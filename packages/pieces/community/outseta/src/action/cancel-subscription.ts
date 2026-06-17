@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown } from '../common/dropdowns';
 
 export const cancelSubscriptionAction = createAction({
   name: 'cancel_subscription',
@@ -16,7 +15,11 @@ export const cancelSubscriptionAction = createAction({
     idempotent: false,
   },
   props: {
-    accountUid: accountUidDropdown(),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account whose subscription to cancel.',
+      required: true,
+    }),
     cancelImmediately: Property.Checkbox({
       displayName: 'Cancel Immediately',
       required: false,
@@ -59,14 +62,27 @@ export const cancelSubscriptionAction = createAction({
       body
     );
 
-    // If cancel immediately, set account to Expired (stage 6).
-    // Outseta does not have a dedicated "cancel now" API endpoint — the cancellation
-    // request only schedules expiry at renewal. Setting AccountStage=6 forces immediate expiry.
+    // Outseta has no dedicated "cancel now" endpoint — the cancellation request
+    // above only schedules expiry at renewal. Setting AccountStage=6 (Expired)
+    // forces immediate expiry. We expand the same nested collections as
+    // update-account.ts / manage-account-membership.ts and flatten any enveloped
+    // arrays before PUT, otherwise the server can interpret {items: […]} as
+    // empty and silently wipe billing / memberships / subscriptions.
     if (context.propsValue.cancelImmediately) {
       const account = await client.get<any>(
-        `/api/v1/crm/accounts/${context.propsValue.accountUid}`
+        `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.*,PersonAccount.*,PersonAccount.Person.*,Subscriptions.*`
       );
       account.AccountStage = 6;
+
+      if (account.PersonAccount && !Array.isArray(account.PersonAccount)) {
+        account.PersonAccount =
+          account.PersonAccount.items ?? account.PersonAccount.Items ?? [];
+      }
+      if (account.Subscriptions && !Array.isArray(account.Subscriptions)) {
+        account.Subscriptions =
+          account.Subscriptions.items ?? account.Subscriptions.Items ?? [];
+      }
+
       await client.put<any>(
         `/api/v1/crm/accounts/${context.propsValue.accountUid}`,
         account
