@@ -1,21 +1,43 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { personUidDropdown } from '../common/dropdowns';
 
 export const getPersonAction = createAction({
   name: 'get_person',
   auth: outsetaAuth,
-  displayName: 'Get Person',
-  description: 'Retrieve an Outseta person by selecting them from the dropdown.',
+  displayName: 'Retrieve Person',
+  description:
+    'Retrieve a person by email or by UID, including the linked account.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Fetches a single Outseta CRM person (contact) by its UID, returning identity, contact, and mailing-address fields. Use to read a person when you already have its UID. Read-only and idempotent.',
+      'Fetches a single Outseta CRM person (contact) by email or by UID, returning identity, contact, and mailing-address fields plus the linked account. Use to read a person by either identifier. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
-    personUid: personUidDropdown(),
+    lookupBy: Property.StaticDropdown({
+      displayName: 'Lookup by',
+      description: 'How to find the person to retrieve.',
+      required: true,
+      defaultValue: 'email',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Email', value: 'email' },
+          { label: 'Person UID', value: 'uid' },
+        ],
+      },
+    }),
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'Used when "Lookup by" is set to Email.',
+      required: false,
+    }),
+    personUid: Property.ShortText({
+      displayName: 'Person UID',
+      description: 'Used when "Lookup by" is set to Person UID.',
+      required: false,
+    }),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -24,9 +46,31 @@ export const getPersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const person = await client.get<any>(
-      `/api/v1/crm/people/${context.propsValue.personUid}`
-    );
+    let person: any;
+
+    if (context.propsValue.lookupBy === 'uid') {
+      const uid = context.propsValue.personUid;
+      if (!uid) {
+        throw new Error('Person UID is required when looking up by UID.');
+      }
+      person = await client.get<any>(
+        `/api/v1/crm/people/${uid}?fields=*,MailingAddress.*,PersonAccount.Account.Uid,PersonAccount.Account.Name,PersonAccount.Account.AccountStage`
+      );
+    } else {
+      const email = context.propsValue.email;
+      if (!email) {
+        throw new Error('Email is required when looking up by Email.');
+      }
+      const items = await client.getAllPages<any>(
+        `/api/v1/crm/people?Email=${encodeURIComponent(email)}&fields=*,PersonAccount.Account.Uid,PersonAccount.Account.Name,PersonAccount.Account.AccountStage`
+      );
+      person = items.find(
+        (p: any) => p.Email?.toLowerCase() === email.toLowerCase()
+      );
+      if (!person) {
+        throw new Error(`No person found with email "${email}".`);
+      }
+    }
 
     return {
       uid: person.Uid ?? null,
@@ -48,6 +92,19 @@ export const getPersonAction = createAction({
       mailing_address_state: person.MailingAddress?.State ?? null,
       mailing_address_postal_code: person.MailingAddress?.PostalCode ?? null,
       mailing_address_country: person.MailingAddress?.Country ?? null,
+      account_uid: firstMembership(person)?.Account?.Uid ?? null,
+      account_name: firstMembership(person)?.Account?.Name ?? null,
+      account_stage: firstMembership(person)?.Account?.AccountStage ?? null,
     };
   },
 });
+
+function firstMembership(person: any): any {
+  // PersonAccount comes back as a direct array on /crm/people, but be
+  // defensive in case the API ever wraps it in {items: [...]} like other
+  // collections do.
+  const list = Array.isArray(person?.PersonAccount)
+    ? person.PersonAccount
+    : (person?.PersonAccount?.items ?? person?.PersonAccount?.Items ?? []);
+  return list[0];
+}

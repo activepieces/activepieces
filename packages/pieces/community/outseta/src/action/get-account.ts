@@ -1,21 +1,44 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown } from '../common/dropdowns';
 
 export const getAccountAction = createAction({
   name: 'get_account',
   auth: outsetaAuth,
-  displayName: 'Get Account',
-  description: 'Retrieve an Outseta account by selecting it from the dropdown.',
+  displayName: 'Retrieve Account',
+  description:
+    'Retrieve an account by its UID, or by the email of its primary contact. Returns plan, subscription, billing address, primary contact and add-on details.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Fetches a single Outseta CRM account by its UID, returning core fields plus billing address, primary contact, and current subscription/plan details. Use to read an account when you already have its UID. Read-only and idempotent.',
+      'Fetches a single Outseta CRM account by its UID or by its primary contact email, returning core fields plus billing address, primary contact, and current subscription/plan/add-on details. Use to read an account by either identifier. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
-    accountUid: accountUidDropdown(),
+    lookupBy: Property.StaticDropdown({
+      displayName: 'Lookup by',
+      description: 'How to find the account to retrieve.',
+      required: true,
+      defaultValue: 'uid',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Account UID', value: 'uid' },
+          { label: 'Primary contact email', value: 'email' },
+        ],
+      },
+    }),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'Used when "Lookup by" is set to Account UID.',
+      required: false,
+    }),
+    primaryContactEmail: Property.ShortText({
+      displayName: 'Primary contact email',
+      description:
+        'Used when "Lookup by" is set to Primary contact email. The action will resolve the email to the linked account.',
+      required: false,
+    }),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -24,9 +47,47 @@ export const getAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
+    let accountUid = context.propsValue.accountUid;
+
+    if (context.propsValue.lookupBy === 'email') {
+      const email = context.propsValue.primaryContactEmail;
+      if (!email) {
+        throw new Error('Primary contact email is required when looking up by email.');
+      }
+      const people = await client.getAllPages<any>(
+        `/api/v1/crm/people?Email=${encodeURIComponent(email)}&fields=*,PersonAccount.Account.Uid`
+      );
+      const person = people.find(
+        (p: any) => p.Email?.toLowerCase() === email.toLowerCase()
+      );
+      if (!person) {
+        throw new Error(`No person found with email "${email}".`);
+      }
+      const memberships: any[] = Array.isArray(person.PersonAccount)
+        ? person.PersonAccount
+        : (person.PersonAccount?.items ?? person.PersonAccount?.Items ?? []);
+      accountUid = memberships[0]?.Account?.Uid ?? null;
+      if (!accountUid) {
+        throw new Error(`Person "${email}" is not linked to any account.`);
+      }
+    }
+
+    if (!accountUid) {
+      throw new Error('Account UID is required.');
+    }
+
+    // The leading `*` is required: when ?fields= is provided, Outseta returns
+    // ONLY the listed fields. Without `*`, top-level scalar fields like Name,
+    // AccountStage, BillingAddress, etc. would all come back null.
     const account = await client.get<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}`
+      `/api/v1/crm/accounts/${accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.*,CurrentSubscription.*,CurrentSubscription.Plan.*,CurrentSubscription.Plan.PlanFamily.*,CurrentSubscription.SubscriptionAddOns.*,CurrentSubscription.SubscriptionAddOns.AddOn.*`
     );
+
+    const sub = account.CurrentSubscription;
+    const rawAddOns = sub?.SubscriptionAddOns;
+    const addOns: any[] = Array.isArray(rawAddOns)
+      ? rawAddOns
+      : (rawAddOns?.items ?? rawAddOns?.Items ?? []);
 
     return {
       uid: account.Uid ?? null,
@@ -50,11 +111,23 @@ export const getAccountAction = createAction({
       primary_contact_email: account.PrimaryContact?.Email ?? null,
       primary_contact_first_name: account.PrimaryContact?.FirstName ?? null,
       primary_contact_last_name: account.PrimaryContact?.LastName ?? null,
-      current_subscription_uid: account.CurrentSubscription?.Uid ?? null,
-      current_subscription_plan_name: account.CurrentSubscription?.Plan?.Name ?? null,
-      current_subscription_plan_uid: account.CurrentSubscription?.Plan?.Uid ?? null,
-      current_subscription_billing_renewal_term: account.CurrentSubscription?.BillingRenewalTerm ?? null,
-      current_subscription_renewal_date: account.CurrentSubscription?.RenewalDate ?? null,
+      current_subscription_uid: sub?.Uid ?? null,
+      subscription_status: sub?.SubscriptionStatus ?? null,
+      plan_uid: sub?.Plan?.Uid ?? null,
+      plan_name: sub?.Plan?.Name ?? null,
+      plan_family_name: sub?.Plan?.PlanFamily?.Name ?? null,
+      billing_renewal_term: sub?.BillingRenewalTerm ?? null,
+      renewal_date: sub?.RenewalDate ?? null,
+      start_date: sub?.StartDate ?? null,
+      end_date: sub?.EndDate ?? null,
+      // Unified validity date: renewal_date for recurring plans,
+      // end_date for one-time plans (which have no renewal).
+      validity_date: sub?.RenewalDate ?? sub?.EndDate ?? null,
+      add_ons: addOns.map((a: any) => ({
+        uid: a.AddOn?.Uid ?? a.Uid ?? null,
+        name: a.AddOn?.Name ?? null,
+        quantity: a.Quantity ?? null,
+      })),
     };
   },
 });
