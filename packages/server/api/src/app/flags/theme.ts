@@ -1,3 +1,4 @@
+import { PlatformThemeColors } from '@activepieces/shared'
 import tinycolor from 'tinycolor2'
 
 function generateColorVariations(defaultColor: string) {
@@ -30,30 +31,38 @@ export function generateTheme({
     favIconUrl,
     logoIconUrl,
     websiteName,
+    themeColors,
 }: {
     primaryColor: string
     fullLogoUrl: string
     favIconUrl: string
     logoIconUrl: string
     websiteName: string
+    themeColors?: PlatformThemeColors
 }) {
+    const primary = generateColorVariations(primaryColor)
     return {
         websiteName,
         colors: {
-            avatar: '#515151',
-            'blue-link': '#1890ff',
-            danger: '#f94949',
-            primary: generateColorVariations(primaryColor),
+            avatar: themeColors?.avatar ?? '#515151',
+            'blue-link': themeColors?.['blue-link'] ?? '#1890ff',
+            danger: themeColors?.danger ?? '#f94949',
+            primary: {
+                default: primary.default,
+                dark: themeColors?.primary?.dark ?? primary.dark,
+                light: themeColors?.primary?.light ?? primary.light,
+                medium: themeColors?.primary?.medium ?? primary.medium,
+            },
             warn: {
-                default: '#f78a3b',
-                light: '#fff6e4',
-                dark: '#cc8805',
+                default: themeColors?.warn?.default ?? '#f78a3b',
+                light: themeColors?.warn?.light ?? '#fff6e4',
+                dark: themeColors?.warn?.dark ?? '#cc8805',
             },
             success: {
-                default: '#14ae5c',
-                light: '#3cad71',
+                default: themeColors?.success?.default ?? '#14ae5c',
+                light: themeColors?.success?.light ?? '#3cad71',
             },
-            selection: generateSelectionColor(primaryColor),
+            selection: themeColors?.selection ?? generateSelectionColor(primaryColor),
         },
         logos: {
             fullLogoUrl,

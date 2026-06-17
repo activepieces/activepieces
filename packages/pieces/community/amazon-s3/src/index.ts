@@ -1,6 +1,4 @@
 import {
-  PieceAuth,
-  Property,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -13,7 +11,7 @@ import { moveFile } from './lib/actions/move-file';
 import { deleteFile } from './lib/actions/delete-file';
 import { listFiles } from './lib/actions/list-files';
 import { decryptPgpFile } from './lib/actions/decrypt-pgp-file';
-import { amazonS3Auth } from './lib/auth';
+import { amazonS3CombinedAuth } from './lib/auth';
 
 export const amazonS3 = createPiece({
   displayName: 'Amazon S3',
@@ -23,7 +21,7 @@ export const amazonS3 = createPiece({
   minimumSupportedRelease: '0.30.0',
   authors: ["Willianwg", "kishanprmr", "MoShizzle", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud", "Kevinyu-alan", "hugh-codes"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   actions: [amazons3UploadFile, readFile, generateSignedUrl, generateSignedUploadUrl, moveFile, deleteFile, listFiles, decryptPgpFile],
   triggers: [newFile],
 });

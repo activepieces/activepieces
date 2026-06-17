@@ -1,9 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../auth';
-import { createS3 } from '../common';
+import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
+import { resolveS3Client } from '../common';
 
 export const deleteFile = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'deleteFile',
   displayName: 'Delete File',
   description: 'Deletes an existing file.',
@@ -20,10 +20,11 @@ export const deleteFile = createAction({
     }),
   },
   async run(context) {
-    const { bucket } = context.auth.props
+    const authProps: S3AuthProps = context.auth.props;
+    const { bucket } = authProps;
     const { key } = context.propsValue;
 
-    const s3 = createS3(context.auth.props);
+    const s3 = await resolveS3Client({ authProps, server: context.server });
 
     const response = await s3.deleteObject({
       Bucket: bucket,

@@ -241,6 +241,15 @@ const validateAuth = async ({
                 server,
             })
         }
+        case PropertyType.OIDC:{
+            if (authValue.type !== AppConnectionType.OIDC) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue.props,
+                server,
+            })
+        }
         default: {
             throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
         }
