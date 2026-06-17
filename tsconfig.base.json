@@ -29,6 +29,9 @@
       "@activepieces/piece-actualbudget": [
         "packages/pieces/community/actualbudget/src/index.ts"
       ],
+      "@activepieces/piece-okx-ticker": [
+        "packages/pieces/community/okx-ticker/src/index.ts"
+      ],
       "@activepieces/piece-acuity-scheduling": [
         "packages/pieces/community/acuity-scheduling/src/index.ts"
       ],
