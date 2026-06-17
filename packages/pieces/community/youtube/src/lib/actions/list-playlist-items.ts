@@ -1,6 +1,6 @@
 import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { youtubeAuth } from '../../';
+import { getAccessToken, youtubeAuth } from '../common/auth';
 
 export const youtubeListPlaylistItemsAction = createAction({
   auth: youtubeAuth,
@@ -46,7 +46,9 @@ export const youtubeListPlaylistItemsAction = createAction({
       throw new Error('You must provide either a Playlist ID or Item IDs.');
     }
 
-    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
+    const accessToken = await getAccessToken(
+      context.auth as OAuth2PropertyValue
+    );
 
     const queryParams: Record<string, string> = {
       part: 'snippet,contentDetails,status',

@@ -4,7 +4,7 @@ import {
   OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { youtubeAuth } from '../../';
+import { getAccessToken, youtubeAuth } from '../common/auth';
 
 export const youtubeDownloadCaptionAction = createAction({
   auth: youtubeAuth,
@@ -49,7 +49,9 @@ export const youtubeDownloadCaptionAction = createAction({
     const { captionId, format, targetLanguage, onBehalfOfContentOwner } =
       context.propsValue;
 
-    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
+    const accessToken = await getAccessToken(
+      context.auth as OAuth2PropertyValue
+    );
 
     const queryParams: Record<string, string> = {
       alt: 'media',

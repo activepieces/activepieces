@@ -12,8 +12,6 @@ import { youtubeSearchAction } from './lib/actions/search';
 import { youtubeListCaptionsAction } from './lib/actions/list-captions';
 import { youtubeDownloadCaptionAction } from './lib/actions/download-caption';
 
-export { youtubeAuth };
-
 export const youtube = createPiece({
   displayName: 'YouTube',
   description:

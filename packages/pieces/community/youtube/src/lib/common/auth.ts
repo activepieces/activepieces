@@ -1,6 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const youtubeAuth = PieceAuth.OAuth2({
   description: `
@@ -35,24 +34,4 @@ export const youtubeAuth = PieceAuth.OAuth2({
 
 export async function getAccessToken(auth: OAuth2PropertyValue): Promise<string> {
   return auth.access_token;
-}
-
-// Helper to revoke access and refresh tokens via Google's endpoint
-export async function revokeTokens(auth: OAuth2PropertyValue): Promise<void> {
-  const refreshToken = getRefreshToken(auth);
-  const tokens = [auth.access_token, refreshToken].filter(
-    (token): token is string => typeof token === 'string' && token.length > 0,
-  );
-  for (const token of tokens) {
-    await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
-  }
-}
-
-function getRefreshToken(auth: OAuth2PropertyValue): string | undefined {
-  const refreshToken = auth.data['refresh_token'];
-  return typeof refreshToken === 'string' ? refreshToken : undefined;
 }

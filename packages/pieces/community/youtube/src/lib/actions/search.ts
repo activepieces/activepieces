@@ -4,7 +4,7 @@ import {
   OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { youtubeAuth } from '../../';
+import { getAccessToken, youtubeAuth } from '../common/auth';
 
 export const youtubeSearchAction = createAction({
   auth: youtubeAuth,
@@ -371,7 +371,9 @@ export const youtubeSearchAction = createAction({
       }
     }
 
-    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
+    const accessToken = await getAccessToken(
+      context.auth as OAuth2PropertyValue
+    );
 
     const queryParams: Record<string, string> = {
       part: 'snippet',
