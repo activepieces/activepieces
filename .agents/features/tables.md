@@ -1,7 +1,7 @@
 # Tables Module
 
 ## Summary
-A built-in relational database feature that lets users store structured data directly within Activepieces, without needing an external database. Tables support typed fields, cell-level storage, per-row webhooks that fire flow automations, and a rich spreadsheet-like editor in the UI. They are tightly integrated with the flow engine through the Tables piece, which provides trigger and action steps for reacting to and manipulating table data.
+A built-in relational database feature that lets users store structured data directly within Activepieces, without needing an external database. Tables support typed fields, cell-level storage, per-row webhooks that fire flow automations, and a rich spreadsheet-like editor in the UI. They are tightly integrated with the flow engine through the Tables piece, which provides trigger and action steps for reacting to and manipulating table data. In embedded mode, taking over a locked table refreshes all table data (fields, records, metadata) in-place instead of triggering a full page reload; this is implemented through `replaceFromServer` on the client state store.
 
 ## Key Files
 - `packages/server/api/src/app/tables/table/table.service.ts` — table CRUD, export, webhook management

@@ -15,6 +15,7 @@ import {
   Row,
   ROW_HEIGHT_MAP,
   RowHeight,
+  TABLE_RECORDS_PAGE_LIMIT,
 } from '@/features/tables';
 import { fieldsApi } from '@/features/tables/api/fields-api';
 import { recordsApi } from '@/features/tables/api/records-api';
@@ -60,7 +61,7 @@ const ApTableEditorPage = () => {
       fieldsApi.list({ tableId: table.id }),
       recordsApi.list({
         tableId: table.id,
-        limit: 99999999,
+        limit: TABLE_RECORDS_PAGE_LIMIT,
         cursor: undefined,
       }),
     ]);

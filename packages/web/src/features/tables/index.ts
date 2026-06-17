@@ -5,6 +5,7 @@ export { ApTableHeader } from './components/ap-table-header';
 export {
   useTableState,
   ApTableStateProvider,
+  TABLE_RECORDS_PAGE_LIMIT,
 } from './components/ap-table-state-provider';
 export { ImportTableDialog } from './components/import-table-dialog';
 export { mapRecordsToRows, useTableColumns } from './components/table-columns';

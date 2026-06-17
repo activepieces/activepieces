@@ -19,6 +19,8 @@ import { fieldsApi } from '../api/fields-api';
 import { recordsApi } from '../api/records-api';
 import { tablesApi } from '../api/tables-api';
 
+const TABLE_RECORDS_PAGE_LIMIT = Number.MAX_SAFE_INTEGER;
+
 const TableContext = createContext<ApTableStore | null>(null);
 
 export const TableStateProviderWithTable = ({
@@ -88,7 +90,7 @@ export function ApTableStateProvider({
     queryFn: () =>
       recordsApi.list({
         tableId: tableId!,
-        limit: 99999999,
+        limit: TABLE_RECORDS_PAGE_LIMIT,
         cursor: undefined,
       }),
     refetchOnWindowFocus: true,
@@ -152,6 +154,8 @@ export function useTableState<T>(selector: (state: TableState) => T) {
   }
   return useStore(tableStore, selector);
 }
+
+export { TABLE_RECORDS_PAGE_LIMIT };
 
 export function useOptionalTableStore() {
   const tableStore = useContext(TableContext);

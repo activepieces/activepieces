@@ -5,7 +5,9 @@ import {
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
@@ -26,6 +28,31 @@ async function completeTakeOver({
   }
 
   reload();
+}
+
+async function completeTakeOverWithFeedback({
+  isEmbedded,
+  onTakeOver,
+  reload,
+  onSuccess,
+  onError,
+}: {
+  isEmbedded: boolean;
+  onTakeOver?: () => Promise<void> | void;
+  reload: () => void;
+  onSuccess: () => void;
+  onError: () => void;
+}) {
+  try {
+    await completeTakeOver({
+      isEmbedded,
+      onTakeOver,
+      reload,
+    });
+    onSuccess();
+  } catch {
+    onError();
+  }
 }
 
 function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
@@ -109,11 +136,20 @@ function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
       async (response: LockResourceResponse) => {
         if (response.acquired) {
           isOwner.current = true;
-          setLockedBy(null);
-          await completeTakeOver({
+          await completeTakeOverWithFeedback({
             isEmbedded,
             onTakeOver,
             reload: () => window.location.reload(),
+            onSuccess: () => {
+              setLockedBy(null);
+            },
+            onError: () => {
+              toast.error(t('Failed to load data'), {
+                description: t(
+                  'Something went wrong while loading your data. Your data is safe — please try again by refreshing the page.',
+                ),
+              });
+            },
           });
         }
       },
@@ -123,7 +159,7 @@ function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
   return { lockedBy, takeOver };
 }
 
-export { completeTakeOver, useResourceLock };
+export { completeTakeOver, completeTakeOverWithFeedback, useResourceLock };
 
 type UseResourceLockParams = {
   resourceId: string;
