@@ -38,6 +38,7 @@ import { FormattedDate } from '@/components/custom/formatted-date';
 import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
 import { ReplaceIcon } from '@/components/icons/replace';
 import { Button } from '@/components/ui/button';
@@ -177,22 +178,22 @@ function AppConnectionsPage() {
         cell: ({ row }) => {
           const isPlatformConnection = row.original.scope === 'PLATFORM';
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <CopyTextTooltip
                 title={t('External ID')}
                 text={row.original.externalId || ''}
               >
-                <div className="flex items-center gap-2 w-fit">
+                <span className="shrink-0">
                   <PieceIconWithPieceName
                     pieceName={row.original.pieceName}
                     showTooltip={false}
                     size="sm"
                   />
-                  <span className="truncate max-w-[120px] 2xl:max-w-[250px]">
-                    {row.original.displayName}
-                  </span>
-                </div>
+                </span>
               </CopyTextTooltip>
+              <TextWithTooltip tooltipMessage={row.original.displayName}>
+                <span className="min-w-0">{row.original.displayName}</span>
+              </TextWithTooltip>
               {isPlatformConnection && (
                 <Tooltip>
                   <TooltipTrigger asChild>
