@@ -128,6 +128,7 @@
   "Running": "Running",
   "Run exceeded {timeout} seconds, try to optimize your steps.": "Run exceeded {timeout} seconds, try to optimize your steps.",
   "Run failed for an unknown reason, contact support.": "Run failed for an unknown reason, contact support.",
+  "Run failed with an internal error, contact support.": "Run failed with an internal error, contact support.",
   "Run Cancelled": "Run Cancelled",
   "Started": "Started",
   "Took": "Took",
