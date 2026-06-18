@@ -1245,6 +1245,9 @@
       "@activepieces/piece-softr": [
         "packages/pieces/community/softr/src/index.ts"
       ],
+      "@activepieces/piece-sofya": [
+        "packages/pieces/community/sofya/src/index.ts"
+      ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"
       ],
