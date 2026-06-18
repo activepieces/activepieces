@@ -51,6 +51,9 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.PROJECT_ROLE_DELETED]: {
       label: t('Project role deleted'),
     },
+    [ApplicationEventName.PROJECT_REPLACED]: {
+      label: t('Project replaced'),
+    },
     [ApplicationEventName.PROJECT_RELEASE_CREATED]: {
       label: t('Project release created'),
     },
