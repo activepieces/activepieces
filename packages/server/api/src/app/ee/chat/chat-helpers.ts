@@ -19,6 +19,14 @@ import { ChatConversationEntity } from './chat-conversation-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
 
+// Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
+// eval endpoints and the regular chat path can tell them apart from real user conversations.
+export const EVAL_CONVERSATION_ID_PREFIX = 'evalconv'
+
+export function isEvalConversationId(id: string): boolean {
+    return id.startsWith(EVAL_CONVERSATION_ID_PREFIX)
+}
+
 const conversationRepo = repoFactory(ChatConversationEntity)
 
 async function getConversationOrThrow({ id, platformId, userId }: { id: string, platformId: string, userId: string }) {
