@@ -63,6 +63,22 @@ Email templates live in `src/assets/emails/`. When creating or modifying email t
 - Write database migrations for schema changes, never modify entities directly without a migration . use db-migration skill
 - Keep enterprise features isolated in `src/app/ee/`
 
+## Structured Logging Field Schema (evlog)
+
+All structured logging goes through evlog — `logger.{info,warn,error,debug}({ fields }, msg)` and `wideEvent.set/error/timed` from `@activepieces/server-utils`. The **field keys** (not message strings) are the queryable schema behind dashboards, alerts, and the OTLP drain. They MUST be consistent: **one concept = one key name, everywhere.**
+
+**Rules:**
+
+1. **Every entity id is a flat `<entity>Id` key — never an alias, never a bare `id`.** A flow run id is always `flowRunId`, never `runId` or `id`. The prefix mirrors the domain entity (`FlowRun` → `flowRunId`, `FlowVersion` → `flowVersionId`). This is the rule that matters most: the codebase previously logged the same flow-run id as `runId`, `flowRunId`, *and* `id`, which broke every correlation query.
+2. **Names/labels are `<entity>Name`, never a bare `name`.** `pieceName`, `stepName`, `triggerName`, `flowName`. Bare `name` is reserved (evlog `wideEvent.timed({ name })` op-label, migration class names).
+3. **Errors use `error`, not `err`.** `ap-logger.ts` normalizes `obj.err ?? obj.error` and emits the canonical `error` key, so writing either works — but prefer `error`.
+4. **Units as a suffix:** durations end in `Ms` (`durationMs`, `timings.{op}Ms`), bytes `Bytes`, counts `Count`/plural.
+5. **Do not set reserved / auto-populated keys manually:** `service`, `version`, `level`, `msg`, `timestamp`, `error`, `timings`, `requestId`, `method`, `path`, and `audit.context.{traceId,ip,userAgent}` (attached by `evlog-setup.ts` / `ap-logger.ts` / `wide-event.ts` and the evlog request middleware).
+
+**Canonical keys:** `flowRunId`, `flowId`, `flowVersionId`, `projectId`, `platformId`, `userId`, `jobId`, `connectionId` (grandfathered for `AppConnection`), `pieceName`, `pieceVersion`, `stepName`, `triggerName`, `sandboxId`, `workerId`, `webhookId`, `conversationId`, `waitpointId`, `migrationName`.
+
+Note: `JobData.runId` and other **data-model / wire fields stay as-is** — this convention governs the keys *emitted to logs* (the value is read into a `flowRunId` log key), not entity/DTO field names.
+
 ## Release Version Detection (`apVersionUtil`)
 
 `apVersionUtil.getCurrentRelease()` (in `@activepieces/server-utils`, `ap-version.ts`) reads the running release from `<process.cwd()>/package.json`. **It is `cwd`-relative, not module-relative** — `__dirname` was tried and does not work in the bundled output, so do not "fix" it that way. On any failure (missing file, bad JSON, missing/non-string `version`) it logs a `warn` and returns the sentinel `UNKNOWN_VERSION` (`'0.0.0'`).

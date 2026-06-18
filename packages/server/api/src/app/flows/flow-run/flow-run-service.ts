@@ -146,7 +146,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             id: flowRunId,
             projectId,
         })
-        log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
+        log.info({ flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
 
         const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         if (
@@ -336,7 +336,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }, log)
 
         await flowRunSideEffects(log).onStart(newFlowRun)
-        log.info({ runId: newFlowRun.id, flowId, projectId, executionType }, 'Flow run started')
+        log.info({ flowRunId: newFlowRun.id, flowId, projectId, executionType }, 'Flow run started')
         return newFlowRun
     },
 

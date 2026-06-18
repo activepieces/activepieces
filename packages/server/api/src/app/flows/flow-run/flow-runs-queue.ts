@@ -32,7 +32,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
             async (job) => {
                 log.info({
                     jobId: job.id,
-                    runId: job.data.runId,
+                    flowRunId: job.data.runId,
                 }, '[runsMetadataQueue#worker] Saving runs metadata')
                 const key = redisMetadataKey(job.data.runId)
                 await distributedLock(log).runExclusive({
@@ -45,7 +45,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
                                 log.info({
                                     jobId: job.id,
-                                    runId: job.data.runId,
+                                    flowRunId: job.data.runId,
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
@@ -74,7 +74,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 if (isNil(updatedFlowRun)) {
                                     log.info({
                                         jobId: job.id,
-                                        runId: job.data.runId,
+                                        flowRunId: job.data.runId,
                                     }, '[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
                                     return
                                 }
@@ -86,7 +86,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 if (!flowExists) {
                                     log.info({
                                         jobId: job.id,
-                                        runId: job.data.runId,
+                                        flowRunId: job.data.runId,
                                     }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
                                     return
                                 }
@@ -148,7 +148,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
     async add(params: RunsMetadataUpsertData): Promise<void> {
         log.info({
-            runId: params.id,
+            flowRunId: params.id,
             projectId: params.projectId,
         }, '[runsMetadataQueue#add] Adding runs metadata to queue')
         await queue.add(params)

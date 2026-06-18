@@ -245,7 +245,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('projectId', 'projectId' in jobData && jobData.projectId != null ? jobData.projectId : undefined),
         ...spreadIfDefined('platformId', 'platformId' in jobData ? jobData.platformId : undefined),
         ...spreadIfDefined('flowId', 'flowId' in jobData ? jobData.flowId : undefined),
-        ...spreadIfDefined('runId', 'runId' in jobData ? jobData.runId : undefined),
+        ...spreadIfDefined('flowRunId', 'runId' in jobData ? jobData.runId : undefined),
         ...spreadIfDefined('flowVersionId', 'flowVersionId' in jobData ? jobData.flowVersionId : undefined),
     })
     return wideEvent.run({

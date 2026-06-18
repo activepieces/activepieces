@@ -1,0 +1,65 @@
+---
+title: "Structured Logging"
+description: "Field-naming conventions for evlog wide events across the Activepieces server"
+icon: "list-tree"
+---
+
+All structured logging on the server goes through [evlog](https://www.evlog.dev) — `logger.{info,warn,error,debug}({ fields }, msg)` and `wideEvent.set/error/timed` from `@activepieces/server-utils`.
+
+The **field keys** (not the message string) are the real schema — they are what dashboards, alerts, and the OTLP drain query against. If the same thing is logged under different keys (`runId` here, `flowRunId` there, a bare `id` elsewhere), every query becomes a guessing game and correlation silently breaks.
+
+One rule above all: **one concept = one field name, everywhere.**
+
+## Rules
+
+<Steps>
+<Step title="Every entity id is a flat <entity>Id key">
+Never an alias, never a bare `id`. A flow run id is always `flowRunId` (never `runId` or `id`); a flow is `flowId`, a flow version is `flowVersionId`. The prefix names the entity, so the key is unambiguous on its own.
+
+```ts
+// ✅ Correct
+logger.info({ flowRunId, flowId, projectId }, 'Flow run started')
+
+// ❌ Wrong — alias + ambiguous bare id
+logger.info({ runId: flowRun.id }, 'Flow run started')
+logger.info({ id: flowRun.id }, 'Flow run started')
+```
+</Step>
+
+<Step title="Names/labels are <entity>Name, never bare name">
+`pieceName`, `stepName`, `triggerName`, `flowName`. Bare `name` is reserved for evlog's `wideEvent.timed({ name })` operation label.
+</Step>
+
+<Step title="Errors use error">
+Pass the error to evlog — `logger.error(err)` or `logger.error({ err }, 'msg')` — and it is emitted under the canonical `error` key. Don't invent an `err` field.
+</Step>
+
+<Step title="Units go in the suffix">
+Durations end in `Ms` (`durationMs`, `timings.{op}Ms`), bytes in `Bytes`, counts in `Count` or a plural.
+</Step>
+
+<Step title="Don't set reserved fields">
+These are added automatically — never set them yourself: `service`, `version`, `level`, `msg`, `timestamp`, `error`, `requestId`, `method`, `path`.
+</Step>
+</Steps>
+
+## Canonical keys
+
+| Concept | Key |
+| --- | --- |
+| Flow run id | `flowRunId` |
+| Flow id | `flowId` |
+| Flow version id | `flowVersionId` |
+| Project / Platform / User | `projectId` / `platformId` / `userId` |
+| Job id | `jobId` |
+| App connection id | `connectionId` |
+| Piece | `pieceName`, `pieceVersion` |
+| Step / Trigger | `stepName`, `triggerName` |
+| Sandbox / Worker / Webhook | `sandboxId` / `workerId` / `webhookId` |
+| Conversation / Waitpoint | `conversationId` / `waitpointId` |
+| Migration | `migrationName` |
+| Error | `error` |
+
+<Warning>
+This convention governs the keys **emitted to logs**, not entity or DTO field names. Data-model fields such as `JobData.runId` stay as-is — the value is simply logged under `flowRunId`.
+</Warning>

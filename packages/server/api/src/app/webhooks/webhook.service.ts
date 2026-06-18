@@ -103,7 +103,7 @@ export const webhookService = {
             },
         })
         const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
-        wideEvent.set({ webhook: { flowVersionId: flowVersionIdToRun } })
+        wideEvent.set({ flowVersionId: flowVersionIdToRun })
 
         const response = await webhookHandshake.handleHandshakeRequest({
             payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
@@ -273,7 +273,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         failParentOnFailure,
     })
 
-    wideEvent.set({ webhook: { runId: createdRun.id } })
+    wideEvent.set({ flowRunId: createdRun.id })
     params.onRunCreated?.(createdRun)
 
     const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {
