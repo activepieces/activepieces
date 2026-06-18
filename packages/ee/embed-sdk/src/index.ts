@@ -505,17 +505,23 @@ class ActivepiecesEmbedded {
           break;
         }
         case ActivepiecesClientEventName.CLIENT_MCP_SETTINGS_DIALOG_CLOSED: {
-          this._resolveMcpSettingsDialogClosed?.();
+          const resolve = this._resolveMcpSettingsDialogClosed;
+          this._resolveMcpSettingsDialogClosed = undefined;
+          resolve?.();
           this._cleanMcpIframe();
           break;
         }
         case ActivepiecesClientEventName.CLIENT_MCP_OAUTH_APPROVED: {
-          this._resolveMcpOAuthDialogClosed?.({ redirectUrl: event.data.data.redirectUrl });
+          const resolve = this._resolveMcpOAuthDialogClosed;
+          this._resolveMcpOAuthDialogClosed = undefined;
+          resolve?.({ redirectUrl: event.data.data.redirectUrl });
           this._cleanMcpIframe();
           break;
         }
         case ActivepiecesClientEventName.CLIENT_MCP_OAUTH_DENIED: {
-          this._resolveMcpOAuthDialogClosed?.({ denied: true });
+          const resolve = this._resolveMcpOAuthDialogClosed;
+          this._resolveMcpOAuthDialogClosed = undefined;
+          resolve?.({ denied: true });
           this._cleanMcpIframe();
           break;
         }
@@ -524,6 +530,9 @@ class ActivepiecesEmbedded {
     window.addEventListener('message', mcpMessageHandler);
     this._cleanMcpIframe = () => {
       window.removeEventListener('message', mcpMessageHandler);
+      // Resolve any dialog still pending (e.g. superseded by a new open) so its caller never hangs.
+      this._resolveMcpSettingsDialogClosed?.();
+      this._resolveMcpOAuthDialogClosed?.({ denied: true });
       this._resolveMcpSettingsDialogClosed = undefined;
       this._resolveMcpOAuthDialogClosed = undefined;
       this._removeEmbedding(target);
