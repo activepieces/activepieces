@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { polydocAuth } from '../common/auth';
 import { buildRequestBody } from '../common/build-request-body';
-import { extractApiErrorMessage, polyDocRequest, resolveAuth } from '../common/client';
+import { extractApiErrorMessage, polyDocRequest } from '../common/client';
 import { EINVOICE_PROFILES, EINVOICE_STANDARDS } from '../common/constants';
 import { shapeOutput } from '../common/output';
 import {
@@ -118,7 +118,7 @@ export const generateEinvoice = createAction({
 
     const request = buildRequestBody(params);
     try {
-      const response = await polyDocRequest(resolveAuth(context.auth), request);
+      const response = await polyDocRequest(context.auth, request);
       return await shapeOutput({
         response,
         isBinary: request.isBinary,

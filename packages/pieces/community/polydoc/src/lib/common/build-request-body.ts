@@ -57,10 +57,10 @@ function buildLayout(opts: JsonObject): JsonObject | undefined {
   const margins = ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'] as const;
   if (margins.some((m) => opts[m] !== undefined && opts[m] !== '')) {
     layout['margin'] = {
-      top: opts['marginTop'] ?? '0',
-      right: opts['marginRight'] ?? '0',
-      bottom: opts['marginBottom'] ?? '0',
-      left: opts['marginLeft'] ?? '0',
+      top: opts['marginTop'] ?? '2',
+      right: opts['marginRight'] ?? '1',
+      bottom: opts['marginBottom'] ?? '2',
+      left: opts['marginLeft'] ?? '1',
     };
   }
   return Object.keys(layout).length > 0 ? layout : undefined;

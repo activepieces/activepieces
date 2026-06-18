@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { polydocAuth } from '../common/auth';
 import { buildRequestBody } from '../common/build-request-body';
-import { extractApiErrorMessage, polyDocRequest, resolveAuth } from '../common/client';
+import { extractApiErrorMessage, polyDocRequest } from '../common/client';
 import { IMAGE_TYPES, SCREENSHOT_OUTPUT_ENCODINGS } from '../common/constants';
 import { shapeOutput } from '../common/output';
 import {
@@ -113,7 +113,7 @@ export const captureScreenshot = createAction({
     }
 
     try {
-      const response = await polyDocRequest(resolveAuth(context.auth), request);
+      const response = await polyDocRequest(context.auth, request);
       return await shapeOutput({
         response,
         isBinary: request.isBinary,

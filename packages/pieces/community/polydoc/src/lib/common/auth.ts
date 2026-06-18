@@ -1,7 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { DEFAULT_BASE_URL, SCREENSHOT_CONVERT_PATH } from './constants';
-import { resolveAuth } from './client';
 
 const AUTH_GUIDE = `Get an API key from the PolyDoc dashboard (dashboard.polydoc.tech, API Keys). It is sent as Authorization: Bearer <key>.
 
@@ -24,7 +23,7 @@ export const polydocAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const { apiKey } = resolveAuth(auth);
+    const apiKey  = auth.apiKey;
     if (!apiKey) {
       return { valid: false, error: 'API key is required.' };
     }
@@ -37,7 +36,7 @@ export const polydocAuth = PieceAuth.CustomAuth({
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'X-Sandbox': 'true',
+          'X-Sandbox': auth.sandbox ? 'true' : 'false',
         },
         body: { source: '<p>polydoc</p>', screenshot: { type: 'png' } },
         responseType: 'arraybuffer',
