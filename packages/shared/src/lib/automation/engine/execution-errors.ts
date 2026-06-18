@@ -109,6 +109,12 @@ export class EngineGenericError extends ExecutionError {
     }
 }
 
+export class PieceNotFoundError extends ExecutionError {
+    constructor(message: string, cause?: unknown) {
+        super('PieceNotFoundError', formatMessage(message), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class SSRFBlockedError extends ExecutionError {
     constructor({ host, ip, cause }: { host: string, ip: string, cause?: unknown }) {
         super(
