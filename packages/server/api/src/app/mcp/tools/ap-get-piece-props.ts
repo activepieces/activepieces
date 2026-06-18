@@ -89,13 +89,8 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const sampleOutputFields = declaredOutputFields.length === 0 && type === 'trigger' && !isNil(component.sampleData)
                     ? mcpUtils.deriveFieldPathsFromSample(component.sampleData)
                     : []
-                const usingDeclaredFields = declaredOutputFields.length > 0
-                const allOutputFields = usingDeclaredFields ? declaredOutputFields : sampleOutputFields
-                // Declared schemas are curated and small, so show every field; sample data can be huge
-                // (a GitHub webhook flattens to 150+ paths), so cap the preview and point to a test run.
-                const outputFields = usingDeclaredFields ? allOutputFields : allOutputFields.slice(0, MAX_OUTPUT_SCHEMA_FIELDS)
-                const truncatedFieldCount = allOutputFields.length - outputFields.length
-                const outputFieldsSource = usingDeclaredFields ? 'declared' : 'sample'
+                const outputFields = declaredOutputFields.length > 0 ? declaredOutputFields : sampleOutputFields
+                const outputFieldsSource = declaredOutputFields.length > 0 ? 'declared' : 'sample'
 
                 const textResult = {
                     piece: normalized,
@@ -115,7 +110,6 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     ...(aiMetadata && { aiMetadata }),
                     ...(component.outputSchema && { outputSchema: component.outputSchema }),
                     ...(outputFields.length > 0 && { outputFields, outputFieldsSource }),
-                    ...(truncatedFieldCount > 0 && { truncatedFieldCount }),
                     props,
                 }
 
@@ -127,11 +121,8 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const outputHeader = outputFieldsSource === 'declared'
                     ? '📤 Output fields this step produces'
                     : '📤 Output fields (from this trigger\'s sample data)'
-                const moreFieldsNote = truncatedFieldCount > 0
-                    ? `\n- …and ${truncatedFieldCount} more — run ap_test_step to see the full output`
-                    : ''
                 const outputSection = outputFields.length > 0
-                    ? `\n\n${outputHeader} — reference them directly as {{<stepName>['output'].<path>}}:\n${outputFields.map(p => `- ${p}`).join('\n')}${moreFieldsNote}`
+                    ? `\n\n${outputHeader} — reference them directly as {{<stepName>['output'].<path>}}:\n${outputFields.map(p => `- ${p}`).join('\n')}`
                     : ''
                 return {
                     content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}${aiHintLine}${idempotentLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}` }],
@@ -272,8 +263,6 @@ async function validateAuthOwnership({ auth, pieceName, projectId, platformId, l
     }
     return null
 }
-
-const MAX_OUTPUT_SCHEMA_FIELDS = 60
 
 const { withTimeout } = mcpUtils
 

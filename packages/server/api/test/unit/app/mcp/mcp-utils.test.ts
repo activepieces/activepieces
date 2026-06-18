@@ -76,11 +76,11 @@ describe('mcpUtils.flattenOutputSchemaFields — declared output schema → refe
         expect(mcpUtils.flattenOutputSchemaFields([])).toEqual([])
     })
 
-    it('emits the boundary node instead of silently dropping a subtree past max depth', () => {
+    it('flattens arbitrarily deep schemas without dropping fields', () => {
         const paths = mcpUtils.flattenOutputSchemaFields([
             { key: 'l1', children: [{ key: 'l2', children: [{ key: 'l3', children: [{ key: 'l4', children: [{ key: 'l5', children: [{ key: 'l6', format: 'number' }] }] }] }] }] },
         ])
-        expect(paths).toContain('l1.l2.l3.l4.l5')
+        expect(paths).toEqual(['l1.l2.l3.l4.l5.l6 (number)'])
     })
 })
 

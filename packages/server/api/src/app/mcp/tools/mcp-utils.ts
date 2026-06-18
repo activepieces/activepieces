@@ -235,36 +235,31 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
         })
 }
 
-const MAX_OUTPUT_SCHEMA_DEPTH = 4
-
-function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = '', depth = 0): string[] {
+function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
     return fields.flatMap((field) => {
         const path = prefix ? `${prefix}.${field.key}` : field.key
-        const canDescend = depth < MAX_OUTPUT_SCHEMA_DEPTH
-        if (field.children && field.children.length > 0 && canDescend) {
-            return flattenOutputSchemaFields(field.children, path, depth + 1)
+        if (field.children && field.children.length > 0) {
+            return flattenOutputSchemaFields(field.children, path)
         }
-        if (field.listItems && field.listItems.length > 0 && canDescend) {
-            return flattenOutputSchemaFields(field.listItems, `${path}[]`, depth + 1)
+        if (field.listItems && field.listItems.length > 0) {
+            return flattenOutputSchemaFields(field.listItems, `${path}[]`)
         }
-        const arraySuffix = field.listItems && field.listItems.length > 0 ? '[]' : ''
         const typeHint = field.format ? ` (${field.format})` : ''
         const dynamicNote = field.dynamicKey ? ' (dynamic key)' : ''
-        return [`${path}${arraySuffix}${typeHint}${dynamicNote}`]
+        return [`${path}${typeHint}${dynamicNote}`]
     })
 }
 
-function deriveFieldPathsFromSample(value: unknown, prefix = '', depth = 0): string[] {
-    const canDescend = depth < MAX_OUTPUT_SCHEMA_DEPTH
+function deriveFieldPathsFromSample(value: unknown, prefix = ''): string[] {
     if (Array.isArray(value)) {
-        return value.length > 0 && canDescend
-            ? deriveFieldPathsFromSample(value[0], `${prefix}[]`, depth + 1)
+        return value.length > 0
+            ? deriveFieldPathsFromSample(value[0], `${prefix}[]`)
             : (prefix ? [`${prefix}[]`] : [])
     }
     if (value !== null && typeof value === 'object') {
         const entries = Object.entries(value)
-        return entries.length > 0 && canDescend
-            ? entries.flatMap(([key, val]) => deriveFieldPathsFromSample(val, prefix ? `${prefix}.${key}` : key, depth + 1))
+        return entries.length > 0
+            ? entries.flatMap(([key, val]) => deriveFieldPathsFromSample(val, prefix ? `${prefix}.${key}` : key))
             : (prefix ? [`${prefix} (object)`] : [])
     }
     if (!prefix) {
