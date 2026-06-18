@@ -471,6 +471,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://filetopdf.dev"><img src="https://avatars.githubusercontent.com/u/268257624?v=4?s=100" width="100px;" alt="FileToPDF.dev"/><br /><sub><b>FileToPDF.dev</b></sub></a><br /><a href="#plugin-FileToPDF" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/GAAZ"><img src="https://avatars.githubusercontent.com/u/52105840?v=4?s=100" width="100px;" alt="DW"/><br /><sub><b>DW</b></sub></a><br /><a href="#plugin-GAAZ" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://yusufgurdogan.com"><img src="https://avatars.githubusercontent.com/u/13736056?v=4?s=100" width="100px;" alt="Yusuf Gürdoğan"/><br /><sub><b>Yusuf Gürdoğan</b></sub></a><br /><a href="#plugin-yusufgurdogan" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 
