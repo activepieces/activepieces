@@ -1,4 +1,7 @@
+import { CornerDownRight } from 'lucide-react';
 import { motion } from 'motion/react';
+
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 
 export function QuickReplies({
   replies,
@@ -10,18 +13,21 @@ export function QuickReplies({
   if (replies.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 py-2">
-      {replies.map((reply, i) => (
+    <div className="flex flex-col gap-3 px-1 pb-3">
+      {replies.slice(0, 3).map((reply, i) => (
         <motion.button
-          key={reply}
+          key={`${i}-${reply}`}
           type="button"
           onClick={() => onSend(reply)}
-          className="px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2, delay: i * 0.03 }}
+          className="flex w-full items-start gap-2 text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer min-w-0"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: i * 0.04 }}
         >
-          {reply}
+          <CornerDownRight className="size-4 shrink-0 mt-0.5" />
+          <TextWithTooltip tooltipMessage={reply}>
+            <span className="min-w-0 flex-1">{reply}</span>
+          </TextWithTooltip>
         </motion.button>
       ))}
     </div>

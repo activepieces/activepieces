@@ -99,7 +99,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `ap_show_connection_picker` — lets the user choose between multiple connections; no longer receives connections array from LLM (server-managed); returns only `{ selected: true, label }` to LLM, stripping externalIds
 - `ap_show_project_picker` — lets the user select a project
 - `ap_show_questions` — renders an interactive multi-question form
-- `ap_show_quick_replies` — shows suggested response buttons
+- `ap_show_quick_replies` — shows up to 3 suggested follow-ups as a stacked list above the chat input (hidden during blocking cards); emitted only when concrete, relevant next steps exist
 
 ## Endpoints
 - `POST /v1/chat/conversations` — create conversation
