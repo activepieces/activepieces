@@ -69,7 +69,7 @@ export const scrapeUrl = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const apiKey = (auth as any)?.secret_text ?? (auth as any) ?? '';
+    const apiKey = auth.secret_text;
 
     const body: Record<string, any> = {
       url_to_scrape: propsValue.url,
