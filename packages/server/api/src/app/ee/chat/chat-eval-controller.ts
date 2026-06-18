@@ -1,9 +1,7 @@
 import {
-    ActivepiecesError,
     apId,
     ChatConversationStatus,
     ChatPromptOverride,
-    ErrorCode,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PersistedChatRole,
@@ -66,16 +64,8 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         const { platformId, userMessage, userMessages, promptOverride } = request.body
         const turns = userMessages ?? [userMessage as string]
 
-        // dryRun runs as the platform owner with tools disabled — no side effects. Gate it behind
-        // the same chatEnabled plan flag the production chat path requires, so the eval can't run the
-        // chat loop for a platform that isn't entitled to it.
-        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-        if (!platform.plan.chatEnabled) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: { message: 'Chat is disabled for this platform' },
-            })
-        }
+        // Eval is an internal api-key dry-run, so it doesn't require the platform's chatEnabled entitlement.
+        const platform = await platformService(log).getOneOrThrow(platformId)
         const evalUserId = platform.ownerId
 
         const conversation = await chatService(log).createConversation({
@@ -158,13 +148,7 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
             if (isNil(platformId)) {
                 return reply.status(StatusCodes.BAD_REQUEST).send({ message: 'platformId is required to start a new conversation' })
             }
-            const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-            if (!platform.plan.chatEnabled) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.FEATURE_DISABLED,
-                    params: { message: 'Chat is disabled for this platform' },
-                })
-            }
+            const platform = await platformService(log).getOneOrThrow(platformId)
             evalPlatformId = platformId
             evalUserId = platform.ownerId
             const conversation = await chatService(log).createConversation({ platformId, userId: evalUserId, request: {}, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
