@@ -72,7 +72,7 @@ export const apListTablesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_list_tables failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_list_tables failed')
                 return mcpUtils.mcpToolError('Failed to list tables', err)
             }
         },

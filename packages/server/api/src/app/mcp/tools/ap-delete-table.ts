@@ -38,7 +38,7 @@ export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_delete_table failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_delete_table failed')
                 return mcpUtils.mcpToolError('Failed to delete table', err)
             }
         },

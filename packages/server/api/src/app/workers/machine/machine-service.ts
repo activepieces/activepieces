@@ -73,7 +73,7 @@ export const machineService = (log: FastifyBaseLogger) => {
         async onDisconnect(request: OnDisconnectParams): Promise<void> {
             log.info({
                 message: 'Worker disconnected',
-                workerId: request.workerId,
+                worker: { id: request.workerId },
             })
             await workerMachineCache().delete([request.workerId])
         },

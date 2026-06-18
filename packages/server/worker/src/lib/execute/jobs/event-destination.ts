@@ -25,7 +25,7 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
         if (error) {
             ctx.log.warn({
                 webhookUrl: data.webhookUrl,
-                webhookId: data.webhookId,
+                webhook: { id: data.webhookId },
                 error: error.message,
             }, 'Event destination request failed before reaching the server')
         }

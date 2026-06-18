@@ -16,7 +16,7 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
             if (currentSandbox) {
                 params.log.info('Sandbox not ready or not reusable, creating fresh one')
                 currentSandbox.shutdown().catch((err) =>
-                    params.log.error({ err }, 'Error shutting down previous sandbox'),
+                    params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
             }
             currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })

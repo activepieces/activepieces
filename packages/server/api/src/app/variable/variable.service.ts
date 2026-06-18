@@ -52,7 +52,7 @@ export const variableService = (log: FastifyBaseLogger) => ({
             }
             throw error
         }
-        log.info({ id, projectId, name }, 'Variable created')
+        log.info({ id, project: { id: projectId }, name }, 'Variable created')
         return getOneOrThrowWithoutValue({ id, projectId, platformId })
     },
 
@@ -63,7 +63,7 @@ export const variableService = (log: FastifyBaseLogger) => ({
             ...(isNil(value) ? {} : { value: await encryptUtils.encryptObject({ secret_text: value }) }),
             ...spreadIfDefined('metadata', metadata),
         })
-        log.info({ id, projectId }, 'Variable updated')
+        log.info({ id, project: { id: projectId } }, 'Variable updated')
         return getOneOrThrowWithoutValue({ id, projectId, platformId })
     },
 
@@ -150,7 +150,7 @@ export const variableService = (log: FastifyBaseLogger) => ({
     async delete(params: GetOneParams): Promise<VariableWithoutSensitiveData> {
         const target = await getOneOrThrowWithoutValue(params)
         await variableRepo().delete({ id: params.id, projectId: params.projectId, platformId: params.platformId })
-        log.info({ id: params.id, projectId: params.projectId }, 'Variable deleted')
+        log.info({ id: params.id, project: { id: params.projectId } }, 'Variable deleted')
         return target
     },
 })
