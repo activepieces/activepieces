@@ -43,7 +43,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 
 ## Edition Availability
 - Community (CE): not available (module not registered)
-- Enterprise (EE): available when `platform.plan.chatEnabled` is true; the eval/playground endpoints (`/v1/chat/eval/*`) are platformAdmin-only (SERVICE principal)
+- Enterprise (EE): available when `platform.plan.chatEnabled` is true; the eval/playground endpoints (`/v1/chat/eval/*`) are internal global-API-key dry-runs and do **not** require `chatEnabled` (they run as the platform owner with tools disabled)
 - Cloud: available when `platform.plan.chatEnabled` is true
 
 ## Domain Terms
@@ -114,11 +114,11 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `POST /v1/chat/conversations/:id/cancel` — cancel an in-progress streaming response
 - `GET /v1/chat/conversations/:id/connections?pieceName=` — get available connections for connection picker; falls back to `findConnectionsForPiece` when the Redis cache is empty and stores the result for future calls
 - `GET /v1/chat/conversations/:id/pending-gate` — get pending approval gate for refresh resilience (returns gate info so the frontend can re-show display tool cards)
-- `GET /v1/chat/eval/prompt-sources` — returns the raw prompt template sources (core + project-context + on-demand guides); requires platformAdmin
-- `POST /v1/chat/eval/simulate` — replays one or more user turns (`userMessages[]`, or legacy single `userMessage`) sequentially in one ephemeral conversation with an optional prompt override in dry-run mode (tools are not executed, no MCP, runs as the platform owner — no side effects, no sandbox), polls until each turn settles, and returns the full transcript synchronously (`status` is `IDLE`/`ERROR`/`TIMEOUT`); the `promptOverride.guides` is shallow-merged over the defaults so a partial override keeps the untouched guides; requires platformAdmin
-- `GET /v1/chat/eval/sandbox-platform` — returns `{ platformId }` for the oldest platform on the instance, so a caller replaying a foreign conversation (e.g. the console in dev, whose conversations reference a cloud platform absent locally) can resolve a local platform to sandbox the dry-run in; requires platformAdmin
-- `POST /v1/chat/eval/turn/start` — interactive eval: create-or-continue a stateful eval conversation and enqueue ONE dry-run agent turn, returning immediately (`{ conversationId, runId, priorAssistantTurns }`); the caller polls the state endpoint to stream progress (the worker persists `uiMessages` per step). New conversations are created with a reserved id prefix (see **Eval conversation scoping**); continuation rejects a conversation that is already STREAMING (409, no racing two workers on one row) and any id not created by the eval flow (404); requires platformAdmin
-- `GET /v1/chat/eval/conversations/:id/state` — pure observer that reads the row directly (not `getConversationOrThrow`, which would reset a stale STREAMING row to IDLE) and returns `{ status, uiMessages }`; rejects non-eval conversation ids (404); requires platformAdmin
+- `GET /v1/chat/eval/prompt-sources` — returns the raw prompt template sources (core + project-context + on-demand guides); requires the global eval API key
+- `POST /v1/chat/eval/simulate` — replays one or more user turns (`userMessages[]`, or legacy single `userMessage`) sequentially in one ephemeral conversation with an optional prompt override in dry-run mode (tools are not executed, no MCP, runs as the platform owner — no side effects, no sandbox), polls until each turn settles, and returns the full transcript synchronously (`status` is `IDLE`/`ERROR`/`TIMEOUT`); the `promptOverride.guides` is shallow-merged over the defaults so a partial override keeps the untouched guides; requires the global eval API key
+- `GET /v1/chat/eval/sandbox-platform` — returns `{ platformId }` for the oldest platform on the instance, so a caller replaying a foreign conversation (e.g. the console in dev, whose conversations reference a cloud platform absent locally) can resolve a local platform to sandbox the dry-run in; requires the global eval API key
+- `POST /v1/chat/eval/turn/start` — interactive eval: create-or-continue a stateful eval conversation and enqueue ONE dry-run agent turn, returning immediately (`{ conversationId, runId, priorAssistantTurns }`); the caller polls the state endpoint to stream progress (the worker persists `uiMessages` per step). New conversations are created with a reserved id prefix (see **Eval conversation scoping**); continuation rejects a conversation that is already STREAMING (409, no racing two workers on one row) and any id not created by the eval flow (404); requires the global eval API key
+- `GET /v1/chat/eval/conversations/:id/state` — pure observer that reads the row directly (not `getConversationOrThrow`, which would reset a stale STREAMING row to IDLE) and returns `{ status, uiMessages }`; rejects non-eval conversation ids (404); requires the global eval API key
 
 - `POST /v1/admin/chat/sync-all` — bulk historical sync of all conversations to console analytics (admin API key required)
 
