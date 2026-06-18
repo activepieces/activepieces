@@ -148,6 +148,11 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
             if (isNil(existing)) {
                 return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
             }
+            // Reject overlapping turns: a turn is already in flight for this conversation. The caller
+            // serializes turns, so this only fires on a double-submit — don't race two workers on one row.
+            if (existing.status === ChatConversationStatus.STREAMING) {
+                return reply.status(StatusCodes.CONFLICT).send({ message: 'A turn is already running for this conversation' })
+            }
             convId = existing.id
             evalPlatformId = existing.platformId
             evalUserId = existing.userId
