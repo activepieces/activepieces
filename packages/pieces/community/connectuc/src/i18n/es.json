@@ -33,6 +33,7 @@
   "Reason": "Razón",
   "Select domain to which this trigger applies": "Seleccione el dominio al que se aplica este disparador",
   "Select the user who owns this contact": "Seleccione el usuario propietario de este contacto",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "The first name of the contact": "El nombre del contacto",
   "The last name of the contact": "El apellido del contacto",
   "The email address of the contact": "La dirección de correo electrónico del contacto",
@@ -75,5 +76,11 @@
   "Select the SMS recipient numbers to which this trigger applies": "Seleccione los números de destinatario SMS a los que se aplica este disparador",
   "Ringing": "Sonando",
   "Answered": "Respondido",
-  "Both": "Ambos"
+  "Both": "Ambos",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
+  "Filter by message direction": "Filter by message direction",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent"
 }
