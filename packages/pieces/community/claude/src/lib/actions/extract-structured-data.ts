@@ -8,6 +8,7 @@ import mime from 'mime-types';
 import { modelDropdown } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
+  audience: 'human',
   auth: claudeAuth,
   name: 'extract-structured-data',
   displayName: 'Extract Structured Data',

@@ -9,6 +9,7 @@ import {
 import { baseUrlv0, baseUrlv1 } from '../common/common';
 
 export const imageGeneration = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'image_generation',
   displayName: 'Image Generation',

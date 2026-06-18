@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askGpt = createAction({
+  audience: 'human',
     auth: azureOpenaiAuth,
     name: 'ask_gpt',
     displayName: 'Ask GPT',

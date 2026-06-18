@@ -9,6 +9,7 @@ import { baseUrlv0 } from '../common/common';
 import { agentIdDropdown } from '../common/props';
 
 export const agentPromptCompletion = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent_prompt_completion',
   displayName: 'Agent Prompt Completion',

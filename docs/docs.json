@@ -112,6 +112,7 @@
                     "admin-guide/guides/permissions",
                     "admin-guide/guides/event-streaming",
                     "admin-guide/guides/project-releases",
+                    "admin-guide/guides/project-replace-cli",
                     "admin-guide/guides/manage-concurrency"
                   ]
                },
@@ -289,6 +290,7 @@
                      "build-pieces/piece-reference/piece-versioning",
                      "build-pieces/piece-reference/examples",
                      "build-pieces/piece-reference/custom-api-calls",
+                     "build-pieces/piece-reference/output-schema",
                      "build-pieces/piece-reference/i18n"
                   ]
                },

@@ -3,8 +3,8 @@ import dns from 'node:dns/promises'
 import { readFile } from 'node:fs/promises'
 import net from 'node:net'
 import path from 'node:path'
+import { type ApLogger } from '@activepieces/server-utils'
 import { ActivepiecesError, ErrorCode, ExecutionMode, NetworkMode, tryCatch, WorkerSettingsResponse } from '@activepieces/shared'
-import { Logger } from 'pino'
 import { workerSettings } from '../config/worker-settings'
 import { isIsolateMode } from '../execute/create-sandbox-for-job'
 import { sandboxCapacity } from '../sandbox/capacity'
@@ -152,18 +152,18 @@ function extractNameserverIp(server: string): string | null {
 }
 
 type StartParams = {
-    log: Logger
+    log: ApLogger
     apiUrl: string
 }
 
 type StartProxyParams = {
-    log: Logger
+    log: ApLogger
     apiUrl: string
     settings: WorkerSettingsResponse
 }
 
 type ApplyLockdownParams = {
-    log: Logger
+    log: ApLogger
     proxy: EgressProxy | null
     settings: WorkerSettingsResponse
 }
@@ -174,7 +174,7 @@ type ShutdownParams = {
 }
 
 type CloseProxyQuietlyParams = {
-    log: Logger
+    log: ApLogger
     proxy: EgressProxy | null
 }
 

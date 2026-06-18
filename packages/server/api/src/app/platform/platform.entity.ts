@@ -25,6 +25,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: false,
         },
+        themeColors: {
+            type: 'jsonb',
+            nullable: true,
+        },
         logoIconUrl: {
             type: String,
             nullable: false,

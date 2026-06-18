@@ -11,6 +11,7 @@ import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const chatGemini = createAction({
+  audience: 'human',
   auth: googleGeminiAuth,
   name: 'chat_gemini',
   displayName: 'Chat Gemini',

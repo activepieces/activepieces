@@ -43,7 +43,8 @@ async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
 
 function truncateLargeResult(result: unknown): unknown {
     const serialized = JSON.stringify(result)
-    if (serialized.length <= MAX_RESULT_SIZE_BYTES) return result
+    const byteSize = Buffer.byteLength(serialized, 'utf8')
+    if (byteSize <= MAX_RESULT_SIZE_BYTES) return result
 
     const topLevelArray = findTopLevelArray(result)
     if (topLevelArray) {
@@ -52,7 +53,18 @@ function truncateLargeResult(result: unknown): unknown {
         return {
             content: [{
                 type: 'text',
-                text: `[LARGE RESPONSE] The result contains ${totalCount} items (at ${path}) but the full response is ${Math.round(serialized.length / 1024)}KB which is too large to process. Only the first 3 items are shown as a preview.\n\nTo handle this data, either:\n1. Use a more specific filter to reduce the number of results\n2. Fetch only IDs or metadata fields instead of full content\n3. Process items in smaller batches\n\nPreview (3 of ${totalCount} items):\n${JSON.stringify(preview, null, 2)}`,
+                text: `[LARGE RESPONSE] The result contains ${totalCount} items (at ${path}) but the full response is ${Math.round(byteSize / 1024)}KB which is too large to process. Only the first 3 items are shown as a preview.\n\nTo handle this data, either:\n1. Use a more specific filter to reduce the number of results\n2. Fetch only IDs or metadata fields instead of full content\n3. Process items in smaller batches\n\nPreview (3 of ${totalCount} items):\n${JSON.stringify(preview, null, 2)}`,
+            }],
+        }
+    }
+
+    const shrunk = shrinkLargeValue(result, { maxStringLength: 2_000, maxArrayItems: 20 })
+    const shrunkSerialized = JSON.stringify(shrunk, null, 2)
+    if (Buffer.byteLength(shrunkSerialized, 'utf8') <= MAX_RESULT_SIZE_BYTES) {
+        return {
+            content: [{
+                type: 'text',
+                text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved] The full response was ${Math.round(byteSize / 1024)}KB. Truncated values are marked with "…[truncated]".\n\n${shrunkSerialized}`,
             }],
         }
     }
@@ -60,9 +72,26 @@ function truncateLargeResult(result: unknown): unknown {
     return {
         content: [{
             type: 'text',
-            text: `[LARGE RESPONSE] The response is ${Math.round(serialized.length / 1024)}KB which is too large to process. Retry with a more specific filter, request fewer items, or fetch only IDs/metadata fields instead of full content.`,
+            text: `[LARGE RESPONSE] The response is ${Math.round(byteSize / 1024)}KB which is too large to process even after truncation. Retry with a more specific filter, request fewer items, or fetch only IDs/metadata fields instead of full content.`,
         }],
     }
+}
+
+function shrinkLargeValue(value: unknown, limits: { maxStringLength: number, maxArrayItems: number }): unknown {
+    if (typeof value === 'string') {
+        if (value.length <= limits.maxStringLength) return value
+        return `${value.slice(0, limits.maxStringLength)}…[truncated ${value.length - limits.maxStringLength} chars]`
+    }
+    if (Array.isArray(value)) {
+        const kept = value.slice(0, limits.maxArrayItems).map((item) => shrinkLargeValue(item, limits))
+        return value.length > limits.maxArrayItems
+            ? [...kept, `…and ${value.length - limits.maxArrayItems} more items`]
+            : kept
+    }
+    if (isObject(value)) {
+        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkLargeValue(val, limits)]))
+    }
+    return value
 }
 
 function findTopLevelArray(obj: unknown): { array: unknown[], path: string, totalCount: number } | null {
@@ -429,9 +458,9 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
         }),
 
         ap_load_guide: tool({
-            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists).',
+            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists), control_flow (routers/conditions & loops — exact operators and gotchas), state (remembering data across runs: Store vs Tables vs Sheets, dedup/idempotency), tables (the built-in Tables database), ai (native AI steps and their output shapes).',
             inputSchema: z.object({
-                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback']).describe('Which guide to load'),
+                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai']).describe('Which guide to load'),
             }),
             execute: async (toolInput) => {
                 const guide = guides[toolInput.topic]
@@ -565,6 +594,67 @@ function extractResultText(result: unknown): string {
     return JSON.stringify(result)
 }
 
+function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, unknown> & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
+    return typeof tool['execute'] === 'function'
+}
+
+function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, eventEmitter, log }: {
+    mcpTools: Record<string, unknown>
+    checkFlowWrites: (flowId: string) => Promise<unknown>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    eventEmitter: ChatEventEmitter
+    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
+}): Record<string, unknown> {
+    const testFlow = mcpTools['ap_test_flow']
+    if (!isObject(testFlow) || !toolHasExecute(testFlow)) {
+        return mcpTools
+    }
+    const originalExecute = testFlow.execute.bind(testFlow)
+    const wrapped = Object.assign({}, testFlow, {
+        execute: async (args: unknown, options?: ToolExecutionOptions) => {
+            const flowId = isObject(args) && typeof args['flowId'] === 'string' ? args['flowId'] : undefined
+            const gateId = options?.toolCallId
+            if (flowId && gateId) {
+                const { data: check, error } = await tryCatch(() => checkFlowWrites(flowId))
+                if (error) {
+                    log?.warn({ err: error, flowId }, 'ap_test_flow write-check failed, running test without confirmation gate')
+                }
+                else if (isObject(check) && check['hasWrites'] === true) {
+                    const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
+                    const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
+                    const gateLabel = writeSteps.length > 0
+                        ? `Run a live test of "${flowName}" — performs: ${writeSteps.join(', ')}`
+                        : `Run a live test of "${flowName}"`
+                    // Render the confirmation card in the live session (and persist it for refresh).
+                    // Without the emit the gate would block silently until the approval timeout.
+                    eventEmitter.emitActionPreview({
+                        toolCallId: gateId,
+                        pieceName: '',
+                        actionName: 'ap_test_flow',
+                        actionDisplayName: gateLabel,
+                        input: {},
+                        isBatch: false,
+                    })
+                    await tryCatch(() => storePendingGate({
+                        gateId,
+                        toolName: 'ap_test_flow',
+                        displayName: gateLabel,
+                        toolInput: { flowId, writeSteps },
+                    }))
+                    const decision = await waitForApproval({ gateId })
+                    if (!decision.approved) {
+                        const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
+                        return { content: [{ type: 'text', text: `Live test cancelled by the user.${stepList} The user declined a real run that would perform these actions. Do not run it; offer to test with mock trigger data instead, or ask whether to proceed.` }] }
+                    }
+                }
+            }
+            return originalExecute(args, options)
+        },
+    })
+    return { ...mcpTools, ap_test_flow: wrapped }
+}
+
 function createThinkingTools(): ToolSet {
     return {
         ap_update_thinking_status: tool({
@@ -607,10 +697,13 @@ export const chatWorkerTools = {
     createDisplayTools,
     createLocalTools,
     createCrossProjectTools,
+    wrapTestFlowGate,
     createThinkingTools,
     createPhaseTools,
     isSuccessResult,
     extractResultText,
+    truncateLargeResult,
+    shrinkLargeValue,
     withToolTimeout,
     TOOL_EXECUTION_TIMEOUT_MS,
 }

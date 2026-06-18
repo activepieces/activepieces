@@ -161,6 +161,12 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     return finalPayload
 }
 
+function truncateForSummary(output: string): string {
+    const codePoints = [...output]
+    if (codePoints.length <= MAX_TOOL_RESULT_CHARS_FOR_SUMMARY) return output
+    return `${codePoints.slice(0, MAX_TOOL_RESULT_CHARS_FOR_SUMMARY).join('')}…[truncated ${codePoints.length - MAX_TOOL_RESULT_CHARS_FOR_SUMMARY} chars]`
+}
+
 function extractTextContent(message: ModelMessage): string {
     if (typeof message.content === 'string') return message.content
     if (!Array.isArray(message.content)) return ''
@@ -178,7 +184,7 @@ function extractTextContent(message: ModelMessage): string {
             }
             else if (part.type === 'tool-result' && 'output' in part) {
                 const output = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
-                text += `[Tool result: ${output.slice(0, MAX_TOOL_RESULT_CHARS_FOR_SUMMARY)}]`
+                text += `[Tool result: ${truncateForSummary(output)}]`
             }
         }
     }

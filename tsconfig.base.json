@@ -917,6 +917,9 @@
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
+      "@activepieces/piece-outseta": [
+        "packages/pieces/community/outseta/src/index.ts"
+      ],
       "@activepieces/piece-open-phone": [
         "packages/pieces/community/open-phone/src/index.ts"
       ],
@@ -1241,6 +1244,9 @@
       ],
       "@activepieces/piece-softr": [
         "packages/pieces/community/softr/src/index.ts"
+      ],
+      "@activepieces/piece-sofya": [
+        "packages/pieces/community/sofya/src/index.ts"
       ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"

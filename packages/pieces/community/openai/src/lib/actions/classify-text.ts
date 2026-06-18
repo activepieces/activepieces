@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const classifyText = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'classify_text',
   displayName: 'Classify Text (Moderation)',

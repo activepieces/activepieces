@@ -3,6 +3,7 @@ import { common } from '../common';
 import { isNil } from '@activepieces/shared';
 
 export const countUniques = createAction({
+  audience: 'human',
   name: 'countUniques',
   displayName: 'Count Uniques',
   description: 'Counts the number of unique values for multiple fields',

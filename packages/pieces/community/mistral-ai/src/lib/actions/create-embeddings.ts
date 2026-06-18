@@ -5,6 +5,7 @@ import { parseMistralError } from '../common/props';
 import { mistralRequest } from '../common/request';
 
 export const createEmbeddings = createAction({
+  audience: 'human',
 	auth: mistralAuth,
 	name: 'create_embeddings',
 	displayName: 'Create Embeddings',

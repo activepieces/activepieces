@@ -227,7 +227,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions } = params
         const sourceAppConnection = await this.getOneOrThrowWithoutValue({
             id: sourceAppConnectionId,
             projectId,
@@ -259,13 +259,33 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             connectionExternalIds: [sourceAppConnection.externalId],
         })
 
+        // Reject up-front (before mutating any flow) when the source connection
+        // can't be deleted because published versions we won't touch still use it.
+        const publishedFlowsUsingConnection = deleteSourceConnection && !applyToPublishedVersions
+            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection(flows.data, sourceAppConnection.externalId)
+            : 0
+        if (publishedFlowsUsingConnection > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Cannot delete the old connection because it is still used by published flows that were not updated',
+                },
+            })
+        }
+
         await appConnectionHandler(log).updateFlowsWithAppConnection(flows.data, {
             appConnection: sourceAppConnection,
             newAppConnection: targetAppConnection,
             userId,
+            applyToPublishedVersions,
         })
 
-        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length }, 'App connection replaced')
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length, deleteSourceConnection, applyToPublishedVersions }, 'App connection replaced')
+
+        if (!deleteSourceConnection) {
+            return
+        }
+
         await this.delete({
             id: sourceAppConnection.id,
             platformId,
@@ -580,6 +600,7 @@ const validateConnectionValue = async (
         }
         case AppConnectionType.NO_AUTH:
             break
+        case AppConnectionType.OIDC:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
             await engineValidateAuth({
@@ -898,5 +919,7 @@ type ReplaceParams = {
     projectId: ProjectId
     platformId: string
     userId: UserId
+    deleteSourceConnection: boolean
+    applyToPublishedVersions: boolean
 }
 

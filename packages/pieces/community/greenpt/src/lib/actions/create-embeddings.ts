@@ -4,6 +4,7 @@ import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createEmbeddings = createAction({
+  audience: 'human',
   auth: greenptAuth,
   name: 'createEmbeddings',
   displayName: 'Create Embeddings',

@@ -4,6 +4,7 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 import { PopulatedRecord } from '@activepieces/shared';
 
 export const getRecord = createAction({
+  audience: 'human',
   name: 'tables-get-record',
   displayName: 'Get Record',
   description: 'Get single record by its id.',

@@ -7,6 +7,7 @@ import { randomBytes } from 'node:crypto';
 import { kebabCase } from '@activepieces/shared';
 
 export const createImage = createAction({
+  audience: 'human',
   auth: imageRouterAuth,
   name: 'createImage',
   displayName: 'Create Image',

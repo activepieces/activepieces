@@ -87,7 +87,7 @@ const resolvePropertyOptionsInput = z.object({
     actionOrTriggerName: z.string().describe('The action or trigger name (e.g. "send_channel_message").'),
     type: z.enum(['action', 'trigger']).describe('Whether this is an action or trigger.'),
     propertyName: z.string().describe('The exact property name to resolve options for (e.g. "channel").'),
-    auth: z.string().describe('Connection externalId — required to resolve options from the user\'s account.'),
+    auth: z.string().optional().describe('Connection externalId. Required for pieces that resolve options from a connected account (e.g. Slack channels, Gmail labels). Omit for pieces that have no auth (e.g. Tables table_id) — passing a value there is unnecessary.'),
     input: z.record(z.string(), z.unknown()).optional().describe('Values for parent properties that this field depends on (refreshers).'),
     searchValue: z.string().optional().describe('Search/filter term to narrow results for large dropdown lists (e.g., "sales" to find sales-related channels).'),
 })
