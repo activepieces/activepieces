@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { linkupAuth } from './lib/common';
+import { LINKUPAPI_BASE_URL, linkupAuth } from './lib/common';
 // actions
 import { listAccounts } from './lib/actions/list-accounts';
 import { getAccount } from './lib/actions/get-account';
@@ -16,19 +16,17 @@ import { checkInvitationStatus } from './lib/actions/check-invitation-status';
 // triggers
 import { newMessageReceived } from './lib/triggers/new-message-received';
 import { invitationAccepted } from './lib/triggers/invitation-accepted';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const linkupapi = createPiece({
-  displayName: 'LinkupAPI for LinkedIn',
+  displayName: 'LinkupAPI',
   description:
-    'Connect your AI agent to LinkedIn, WhatsApp, and email through one unified API. LinkupAPI lets agents send messages, manage conversations, and automate outreach across every channel, for sales and recruitment.',
+    'LinkupAPI lets agents send messages, manage conversations, and automate outreach across every channel, for sales and recruitment.',
   auth: linkupAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://pub-fd0d8aa927e9482997ee57dab0ca223f.r2.dev/logo1.svg',
-  categories: [
-    PieceCategory.SALES_AND_CRM,
-    PieceCategory.MARKETING,
-  ],
-  authors: ['titouanprx'],
+  logoUrl: 'https://cdn.activepieces.com/pieces/linkupapi.png',
+  categories: [PieceCategory.SALES_AND_CRM, PieceCategory.MARKETING],
+  authors: ['titouanprx', 'sanket-a11y'],
   actions: [
     listAccounts,
     getAccount,
@@ -41,6 +39,13 @@ export const linkupapi = createPiece({
     getConversation,
     sendConnectionRequest,
     checkInvitationStatus,
+    createCustomApiCallAction({
+      baseUrl: () => LINKUPAPI_BASE_URL,
+      auth: linkupAuth,
+      authMapping: async (auth) => ({
+        'x-api-key': auth.secret_text,
+      }),
+    }),
   ],
   triggers: [newMessageReceived, invitationAccepted],
 });

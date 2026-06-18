@@ -1688,6 +1688,9 @@
       "@activepieces/piece-linkup": [
         "packages/pieces/community/linkup/src/index.ts"
       ],
+      "@activepieces/piece-linkupapi": [
+        "packages/pieces/community/linkupapi/src/index.ts"
+      ],
       "@activepieces/piece-youform": [
         "packages/pieces/community/youform/src/index.ts"
       ],

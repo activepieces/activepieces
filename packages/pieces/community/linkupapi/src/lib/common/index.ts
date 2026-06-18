@@ -15,7 +15,7 @@ export const linkupAuth = PieceAuth.SecretText({
       await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${LINKUPAPI_BASE_URL}/accounts`,
-        headers: { 'x-api-key': auth as string },
+        headers: { 'x-api-key': auth},
         queryParams: { limit: '1' },
       });
       return { valid: true };
