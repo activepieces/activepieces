@@ -32,6 +32,15 @@ export const UpsertCustomAuthRequest = z.object({
     }),
 }).describe('Custom Auth')
 
+export const UpsertOIDCRequest = z.object({
+    ...commonAuthProps,
+    type: z.literal(AppConnectionType.OIDC),
+    value: z.object({
+        type: z.literal(AppConnectionType.OIDC),
+        props: propsSchema,
+    }),
+}).describe('OIDC')
+
 export const UpsertNoAuthRequest = z.object({
     ...commonAuthProps,
     type: z.literal(AppConnectionType.NO_AUTH),
@@ -115,6 +124,7 @@ export const UpsertAppConnectionRequestBody = z.union([
     UpsertPlatformOAuth2Request,
     UpsertBasicAuthRequest,
     UpsertCustomAuthRequest,
+    UpsertOIDCRequest,
     UpsertNoAuthRequest,
     UpsertPlaceholderConnectionRequest,
 ])
@@ -125,6 +135,7 @@ export type UpsertOAuth2Request = z.infer<typeof UpsertOAuth2Request>
 export type UpsertSecretTextRequest = z.infer<typeof UpsertSecretTextRequest>
 export type UpsertBasicAuthRequest = z.infer<typeof UpsertBasicAuthRequest>
 export type UpsertCustomAuthRequest = z.infer<typeof UpsertCustomAuthRequest>
+export type UpsertOIDCRequest = z.infer<typeof UpsertOIDCRequest>
 export type UpsertNoAuthRequest = z.infer<typeof UpsertNoAuthRequest>
 export type UpsertPlaceholderConnectionRequest = z.infer<typeof UpsertPlaceholderConnectionRequest>
 export type UpsertAppConnectionRequestBody = z.infer<typeof UpsertAppConnectionRequestBody>
@@ -159,6 +170,7 @@ export const UpsertGlobalConnectionRequestBody =
         UpsertPlatformOAuth2Request.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
         UpsertBasicAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
         UpsertCustomAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+        UpsertOIDCRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
         UpsertNoAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
     ])
 export type UpsertGlobalConnectionRequestBody = z.infer<typeof UpsertGlobalConnectionRequestBody>

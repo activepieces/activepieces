@@ -62,6 +62,7 @@ const systemPropValidators: {
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,
+    [AppSystemProp.FRONTEND_SENTRY_DSN]: urlValidator,
     [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: numberValidator,
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
@@ -76,6 +77,7 @@ const systemPropValidators: {
     [AppSystemProp.FRONTEND_URL]: urlValidator,
     [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [AppSystemProp.PORT]: numberValidator,
+    [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,
@@ -201,6 +203,9 @@ const systemPropValidators: {
         return !isNaN(n) && n >= 0 && n <= 100 ? true : 'Value must be a number between 0 and 100'
     },
     [AppSystemProp.LOG_KEEP_SLOW_MS]: numberValidator,
+
+    // OIDC
+    [AppSystemProp.OIDC_RSA_PRIVATE_KEY]: stringValidator,
 }
 
 

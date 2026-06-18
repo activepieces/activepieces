@@ -1,10 +1,11 @@
 import { z } from 'zod'
 import { SAFE_STRING_PATTERN } from '../../core/common'
-import { OptionalArrayFromQuery, OptionalBooleanFromQuery } from '../../core/common/base-model'
+import { Nullable, OptionalArrayFromQuery, OptionalBooleanFromQuery } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { ApMultipartFile } from '../../core/common/multipart-file'
+import { tryCatchSync } from '../../core/common/try-catch'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
-import { FilteredPieceBehavior } from './platform.model'
+import { FilteredPieceBehavior, PlatformThemeColors } from './platform.model'
 
 export const MAX_EMBED_ORIGIN_LENGTH = 300
 
@@ -38,9 +39,19 @@ export const CreatePlatformRequest = z.object({
 
 export type CreatePlatformRequest = z.infer<typeof CreatePlatformRequest>
 
+// The branding form submits as multipart (logo uploads), where every field arrives as a string
+const NullableThemeColorsFromMultipart = z.preprocess((value) => {
+    if (typeof value !== 'string') {
+        return value
+    }
+    const { data, error } = tryCatchSync<unknown>(() => JSON.parse(value))
+    return error ? value : data
+}, Nullable(PlatformThemeColors))
+
 export const UpdatePlatformRequestBody = z.object({
     name: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
     primaryColor: z.string().optional(),
+    themeColors: NullableThemeColorsFromMultipart,
     logoIcon: ApMultipartFile.optional(),
     fullLogo: ApMultipartFile.optional(),
     favIcon: ApMultipartFile.optional(),

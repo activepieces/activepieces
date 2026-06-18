@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.85.2",
+  "version": "0.85.4",
   "packageManager": "bun@1.3.3",
   "trustedDependencies": [
     "sqlite3",
@@ -30,6 +30,8 @@
     "lint-dev": "turbo run lint --filter='!@activepieces/piece-*' --force -- --fix",
     "test-unit": "turbo run test --filter=@activepieces/engine --filter=@activepieces/shared --filter=web",
     "test-api": "turbo run check-migrations test-ce test-ee test-cloud --filter=api --concurrency=1",
+    "chat-evals": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/chat-eval/cli/tsconfig.json packages/server/worker/test/lib/chat-eval/cli/index.ts",
+    "chat-evals:ci": "set -a && . ./.env.dev && set +a && vitest run --dir packages/server/worker/test/lib/chat-eval",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
     "create-action": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts actions create",

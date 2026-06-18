@@ -38,7 +38,7 @@ const MAX_APPROVAL_BLOCK_MS = 50_000
 
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride } = input
 
         const [conversation, providerConfig, userProjects, userContent, mcpCredentials] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
@@ -74,7 +74,13 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             projects: userProjects,
             currentProjectId: selectedProjectId,
             frontendUrl,
+            templates: promptOverride,
         })
+        // Merge over defaults, not replace: an override carries only the changed guide topics
+        // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
+        const guides = promptOverride?.guides
+            ? { ...chatPrompt.guides, ...promptOverride.guides }
+            : chatPrompt.guides
 
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
@@ -137,7 +143,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 ? { mcpServerUrl: mcpCredentials.mcpServerUrl, mcpToken: mcpCredentials.mcpToken }
                 : null,
             projects: userProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
-            guides: chatPrompt.guides,
+            guides,
         }
     },
 
@@ -163,6 +169,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             const conversation = await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId })
             if (conversation) {
                 chatAnalyticsTelemetry(log).sendConversationUpdate({ conversation })
+                chatAnalyticsTelemetry(log).sendMessageBillingEvent({ conversation })
             }
         }
     },

@@ -365,6 +365,7 @@ import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1
 import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
 import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/1777370308000-AddRunStatusCoverIndex'
 import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
+import { AddThemeColorsToPlatform1781206955649 } from './migration/postgres/1781206955649-AddThemeColorsToPlatform'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
@@ -381,6 +382,7 @@ import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/pos
 import { AddVariableTable1793000000000 } from './migration/postgres/1793000000000-AddVariableTable'
 import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
+import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -777,6 +779,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddCreatedByToFlow1794000000000,
         AddStatusToChatConversation1779500000000,
         AddDataManipulationEnabledToPlatformPlan1794000000000,
+        AddThemeColorsToPlatform1781206955649,
+        AddExternalIdToFolder1795000000000,
     ]
     return migrations
 }
