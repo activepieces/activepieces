@@ -6806,6 +6806,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/sofya": {
+      "name": "@activepieces/piece-sofya",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/sperse": {
       "name": "@activepieces/piece-sperse",
       "version": "0.1.5",
@@ -7861,6 +7871,9 @@
         "dayjs": "1.11.9",
         "fast-xml-parser": "5.7.0",
         "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/community/wrike": {
@@ -10139,6 +10152,8 @@
     "@activepieces/piece-socialkit": ["@activepieces/piece-socialkit@workspace:packages/pieces/community/socialkit"],
 
     "@activepieces/piece-softr": ["@activepieces/piece-softr@workspace:packages/pieces/community/softr"],
+
+    "@activepieces/piece-sofya": ["@activepieces/piece-sofya@workspace:packages/pieces/community/sofya"],
 
     "@activepieces/piece-sperse": ["@activepieces/piece-sperse@workspace:packages/pieces/community/sperse"],
 

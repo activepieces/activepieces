@@ -19,6 +19,12 @@ export enum TableOperationType {
     DELETE_TABLE = 'DELETE_TABLE',
 }
 
+export enum FolderOperationType {
+    UPDATE_FOLDER = 'UPDATE_FOLDER',
+    CREATE_FOLDER = 'CREATE_FOLDER',
+    DELETE_FOLDER = 'DELETE_FOLDER',
+}
+
 export const FlowState = PopulatedFlow
 export type FlowState = z.infer<typeof FlowState>
 
@@ -51,11 +57,19 @@ export const TableState = z.object({
 })
 export type TableState = z.infer<typeof TableState>
 
+export const FolderState = z.object({
+    externalId: z.string(),
+    displayName: z.string(),
+    displayOrder: z.number(),
+})
+export type FolderState = z.infer<typeof FolderState>
+
 export const ProjectState = z.object({
     flows: z.array(PopulatedFlow),
     // NOTE: This is optional because in old releases, the connections, tables, agents and mcp state is not present
     connections: z.array(ConnectionState).optional(),
     tables: z.array(TableState).optional(),
+    folders: z.array(FolderState).optional(),
 })
 export type ProjectState = z.infer<typeof ProjectState>
 
@@ -105,6 +119,23 @@ export const TableOperation = z.union([
     }),
 ])
 export type TableOperation = z.infer<typeof TableOperation>
+
+export const FolderOperation = z.union([
+    z.object({
+        type: z.literal(FolderOperationType.UPDATE_FOLDER),
+        newFolderState: FolderState,
+        folderState: FolderState,
+    }),
+    z.object({
+        type: z.literal(FolderOperationType.CREATE_FOLDER),
+        folderState: FolderState,
+    }),
+    z.object({
+        type: z.literal(FolderOperationType.DELETE_FOLDER),
+        folderState: FolderState,
+    }),
+])
+export type FolderOperation = z.infer<typeof FolderOperation>
 
 export const DiffState = z.object({
     flows: z.array(ProjectOperation),
