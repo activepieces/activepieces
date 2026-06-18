@@ -278,9 +278,9 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
         }),
 
         ap_show_quick_replies: tool({
-            description: 'Display quick reply suggestion buttons below your message.',
+            description: 'Offer 1-3 short, relevant follow-up suggestions above the chat input. Only use when concrete next steps genuinely exist; skip it otherwise.',
             inputSchema: z.object({
-                replies: z.array(z.string().max(80)).min(1).max(5).describe('Short suggestion texts'),
+                replies: z.array(z.string().max(80)).min(1).max(3).describe('Short suggestion texts'),
             }),
             execute: async () => {
                 return { displayed: true }
