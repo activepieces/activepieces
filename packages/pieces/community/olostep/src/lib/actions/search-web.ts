@@ -28,7 +28,7 @@ export const searchWeb = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const apiKey = (auth as any)?.secret_text ?? (auth as any) ?? '';
+    const apiKey = auth.secret_text;
     const response = await httpClient.sendRequest<OlostepSearchResponse>({
       method: HttpMethod.POST,
       url: 'https://api.olostep.com/v1/searches',
