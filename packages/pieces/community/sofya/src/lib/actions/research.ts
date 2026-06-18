@@ -5,8 +5,8 @@ import { makeRequest } from '../common/client';
 
 export const researchAction = createAction({
   name: 'research',
-  displayName: 'Research',
-  description: 'Run deep multi-source research: decomposes the query, reads many sources, and returns a cited report.',
+  displayName: 'Deep Research',
+  description: 'Research any topic — searches up to 30 sources and synthesizes a cited report.',
   audience: 'both',
   aiMetadata: {
     description:

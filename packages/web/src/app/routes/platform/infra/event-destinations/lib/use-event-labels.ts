@@ -63,6 +63,9 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.FLOW_DEACTIVATED]: {
       label: t('Flow deactivated'),
     },
+    [ApplicationEventName.PROJECT_REPLACED]: {
+      label: t('Project replaced'),
+    },
   };
 };
 

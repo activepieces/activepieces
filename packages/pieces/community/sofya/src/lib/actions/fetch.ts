@@ -5,8 +5,8 @@ import { makeRequest } from '../common/client';
 
 export const fetchAction = createAction({
   name: 'fetch',
-  displayName: 'Fetch',
-  description: 'Fetch one or more URLs and return their content as clean markdown (also handles PDFs and documents).',
+  displayName: 'Fetch URL Content',
+  description: 'Fetch URLs and return clean markdown. Supports web pages, PDFs, and documents.',
   audience: 'both',
   aiMetadata: {
     description:

@@ -5,8 +5,8 @@ import { makeRequest } from '../common/client';
 
 export const searchAction = createAction({
   name: 'search',
-  displayName: 'Search',
-  description: 'Search the web and return extracted page content, with an optional AI-synthesized answer.',
+  displayName: 'Search the Web',
+  description: 'Search the web and get full page content, not just snippets.',
   audience: 'both',
   aiMetadata: {
     description:

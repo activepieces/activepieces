@@ -5,8 +5,8 @@ import { makeRequest } from '../common/client';
 
 export const extractAction = createAction({
   name: 'extract',
-  displayName: 'Extract',
-  description: 'Fetch a page and extract specific information from it using AI.',
+  displayName: 'Extract Data from Page',
+  description: 'Use AI to pull specific data from a webpage — pricing, specs, contacts, and more.',
   audience: 'both',
   aiMetadata: {
     description:
