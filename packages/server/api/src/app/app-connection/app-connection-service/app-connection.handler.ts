@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEnvironment, AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, CustomAuthConnectionValue, EngineResponse, EngineResponseStatus, ErrorCode, ExecuteRefreshAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionId, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId, WorkerJobType } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionId, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, In } from 'typeorm'
@@ -7,13 +7,9 @@ import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { exceptionHandler } from '../../helper/exception-handler'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
-import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { AppConnectionSchema } from '../app-connection.entity'
-import { appConnectionsRepo } from './app-connection-service'
+import { appConnectionsRepo, engineRefreshCustomAuth } from './app-connection-service'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 
@@ -72,15 +68,18 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 })
                 break
             case AppConnectionType.CUSTOM_AUTH: {
-                const refreshResult = await refreshCustomAuth({
-                    connection,
+                const refreshResult = await engineRefreshCustomAuth({
+                    pieceName: connection.pieceName,
                     projectId,
-                    log,
-                })
-                const refreshedProps = (refreshResult.value as CustomAuthConnectionValue).props
+                    platformId: connection.platformId,
+                    auth: connection.value,
+                }, log)
+                if (refreshResult.value.type !== AppConnectionType.CUSTOM_AUTH) {
+                    break
+                }
                 connection.value = {
                     ...connection.value,
-                    props: refreshedProps,
+                    props: refreshResult.value.props,
                     nextRefreshEpochMs: refreshResult.nextRefreshEpochMs,
                 }
                 break
@@ -258,50 +257,6 @@ function replaceConnectionIdInAuth(auth: string, oldConnectionId: string, newCon
     )
 }
 
-async function refreshCustomAuth({
-    connection,
-    projectId,
-    log,
-}: {
-    connection: AppConnection
-    projectId: ProjectId
-    log: FastifyBaseLogger
-}): Promise<ExecuteRefreshAuthResponse> {
-    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
-    if (environment === ApEnvironment.TESTING) {
-        return { value: connection.value }
-    }
-
-    const pieceMetadata = await pieceMetadataService(log).getOrThrow({
-        name: connection.pieceName,
-        version: undefined,
-        platformId: connection.platformId,
-    })
-
-    const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteRefreshAuthResponse>>({
-        piece: await getPiecePackageWithoutArchive(log, connection.platformId, {
-            pieceName: connection.pieceName,
-            pieceVersion: pieceMetadata.version,
-        }),
-        projectId,
-        platformId: connection.platformId,
-        connectionValue: connection.value,
-        jobType: WorkerJobType.EXECUTE_REFRESH,
-    }, log)
-
-    if (engineResponse.status !== EngineResponseStatus.OK) {
-        log.error({ engineResponse }, 'Engine refresh auth failed')
-        throw new ActivepiecesError({
-            code: ErrorCode.ENGINE_OPERATION_FAILURE,
-            params: {
-                message: 'Failed to run engine refresh auth',
-                context: engineResponse,
-            },
-        })
-    }
-
-    return engineResponse.response
-}
 
 type UpdateFlowsWithAppConnectionParams = {
     appConnection: AppConnectionWithoutSensitiveData

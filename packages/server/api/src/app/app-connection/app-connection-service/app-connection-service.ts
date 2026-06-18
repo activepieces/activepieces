@@ -13,7 +13,6 @@ import {
     AppConnectionWithoutSensitiveData,
     ConnectionState,
     Cursor,
-    CustomAuthConnectionValue,
     EngineResponse,
     EngineResponseStatus,
     ErrorCode,
@@ -628,11 +627,14 @@ const validateConnectionValue = async (
                     pieceName,
                     projectId,
                     auth: value,
+                    pieceVersion: meta.version,
                 }, log)
-                const refreshedProps = (refreshResult.value as CustomAuthConnectionValue).props
+                if (refreshResult.value.type !== AppConnectionType.CUSTOM_AUTH) {
+                    break
+                }
                 return {
                     ...value,
-                    props: refreshedProps,
+                    props: refreshResult.value.props,
                     nextRefreshEpochMs: refreshResult.nextRefreshEpochMs,
                 }
             }
@@ -696,7 +698,7 @@ const engineValidateAuth = async (
     }
 }
 
-const engineRefreshCustomAuth = async (
+export const engineRefreshCustomAuth = async (
     params: EngineRefreshAuthParams,
     log: FastifyBaseLogger,
 ): Promise<ExecuteRefreshAuthResponse> => {
@@ -704,18 +706,18 @@ const engineRefreshCustomAuth = async (
     if (environment === ApEnvironment.TESTING) {
         return { value: params.auth }
     }
-    const { pieceName, auth, projectId, platformId } = params
+    const { pieceName, auth, projectId, platformId, pieceVersion } = params
 
-    const pieceMetadata = await pieceMetadataService(log).getOrThrow({
+    const resolvedVersion = pieceVersion ?? (await pieceMetadataService(log).getOrThrow({
         name: pieceName,
         version: undefined,
         platformId,
-    })
+    })).version
 
     const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteRefreshAuthResponse>>({
         piece: await getPiecePackageWithoutArchive(log, platformId, {
             pieceName,
-            pieceVersion: pieceMetadata.version,
+            pieceVersion: resolvedVersion,
         }),
         projectId,
         platformId,
@@ -911,6 +913,7 @@ type EngineRefreshAuthParams = {
     projectId: ProjectId | undefined
     platformId: string
     auth: AppConnectionValue
+    pieceVersion?: string
 }
 
 type ReplaceParams = {

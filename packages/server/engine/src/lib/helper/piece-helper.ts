@@ -281,7 +281,7 @@ const refreshAuth = async ({
     server,
     authValue,
     pieceAuth,
-}: ValidateAuthParams): Promise<ExecuteRefreshAuthResponse> => {
+}: RefreshAuthParams): Promise<ExecuteRefreshAuthResponse> => {
     if (isNil(pieceAuth)) {
         return { value: authValue }
     }
@@ -321,3 +321,5 @@ type ValidateAuthParams = {
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
 }
+
+type RefreshAuthParams = ValidateAuthParams
