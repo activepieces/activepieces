@@ -11,7 +11,7 @@ export const olostep = createPiece({
   auth: olostepAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/olostep.png',
-  authors: [],
+  authors: ['umerkay'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [
     searchWeb,
