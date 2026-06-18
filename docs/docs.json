@@ -112,6 +112,7 @@
                     "admin-guide/guides/permissions",
                     "admin-guide/guides/event-streaming",
                     "admin-guide/guides/project-releases",
+                    "admin-guide/guides/project-replace-cli",
                     "admin-guide/guides/manage-concurrency"
                   ]
                },
@@ -232,6 +233,7 @@
                   "pages": [
                      "embedding/customize-pieces",
                      "embedding/embed-connections",
+                     "embedding/embeddable-mcp",
                      "embedding/navigation",
                      "embedding/predefined-connection",
                      "embedding/sdk-changelog",
