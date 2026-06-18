@@ -40,7 +40,7 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
     return (
       <div className="flex items-center justify-center h-full w-full">
         <p className="text-sm text-muted-foreground">
-          {t('AI piece is not available for this workspace')}
+          {t('AI piece is not available for this platform')}
         </p>
       </div>
     );
