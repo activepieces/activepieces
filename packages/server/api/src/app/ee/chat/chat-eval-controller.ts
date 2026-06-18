@@ -1,8 +1,7 @@
 import {
-    ActivepiecesError,
     apId,
     ChatConversationStatus,
-    ErrorCode,
+    ChatPromptOverride,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PersistedChatRole,
@@ -12,13 +11,14 @@ import {
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { chatApprovalGate } from './chat-approval-gate'
-import { chatHelpers } from './chat-helpers'
+import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
 import { chatService } from './chat-service'
 import { chatPrompt } from './prompt/chat-prompt'
 
@@ -64,16 +64,8 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         const { platformId, userMessage, userMessages, promptOverride } = request.body
         const turns = userMessages ?? [userMessage as string]
 
-        // dryRun runs as the platform owner with tools disabled — no side effects. Gate it behind
-        // the same chatEnabled plan flag the production chat path requires, so the eval can't run the
-        // chat loop for a platform that isn't entitled to it.
-        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-        if (!platform.plan.chatEnabled) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: { message: 'Chat is disabled for this platform' },
-            })
-        }
+        // Eval is an internal api-key dry-run, so it doesn't require the platform's chatEnabled entitlement.
+        const platform = await platformService(log).getOneOrThrow(platformId)
         const evalUserId = platform.ownerId
 
         const conversation = await chatService(log).createConversation({
@@ -120,6 +112,86 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
             runId: lastRunId,
             status: settled.status,
             uiMessages: settled.uiMessages ?? [],
+        })
+    })
+
+    // Enqueue one turn and return; the caller polls /state for progress. Dry-run, so tools aren't executed.
+    app.post('/eval/turn/start', EvalTurnStartRoute, async (request, reply) => {
+        const log = request.log
+        const { conversationId, platformId, userMessage, promptOverride } = request.body
+
+        let convId: string
+        let evalPlatformId: string
+        let evalUserId: string
+        let priorAssistantTurns: number
+        if (!isNil(conversationId)) {
+            // Only continue conversations this eval flow created — never an arbitrary (e.g. a real
+            // user's) conversation, even with a valid API key.
+            if (!isEvalConversationId(conversationId)) {
+                return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
+            }
+            const existing = await chatHelpers.conversationRepo().findOneBy({ id: conversationId })
+            if (isNil(existing)) {
+                return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
+            }
+            // Reject overlapping turns: a turn is already in flight for this conversation. The caller
+            // serializes turns, so this only fires on a double-submit — don't race two workers on one row.
+            if (existing.status === ChatConversationStatus.STREAMING) {
+                return reply.status(StatusCodes.CONFLICT).send({ message: 'A turn is already running for this conversation' })
+            }
+            convId = existing.id
+            evalPlatformId = existing.platformId
+            evalUserId = existing.userId
+            priorAssistantTurns = countAssistantTurns(existing.uiMessages)
+        }
+        else {
+            if (isNil(platformId)) {
+                return reply.status(StatusCodes.BAD_REQUEST).send({ message: 'platformId is required to start a new conversation' })
+            }
+            const platform = await platformService(log).getOneOrThrow(platformId)
+            evalPlatformId = platformId
+            evalUserId = platform.ownerId
+            const conversation = await chatService(log).createConversation({ platformId, userId: evalUserId, request: {}, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
+            convId = conversation.id
+            priorAssistantTurns = 0
+        }
+
+        const runId = apId()
+        await chatApprovalGate.storeActiveRunId({ conversationId: convId, runId })
+        await jobQueue(log).add({
+            id: apId(),
+            type: JobType.ONE_TIME,
+            data: {
+                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
+                conversationId: convId,
+                runId,
+                projectId: null,
+                platformId: evalPlatformId,
+                userId: evalUserId,
+                userMessage,
+                modelName: null,
+                promptOverride,
+                dryRun: true,
+            },
+        })
+
+        return reply.status(StatusCodes.OK).send({ conversationId: convId, runId, priorAssistantTurns })
+    })
+
+    // Pure observer of an eval conversation's live state — read the row directly (not
+    // getConversationOrThrow, which resets a stale STREAMING row to IDLE).
+    app.get('/eval/conversations/:conversationId/state', EvalStateRoute, async (request, reply) => {
+        if (!isEvalConversationId(request.params.conversationId)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
+        }
+        const conversation = await chatHelpers.conversationRepo().findOneBy({ id: request.params.conversationId })
+        if (isNil(conversation)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
+        }
+        return reply.status(StatusCodes.OK).send({
+            status: conversation.status,
+            uiMessages: conversation.uiMessages ?? [],
         })
     })
 }
@@ -186,5 +258,36 @@ const SimulateRoute = {
     schema: {
         tags: ['chat'],
         body: SimulateChatRequest,
+    },
+}
+
+const EvalTurnStartRequest = z.object({
+    conversationId: z.string().optional(),
+    platformId: z.string().optional(),
+    userMessage: z.string().min(1).max(51200),
+    promptOverride: ChatPromptOverride.optional(),
+})
+
+const EvalStateParams = z.object({
+    conversationId: z.string(),
+})
+
+const EvalTurnStartRoute = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['chat'],
+        body: EvalTurnStartRequest,
+    },
+}
+
+const EvalStateRoute = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['chat'],
+        params: EvalStateParams,
     },
 }
