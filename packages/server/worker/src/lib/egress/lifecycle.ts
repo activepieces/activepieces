@@ -61,7 +61,7 @@ async function maybeApplyIptablesLockdown({ log, proxy, settings }: ApplyLockdow
     const { nameservers: sandboxNameservers, readError: sandboxResolvConfReadError } = await readSandboxResolvConfNameservers()
     if (sandboxResolvConfReadError !== undefined) {
         log.warn(
-            { sandboxResolvConf: SANDBOX_RESOLV_CONF_PATH, err: sandboxResolvConfReadError },
+            { sandboxResolvConf: SANDBOX_RESOLV_CONF_PATH, error: sandboxResolvConfReadError },
             'Could not read sandbox resolv.conf — DNS allowlist will only include host nameservers, which may not match what the sandbox queries. This is the exact condition that caused the 2026-05-06 EAI_AGAIN outage.',
         )
     }

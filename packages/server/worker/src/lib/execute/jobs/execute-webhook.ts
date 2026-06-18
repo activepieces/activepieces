@@ -42,7 +42,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
         if (isNil(flowVersion)) {
-            ctx.log.info({ flowVersionId: data.flowVersionIdToRun }, 'Flow version not found for webhook, skipping')
+            ctx.log.info({ flowVersion: { id: data.flowVersionIdToRun } }, 'Flow version not found for webhook, skipping')
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
@@ -126,7 +126,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         if (error) {
             await ctx.sandboxManager.invalidate(ctx.log)
             if (isSandboxTimeout(error)) {
-                ctx.log.warn({ flowVersionId: data.flowVersionIdToRun }, 'Webhook execution timed out in sandbox')
+                ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
             throw error

@@ -104,7 +104,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 if (!params.ignoreError) {
                     throw error
                 }
-                log.warn({ flowId, error: error.message }, '[flowTriggerSideEffect#disable] Ignored error during trigger disable')
+                log.warn({ flow: { id: flowId }, error: error.message }, '[flowTriggerSideEffect#disable] Ignored error during trigger disable')
             }
             else if (!params.ignoreError) {
                 assertEngineResponseIsOk(engineHelperResponse!, flowId, flowVersionId)

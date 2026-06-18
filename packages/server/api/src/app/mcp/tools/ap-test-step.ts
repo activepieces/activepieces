@@ -24,7 +24,7 @@ export const apTestStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
                 return await executeFlowTest({ flowId, projectId: mcp.projectId, stepName, triggerTestData, log })
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_test_step failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_test_step failed')
                 return mcpUtils.mcpToolError('Failed to test step', err)
             }
         },

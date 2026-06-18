@@ -73,7 +73,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
             return { activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }) }
         },
         experimental_repairToolCall: async ({ toolCall, error }) => {
-            log.warn({ toolName: toolCall.toolName, err: error }, 'Repairing malformed tool call')
+            log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
                     model,
@@ -96,7 +96,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
                 log.info({ toolName: result.toolCall.toolName, durationMs: result.durationMs }, 'Tool call completed')
             }
             else {
-                log.warn({ toolName: result.toolCall.toolName, durationMs: result.durationMs, err: result.error }, 'Tool call failed')
+                log.warn({ toolName: result.toolCall.toolName, durationMs: result.durationMs, error: result.error }, 'Tool call failed')
             }
         },
         onAbort: ({ steps }) => {
@@ -107,7 +107,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
             onProgress([...uiParts])
         },
         onError: ({ error }) => {
-            log.error({ err: error }, 'Chat streamText error')
+            log.error({ error }, 'Chat streamText error')
             streamError = error instanceof Error ? error : new Error(String(error))
         },
     })
@@ -121,7 +121,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         if (streamError) {
             if (shouldRetryStream({ producedVisibleOutput, streamRetries })) {
                 streamRetries++
-                log.warn({ streamRetries, err: streamError }, 'Chat stream failed before any visible output — retrying the turn')
+                log.warn({ streamRetries, error: streamError }, 'Chat stream failed before any visible output — retrying the turn')
                 streamError = null
                 await delayWithJitter(STREAM_RETRY_BASE_DELAY_MS)
                 continue

@@ -30,7 +30,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {
-            ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found, skipping')
+            ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found, skipping')
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
@@ -183,7 +183,7 @@ async function reportFlowStatus(
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
             params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
-        }).catch((e) => ctx.log.error({ flowRunId: data.runId, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
+        }).catch((e) => ctx.log.error({ flowRun: { id: data.runId }, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
     }
 }
 

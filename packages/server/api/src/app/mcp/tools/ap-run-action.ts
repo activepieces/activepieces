@@ -31,7 +31,7 @@ export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                 })
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_run_action failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_run_action failed')
                 return mcpUtils.mcpToolError('Failed to run action', err)
             }
         },

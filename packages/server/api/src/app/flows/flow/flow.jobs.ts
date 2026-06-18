@@ -52,7 +52,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
         const flowExists = await flowRepo().existsBy({ id: flow.id })
         if (!flowExists) {
-            log.info({ flowId: flow.id }, '[deleteFlowHandler] Flow already deleted, skipping')
+            log.info({ flow: { id: flow.id } }, '[deleteFlowHandler] Flow already deleted, skipping')
             return
         }
 

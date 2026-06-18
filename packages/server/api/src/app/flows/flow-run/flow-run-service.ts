@@ -146,7 +146,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             id: flowRunId,
             projectId,
         })
-        log.info({ flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
+        log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
         const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         if (
@@ -318,10 +318,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         wideEvent.set({
             flowRun: {
                 id: newFlowRun.id,
-                flowId,
                 environment,
                 executionType,
             },
+            flow: { id: flowId },
         })
 
         await addToQueue({
@@ -336,7 +336,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }, log)
 
         await flowRunSideEffects(log).onStart(newFlowRun)
-        log.info({ flowRunId: newFlowRun.id, flowId, projectId, executionType }, 'Flow run started')
+        log.info({ flowRun: { id: newFlowRun.id }, flow: { id: flowId }, project: { id: projectId }, executionType }, 'Flow run started')
         return newFlowRun
     },
 
@@ -481,8 +481,8 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
         status: FlowRunStatus.CANCELED,
     })
     log.info({
-        runId: flowRun.id,
-        flowId: flowRun.flowId,
+        flowRun: { id: flowRun.id },
+        flow: { id: flowRun.flowId },
     }, 'Flow run cancelled')
 }
 

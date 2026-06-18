@@ -63,7 +63,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         )
 
         log.info({
-            flowVersionId,
+            flowVersion: { id: flowVersionId },
         }, '[jobQueue#removeRepeatingJob] removed jobs from all queues')
     },
 
@@ -74,13 +74,13 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         if (!isNil(job)) {
             await job.remove()
             log.info({
-                jobId,
+                job: { id: jobId },
                 queueName,
             }, '[jobQueue#removeOneTimeJob] removed job from queue')
             return
         }
         log.info({
-            jobId,
+            job: { id: jobId },
             queueName,
         }, '[jobQueue#removeOneTimeJob] job not found in queue')
     },

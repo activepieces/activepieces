@@ -96,7 +96,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             log,
         )
 
-        log.info({ flowId: savedFlow.id, projectId, displayName: request.displayName }, 'Flow created')
+        log.info({ flow: { id: savedFlow.id }, project: { id: projectId }, displayName: request.displayName }, 'Flow created')
         return {
             ...savedFlow,
             version: savedFlowVersion,
@@ -385,7 +385,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 await flowRepo().update(id, {
                     folderId: operation.request.folderId,
                 })
-                log.info({ flowId: id, folderId: operation.request.folderId }, 'Flow moved to folder')
+                log.info({ flow: { id }, folderId: operation.request.folderId }, 'Flow moved to folder')
                 break
             }
 
@@ -512,7 +512,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
         })
-        log.info({ flowId: id, projectId }, 'Flow deletion requested')
+        log.info({ flow: { id }, project: { id: projectId } }, 'Flow deletion requested')
     },
 
     async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {

@@ -71,7 +71,7 @@ export const apListRunsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_list_runs failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_list_runs failed')
                 return mcpUtils.mcpToolError('Failed to list runs', err)
             }
         },

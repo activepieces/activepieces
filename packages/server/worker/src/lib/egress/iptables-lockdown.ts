@@ -20,7 +20,7 @@ export const iptablesLockdown = {
             for (const args of buildApplyCommandsForFamily({ params, rejectWith: family.rejectWith, family: family.ipFamily })) {
                 const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
                 if (error) {
-                    log.error({ err: error, binary: family.binary, args }, 'iptables rule failed; rolling back')
+                    log.error({ error, binary: family.binary, args }, 'iptables rule failed; rolling back')
                     await removeLockdown({ log, params })
                     throw new IptablesLockdownError(
                         `Failed to apply ${family.binary} rule "${args.join(' ')}" — ` +
@@ -84,7 +84,7 @@ async function preflightCleanup({ log, params }: { log: ApLogger, params: ApplyP
     for (const family of FAMILIES) {
         for (const args of iptablesLockdown.buildRemoveCommands(params)) {
             const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
-            if (error) log.debug({ err: error, binary: family.binary, args }, 'preflight cleanup step had no prior state (expected on fresh start)')
+            if (error) log.debug({ error, binary: family.binary, args }, 'preflight cleanup step had no prior state (expected on fresh start)')
         }
     }
 }
@@ -93,7 +93,7 @@ async function removeLockdown({ log, params }: { log: ApLogger, params: ApplyPar
     for (const family of FAMILIES) {
         for (const args of iptablesLockdown.buildRemoveCommands(params)) {
             const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
-            if (error) log.warn({ err: error, binary: family.binary, args }, 'iptables cleanup command failed (best-effort)')
+            if (error) log.warn({ error, binary: family.binary, args }, 'iptables cleanup command failed (best-effort)')
         }
     }
 }

@@ -209,7 +209,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             })
         }
         catch (e) {
-            log.warn({ err: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
+            log.warn({ error: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
         }
     },
 
@@ -232,7 +232,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             await response.json()
         }
         catch (error) {
-            log.warn({ err: error }, '[authenticationUtils#saveNewsLetterSubscriber] Failed to save newsletter subscriber')
+            log.warn({ error }, '[authenticationUtils#saveNewsLetterSubscriber] Failed to save newsletter subscriber')
         }
     },
     async extractUserIdFromRequest(request: FastifyRequest): Promise<string> {

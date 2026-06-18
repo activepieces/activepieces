@@ -65,19 +65,19 @@ Email templates live in `src/assets/emails/`. When creating or modifying email t
 
 ## Structured Logging Field Schema (evlog)
 
-All structured logging goes through evlog — `logger.{info,warn,error,debug}({ fields }, msg)` and `wideEvent.set/error/timed` from `@activepieces/server-utils`. The **field keys** (not message strings) are the queryable schema behind dashboards, alerts, and the OTLP drain. They MUST be consistent: **one concept = one key name, everywhere.**
+All structured logging goes through evlog — `logger.{info,warn,error,debug}({ fields }, msg)` and `wideEvent.set/error/timed` from `@activepieces/server-utils`. The **field keys** (not message strings) are the queryable schema behind dashboards, alerts, and the OTLP drain. They MUST be consistent: **one concept = one path, everywhere.** Following [evlog's guidance](https://www.evlog.dev/learn/wide-events), fields are **grouped by entity** (which flattens to the dotted `entity.id` paths OpenTelemetry recommends), not flat prefixed keys.
 
 **Rules:**
 
-1. **Every entity id is a flat `<entity>Id` key — never an alias, never a bare `id`.** A flow run id is always `flowRunId`, never `runId` or `id`. The prefix mirrors the domain entity (`FlowRun` → `flowRunId`, `FlowVersion` → `flowVersionId`). This is the rule that matters most: the codebase previously logged the same flow-run id as `runId`, `flowRunId`, *and* `id`, which broke every correlation query.
-2. **Names/labels are `<entity>Name`, never a bare `name`.** `pieceName`, `stepName`, `triggerName`, `flowName`. Bare `name` is reserved (evlog `wideEvent.timed({ name })` op-label, migration class names).
-3. **Errors use `error`, not `err`.** `ap-logger.ts` normalizes `obj.err ?? obj.error` and emits the canonical `error` key, so writing either works — but prefer `error`.
-4. **Units as a suffix:** durations end in `Ms` (`durationMs`, `timings.{op}Ms`), bytes `Bytes`, counts `Count`/plural.
-5. **Do not set reserved / auto-populated keys manually:** `service`, `version`, `level`, `msg`, `timestamp`, `error`, `timings`, `requestId`, `method`, `path`, and `audit.context.{traceId,ip,userAgent}` (attached by `evlog-setup.ts` / `ap-logger.ts` / `wide-event.ts` and the evlog request middleware).
+1. **Group fields by entity; the entity's own id is `id` inside its group — never a top-level `<entity>Id`, `runId`, or bare `id`.** A flow run is `flowRun: { id }` (flattens to `flowRun.id`), not `flowRunId`/`runId`/`id`. The group is the camelCase singular entity from the domain model. This is the rule that matters most: the codebase previously logged the same flow-run id as `runId`, `flowRunId`, *and* `id`, which broke every correlation query.
+2. **An entity's attributes live beside `id` in the same group, merged into one object.** `{ jobId, jobType }` → `job: { id, type }`; `{ pieceName, pieceVersion }` → `piece: { name, version }`; `flowRun: { id, status, environment }`. Never bare `name`/`version`/`status`/`type` at the top level.
+3. **Errors use `error`, not `err`.** `ap-logger.ts` normalizes `obj.err ?? obj.error` and emits the canonical `error` key. Descriptively-named error fields (`migrationError`, `pageError`) are fine and stay as-is.
+4. **Units as a suffix on leaf keys:** durations end in `Ms` (`durationMs`, `timings.{op}Ms`), bytes `Bytes`, counts `Count`/plural.
+5. **Do not nest, and never set, reserved / auto-populated keys:** `service`, `version`, `level`, `msg`, `timestamp`, `error`, `timings`, `requestId`, `traceId`, `method`, `path` (attached by `evlog-setup.ts` / `ap-logger.ts` / `wide-event.ts` and the evlog request middleware). `requestId` stays flat — do not fold it into a group.
 
-**Canonical keys:** `flowRunId`, `flowId`, `flowVersionId`, `projectId`, `platformId`, `userId`, `jobId`, `connectionId` (grandfathered for `AppConnection`), `pieceName`, `pieceVersion`, `stepName`, `triggerName`, `sandboxId`, `workerId`, `webhookId`, `conversationId`, `waitpointId`, `migrationName`.
+**Canonical groups:** `flowRun: { id, status, environment }`, `flow: { id, version }`, `flowVersion: { id }`, `project: { id }`, `platform: { id }`, `user: { id }`, `job: { id, type }`, `piece: { name, version }`, `connection: { id }` (`AppConnection`), `sandbox: { id }`, `worker: { id }`, `webhook: { id, requestId, mode, flowFound, responseStatus }`, `conversation: { id }`, `waitpoint: { id }`, `step: { name }`, `trigger: { name }`, `migration: { name }`.
 
-Note: `JobData.runId` and other **data-model / wire fields stay as-is** — this convention governs the keys *emitted to logs* (the value is read into a `flowRunId` log key), not entity/DTO field names.
+Only the metadata object of a logging call (`logger.*`, `log.child`, `createLogger`, `wideEvent.set`) is grouped. **Data-model / wire fields stay flat** — `JobData.runId`, DB query args (`findOneBy({ id })`), service-call arguments (`resumeFromWaitpoint({ flowRunId })`), DTOs, return objects, and client event payloads are NOT logs and keep their original keys.
 
 ## Release Version Detection (`apVersionUtil`)
 

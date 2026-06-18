@@ -84,7 +84,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                 ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             })
             if (!isNil(existingForPlaceholder) && existingForPlaceholder.status !== AppConnectionStatus.MISSING) {
-                log.info({ connectionId: existingForPlaceholder.id, pieceName, platformId, existingStatus: existingForPlaceholder.status }, 'Placeholder upsert skipped — non-missing connection already exists')
+                log.info({ connection: { id: existingForPlaceholder.id }, piece: { name: pieceName }, platform: { id: platformId }, existingStatus: existingForPlaceholder.status }, 'Placeholder upsert skipped — non-missing connection already exists')
                 return this.removeSensitiveData(existingForPlaceholder)
             }
         }
@@ -135,7 +135,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             scope,
         })
-        log.info({ connectionId: newId, pieceName, platformId, isNew: isNil(existingConnection) }, 'App connection upserted')
+        log.info({ connection: { id: newId }, piece: { name: pieceName }, platform: { id: platformId }, isNew: isNil(existingConnection) }, 'App connection upserted')
         return this.removeSensitiveData(updatedConnection)
     },
     async update(params: UpdateParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -299,7 +299,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope: params.scope,
             ...(params.projectId ? { projectIds: ArrayContains([params.projectId]) } : {}),
         })
-        log.info({ connectionId: params.id, platformId: params.platformId }, 'App connection deleted')
+        log.info({ connection: { id: params.id }, platform: { id: params.platformId } }, 'App connection deleted')
     },
 
     async list({

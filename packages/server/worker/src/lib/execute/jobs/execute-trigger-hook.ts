@@ -20,13 +20,13 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (!flowVersion) {
-            ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found for trigger hook, skipping')
+            ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            ctx.log.info({ flowId: data.flowId }, 'Failed to provision pieces for trigger hook, skipping')
+            ctx.log.info({ flow: { id: data.flowId } }, 'Failed to provision pieces for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
