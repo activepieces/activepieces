@@ -2,7 +2,6 @@ import {
   ActionPreviewEvent,
   ActionReceiptEvent,
   ChatAgentEventType,
-  ToolApprovalRequestEvent,
   ToolProgressEvent,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -21,7 +20,6 @@ const STALE_CHECK_INTERVAL_MS = 15_000;
 export function useStreamingReducer({
   onTitleUpdate,
   onToolProgress,
-  onToolApprovalRequest,
   onActionPreview,
   onActionReceipt,
   onStreamFinished,
@@ -30,7 +28,6 @@ export function useStreamingReducer({
 }: {
   onTitleUpdate: (title: string) => void;
   onToolProgress: (event: ToolProgressEvent) => void;
-  onToolApprovalRequest: (event: ToolApprovalRequestEvent) => void;
   onActionPreview: (event: ActionPreviewEvent) => void;
   onActionReceipt: (event: ActionReceiptEvent) => void;
   onStreamFinished: (conversationId: string) => void;
@@ -60,8 +57,6 @@ export function useStreamingReducer({
   onTitleUpdateRef.current = onTitleUpdate;
   const onToolProgressRef = useRef(onToolProgress);
   onToolProgressRef.current = onToolProgress;
-  const onToolApprovalRequestRef = useRef(onToolApprovalRequest);
-  onToolApprovalRequestRef.current = onToolApprovalRequest;
   const onActionPreviewRef = useRef(onActionPreview);
   onActionPreviewRef.current = onActionPreview;
   const onActionReceiptRef = useRef(onActionReceipt);
@@ -218,11 +213,6 @@ export function useStreamingReducer({
         } else if (event.type === ChatAgentEventType.TOOL_PROGRESS) {
           lastChunkTimeRef.current = Date.now();
           onToolProgressRef.current(event.data as ToolProgressEvent);
-        } else if (event.type === ChatAgentEventType.TOOL_APPROVAL_REQUEST) {
-          lastChunkTimeRef.current = Date.now();
-          onToolApprovalRequestRef.current(
-            event.data as ToolApprovalRequestEvent,
-          );
         } else if (event.type === ChatAgentEventType.ACTION_PREVIEW) {
           lastChunkTimeRef.current = Date.now();
           onActionPreviewRef.current(event.data as ActionPreviewEvent);

@@ -5,8 +5,3 @@ export type MultiQuestion = {
   options?: string[];
   placeholder?: string;
 };
-
-export type PlanProgressData = {
-  title: string;
-  steps: string[];
-};

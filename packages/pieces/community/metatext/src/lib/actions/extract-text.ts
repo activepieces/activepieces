@@ -8,6 +8,8 @@ export const extractText = createAction({
   name: 'extract_text',
   displayName: 'Extract Text',
   description: 'Extract information from text (entities, keywords, custom models)',
+  audience: 'both',
+  aiMetadata: { description: 'Run a Metatext extraction project against a block of text to pull out structured information such as entities or keywords. Use when you have a configured extraction project (referenced by its project ID) and want to extract fields from raw text; optionally target a specific model and version. Requires the project ID and the text; this is a read-only analysis call that returns the same result for the same input, so it is safe to repeat.', idempotent: true },
   props: {
     project_id: Property.ShortText({
       displayName: 'Project ID',

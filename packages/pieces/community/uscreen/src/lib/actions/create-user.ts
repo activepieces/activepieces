@@ -20,6 +20,8 @@ export const createUser = createAction({
     name: 'create_user',
     displayName: 'Create User',
     description: "Creates a new user and optionally sends them a welcome email to your storefront.",
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new customer account on the Uscreen storefront from an email and name, optionally setting a password (omit to send an invite email) and arbitrary storefront-defined custom fields. Use to onboard a viewer or subscriber. Not idempotent: each call creates another account, so guard against duplicate emails.', idempotent: false },
 
     props: {
         email: Property.ShortText({

@@ -27,6 +27,9 @@ export const fountainWorkerWebhook = createTrigger({
   name: 'worker_webhook',
   displayName: 'Worker Webhook',
   description: 'Triggers when Fountain sends worker webhook events',
+  aiMetadata: {
+    description: 'Fires when a Fountain automation sends a worker webhook event (e.g. a worker is created or their status changes), per the conditions configured on the Fountain automation. The event payload represents the worker. Requires a webhook to be set up in Fountain pointing at this trigger\'s URL.',
+  },
   props: {
     setup: Property.MarkDown({
       value: setupMarkdown,

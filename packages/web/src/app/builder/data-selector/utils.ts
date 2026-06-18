@@ -110,7 +110,8 @@ function convertArrayToZippedView(
     const stepName = propertyPath[0];
     const subPath = [...propertyPath.slice(1), key];
 
-    const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}['output'], ['${subPath
+    const arrayPath = pathHelpers.propertyPathStarter(String(stepName));
+    const propertyPathWithFlattenArray = `flattenNestedKeys(${arrayPath}, ['${subPath
       .map((s) => String(s))
       .join("', '")}'])`;
     const joinedValues = node.values.join(', ');
@@ -144,7 +145,7 @@ function buildJsonPath(propertyPath: PathSegment[]): string {
         ? `'${pathHelpers.escapeMentionKey(String(segment))}'`
         : segment
     }]`;
-  }, `${propertyPath[0]}['output']`) as string;
+  }, pathHelpers.propertyPathStarter(String(propertyPath[0]))) as string;
 }
 
 function buildDataSelectorNode(
@@ -253,6 +254,18 @@ function getSearchableValue(
   if (item.data.type === 'chunk') {
     return item.data.displayName;
   }
+  // A container whose value holds the real object/array (for the type icon +
+  // count) is matched by displayName and by its children's leaf values, which
+  // are searched separately — so don't stringify the whole subtree here every
+  // keystroke (redundant and costly). Containers carrying a primitive value
+  // (e.g. the zipped-view aggregated preview string) keep their value searchable.
+  const isContainerObjectValue =
+    !isNil(item.children) &&
+    item.children.length > 0 &&
+    (isObject(item.data.value) || Array.isArray(item.data.value));
+  if (isContainerObjectValue) {
+    return '';
+  }
   if (!isNil(item.data.value)) {
     return JSON.stringify(item.data.value).toLowerCase();
   } else if (item.data.value === null) {
@@ -322,7 +335,7 @@ function traverseStep(
         data: {
           type: 'value',
           displayName: t('Output'),
-          propertyPath: `${step.name}['output']`,
+          propertyPath: pathHelpers.propertyPathStarter(step.name),
           value: stepNode.data.value,
           insertable: true,
           hideStepIcon: true,

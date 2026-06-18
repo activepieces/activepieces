@@ -11,6 +11,12 @@ export const rejectApproval = createAction({
   displayName: 'Reject Approval',
   description:
     'Rejects a pending approval in Coupa (e.g. a requisition or purchase order awaiting your decision). Pick the approval from the dropdown.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reject a pending Coupa approval (e.g. a requisition or purchase order awaiting decision) by its approval ID, optionally recording a rejection reason. Use Grant Approval to approve instead. Not idempotent: the approval must be in a pending state, and re-running after it is decided may fail.',
+    idempotent: false,
+  },
   props: {
     approvalId: pendingApprovalDropdown,
     reason: Property.LongText({

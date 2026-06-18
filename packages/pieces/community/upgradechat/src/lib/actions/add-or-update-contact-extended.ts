@@ -6,6 +6,12 @@ export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContactExtended',
   displayName: 'Add or Update Contact (Extended)',
   description: 'Adds or updates a contact (extended version)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Imports a contact into the Sperse/Upgrade.chat CRM with the full field set: personal, business, home/work/company addresses, links, custom fields, optional user creation, tracking/UTM data, and up to three inline subscriptions. When 'Match Existing Contact' is enabled (default) or a Contact ID / Contact XREF is supplied it updates the existing record (upsert), otherwise it inserts a new one. Prefer this over the basic Add or Update Contact when you need company, address, or subscription detail. First or Last name is required (or a Company Name). Idempotent only when matching is enabled or a stable Contact ID/XREF is reused.",
+    idempotent: true,
+  },
   auth: upgradechatAuth,
   props: {
     matchExisting: Property.StaticDropdown({

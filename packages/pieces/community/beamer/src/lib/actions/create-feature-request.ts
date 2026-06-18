@@ -12,6 +12,11 @@ export const createNewFeatureRequest = createAction({
   name: 'create_new_feature_request',
   displayName: 'Create New Feature Request ',
   description: 'Create New Feature Request',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a feature request on a Beamer feedback board, attributed to a user by email, with a category (bug, feature request, or improvement), a status (under review, planned, in progress, or completed), and public or internal visibility. Use to log product feedback or roadmap items. Creates a new request on each call (not idempotent).',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

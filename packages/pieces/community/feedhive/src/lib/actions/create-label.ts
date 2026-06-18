@@ -8,6 +8,8 @@ export const createLabelAction = createAction({
   name: 'create_label',
   displayName: 'Create Label',
   description: 'Creates a new label in FeedHive for organising posts.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new label in FeedHive that can later be attached to posts for organisation. Use when a label an agent needs does not yet exist. Not idempotent: each call creates a new label even if one with the same title already exists.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Label Name',

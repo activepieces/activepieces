@@ -7,6 +7,8 @@ export const getBlockHeight = createAction({
     name: 'get_block_height',
     displayName: 'Get Block Height',
     description: 'Returns the hash of the block currently at specified height',
+    audience: 'both',
+    aiMetadata: { description: 'Resolve a block height to its block hash. Pick this to translate a numeric height into the hash other block actions need; use Get Block Timestamp to find a block by time, or Get Block Tip Hash for the latest block. Read-only.', idempotent: true },
     // category: 'Blocks',
     props: {
         height: Property.Number({

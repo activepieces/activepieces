@@ -30,6 +30,9 @@ export const updatedIssueTrigger = createTrigger({
   name: 'updated_issue',
   displayName: 'Updated Issue',
   description: 'Triggers when an existing issue is modified (summary, description, custom fields, etc.).',
+  aiMetadata: {
+    description: 'Fires when an existing issue is modified — its summary, description, custom fields, or other attributes change. Each event represents one updated issue (issues created within the same polling window are excluded). Use to react to changes on already-existing issues rather than brand-new ones.',
+  },
   props: {},
   sampleData: {
     idReadable: 'SP-42', summary: 'Fixed login page crash', project_name: 'Sample Project',

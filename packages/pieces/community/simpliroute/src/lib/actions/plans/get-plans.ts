@@ -8,6 +8,8 @@ export const get_plans = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Plans',
     description: 'Retrieve the list of saved routing plans (executions).',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve the saved routing plans (executions) for a given date. Read-only and idempotent; the date is required, so use it to inspect what plans exist for a specific day.', idempotent: true },
     props: {date: Property.ShortText({ displayName: 'date', description: 'Planned date (YYYY-MM-DD).', required: true })},
     async run(context) {
         const url = `${API_BASE_URL}/v1/plans/${context.propsValue.date}/`;

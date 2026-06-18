@@ -12,6 +12,9 @@ export const unsubscribedSubscriber = createTrigger({
   name: 'unsubscribedSubscriber',
   displayName: 'Unsubscribed Subscriber',
   description: 'Triggers when subscriber is unsubscribed.',
+  aiMetadata: {
+    description: 'Fires when a subscriber unsubscribes from a Zagomail list, representing a contact opting out of further mailings. The event payload includes the subscriber UID, list UID, email, status, and custom fields.',
+  },
   props: {},
   sampleData: {
     action: 'subscriber-unsubscribe',

@@ -13,7 +13,9 @@ export const findProductAction = createAction({
     auth: pipedriveAuth,
     name: 'find-product',
     displayName: 'Find Product',
-    description: 'Finds a product by name ', 
+    description: 'Finds a product by name ',
+    audience: 'both',
+    aiMetadata: { description: 'Search the product catalog by name and return the single best-matching product with its full details and custom fields. Pick this when you have a product name or keyword rather than an ID; use Retrieve a Product when you already know the exact product ID. Read-only and returns at most one match (found:false when nothing matches).', idempotent: true },
     props: {
         searchTerm: Property.ShortText({
             displayName: 'Search Term',

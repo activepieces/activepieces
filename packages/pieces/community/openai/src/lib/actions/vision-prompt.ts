@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const visionPrompt = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'vision_prompt',
   displayName: 'Vision Prompt',

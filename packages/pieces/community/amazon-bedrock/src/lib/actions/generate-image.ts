@@ -9,6 +9,7 @@ import {
 } from '../common';
 
 export const generateImage = createAction({
+  audience: 'human',
   auth: awsBedrockAuth,
   name: 'generate_image',
   displayName: 'Generate Image',

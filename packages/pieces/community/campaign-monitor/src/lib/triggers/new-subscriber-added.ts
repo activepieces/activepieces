@@ -10,6 +10,10 @@ export const newSubscriberAddedTrigger = createTrigger({
   name: 'new_subscriber_added',
   displayName: 'New Subscriber Added',
   description: 'Triggered when a new subscriber is added to a list.',
+  aiMetadata: {
+    description:
+      'Fires when a contact subscribes to the specified Campaign Monitor list under a client, via a Subscribe webhook event, and reports the new subscriber together with their details and custom fields.',
+  },
   props: {
     clientId: clientId,
     listId: listId,

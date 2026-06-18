@@ -8,6 +8,12 @@ export const deleteUser = createAction({
   name: 'deleteUser',
   displayName: 'Delete User',
   description: 'Delete a user and all their properties and activities permanently. This action is irreversible.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a Vero user, identified by user ID, along with all of their properties and activity history. This is irreversible. Re-running on an already-deleted ID has no further effect, so it is effectively idempotent on the same target.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'User ID',

@@ -14,6 +14,9 @@ export const postNotificationTrigger = createTrigger({
   name: 'post_notification',
   displayName: 'Post Notification',
   description: 'Triggers when a post is published, scheduled, or fails.',
+  aiMetadata: {
+    description: 'Fires via webhook when a FeedHive post changes state — published, scheduled, or failed — depending on which notification event type is configured in FeedHive. Represents a lifecycle event for a single post, carrying its ID, excerpt, and target social account.',
+  },
   props: {
     event_type: Property.StaticDropdown({
       displayName: 'Event Type',

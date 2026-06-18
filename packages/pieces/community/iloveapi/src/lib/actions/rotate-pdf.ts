@@ -8,6 +8,12 @@ export const rotatePdfAction = createAction({
   name: 'rotate_pdf',
   displayName: 'Rotate PDF',
   description: 'Rotate every page of a PDF by 90, 180, or 270 degrees.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Rotate all pages of a PDF by a fixed 90, 180, or 270 degrees. The rotation is relative to the current orientation, so it is not idempotent: applying it repeatedly keeps turning the pages rather than settling on an absolute angle.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

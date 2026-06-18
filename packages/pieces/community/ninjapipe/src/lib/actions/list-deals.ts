@@ -8,6 +8,8 @@ export const listDeals = createAction({
   name: 'list_deals',
   displayName: 'List Deals',
   description: 'Retrieves a list of deals.',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only listing of deals (sales opportunities) in NinjaPipe, with optional search text, status/owner filters, and pagination. Pick this to browse or find deals; enable Return All to page through every match instead of a single page. Safe to repeat.', idempotent: true },
   props: {
     limit: ninjapipeCommon.limitProperty,
     search: ninjapipeCommon.searchProperty,

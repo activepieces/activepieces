@@ -8,6 +8,12 @@ export const searchAds = createAction({
   name: 'search_ads',
   displayName: 'Search Advertisements',
   description: 'Search company advertisements and ad campaigns',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search the advertisement database for company ad campaigns, filtering by keywords, headlines, target/company locations, date ranges, domains, LinkedIn URLs, or company IDs, with paging (per_page max 25). Read-only and repeatable. Use to discover which companies are running ads or to find ad creatives; pass an advertisement_search_id from the results to the Lookup Advertisement action for full detail.',
+    idempotent: true,
+  },
   props: {
     search_terms: Property.Array({
       displayName: 'Search Terms',

@@ -14,6 +14,8 @@ export const updateEvent = createAction({
   name: 'updateEvent',
   displayName: 'Update Event',
   description: 'Updates an existing event in Bigin',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing calendar event in Bigin CRM, identified by selecting the event; its current fields are prepopulated and any you set are overwritten (title, start/end time, all-day, venue, participants, owner, tags), with optional recurrence and reminder settings. Use to modify an event that already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     eventId: Property.Dropdown({
       auth: biginAuth,

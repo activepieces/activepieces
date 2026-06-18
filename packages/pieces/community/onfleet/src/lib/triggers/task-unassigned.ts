@@ -10,6 +10,10 @@ export const taskUnassigned = createTrigger({
   name: 'task_unassigned',
   displayName: 'Task Unassigned',
   description: 'Triggers when a task is unassigned',
+  aiMetadata: {
+    description:
+      'Fires when an Onfleet task that was previously assigned to a worker becomes unassigned, returning it to the unassigned pool. Represents removal of the task from a worker without deleting it, useful for re-routing or alerting when a delivery loses its driver. The payload includes the full task object.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

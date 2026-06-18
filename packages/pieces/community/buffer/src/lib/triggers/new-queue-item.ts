@@ -45,6 +45,10 @@ export const newQueueItem = createTrigger({
   name: 'new_queue_item',
   displayName: 'New Queue Item',
   description: 'Triggers when a new post is queued in Buffer.',
+  aiMetadata: {
+    description:
+      'Fires when a new not-yet-published post (any status except sent or error, e.g. pending, scheduled, or draft) appears in the selected Buffer organization, optionally limited to specific channels. Represents the queued post.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     organizationId: bufferProps.organizationId(),

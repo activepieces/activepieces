@@ -6,6 +6,9 @@ export const newBooking = createTrigger({
   name: 'new_booking',
   displayName: 'New Booking',
   description: 'Triggers when a new booking is created in SimplyBook.me',
+  aiMetadata: {
+    description: 'Fires when a new booking is created in SimplyBook.me (the platform webhook with notification_type "create"), representing a newly scheduled appointment.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

@@ -9,6 +9,12 @@ export const createContactAction = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Create a new contact in Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new contact in Elastic Email from an email address, with optional name, status, and custom fields, without attaching it to any mailing list. Use when you only need the contact to exist; use Add Contact to Mailing List when it must also join specific lists. Each call appends the contact, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: elasticEmailAuth,
   props: {
     email: Property.ShortText({

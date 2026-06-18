@@ -11,6 +11,12 @@ export const publishDraftNowAction = createAction({
 	displayName: 'Publish Draft Now',
 	description:
 		'Immediately publishes an existing draft to all configured platforms.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Immediately publishes an existing Typefully draft to all of its configured platforms by setting its publish time to now. Use when content is ready to go live right away; use Schedule Draft instead to publish at a future time. Requires the social set ID and the draft ID. Publishing is a one-time side effect, so it is not idempotent.',
+		idempotent: false,
+	},
 	props: {
 		social_set_id: socialSetDropdown,
 		draft_id: Property.ShortText({

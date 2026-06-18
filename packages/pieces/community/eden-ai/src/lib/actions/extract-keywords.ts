@@ -81,6 +81,12 @@ export const extractKeywordsAction = createAction({
   name: 'extract_keywords',
   displayName: 'Extract Keywords in Text',
   description: 'Identify important terms in a text using Eden AI. Supports multiple providers, languages, and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Extract important keywords and their relative importance from a text via Eden AI, routed to a chosen provider. Use it to surface the salient terms of a passage for tagging, indexing, or downstream analysis. Requires a provider and the text; language defaults to auto-detection. Read-only analysis with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

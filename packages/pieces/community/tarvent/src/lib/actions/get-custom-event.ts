@@ -7,6 +7,8 @@ export const getCustomEvent = createAction({
   name: 'tarvent_get_custom_event',
   displayName: 'Find Custom Event',
   description: 'Finds a custom event by name.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the custom event definitions in a Tarvent account, optionally filtered by name; leaving the name empty returns all custom events. Use to look up a custom event or its ID before generating it for a contact. Idempotent read-only lookup.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Custom event name',

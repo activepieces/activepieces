@@ -23,6 +23,9 @@ export const newContact = createTrigger({
   name: 'newContact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is added to a particular list.',
+  aiMetadata: {
+    description: 'Fires when a new contact is created in EmailOctopus (a contact.created webhook event), representing a new subscriber. Can be scoped to a single list id, or left unfiltered to catch new contacts across all lists.',
+  },
   props: {
     list_id: emailOctopusProps.listId(true),
     liveMarkdown: Property.MarkDown({

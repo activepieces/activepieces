@@ -11,6 +11,12 @@ export const deleteSecret = createAction({
   name: 'deleteSecret',
   displayName: 'Delete Secret',
   description: 'Deletes an existing secret.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes an existing AWS Secrets Manager secret (identified by name or ARN, selectable from a list or passed directly). By default schedules deletion after a recovery window (7-30 days, default 30) during which it can be restored; enabling force-delete removes it immediately and irreversibly. Use to decommission a credential. Destructive and not idempotent — a repeat call on an already-deleted secret errors.',
+    idempotent: false,
+  },
   props: {
     secretId: secretIdDropdown,
     recoveryWindowInDays: Property.Number({

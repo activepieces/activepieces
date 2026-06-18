@@ -10,6 +10,11 @@ export const getRowsAction = createAction({
   name: 'get-rows',
   displayName: 'Get Rows',
   description: 'Retrieve rows from a Glide Big Table.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Read rows from a Glide Big Table identified by table ID, paginating up to an optional limit (default 100). Use to fetch existing records for inspection or downstream processing. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     tableId: glideProps.tableId(),
     limit: Property.Number({

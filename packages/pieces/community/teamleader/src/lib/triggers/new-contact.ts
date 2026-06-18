@@ -14,6 +14,9 @@ export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact (an individual person) is added in Teamleader Focus CRM, via the contact.added webhook. Emits the full contact record. Use to react to newly created people, such as onboarding or enrichment flows.',
+  },
   auth: teamleaderAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

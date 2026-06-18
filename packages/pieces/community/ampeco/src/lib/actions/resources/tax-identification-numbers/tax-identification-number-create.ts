@@ -15,6 +15,8 @@ export const taxIdentificationNumberCreateAction = createAction({
   name: 'taxIdentificationNumberCreate',
   displayName: 'Resources - Tax Identification Numbers - Create',
   description: 'Create new Tax Identification Number.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new tax identification number record with the given name. Use when registering a new TIN; to change an existing one use the update action instead. Not idempotent — each call creates a new record.', idempotent: false },
   props: {
         
   name: Property.ShortText({

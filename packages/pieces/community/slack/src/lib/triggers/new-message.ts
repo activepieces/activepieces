@@ -7,6 +7,10 @@ export const newMessageTrigger = createTrigger({
 	name: 'new-message',
 	displayName: 'New Public Message Posted Anywhere',
 	description: 'Triggers when a new message is posted to any channel.',
+	aiMetadata: {
+		description:
+			'Fires when a new message is posted in any public channel or group the app can access (direct messages are excluded). Bot messages can be optionally ignored. The event payload is the Slack message event, including its channel, text, and sender.',
+	},
 	props: {
 		ignoreBots: Property.Checkbox({
 			displayName: 'Ignore Bot Messages ?',

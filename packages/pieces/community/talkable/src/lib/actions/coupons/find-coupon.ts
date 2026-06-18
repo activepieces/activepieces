@@ -7,6 +7,8 @@ export const findCoupon = createAction({
   auth: talkableAuth,
   displayName: 'Find coupon',
   description: 'Find coupon code',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a Talkable coupon by its code and return its details. Use to verify a coupon exists or inspect its status/value. Read-only; the coupon code is required.', idempotent: true },
   props: {
     code: Property.ShortText({
       displayName: 'Coupon code',

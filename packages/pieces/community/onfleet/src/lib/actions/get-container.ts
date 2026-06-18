@@ -8,6 +8,12 @@ export const getContainer = createAction({
   name: 'get_container',
   displayName: 'Get Container',
   description: 'Get a specific container',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch an Onfleet container (the ordered task queue) for a given owner, specifying both the container type (organization, team, or worker) and that owner ID. Read-only and idempotent. Use to inspect the current task ordering for an org, team, or worker.',
+    idempotent: true,
+  },
   props: {
     containerType: Property.Dropdown<
       'organizations' | 'workers' | 'teams',

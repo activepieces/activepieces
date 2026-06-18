@@ -8,6 +8,8 @@ export const updateProduct = createAction({
   name: 'update_product',
   displayName: 'Update Product',
   description: 'Updates an existing product in your Quizell product catalog.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Quizell catalog product, identified by product_id. Use to change price, stock, status, or other product fields on a known product; requires product_id, title, price, and status. Idempotent — re-sending the same fields leaves the product in the same state.', idempotent: true },
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

@@ -9,6 +9,12 @@ export const deleteAgent = createAction({
   name: 'deleteAgent',
   displayName: 'Delete Agent',
   description: 'Delete a CustomGPT agent',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a CustomGPT agent (project) identified by its project id, removing the agent and its conversations. Use when decommissioning an agent; this is destructive and cannot be undone. Not idempotent: repeating it after deletion targets a project that no longer exists.',
+    idempotent: false,
+  },
   props: {
     projectId: projectId,
   },

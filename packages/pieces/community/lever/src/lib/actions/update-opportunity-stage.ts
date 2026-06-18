@@ -11,6 +11,12 @@ export const updateOpportunityStage = createAction({
   name: 'updateOpportunityStage',
   displayName: 'Update opportunity stage',
   description: "Change an Opportunity's current stage",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Move a Lever opportunity to a specific pipeline stage. Use to advance or reassign a candidate's stage in the hiring pipeline; requires the opportunity ID and the target stage ID. Idempotent: setting the same stage again leaves the opportunity in that stage with no additional effect.",
+    idempotent: true,
+  },
   auth: leverAuth,
   props: {
     opportunityId: Property.ShortText({

@@ -8,6 +8,8 @@ export const getPendingApprovables = createAction({
     name: 'get_pending_approvables',
     displayName: 'Get Pending Approvables',
     description: 'List all documents/tasks that are pending approval.',
+    audience: 'both',
+    aiMetadata: { description: 'List documents and tasks awaiting approval in a SAP Ariba realm (required). Use to find pending approvals; optional filters narrow by approvable type (requisitions, invoices, contracts, payment), user, or password adapter, and leaving them empty returns all pending items. Read-only and idempotent.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

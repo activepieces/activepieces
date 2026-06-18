@@ -7,6 +7,8 @@ export const updateCompany = createAction({
   name: 'update_company',
   displayName: 'Update Company',
   description: 'Updates an existing company in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing MyCase company identified by its company ID, replacing contact details, address, and linked cases/clients with the supplied values. Use to modify a company you have already resolved (e.g. via Find Case/clients lookups); requires a valid company_id. Idempotent for a given set of inputs. To add a brand-new company, use Create Company.', idempotent: true },
   props: {
     company_id: Property.Dropdown({
   auth: mycaseAuth,

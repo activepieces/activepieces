@@ -3,6 +3,7 @@ import { groqAuth } from '../..';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export const transcribeAudio = createAction({
+  audience: 'human',
 	auth: groqAuth,
 	name: 'transcribe-audio',
 	displayName: 'Transcribe Audio',

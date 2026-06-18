@@ -8,6 +8,8 @@ export const updateOOO = createAction({
   name: 'update_OOO',
   displayName: 'Update OOO Request',
   description: 'Updates an existing OOO request.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing time-off request identified by its OOO ID. Because Assembled has no update endpoint, this cancels the original request and creates a fresh one with the new details, so user ID and activity type ID are required. This mutates state and creates a new request each call, so it is not safe to repeat.', idempotent: false },
   props: {
     OOO_id: Property.ShortText({
       displayName: 'OOO ID',

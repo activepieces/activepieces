@@ -13,6 +13,9 @@ export const newThreadTrigger = createTrigger({
   displayName: 'New Email Thread',
   description:
     'Triggers when a brand-new conversation (thread) is started in an inbox.',
+  aiMetadata: {
+    description: 'Fires via webhook when an inbound email starts a brand-new conversation thread (not a reply to an existing one), optionally scoped to a single inbox. Each event represents the opening message of a new thread with its thread id, sender, recipients, subject, and preview. Use to react only to first-contact messages rather than every email.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     inbox_id: inboxIdDropdownOptional,

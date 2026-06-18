@@ -9,6 +9,11 @@ export const scrapeWebsiteAction = createAction({
     auth: dataFuelAuth,
     displayName: 'Crawl Website',
     description: 'Crawl a website into a markdown format.',
+    audience: 'both',
+    aiMetadata: {
+        description: 'Scrapes a single URL and returns its content as markdown; optionally extract structured data by supplying a JSON schema (OpenAI function-calling format) and an AI prompt. Use when you need one page rather than crawling a whole site (use Crawl Website for multi-page traversal). Submits a new scrape job and polls until it finishes, so each call starts fresh work and is not idempotent.',
+        idempotent: false,
+    },
     props: {
         url: Property.ShortText({
             displayName: 'URL',

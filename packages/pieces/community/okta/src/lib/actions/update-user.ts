@@ -9,6 +9,8 @@ export const updateUserAction = createAction({
   name: 'update_user',
   displayName: 'Update User',
   description: 'Update user profile information',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Okta user profile (by user ID) with any supplied fields — first/last name, email, mobile phone, plus arbitrary custom attributes via a JSON object; only provided fields are sent. Use to edit a known account. Idempotent — applying the same values again yields the same profile state.', idempotent: true },
   props: {
     userId: userIdDropdown(),
     firstName: Property.ShortText({

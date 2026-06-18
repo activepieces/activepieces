@@ -8,6 +8,8 @@ export const createList = createAction({
     name: 'create_list',
     displayName: 'Create List',
     description: 'Creates a new mailing list.',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new EmailOctopus mailing list with the given name. Use to set up a fresh list before adding contacts. Requires only a list name. Not idempotent — each call creates a separate list even if the name matches an existing one.', idempotent: false },
     props: {
         name: Property.ShortText({
             displayName: 'List Name',

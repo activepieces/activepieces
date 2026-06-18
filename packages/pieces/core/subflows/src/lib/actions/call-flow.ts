@@ -14,6 +14,7 @@ type FlowValue = {
 };
 
 export const callFlow = createAction({
+  audience: 'human',
   name: 'callFlow',
   displayName: 'Call Flow',
   description: 'Call a flow that has "Callable Flow" trigger',

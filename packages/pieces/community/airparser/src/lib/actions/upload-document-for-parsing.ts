@@ -10,6 +10,8 @@ export const uploadDocumentAction = createAction({
 	name: 'upload_document',
 	displayName: 'Upload Document',
 	description: 'Upload a document to an Airparser inbox for parsing.',
+	audience: 'both',
+	aiMetadata: { description: 'Uploads a file to a specified Airparser inbox so it can be parsed into structured data; requires the inbox ID and the file. Use to submit a new document (PDF, email, image, etc.) for extraction. Not idempotent: each call creates a new document, and parsing completes asynchronously, so retrieve the results separately once parsing finishes.', idempotent: false },
 	props: {
 		inboxId: inboxIdDropdown,
 		file: Property.File({

@@ -7,6 +7,8 @@ export const getAllTicketsByStatus = createAction({
   name: 'get_all_tickets_by_status',
   displayName: 'Get All Tickets By Status',
   description: 'Get All Tickets by selected status from Freshdesk.',
+  audience: 'both',
+  aiMetadata: { description: 'Search Freshdesk tickets filtered to one or more selected workflow states (Open, Pending, Resolved, Closed), combining the chosen statuses with OR. Use when you want tickets matching specific statuses rather than the full unfiltered list from Get Tickets. At least one status must be selected. Read-only and idempotent.', idempotent: true },
 
   props: {
     status_filter: Property.StaticMultiSelectDropdown({

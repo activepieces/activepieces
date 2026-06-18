@@ -9,6 +9,8 @@ export const searchBuckets = createAction({
   name: 'search_buckets',
   displayName: 'Search Buckets',
   description: 'Search buckets by name. Perfect for finding buckets in your project.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists buckets in a project, optionally filtered by name prefix, including soft-deleted versions, and choosing whether ACLs are returned; with no prefix it returns all buckets. Use to find a bucket or enumerate a project\'s buckets, and pass the returned page token to paginate. Idempotent read that does not modify storage. Requires the project ID.', idempotent: true },
   props: {
     projectId: projectIdProperty,
     prefix: Property.ShortText({

@@ -11,6 +11,12 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in the CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an invoice in the Sperse/Upgrade.chat CRM for a contact, including a single line item, billing/shipping addresses, totals, and an associated payment transaction. Choose this to bill a contact or record a payment against them. Requires the contact (Contact ID or External Contact ID), a status, invoice number, dates, currency, description, quantity, and the transaction date. Not idempotent: each call records a new invoice and transaction, so repeating it produces duplicates.',
+    idempotent: false,
+  },
   auth: upgradechatAuth,
   props: {
     contactId: Property.Number({

@@ -7,6 +7,12 @@ export const createMonitorAction = createAction({
   name: 'create_monitor',
   displayName: 'Create HTTP Monitor',
   description: 'Create a new HTTP uptime monitor in UptimeRobot',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new HTTP uptime monitor in UptimeRobot for a given URL and friendly name. Use when an agent needs to start monitoring a new website or endpoint. Requires the full URL including protocol; the check interval has plan-dependent minimums (300s on Free). Each call creates a separate monitor, so it is not safe to repeat blindly.',
+    idempotent: false,
+  },
   props: {
     friendly_name: Property.ShortText({
       displayName: 'Monitor Name',

@@ -130,7 +130,6 @@ const ExecuteFlowJobDataCommon = z.object({
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsFileId: z.string(),
-    traceContext: z.record(z.string(), z.string()).optional(),
 })
 
 export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
@@ -162,7 +161,6 @@ export const WebhookJobData = z.object({
     jobType: z.literal(WorkerJobType.EXECUTE_WEBHOOK),
     parentRunId: z.string().optional(),
     failParentOnFailure: z.boolean().optional(),
-    traceContext: z.record(z.string(), z.string()).optional(),
 })
 export type WebhookJobData = z.infer<typeof WebhookJobData>
 
@@ -238,6 +236,14 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
+export const ChatPromptOverride = z.object({
+    system: z.string().optional(),
+    projectSelected: z.string().optional(),
+    noProject: z.string().optional(),
+    guides: z.record(z.string(), z.string()).optional(),
+})
+export type ChatPromptOverride = z.infer<typeof ChatPromptOverride>
+
 export const ExecuteChatAgentJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
@@ -253,6 +259,8 @@ export const ExecuteChatAgentJobData = z.object({
         mimeType: z.string(),
         data: z.string(),
     })).optional(),
+    promptOverride: ChatPromptOverride.optional(),
+    dryRun: z.boolean().optional(),
 })
 export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
 

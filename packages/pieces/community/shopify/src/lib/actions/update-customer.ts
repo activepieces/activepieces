@@ -9,6 +9,8 @@ export const updateCustomerAction = createAction({
   name: 'update_customer',
   displayName: 'Update Customer',
   description: 'Update an existing customer.',
+  audience: 'both',
+  aiMetadata: { description: 'Update fields on an existing Shopify customer identified by customer ID (email, name, phone, tags, marketing consent). Pick this to edit a known customer rather than Create Customer; the customer ID is required and only supplied fields are changed. Sets absolute field values, so re-running with the same input is idempotent.', idempotent: true },
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',

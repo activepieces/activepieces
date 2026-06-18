@@ -16,6 +16,8 @@ export const createComment = createAction({
 	name: 'create_comment',
 	displayName: 'Create Comment',
 	description: 'Creates a new comment on a post.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds a comment to a Circle post, identified by its post ID. Use to reply within a discussion; supplying a parent comment ID makes it a threaded reply rather than a top-level comment. Posts a new comment on each call, so it is not idempotent.', idempotent: false },
 	props: {
 		space_id: spaceIdDropdown,
 		post_id: postIdDropdown,

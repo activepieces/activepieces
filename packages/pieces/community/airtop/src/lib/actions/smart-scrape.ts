@@ -11,6 +11,11 @@ export const smartScrapeAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Smart Scrape',
 	description: 'Scrape a page and return the data as Markdown.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Scrapes the current page in a session window and returns its content as Markdown. Use this when you want the whole page text rather than answering a specific question (use Page Query for targeted extraction). Requires session id and window id; read-only and idempotent since it does not modify the page.',
+		idempotent: true,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,

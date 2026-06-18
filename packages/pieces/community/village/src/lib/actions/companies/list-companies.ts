@@ -8,6 +8,12 @@ export const listCompanies = createAction({
   displayName: 'List Companies',
   description:
     'Get your top-connected companies ranked by network strength. Returns a paginated list with connection score, label, LinkedIn URL, domain, and enrichment data.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only browse of the companies your network reaches best, ranked by connection strength, with optional connection-degree filtering. Use to enumerate companies you already have a path into; for criteria-based discovery use Search Companies. Cursor-paginated and safe to retry.',
+    idempotent: true,
+  },
   props: {
     cursor: Property.ShortText({
       displayName: 'Cursor',

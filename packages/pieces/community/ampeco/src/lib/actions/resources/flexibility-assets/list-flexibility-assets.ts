@@ -15,6 +15,8 @@ export const listFlexibilityAssetsAction = createAction({
   name: 'listFlexibilityAssets',
   displayName: 'Resources - Flexibility Assets - List',
   description: 'Get a list of Flexibility Assets.',
+  audience: 'both',
+  aiMetadata: { description: 'List flexibility assets, optionally filtered to those updated since a given timestamp. Read-only and idempotent. Enable the pagination option to fetch all matching assets across pages; otherwise a single page (up to per_page) is returned. Use this to discover asset IDs before reading, updating, or pulling time-series data for a specific asset.', idempotent: true },
   props: {
         
   filter__updatedSince: Property.DateTime({

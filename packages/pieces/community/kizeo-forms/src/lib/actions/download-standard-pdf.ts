@@ -8,6 +8,8 @@ export const downloadStandardPDF = createAction({
   name: 'download_standard_pdf', // Must be a unique across the piece, this shouldn't be changed.
   displayName: 'Download Standard PDF',
   description: 'Get PDF data of a form',
+  audience: 'both',
+  aiMetadata: { description: 'Download the standard PDF rendering of one submitted Kizeo Forms data record, identified by form ID and data ID, returned as a base64 data URI. Use when you need the generated PDF document for a specific submission. Read-only and idempotent.', idempotent: true },
   props: {
     formId: kizeoFormsCommon.formId,
     dataId: Property.Number({

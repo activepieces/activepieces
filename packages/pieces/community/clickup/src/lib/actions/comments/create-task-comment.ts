@@ -7,6 +7,8 @@ export const createClickupTaskComment = createAction({
   auth: clickupAuth,
   name: 'create_task_comments',
   description: 'Creates a comment on a task in ClickUp',
+  audience: 'both',
+  aiMetadata: { description: 'Post a new comment on a ClickUp task and notify the workspace. Each call adds a distinct comment, so repeated calls create duplicates (not idempotent). If no assignee is given, the comment is attributed to the authenticated user.', idempotent: false },
   displayName: 'Create Task Comment',
   props: {
     workspace_id: clickupCommon.workspace_id(),

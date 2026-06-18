@@ -7,6 +7,8 @@ export const createPurchasesBatch = createAction({
   auth: talkableAuth,
   displayName: 'Create batch of purchases',
   description: 'Create batch of purchases in Talkable',
+  audience: 'both',
+  aiMetadata: { description: 'Record multiple purchase origins in Talkable in one call by passing an array of purchase objects (each keyed to a customer email). Use to ingest orders in bulk rather than one at a time; optionally create campaign offers for them. Not idempotent: each call posts the purchases again, so avoid resubmitting the same batch.', idempotent: false },
   props: {
     create_offers: Property.Checkbox({
       displayName: 'Create offers',

@@ -4,6 +4,10 @@ export const newTaskTrigger = createPipelineWebhookTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Triggers when a task is created on a box in the selected pipeline.',
+  aiMetadata: {
+    description:
+      'Fires when a new task (to-do item) is created on a box in the selected pipeline, representing a freshly added action item on a CRM record.',
+  },
   event: 'TASK_CREATE',
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSBFRhc2sYgICAwI_oogow',

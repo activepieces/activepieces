@@ -15,6 +15,8 @@ export const evseDowntimePeriodCreateAction = createAction({
   name: 'evseDowntimePeriodCreate',
   displayName: 'Resources - Evse Downtime Periods - Create',
   description: 'Create Manual Exempt EVSE Downtime Period.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a manual exempt downtime period for an EVSE, specifying the EVSE ID, an exempt-type notice ID, and start/end times. Not idempotent: each call creates a new period, so avoid duplicate calls for the same window. Use evse-downtime-period-update to adjust an existing period instead.', idempotent: false },
   props: {
         
   evseId: Property.Number({

@@ -71,6 +71,12 @@ export const extractEntitiesAction = createAction({
   name: 'extract_entities',
   displayName: 'Extract Named Entities in Text',
   description: 'Identify entities (names, places) in text using Eden AI. Supports multiple providers, languages, and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Run named-entity recognition over a text via Eden AI, routed to a chosen provider, returning detected entities with their category and importance. Use it to pull out people, places, organizations, and similar named items from a passage. Requires a provider and the text; language defaults to auto-detection. Read-only analysis with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,

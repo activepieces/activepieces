@@ -7,6 +7,8 @@ export const posthogGetFeatureFlags = createAction({
   name: 'get_feature_flags',
   displayName: 'Get Feature Flags',
   description: 'List all feature flags in your PostHog project',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves feature flags defined in the connected PostHog project, including each flag key, name, and active state, with an optional result limit. Use to inspect or audit which feature flags exist. Idempotent: a read-only lookup with no side effects.', idempotent: true },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

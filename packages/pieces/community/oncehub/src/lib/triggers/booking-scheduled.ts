@@ -8,6 +8,10 @@ export const bookingScheduled = createTrigger({
   displayName: 'Booking Scheduled',
   description:
     'Triggered when Customer schedules a booking and when User approves a booking requested by a Customer',
+  aiMetadata: {
+    description:
+      'Fires when a new booking is scheduled in OnceHub, either when a customer books directly or when a user approves a booking the customer requested. The event carries the new booking with its contact and owner details.',
+  },
   props: {},
   sampleData: {
     id: 'EVNT-KN56U3YL7C',

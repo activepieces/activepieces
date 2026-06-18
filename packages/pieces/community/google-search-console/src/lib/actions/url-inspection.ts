@@ -14,6 +14,8 @@ export const urlInspection = createAction({
   displayName: 'URL Inspection',
   description:
     "Use the URL Inspection action to check the status and presence of a specific page within Google's index.",
+  audience: 'both',
+  aiMetadata: { description: "Inspect a single URL with the Google Search Console URL Inspection API to report its index status, coverage, mobile usability, and rich-result details for a verified site. Choose this to diagnose why a specific page is or isn't indexed. Requires a verified siteUrl and the exact URL to inspect (must belong to that property); read-only and idempotent.", idempotent: true },
   props: {
     siteUrl: commonProps.siteUrl,
     url: Property.ShortText({

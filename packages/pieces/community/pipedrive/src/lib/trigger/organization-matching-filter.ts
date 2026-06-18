@@ -77,6 +77,10 @@ export const organizationMatchingFilterTrigger = createTrigger({
 	name: 'organization-matching-filter',
 	displayName: 'Organization Matching Filter',
 	description: 'Triggers when an organization newly matches a Pipedrive filter for the first time.',
+	aiMetadata: {
+		description:
+			'Fires when an organization (company) record first becomes a member of a selected Pipedrive filter — that is, the organization newly satisfies the filter conditions. Polls the filter and emits each organization the first time it appears; does not re-fire for organizations already in the filter.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		filterId: filterIdProp('org', true),

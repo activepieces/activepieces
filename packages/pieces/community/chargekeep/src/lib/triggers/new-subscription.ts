@@ -7,6 +7,9 @@ export const newSubscription = createTrigger({
   name: 'new_subscription',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is created',
+  aiMetadata: {
+    description: 'Fires when a subscription is created or updated in the ChargeKeep/Sperse CRM, emitting the subscription details (plan name, dates, amount, frequency, and status) for the associated contact.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

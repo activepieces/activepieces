@@ -9,6 +9,10 @@ export const documentUpdatedTrigger = createTrigger({
   name: 'document_updated',
   displayName: 'Document Updated',
   description: 'Triggers when a document has been updated.',
+  aiMetadata: {
+    description:
+      'Fires when an existing SignNow document is modified, signaling a change to the document such as edits to its fields, fields filled, or status updates.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

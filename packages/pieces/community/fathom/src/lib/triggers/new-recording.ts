@@ -16,6 +16,9 @@ export const newRecording = createTrigger({
   displayName: 'New Recording',
   description:
     'Fires when a meeting is recorded (i.e. a new meeting recording is produced)',
+  aiMetadata: {
+    description: 'Fires when Fathom finishes producing a new meeting recording, delivering the meeting metadata (and optionally the transcript, summary, action items, and CRM matches). Scope is configurable to any combination of your own recordings, shared external recordings, recordings you shared with your team, and recordings shared across the team.',
+  },
   props: {
     triggered_for: Property.MultiSelectDropdown({
       auth: fathomAuth,

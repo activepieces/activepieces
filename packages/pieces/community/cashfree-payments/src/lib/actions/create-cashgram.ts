@@ -7,6 +7,11 @@ export const createCashgram = createAction({
   name: 'create-cashgram',
   displayName: 'Create Cashgram',
   description: 'Create a Cashgram for instant money transfers using Cashfree',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a Cashfree Payout "Cashgram" — a shareable link that lets a contact claim a money transfer for a given amount — addressed to a name and phone, with an expiry within 30 days. Use this to disburse funds without knowing the recipient bank details. Each call creates a new payout keyed on the caller-supplied Cashgram ID (a duplicate ID returns a conflict), and it moves money, so it is not idempotent.',
+    idempotent: false,
+  },
   requireAuth: true,
   props: {
     environment: Property.StaticDropdown({

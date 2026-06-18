@@ -17,6 +17,7 @@ import {
     PrincipalType,
     RetryFlowRequestBody,
     RunEnvironment,
+    RunInternalErrorSource,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
@@ -69,7 +70,8 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
                 projectId: request.projectId,
                 id: request.params.id,
             })
-            const canViewInternalError = system.getEdition() !== ApEdition.CLOUD && await isRequesterPlatformAdmin(request)
+            const internalErrorEnabled = flowRun.internalError?.source === RunInternalErrorSource.ENGINE || system.getEdition() !== ApEdition.CLOUD
+            const canViewInternalError = internalErrorEnabled && await isRequesterPlatformAdmin(request)
             await reply.send(canViewInternalError ? flowRun : omit(flowRun, ['internalError']))
         },
     )

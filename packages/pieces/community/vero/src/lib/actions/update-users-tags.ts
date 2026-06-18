@@ -8,6 +8,12 @@ export const updateUsersTags = createAction({
   name: 'updateUsersTags',
   displayName: 'Update User Tags',
   description: 'Add or remove tags from a user profile',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds and/or removes tags on a Vero user profile identified by user ID, supplying lists of tags to add, remove, or both. Use to segment or label a user. Applying the same add/remove sets converges to the same tag state, so it is idempotent.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'User ID',

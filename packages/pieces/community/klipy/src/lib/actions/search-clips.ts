@@ -7,6 +7,8 @@ export const searchClipsAction = createAction({
   name: 'search_clips',
   displayName: 'Search Clips',
   description: 'Search and retrieve video clips from KLIPY\'s database by keyword or phrase.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches KLIPY\'s video clip library and returns a paginated set of matching clips. Use when an agent needs to find short video clips for a topic; leave the search keyword empty to browse trending clips instead of filtering to a query. Read-only and idempotent (same input returns the same page). Tune results with paging, locale, and content-safety filter.', idempotent: true },
   props: {
     q: Property.ShortText({
       displayName: 'Search Keyword',

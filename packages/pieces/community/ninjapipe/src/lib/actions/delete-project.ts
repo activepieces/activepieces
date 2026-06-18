@@ -8,6 +8,8 @@ export const deleteProject = createAction({
   name: 'delete_project',
   displayName: 'Delete Project',
   description: 'Deletes a project by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a project identified by Project ID, including its tasks. Pick this to remove a project entirely; the change is destructive and cannot be undone. Re-running after deletion typically fails since the ID no longer exists.', idempotent: false },
   props: {
     projectId: ninjapipeCommon.projectDropdownRequired,
   },

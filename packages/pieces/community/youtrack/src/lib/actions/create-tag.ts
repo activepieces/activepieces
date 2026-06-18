@@ -8,6 +8,8 @@ export const createTagAction = createAction({
   name: 'create_tag',
   displayName: 'Create Tag',
   description: 'Creates a new tag in YouTrack.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new tag in YouTrack with a given name, optionally set to auto-remove when an issue is resolved. Use to define a label before applying it to issues. Not idempotent: repeating the call creates another tag with the same name.', idempotent: false },
   props: {
     name: Property.ShortText({ displayName: 'Tag Name', description: 'Name like "Regression" or "To deploy".', required: true }),
     untagOnResolve: Property.Checkbox({ displayName: 'Remove when resolved?', required: false, defaultValue: false }),

@@ -6,6 +6,11 @@ export const fetchPaymentLinkDetails = createAction({
   name: 'fetch-payment-link-details',
   displayName: 'Fetch Payment Link Details',
   description: 'View all details and status of a payment link in Cashfree Payment Gateway',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the full details and current status of a single Cashfree payment link identified by its Link ID. Use this to check whether a link is active, expired, or paid, or to read back its configuration. Read-only lookup, so it is idempotent.',
+    idempotent: true,
+  },
   requireAuth: true,
   auth: cashfreePaymentsAuth,
   props: {

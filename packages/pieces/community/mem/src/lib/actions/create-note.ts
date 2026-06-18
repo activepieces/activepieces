@@ -8,6 +8,11 @@ export const createNoteAction = createAction({
   name: 'create_note',
   displayName: 'Create Note',
   description: 'Log a plain-text Markdown note into Mem, optionally with formatting, templates, collections, and timestamps.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a Markdown note in Mem, using the first line as the title, and can assign it to one or more collections (creating them if they do not exist). Use when you want to store a specific, ready-formatted note rather than hand raw content to Mem\'s processor. Not idempotent: a new note is created on each call, even when a Note ID is supplied.',
+    idempotent: false,
+  },
   props: {
     content: Property.LongText({
       displayName: 'Content',

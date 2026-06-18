@@ -7,6 +7,11 @@ export const createPortfolioCompany = createAction({
   name: 'create_portfolio_company',
   displayName: 'Create Portfolio Company',
   description: 'Creates a new portfolio company.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new portfolio company profile in Visible. Use to onboard a company before adding its metrics or contacts. Requires a company ID and name; optionally website URL, currency, and a primary contact ID. Not idempotent: this is a create-only operation, so repeating it adds another company profile.',
+    idempotent: false,
+  },
   auth: visibleAuth,
   props: {
     companyId: Property.ShortText({

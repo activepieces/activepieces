@@ -7,6 +7,12 @@ export const uploaddocument = createAction({
   name: 'uploadDocument',
   displayName: 'Upload document',
   description: 'Uploads a document to a DocumentPro parser',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads a document file (PDF, JPEG, PNG, or TIFF, max 6MB) to DocumentPro, returning a document identifier used by later extraction steps. Use this as the first step before running a parser/workflow on the document. Not idempotent: each call uploads a new document and creates a distinct record.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'File',

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askDeepseek = createAction({
+  audience: 'human',
   auth: deepseekAuth,
   name: 'ask_deepseek',
   displayName: 'Ask Deepseek',

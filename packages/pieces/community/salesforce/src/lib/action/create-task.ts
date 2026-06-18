@@ -8,6 +8,8 @@ export const createTask = createAction({
     name: 'create_task',
     displayName: 'Create Task',
     description: 'Creates a new task.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new activity Task with a required Subject and optional owner, status, priority, and links to a Contact/Lead (WhoId) or other object (WhatId). Not idempotent — each call creates a separate task.', idempotent: false },
     props: {
         Subject: Property.ShortText({
             displayName: 'Subject',

@@ -10,6 +10,11 @@ export const addRowsAction = createAction({
   name: 'add-rows',
   displayName: 'Add Rows',
   description: 'Add one or more rows to a Glide Big Table.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Append one or more new rows to a Glide Big Table identified by table ID. Use to insert records; each row is a JSON object whose keys must match the table column IDs. Not idempotent — every call appends, so re-running creates duplicate rows.',
+    idempotent: false,
+  },
   props: {
     tableId: glideProps.tableId(),
     rows: Property.Json({

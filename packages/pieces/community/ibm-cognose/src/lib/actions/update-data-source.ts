@@ -9,6 +9,8 @@ export const updateDataSourceAction = createAction({
   name: 'update_data_source',
   displayName: 'Update Data Source',
   description: 'Update an existing data source',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing IBM Cognos data source identified by its id, changing its name and/or its disabled/hidden flags. At least one field must be supplied. Idempotent: re-applying the same values leaves the data source in the same state.', idempotent: true },
   props: {
     datasourceId: dataSourceDropdown,
     defaultName: Property.ShortText({

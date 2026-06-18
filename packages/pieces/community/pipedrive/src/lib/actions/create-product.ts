@@ -16,6 +16,8 @@ export const createProductAction = createAction({
 	name: 'create-product',
 	displayName: 'Create Product',
 	description: 'Creates a new product.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new product in the catalog with name, code, pricing (price/cost/overhead/currency/tax), unit, owner, visibility, and custom fields. Pick this to add a product; each call creates a separate record, so repeating it produces duplicates. Not idempotent.', idempotent: false },
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

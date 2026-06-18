@@ -9,6 +9,8 @@ export const setChannelTopicAction = createAction({
 	name: 'set-channel-topic',
 	displayName: 'Set Channel Topic',
 	description: 'Sets the topic on a selected channel.',
+	audience: 'both',
+	aiMetadata: { description: 'Set (overwrite) the topic of a selected channel. Idempotent: re-running with the same topic leaves the channel in the same state. The bot must be a member of the channel.', idempotent: true },
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),

@@ -5,6 +5,8 @@ export const getAddressByHash = createAction({
   name: 'get_address_by_hash',
   displayName: 'Get Address by Hash',
   description: 'Get address info by its hash',
+  audience: 'both',
+  aiMetadata: { description: 'Look up the core profile of a single address: current balance, contract/EOA status, name tags, and implementation details. Pick this as the first lookup for one known address before drilling into its transactions, tokens, or logs. Read-only lookup on eth.blockscout.com; requires a 0x address hash.', idempotent: true },
   // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({

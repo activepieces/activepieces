@@ -8,6 +8,7 @@ export const signrequestDeclined = createTrigger({
   name: 'signrequestDeclined',
   displayName: 'signrequest declined',
   description: 'Fires when a SignRequest is declined',
+  aiMetadata: { description: 'Fires when a recipient declines a SignRequest. Use to handle rejected or refused signature requests.' },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

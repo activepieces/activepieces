@@ -11,6 +11,8 @@ export const findTimeEntry = createAction({
   name: 'find_time_entry',
   displayName: 'Find Time Entry',
   description: 'Find time entries by description.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the current user\'s time entries, optionally bounded by date range or modified-since timestamp; when a description text is provided it filters client-side to entries whose description contains that text (case-insensitive), otherwise all entries in range are returned. Use to locate existing entries before reporting or updating. Read-only and idempotent.', idempotent: true },
   props: {
     description: Property.ShortText({
       displayName: 'Description Contains',

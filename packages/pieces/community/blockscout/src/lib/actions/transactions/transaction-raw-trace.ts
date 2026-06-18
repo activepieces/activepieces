@@ -5,6 +5,8 @@ export const getTransactionRawTrace = createAction({
   name: 'get_transaction_raw_trace',
   displayName: 'Get Transaction Raw Trace',
   description: 'Get raw trace data for a transaction',
+  audience: 'both',
+  aiMetadata: { description: 'Get the low-level raw execution trace (opcode-level call frames) for one Ethereum transaction by hash. Read-only and intended for deep debugging of contract execution. Prefer the higher-level Get Transaction Internal Transactions or Get Transaction by Hash actions for ordinary lookups; reach for this only when you need the full unprocessed trace.', idempotent: true },
   // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({

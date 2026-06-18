@@ -18,6 +18,12 @@ export const searchRegistrationFolder = createAction({
   displayName: 'Rechercher un ou plusieurs dossiers de formation',
   description:
     'Liste les dossiers de formation en fonction des critères sélectionnés',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches and lists training registration folders across the organization, filtered by free-text query, period, type, lifecycle/billing/control state, certification, tags, and many other criteria, with paging and sorting. Read-only and safe to repeat. Use to find folders matching conditions; to fetch one known folder by its number use the get-folder action instead.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Recherche',

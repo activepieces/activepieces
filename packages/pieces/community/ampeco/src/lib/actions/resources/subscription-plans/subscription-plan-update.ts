@@ -14,6 +14,8 @@ export const subscriptionPlanUpdateAction = createAction({
   name: 'subscriptionPlanUpdate',
   displayName: 'Resources - Subscription Plans - Update',
   description: 'Update a Subscription plan.',
+  audience: 'both',
+  aiMetadata: { description: 'Modify an existing AMPECO subscription plan by its numeric ID, changing localized name/description, renewal cycle, pre-paid/post-paid type, fees, allowance (kWh and country/partner restrictions), visibility restrictions, and enabled/disabled status. Not idempotent: it edits a plan that must already exist, and localized name/description entries omitted on update are deleted, so always send all locales you want to keep.', idempotent: false },
   props: {
         
   subscriptionPlan: Property.Number({

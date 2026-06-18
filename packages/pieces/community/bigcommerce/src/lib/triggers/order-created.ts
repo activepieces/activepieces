@@ -11,6 +11,10 @@ export const orderCreated = createTrigger({
   name: 'orderCreated',
   displayName: 'Order Created',
   description: 'Triggers when a new order is created',
+  aiMetadata: {
+    description:
+      'Fires when a new order is created in the BigCommerce store. The event identifies the new order; pair with Get Order to fetch its full details.',
+  },
   props: {},
   sampleData: {
     producer: 'stores/xqcaklwsso',

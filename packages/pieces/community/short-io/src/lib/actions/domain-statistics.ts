@@ -9,6 +9,8 @@ export const domainStatisticsAction = createAction({
   name: 'get-domain-statistics',
   displayName: 'Domain Statistics',
   description: 'Retrieve usage stats (clicks, conversions) for a domain within a time period.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves aggregate click and link statistics for a whole Short.io domain over a chosen time window — either a preset range (today, last 7/30 days, this/last month) or a custom start/end date. Use to report on overall domain performance rather than a single link. Custom range requires both start and end dates; read-only and idempotent.', idempotent: true },
   props: {
     domainId: {
       ...domainIdDropdown,

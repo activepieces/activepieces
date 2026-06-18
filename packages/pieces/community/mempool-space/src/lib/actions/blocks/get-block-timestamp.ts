@@ -7,6 +7,8 @@ export const getBlockTimestamp = createAction({
     name: 'get_block_timestamp',
     displayName: 'Get Block Timestamp',
     description: 'Returns the height and hash of the block closest to the given timestamp',
+    audience: 'both',
+    aiMetadata: { description: 'Find the block mined closest to a given Unix timestamp, returning its height and hash. Pick this to locate a block by time; use Get Block Height when you already know the numeric height. Read-only.', idempotent: true },
     // category: 'Blocks',
     props: {
         timestamp: Property.Number({

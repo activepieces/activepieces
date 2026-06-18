@@ -9,6 +9,12 @@ export const updateProspectAction = createAction({
   name: 'update_prospect',
   displayName: 'Update Prospect',
   description: 'Update an existing prospect in Klenty by email address.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Updates an existing Klenty prospect identified by their current email address, overwriting the supplied contact fields (including optionally a new email). Use to edit a known prospect's details rather than create one. Idempotent: the prospect is keyed on the current email, so repeating the call with the same input yields the same record.",
+    idempotent: true,
+  },
   auth: klentyAuth,
   props: {
     currentEmail: Property.ShortText({

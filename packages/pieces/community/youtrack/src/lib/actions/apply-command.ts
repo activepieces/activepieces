@@ -8,6 +8,8 @@ export const applyCommandAction = createAction({
   name: 'apply_command',
   displayName: 'Apply Command',
   description: 'Applies a YouTrack command to an issue (e.g. change state, assign, set sprint).',
+  audience: 'both',
+  aiMetadata: { description: 'Apply a free-text YouTrack command to an issue (e.g. "State Fixed", "assignee jane.doe", "Priority Critical") to change its state, assignment, fields, or sprint in one step, optionally with a comment and silent (no-notification) mode. Use for workflow transitions expressed as commands. Mutating; idempotency depends on the command — setting a state or field is idempotent, while appending a comment is not.', idempotent: false },
   props: {
     issue: issueDropdown,
     command: Property.ShortText({

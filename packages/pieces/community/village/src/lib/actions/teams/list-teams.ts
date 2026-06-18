@@ -8,6 +8,12 @@ export const listTeams = createAction({
   displayName: 'List Teams',
   description:
     'Get all teams you are a member of. Each team includes id, name, logo, invite_link, and an is_admin flag indicating your admin status.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List every team the authenticated user belongs to, including each team ID and the admin-status flag. Read-only and idempotent. Use to discover team IDs before joining, leaving, or updating a team.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

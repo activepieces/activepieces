@@ -9,6 +9,10 @@ export const newDocumentExportFailed = createTrigger({
   displayName: 'New Document Export Failed',
   description:
     'Fires when an automated export endpoint (webhook / integration) fails for a processed document.',
+  aiMetadata: {
+    description:
+      'Fires when delivering a successfully parsed document to a configured export target (webhook or downstream integration) fails for the selected Parseur mailbox. Use to detect and handle export/delivery failures.',
+  },
   props: { mailboxId: parserDropdown({ required: true }) },
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

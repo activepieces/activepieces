@@ -8,6 +8,8 @@ export const downloadAttachmentAction = createAction({
   name: 'download_attachment',
   displayName: 'Download Attachment',
   description: 'Downloads an attachment from an issue and returns it as a Base64-encoded string. Use this with the "Upload to Drive" or "Send Email" actions in your flow.',
+  audience: 'both',
+  aiMetadata: { description: 'Download a single attachment from an issue and return its content as Base64 plus metadata, given the issue ID and attachment database ID (e.g. "134-31", found via List Attachments). Use to retrieve file bytes for forwarding to another step. Read-only and idempotent.', idempotent: true },
   props: {
     issue: issueDropdown,
     attachmentId: Property.ShortText({

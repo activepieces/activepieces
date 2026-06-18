@@ -8,6 +8,12 @@ export const createClientAction = createAction({
   name: 'create_client',
   displayName: 'Create Client',
   description: 'Creates a new client in your Wayfront workspace.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new client record in a Wayfront workspace from contact details (name, email, company, phone, address, status, balance, custom fields). Use to onboard a customer or lead into the CRM. All fields are optional, so passing none creates an empty client. Not idempotent: each call adds a separate client even with identical input.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

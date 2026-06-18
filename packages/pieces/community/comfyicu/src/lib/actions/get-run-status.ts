@@ -8,6 +8,8 @@ export const getRunStatusAction = createAction({
   name: 'get-run-status',
   displayName: 'Get Run Status',
   description: 'Retrieves the status of workflow run.',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the current execution status of a specific Comfy.ICU workflow run, identified by workflow ID and run ID. Use to poll or check whether a submitted run is still running, completed, or errored. Read-only and safe to repeat.', idempotent: true },
   props: {
     ...commonProps,
   },

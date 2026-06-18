@@ -12,6 +12,7 @@ import {
 import { ExportTableResponse } from '@activepieces/shared';
 
 export const downloadTable = createAction({
+  audience: 'human',
   name: 'tables-download-table',
   displayName: 'Download Table',
   description: 'Export a table as a CSV file.',

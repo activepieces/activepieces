@@ -6,6 +6,8 @@ export const findTeamMember = createAction({
   name: 'findTeamMember',
   displayName: 'Find Team Member',
   description: 'Find team member based on email',
+  audience: 'both',
+  aiMetadata: { description: 'List team members in the connected Fathom workspace, optionally narrowed to a single team by name; with no team supplied it returns members across all teams. Use to look up who belongs to a team. Read-only and repeatable; use the cursor for pagination.', idempotent: true },
   auth: fathomAuth,
   props: {
     team: Property.ShortText({

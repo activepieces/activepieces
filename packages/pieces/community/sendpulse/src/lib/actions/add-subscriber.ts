@@ -9,6 +9,8 @@ export const addSubscriberAction = createAction({
   name: 'add-subscriber',
   displayName: 'Add Subscriber',
   description: 'Add subscriber to mailing list',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an email contact to a specific SendPulse mailing list (address book), optionally attaching subscriber variables (e.g. name, phone) and numeric tag IDs. Use to enroll a new contact into a list; requires the target mailing list ID and a valid email. Not idempotent — each call re-submits the contact to the list.', idempotent: false },
   props: {
     mailingListId: mailingListDropdown,
     email: Property.ShortText({

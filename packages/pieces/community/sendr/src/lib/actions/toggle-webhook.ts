@@ -8,6 +8,8 @@ export const toggleWebhook = createAction({
   name: 'toggle_webhook',
   displayName: 'Toggle Webhook',
   description: 'Enables or disables a registered Sendr webhook.',
+  audience: 'both',
+  aiMetadata: { description: 'Enables or disables a registered webhook, identified by its URL, by setting its enabled flag. Use List Webhooks to find the URL. Idempotent: repeating the call with the same enabled value yields the same state.', idempotent: true },
   props: {
     webhook: webhookDropdown,
     enabled: Property.Checkbox({

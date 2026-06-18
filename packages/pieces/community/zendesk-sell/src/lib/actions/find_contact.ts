@@ -8,6 +8,8 @@ export const findContact = createAction({
     name: 'find_contact',
     displayName: 'Find Contact',
     description: 'Find a contact by email, name, or other identifier.',
+    audience: 'both',
+    aiMetadata: { description: 'Searches Zendesk Sell contacts by email, name, first/last name, or phone and returns the first match. Use to resolve a contact ID before creating a deal or note, or to check whether a contact already exists. Requires at least one search field; returns null data when no match is found. Idempotent — a read-only lookup.', idempotent: true },
     props: {
         email: Property.ShortText({
             displayName: 'Email',

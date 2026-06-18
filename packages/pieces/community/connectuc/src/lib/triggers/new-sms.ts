@@ -8,6 +8,9 @@ export const newSms = createTrigger({
     name: 'newSms',
     displayName: 'New SMS',
     description: 'Triggers when a new SMS message is received',
+    aiMetadata: {
+        description: 'Fires when a new inbound SMS/MMS message is received for the selected ConnectUC domain, users, and recipient numbers. Represents an incoming text with its content, sender, recipients, and any media attachments.',
+    },
     props: {
         domain: domainProp(),
         users: usersProp(),

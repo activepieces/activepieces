@@ -9,6 +9,12 @@ export const webSearchSummarizationAction = createAction({
   displayName: 'Web Search Summarization',
   description:
     'Perform a web search and retrieve summarized results using the Reader API.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Run a web search through the Jina Reader search API and return the result list, optionally visiting every hit to include full page content; supports country/language/location targeting, in-site (single-domain) search, and pagination. Pick this to discover pages by keyword — use Extract Webpage Content for a known URL or DeepSearch Query for multi-step research questions. Read-only search, so repeat calls are idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

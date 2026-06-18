@@ -14,6 +14,12 @@ export const replyToReview = createAction({
   displayName: 'Reply to Review',
   description:
     'Reply to a specific review within a date range for a selected application and collection',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts a public reply to a specific app store review, identified by its review ID, for the selected application. Use to respond to user feedback in store reviews. Not idempotent: each call submits another reply.',
+    idempotent: false,
+  },
   props: {
     collection_id: collection_idDropdown,
     app_ext_id: application_ext_idDropdown,

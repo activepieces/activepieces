@@ -9,6 +9,9 @@ export const bookingStopStatusUpdate = createTrigger({
   name: 'bookingStopStatusUpdate',
   displayName: 'Booking Stop Status Update',
   description: '',
+  aiMetadata: {
+    description: 'Fires when a booking\'s route changes in MotionTools (the booking.route_changed webhook event), reflecting an update to its stops/route. Each event carries the affected booking and customer ids.',
+  },
   props: {
     instructions: Property.MarkDown({
       value: `# Motiontools Webhook Setup

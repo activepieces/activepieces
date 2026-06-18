@@ -15,6 +15,11 @@ export const updateRecord = createAction({
 	name: 'updateRecord',
 	displayName: 'Update Record',
 	description: 'Updates fields on an existing record.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Updates field values on one existing Ninox record, addressed by team, database, table, and record id. Use when the target record id is known and you want to overwrite specific fields; empty field values are dropped before sending. Idempotent — repeating with the same input leaves the record in the same state.',
+		idempotent: true,
+	},
 	props: {
 		teamid: teamidDropdown,
 		dbid: databaseIdDropdown,

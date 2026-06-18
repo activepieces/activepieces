@@ -16,6 +16,8 @@ export const heartBeatCreateUser = createAction({
   name: 'heartbeat_create_user',
   displayName: 'Create User',
   description: 'Create a new user in a Heartbeat community',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a member in a Heartbeat community via the Heartbeat API, assigning a role and optionally adding them to groups and setting profile fields (bio, social links, status). Use to onboard a new person; the email must be unique to the community. Not idempotent: each call creates a member (a duplicate email is rejected) and, if a bio is supplied with the introduction-thread option enabled, also posts an introduction thread.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

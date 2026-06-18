@@ -8,6 +8,12 @@ export const getCompanyPaths = createAction({
   displayName: 'Get Company Paths',
   description:
     'Find introduction paths to people at a specific company. Returns up to 50 employees you can reach through your network, ranked by connection strength.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only lookup of the reachable employees at one company (identified by domain, LinkedIn URL, or generic url; supply exactly one), ranked by connection strength. Use when you want the actual people to approach; for a cheaper exists/score screen first use Check Company Paths. Cursor-paginated and safe to retry.',
+    idempotent: true,
+  },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',

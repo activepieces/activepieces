@@ -9,6 +9,12 @@ export const searchAction = createAction({
   displayName: 'Search the Web',
   description:
     'Search the web with natural-language objectives. Returns LLM-optimized excerpts with citations.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Run a web search via Parallel's research API and return ranked, citation-backed text excerpts for a natural-language objective plus one or more keyword queries. Use it to gather fresh web evidence on a topic; choose between a fast Basic mode and a deeper Advanced mode, and optionally restrict or exclude specific domains. At least one search query is required. Read-only and idempotent: re-running the same query has no side effect, though live web results may vary over time.",
+    idempotent: true,
+  },
   props: {
     objective: Property.LongText({
       displayName: 'Objective',

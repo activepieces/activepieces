@@ -26,6 +26,8 @@ export const createItemAction = createAction({
   name: 'create_item',
   displayName: 'Create New Item',
   description: 'Creates a new report item in Weekdone.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a new report item (a plan, progress note, problem, or plan-on-hold entry) to a Weekdone weekly report. Use to log status update entries for a user/team; the item text and report category are required, and it targets the current week unless a YYYYWW week is supplied. Not idempotent — each call appends a new item.', idempotent: false },
   props: {
     description: Property.LongText({
       displayName: 'Description',

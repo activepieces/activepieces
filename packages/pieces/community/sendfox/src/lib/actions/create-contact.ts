@@ -8,6 +8,8 @@ export const createContact = createAction({
   auth: sendfoxAuth,
   displayName: 'Create Contact',
   description: 'Create a new contact',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a new contact (subscriber) to SendFox by email, optionally setting first/last name and assigning the contact to a list. Use to add or onboard a subscriber. Not idempotent: each call posts the contact, so repeating may create or re-add the entry.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

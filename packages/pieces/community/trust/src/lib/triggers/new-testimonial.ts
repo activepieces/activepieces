@@ -45,6 +45,10 @@ export const newTestimonialTrigger = createTrigger({
   displayName: 'New Testimonial Created',
   description:
     'Triggers when a new testimonial is created in your Trust workspace.',
+  aiMetadata: {
+    description:
+      'Fires when a new testimonial is created in the connected Trust workspace, detected by polling for testimonials with a creation timestamp newer than the last poll. Each event represents one customer testimonial, including the author details (name, email, title, company), testimonial text, star rating, and publication/consent status.',
+  },
   props: {},
   sampleData: {
     id: 'testimonial_01abc123',

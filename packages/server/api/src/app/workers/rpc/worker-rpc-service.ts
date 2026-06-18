@@ -1,4 +1,4 @@
-import { apVersionUtil } from '@activepieces/server-utils'
+import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import {
     ApEdition,
     ExecutionType,
@@ -12,6 +12,7 @@ import {
     logSerializer,
     PiecePackage,
     RunInternalError,
+    RunInternalErrorSource,
     StreamStepProgress,
     truncateFailedStepMessage,
     tryCatch,
@@ -31,6 +32,7 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
@@ -44,6 +46,22 @@ const getPollQueueName = (workerGroupId?: string): string => {
     return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
 }
 
+let pagedForUnreadableAppVersion = false
+
+function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: string): void {
+    if (pagedForUnreadableAppVersion) {
+        return
+    }
+    pagedForUnreadableAppVersion = true
+    onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
+        code: 'APP_VERSION_READ_FAILED',
+        message: 'App could not read its release version from package.json (reported as 0.0.0); worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)',
+        params: { appVersion },
+    }).catch((pageError) => {
+        log.error({ pageError }, '[workerRpc#poll] Failed to send on-call page for unreadable app version')
+    })
+}
+
 export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
     return {
         async poll(input) {
@@ -51,8 +69,17 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             await machineService(log).onConnection(input, workerGroupId)
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
-            if (workerVersion !== appVersion) {
-                log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
+            if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
+                const versionUnreadable = workerVersion === UNKNOWN_VERSION || appVersion === UNKNOWN_VERSION
+                if (versionUnreadable) {
+                    log.error({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on deploy completion, check the worker/app deployment (cwd/packaging)')
+                }
+                else {
+                    log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
+                }
+                if (appVersion === UNKNOWN_VERSION) {
+                    pageOnceForUnreadableAppVersion(log, appVersion)
+                }
                 return null
             }
             const pollQueueName = getPollQueueName(workerGroupId)
@@ -76,7 +103,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async uploadRunLog(input) {
-            const internalErrorEnabled = system.getEdition() !== ApEdition.CLOUD
+            const internalErrorEnabled = input.internalError?.source === RunInternalErrorSource.ENGINE || system.getEdition() !== ApEdition.CLOUD
             if (internalErrorEnabled && !isNil(input.internalError) && !isNil(input.logsFileId)) {
                 await persistInternalErrorToLogs({
                     log,

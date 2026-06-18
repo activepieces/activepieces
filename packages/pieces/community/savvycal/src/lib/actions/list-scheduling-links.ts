@@ -7,6 +7,8 @@ export const listSchedulingLinksAction = createAction({
   name: 'list_scheduling_links',
   displayName: 'List Scheduling Links',
   description: 'Returns all scheduling links configured in your SavvyCal account.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the scheduling links in the account, optionally filtered to a single team (or to personal links). Use to discover available links and their ids before booking, querying slots, or managing a link. Read-only and idempotent.', idempotent: true },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,

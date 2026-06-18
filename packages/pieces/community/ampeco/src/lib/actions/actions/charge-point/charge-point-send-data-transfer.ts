@@ -14,6 +14,8 @@ export const chargePointSendDataTransferAction = createAction({
   name: 'chargePointSendDataTransfer',
   displayName: 'Actions - Charge Point - Send Data Transfer',
   description: 'Charge Point / Send Data Transfer.',
+  audience: 'both',
+  aiMetadata: { description: 'Send an OCPP DataTransfer message to a charge point carrying vendor-specific data, identified by a vendor id and optional message id and free-form data payload. Use to invoke proprietary/vendor extensions not covered by standard OCPP actions. Effects depend on the vendor implementation, so treat it as a non-idempotent command.', idempotent: false },
   props: {
         
   chargePoint: Property.Number({

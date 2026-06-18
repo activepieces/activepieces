@@ -24,6 +24,7 @@ interface Category {
 }
 
 export const categorizeText = createAction({
+  audience: 'human',
   auth: grokAuth,
   name: 'categorize_text',
   displayName: 'Categorize Text',

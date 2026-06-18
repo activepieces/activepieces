@@ -18,6 +18,12 @@ export const importDesign = createAction({
   name: 'import_design',
   displayName: 'Import Design',
   description: 'Import an external file (PDF, PSD, DOCX, PPTX, etc.) into Canva as a new design. This creates an asynchronous job that you can monitor for completion.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads an external document or design file (PDF, DOCX, PPTX, XLSX, PSD, AI, and similar) and converts it into a new Canva design via an asynchronous import job, with a required title of at most 50 characters. Pick this to bring existing files into Canva as editable designs; use Create Design for a blank design and Upload Asset for images/videos meant for the media library. Not idempotent: each call starts a new import and can create duplicate designs.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'Design File',

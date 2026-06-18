@@ -9,6 +9,12 @@ export const runUserVerificationProfileAction = createAction({
   displayName: 'Start Identity Verification for profile',
   description:
     'Kicks off a new identity check for a person. AiPrise will run the checks defined in your chosen template (e.g. ID document scan, liveness, address).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a server-side identity (KYC) verification for an existing user profile by running the checks bundled in a given AiPrise template (ID scan, liveness, address, etc.). Use when you want to programmatically begin verifying a person you have already created a profile for, rather than sending them a hosted link. Requires a template ID and your user_profile_id. Not idempotent — each call launches a new verification session.',
+    idempotent: false,
+  },
   props: {
     template_id: Property.ShortText({
       displayName: 'Verification Template',

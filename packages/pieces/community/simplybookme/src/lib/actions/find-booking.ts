@@ -6,6 +6,8 @@ export const findBooking = createAction({
   name: 'find_booking',
   displayName: 'Get Bookings',
   description: 'Returns list of bookings filtered by given parameters',
+  audience: 'both',
+  aiMetadata: { description: 'Lists bookings in SimplyBook.me, optionally narrowed by date/time range, provider, service, client, confirmation status, and booking type (e.g. all, cancelled, approved). Use to look up appointments or retrieve a booking ID for a follow-up action; leaving all filters empty returns the broadest list. Idempotent: read-only with no side effects.', idempotent: true },
   props: {
     dateFrom: Property.ShortText({
       displayName: 'Date From',

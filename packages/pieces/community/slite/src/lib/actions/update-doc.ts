@@ -11,6 +11,12 @@ export const sliteUpdateDocAction = createAction({
   displayName: 'Update Doc',
   description:
     'Updates a specific part (tile) of a doc. Fields you leave blank are kept unchanged.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Edits a single tile (content block) within a Slite doc, identified by the note id plus the tile id, optionally setting its header, Markdown content, link, icon, and status badge; omitted fields stay unchanged. Choose this for a targeted block-level edit rather than rewriting the whole doc (see Replace Doc for that); the tile id must be copied from the block in Slite. Idempotent: applying the same input to the same tile yields the same final state.',
+    idempotent: true,
+  },
   props: {
     note_id: sliteProps.noteId({ required: true }),
     tile_id: Property.ShortText({

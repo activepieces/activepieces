@@ -10,6 +10,12 @@ export const createTranscription = createAction({
   displayName: 'Create Transcription',
   description:
     'Initiate a pre-recorded transcription job from an audio or video URL',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits a pre-recorded audio or video file (referenced by URL) to Gladia for speech-to-text transcription, then fetches the created job by id. The audio_url must point to a publicly reachable file or a Gladia-hosted upload (use the Upload Audio File action first for local files). Optional flags enable add-ons like language hints, code switching, subtitles, diarization, translation, summarization, sentiment analysis, and sentence detection. Not idempotent: each call starts a new transcription job.',
+    idempotent: false,
+  },
   props: {
     audio_url: Property.LongText({
       displayName: 'Audio URL',

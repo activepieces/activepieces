@@ -9,6 +9,9 @@ export const newContactBook = createTrigger({
   name: 'new_contact_book',
   displayName: 'New Contact Book',
   description: 'Triggers when new contact books are created',
+  aiMetadata: {
+    description: 'Fires when a new contact book is created in Missive. Delivered via a manually configured Missive webhook rule; each event carries the contact book details (name, owner, organization, permissions). Use to react to the creation of a new contact database.',
+  },
   auth: missiveAuth,
   props: {
     setupInstructions: Property.MarkDown({

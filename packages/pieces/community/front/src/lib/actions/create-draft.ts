@@ -9,6 +9,12 @@ export const createDraft = createAction({
   name: 'createDraft',
   displayName: 'Create Draft',
   description: 'Create a draft message in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create an unsent draft message on a channel that starts a new conversation, optionally private to the author or shared with the team (Mode). Use when a human should review before sending rather than dispatching immediately ("Send Message" sends right away); to draft a reply within an existing conversation use "Create Draft Reply". Not idempotent: each call creates a new draft.',
+    idempotent: false,
+  },
   props: {
     channel_id: channelIdDropdown,
     to: Property.Array({

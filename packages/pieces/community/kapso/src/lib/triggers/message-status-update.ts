@@ -26,6 +26,9 @@ export const messageStatusUpdate = createTrigger({
   displayName: 'Message Status Update',
   description:
     'Triggers when a message status changes (sent, delivered, read).',
+  aiMetadata: {
+    description: 'Fires when a delivery-status update arrives for a previously sent WhatsApp message — sent, delivered, read, or failed. An optional status filter restricts firing to a single status; left as All, it fires on any status change. Represents the lifecycle of outbound messages, useful for tracking delivery or detecting failures.',
+  },
   props: {
     setup: Property.MarkDown({
       value: webhookSetupMarkdown,

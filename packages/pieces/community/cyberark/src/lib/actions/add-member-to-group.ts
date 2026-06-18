@@ -10,6 +10,11 @@ export const addMemberToGroup = createAction({
   name: 'add_member_to_group',
   displayName: 'Add Member to Group',
   description: 'Adds a user as a member to an existing Vault group (requires Add/Update users permissions)',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds a member to an existing Vault user group, where the member is either a Vault user or a domain user (domain mode requires the domain DNS name). Use to grant group-based permissions. Requires Add/Update Users permissions. Effectively idempotent on the membership keyed by group and member, though re-adding an existing member may surface an error.',
+    idempotent: true,
+  },
   props: {
     groupId: groupIdDropdown,
     memberId: memberIdDropdown,

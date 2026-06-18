@@ -103,15 +103,16 @@ function buildPositions({ step, offsetX, offsetY, positions }: {
 
 function computeRouterChildOffsets(
     boundingBoxes: ReadonlyArray<{ width: number, left: number, right: number }>,
+    branchGap: number = FLOW_CANVAS_HSPACE,
 ): number[] {
     if (boundingBoxes.length === 0) return []
     const totalWidth = boundingBoxes.reduce((sum, b) => sum + b.width, 0)
-        + FLOW_CANVAS_HSPACE * (boundingBoxes.length - 1)
+        + branchGap * (boundingBoxes.length - 1)
     let deltaLeftX = -(totalWidth - boundingBoxes[0].left - boundingBoxes[boundingBoxes.length - 1].right) / 2
         - boundingBoxes[0].left
     return boundingBoxes.map(b => {
         const x = deltaLeftX + b.left
-        deltaLeftX += b.width + FLOW_CANVAS_HSPACE
+        deltaLeftX += b.width + branchGap
         return x
     })
 }

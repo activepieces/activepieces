@@ -12,6 +12,8 @@ export const sendImageManualAction = createAction({
   name: 'whatsscale_send_image_manual',
   displayName: 'Send an Image (Manual Entry)',
   description: 'Send an image by entering a phone number or group ID manually.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an image to a recipient typed in directly rather than picked from a list, with an optional caption. Set the chat type to Contact (then a phone number with country code) or Group (then a bare group ID). Pick this when you already hold the raw number/ID; use the contact, group, CRM-contact, or channel image variants when selecting from session lists. Requires a directly downloadable image URL. Not idempotent: each call delivers another image.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     chatType: Property.StaticDropdown({

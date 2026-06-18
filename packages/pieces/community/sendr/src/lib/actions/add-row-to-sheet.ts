@@ -8,6 +8,8 @@ export const addRowToSheet = createAction({
   name: 'add_row_to_sheet',
   displayName: 'Add Row to Sheet',
   description: 'Adds a new contact or record to a selected contact list (sheet).',
+  audience: 'both',
+  aiMetadata: { description: 'Appends a new contact/record row to a sheet. Provide the sheet id and a key-value object where keys match the sheet column names (call Get Sheet Columns first to learn them). Not idempotent: each call inserts another row.', idempotent: false },
   props: {
     sheet: sheetDropdown,
     instructions: Property.MarkDown({

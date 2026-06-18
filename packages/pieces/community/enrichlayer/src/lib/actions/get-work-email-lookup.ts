@@ -9,6 +9,12 @@ export const getWorkEmailLookup = createAction({
   displayName: 'Look Up Work Email',
   description:
     'Get the work email address for a professional network profile. 95%+ deliverability guarantee (3 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Find a person's work (business) email address from their professional-network profile URL, with a 95%+ deliverability guarantee. Read-only and safe to retry. Use for B2B/work contact; for personal emails use Look Up Personal Email, and to go from an email back to profiles use Reverse Email Lookup. Processing may be asynchronous, so an optional callback URL can be supplied for completion notification.",
+    idempotent: true,
+  },
   props: {
     profile_url: Property.ShortText({
       displayName: 'Profile URL',

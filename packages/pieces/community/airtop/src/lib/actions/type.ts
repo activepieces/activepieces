@@ -10,6 +10,11 @@ export const typeAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Type',
 	description: 'Type into a browser window at the specified field.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Types text into an input in a session window, with options to clear the field first, press Enter and/or Tab afterward, and wait for navigation; the target field can be located by a natural-language element description or left to the active focus. Use this to fill forms or search boxes. Requires session id, window id, and the text; not idempotent since it mutates the page and may submit forms or trigger navigation.',
+		idempotent: false,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,

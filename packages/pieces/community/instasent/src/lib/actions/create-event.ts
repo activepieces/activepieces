@@ -9,6 +9,8 @@ export const createEvent = createAction({
     name: 'add_event',
     displayName: 'Add Event',
     description: 'Add a contact event',
+    audience: 'both',
+    aiMetadata: { description: 'Records a contact event in Instasent for a given User ID and event type (selected from the datasource event specs), with event-type-specific parameters loaded dynamically. Use to track an activity or behavior against a contact. Requires an Event ID, which the platform uses to deduplicate — sending the same Event ID again will not create a duplicate, so the call is idempotent on Event ID.', idempotent: true },
     auth: instasentAuth,
     props: {
         user_id: Property.ShortText({

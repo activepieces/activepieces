@@ -21,6 +21,12 @@ export const addFileAttachment = createAction({
   displayName: 'Add File Attachment to Object',
   description:
     'Adds an attachment (an uploaded file or a link) to a Purchase Order, Supplier, or Contract in Coupa.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attach a file or a URL link to an existing Coupa purchase order, supplier, or contract record. Pick the mode via attachmentSource: upload a file directly, or link a URL instead. Not idempotent — each run appends a new attachment to the record, so retries create duplicates.',
+    idempotent: false,
+  },
   props: {
     module: attachmentModuleProperty,
     parentRecord: Property.DynamicProperties({

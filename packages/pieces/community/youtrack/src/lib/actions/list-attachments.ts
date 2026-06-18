@@ -8,6 +8,8 @@ export const listAttachmentsAction = createAction({
   name: 'list_attachments',
   displayName: 'List Attachments',
   description: 'Lists all attachments on a specific issue with metadata (name, size, type).',
+  audience: 'both',
+  aiMetadata: { description: 'List the attachments on an issue, given its ID, with metadata (name, size, content type, author) capped by an optional limit. Use to discover attachment IDs before downloading or deleting them. Read-only and idempotent.', idempotent: true },
   props: {
     issue: issueDropdown,
     limit: Property.Number({ displayName: 'Limit', description: 'Max attachments. Default 50.', required: false, defaultValue: 50 }),

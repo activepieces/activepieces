@@ -16,12 +16,18 @@ import { ApBigAddButtonNode } from '../utils/types';
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
     const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
-    const [readonly, activeDraggingStep, isPieceSelectorOpened] =
-      useBuilderStateContext((state) => [
-        state.readonly,
-        state.activeDraggingStep,
-        state.openedPieceSelectorStepNameOrAddButtonId === id,
-      ]);
+    const [
+      readonly,
+      activeDraggingStep,
+      isPieceSelectorOpened,
+      canvasOrientation,
+    ] = useBuilderStateContext((state) => [
+      state.readonly,
+      state.activeDraggingStep,
+      state.openedPieceSelectorStepNameOrAddButtonId === id,
+      state.canvasOrientation,
+    ]);
+    const isHorizontal = canvasOrientation === 'horizontal';
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
       id: draggableId,
@@ -39,13 +45,14 @@ const ApBigAddButtonCanvasNode = React.memo(
         setIsStepInsideDropzone(false);
       },
     });
+    const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation];
     return (
       <>
         {
           <div
             style={{
-              height: `${flowCanvasConsts.AP_NODE_SIZE.STEP.height}px`,
-              width: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,
+              height: `${stepNodeSize.height}px`,
+              width: `${stepNodeSize.width}px`,
             }}
             className="flex justify-center items-center "
           >
@@ -104,10 +111,10 @@ const ApBigAddButtonCanvasNode = React.memo(
                     //this is an invisible div that is used to show the drop indicator when the step is being dragged over the big add button, it is a rectangle so there is more leanancy to drop the step on the big add button
                     <div
                       style={{
-                        height: `${flowCanvasConsts.AP_NODE_SIZE.STEP.height}px`,
-                        width: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,
+                        height: `${stepNodeSize.height}px`,
+                        width: `${stepNodeSize.width}px`,
                         top: `-${
-                          flowCanvasConsts.AP_NODE_SIZE.STEP.height / 2 -
+                          stepNodeSize.height / 2 -
                           flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width / 2
                         }px`,
                       }}
@@ -123,14 +130,14 @@ const ApBigAddButtonCanvasNode = React.memo(
             {readonly && (
               <div
                 style={{
-                  height: `${flowCanvasConsts.AP_NODE_SIZE.STEP.height}px`,
-                  width: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,
+                  height: `${stepNodeSize.height}px`,
+                  width: `${stepNodeSize.width}px`,
                 }}
                 className=" cursor-auto  flex items-center justify-center relative "
               >
                 <svg
-                  height={flowCanvasConsts.AP_NODE_SIZE.STEP.height}
-                  width={flowCanvasConsts.AP_NODE_SIZE.STEP.width}
+                  height={stepNodeSize.height}
+                  width={stepNodeSize.width}
                   className="overflow-visible border-transparent "
                   style={{
                     stroke: 'var(--xy-edge-stroke, var(--xy-edge-stroke))',
@@ -139,11 +146,15 @@ const ApBigAddButtonCanvasNode = React.memo(
                 >
                   <g>
                     <path
-                      d={`M ${
-                        flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2
-                      } -10 v ${
-                        flowCanvasConsts.AP_NODE_SIZE.STEP.height + 14
-                      }`}
+                      d={
+                        isHorizontal
+                          ? `M -10 ${stepNodeSize.height / 2} h ${
+                              stepNodeSize.width + 14
+                            }`
+                          : `M ${stepNodeSize.width / 2} -10 v ${
+                              stepNodeSize.height + 14
+                            }`
+                      }
                       fill="transparent"
                       strokeWidth="1.5"
                     />
@@ -156,12 +167,12 @@ const ApBigAddButtonCanvasNode = React.memo(
 
         <Handle
           type="source"
-          position={Position.Bottom}
+          position={isHorizontal ? Position.Right : Position.Bottom}
           style={flowCanvasConsts.HANDLE_STYLING}
         />
         <Handle
           type="target"
-          position={Position.Top}
+          position={isHorizontal ? Position.Left : Position.Top}
           style={flowCanvasConsts.HANDLE_STYLING}
         />
       </>

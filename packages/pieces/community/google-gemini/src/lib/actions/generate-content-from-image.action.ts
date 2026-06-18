@@ -8,6 +8,7 @@ import { googleGeminiAuth } from '../auth';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 
 export const generateContentFromImageAction = createAction({
+  audience: 'human',
   description:
     'Generate content using Google Gemini using the "gemini-pro-vision" model',
   displayName: 'Generate Content from Image',

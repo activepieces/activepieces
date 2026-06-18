@@ -1,7 +1,7 @@
 # App Connections
 
 ## Summary
-App Connections store encrypted authentication credentials (OAuth2 tokens, API keys, basic auth, or custom piece-defined fields) that flow steps use to call external services. They support automatic OAuth2 token refresh with distributed locking, a dual-scope model (project-level or platform-wide), and a "replace" operation that atomically rewires all flow references from one connection to another. The module handles all OAuth2 variants: user-supplied credentials, platform-managed OAuth apps, and Activepieces-hosted cloud OAuth, Users can optionally select a subset of a piece's declared OAuth2 scopes when creating a connection.
+App Connections store encrypted authentication credentials (OAuth2 tokens, API keys, basic auth, custom piece-defined fields, or OIDC props) that flow steps use to call external services. They support automatic OAuth2 token refresh with distributed locking, a dual-scope model (project-level or platform-wide), and a "replace" operation that atomically rewires all flow references from one connection to another. The module handles all OAuth2 variants: user-supplied credentials, platform-managed OAuth apps, and Activepieces-hosted cloud OAuth. Users can optionally select a subset of a piece's declared OAuth2 scopes when creating a connection. OIDC connections enable pieces to obtain short-lived credentials from cloud providers (e.g. AWS via IRSA/Web Identity) using the Activepieces platform as an OIDC identity provider.
 
 ## Key Files
 - `packages/server/api/src/app/app-connection/` — backend module (controller, service, entity)
@@ -21,6 +21,11 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - `packages/web/src/app/connections/create-edit-connection-dialog.tsx` — create/edit connection form dialog
 - `packages/web/src/features/connections/components/edit-global-connection-dialog.tsx` — edit global connection dialog
 - `packages/web/src/features/connections/components/rename-connection-dialog.tsx` — rename connection dialog
+- `packages/web/src/app/connections/oidc-connection-settings.tsx` — OIDC connection form component
+- `packages/server/api/src/app/core/security/oidc/oidc-key-manager.ts` — RSA key lifecycle: mutex-protected caching, auto-generation (CE), RFC 7638 kid fingerprint
+- `packages/server/api/src/app/core/security/oidc/oidc.module.ts` — module wrapper that registers the OIDC token controller under `/v1/worker`
+- `packages/server/api/src/app/core/security/oidc/oidc-token.controller.ts` — engine-only endpoint that issues RS256 JWTs (`POST /api/v1/worker/oidc-token`)
+- `packages/server/api/src/app/core/security/oidc/oidc-discovery.controller.ts` — public OIDC discovery endpoints (`GET /.well-known/openid-configuration`, `GET /.well-known/jwks.json`)
 
 ## Edition Availability
 - **Community (CE)**: Available — project-scoped connections fully supported.
@@ -30,7 +35,10 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 ## Domain Terms
 - **AppConnection**: An encrypted credential record bound to a platform and optionally scoped to one or more projects.
 - **AppConnectionScope**: `PROJECT` (restricted to projects in `projectIds[]`) or `PLATFORM` (available to all projects).
-- **AppConnectionType**: One of `OAUTH2`, `CLOUD_OAUTH2`, `PLATFORM_OAUTH2`, `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH`, `NO_AUTH`.
+- **AppConnectionType**: One of `OAUTH2`, `CLOUD_OAUTH2`, `PLATFORM_OAUTH2`, `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH`, `NO_AUTH`, `OIDC`.
+- **OIDCConnectionValue**: `{ type: OIDC, props: T }` — piece-defined OIDC props (role ARN, audience, etc.) stored encrypted; the actual token is fetched at runtime from the `POST /api/v1/worker/oidc-token` endpoint.
+- **OIDC provider**: The Activepieces server acts as an OpenID Connect identity provider, exposing `/.well-known/openid-configuration` and `/.well-known/jwks.json` so cloud providers (e.g. AWS STS) can verify issued tokens.
+- **OIDC kid**: Derived via RFC 7638 SHA-256 thumbprint of the RSA public key — rotates automatically when the key material changes, preventing JWKS cache poisoning.
 - **externalId**: The stable identifier for a connection within a project; referenced in flow step settings (survives rename).
 - **preSelectForNewProjects**: Boolean flag on platform-scope connections; when true, auto-added to `projectIds` for every new project.
 - **Global connection**: A `PLATFORM`-scope connection managed from the platform admin UI, shared across all (or selected) projects.
@@ -40,7 +48,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 
 **AppConnection**: id, displayName, externalId, type (AppConnectionType), status (ACTIVE/EXPIRED/ERROR), value (EncryptedObject), platformId, pieceName, pieceVersion, ownerId (nullable FK), projectIds[] (string array — multi-project), scope (PROJECT/PLATFORM), metadata (JSONB), preSelectForNewProjects (boolean).
 
-## Connection Types (7)
+## Connection Types (8)
 
 | Type | Value Fields | Refresh |
 |------|-------------|---------|
@@ -51,6 +59,40 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 | BASIC_AUTH | username, password | None |
 | CUSTOM_AUTH | piece-defined custom fields | None |
 | NO_AUTH | (empty) | None |
+| OIDC | piece-defined props (e.g. role ARN, audience) — token fetched at runtime | None (short-lived JWT issued per-request) |
+
+## OIDC Provider
+
+Activepieces acts as an OIDC identity provider to enable pieces to assume cloud roles without long-lived credentials (e.g. AWS IRSA / Web Identity Federation).
+
+**Runtime flow:**
+1. Engine calls `POST /api/v1/worker/oidc-token` with `{ audience, expiresInSeconds? }` (engine-only endpoint, guarded by `securityAccess.engine()`)
+2. Server issues a signed RS256 JWT with `sub: platform:{platformId}:project:{projectId}`, `aud` set to the requested audience (e.g. `sts.amazonaws.com`), TTL defaults to 1 hour (capped at 1 hour)
+3. Piece exchanges the JWT with the cloud provider (e.g. AWS STS `AssumeRoleWithWebIdentity`) to get temporary credentials
+
+**Caller contract** (pieces calling from `run()` via `context.server`):
+- The JSON body is required: `audience` (non-empty after trim) is mandatory; `expiresInSeconds` is optional (integer, 60–3600, default 3600). Requests without a body get `400`.
+
+```ts
+const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
+    method: 'POST',
+    headers: {
+        Authorization: `Bearer ${server.token}`,
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ audience: 'sts.amazonaws.com' }),
+})
+const { token } = await response.json()
+```
+
+**Discovery endpoints** (public, CORS-open, available when `system.isApp()` is true):
+- `GET /.well-known/openid-configuration` — issuer metadata pointing to the JWKS URI
+- `GET /.well-known/jwks.json` — RSA public key set; `kid` is an RFC 7638 SHA-256 thumbprint
+
+**Key management** (`oidcKeyManager`):
+- Production: key provided via `AP_OIDC_RSA_PRIVATE_KEY` env var (base64-encoded PEM)
+- CE / dev: key auto-generated and persisted to local file store on first use
+- Concurrent access is safe: `privateKeyMutex` and `publicKeyMutex` guard caching independently to avoid deadlocks
 
 ## Scope
 

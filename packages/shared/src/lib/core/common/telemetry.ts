@@ -152,6 +152,33 @@ type PieceSelectorSearch = {
     isTrigger: boolean
     selectedActionOrTriggerName: string | null
 }
+
+type SignUpSubmitted = {
+    method: 'email'
+}
+
+type SignUpFailed = {
+    errorCode: string
+}
+
+type EmailVerificationCompleted = Record<string, never>
+
+type SignInSubmitted = {
+    method: 'email'
+}
+
+type SignInFailed = {
+    errorCode: string
+}
+
+type FederatedLoginStarted = {
+    provider: 'google' | 'saml'
+}
+
+type SignedIn = {
+    userId: UserId
+    platformId: string
+}
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
@@ -188,6 +215,13 @@ export enum TelemetryEventName {
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'opened.pricing.from.dashboard',
     PIECE_SELECTOR_SEARCH = 'piece.selector.search',
+    SIGN_UP_SUBMITTED = 'signup.submitted',
+    SIGN_UP_FAILED = 'signup.failed',
+    EMAIL_VERIFICATION_COMPLETED = 'email.verification.completed',
+    SIGN_IN_SUBMITTED = 'signin.submitted',
+    SIGN_IN_FAILED = 'signin.failed',
+    FEDERATED_LOGIN_STARTED = 'federated.login.started',
+    SIGNED_IN = 'signed.in',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -258,3 +292,16 @@ export type TelemetryEvent =
   | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
   | BaseTelemetryEvent<TelemetryEventName.MCP_SERVER_CONNECTED, McpServerConnected>
   | BaseTelemetryEvent<TelemetryEventName.PIECE_SELECTOR_SEARCH, PieceSelectorSearch>
+  | BaseTelemetryEvent<TelemetryEventName.SIGN_UP_SUBMITTED, SignUpSubmitted>
+  | BaseTelemetryEvent<TelemetryEventName.SIGN_UP_FAILED, SignUpFailed>
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
+  EmailVerificationCompleted
+  >
+  | BaseTelemetryEvent<TelemetryEventName.SIGN_IN_SUBMITTED, SignInSubmitted>
+  | BaseTelemetryEvent<TelemetryEventName.SIGN_IN_FAILED, SignInFailed>
+  | BaseTelemetryEvent<
+  TelemetryEventName.FEDERATED_LOGIN_STARTED,
+  FederatedLoginStarted
+  >
+  | BaseTelemetryEvent<TelemetryEventName.SIGNED_IN, SignedIn>

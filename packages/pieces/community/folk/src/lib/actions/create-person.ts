@@ -9,6 +9,11 @@ export const createPerson = createAction({
   displayName: 'Create Person',
   description:
     'Create a new person in your Folk workspace. You can link them to a company, add contact details, and assign to a group.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new person (contact) record in the Folk CRM, optionally linking them to companies by ID or name, setting a job title and birthday, and adding emails, phones, addresses, URLs, and a group. Use to add a new contact when none exists; provide a name via first/last or full name. Not idempotent: each call creates a separate person, so check for existing contacts first to avoid duplicates.',
+    idempotent: false,
+  },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

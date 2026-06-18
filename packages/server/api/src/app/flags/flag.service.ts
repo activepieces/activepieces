@@ -9,6 +9,7 @@ import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-send
 import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { knowledgeBaseSchema } from '../knowledge-base/knowledge-base-schema'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 import { webhookSecretsUtils } from './webhook-secrets-util'
@@ -68,6 +69,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.ENVIRONMENT,
                 value: system.get(AppSystemProp.ENVIRONMENT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.FRONTEND_SENTRY_DSN,
+                value: system.get(AppSystemProp.FRONTEND_SENTRY_DSN) ?? null,
                 created,
                 updated,
             },
@@ -305,6 +312,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SMTP_CONFIGURED,
                 value: smtpEmailSender(log).isSmtpConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PGVECTOR_AVAILABLE,
+                value: await knowledgeBaseSchema.isVectorExtensionInstalled(),
                 created,
                 updated,
             },

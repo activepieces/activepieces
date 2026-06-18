@@ -9,6 +9,8 @@ export const getContact = createAction({
   name: 'tarvent_get_contact',
   displayName: 'Find Contact',
   description: 'Finds a contact by your custom key data field (typically this is by email).',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a contact within a Tarvent audience by email (the audience\'s key field). Use to retrieve a contact or its ID before acting on it. If the audience uses a custom identifier, this returns the first contact matching the email, so target a specific record by ID when precision matters. Idempotent read-only lookup.', idempotent: true },
   props: {
     audienceId: tarventCommon.audienceId(true, ''),
     email: Property.ShortText({

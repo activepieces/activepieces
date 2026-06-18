@@ -10,6 +10,12 @@ export const findCustomer = createAction({
   name: 'find_customer',
   displayName: 'Find Customer',
   description: 'Finds a customer by email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a Help Scout customer by exact email and returns the first match (with a found flag). Use to resolve a customer ID or check existence before creating a customer or associating a conversation. Email is required; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

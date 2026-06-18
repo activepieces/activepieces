@@ -8,6 +8,9 @@ export const newRecording = createTrigger({
     name: 'newRecording',
     displayName: 'New Recording',
     description: 'Triggers when a new call recording is available',
+    aiMetadata: {
+        description: 'Fires when a new call recording becomes available for the selected ConnectUC domain and users. Represents a completed, recorded call, providing the recording metadata and download/media URLs.',
+    },
     props: {
         domain: domainProp(),
         users: usersProp(),

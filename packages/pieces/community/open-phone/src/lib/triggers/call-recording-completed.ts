@@ -14,6 +14,9 @@ export const callRecordingCompleted = createTrigger({
   displayName: 'Call Recording Completed',
   description:
     'Fires when a call recording finishes. Useful for post-transcription or archival workflows.',
+  aiMetadata: {
+    description: 'Fires when a call recording becomes available after a call ends, delivering the call details and a recording URL. Use to drive transcription, archival, or post-call processing. Can be scoped to a specific OpenPhone number or all numbers.',
+  },
   props: {
     phoneNumbers: phoneNumberDropdown,
   },

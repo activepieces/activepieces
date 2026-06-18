@@ -7,6 +7,8 @@ export const searchAction = createAction({
   name: 'search',
   displayName: 'Search',
   description: 'Search the web, research papers, and proprietary datasets to retrieve relevant context.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a Valyu search over web pages, news, and/or Valyu proprietary datasets and returns ranked content for a free-text query. Use to gather grounding context or sources for a question; set search_type to scope to web, news, or proprietary indices (default searches all), and use url_only to return links without content. Read-only retrieval, so repeating the same query is safe.', idempotent: true },
   auth: valyuAuth,
   props: {
     query: Property.ShortText({

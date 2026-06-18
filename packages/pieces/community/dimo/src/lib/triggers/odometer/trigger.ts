@@ -14,6 +14,10 @@ export const odometerTrigger = createTrigger({
 	name: 'odometer-trigger',
 	displayName: 'Odometer Trigger',
 	description: 'Triggers when vehicle odometer meets the specified condition.',
+	aiMetadata: {
+		description:
+			'Fires via DIMO webhook when a monitored vehicle reports a travelled-distance (odometer) reading in kilometers that satisfies the configured comparison operator against the threshold. Each event represents a single odometer telemetry signal and includes the vehicle token ID, timestamp, and the distance in km and miles. Use to detect when a vehicle reaches a mileage milestone (e.g. service interval).',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		vehicleTokenIds: Property.Array({

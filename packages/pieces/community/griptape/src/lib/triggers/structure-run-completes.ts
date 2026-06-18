@@ -55,6 +55,10 @@ export const structureRunCompletes = createTrigger({
   name: 'structureRunCompletes',
   displayName: 'Structure Run Completes',
   description: '',
+  aiMetadata: {
+    description:
+      'Fires when a run for the selected Griptape Cloud structure reaches any terminal state, including SUCCEEDED, FAILED, ERROR, or CANCELLED. Polls for newly completed runs; use when you need to react to a finished structure run regardless of whether it succeeded.',
+  },
   props,
   sampleData: {},
   type: TriggerStrategy.POLLING,

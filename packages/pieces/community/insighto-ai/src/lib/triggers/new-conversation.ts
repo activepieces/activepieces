@@ -7,6 +7,9 @@ export const newConversation = createTrigger({
   name: 'new_conversation',
   displayName: 'New Conversation',
   description: 'Fires when an existing conversation is updated with a new message',
+  aiMetadata: {
+    description: 'Fires when an Insighto.ai conversation is updated with a new message, delivering the full conversation transcript along with the contact, widget, and assistant IDs.',
+  },
   props: {},
   auth: insightoAuth,
   sampleData: {

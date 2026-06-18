@@ -7,6 +7,8 @@ export const findOrCreateCase = createAction({
   name: 'find_or_create_case',
   displayName: 'Find or Create Case',
   description: 'Finds a case by name or creates a new one if it does not exist',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the MyCase case matching the given name (case-insensitive), creating it with the optional stage, practice area, parties, staff, and other fields only if no match exists. Use to guarantee a case exists without creating duplicates; repeat calls with the same name converge to one record and the extra fields apply only on creation. Use Create Case to always insert or Update Case to modify an existing one.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Case Name',

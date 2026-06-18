@@ -9,6 +9,12 @@ export const deleteBouncesBulk = createAction({
   displayName: 'Delete Bounces (Bulk)',
   description:
     'Remove bounced addresses from the Mailgun suppression list, either all at once for a domain or a single address.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Delete entries from a Mailgun domain\'s bounce suppression list. The scope selects the mode: "all" clears every bounce for the domain, while "single" removes one address (which is then required). Use to re-enable sending to addresses that previously bounced. Idempotent: deleting an already-absent bounce leaves the same end state with no extra effect.',
+    idempotent: true,
+  },
   props: {
     domain: mailgunCommon.domainDropdown,
     scope: Property.StaticDropdown({

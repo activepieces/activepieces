@@ -29,6 +29,12 @@ export const runQueryAction = createAction({
   displayName: 'Run a Query',
   description:
     'Execute a SQL query on BigQuery and return the results as flat rows',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs an arbitrary standard-SQL (or legacy-SQL) statement against BigQuery in a given project and returns the result rows, paginating up to the max-rows cap. Use it for any ad-hoc read or aggregation when no purpose-built action fits, or when you need full SQL control. Note that BigQuery SQL is not limited to reads — a DML/DDL statement passed here will mutate data — so idempotency depends on the query you supply; a plain SELECT is safe to repeat.',
+    idempotent: false,
+  },
   props: {
     project_id: projectIdProp,
     query: Property.LongText({

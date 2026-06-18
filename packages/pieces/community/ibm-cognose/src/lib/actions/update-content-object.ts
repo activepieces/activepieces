@@ -9,6 +9,8 @@ export const updateContentObjectAction = createAction({
   name: 'update_content_object',
   displayName: 'Update Content Object',
   description: 'Update an existing content object',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing content-store object (report, dashboard, folder, etc.) identified by its id, changing its name and/or description. The object type is required, and an optional version enables optimistic-concurrency checking that rejects the update if the object changed since it was fetched. Idempotent: re-applying the same values leaves the object in the same state.', idempotent: true },
   props: {
     objectId: contentObjectDropdown,
     type: Property.ShortText({

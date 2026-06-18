@@ -21,6 +21,7 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
 
 export const httpOauth2RequestAction = createAction({
+  audience: 'human',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
   displayName: 'Send an OAuth2 Request',

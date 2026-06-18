@@ -7,6 +7,8 @@ export const updatePerson = createAction({
   name: 'update_person',
   displayName: 'Update Person (Client)',
   description: 'Updates an existing individual client (person) in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Overwrites an existing client (selected by ID) with the supplied name, contact, address, people-group, and case-association fields. Use to modify a known client rather than create one; first and last name are always sent, so provide complete values. Re-running with the same input lands the client in the same state.', idempotent: true },
   props: {
     client_id: Property.Dropdown({
   auth: mycaseAuth,

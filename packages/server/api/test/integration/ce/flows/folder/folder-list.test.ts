@@ -1,3 +1,4 @@
+import { apId } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import qs from 'qs'
@@ -89,8 +90,10 @@ describe('Folder N+1 fix', () => {
         it('parses more than 20 folderIds as an array (qs arrayLimit)', async () => {
             const ctx = await createTestContext(app)
             const folders = await Promise.all(
-                Array.from({ length: 25 }, async () => {
-                    const folder = createMockFolder({ projectId: ctx.project.id })
+                // Unique displayName per folder: faker.lorem.word() collides across 25
+                // folders in one project, violating idx_folder_project_id_display_name.
+                Array.from({ length: 25 }, async (_item, index) => {
+                    const folder = createMockFolder({ projectId: ctx.project.id, displayName: `folder-${index}-${apId()}` })
                     await db.save('folder', folder)
                     return folder
                 }),

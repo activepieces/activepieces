@@ -9,6 +9,12 @@ export const createIncident = createAction({
   name: 'create_incident',
   displayName: 'Create Incident',
   description: 'Create a new PagerDuty incident using the REST API.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Opens a new incident on a PagerDuty service, requiring the requester email (From), the target service ID, and a title. Use to programmatically raise an alert/incident. Not idempotent — each call creates an incident, unless an Incident Key matching an already-open incident on the same service is supplied, in which case PagerDuty rejects the duplicate.',
+    idempotent: false,
+  },
   props: {
     fromEmail: fromEmailProp,
     serviceId: serviceIdProp,

@@ -9,6 +9,8 @@ export const updateConversationStateAction = createAction({
 	name: 'change_state',
 	displayName: 'Change Conversation State',
 	description: 'Updates the state of a conversation.',
+	audience: 'both',
+	aiMetadata: { description: 'Sets the workflow state of a Crisp conversation (unresolved, resolved, or pending), identified by website ID and conversation session ID. Use to mark a thread resolved or reopen it. Idempotent: re-applying the same target state leaves the conversation in that state with no extra effect.', idempotent: true },
 	props: {
 		websiteId: websiteIdProp,
 		sessionId: sessionIdProp,

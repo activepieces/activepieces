@@ -81,6 +81,10 @@ export const newPerson = createTrigger({
 	name: 'new_person',
 	displayName: 'New Person',
 	description: 'Triggers when a new person is created',
+	aiMetadata: {
+		description:
+			'Fires the moment a new person (contact) record is created in Pipedrive, with their name, emails, phones, owner, associated organization, labels, and custom fields. Use to start automations whenever a contact is added to the CRM.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

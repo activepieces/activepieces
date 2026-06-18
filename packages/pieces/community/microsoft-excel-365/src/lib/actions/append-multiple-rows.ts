@@ -41,6 +41,8 @@ export const appendMultipleRowsAction = createAction({
 	auth: excelAuth,
 	name: 'append_multiple_rows',
 	description: 'Appends multiple row of values to a worksheet.',
+	audience: 'both',
+	aiMetadata: { description: 'Append several rows of cell values to the bottom of a worksheet in one call, after the last used row. Use for bulk inserts into a plain (non-table) worksheet; for a defined Excel table use Append Rows to a Table instead. Not idempotent — re-running adds duplicate rows. Supports an optional filter to insert only rows whose chosen column matches/does not match a value.', idempotent: false },
 	displayName: 'Append Multiple Rows',
 	props: {
 		storageSource: commonProps.storageSource,

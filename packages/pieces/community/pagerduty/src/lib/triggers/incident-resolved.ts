@@ -7,6 +7,10 @@ export const incidentResolved = createTrigger({
   name: 'incidentResolved',
   displayName: 'Incident Resolved',
   description: 'Triggers when an incident is resolved.',
+  aiMetadata: {
+    description:
+      'Fires when a PagerDuty incident is resolved (closed), on the incident.resolved webhook event. Represents an incident transitioning to the resolved state, carrying its final details.',
+  },
   props: { instruction: instructionProp },
   sampleData: {
     event: {

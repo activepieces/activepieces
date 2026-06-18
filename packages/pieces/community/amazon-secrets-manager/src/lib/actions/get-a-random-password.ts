@@ -10,6 +10,12 @@ export const getARandomPassword = createAction({
   name: 'getARandomPassword',
   displayName: 'Generate Random Password',
   description: 'Generates a random password using AWS Secrets Manager.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates a random password using the AWS Secrets Manager service, with optional length and character-set controls (exclude specific characters/numbers/punctuation/case, include spaces, require each included type). Use when a flow needs a freshly generated strong password; it does not store anything. Not idempotent — each call returns a different password.',
+    idempotent: false,
+  },
   props: {
     passwordLength: Property.Number({
       displayName: 'Password Length',

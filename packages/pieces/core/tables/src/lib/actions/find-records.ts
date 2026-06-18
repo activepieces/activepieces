@@ -11,6 +11,7 @@ type FieldInfo = {
 };
 
 export const findRecords = createAction({
+  audience: 'human',
   name: 'tables-find-records',
   displayName: 'Find Records',
   description: 'Find records in a table with filters.',

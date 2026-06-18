@@ -16,6 +16,8 @@ export const createVideo = createAction({
 	name: 'create_video',
 	displayName: 'Create Video',
 	description: 'Produces a video based on a template.',
+	audience: 'both',
+	aiMetadata: { description: 'Render a video from a Placid template by filling its layers with provided data; choose this to produce a rendered video asset from a template. Requires a template UUID. By default the render is queued and returns immediately; enabling create_now blocks and polls until the video finishes. Not idempotent — each call queues a new render job.', idempotent: false },
 	props: {
 		template: videoTemplateDropdown,
 		layers: templateLayersProperty('video'),

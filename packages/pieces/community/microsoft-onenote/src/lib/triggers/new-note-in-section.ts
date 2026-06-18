@@ -61,6 +61,9 @@ export const newNoteInSectionTrigger = createTrigger({
 	name: 'new_note_in_section',
 	displayName: 'New Note in Section',
 	description: 'Fires when a new note is created in a specified section.',
+	aiMetadata: {
+		description: 'Fires when a new page (note) is created in a specific OneNote notebook section, detected by polling for pages newer than the last check ordered by creation time. Each event represents one newly created page.',
+	},
 	auth: oneNoteAuth,
 	props: {
 		notebook_id: Property.Dropdown({	

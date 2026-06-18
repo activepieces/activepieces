@@ -8,6 +8,8 @@ export const listDatabaseEvents = createAction({
   name: 'list_database_events',
   displayName: 'List Database Events',
   description: 'Retrieve all event logs for a database cluster.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the event log (configuration changes, maintenance, scaling) for one managed database cluster on the DigitalOcean account, identified by its cluster UUID. Use to audit or inspect recent activity on a specific cluster. Read-only and idempotent.', idempotent: true },
   props: {
     database_cluster_uuid: Property.Dropdown({
       displayName: 'Database Cluster',

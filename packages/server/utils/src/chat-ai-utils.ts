@@ -5,6 +5,7 @@ import {
     BedrockProviderAuthConfig,
     BedrockProviderConfig,
     chatPersistenceUtils,
+    chatToolClassification,
     CloudflareGatewayProviderConfig,
     OpenAICompatibleProviderConfig,
     PersistedChatPart,
@@ -87,16 +88,15 @@ function createChatModel({ provider, auth, config, modelId }: {
     }
 }
 
-const THINKING_PROVIDERS = new Set([
-    AIProviderName.ANTHROPIC,
-    AIProviderName.BEDROCK,
-    AIProviderName.OPENROUTER,
-    AIProviderName.ACTIVEPIECES,
-])
-
-function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName): ModelMessage[] {
-    if (THINKING_PROVIDERS.has(provider)) return messages
-
+/**
+ * Strips for ALL providers (not just non-thinking ones) because Anthropic rejects
+ * a re-sent `thinking` block whose `signature` didn't survive our DB round-trip /
+ * compaction / truncation reshaping ("Invalid `signature` in `thinking` block"),
+ * and prior-turn reasoning adds nothing the text + tool results don't already carry.
+ * In-flight thinking within one streamText call keeps its intact signature and is
+ * untouched — this only touches the cross-turn history we assemble.
+ */
+function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName): ModelMessage[] {
     const hasThinking = messages.some(
         (msg) => msg.role === 'assistant' && Array.isArray(msg.content)
             && (msg.content as Array<Record<string, unknown>>).some(
@@ -116,6 +116,48 @@ function stripThinkingBlocks(messages: ModelMessage[], provider: AIProviderName)
             return { ...msg, content: filtered }
         })
         .filter((msg): msg is ModelMessage => msg !== null)
+}
+
+function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[] {
+    const last = messages[messages.length - 1]
+    if (!last || last.role !== 'assistant' || !Array.isArray(last.content)) {
+        return messages
+    }
+
+    const resolvedToolCallIds = new Set(
+        messages
+            .flatMap((msg) => (msg.role === 'tool' && Array.isArray(msg.content) ? msg.content : []))
+            .flatMap((part) => (part.type === 'tool-result' ? [part.toolCallId] : [])),
+    )
+
+    const sanitizedParts = last.content.filter((part) => {
+        if (part.type === 'reasoning') {
+            return false
+        }
+        if (part.type === 'tool-call') {
+            return resolvedToolCallIds.has(part.toolCallId)
+        }
+        return true
+    })
+
+    const head = messages.slice(0, -1)
+    if (sanitizedParts.length === 0) {
+        return head
+    }
+    if (sanitizedParts.length === last.content.length) {
+        return messages
+    }
+    return [...head, { ...last, content: sanitizedParts }]
+}
+
+/**
+ * Collect the messages from EVERY step of a streamText turn, not just the last one.
+ * `result.response.messages` is the last step only — using it drops the tool calls and
+ * tool results of all earlier steps, so the persisted history would lose what the agent
+ * already did this conversation and it would re-run those tools on the next turn.
+ */
+function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
+    return steps.flatMap((step) => step.response.messages)
 }
 
 function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
@@ -212,8 +254,7 @@ function buildStepParts({ content }: {
                     const isAppSuccess = result.type === 'tool-result'
                         && outputRecord['success'] !== false
                         && outputRecord['isError'] !== true
-                        && !firstContentText.startsWith('❌')
-                        && !firstContentText.startsWith('⏳')
+                        && !chatToolClassification.hasFailureTextPrefix(firstContentText)
                         && !firstContentText.includes('cancelled by user')
                     const errorText = !isAppSuccess && firstContentText
                         ? firstContentText
@@ -240,6 +281,8 @@ function buildStepParts({ content }: {
 export const chatAiUtils = {
     createChatModel,
     stripThinkingBlocks,
+    sanitizeTruncatedAssistantTail,
+    collectStepMessages,
     buildProviderOptions,
     buildSystemPromptWithCaching,
     buildStepParts,

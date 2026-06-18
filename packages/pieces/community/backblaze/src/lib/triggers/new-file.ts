@@ -47,6 +47,9 @@ export const newBackBlazeFileTrigger = createTrigger({
   name: 'new_backblaze_file',
   displayName: 'New File',
   description: 'Trigger when a new file is uploaded.',
+  aiMetadata: {
+    description: 'Fires when a new object appears in the configured Backblaze B2 (S3-compatible) bucket, discovered by polling the bucket listing. An optional folder path restricts watching to objects under that prefix. Each event represents one newly seen object.',
+  },
   props: {
     folderPath: Property.ShortText({
       displayName: 'Folder Path',

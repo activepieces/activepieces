@@ -8,6 +8,12 @@ export const deleteList = createAction({
   displayName: 'Delete a list',
   description:
     'Permanently delete a list and all its items. This action cannot be undone.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete an entire list and all its items by list ID; this cannot be undone. To remove only specific entries while keeping the list, use Remove items from list instead. Effectively idempotent once deleted.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'List ID',

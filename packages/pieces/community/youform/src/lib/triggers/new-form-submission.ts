@@ -17,6 +17,10 @@ export const newSubmissionTrigger = createTrigger({
   auth: youformAuth,
   displayName: 'New Submission',
   description: 'Triggers When a new submission is recieved.',
+  aiMetadata: {
+    description:
+      'Fires when a respondent submits the selected Youform form. The event represents a single completed form submission and emits its full payload, including the submitted answers and submission metadata.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     formId: formIdDropdown,

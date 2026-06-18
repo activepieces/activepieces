@@ -13,6 +13,8 @@ export const getTasks = createAction({
   auth: harvestAuth,
   displayName: 'Get Tasks',
   description: 'Fetches Tasks',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the task types defined in a Harvest account (the work categories assignable to projects, not project-specific assignments); with no filters it returns all tasks, or narrow by active/inactive state or updated-since timestamp. Use to discover task IDs. Read-only and idempotent.', idempotent: true },
   props: {
       is_active: Property.ShortText({
       description: 'Pass `true` to only return active tasks and `false` to return inactive tasks.',

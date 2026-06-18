@@ -13,6 +13,8 @@ export const certificateReissueAnEmaidAction = createAction({
   name: 'certificateReissueAnEmaid',
   displayName: 'Actions - Id Tag - Certificate Reissue An EMAID',
   description: 'Certificate / Reissue an EMAID.',
+  audience: 'both',
+  aiMetadata: { description: 'Reissue the e-mobility account identifier (EMAID) certificate for an existing id tag, addressed by its numeric ID. Use to refresh a Plug & Charge contract certificate already associated with a tag; to mint a brand-new EMAID for a provisioning certificate, use certificate-issue-an-emaid instead. Not idempotent: each call issues a new certificate.', idempotent: false },
   props: {
         
   idTag: Property.Number({

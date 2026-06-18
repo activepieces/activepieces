@@ -9,6 +9,12 @@ export const enrichCompany = createAction({
   displayName: 'Enrich Company',
   description:
     'Get enriched company data with full firmographic details (uses credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrich a single known company by domain, LinkedIn URL, domain search ID, or numeric domain ID to retrieve full firmographic details. A read-only lookup that is safe to repeat (it consumes credits but does not change data). Pick this when you already have one company identifier; use Search Companies to discover companies by criteria.',
+    idempotent: true,
+  },
   props: {
     lookup_type: Property.StaticDropdown({
       displayName: 'Lookup Type',

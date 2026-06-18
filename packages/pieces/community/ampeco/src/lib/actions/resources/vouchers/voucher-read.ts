@@ -14,6 +14,8 @@ export const voucherReadAction = createAction({
   name: 'voucherRead',
   displayName: 'Resources - Vouchers - Voucher Read',
   description: 'Get a Voucher.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single voucher by its numeric id. Read-only and idempotent. Use this when you already know the id; to discover vouchers by code, status, or date use Vouchers Listing instead.', idempotent: true },
   props: {
         
   voucher: Property.Number({

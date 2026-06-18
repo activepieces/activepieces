@@ -13,6 +13,12 @@ export const generateVideo = createAction({
   name: 'generate_video',
   displayName: 'Generate Video',
   description: 'Create an AI-generated video from parameters',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates an AI video on Vadoo from a topic or custom script and waits (polls up to ~5 minutes) for it to finish, returning the completed video URL. Supports two content modes: pick a topic from the account list (or set topic to "Custom" and supply a prompt for a custom script), or pass a blog URL for blog-to-video. Optional voice, theme, language, duration, aspect ratio, captions, and background music control the output. Each call starts a new generation job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     topic: Property.Dropdown({
   auth: vadooAiAuth,

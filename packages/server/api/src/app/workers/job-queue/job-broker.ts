@@ -1,11 +1,8 @@
 import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
-import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis-connections'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
@@ -32,13 +29,11 @@ function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<
 }
 
 async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
-    const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     const worker = new BullMQWorker(
         queueName,
         undefined,
         {
             connection: await redisConnections.create(),
-            telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
             concurrency: 500,
             autorun: false,
             lockDuration: LOCK_DURATION_MS,

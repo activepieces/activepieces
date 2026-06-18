@@ -10,6 +10,11 @@ export const takeScreenshotAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Take Screenshot',
 	description: 'Captures a screenshot of the current window.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Captures a screenshot of a given session window, returned as base64 data or a download URL, scoped to the current viewport, the full page, or scan mode for problem pages. Use this to visually inspect what the browser currently shows; requires session id and window id. Read-only and idempotent in that it does not change page state, though each call captures the live view at that moment.',
+		idempotent: true,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,

@@ -8,6 +8,8 @@ export const deactivateUserAction = createAction({
   name: 'deactivate_user',
   displayName: 'Deactivate User',
   description: 'Deactivate (disable) a user in Okta',
+  audience: 'both',
+  aiMetadata: { description: 'Transitions an existing Okta user (by user ID) to the DEACTIVATED lifecycle state, disabling their access while preserving the account. Use to offboard or temporarily disable someone. Idempotent on end-state — re-running leaves the user deactivated, though it may re-send the notification email if that option is on.', idempotent: true },
   props: {
     userId: userIdDropdown(),
     sendEmail: Property.Checkbox({

@@ -8,6 +8,12 @@ export const listScheduledPosts = createAction({
   name: 'list_scheduled_posts',
   displayName: 'List Scheduled Posts',
   description: 'Get a list of pending scheduled posts',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists pending scheduled posts, optionally filtered to a single platform; leaving the platform filter empty returns scheduled posts across all platforms. Use this to find the schedule ID of a post you want to cancel or trigger early, or to review the publishing queue. Idempotent: it is a read-only list.',
+    idempotent: true,
+  },
   props: {
     platformFilter: platformFilterProperty,
   },

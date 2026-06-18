@@ -7,6 +7,8 @@ export const getClickupTaskComments = createAction({
   auth: clickupAuth,
   name: 'get_task_comments',
   description: 'Gets comments from a task in ClickUp',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only: retrieve the existing comments on a ClickUp task by its task ID. Use to review discussion or activity on a known task; does not create or modify anything. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Task Comments',
   props: {
     task_id: Property.ShortText({

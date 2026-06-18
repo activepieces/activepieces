@@ -9,6 +9,12 @@ export const updatePersonAction = createAction({
   name: 'update_person',
   displayName: 'Update Person',
   description: 'Update an existing person in Salesloft.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates fields on an existing Salesloft person identified by person ID; only the fields you supply are changed. Use when editing a known contact rather than creating one. Idempotent — applying the same field values repeatedly leaves the person in the same state.',
+    idempotent: true,
+  },
   auth: salesloftAuth,
   props: {
     person_id: personIdProp,

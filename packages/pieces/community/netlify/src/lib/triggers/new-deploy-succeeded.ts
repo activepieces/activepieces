@@ -6,7 +6,10 @@ export const newDeploySucceeded = createTrigger({
   name: "new_deploy_succeeded",
   displayName: "New Deploy Succeeded",
   description: "Fires when a new site version has successfully deployed.",
-  auth: netlifyAuth, 
+  aiMetadata: {
+    description: 'Fires when a deploy on the selected Netlify site finishes successfully and the new version goes live (the deploy_succeeded event). Use it to run follow-up steps after a site is published, e.g. cache purges, notifications, or downstream syncs.',
+  },
+  auth: netlifyAuth,
   props: {
     siteId: Property.Dropdown({
       auth: netlifyAuth,      displayName: "Site",

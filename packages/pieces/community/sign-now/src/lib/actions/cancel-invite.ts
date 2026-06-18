@@ -7,6 +7,12 @@ export const cancelInviteAction = createAction({
   name: 'cancel_invite',
   displayName: 'Cancel Invite to Sign',
   description: 'Cancels an invite to sign a document.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Cancels the pending field invite on a SignNow document, halting the signing request and notifying recipients. Use to recall or stop a signing flow already sent out. Requires the document ID and a cancellation reason; it mutates the document state, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     document_id: Property.ShortText({
       displayName: 'Document ID',

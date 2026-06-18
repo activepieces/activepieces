@@ -8,6 +8,11 @@ export const sendSticker = createAction({
   name: 'send_sticker',
   displayName: 'Send Sticker',
   description: 'Send a sticker message via WhatsApp.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a WebP sticker to a WhatsApp recipient. Supply the sticker either as a public URL or as the media ID of a previously uploaded file (use one or the other). Each call delivers a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,

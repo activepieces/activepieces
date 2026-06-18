@@ -14,6 +14,8 @@ export const notificationsUnsubscribeAction = createAction({
   name: 'notificationsUnsubscribe',
   displayName: 'Notifications - V2.0 - Notifications Unsubscribe',
   description: 'Unsubscribe for a notification.',
+  audience: 'both',
+  aiMetadata: { description: 'Delete (unsubscribe) an AMPECO notification subscription by its identifier, stopping further webhook/kafka delivery. Effectively idempotent on the target but destructive, so confirm the subscription ID before running.', idempotent: true },
   props: {
         
   notification: Property.ShortText({

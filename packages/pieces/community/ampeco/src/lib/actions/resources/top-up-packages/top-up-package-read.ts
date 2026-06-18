@@ -15,6 +15,8 @@ export const topUpPackageReadAction = createAction({
   name: 'topUpPackageRead',
   displayName: 'Resources - Top Up Packages - Read',
   description: 'Get a Top-Up Package.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single top-up package from AMPECO by its numeric ID. Use to look up the details of one known package; requires the package ID. Read-only and idempotent.', idempotent: true },
   props: {
         
   topUpPackage: Property.Number({

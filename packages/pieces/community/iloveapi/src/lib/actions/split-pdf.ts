@@ -9,6 +9,12 @@ export const splitPdfAction = createAction({
   displayName: 'Split PDF',
   description:
     'Split a PDF by page ranges, fixed page batches, removed pages, or target file size.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Split one PDF into multiple PDFs via the iLoveAPI service. Pick this to break a document apart by explicit page ranges, fixed batches of N pages, by removing specific pages, or by a maximum output file size (MB) — the split mode determines which range/size input is required. Optionally merge the pieces back into a single PDF. Each call produces new output files, so repeated runs are not idempotent.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

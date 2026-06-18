@@ -60,6 +60,9 @@ export const newCallCreatedTrigger = createTrigger({
     auth: leexiAuth,
     displayName: 'New Call Created',
     description: 'Triggers when a new call is created.',
+    aiMetadata: {
+        description: 'Fires when a new call (recording/transcription session) appears in the Leexi account. Polls the calls list on an interval and emits one event per newly created call.',
+    },
     type: TriggerStrategy.POLLING,
     props: {},
     async onEnable(context) {

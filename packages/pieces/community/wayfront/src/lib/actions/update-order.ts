@@ -14,6 +14,12 @@ export const updateOrderAction = createAction({
   name: 'update_order',
   displayName: 'Update Order',
   description: 'Updates an order in Wayfront. Only the fields you provide will be changed.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Wayfront order identified by its reference, applying a partial patch to note, status, service, dates, assigned employees, tags, linked orders, form data, or metadata; omitted fields are left untouched, but supplying tags or linked orders replaces the existing set. Use to advance or amend a known order. Idempotent: re-sending the same patch yields the same order state.',
+    idempotent: true,
+  },
   props: {
     order_ref: ordersDropdown,
     note: Property.LongText({

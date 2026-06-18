@@ -9,6 +9,8 @@ export const createContact = createAction({
   name: 'tarvent_create_contact',
   displayName: 'Create/Update Contact',
   description: 'This action is used to create or update a contact in an audience.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a contact in a Tarvent audience, or updates the existing one matched by email/custom identifier; choose whether a duplicate is updated or returns an error, and whether group/tag assignments replace or add to current ones. Use to onboard or maintain a subscriber profile. Not idempotent: it creates on the first call and, in add-only mode, appends to groups/tags.', idempotent: false },
   props: {
     audienceId: tarventCommon.audienceId(true, ''),
     email: Property.ShortText({

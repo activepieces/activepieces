@@ -13,6 +13,8 @@ export const getExpenses = createAction({
   auth: harvestAuth,
   displayName: 'Get Expenses',
   description: 'Fetches expenses',
+  audience: 'both',
+  aiMetadata: { description: 'Lists expense records from a Harvest account; with all filters empty it returns every expense, or narrow by spent-date range, user ID, client ID, project ID, billed/unbilled status, or updated-since timestamp. Use to review expenses or check what has been invoiced. Read-only and idempotent.', idempotent: true },
   props: {
     from: Property.ShortText({
       description: 'Only return expenses with an spent_date on or after the given date. (YYYY-MM-DD)',

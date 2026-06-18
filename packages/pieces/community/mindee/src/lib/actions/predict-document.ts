@@ -9,6 +9,8 @@ export const mindeePredictDocumentAction = createAction({
   name: 'mindee_predict_document',
   displayName: 'Extract Document',
   description: 'Parse details of a document using OCR.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs OCR extraction on a document via Mindee, returning structured fields parsed from it. Choose the document-type model through the API Name option (receipt, invoice, passport, bank account details, proof of address, or financial document), since each extracts a different field set. The document is supplied as a remote URL, local file path, or Base64 string. Read-only analysis with no stored result, so re-running on the same document is idempotent.', idempotent: true },
   props: {
     account_name: Property.ShortText({
       displayName: 'Account Name',

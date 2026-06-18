@@ -13,6 +13,9 @@ export const emailOpened = createTrigger({
   displayName: 'Email Opened',
   description:
     'Triggers when a recipient opens an email from a specified campaign.',
+  aiMetadata: {
+    description: 'Fires when a recipient opens an EmailOctopus campaign email (a contact.opened webhook event), representing an engagement/open. Can be scoped to a single campaign id, or left unfiltered to catch opens across all campaigns.',
+  },
   props: {
     campaign_id: emailOctopusProps.campaignId(),
     liveMarkdown: Property.MarkDown({

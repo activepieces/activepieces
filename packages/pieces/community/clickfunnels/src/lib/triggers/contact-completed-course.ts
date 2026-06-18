@@ -11,6 +11,10 @@ export const contactCompletedCourse = createTrigger({
   name: 'contactCompletedCourse',
   displayName: MODULE_NAME,
   description: 'Triggers when a contact completes a course.',
+  aiMetadata: {
+    description:
+      'Fires when a contact completes a course in the selected ClickFunnels workspace, representing the enrollment reaching completed status. Delivers the enrollment payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

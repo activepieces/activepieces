@@ -7,6 +7,10 @@ export const newPayment = createTrigger({
   name: 'newPayment',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is created',
+  aiMetadata: {
+    description:
+      'Fires when a payment is recorded in the Linka/Sperse CRM (via the Payment.Created webhook), delivering the related contact, invoice, and transaction details. Use to start a flow when a customer pays.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

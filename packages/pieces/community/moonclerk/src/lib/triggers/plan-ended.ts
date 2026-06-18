@@ -10,6 +10,9 @@ export const planEnded = createTrigger({
   displayName: 'Plan Ended',
   description:
     'Triggers when a plan is canceled or when the set number periods have been exhausted.',
+  aiMetadata: {
+    description: 'Fires when a MoonClerk recurring plan ends — either because it was canceled or because its configured number of billing periods has been exhausted. Use to handle subscription termination (offboarding, access revocation, churn tracking). Requires a MoonClerk webhook configured for the corresponding plan-ended event.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `## MoonClerk Webhook Setup

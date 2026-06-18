@@ -11,6 +11,10 @@ export const smsRecipientOptOut = createTrigger({
   name: 'sms_recipient_opt_out',
   displayName: 'SMS Recipient Opt Out',
   description: 'Triggers when a recipient opts out of SMS notifications',
+  aiMetadata: {
+    description:
+      'Fires when a delivery recipient opts out of receiving Onfleet SMS notifications (for example, by replying STOP). Represents a recipient withdrawing SMS consent, useful for updating communication preferences and suppressing future messages. The payload includes the recipient details.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

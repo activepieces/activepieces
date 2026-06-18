@@ -10,6 +10,8 @@ export const sendSmsAction = createAction({
     name: 'send-sms',
     displayName: 'Send SMS',
     description: 'Send an SMS message through ConnectUC',
+    audience: 'both',
+    aiMetadata: { description: 'Sends an SMS/MMS text message from a ConnectUC sender number to one or more recipient phone numbers, optionally with media attachment URLs. Use when an agent needs to text a person or group. Not idempotent: each call sends a new message (a fresh reference ID is generated per call), so repeating it delivers duplicate texts.', idempotent: false },
     props: {
         recipients: Property.Array({
             displayName: 'SMS Destinations',
