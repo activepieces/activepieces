@@ -6,7 +6,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration with `chatEnabled` plan gate
 - `packages/server/api/src/app/ee/chat/chat-controller.ts` — HTTP endpoints (conversations CRUD, messages, tool approvals)
-- `packages/server/api/src/app/ee/chat/chat-eval-controller.ts` — admin eval/playground endpoints: prompt-source inspection and dry-run simulate-a-turn
+- `packages/server/api/src/app/ee/chat/chat-eval-controller.ts` — admin eval/playground endpoints: prompt-source inspection, batch dry-run simulate, and the interactive single-turn eval (stateful `turn/start` + state-poll) backing the console's live prompt playground
 - `packages/server/worker/src/lib/execute/jobs/ee/chat/run-chat-turn.ts` — pure dependency-injected streaming-loop core shared by the production worker, the replay eval gate, and the live playground
 - `packages/server/api/src/app/ee/chat/chat-service.ts` — core business logic (conversation management, message streaming)
 - `packages/server/api/src/app/ee/chat/chat-conversation-entity.ts` — ChatConversation TypeORM entity
@@ -62,6 +62,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **Pending gate persistence** — when a display tool or action preview blocks on approval, gate metadata is stored in Redis so the frontend can re-show the card after page refresh; cleared automatically when the gate resolves
 - **Stream reconnection** — when loading a STREAMING conversation (e.g. after refresh), the frontend extracts the last assistant message from history as the streaming message's initial content, calls `getPendingGate` to inject synthetic display-tool parts for pending gates, then calls `startStream`; a socket `connect` handler re-registers the chunk listener and resets the stale-check timer on reconnect; the periodic stale-check calls `GET /conversations/:id` and only reconciles when the server's status is no longer STREAMING, so long tool executions (>15s) are not incorrectly torn down
 - **Run ID event filtering** — each agent run gets a unique `runId` (generated in the controller, included in job data, threaded through all websocket events); the frontend's event handler filters by `runId` to prevent stale FINISHED/ERROR events from old runs from killing new streams; combined with a generation counter that guards against stale async reconcile callbacks
+- **Eval conversation scoping** — conversations created by the interactive eval (`turn/start`) carry a reserved id prefix (within the 21-char id column). The continue and `state` endpoints refuse any id without that prefix, so the global eval API key cannot read or mutate arbitrary (real) user conversations — only the ephemeral ones the eval flow itself created
 - **AI provider** — a platform-configured LLM provider with an `enabledForChat` flag; the chat resolves the first enabled provider and its default model
 - **Streaming cancel** — cancel keys are run-scoped (`chat-cancel:{conversationId}:{runId}`) so each worker only checks its own key; a 3-second periodic timer polls the Redis key so cancellation fires within 3 seconds regardless of step boundaries; partial messages (from completed steps via `onAbort` callback) are saved to preserve context for resume; when a new message arrives while STREAMING, the controller reads the active runId, cancels that specific run, and resets status to IDLE before queuing the new job
 - **Stale recovery** — when `getConversationOrThrow` fetches a conversation stuck in STREAMING for more than 2 minutes, it automatically resets the status to IDLE before returning
@@ -76,7 +77,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - Index: `idx_chat_conversation_platform_user_created_id` on (platformId, userId, created, id)
 
 ## Key Service Methods
-- `createConversation()` — creates a new conversation for a user on a platform
+- `createConversation()` — creates a new conversation for a user on a platform; accepts an optional explicit `id` (defaults to `apId()`) so the interactive eval can mint a reserved-prefix conversation id
 - `listConversations()` — cursor-paginated list of user's conversations, ordered by creation date descending; excludes messages, uiMessages, and summary columns for performance
 - `getConversationOrThrow()` — fetches a conversation, enforcing ownership (platformId + userId); auto-recovers stale STREAMING conversations to IDLE after a 2-minute timeout
 - `updateConversation()` — updates title and/or modelName
@@ -116,6 +117,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `GET /v1/chat/eval/prompt-sources` — returns the raw prompt template sources (core + project-context + on-demand guides); requires platformAdmin
 - `POST /v1/chat/eval/simulate` — replays one or more user turns (`userMessages[]`, or legacy single `userMessage`) sequentially in one ephemeral conversation with an optional prompt override in dry-run mode (tools are not executed, no MCP, runs as the platform owner — no side effects, no sandbox), polls until each turn settles, and returns the full transcript synchronously (`status` is `IDLE`/`ERROR`/`TIMEOUT`); the `promptOverride.guides` is shallow-merged over the defaults so a partial override keeps the untouched guides; requires platformAdmin
 - `GET /v1/chat/eval/sandbox-platform` — returns `{ platformId }` for the oldest platform on the instance, so a caller replaying a foreign conversation (e.g. the console in dev, whose conversations reference a cloud platform absent locally) can resolve a local platform to sandbox the dry-run in; requires platformAdmin
+- `POST /v1/chat/eval/turn/start` — interactive eval: create-or-continue a stateful eval conversation and enqueue ONE dry-run agent turn, returning immediately (`{ conversationId, runId, priorAssistantTurns }`); the caller polls the state endpoint to stream progress (the worker persists `uiMessages` per step). New conversations are created with a reserved id prefix (see **Eval conversation scoping**); continuation rejects a conversation that is already STREAMING (409, no racing two workers on one row) and any id not created by the eval flow (404); requires platformAdmin
+- `GET /v1/chat/eval/conversations/:id/state` — pure observer that reads the row directly (not `getConversationOrThrow`, which would reset a stale STREAMING row to IDLE) and returns `{ status, uiMessages }`; rejects non-eval conversation ids (404); requires platformAdmin
 
 - `POST /v1/admin/chat/sync-all` — bulk historical sync of all conversations to console analytics (admin API key required)
 
