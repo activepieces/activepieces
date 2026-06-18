@@ -49,6 +49,20 @@ const selfHostedAuth = PieceAuth.CustomAuth({
       };
     }
   },
+  refresh: {
+    generate: async ({ auth }) => {
+      const baseUrl = auth.baseUrl.replace(/\/+$/, '');
+      const response = await httpClient.sendRequest<{ token: string }>({
+        method: HttpMethod.POST,
+        url: `${baseUrl}/api/auth/login`,
+        body: { username: auth.username, password: auth.password },
+      });
+      return { access_token: response.body.token };
+    },
+    // Umami does not return expires_in; default to 55 min so the token refreshes
+    // well before a typical 1-hour server-side JWT expiry.
+    defaultExpiresIn: 3300,
+  },
 });
 
 const cloudAuth = PieceAuth.SecretText({
@@ -97,6 +111,13 @@ export async function getAuthHeaders(
   if (auth.type === AppConnectionType.SECRET_TEXT) {
     return { 'x-umami-api-key': auth.secret_text };
   }
+  // Use the server-cached token when available (set by the refresh callback).
+  // Falls back to a fresh login only on the very first call before the cache warms up.
+  if (auth.access_token) {
+    console.log('[umami] using cached access_token (no login request)');
+    return { Authorization: `Bearer ${auth.access_token}` };
+  }
+  console.log('[umami] no cached token — falling back to login request');
   const baseUrl = auth.props.baseUrl.replace(/\/+$/, '');
   const loginResponse = await httpClient.sendRequest<{ token: string }>({
     method: HttpMethod.POST,

@@ -9,6 +9,7 @@ import { StaticPropsValue } from '..';
 import { SecretTextProperty } from './secret-text-property';
 import { BasePieceAuthSchema } from './common';
 import { MarkDownProperty } from '../input/markdown-property';
+import { ServerContext } from '../../context';
 
 const CustomAuthProps = z.record(z.string(), z.union([
   ShortTextProperty,
@@ -36,10 +37,19 @@ export const CustomAuthProperty = z.object({
   ...TPropertyValue(z.unknown(), PropertyType.CUSTOM_AUTH).shape,
 })
 
+export type CustomAuthRefresh<T extends CustomAuthProps> = {
+  generate: (params: { auth: StaticPropsValue<T>; server: Omit<ServerContext, 'token'> }) => Promise<{
+    access_token: string
+    expires_in?: number
+  }>
+  defaultExpiresIn?: number
+}
+
 export type CustomAuthProperty<
   T extends CustomAuthProps
 > = BasePieceAuthSchema<StaticPropsValue<T>> & {
   props: T;
+  refresh?: CustomAuthRefresh<T>;
 } &
   TPropertyValue<
     StaticPropsValue<T>,

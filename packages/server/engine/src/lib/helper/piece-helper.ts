@@ -17,6 +17,8 @@ import {
     EngineGenericError,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
+    ExecuteRefreshTokenAuthOperation,
+    ExecuteRefreshTokenAuthResponse,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
     isNil,
@@ -146,6 +148,44 @@ export const pieceHelper = {
             server,
         })
 
+    },
+
+    async executeRefreshTokenAuth(
+        { params, devPieces }: { params: ExecuteRefreshTokenAuthOperation, devPieces: string[] },
+    ): Promise<ExecuteRefreshTokenAuthResponse> {
+        const { piece: piecePackage } = params
+
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
+
+        if (isNil(piece.auth) || piece.auth.type !== PropertyType.CUSTOM_AUTH || isNil(piece.auth.refresh)) {
+            console.log('[custom-auth-refresh] piece has no refresh callback — skipping', { pieceName: piecePackage.pieceName })
+            return { skipped: true }
+        }
+
+        if (params.auth.type !== AppConnectionType.CUSTOM_AUTH) {
+            return { skipped: true }
+        }
+
+        const server = {
+            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
+            publicUrl: params.publicApiUrl,
+        }
+
+        console.log('[custom-auth-refresh] calling refresh.generate for piece', { pieceName: piecePackage.pieceName })
+        const DEFAULT_EXPIRES_IN_SECONDS = 3300
+        const result = await piece.auth.refresh.generate({
+            auth: params.auth.props,
+            server,
+        })
+
+        const expiresIn = result.expires_in ?? piece.auth.refresh.defaultExpiresIn ?? DEFAULT_EXPIRES_IN_SECONDS
+        console.log('[custom-auth-refresh] refresh.generate succeeded', { pieceName: piecePackage.pieceName, expiresIn })
+
+        return {
+            skipped: false,
+            access_token: result.access_token,
+            expires_in: expiresIn,
+        }
     },
 
     async extractPieceMetadata({ devPieces, params }: { devPieces: string[], params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
