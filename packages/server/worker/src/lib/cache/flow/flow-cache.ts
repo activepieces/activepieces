@@ -29,7 +29,7 @@ export const flowCache = (log: ApLogger, apiClient: WorkerToApiContract) => ({
                                 versionId: flowVersionId,
                             })
                             log.info({
-                                flowVersionId,
+                                flowVersion: { id: flowVersionId },
                                 state: flowVersion?.state,
                                 found: !isNil(flowVersion),
                             }, 'Fetched flow version')

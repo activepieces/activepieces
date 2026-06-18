@@ -134,7 +134,7 @@ async function waitForSimulationResult({ conversationId, platformId, userId, pri
             return settled
         }
     }
-    log.warn({ conversationId }, 'Chat simulation timed out before completing')
+    log.warn({ conversation: { id: conversationId } }, 'Chat simulation timed out before completing')
     return { status: SIMULATION_TIMEOUT_STATUS, uiMessages: null }
 }
 

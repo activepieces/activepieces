@@ -59,7 +59,7 @@ async function processBadgeChecks(
             log.info({
                 message: 'Awarding badge',
                 badgeName,
-                userId,
+                user: { id: userId },
             })
 
             await emailService(log).sendBadgeAwardedEmail(userId, badgeName)

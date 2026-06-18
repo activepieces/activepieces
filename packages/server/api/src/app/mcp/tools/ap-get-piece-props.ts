@@ -170,7 +170,7 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
             }
         }
         catch (err) {
-            log.warn({ err, propertyName: prop.name }, 'Failed to resolve property options — dropdown will be empty. Try calling ap_get_piece_props again with auth.')
+            log.warn({ error: err, propertyName: prop.name }, 'Failed to resolve property options — dropdown will be empty. Try calling ap_get_piece_props again with auth.')
         }
     }))
 }
@@ -201,7 +201,7 @@ async function discoverAvailableConnections({ pieceName, projectId, platformId, 
         return { message: 'No connections found. Set up in UI or use ap_setup_guide.', connections: [] }
     }
     catch (err) {
-        log.debug({ err, pieceName }, 'Failed to discover connections')
+        log.debug({ error: err, piece: { name: pieceName } }, 'Failed to discover connections')
         return { message: 'Use ap_list_connections to find connections.', connections: [] }
     }
 }
