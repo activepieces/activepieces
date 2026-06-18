@@ -20,16 +20,12 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { chatApprovalGate } from './chat-approval-gate'
-import { chatHelpers } from './chat-helpers'
+import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
 import { chatService } from './chat-service'
 import { chatPrompt } from './prompt/chat-prompt'
 
 const API_KEY_HEADER = 'api-key'
 const API_KEY = system.get(AppSystemProp.API_KEY)
-// Conversations created by the interactive eval carry this id prefix, so the continue/state
-// endpoints can refuse to touch any other (e.g. a real user's) conversation. Kept within the
-// 21-char id column; collision with a random apId is ~64^-8.
-const EVAL_CONVERSATION_ID_PREFIX = 'evalconv'
 const SIMULATION_POLL_INTERVAL_MS = 1_500
 const SIMULATION_MAX_ATTEMPTS = 120
 const SIMULATION_TIMEOUT_STATUS = 'TIMEOUT'
@@ -141,7 +137,7 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         if (!isNil(conversationId)) {
             // Only continue conversations this eval flow created — never an arbitrary (e.g. a real
             // user's) conversation, even with a valid API key.
-            if (!conversationId.startsWith(EVAL_CONVERSATION_ID_PREFIX)) {
+            if (!isEvalConversationId(conversationId)) {
                 return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
             }
             const existing = await chatHelpers.conversationRepo().findOneBy({ id: conversationId })
@@ -202,7 +198,7 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
     // Pure observer of an eval conversation's live state — read the row directly (not
     // getConversationOrThrow, which resets a stale STREAMING row to IDLE).
     app.get('/eval/conversations/:conversationId/state', EvalStateRoute, async (request, reply) => {
-        if (!request.params.conversationId.startsWith(EVAL_CONVERSATION_ID_PREFIX)) {
+        if (!isEvalConversationId(request.params.conversationId)) {
             return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
         }
         const conversation = await chatHelpers.conversationRepo().findOneBy({ id: request.params.conversationId })

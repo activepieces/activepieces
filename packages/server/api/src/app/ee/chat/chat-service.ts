@@ -1,9 +1,11 @@
 import {
+    ActivepiecesError,
     apId,
     ChatConversation,
     ChatConversationStatus,
     ChatHistoryMessage,
     CreateChatConversationRequest,
+    ErrorCode,
     PersistedChatMessage,
     SeekPage,
     spreadIfDefined,
@@ -16,7 +18,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { chatApprovalGate } from './chat-approval-gate'
 import { ChatConversationEntity } from './chat-conversation-entity'
-import { chatHelpers } from './chat-helpers'
+import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
 import { chatHistory } from './history/chat-history'
 
 export const chatService = (log: FastifyBaseLogger) => ({
@@ -63,12 +65,19 @@ export const chatService = (log: FastifyBaseLogger) => ({
                 'chat_conversation.status',
             ])
             .where({ platformId, userId })
+            // Eval conversations are owned by the platform owner; keep them out of the regular list.
+            .andWhere('chat_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(data, paginationCursor)
     },
 
     async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<ChatConversation> {
+        // Eval conversations must never be opened or messaged through the regular (non-dry-run) chat
+        // path — that would run real tools against a conversation meant to be side-effect-free.
+        if (isEvalConversationId(id)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'ChatConversation' } })
+        }
         return chatHelpers.getConversationOrThrow({ id, platformId, userId })
     },
 
