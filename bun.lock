@@ -7862,6 +7862,9 @@
         "fast-xml-parser": "5.7.0",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
     },
     "packages/pieces/community/wrike": {
       "name": "@activepieces/piece-wrike",
