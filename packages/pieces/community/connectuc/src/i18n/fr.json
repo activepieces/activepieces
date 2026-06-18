@@ -33,6 +33,7 @@
   "Reason": "Raison",
   "Select domain to which this trigger applies": "Sélectionnez le domaine auquel ce déclencheur s'applique",
   "Select the user who owns this contact": "Sélectionnez l'utilisateur qui est propriétaire de ce contact",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "The first name of the contact": "Le prénom du contact",
   "The last name of the contact": "Le nom de famille du contact",
   "The email address of the contact": "L'adresse e-mail du contact",
@@ -75,5 +76,11 @@
   "Select the SMS recipient numbers to which this trigger applies": "Sélectionnez le numéro de destinataire du SMS auquel ce déclencheur s'applique",
   "Ringing": "Sonnerie",
   "Answered": "Répondu",
-  "Both": "Les deux"
+  "Both": "Les deux",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Orientation",
+  "Filter by message direction": "Filter by message direction",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent"
 }
