@@ -233,6 +233,7 @@
                   "pages": [
                      "embedding/customize-pieces",
                      "embedding/embed-connections",
+                     "embedding/embeddable-mcp",
                      "embedding/navigation",
                      "embedding/predefined-connection",
                      "embedding/sdk-changelog",
