@@ -880,6 +880,17 @@
         "typescript": "^5.6.2",
       },
     },
+    "packages/pieces/community/atomicmail": {
+      "name": "@activepieces/piece-atomicmail",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@atomicmail/agentic-core": "^0.3.15",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
       "version": "0.1.19",
@@ -1900,7 +1911,7 @@
     },
     "packages/pieces/community/connectuc": {
       "name": "@activepieces/piece-connectuc",
-      "version": "0.0.6",
+      "version": "0.0.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -9039,6 +9050,8 @@
 
     "@activepieces/piece-assemblyai": ["@activepieces/piece-assemblyai@workspace:packages/pieces/community/assemblyai"],
 
+    "@activepieces/piece-atomicmail": ["@activepieces/piece-atomicmail@workspace:packages/pieces/community/atomicmail"],
+
     "@activepieces/piece-attio": ["@activepieces/piece-attio@workspace:packages/pieces/community/attio"],
 
     "@activepieces/piece-autocalls": ["@activepieces/piece-autocalls@workspace:packages/pieces/community/autocalls"],
@@ -10546,6 +10559,8 @@
     "@atlaskit/react-ufo": ["@atlaskit/react-ufo@5.17.0", "", { "dependencies": { "@atlaskit/atlassian-context": "^0.8.0", "@atlaskit/browser-apis": "^0.0.1", "@atlaskit/feature-gate-js-client": "^5.5.0", "@atlaskit/interaction-context": "^3.1.0", "@atlaskit/platform-feature-flags": "^1.1.0", "@babel/runtime": "^7.0.0", "@opentelemetry/api": "^1.9.0", "bind-event-listener": "^3.0.0", "bowser-ultralight": "^1.0.6", "scheduler": "0.23.2", "uuid": "^3.1.0" }, "peerDependencies": { "react": "^18.2.0" } }, "sha512-81lZocFvJrOd0xpk2Iup6aXS/0Cz6Qlf79Y4UrvqumGROoU/qFvtFjP/nTkCBCBYBa6ATgAa/n+qkw8CRQg3iA=="],
 
     "@atlaskit/tmp-editor-statsig": ["@atlaskit/tmp-editor-statsig@73.0.0", "", { "dependencies": { "@atlaskit/feature-gate-js-client": "^5.5.0", "@atlaskit/react-ufo": "^5.17.0", "@babel/runtime": "^7.0.0" }, "peerDependencies": { "react": "^18.2.0" } }, "sha512-6bVLebWPS+OaHFocquVGkQSs+m0905CxvQcIWLDWtU+93ftPqek+nqTfwF09uAenCgFlgBnBIXRA4GNLPuYl6A=="],
+
+    "@atomicmail/agentic-core": ["@atomicmail/agentic-core@0.3.15", "", {}, "sha512-VLh3TyAw+uQJ9FUpcOOpTq8Bw9+Q6FJK/KWiQNG2aXlVu+FdnmP8jHCYRZRDDa44dNhbibf3J9HS4Gzm7mrphA=="],
 
     "@atproto/api": ["@atproto/api@0.16.0", "", { "dependencies": { "@atproto/common-web": "^0.4.2", "@atproto/lexicon": "^0.4.12", "@atproto/syntax": "^0.4.0", "@atproto/xrpc": "^0.7.1", "await-lock": "^2.2.2", "multiformats": "^9.9.0", "tlds": "^1.234.0", "zod": "^3.23.8" } }, "sha512-PQHeae6mz/L1YirUslfci7bknfg3RrSZjXpYwzLICxIOvqGKIkOi0+qukC2Py238RhXRo8YZ9dCuole9HQBXDw=="],
 
