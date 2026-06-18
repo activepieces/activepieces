@@ -5,8 +5,17 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "module": "commonjs",
+    "moduleResolution": "node"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ]
 }

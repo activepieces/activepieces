@@ -11,10 +11,10 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@activepieces/core-utils": [
-        "../core/utils/dist/index.d.ts"
+        "../core/utils/dist/src/index.d.ts"
       ],
       "@activepieces/core-formula": [
-        "../core/formula/dist/index.d.ts"
+        "../core/formula/dist/src/index.d.ts"
       ]
     }
   },

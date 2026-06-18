@@ -1,25 +1,10 @@
 {
   "name": "@activepieces/core-piece-types",
   "version": "0.1.0",
-  "type": "module",
-  "sideEffects": false,
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
-    }
-  },
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
   "scripts": {
-    "build": "tsup",
+    "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
@@ -29,7 +14,7 @@
   },
   "devDependencies": {
     "@types/node": "24.11.0",
-    "tsup": "8.3.5",
     "typescript": "5.5.4"
-  }
+  },
+  "typings": "./dist/src/index.d.ts"
 }

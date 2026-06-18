@@ -113,6 +113,18 @@ export default defineConfig(({ command, mode }) => {
           __dirname,
           '../../packages/pieces/framework/src',
         ),
+        '@activepieces/core-utils': path.resolve(
+          __dirname,
+          '../../packages/core/utils/src',
+        ),
+        '@activepieces/core-formula': path.resolve(
+          __dirname,
+          '../../packages/core/formula/src',
+        ),
+        '@activepieces/core-piece-types': path.resolve(
+          __dirname,
+          '../../packages/core/piece-types/src',
+        ),
       },
     },
     plugins: [
