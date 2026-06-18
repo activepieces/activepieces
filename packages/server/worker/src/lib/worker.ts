@@ -86,7 +86,7 @@ export const worker = {
                     // Kill switch: if SSRF hardening can't be applied, refuse to accept any job.
                     // Running without egress protection in a configured-hardened worker is
                     // more dangerous than crash-looping — the orchestrator will restart us.
-                    logger.fatal({ err: error }, 'Egress stack failed to start; aborting worker to avoid running unprotected')
+                    logger.fatal({ error }, 'Egress stack failed to start; aborting worker to avoid running unprotected')
                     process.exit(1)
                 }
                 egressStack = data
@@ -197,12 +197,12 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             continue
         }
 
-        workerLog.debug({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
+        workerLog.debug({ job: { id: job.jobId, type: job.jobData.jobType } }, 'Job received from poll')
 
         const lockExtensionInterval = setInterval(() => {
             void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
                 if (error) {
-                    workerLog.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
+                    workerLog.warn({ error, job: { id: job.jobId } }, 'Failed to extend lock')
                 }
             })
         }, 30_000)
@@ -229,7 +229,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         clearInterval(lockExtensionInterval)
 
         if (completeError) {
-            workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
+            workerLog.error({ error: completeError, job: { id: job.jobId } }, 'Failed to complete job')
         }
     }
 }
@@ -239,19 +239,18 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     const jobData = JobData.parse(rawData)
     const jobLogger = createLogger({
         event: 'job.execute',
-        jobId: job.jobId,
-        jobType: jobData.jobType,
+        job: { id: job.jobId, type: jobData.jobType },
         ...spreadIfDefined('requestId', 'requestId' in jobData ? jobData.requestId : 'httpRequestId' in jobData ? jobData.httpRequestId : undefined),
-        ...spreadIfDefined('projectId', 'projectId' in jobData && jobData.projectId != null ? jobData.projectId : undefined),
-        ...spreadIfDefined('platformId', 'platformId' in jobData ? jobData.platformId : undefined),
-        ...spreadIfDefined('flowId', 'flowId' in jobData ? jobData.flowId : undefined),
-        ...spreadIfDefined('runId', 'runId' in jobData ? jobData.runId : undefined),
-        ...spreadIfDefined('flowVersionId', 'flowVersionId' in jobData ? jobData.flowVersionId : undefined),
+        ...spreadIfDefined('project', 'projectId' in jobData && jobData.projectId != null ? { id: jobData.projectId } : undefined),
+        ...spreadIfDefined('platform', 'platformId' in jobData ? { id: jobData.platformId } : undefined),
+        ...spreadIfDefined('flow', 'flowId' in jobData ? { id: jobData.flowId } : undefined),
+        ...spreadIfDefined('flowRun', 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
     })
     return wideEvent.run({
         logger: jobLogger,
         fn: async () => {
-            const log = logger.child({ jobId: job.jobId, jobType: jobData.jobType })
+            const log = logger.child({ job: { id: job.jobId, type: jobData.jobType } })
             const apiUrl = getApiUrl()
             const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
             log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
@@ -269,7 +268,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
                 const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
                 if (error) {
-                    log.error({ err: error }, 'Job execution failed')
+                    log.error({ error }, 'Job execution failed')
                     wideEvent.error(error)
                     wideEvent.set({ outcome: 'failed' })
                     throw error

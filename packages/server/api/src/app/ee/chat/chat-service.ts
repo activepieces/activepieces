@@ -30,7 +30,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             modelName: request.modelName ?? null,
             messages: [],
         })
-        log.info({ conversationId: conversation.id, platformId, userId }, '[chatService] Conversation created')
+        log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[chatService] Conversation created')
         return conversation
     },
 
@@ -94,7 +94,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             })
         }
         await chatHelpers.conversationRepo().delete(conversation.id)
-        log.info({ conversationId: id, platformId, userId }, '[chatService] Conversation deleted')
+        log.info({ conversation: { id }, platform: { id: platformId }, user: { id: userId } }, '[chatService] Conversation deleted')
     },
 
     async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {

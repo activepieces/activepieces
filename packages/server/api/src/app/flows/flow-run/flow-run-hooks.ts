@@ -46,7 +46,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         }
         const { error } = await tryCatch(() => aiUsageTracker(log).track({ flowRun, flowVersion }))
         if (error) {
-            log.warn({ err: error, flowRunId: flowRun.id }, 'Failed to capture AI usage event')
+            log.warn({ error, flowRun: { id: flowRun.id } }, 'Failed to capture AI usage event')
         }
     },
 })

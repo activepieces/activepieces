@@ -185,7 +185,7 @@ const skipInternalDestinationsOnFlowCycle = async ({
         return destinations
     }
     log.warn({
-        flowId: eventFlowId,
+        flow: { id: eventFlowId },
         action: event.action,
     }, '[eventDestinationService#trigger] Source flow is wired as an internal webhook target; dropping internal destinations to break the cycle, external destinations will still fire')
     return destinationsWithFlowIds

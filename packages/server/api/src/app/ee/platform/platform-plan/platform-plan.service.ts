@@ -53,7 +53,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
         const { platformId, ...update } = params
-        log.info({ platformId }, 'updating platform billing')
+        log.info({ platform: { id: platformId } }, 'updating platform billing')
 
         const platformPlan = await platformPlanRepo().findOneByOrFail({
             platformId,

@@ -37,7 +37,7 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_delete_records failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_delete_records failed')
                 return mcpUtils.mcpToolError('Failed to delete records', err)
             }
         },

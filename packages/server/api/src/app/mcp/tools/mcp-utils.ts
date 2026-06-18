@@ -187,7 +187,7 @@ async function detectUnknownInputProps({ pieceName, pieceVersion, componentName,
         return { unknownKeys, message: unknownMessage }
     }
     catch (err) {
-        log.warn({ err, pieceName, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
         return { unknownKeys: [], message: '' }
     }
 }
@@ -424,7 +424,7 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
         settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
     }
     catch (err) {
-        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
+        log.warn({ error: err, piece: { name: pieceName }, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
     }
 }
 
