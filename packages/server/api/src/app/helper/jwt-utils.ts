@@ -46,12 +46,13 @@ export const jwtUtils = {
         keyId = KEY_ID,
         algorithm = ALGORITHM,
         audience,
+        issuer,
     }: SignParams): Promise<string> {
         const signOptions: SignOptions = {
             algorithm,
             keyid: keyId,
             expiresIn: expiresInSeconds,
-            issuer: ISSUER,
+            issuer: issuer ?? ISSUER,
             ...spreadIfDefined('audience', audience),
         }
         return new Promise((resolve, reject) => {
@@ -140,6 +141,7 @@ type SignParams = {
     algorithm?: JwtSignAlgorithm
     keyId?: string
     audience?: JwtAudience
+    issuer?: string
 }
 
 type VerifyParams = {

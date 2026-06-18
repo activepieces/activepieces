@@ -996,6 +996,9 @@
       "@activepieces/piece-podio": [
         "packages/pieces/community/podio/src/index.ts"
       ],
+      "@activepieces/piece-polydoc": [
+        "packages/pieces/community/polydoc/src/index.ts"
+      ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
       ],
@@ -1244,6 +1247,9 @@
       ],
       "@activepieces/piece-softr": [
         "packages/pieces/community/softr/src/index.ts"
+      ],
+      "@activepieces/piece-sofya": [
+        "packages/pieces/community/sofya/src/index.ts"
       ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"
