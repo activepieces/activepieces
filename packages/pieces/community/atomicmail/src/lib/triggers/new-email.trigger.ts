@@ -79,8 +79,11 @@ export const newEmailTrigger = createTrigger({
     return;
   },
   async run(context) {
-    const lastPollMs =
-      (await context.store.get<number>('lastPollMs')) ?? 0;
+    let lastPollMs = await context.store.get<number>('lastPollMs');
+    if (lastPollMs == null) {
+      lastPollMs = Date.now();
+      await context.store.put('lastPollMs', lastPollMs);
+    }
     const accountId = normalizeAccountId(context.propsValue.account_id);
     const inlineKey = context.propsValue.api_key?.trim();
     await assertStoredCredentials(context, accountId, inlineKey || undefined);

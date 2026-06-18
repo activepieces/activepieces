@@ -100,6 +100,9 @@ export async function assertStoredCredentials(
 ): Promise<void> {
   if (apiKey) return;
   const storage = createKeyValueStore(context, accountId);
+  // agentic-core KeyValueCredentialStore uses account:{id}:credentials.json;
+  // createKeyValueStore prepends atomicmail:{id}: for Activepieces isolation.
+  // Register and this guard share the same effective store key.
   const credentialsKey = `account:${accountId}:credentials.json`;
   const raw = await storage.get(credentialsKey);
   if (!raw) {

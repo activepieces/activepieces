@@ -1,6 +1,6 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join, resolve, sep } from 'node:path';
 
 import { ApFile } from '@activepieces/pieces-framework';
 import type { JmapAttachmentInput } from '@atomicmail/agentic-core';
@@ -24,10 +24,15 @@ export function attachmentsFromApFiles(
 
   const dir = mkdtempSync(join(tmpdir(), 'atomicmail-attach-'));
   const attachments: JmapAttachmentInput[] = list.map((file, index) => {
-    const filename = file.filename || `attachment-${index + 1}`;
-    const path = join(dir, filename);
-    writeFileSync(path, file.data);
-    return { path, name: filename };
+    const fallback = `attachment-${index + 1}`;
+    const rawName = file.filename || fallback;
+    const filename = basename(rawName) || fallback;
+    const filePath = resolve(dir, filename);
+    if (!filePath.startsWith(dir + sep)) {
+      throw new Error(`Invalid attachment filename: ${rawName}`);
+    }
+    writeFileSync(filePath, file.data);
+    return { path: filePath, name: filename };
   });
 
   return {

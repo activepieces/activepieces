@@ -51,6 +51,8 @@ export const atomicmailAuth = PieceAuth.CustomAuth({
     }
     return { valid: true };
   },
+  // CustomAuthProperty is typed required: true; optional auth needs this cast.
+  // Same as PieceAuth.CustomAuth itself (pieces-framework authentication/index.ts).
 } as unknown as Parameters<typeof PieceAuth.CustomAuth>[0]);
 
 export function authEnvFromProps(
