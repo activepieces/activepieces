@@ -356,6 +356,25 @@
         "@types/node": "24.11.0",
       },
     },
+    "packages/core/execution": {
+      "name": "@activepieces/core-execution",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "dayjs": "1.11.9",
+        "semver": "7.6.0",
+        "socket.io-client": "4.8.1",
+        "tslib": "2.6.2",
+        "zod": "4.3.6",
+      },
+      "devDependencies": {
+        "@types/node": "24.11.0",
+        "@types/semver": "7.5.6",
+        "tsup": "8.3.5",
+        "typescript": "5.5.4",
+      },
+    },
     "packages/core/formula": {
       "name": "@activepieces/core-formula",
       "version": "0.1.0",
@@ -389,6 +408,7 @@
       "version": "0.1.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
+        "ipaddr.js": "2.3.0",
         "nanoid": "3.3.8",
         "tslib": "2.6.2",
         "zod": "4.3.6",
@@ -411,17 +431,13 @@
     },
     "packages/pieces/common": {
       "name": "@activepieces/pieces-common",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "form-data": "4.0.4",
-        "mime-types": "2.1.35",
         "tslib": "2.6.2",
         "zod": "4.3.6",
-      },
-      "devDependencies": {
-        "@types/mime-types": "2.1.1",
       },
     },
     "packages/pieces/community/activecampaign": {
@@ -8598,6 +8614,8 @@
       "version": "0.0.1",
       "dependencies": {
         "@1password/sdk": "0.4.0",
+        "@activepieces/core-formula": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
         "@activepieces/engine": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8724,6 +8742,8 @@
       "name": "@activepieces/engine",
       "version": "0.7.0",
       "dependencies": {
+        "@activepieces/core-formula": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
@@ -8750,6 +8770,8 @@
       "name": "@activepieces/server-utils",
       "version": "0.1.4",
       "dependencies": {
+        "@activepieces/core-formula": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@ai-sdk/amazon-bedrock": "3.0.97",
         "@ai-sdk/anthropic": "^3.0.0",
@@ -8778,6 +8800,8 @@
       "name": "worker",
       "version": "0.1.0",
       "dependencies": {
+        "@activepieces/core-formula": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/server-utils": "workspace:*",
         "@activepieces/shared": "workspace:*",
@@ -8846,6 +8870,8 @@
       "name": "web",
       "version": "0.0.1",
       "dependencies": {
+        "@activepieces/core-formula": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@codemirror/commands": "6.10.3",
@@ -8981,6 +9007,8 @@
     "@1password/sdk-core": ["@1password/sdk-core@0.4.0", "", {}, "sha512-vjeI1o4wiONY+t1naA4dtUp6HktdLH1D2S+tN1Lh4l41S9XIUHxrljov9B5u6G+VHr7f2MUoxmzXA9zT3aokQQ=="],
 
     "@activepieces/cli": ["@activepieces/cli@workspace:packages/cli"],
+
+    "@activepieces/core-execution": ["@activepieces/core-execution@workspace:packages/core/execution"],
 
     "@activepieces/core-formula": ["@activepieces/core-formula@workspace:packages/core/formula"],
 

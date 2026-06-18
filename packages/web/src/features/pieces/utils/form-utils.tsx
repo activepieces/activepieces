@@ -1,3 +1,4 @@
+import { Metadata, isNil } from '@activepieces/core-utils';
 import {
   piecePropertiesUtils,
   OAuth2Props,
@@ -13,11 +14,9 @@ import {
   AppConnectionType,
   CodeActionSchema,
   LoopOnItemsActionSchema,
-  Metadata,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
-  isNil,
   RouterActionSchema,
   RouterBranchesSchema,
   RouterExecutionType,

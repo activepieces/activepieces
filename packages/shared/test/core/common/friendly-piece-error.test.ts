@@ -18,7 +18,7 @@ describe('formatPieceError', () => {
                 },
             },
             {
-                body: { queries: [{ query: "created > '1970-01-01 02:00'" }] },
+                body: { queries: [{ query: 'created > \'1970-01-01 02:00\'' }] },
             },
         )
 
@@ -32,7 +32,7 @@ describe('formatPieceError', () => {
             errorMessages: ['You are not authorized to perform this action. Administrator privileges are required.'],
             errors: {},
         })
-        expect(result.requestBody).toEqual({ queries: [{ query: "created > '1970-01-01 02:00'" }] })
+        expect(result.requestBody).toEqual({ queries: [{ query: 'created > \'1970-01-01 02:00\'' }] })
     })
 
     it('extracts apiMessage from a 401 with { message } body (Slack / generic style)', () => {

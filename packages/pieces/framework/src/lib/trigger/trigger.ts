@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import type { OutputSchema } from '../output-schema';
 import { AiMetadata, TriggerBase } from '../piece-metadata';

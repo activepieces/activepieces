@@ -4,16 +4,9 @@ import { ApId } from '../../core/common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
 import { SsoDomainVerification } from './sso-domain-verification'
 
-export type PlatformId = ApId
-
 export enum FilteredPieceBehavior {
     ALLOWED = 'ALLOWED',
     BLOCKED = 'BLOCKED',
-}
-
-export enum PlatformUsageMetric {
-    AI_CREDITS = 'ai-credits',
-    ACTIVE_FLOWS = 'active-flows',
 }
 
 export const PlatformUsage = z.object({

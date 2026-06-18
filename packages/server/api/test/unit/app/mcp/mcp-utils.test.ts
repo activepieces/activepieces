@@ -17,7 +17,7 @@ describe('mcpUtils.diagnosePieceProps — unknown property suggestions', () => {
         })
         expect(diagnosis.unknownKeys).toContain('scope')
         const text = diagnosis.parts.join('\n')
-        expect(text).toContain("did you mean 'store_scope'?")
+        expect(text).toContain('did you mean \'store_scope\'?')
     })
 
     it('suggests the closest key for a typo within edit-distance threshold', () => {
@@ -28,7 +28,7 @@ describe('mcpUtils.diagnosePieceProps — unknown property suggestions', () => {
             requireAuth: false,
             componentType: 'action',
         })
-        expect(diagnosis.parts.join('\n')).toContain("did you mean 'store_scope'?")
+        expect(diagnosis.parts.join('\n')).toContain('did you mean \'store_scope\'?')
     })
 
     it('does not invent a suggestion for an unrelated unknown key', () => {

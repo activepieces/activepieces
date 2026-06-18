@@ -1,11 +1,5 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    AppConnectionScope,
-    AppConnectionType,
-    PackageType,
-    UpsertGlobalConnectionRequestBody,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { AppConnectionScope, AppConnectionType, PackageType, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
@@ -13,6 +7,7 @@ import {
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

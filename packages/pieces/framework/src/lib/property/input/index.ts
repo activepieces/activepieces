@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { ArrayProperty } from './array-property';
 import { CheckboxProperty } from './checkbox-property';
 import { DateTimeProperty } from './date-time-property';

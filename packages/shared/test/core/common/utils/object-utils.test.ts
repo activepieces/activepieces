@@ -1,14 +1,14 @@
 import {
-    applyFunctionToValuesSync,
     applyFunctionToValues,
-    sanitizeObjectForPostgresql,
-    groupBy,
-    omit,
+    applyFunctionToValuesSync,
     deleteProperties,
     deleteProps,
-    spreadIfNotUndefined,
-    spreadIfDefined,
+    groupBy,
     isObject,
+    omit,
+    sanitizeObjectForPostgresql,
+    spreadIfDefined,
+    spreadIfNotUndefined,
 } from '../../../../src/lib/core/common/utils/object-utils'
 
 describe('applyFunctionToValuesSync', () => {

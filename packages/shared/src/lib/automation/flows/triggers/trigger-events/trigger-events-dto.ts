@@ -1,7 +1,7 @@
+import { FlowId } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { ApId } from '../../../../core/common/id-generator'
 import { Cursor } from '../../../../core/common/seek-page'
-import { FlowId } from '../../flow'
 
 export const ListTriggerEventsRequest = z.object({
     projectId: ApId,

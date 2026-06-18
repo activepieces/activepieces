@@ -18,8 +18,6 @@ export enum ColorName {
     DEEP_ORANGE = 'DEEP_ORANGE',
 }
 
-export type ProjectId = ApId
-
 export enum PiecesFilterType {
     NONE = 'NONE',
     ALLOWED = 'ALLOWED',

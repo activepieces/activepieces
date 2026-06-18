@@ -1,4 +1,5 @@
-import { Permission, UncategorizedFolderId } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import { UncategorizedFolderId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';

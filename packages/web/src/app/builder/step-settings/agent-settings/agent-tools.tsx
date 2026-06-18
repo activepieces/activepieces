@@ -1,4 +1,5 @@
-import { AgentToolType, AIProviderName } from '@activepieces/shared';
+import { AIProviderName } from '@activepieces/core-utils';
+import { AgentToolType } from '@activepieces/shared';
 import type {
   AgentKnowledgeBaseTool,
   AgentPieceTool,

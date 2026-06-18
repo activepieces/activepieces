@@ -1,11 +1,8 @@
 import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
-import { ApId } from '../../core/common/id-generator'
 import { UserWithMetaInformation } from '../../core/user'
 import { Note } from './note'
 import { FlowTrigger } from './triggers/trigger'
-
-export type FlowVersionId = ApId
 
 export const LATEST_FLOW_SCHEMA_VERSION = '22'
 

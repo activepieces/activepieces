@@ -5,7 +5,7 @@ import { Metadata } from '../../core/common/metadata'
 import { TriggerSource, WebhookHandshakeConfiguration } from '../trigger'
 import { FlowVersion } from './flow-version'
 
-export type FlowId = ApId
+type FlowId = ApId
 export enum FlowStatus {
     ENABLED = 'ENABLED',
     DISABLED = 'DISABLED',

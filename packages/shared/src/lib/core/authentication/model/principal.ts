@@ -1,5 +1,4 @@
-import type { PlatformId } from '../../../management/platform'
-import type { ProjectId } from '../../../management/project'
+import type { PlatformId, ProjectId } from '@activepieces/core-utils'
 import type { ApId } from '../../common/id-generator'
 import { PrincipalType } from './principal-type'
 

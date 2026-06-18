@@ -1,4 +1,4 @@
-import { ProjectId } from '../../../management/project/project'
+import { ProjectId } from '@activepieces/core-utils'
 
 export type ConnectionKeyId = string
 

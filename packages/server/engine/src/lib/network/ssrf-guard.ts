@@ -1,4 +1,5 @@
-import { NetworkMode, ssrfIpClassifier, tryCatchSync } from '@activepieces/shared'
+import { ssrfIpClassifier, tryCatchSync } from '@activepieces/core-utils'
+import { NetworkMode } from '@activepieces/shared'
 import { installDnsLookupGuard } from './dns-lookup-guard'
 import { EGRESS_PROXY_URL_ENV, installGlobalProxyAgents } from './global-agent-proxy'
 import { installEnvProxyDispatcher } from './proxy-dispatcher'

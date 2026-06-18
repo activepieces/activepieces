@@ -1,4 +1,4 @@
-import type { ProjectId } from '../../management/project/project'
+import type { ProjectId } from '@activepieces/core-utils'
 import type { BaseModel } from '../common/base-model'
 import type { ApId } from '../common/id-generator'
 

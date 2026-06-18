@@ -1,6 +1,6 @@
+import { AIProviderName } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { Nullable } from '../../core/common'
-import { AIProviderName } from '../../management/ai-providers'
 export * from './tools'
 export * from './mcp'
 export * from './mcp-tool-name-util'

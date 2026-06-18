@@ -5,10 +5,10 @@ import {
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
+    flowStructureUtil,
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
-    flowStructureUtil,
     PieceAction,
     StepLocationRelativeToParent,
 } from '../../src'

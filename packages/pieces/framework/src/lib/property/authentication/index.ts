@@ -1,5 +1,5 @@
 
-import { z } from "zod";
+import * as z from "zod/mini";
 import { BasicAuthProperty } from "./basic-auth-prop";
 import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
 import { OIDCProperty, OIDCAuthProps } from "./oidc-prop";

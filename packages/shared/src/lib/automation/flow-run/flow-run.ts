@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { ErrorCode } from '../../core/common/activepieces-error'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
-import { ApId } from '../../core/common/id-generator'
 import { isNil, truncateString } from '../../core/common/utils/utils'
 import { ExecutionState, RunInternalError } from './execution/execution-output'
 import { FlowRunStatus } from './execution/flow-execution'
@@ -27,8 +26,6 @@ export function truncateFailedStepMessage(
 export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
 export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'
 export const RAW_PAYLOAD_HEADER = 'ap-raw-payload'
-
-export type FlowRunId = ApId
 
 export enum RunEnvironment {
     PRODUCTION = 'PRODUCTION',

@@ -36,7 +36,9 @@
     "socket.io-client": "4.8.1",
     "tree-kill": "1.2.2",
     "tslib": "2.6.2",
-    "write-file-atomic": "5.0.1"
+    "write-file-atomic": "5.0.1",
+    "@activepieces/core-utils": "workspace:*",
+    "@activepieces/core-formula": "workspace:*"
   },
   "devDependencies": {
     "@types/decompress": "4.2.7",

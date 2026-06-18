@@ -1,4 +1,5 @@
-import { ChatConversation, SeekPage } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { ChatConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';

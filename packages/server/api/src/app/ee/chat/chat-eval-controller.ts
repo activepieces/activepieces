@@ -1,14 +1,5 @@
-import {
-    ActivepiecesError,
-    apId,
-    ChatConversationStatus,
-    ErrorCode,
-    isNil,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    PersistedChatRole,
-    SimulateChatRequest,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ChatConversationStatus, LATEST_JOB_DATA_SCHEMA_VERSION, PersistedChatRole, SimulateChatRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'

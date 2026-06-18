@@ -1,9 +1,8 @@
+import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
 import {
   ConfigureRepoRequest,
   GitBranchType,
   GitRepo,
-  ApErrorParams,
-  ErrorCode,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';

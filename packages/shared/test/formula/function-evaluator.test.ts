@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { formulaEvaluator } from '@activepieces/core-formula'
+import { describe, expect, it } from 'vitest'
 
 const ok = (expr: string, data: Record<string, unknown> = {}) =>
     formulaEvaluator.evaluate({ expression: formulaEvaluator.wrap(expr), sampleData: data })

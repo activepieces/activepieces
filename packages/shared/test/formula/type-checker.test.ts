@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { typeCheckTiptapDoc } from '@activepieces/core-formula'
+import { describe, expect, it } from 'vitest'
 
 type Node = {
     type?: string

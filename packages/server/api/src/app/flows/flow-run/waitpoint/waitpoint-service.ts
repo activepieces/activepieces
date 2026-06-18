@@ -1,4 +1,5 @@
-import { apId, FlowRunStatus, isNil, PauseType } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'

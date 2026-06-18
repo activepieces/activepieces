@@ -1,24 +1,6 @@
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    ChatConfigResponse,
-    ChatConversationStatus,
-    chatToolClassification,
-    ErrorCode,
-    ExecuteChatToolRequest,
-    ExecuteChatToolResponse,
-    FlowActionType,
-    flowStructureUtil,
-    GetChatConfigRequest,
-    isNil,
-    PersistedChatMessage,
-    PersistedChatPartType,
-    PersistedChatRole,
-    sanitizeObjectForPostgresql,
-    SaveChatMessagesRequest,
-    UpdateChatProgressRequest,
-    UpdateProjectContextRequest,
-} from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FlowActionType, flowStructureUtil, GetChatConfigRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatMessagesRequest, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'

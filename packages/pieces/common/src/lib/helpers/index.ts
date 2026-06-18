@@ -21,7 +21,65 @@ import {
 } from '../http';
 import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/core-utils';
 import fs from 'fs';
-import mime from 'mime-types';
+// Self-contained content-type → file-extension lookup, replacing the heavy
+// `mime-types`/`mime-db` dependency (~134 KB inlined into every piece bundle).
+// Covers the common types returned for binary HTTP responses; unknown → ''.
+const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
+  'application/json': 'json',
+  'application/pdf': 'pdf',
+  'application/xml': 'xml',
+  'text/xml': 'xml',
+  'application/zip': 'zip',
+  'application/gzip': 'gz',
+  'application/x-tar': 'tar',
+  'application/octet-stream': 'bin',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+  'application/rtf': 'rtf',
+  'application/javascript': 'js',
+  'application/x-www-form-urlencoded': 'bin',
+  'text/plain': 'txt',
+  'text/html': 'html',
+  'text/css': 'css',
+  'text/csv': 'csv',
+  'text/calendar': 'ics',
+  'text/markdown': 'md',
+  'image/png': 'png',
+  'image/jpeg': 'jpeg',
+  'image/jpg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
+  'image/bmp': 'bmp',
+  'image/tiff': 'tiff',
+  'image/x-icon': 'ico',
+  'image/vnd.microsoft.icon': 'ico',
+  'image/heic': 'heic',
+  'audio/mpeg': 'mp3',
+  'audio/mp4': 'm4a',
+  'audio/wav': 'wav',
+  'audio/x-wav': 'wav',
+  'audio/ogg': 'ogg',
+  'audio/webm': 'weba',
+  'video/mp4': 'mp4',
+  'video/mpeg': 'mpeg',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+  'video/x-msvideo': 'avi',
+  'font/woff': 'woff',
+  'font/woff2': 'woff2',
+  'font/ttf': 'ttf',
+  'font/otf': 'otf',
+};
+
+function contentTypeToExtension(contentType: string): string {
+  const type = contentType.split(';')[0].trim().toLowerCase();
+  return CONTENT_TYPE_EXTENSIONS[type] ?? '';
+}
 import FormData from 'form-data';
 
 export const getAccessTokenOrThrow = (
@@ -406,7 +464,7 @@ const handleBinaryResponse = async (
       ? headers['content-type'][0]
       : headers?.['content-type'];
     const fileExtension: string =
-      mime.extension(contentTypeValue ?? '') || 'txt';
+      contentTypeToExtension(contentTypeValue ?? '') || 'txt';
 
     let bufferData: Buffer;
     if (bodyContent instanceof ArrayBuffer) {

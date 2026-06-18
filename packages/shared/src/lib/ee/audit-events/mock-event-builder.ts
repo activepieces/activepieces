@@ -1,8 +1,7 @@
+import { PlatformId, ProjectId } from '@activepieces/core-utils'
 import { FlowStatus } from '../../automation/flows/flow'
 import { FlowOperationType } from '../../automation/flows/operations'
 import { apId } from '../../core/common/id-generator'
-import { PlatformId } from '../../management/platform/platform.model'
-import { ProjectId } from '../../management/project/project'
 import {
     ApplicationEvent,
     ApplicationEventName,

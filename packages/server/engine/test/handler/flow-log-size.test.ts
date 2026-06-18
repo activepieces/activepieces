@@ -1,4 +1,4 @@
-import { ExecutionType, FlowRunStatus, FlowTriggerType, FlowVersionState, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { FlowRunStatus, FlowTriggerType, FlowVersionState, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'

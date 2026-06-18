@@ -1,8 +1,8 @@
-import { z } from 'zod'
+import * as z from "zod/mini";
 
 export const TriggerPayload = z.object({
     body: z.unknown(),
-    rawBody: z.unknown().optional(),
+    rawBody: z.optional(z.unknown()),
     headers: z.record(z.string(), z.string()),
     queryParams: z.record(z.string(), z.string()),
 })

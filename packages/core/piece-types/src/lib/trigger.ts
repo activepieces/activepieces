@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from "zod/mini";
 
 export enum TriggerStrategy {
     POLLING = 'POLLING',
@@ -15,8 +15,8 @@ export enum WebhookHandshakeStrategy {
 }
 
 export const WebhookHandshakeConfiguration = z.object({
-    strategy: z.nativeEnum(WebhookHandshakeStrategy),
-    paramName: z.string().optional(),
+    strategy: z.enum(WebhookHandshakeStrategy),
+    paramName: z.optional(z.string()),
 })
 export type WebhookHandshakeConfiguration = z.infer<typeof WebhookHandshakeConfiguration>
 

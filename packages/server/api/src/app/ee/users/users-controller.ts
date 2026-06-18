@@ -1,15 +1,5 @@
-import {
-    AP_MAXIMUM_PROFILE_PICTURE_SIZE,
-    ApId,
-    ApMultipartFile,
-    FileType,
-    isNil,
-    PrincipalType,
-    PROFILE_PICTURE_ALLOWED_TYPES,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateMeResponse,
-    UserWithBadges,
-} from '@activepieces/shared'
+import { ApId, ApMultipartFile, isNil } from '@activepieces/core-utils'
+import { AP_MAXIMUM_PROFILE_PICTURE_SIZE, FileType, PrincipalType, PROFILE_PICTURE_ALLOWED_TYPES, SERVICE_KEY_SECURITY_OPENAPI, UpdateMeResponse, UserWithBadges } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
