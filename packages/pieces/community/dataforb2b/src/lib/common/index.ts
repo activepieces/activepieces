@@ -8,8 +8,7 @@ export const DATAFORB2B_API_BASE_URL = 'https://api.dataforb2b.ai';
 export const dataforb2bAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description:
-    'Your DataForB2B API key. Get it from https://app.dataforb2b.ai',
+  description: 'Your DataForB2B API key. Get it from https://app.dataforb2b.ai',
   validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest({
@@ -19,7 +18,8 @@ export const dataforb2bAuth = PieceAuth.SecretText({
       });
       return { valid: true };
     } catch (e) {
-      const status = (e as { response?: { status?: number } })?.response?.status;
+      const status = (e as { response?: { status?: number } })?.response
+        ?.status;
       if (status === 401 || status === 403) {
         return {
           valid: false,
@@ -122,8 +122,14 @@ export const peopleFilterFields = [
   { label: 'Current Employment Type', value: 'current_employment_type' },
   { label: 'Years in Current Position', value: 'years_in_current_position' },
   { label: 'Years at Current Company', value: 'years_at_current_company' },
-  { label: 'Current Company Has Funding', value: 'current_company_has_funding' },
-  { label: 'Current Company Funding Stage', value: 'current_company_funding_stage' },
+  {
+    label: 'Current Company Has Funding',
+    value: 'current_company_has_funding',
+  },
+  {
+    label: 'Current Company Funding Stage',
+    value: 'current_company_funding_stage',
+  },
   { label: 'Current Company Investor', value: 'current_company_investor' },
   // Past Jobs
   { label: 'Past Company', value: 'past_company' },
@@ -236,8 +242,7 @@ export function buildFiltersProp(
       }),
       value: Property.ShortText({
         displayName: 'Value',
-        description:
-          'For "In List" / "Not In List" use comma-separated values',
+        description: 'For "In List" / "Not In List" use comma-separated values',
         required: true,
       }),
       value2: Property.ShortText({
@@ -277,8 +282,7 @@ export function finalizeFilters(
   advanced: unknown
 ): Record<string, unknown> | undefined {
   const op = match === 'or' ? 'or' : 'and';
-  const group =
-    conditions.length > 0 ? { op, conditions } : undefined;
+  const group = conditions.length > 0 ? { op, conditions } : undefined;
 
   if (advanced && typeof advanced === 'object') {
     const adv = Array.isArray(advanced)

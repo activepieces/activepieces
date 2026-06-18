@@ -370,6 +370,9 @@
       "@activepieces/piece-datadog": [
         "packages/pieces/community/datadog/src/index.ts"
       ],
+      "@activepieces/piece-dataforb2b": [
+        "packages/pieces/community/dataforb2b/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/core/date-helper/src/index.ts"
       ],
@@ -1866,7 +1869,7 @@
       "@activepieces/piece-omnihr": [
         "packages/pieces/community/omnihr/src/index.ts"
       ],
-      "@activepieces/piece-clicdata": [
+      "@activepieces/piece-clicdog": [
         "packages/pieces/community/clicdata/src/index.ts"
       ],
       "@activepieces/piece-katana": [
