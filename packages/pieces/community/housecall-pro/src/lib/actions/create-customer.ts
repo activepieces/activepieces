@@ -3,7 +3,7 @@ import { housecallProAuth, makeHousecallProRequest } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { z } from "zod";
 import { propsValidation } from "@activepieces/pieces-common";
-import { MarkdownVariant } from "@activepieces/shared";
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const createCustomer = createAction({
   auth: housecallProAuth,

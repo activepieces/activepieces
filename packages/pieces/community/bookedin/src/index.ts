@@ -7,7 +7,7 @@ import { getLead } from "./lib/actions/get-lead";
 import { deleteLead } from "./lib/actions/delete-lead";
 import { getLeadStats } from "./lib/actions/get-lead-stats";
 import { updateLead } from "./lib/actions/update-lead";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { bookedinAuth } from './lib/auth';
 
 // --- Authentication ---

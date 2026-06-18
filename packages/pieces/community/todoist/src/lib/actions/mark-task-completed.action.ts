@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { todoistRestClient } from '../common/client/rest-client';

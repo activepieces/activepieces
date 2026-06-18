@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { CallRecordingResponse, CallRecordingWebhookPayload, MeetingResponse, WebhookResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'call-recording-created-trigger';
 

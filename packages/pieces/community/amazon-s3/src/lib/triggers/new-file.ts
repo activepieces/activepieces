@@ -1,7 +1,7 @@
 import { AppConnectionValueForAuthProperty, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { ListObjectsV2CommandInput, S3 } from '@aws-sdk/client-s3';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';

@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { searchIssuesByJql, mapFieldNames } from '../common';
 import { z } from 'zod';

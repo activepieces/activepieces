@@ -4,7 +4,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createDatasetAction } from './lib/actions/create-dataset';
 import { pushRowsToDatasetTableAction } from './lib/actions/push-rows-to-table';
 import { microsoftPowerBiAuth } from './lib/auth';

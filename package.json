@@ -377,6 +377,7 @@
   "workspaces": [
     "packages/shared",
     "packages/cli",
+    "packages/core/*",
     "packages/server/engine",
     "packages/web",
     "packages/server/api",

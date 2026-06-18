@@ -1,7 +1,7 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 
 export const moveFileAction = createAction({
   auth: googleDriveAuth,
@@ -25,7 +25,7 @@ export const moveFileAction = createAction({
 
     const authClient = await createGoogleClient(context.auth);
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const file = await drive.files.get({
       fileId,

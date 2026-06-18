@@ -221,6 +221,9 @@ export const getPiecePackageWithoutArchive = async (
                 pieceType: pieceMetadata.pieceType,
             }
         }
+        default: {
+            throw new Error(`Unhandled packageType: ${(pieceMetadata as { packageType: string }).packageType}`)
+        }
     }
 }
 

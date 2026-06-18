@@ -4,7 +4,7 @@ import { phantombusterAuth } from './lib/common/auth';
 import { newOutput } from './lib/triggers/new-output';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const phantombuster = createPiece({
   displayName: 'PhantomBuster',

@@ -18,6 +18,7 @@
     "commander": "11.1.0",
     "dayjs": "1.11.9",
     "dotenv": "17.2.3",
+    "esbuild": "0.25.0",
     "form-data": "4.0.4",
     "inquirer": "8.2.7",
     "jsonwebtoken": "9.0.1",

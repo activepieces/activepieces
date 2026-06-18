@@ -16,7 +16,8 @@ import {
 } from 'ai';
 import { generateImage } from 'ai';
 import mime from 'mime-types';
-import { isNil, getEffectiveProviderAndModel } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { getEffectiveProviderAndModel } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
 import { AIProviderName } from '@activepieces/shared';
 import { aiProps } from '../../common/props';

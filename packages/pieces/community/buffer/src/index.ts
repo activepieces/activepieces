@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { bufferAuth } from './lib/common/auth';
 import { bufferClient } from './lib/common/client';
 import { createPost } from './lib/actions/create-post';

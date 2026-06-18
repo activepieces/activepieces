@@ -7,7 +7,7 @@ import { getBots } from './lib/actions/get-bots';
 import { getCalls } from './lib/actions/get-calls';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { newPostCallSummary } from './lib/triggers/new-post-call-summary';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { BASE_URL } from './lib/common/client';
 
 export const openmicAi = createPiece({

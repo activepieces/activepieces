@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activep
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { saveContent } from './api';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export type TotalCMSAuthType = AppConnectionValueForAuthProperty<typeof cmsAuth>;
 

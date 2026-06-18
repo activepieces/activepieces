@@ -9,7 +9,8 @@ import { claudeAuth } from '../auth';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-import { isNil, spreadIfDefined } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { spreadIfDefined } from '@activepieces/shared';
 import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({

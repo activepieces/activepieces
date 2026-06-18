@@ -1,7 +1,7 @@
 
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { runWorkflowAction } from './lib/actions/run-workflow';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const mindStudioAuth = PieceAuth.SecretText({
   displayName: 'API Key',

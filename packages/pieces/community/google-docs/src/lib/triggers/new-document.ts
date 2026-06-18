@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { folderIdProp } from '../common/props';
 import dayjs from 'dayjs';
-import { google, drive_v3 } from 'googleapis';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 
 type Props = {
 	folderId?: string;
@@ -28,7 +28,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>,
 
 		const authClient = await createGoogleClient(auth);
 
-		const drive = google.drive({ version: 'v3', auth: authClient });
+		const drive = googleDrive({ version: 'v3', auth: authClient });
 
 		let nextPageToken;
 		const items = [];

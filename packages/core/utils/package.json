@@ -1,0 +1,36 @@
+{
+  "name": "@activepieces/core-utils",
+  "version": "0.1.0",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "deepmerge-ts": "7.1.0",
+    "nanoid": "3.3.8",
+    "tslib": "2.6.2",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "24.11.0",
+    "tsup": "8.3.5",
+    "typescript": "5.5.4"
+  }
+}

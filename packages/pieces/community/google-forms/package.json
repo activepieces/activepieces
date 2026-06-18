@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-google-forms",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -8,8 +8,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "dayjs": "1.11.9",
-    "googleapis": "129.0.0",
-    "googleapis-common": "7.2.0",
+    "google-auth-library": "10.5.0",
     "tslib": "2.6.2"
   },
   "scripts": {

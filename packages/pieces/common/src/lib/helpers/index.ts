@@ -19,7 +19,7 @@ import {
   QueryParams,
   httpClient,
 } from '../http';
-import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/core-utils';
 import fs from 'fs';
 import mime from 'mime-types';
 import FormData from 'form-data';

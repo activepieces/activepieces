@@ -26,6 +26,7 @@
     "ai": "^6.0.0",
     "async-mutex": "0.4.0",
     "dayjs": "1.11.9",
+    "decompress": "4.2.1",
     "env-var": "7.5.0",
     "evlog": "2.18.1",
     "nanoid": "3.3.8",
@@ -38,6 +39,7 @@
     "write-file-atomic": "5.0.1"
   },
   "devDependencies": {
+    "@types/decompress": "4.2.7",
     "@types/node": "24.11.0",
     "@types/write-file-atomic": "4.0.3",
     "vitest": "3.0.8"

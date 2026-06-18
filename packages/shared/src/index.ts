@@ -109,8 +109,5 @@ export * from './lib/ee/scim'
 export * from './lib/ee/embed-subdomain'
 export * from './lib/management/project/project-requests'
 
-// formula
-export * from './lib/formula/function-registry'
-export * from './lib/formula/function-implementations'
-export * from './lib/formula/formula-evaluator'
-export * from './lib/formula/function-type-checker'
+// formula (extracted to @activepieces/core-formula; re-exported for back-compat)
+export * from '@activepieces/core-formula'

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../common/auth';
 import { makeAmpecoApiCall } from '../common/utils';
 

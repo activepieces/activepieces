@@ -20,7 +20,20 @@
         "*.ts",
         "*.tsx"
       ],
-      "rules": {}
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "lodash",
+              "lodash/*",
+              "@activepieces/core-*",
+              "@activepieces/server*",
+              "@activepieces/engine"
+            ]
+          }
+        ]
+      }
     },
     {
       "files": [
@@ -30,4 +43,4 @@
       "rules": {}
     }
   ]
-} 
+}

@@ -5,7 +5,8 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory, tryCatch } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
+import { tryCatch } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
 import { validateEmail } from './lib/actions/validate-email';
 import { addMailingListMember } from './lib/actions/add-mailing-list-member';

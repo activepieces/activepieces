@@ -1,19 +1,51 @@
 {
-  "extends": ["../../../../.eslintrc.base.json"],
-  "ignorePatterns": ["!**/*"],
+  "extends": [
+    "../../../../.eslintrc.base.json"
+  ],
+  "ignorePatterns": [
+    "!**/*"
+  ],
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "files": [
+        "*.ts",
+        "*.tsx",
+        "*.js",
+        "*.jsx"
+      ],
       "rules": {},
-      "extends": ["plugin:prettier/recommended"],
-      "plugins": ["prettier"]
+      "extends": [
+        "plugin:prettier/recommended"
+      ],
+      "plugins": [
+        "prettier"
+      ]
     },
     {
-      "files": ["*.ts", "*.tsx"],
-      "rules": {}
+      "files": [
+        "*.ts",
+        "*.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "lodash",
+              "lodash/*",
+              "@activepieces/core-*",
+              "@activepieces/server*",
+              "@activepieces/engine"
+            ]
+          }
+        ]
+      }
     },
     {
-      "files": ["*.js", "*.jsx"],
+      "files": [
+        "*.js",
+        "*.jsx"
+      ],
       "rules": {}
     }
   ]

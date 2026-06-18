@@ -4,7 +4,6 @@ import { helpScoutAuth } from '../common/auth';
 import { propsValidation } from '@activepieces/pieces-common';
 import { z } from 'zod';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { HttpStatusCode } from 'axios';
 
 export const createCustomer = createAction({
   auth: helpScoutAuth,

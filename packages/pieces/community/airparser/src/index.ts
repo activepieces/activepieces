@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { extractDataFromDocumentAction } from './lib/actions/extract-data-from-document';
 import { uploadDocumentAction } from './lib/actions/upload-document-for-parsing';
 import { airparserApiCall } from './lib/common';

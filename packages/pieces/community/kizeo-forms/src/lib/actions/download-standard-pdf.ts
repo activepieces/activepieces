@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { endpoint, kizeoFormsCommon } from '../common';
-import axios from 'axios';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { kizeoFormsAuth } from '../..';
 
 export const downloadStandardPDF = createAction({
@@ -20,22 +20,22 @@ export const downloadStandardPDF = createAction({
   },
   async run(context) {
     const { formId, dataId } = context.propsValue;
-    const response = await axios.get(
-      endpoint +
+    const response = await httpClient.sendRequest<Buffer>({
+      method: HttpMethod.GET,
+      url:
+        endpoint +
         `v3/forms/${formId}/data/${dataId}/pdf?used-with-actives-pieces=`,
-      {
-        headers: {
-          'Content-Type': 'application/pdf',
-          Authorization: context.auth.secret_text,
-        },
-        responseType: 'arraybuffer',
-      }
-    );
+      headers: {
+        'Content-Type': 'application/pdf',
+        Authorization: context.auth.secret_text,
+      },
+      responseType: 'arraybuffer',
+    });
 
     if (response.status === 200) {
       return (
         'data:application/pdf;base64,' +
-        Buffer.from(response.data).toString('base64')
+        Buffer.from(response.body).toString('base64')
       );
     }
 

@@ -7,7 +7,7 @@ import {
   TypefullySocialSet,
   TypefullyTag,
 } from './types';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 async function fetchAllPages<T>(
   apiKey: string,

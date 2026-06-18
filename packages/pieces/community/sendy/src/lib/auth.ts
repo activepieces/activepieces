@@ -6,7 +6,7 @@ import {
 import { getLists } from './api';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export type SendyAuthType = AppConnectionValueForAuthProperty<typeof sendyAuth>;
 

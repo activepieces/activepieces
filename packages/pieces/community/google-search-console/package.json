@@ -1,14 +1,15 @@
 {
   "name": "@activepieces/piece-google-search-console",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "@googleapis/webmasters": "2.0.1",
     "dayjs": "1.11.9",
-    "googleapis": "129.0.0",
+    "google-auth-library": "10.5.0",
     "tslib": "2.6.2"
   },
   "scripts": {

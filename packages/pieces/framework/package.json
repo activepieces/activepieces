@@ -10,7 +10,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
+    "@activepieces/core-piece-types": "workspace:*",
     "zod": "4.3.6",
     "ai": "^6.0.0",
     "semver": "7.6.0",

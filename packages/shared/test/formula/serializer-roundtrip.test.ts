@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formulaEvaluator } from '../../src/lib/formula/formula-evaluator'
+import { formulaEvaluator } from '@activepieces/core-formula'
 
 /**
  * These tests verify that expression strings survive a full round-trip through

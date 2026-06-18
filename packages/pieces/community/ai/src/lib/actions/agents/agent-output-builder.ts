@@ -1,19 +1,6 @@
-import {
-  AgentResult,
-  AgentStepBlock,
-  AgentTaskStatus,
-  AgentTool,
-  AgentToolType,
-  assertNotNullOrUndefined,
-  ContentBlockType,
-  ExecutionToolStatus,
-  isNil,
-  MarkdownContentBlock,
-  ToolCallBase,
-  ToolCallContentBlock,
-  ToolCallStatus,
-  ToolCallType,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/pieces-framework';
+import { AgentToolType } from '@activepieces/pieces-framework';
+import { AgentResult, AgentStepBlock, AgentTaskStatus, AgentTool, ContentBlockType, ExecutionToolStatus, MarkdownContentBlock, ToolCallBase, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared';
 
 export const agentOutputBuilder = (prompt: string) => {
   let status: AgentTaskStatus = AgentTaskStatus.IN_PROGRESS;

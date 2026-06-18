@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { common, OnfleetWebhookTriggers } from '../common';
 import { onfleetAuth } from '../..';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const taskDeleted = createTrigger({
   auth: onfleetAuth,
   name: 'task_deleted',

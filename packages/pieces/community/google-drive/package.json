@@ -1,16 +1,16 @@
 {
   "name": "@activepieces/piece-google-drive",
-  "version": "0.7.8",
+  "version": "0.7.9",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "@googleapis/drive": "20.2.0",
     "dayjs": "1.11.9",
     "form-data": "4.0.4",
-    "googleapis": "129.0.0",
-    "googleapis-common": "7.2.0",
+    "google-auth-library": "10.5.0",
     "mime-types": "2.1.35",
     "tslib": "2.6.2"
   },

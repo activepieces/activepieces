@@ -1,12 +1,13 @@
-import { readFileSync, writeFileSync, existsSync, copyFileSync, readdirSync, mkdirSync, symlinkSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { readFileSync, writeFileSync, existsSync, copyFileSync, readdirSync, mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { cwd } from 'node:process'
 import { buildWorkspaceVersionMap, resolveWorkspaceDependencies, stripSemverRanges } from './workspace-utils'
+import { bundlePieceUtils } from './bundle-piece-utils'
 
 function copyPackageJson({ piecePath, distPath }: PieceDistPaths): void {
     const srcPackageJson = join(piecePath, 'package.json')
     if (!existsSync(srcPackageJson)) {
-        return
+        throw new Error(`[preparePiece] no package.json at ${srcPackageJson}`)
     }
     copyFileSync(srcPackageJson, join(distPath, 'package.json'))
 }
@@ -26,16 +27,7 @@ function copyI18nAssets({ piecePath, distPath }: PieceDistPaths): void {
     }
 }
 
-function symlinkNodeModules({ piecePath, distPath }: PieceDistPaths): void {
-    const srcNodeModules = resolve(piecePath, 'node_modules')
-    const distNodeModules = join(distPath, 'node_modules')
-    if (!existsSync(srcNodeModules) || existsSync(distNodeModules)) {
-        return
-    }
-    symlinkSync(resolve(srcNodeModules), distNodeModules, 'dir')
-}
-
-function preparePieceDistForPublish(piecePath: string): void {
+async function preparePieceDistForPublish(piecePath: string): Promise<void> {
     const distPath = join(piecePath, 'dist')
 
     if (!existsSync(distPath)) {
@@ -45,19 +37,41 @@ function preparePieceDistForPublish(piecePath: string): void {
     const paths = { piecePath, distPath }
     copyPackageJson(paths)
     copyI18nAssets(paths)
-    symlinkNodeModules(paths)
 
-    const workspaceVersionMap = buildWorkspaceVersionMap(cwd())
+    const { bundleBytes, rawBytes, external } = await bundlePieceUtils.bundlePiece(paths)
 
+    rewriteManifestForBundle({ distPath, external })
+
+    const ratio = rawBytes > 0 ? (rawBytes / bundleBytes).toFixed(1) : '—'
+    const extNote = external.length ? ` external=[${external.join(', ')}]` : ''
+    console.info(`[preparePiece] bundled ${piecePath} → ${(bundleBytes / 1024).toFixed(0)} KB (${ratio}x smaller than ${(rawBytes / 1024).toFixed(0)} KB raw inputs)${extNote}`)
+}
+
+// The published artifact is the self-contained bundle. framework/common/shared and
+// all pure-JS deps are inlined; only native externals remain as install-time deps.
+function rewriteManifestForBundle({ distPath, external }: { distPath: string, external: string[] }): void {
     const distPackageJsonPath = join(distPath, 'package.json')
     const json = JSON.parse(readFileSync(distPackageJsonPath, 'utf-8'))
 
-    json.dependencies = stripSemverRanges(resolveWorkspaceDependencies(json.dependencies, workspaceVersionMap))
-    json.devDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.devDependencies, workspaceVersionMap))
-    json.peerDependencies = stripSemverRanges(resolveWorkspaceDependencies(json.peerDependencies, workspaceVersionMap))
+    const workspaceVersionMap = buildWorkspaceVersionMap(cwd())
+    const resolvedDeps = stripSemverRanges(resolveWorkspaceDependencies(json.dependencies ?? {}, workspaceVersionMap))
+
+    const nativeDeps: Record<string, string> = {}
+    for (const dep of external) {
+        if (resolvedDeps[dep]) {
+            nativeDeps[dep] = resolvedDeps[dep]
+        }
+    }
+
+    json.main = `./${bundlePieceUtils.BUNDLE_FILENAME}`
+    json.dependencies = nativeDeps
+    delete json.devDependencies
+    delete json.peerDependencies
+    delete json.scripts
+    delete json.types
+    json.files = [bundlePieceUtils.BUNDLE_FILENAME, 'package.json', 'src/i18n']
 
     writeFileSync(distPackageJsonPath, JSON.stringify(json, null, 2) + '\n')
-    console.info(`[preparePiece] prepared ${piecePath} (${Object.keys(json.dependencies ?? {}).length} deps)`)
 }
 
 export { preparePieceDistForPublish }

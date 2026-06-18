@@ -1,11 +1,13 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.95.1",
+  "version": "0.97.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
+    "@activepieces/core-formula": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
     "dayjs": "1.11.9",
     "deepmerge-ts": "7.1.0",
     "expr-eval": "2.0.2",

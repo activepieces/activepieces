@@ -4,7 +4,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';
 import { z } from 'zod';
 

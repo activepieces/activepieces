@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { typeCheckTiptapDoc } from '../../src/lib/formula/function-type-checker'
+import { typeCheckTiptapDoc } from '@activepieces/core-formula'
 
 type Node = {
     type?: string

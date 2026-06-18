@@ -26,6 +26,7 @@ const buildOptions = {
         '@activepieces/shared': path.resolve(__dirname, '../../shared/src'),
         '@activepieces/pieces-framework': path.resolve(__dirname, '../../pieces/framework/src'),
         '@activepieces/pieces-common': path.resolve(__dirname, '../../pieces/common/src'),
+        '@activepieces/core-formula': path.resolve(__dirname, '../../core/formula/src'),
     },
     external: ['isolated-vm', 'utf-8-validate', 'bufferutil'],
     plugins: [
