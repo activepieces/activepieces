@@ -33,6 +33,7 @@
   "Reason": "理由：",
   "Select domain to which this trigger applies": "このトリガーが適用されるドメインを選択",
   "Select the user who owns this contact": "この連絡先を所有しているユーザーを選択してください",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "The first name of the contact": "連絡先の名",
   "The last name of the contact": "連絡先の姓",
   "The email address of the contact": "連絡先のメールアドレス",
@@ -75,5 +76,11 @@
   "Select the SMS recipient numbers to which this trigger applies": "このトリガーが適用されるSMS受信者番号を選択します",
   "Ringing": "着信中",
   "Answered": "回答済み",
-  "Both": "両方とも"
+  "Both": "両方とも",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
+  "Filter by message direction": "Filter by message direction",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent"
 }
