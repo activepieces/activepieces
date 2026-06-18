@@ -33,6 +33,7 @@
   "Reason": "Reden",
   "Select domain to which this trigger applies": "Selecteer domein waarvoor deze trigger van toepassing is",
   "Select the user who owns this contact": "Selecteer de gebruiker die eigenaar is van deze contactpersoon",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "The first name of the contact": "De voornaam van het contact",
   "The last name of the contact": "De achternaam van de contactpersoon",
   "The email address of the contact": "Het e-mailadres van de contactpersoon",
@@ -75,5 +76,11 @@
   "Select the SMS recipient numbers to which this trigger applies": "Selecteer de SMS ontvangersnummers waarop deze trigger van toepassing is",
   "Ringing": "Bellen",
   "Answered": "beantwoord",
-  "Both": "Allebei"
+  "Both": "Allebei",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
+  "Filter by message direction": "Filter by message direction",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent"
 }
