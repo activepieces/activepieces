@@ -1,4 +1,4 @@
-import { test, expect } from '../../../fixtures';
+import { test } from '../../../fixtures';
 
 test.describe('Webhooks', () => {
   test('should handle webhook with return response', async ({ page, automationsPage, builderPage }) => {
@@ -40,10 +40,11 @@ test.describe('Webhooks', () => {
     await page.waitForTimeout(1000);
     await builderPage.publishFlow();
 
-    const response = await page.context().request.get(urlWithParams);
-    const body = await response.json();
-
-    expect(body.targetRunVersion).toBe(runVersion.toString());
+    await builderPage.expectSyncWebhookResponse({
+      url: urlWithParams,
+      key: 'targetRunVersion',
+      expected: runVersion.toString(),
+    });
   });
 
 }); 
