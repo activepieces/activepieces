@@ -13,7 +13,7 @@ import { mcpUtils, PropSummary } from './mcp-utils'
 export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_get_piece_props',
-        description: 'Get the input property schema for a piece action or trigger. Returns field names, types, required/optional, defaults, and options. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
+        description: 'Get the input schema for a piece action or trigger, plus AI guidance for using it: an AI-written description of what it does, an idempotency hint, and — when available — the output field paths it produces (for triggers, also derived from sample data). Use the AI description to pick the right action; when output fields are listed, reference them directly downstream as {{step[\'output\'].path}}. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
         inputSchema: getPiecePropsInput.shape,
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -72,6 +72,16 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     })
                 }
 
+                const aiMetadata = component.aiMetadata
+                const declaredOutputFields = component.outputSchema?.fields
+                    ? mcpUtils.flattenOutputSchemaFields(component.outputSchema.fields)
+                    : []
+                const sampleOutputFields = declaredOutputFields.length === 0 && type === 'trigger' && !isNil(component.sampleData)
+                    ? mcpUtils.deriveFieldPathsFromSample(component.sampleData)
+                    : []
+                const outputFields = declaredOutputFields.length > 0 ? declaredOutputFields : sampleOutputFields
+                const outputFieldsSource = declaredOutputFields.length > 0 ? 'declared' : 'sample'
+
                 const textResult = {
                     piece: normalized,
                     name: component.name,
@@ -87,12 +97,25 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     displayName: component.displayName,
                     description: component.description,
                     requiresAuth,
+                    ...(aiMetadata && { aiMetadata }),
+                    ...(component.outputSchema && { outputSchema: component.outputSchema }),
+                    ...(outputFields.length > 0 && { outputFields, outputFieldsSource }),
                     props,
                 }
 
                 const descLine = component.description ? `\nDescription: ${component.description}\n` : ''
+                const aiHintLine = aiMetadata?.description ? `AI hint: ${aiMetadata.description}\n` : ''
+                const idempotentLine = typeof aiMetadata?.idempotent === 'boolean'
+                    ? `Idempotent: ${aiMetadata.idempotent}\n`
+                    : ''
+                const outputHeader = outputFieldsSource === 'declared'
+                    ? '📤 Output fields this step produces'
+                    : '📤 Output fields (from this trigger\'s sample data)'
+                const outputSection = outputFields.length > 0
+                    ? `\n\n${outputHeader} — reference them directly as {{<stepName>['output'].<path>}}:\n${outputFields.map(p => `- ${p}`).join('\n')}`
+                    : ''
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}\n${JSON.stringify(textResult, null, 2)}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}${aiHintLine}${idempotentLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}` }],
                     structuredContent: structured,
                 }
             }

@@ -2,7 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { EngineGenericError, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, trimVersionFromAlias } from '@activepieces/shared'
+import { EngineGenericError, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, PieceNotFoundError, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
 
 export const pieceLoader = {
@@ -25,7 +25,7 @@ export const pieceLoader = {
             })
 
             if (isNil(piece)) {
-                throw new EngineGenericError('PieceNotFoundError', `Piece not found for piece: ${pieceName}, pieceVersion: ${pieceVersion}`)
+                throw new PieceNotFoundError(`Piece not found for piece: ${pieceName}, pieceVersion: ${pieceVersion}`)
             }
             return piece
         })
@@ -124,7 +124,7 @@ export const pieceLoader = {
             ? await findInDistFolder(packageName)
             : await traverseAllParentFoldersToFindPiece(packageName)
         if (isNil(piecePath)) {
-            throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}`)
+            throw new PieceNotFoundError(`Piece not found for package: ${packageName}`)
         }
         return piecePath
     },
