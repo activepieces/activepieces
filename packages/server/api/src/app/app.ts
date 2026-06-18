@@ -18,6 +18,7 @@ import { platformAppConnectionModule } from './app-connection/platform-app-conne
 import { authenticationModule } from './authentication/authentication.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
+import { oidcModule } from './core/security/oidc/oidc.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
@@ -33,6 +34,7 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { chatEvalModule } from './ee/chat/chat-eval-controller'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
@@ -54,6 +56,7 @@ import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
 import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
+import { projectReplaceModule } from './ee/projects/project-replace/project-replace.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
@@ -227,6 +230,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
+    await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
@@ -289,11 +293,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
+            await app.register(chatEvalModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -319,11 +325,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
+            await app.register(chatEvalModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
