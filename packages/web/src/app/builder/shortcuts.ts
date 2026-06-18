@@ -158,7 +158,7 @@ const shortcutHandler = (
 ) => {
   const shortcutActivated = Object.entries(CanvasShortcuts).find(
     ([_, shortcut]) =>
-      shortcut.shortcutKey?.toLowerCase() === event.key.toLowerCase() &&
+      shortcut.shortcutKey?.toLowerCase() === event.key?.toLowerCase() &&
       !!(
         shortcut.withCtrl === event.ctrlKey ||
         shortcut.withCtrl === event.metaKey
