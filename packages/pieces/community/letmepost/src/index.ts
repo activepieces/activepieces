@@ -24,15 +24,10 @@ export const letmepost = createPiece({
     listAccounts,
     listMedia,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        (auth as { props: { base_url: string } }).props.base_url
-          ?.trim()
-          .replace(/\/+$/, ''),
+      baseUrl: (auth) => auth?.props.base_url ?? '',
       auth: letmepostAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${
-          (auth as { props: { api_key: string } }).props.api_key
-        }`,
+        Authorization: `Bearer ${auth.props.api_key}`,
       }),
     }),
   ],

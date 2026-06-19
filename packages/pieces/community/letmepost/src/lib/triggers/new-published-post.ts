@@ -9,7 +9,7 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { letmepostAuth, LetmepostAuth } from '../common/auth';
+import { letmepostAuth } from '../common/auth';
 import { letmepostApiCall } from '../common';
 
 const polling: Polling<
@@ -30,7 +30,7 @@ const polling: Polling<
         createdAt: string;
       }[];
     }>({
-      auth: auth as LetmepostAuth,
+      auth: auth,
       method: HttpMethod.GET,
       path: '/v1/posts',
       queryParams: { limit: '100' },

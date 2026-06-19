@@ -103,14 +103,18 @@ export const publishPost = createAction({
 
     if (!publishImmediately && !scheduledAt) {
       throw new Error(
-        'A Schedule at time is required when Publish now is turned off.',
+        'A Schedule at time is required when Publish now is turned off.'
       );
     }
 
     const body: Record<string, unknown> = {
       targets: accounts.map((accountId) => ({ accountId })),
-      publishNow: publishImmediately,
     };
+    if (publishImmediately) {
+      body['publishNow'] = true;
+    } else {
+      body['scheduledAt'] = scheduledAt;
+    }
 
     if (text) {
       body['text'] = text;

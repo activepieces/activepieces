@@ -75,7 +75,9 @@ export const letmepostCommon = {
       return {
         disabled: false,
         options: response.body.data.map((account) => ({
-          label: `${account.displayName ?? account.platform} (${account.platform})`,
+          label: `${account.displayName ?? account.platform} (${
+            account.platform
+          })`,
           value: account.id,
         })),
       };
