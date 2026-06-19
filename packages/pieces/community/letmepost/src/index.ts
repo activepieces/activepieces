@@ -10,21 +10,21 @@ import { newPublishedPost } from './lib/triggers/new-published-post';
 import { postEvent } from './lib/triggers/post-event';
 
 export const letmepost = createPiece({
-  displayName: 'letmepost',
+  displayName: 'Letmepost',
   description:
     'Publish and schedule posts to Bluesky, X, LinkedIn, Instagram, Threads, Facebook, Pinterest, and TikTok through one API',
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/letmepost.png',
   categories: [PieceCategory.MARKETING],
   auth: letmepostAuth,
-  authors: ['rosekamallove'],
+  authors: ['rosekamallove', 'sanket-a11y'],
   actions: [
     publishPost,
     getPost,
     listAccounts,
     listMedia,
     createCustomApiCallAction({
-      baseUrl: (auth) => auth?.props.base_url ?? '',
+      baseUrl: (auth) => auth?.props.base_url ?? 'https://api.letmepost.dev',
       auth: letmepostAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.props.api_key}`,

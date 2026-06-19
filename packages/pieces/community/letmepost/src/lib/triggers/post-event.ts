@@ -35,6 +35,14 @@ function isValidSignature(
   }
 }
 
+function getEventType(body: unknown): string | undefined {
+  if (typeof body === 'object' && body !== null && 'type' in body) {
+    const type = body.type;
+    return typeof type === 'string' ? type : undefined;
+  }
+  return undefined;
+}
+
 export const postEvent = createTrigger({
   auth: letmepostAuth,
   name: 'post_event',
@@ -133,7 +141,13 @@ export const postEvent = createTrigger({
     ) {
       return [];
     }
-
+    const events = context.propsValue.events;
+    if (events && events.length > 0) {
+      const eventType = getEventType(context.payload.body);
+      if (!eventType || !events.includes(eventType)) {
+        return [];
+      }
+    }
     return [context.payload.body];
   },
 });
