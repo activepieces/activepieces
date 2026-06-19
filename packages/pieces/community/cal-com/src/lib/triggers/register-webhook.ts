@@ -39,7 +39,7 @@ export const registerWebhooks = ({
         url: `https://api.cal.com/v2/webhooks`,
         body: {
           triggers: [name],
-          url: context.webhookUrl,
+          subscriberUrl: context.webhookUrl,
           active: true,
         },
         headers: {
@@ -101,7 +101,7 @@ interface WebhookInformation {
   payloadTemplate?: null | string;
   triggers: string[];
   appId?: null | string;
-  url: string;
+  subscriberUrl: string;
 }
 
 interface WebhookResponseBody {
