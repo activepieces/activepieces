@@ -14,7 +14,7 @@ const SECRET_STORE_KEY = 'letmepost_webhook_signing_secret';
 function isValidSignature(
   secret: string,
   rawBody: string,
-  signature: string,
+  signature: string
 ): boolean {
   const presented = signature.startsWith('sha256=')
     ? signature.slice('sha256='.length)
@@ -28,19 +28,11 @@ function isValidSignature(
   try {
     return timingSafeEqual(
       Buffer.from(presented, 'hex'),
-      Buffer.from(expected, 'hex'),
+      Buffer.from(expected, 'hex')
     );
   } catch {
     return false;
   }
-}
-
-function getEventType(body: unknown): string | undefined {
-  if (typeof body === 'object' && body !== null && 'type' in body) {
-    const type = body.type;
-    return typeof type === 'string' ? type : undefined;
-  }
-  return undefined;
 }
 
 export const postEvent = createTrigger({
@@ -59,7 +51,7 @@ export const postEvent = createTrigger({
       displayName: 'Events',
       description:
         'Which events to listen for. Leave empty to receive all events.',
-      required: false,
+      required: true,
       options: {
         options: [
           { label: 'Post queued', value: 'post.queued' },
@@ -77,16 +69,17 @@ export const postEvent = createTrigger({
     }),
   },
   sampleData: {
-    id: 'evt_01HXY7Z8K9MNB1P2QR3STVW',
+    id: '3bb21953-33c4-47f9-9401-7323e84ee6e0',
     type: 'post.published',
-    createdAt: '2026-06-19T10:00:00.000Z',
-    organizationId: 'org_01HXY7Z8K9MNB1P2QR3STVW',
+    createdAt: '2026-06-19T10:29:47.790Z',
+    organizationId: '019edf51-a4fd-7e45-95f2-d104b470d962',
     data: {
-      id: 'post_01HXY7Z8K9MNB1P2QR3STVW',
-      accountId: 'acc_01HXY7Z8K9MNB1P2QR3STVW',
+      postId: '00000000-0000-0000-0000-000000000000',
       platform: 'bluesky',
       status: 'published',
-      platformUri: 'https://bsky.app/profile/letmepost.dev/post/abc123',
+      text: 'Test webhook from letmepost.dev',
+      publishedAt: '2026-06-19T09:58:52.423Z',
+      platformUri: 'at://did:plc:test/app.bsky.feed.post/test',
     },
   },
   async onEnable(context) {
@@ -127,6 +120,7 @@ export const postEvent = createTrigger({
     }
   },
   async run(context) {
+    const body = context.payload.body as any;
     const secret = await context.store.get<string>(SECRET_STORE_KEY);
     const headers = context.payload.headers ?? {};
     const signature =
@@ -143,7 +137,7 @@ export const postEvent = createTrigger({
     }
     const events = context.propsValue.events;
     if (events && events.length > 0) {
-      const eventType = getEventType(context.payload.body);
+      const eventType = body?.type;
       if (!eventType || !events.includes(eventType)) {
         return [];
       }
