@@ -1,4 +1,4 @@
-import { test, expect } from '../../../fixtures';
+import { test } from '../../../fixtures';
 
 /**
  * Warmup resilience smoke test.
@@ -48,9 +48,10 @@ test.describe('Piece isolation — CE', () => {
     await page.waitForTimeout(1000);
     await builderPage.publishFlow();
 
-    const response = await page.context().request.get(`${webhookUrl}/sync?runVersion=${runVersion}`);
-    const body = await response.json();
-
-    expect(body.runVersion).toBe(runVersion.toString());
+    await builderPage.expectSyncWebhookResponse({
+      url: `${webhookUrl}/sync?runVersion=${runVersion}`,
+      key: 'runVersion',
+      expected: runVersion.toString(),
+    });
   });
 });

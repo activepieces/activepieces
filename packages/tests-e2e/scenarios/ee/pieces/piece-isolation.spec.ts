@@ -1,4 +1,6 @@
-import { test, expect } from '../../../fixtures';
+import { gzipSync } from 'node:zlib';
+
+import { test } from '../../../fixtures';
 
 /**
  * EE: Bad piece isolation test.
@@ -27,19 +29,7 @@ test.describe('Piece isolation — EE', () => {
       },
     });
 
-    const { Readable } = await import('node:stream');
-    const tar = await import('tar-stream');
-    const zlib = await import('node:zlib');
-
-    const pack = tar.pack();
-    pack.entry({ name: 'package/package.json' }, badPackageJson);
-    pack.finalize();
-
-    const chunks: Buffer[] = [];
-    for await (const chunk of pack.pipe(zlib.createGzip())) {
-      chunks.push(chunk as Buffer);
-    }
-    const tarball = Buffer.concat(chunks);
+    const tarball = createGzippedTarball('package/package.json', badPackageJson);
 
     // POST the broken piece archive to the platform pieces endpoint
     const uploadResponse = await request.post('/api/v1/pieces', {
@@ -88,9 +78,32 @@ test.describe('Piece isolation — EE', () => {
     await page.waitForTimeout(1000);
     await builderPage.publishFlow();
 
-    const response = await page.context().request.get(`${webhookUrl}/sync?runVersion=${runVersion}`);
-    const body = await response.json();
-
-    expect(body.runVersion).toBe(runVersion.toString());
+    await builderPage.expectSyncWebhookResponse({
+      url: `${webhookUrl}/sync?runVersion=${runVersion}`,
+      key: 'runVersion',
+      expected: runVersion.toString(),
+    });
   });
 });
+
+// Build a minimal gzipped ustar archive in memory using only Node built-ins,
+// so the test does not depend on tar-stream (unavailable in the Checkly runtime)
+// or dynamic imports (unsupported in its sandbox). Numeric header fields (uid,
+// gid, mtime) are left as the zero-fill, which tar reads as 0.
+function createGzippedTarball(name: string, content: string): Buffer {
+  const data = Buffer.from(content, 'utf8');
+  const header = Buffer.alloc(512);
+  header.write(name, 0, 100, 'utf8');
+  header.write('0000644\0', 100, 8, 'utf8'); // mode
+  header.write(`${data.length.toString(8).padStart(11, '0')}\0`, 124, 12, 'utf8'); // size
+  header.write('0', 156, 1, 'utf8'); // typeflag: regular file
+  header.write('ustar\0', 257, 6, 'utf8'); // magic
+  header.write('00', 263, 2, 'utf8'); // version
+  header.fill(' ', 148, 156); // checksum field is spaces while summing
+  const checksum = header.reduce((sum, byte) => sum + byte, 0);
+  header.write(`${checksum.toString(8).padStart(6, '0')}\0 `, 148, 8, 'utf8');
+  const padding = (512 - (data.length % 512)) % 512;
+  return gzipSync(
+    Buffer.concat([header, data, Buffer.alloc(padding), Buffer.alloc(1024)]),
+  );
+}

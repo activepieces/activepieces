@@ -23,10 +23,11 @@ export class AutomationsPage extends BasePage {
 
   async waitFor() {
     await this.page.waitForURL('**/automations**');
-    await Promise.race([
-      this.page.waitForSelector('text="Get started with Activepieces"'),
-      this.page.waitForSelector('button:has-text("Create New")'),
-    ]);
+    await this.page
+      .locator('text="Get started with Activepieces"')
+      .or(this.page.locator('button:has-text("Create New")'))
+      .first()
+      .waitFor();
   }
 
   async newFlowFromScratch() {
