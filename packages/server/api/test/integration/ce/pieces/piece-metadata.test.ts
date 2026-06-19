@@ -287,6 +287,91 @@ describe('Piece Metadata CE API', () => {
         })
     })
 
+    describe('DELETE /v1/pieces/:id', () => {
+        it('should delete a custom piece owned by the platform', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/deletable-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).toBeNull()
+        })
+
+        it('should delete all versions of the custom piece', async () => {
+            const ctx = await createTestContext(app!)
+            const versionOne = createMockPieceMetadata({
+                name: '@custom/multi-version-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            const versionTwo = createMockPieceMetadata({
+                name: '@custom/multi-version-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.2.0',
+            })
+            await db.save('piece_metadata', [versionOne, versionTwo])
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${versionTwo.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findBy({ name: '@custom/multi-version-piece' })
+            expect(remaining).toHaveLength(0)
+        })
+
+        it('should reject deleting a platform-owned official piece with 403', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@activepieces/official-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).not.toBeNull()
+        })
+
+        it('should not delete a custom piece owned by another platform', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/other-platform-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: apId(),
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).not.toBeNull()
+        })
+    })
+
     describe('pieceMetadataService.get() — custom pieces', () => {
         it('should return undefined for custom piece when platformId is not provided', async () => {
             const platformId = apId()

@@ -178,6 +178,24 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 await pieceCache(log).invalidate()
             }
         },
+
+        async delete({ id, platformId }: DeleteParams): Promise<void> {
+            const piece = await pieceRepos().findOneBy({ id })
+            if (isNil(piece) || piece.platformId !== platformId) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: { entityType: 'piece', entityId: id },
+                })
+            }
+            if (piece.pieceType !== PieceType.CUSTOM) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Only custom pieces can be deleted' },
+                })
+            }
+            await pieceRepos().delete({ name: piece.name, platformId })
+            await pieceCache(log).invalidate()
+        },
     }
 }
 
@@ -485,6 +503,11 @@ type GetOrThrowParams = {
     projectId?: string
     platformId?: string
     locale?: LocalesEnum
+}
+
+type DeleteParams = {
+    id: string
+    platformId: string
 }
 
 type CreateParams = {

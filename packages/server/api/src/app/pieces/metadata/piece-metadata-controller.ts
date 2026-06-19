@@ -19,6 +19,8 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
@@ -123,6 +125,14 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
 
+    app.delete('/:id', DeletePieceRequest, async (req, reply) => {
+        await pieceMetadataService(req.log).delete({
+            id: req.params.id,
+            platformId: req.principal.platform.id,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     app.post(
         '/options',
         OptionsPieceRequest,
@@ -219,5 +229,17 @@ const OptionsPieceRequest = {
 const SyncPiecesRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const DeletePieceRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['pieces'],
+        params: z.object({
+            id: z.string(),
+        }),
     },
 }
