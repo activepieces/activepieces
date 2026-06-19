@@ -98,18 +98,19 @@ async function extractPieceBundle({ rootWorkspace, piecePackage, log }: {
     // The published artifact is a single self-contained bundle. npm tarballs nest
     // everything under `package/`; strip it so the bundle lands at the folder root.
     await decompress(archivePath, folder, { strip: 1 })
-    await installNativeDependenciesIfAny({ folder, log })
+    await installExternalDependenciesIfAny({ folder, log })
 }
 
-// Only externalized native addons survive as install-time deps (≈1% of pieces).
-// Everything else is inlined in the bundle, so there is no runtime install.
-async function installNativeDependenciesIfAny({ folder, log }: { folder: string, log: ApLogger }): Promise<void> {
+// Third-party deps are external by default, so a bundle ships a package.json listing its
+// external closure — install it. A piece that opts into inlining (bundleDeps) ships no
+// dependencies and skips the install entirely. Workspace code is always in the bundle.
+async function installExternalDependenciesIfAny({ folder, log }: { folder: string, log: ApLogger }): Promise<void> {
     const { data: raw } = await tryCatch(async () => readFile(join(folder, 'package.json'), 'utf8'))
     if (isNil(raw)) {
         return
     }
-    const nativeDeps = JSON.parse(raw).dependencies ?? {}
-    if (isEmpty(Object.keys(nativeDeps))) {
+    const externalDeps = JSON.parse(raw).dependencies ?? {}
+    if (isEmpty(Object.keys(externalDeps))) {
         return
     }
     await bunRunner(log).install({ path: folder, filtersPath: [] })
