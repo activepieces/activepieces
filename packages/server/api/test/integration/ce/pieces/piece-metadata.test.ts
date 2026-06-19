@@ -308,6 +308,15 @@ describe('Piece Metadata CE API', () => {
             expect(remaining).toBeNull()
         })
 
+        it('should return 404 for a non-existent piece id', async () => {
+            const ctx = await createTestContext(app!)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${apId()}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
         it('should delete all versions of the custom piece', async () => {
             const ctx = await createTestContext(app!)
             const versionOne = createMockPieceMetadata({
