@@ -32,8 +32,8 @@ export const websocketService = {
                 await validateProjectId({ userId: principal.id, projectId, log })
                 log.info({
                     message: 'User connected',
-                    userId: principal.id,
-                    projectId,
+                    user: { id: principal.id },
+                    project: { id: projectId },
                 })
                 await socket.join(projectId)
                 await socket.join(principal.id)
@@ -43,7 +43,7 @@ export const websocketService = {
                 const workerId = socket.handshake.auth.workerId
                 log.info({
                     message: 'Worker connected',
-                    workerId,
+                    worker: { id: workerId },
                 })
                 await socket.join(workerId)
                 break

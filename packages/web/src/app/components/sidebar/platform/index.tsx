@@ -50,7 +50,10 @@ export function PlatformSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
-  const defaultRoute = determineDefaultRoute(checkAccess);
+  const defaultRoute = determineDefaultRoute({
+    checkAccess,
+    chatEnabled: platform.plan.chatEnabled,
+  });
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
 
   const setupItems = [

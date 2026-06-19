@@ -145,7 +145,7 @@ async function pushBatch({ conversations, licenseKey, log, userCache, platformCa
     for (const conversation of conversations) {
         const payloadResult = await tryCatch(() => toSyncPayload({ conversation, log, userCache, platformCache, providerCache }))
         if (payloadResult.error) {
-            log.error({ conversationId: conversation.id, error: String(payloadResult.error) }, 'Failed to build sync payload for conversation, skipping')
+            log.error({ conversation: { id: conversation.id }, error: String(payloadResult.error) }, 'Failed to build sync payload for conversation, skipping')
             continue
         }
         payloads.push(payloadResult.data)

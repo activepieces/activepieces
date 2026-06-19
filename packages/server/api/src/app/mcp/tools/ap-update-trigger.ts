@@ -163,7 +163,7 @@ async function diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerNa
         return parts.join(' ')
     }
     catch (err) {
-        log.warn({ err, pieceName, triggerName }, 'diagnoseMissingTriggerInputs: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, trigger: { name: triggerName } }, 'diagnoseMissingTriggerInputs: failed to fetch piece metadata')
         return null
     }
 }

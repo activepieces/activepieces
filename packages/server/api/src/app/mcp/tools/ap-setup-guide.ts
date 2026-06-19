@@ -28,7 +28,7 @@ export const apSetupGuideTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 return await aiProviderGuide(mcp, log)
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_setup_guide failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_setup_guide failed')
                 return mcpUtils.mcpToolError('Failed to generate setup guide', err)
             }
         },

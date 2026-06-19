@@ -9,7 +9,7 @@ const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 export class AddExternalIdToFolder1795000000000 implements Migration {
     name = 'AddExternalIdToFolder1795000000000'
     breaking = false
-    release = '0.96.0'
+    release = '0.85.4'
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {

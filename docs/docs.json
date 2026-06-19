@@ -233,6 +233,7 @@
                   "pages": [
                      "embedding/customize-pieces",
                      "embedding/embed-connections",
+                     "embedding/embeddable-mcp",
                      "embedding/navigation",
                      "embedding/predefined-connection",
                      "embedding/sdk-changelog",
@@ -528,6 +529,7 @@
                      "handbook/engineering/playbooks/canary-deployment",
                      "handbook/engineering/playbooks/infrastructure",
                      "handbook/engineering/playbooks/database-migration",
+                     "handbook/engineering/playbooks/structured-logging",
                      "handbook/engineering/playbooks/security-advisory-response",
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",

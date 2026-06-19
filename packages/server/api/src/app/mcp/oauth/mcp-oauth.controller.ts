@@ -111,7 +111,7 @@ function unauthorized({ req, reply, scope, message, invalidToken }: {
 async function resolveIdentity({ token, scope, log }: { token: string, scope: McpServerType, log: FastifyBaseLogger }): Promise<ResolvedIdentity | null> {
     const { data: payload, error } = await tryCatch(() => mcpOAuthTokenService.verifyAccessToken(token))
     if (error) {
-        log.debug({ err: error }, 'OAuth token verification failed')
+        log.debug({ error }, 'OAuth token verification failed')
         return null
     }
     const { projectId } = payload
@@ -149,7 +149,7 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
         return { mcp, userId: identity.userId }
     }
     catch (err) {
-        log.debug({ err }, 'Failed to resolve MCP server')
+        log.debug({ error: err }, 'Failed to resolve MCP server')
         return { mcp: null }
     }
 }
@@ -169,11 +169,11 @@ async function resolveConversationProjectId({ conversationId, userId, log }: {
         chatConversationRepo().findOne({ where: { id: conversationId, userId }, select: ['projectId'] }),
     )
     if (error) {
-        log.warn({ err: error, conversationId }, 'DB error resolving conversation project')
+        log.warn({ error, conversation: { id: conversationId } }, 'DB error resolving conversation project')
         return null
     }
     if (!conversation) {
-        log.debug({ conversationId }, 'Conversation not found for project resolution')
+        log.debug({ conversation: { id: conversationId } }, 'Conversation not found for project resolution')
         return null
     }
     return conversation.projectId ?? null

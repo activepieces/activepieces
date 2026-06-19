@@ -65,17 +65,17 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
 export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
+            log.info({ worker: { id: input.workerId }, workerGroupId }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, workerGroupId)
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
             if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
                 const versionUnreadable = workerVersion === UNKNOWN_VERSION || appVersion === UNKNOWN_VERSION
                 if (versionUnreadable) {
-                    log.error({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on deploy completion, check the worker/app deployment (cwd/packaging)')
+                    log.error({ worker: { id: input.workerId }, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on deploy completion, check the worker/app deployment (cwd/packaging)')
                 }
                 else {
-                    log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
+                    log.warn({ worker: { id: input.workerId }, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
                 }
                 if (appVersion === UNKNOWN_VERSION) {
                     pageOnceForUnreadableAppVersion(log, appVersion)
@@ -85,16 +85,16 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             const pollQueueName = getPollQueueName(workerGroupId)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
-                log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
+                log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }
             else {
-                log.debug({ workerId: input.workerId }, '[workerRpc#poll] No job available, returning null')
+                log.debug({ worker: { id: input.workerId } }, '[workerRpc#poll] No job available, returning null')
             }
             return job
         },
 
         async completeJob(input) {
-            log.info({ jobId: input.jobId, status: input.status }, '[workerRpc#completeJob] Job completed by worker')
+            log.info({ job: { id: input.jobId }, status: input.status }, '[workerRpc#completeJob] Job completed by worker')
             await jobBroker(log).completeJob(input)
         },
 
@@ -271,7 +271,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                     request: { status: FlowStatus.DISABLED },
                 },
             })
-            log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled by worker request')
+            log.info({ flow: { id: flowId }, project: { id: projectId } }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
 
         async sendChatEvent(input) {
@@ -334,7 +334,7 @@ async function persistInternalErrorToLogs({ log, projectId, logsFileId, internal
     })
 
     if (error) {
-        log.error({ error, logsFileId, projectId }, '[workerRpc#uploadRunLog] Failed to persist internal error to logs file')
+        log.error({ error, logsFileId, project: { id: projectId } }, '[workerRpc#uploadRunLog] Failed to persist internal error to logs file')
     }
 }
 

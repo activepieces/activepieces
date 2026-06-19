@@ -122,7 +122,7 @@ export const stripeBillingController: FastifyPluginAsyncZod = async (fastify) =>
                 return await reply.status(StatusCodes.OK).send({ received: true })
             }
             catch (err) {
-                request.log.error({ err }, 'Stripe webhook processing failed')
+                request.log.error({ error: err }, 'Stripe webhook processing failed')
                 exceptionHandler.handle(err, request.log)
                 return reply
                     .status(StatusCodes.BAD_REQUEST)
