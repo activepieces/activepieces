@@ -162,7 +162,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const saveResult = await chatHelpers.conversationRepo().update(input.conversationId, updates)
         if (saveResult.affected === 0) {
-            log.warn({ conversationId: input.conversationId }, 'saveChatMessages: conversation not found, may have been deleted')
+            log.warn({ conversation: { id: input.conversationId } }, 'saveChatMessages: conversation not found, may have been deleted')
         }
 
         if (input.messages.length > 0) {

@@ -107,7 +107,7 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_find_records failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_find_records failed')
                 return mcpUtils.mcpToolError('Failed to find records', err)
             }
         },

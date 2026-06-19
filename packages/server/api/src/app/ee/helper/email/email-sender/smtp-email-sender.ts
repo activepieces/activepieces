@@ -51,7 +51,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 const smtpClient = initSmtpClient()
                 log.info({
                     emails,
-                    platformId,
+                    platform: { id: platformId },
                     templateData,
                 }, '[smtpEmailSender#send] sending email')
                 await smtpClient.sendMail({
@@ -65,7 +65,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 log.error({
                     error: e,
                     emails,
-                    platformId,
+                    platform: { id: platformId },
                     title: templateData.name,
                 }, '[smtpEmailSender#send] error sending email')
                 throw e

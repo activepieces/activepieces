@@ -180,9 +180,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('preHandler', (request, _reply, done) => {
         try {
             const principal = request.principal
+            const projectId = extractProjectId(principal)
+            const platformId = extractPlatformId(principal)
             wideEvent.set({
-                ...spreadIfDefined('projectId', extractProjectId(principal)),
-                ...spreadIfDefined('platformId', extractPlatformId(principal)),
+                ...spreadIfDefined('project', isNil(projectId) ? undefined : { id: projectId }),
+                ...spreadIfDefined('platform', isNil(platformId) ? undefined : { id: platformId }),
                 ...spreadIfDefined('principalType', principal?.type),
             })
         }
