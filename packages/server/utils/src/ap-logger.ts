@@ -68,7 +68,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 }
                 else {
                     if (err) {
-                        log.error({ msg: message ?? err.message, err: `${err.message}\n${err.stack ?? ''}`, ...bindings, ...fields })
+                        log.error({ msg: message ?? err.message, error: `${err.message}\n${err.stack ?? ''}`, ...bindings, ...fields })
                     }
                     else {
                         log.error({ msg: message, ...bindings, ...fields })
@@ -88,7 +88,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 }
                 else {
                     if (err) {
-                        log.error({ msg: message ?? err.message, err: `${err.message}\n${err.stack ?? ''}`, ...bindings, ...fields })
+                        log.error({ msg: message ?? err.message, error: `${err.message}\n${err.stack ?? ''}`, ...bindings, ...fields })
                     }
                     else {
                         log.error({ msg: message, ...bindings, ...fields })

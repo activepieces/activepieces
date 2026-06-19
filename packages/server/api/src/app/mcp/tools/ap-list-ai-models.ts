@@ -65,7 +65,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             return `- ${p.provider} (${p.name}) — ${textModels.length} text model(s)\n  Models:\n${modelLines}${overflow}`
                         }
                         catch (err) {
-                            log.warn({ err, provider: p.provider }, 'ap_list_ai_models: failed to fetch models for provider')
+                            log.warn({ error: err, provider: p.provider }, 'ap_list_ai_models: failed to fetch models for provider')
                             structuredProviders.push({ provider: p.provider, displayName: p.name, models: [] })
                             return `- ${p.provider} (${p.name})\n  (failed to fetch models)`
                         }
@@ -81,7 +81,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_list_ai_models failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_list_ai_models failed')
                 return mcpUtils.mcpToolError('Failed to list AI models', err)
             }
         },

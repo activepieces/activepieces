@@ -22,7 +22,7 @@ export const flowVersionBackupService = (log: FastifyBaseLogger) => ({
         })
 
         log.info({
-            flowVersionId: flowVersion.id,
+            flowVersion: { id: flowVersion.id },
             schemaVersion: flowVersion.schemaVersion,
         }, 'Stored backup version for flow version')
 
@@ -44,7 +44,7 @@ export const flowVersionBackupService = (log: FastifyBaseLogger) => ({
         const backupFlowVersion: FlowVersion = JSON.parse(fileData.data.toString('utf-8'))
 
         log.info({
-            flowVersionId: flowVersion.id,
+            flowVersion: { id: flowVersion.id },
             schemaVersion,
         }, 'Backup version retrieved for flow version')
         return backupFlowVersion

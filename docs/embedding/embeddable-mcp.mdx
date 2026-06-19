@@ -1,0 +1,181 @@
+---
+title: "Embeddable MCP"
+description: "Let your embedded users connect their automations to AI with one click"
+icon: "plug"
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+## What it does
+
+Every Activepieces project can act as an [MCP](/mcp/overview) server — a place an AI can connect to in order to run that project's flows.
+
+When you embed Activepieces, your users log in through **your** app, not Activepieces. So they can't use the normal "connect your AI" screen (it would ask them to log in to Activepieces, which they can't).
+
+Embeddable MCP fixes that. Your user clicks one **Authorize** button inside your app, and your backend gets a token it can use to run that user's automations through AI.
+
+**Who does what:**
+- **Your backend** runs the connect steps and keeps the token.
+- **Your user** just clicks Authorize in a small popup inside your app.
+- **Activepieces** checks everything and gives back a token for that one user's project.
+
+<Info>
+It's normal OAuth. The only Activepieces-specific part is one SDK call (`authorizeMcp`) that shows the Authorize popup inside your app.
+</Info>
+
+## Before you start
+
+Embedding should already work for you:
+1. You created a **signing key**.
+2. Your backend **signs a user token (JWT)**.
+3. Your frontend called `activepieces.configure({ jwtToken, instanceUrl, … })`.
+
+Below, `INSTANCE_URL` is your Activepieces address (like `https://app.your-company.com`).
+
+## The whole idea in 6 steps
+
+1. **Register your app once** → you get a `client_id`.
+2. **Make two random codes** (a "verifier" and a "challenge").
+3. **Ask Activepieces to start a connection** → you get an `authRequestId`.
+4. **Show the Authorize popup** in your app → the user clicks Authorize → you get a `code`.
+5. **Trade the `code` for a token.**
+6. **Use the token** to run the user's flows.
+
+## Steps
+
+<Steps>
+  <Step title="1. Register your app (only once)">
+    This tells Activepieces who your app is. Save the `client_id` — it's the same for all users.
+
+    ```bash
+    curl -X POST "$INSTANCE_URL/register" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "client_name": "My App AI Assistant",
+        "redirect_uris": ["https://app.your-company.com/mcp/callback"]
+      }'
+    ```
+
+    You get back a `client_id`.
+
+    <Tip>
+    `client_name` is the name your user sees in the popup ("**My App AI Assistant** wants to connect"). Skip it and it says "Unknown app".
+    </Tip>
+  </Step>
+
+  <Step title="2. Make two random codes">
+    Make a random `codeVerifier`, then turn it into a `codeChallenge`. Keep the verifier for step 5.
+
+    ```ts
+    import crypto from 'crypto';
+
+    const base64url = (b: Buffer) =>
+      b.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    const codeVerifier = base64url(crypto.randomBytes(45));
+    const codeChallenge = base64url(crypto.createHash('sha256').update(codeVerifier).digest());
+    ```
+  </Step>
+
+  <Step title="3. Get an authRequestId">
+    Call `/authorize`. It doesn't reply with data — it **redirects**. Don't follow the redirect; just read the `authRequestId` from the redirect address.
+
+    ```ts
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      redirect_uri: 'https://app.your-company.com/mcp/callback',
+      response_type: 'code',
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+    });
+
+    const res = await fetch(`${INSTANCE_URL}/authorize?${params}`, { redirect: 'manual' });
+    const location = res.headers.get('location'); // .../mcp-authorize?authRequestId=eyJ...
+    const authRequestId = new URL(location).searchParams.get('authRequestId');
+    ```
+
+    <Warning>The `authRequestId` only lasts 10 minutes. Get it right before showing the popup.</Warning>
+  </Step>
+
+  <Step title="4. Show the Authorize popup">
+    Send the `authRequestId` to your frontend and pass it to the SDK. A popup shows up inside your app and the user clicks Authorize.
+
+    ```ts
+    const result = await activepieces.authorizeMcp({ authRequestId });
+
+    if (result.denied) {
+      // user clicked Deny
+    } else {
+      // result.redirectUrl looks like: .../mcp/callback?code=THE_CODE
+      const code = new URL(result.redirectUrl).searchParams.get('code');
+      // send `code` to your backend for step 5
+    }
+    ```
+  </Step>
+
+  <Step title="5. Trade the code for a token">
+    On your backend, swap the `code` (plus the `codeVerifier` from step 2) for a token.
+
+    ```ts
+    const res = await fetch(`${INSTANCE_URL}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'authorization_code',
+        code,
+        code_verifier: codeVerifier,
+        redirect_uri: 'https://app.your-company.com/mcp/callback',
+        client_id: CLIENT_ID,
+      }),
+    });
+    const { access_token, refresh_token } = await res.json();
+    ```
+
+    Save the `refresh_token` for this user. The `access_token` works for 15 minutes; the `refresh_token` gets you new ones and can be turned off anytime.
+  </Step>
+
+  <Step title="6. Use the token">
+    Point your AI at `INSTANCE_URL/mcp` with the token. It only works for that user's project. Quick check:
+
+    ```bash
+    curl -X POST "$INSTANCE_URL/mcp" \
+      -H "Authorization: Bearer $ACCESS_TOKEN" \
+      -H "Content-Type: application/json" \
+      -H "Accept: application/json, text/event-stream" \
+      -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+    ```
+
+    You'll see the user's tools and flows come back.
+  </Step>
+</Steps>
+
+## Get a new token / disconnect
+
+Get a fresh token when the 15-minute one expires:
+
+```bash
+curl -X POST "$INSTANCE_URL/token" -H "Content-Type: application/json" \
+  -d '{"grant_type":"refresh_token","refresh_token":"<REFRESH_TOKEN>","client_id":"<CLIENT_ID>"}'
+```
+
+Disconnect (turn the AI off):
+
+```bash
+curl -X POST "$INSTANCE_URL/revoke" -H "Content-Type: application/json" \
+  -d '{"token":"<REFRESH_TOKEN>","client_id":"<CLIENT_ID>"}'
+```
+
+## Optional: let users manage their MCP
+
+Add a button so users can see their connection and turn tools on or off — inside your app:
+
+```ts
+await activepieces.mcpSettings();
+```
+
+## Good to know
+
+- **Use the same `redirect_uri` everywhere** (register, `/authorize`, `/token`). If it differs, it's rejected.
+- **`authRequestId` lasts 10 minutes** — make it right before the popup.
+- **The token is only for that one user's project** — that's how users stay separate.
+- **Cursor and Claude Desktop are different.** Those are tools a user installs and connects themselves, so they don't use this popup. Embeddable MCP is for the AI **your app** runs for the user.

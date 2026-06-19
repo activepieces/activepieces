@@ -16,6 +16,10 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-flows.tsx` — list of flows exposed as tools
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-tools.tsx` — controllable tool toggle UI
 - `packages/web/src/app/routes/mcp-authorize/index.tsx` — OAuth authorization page for MCP clients
+- `packages/web/src/app/routes/mcp-authorize/permission-item.tsx` — shared permission-item component used by the MCP OAuth consent screens
+- `packages/web/src/app/routes/embed/embedded-mcp-authorize-dialog.tsx` — in-embed MCP OAuth consent dialog for managed-auth (embedded) users
+- `packages/web/src/app/routes/embed/embedded-mcp-settings-dialog.tsx` — in-embed MCP settings dialog for managed-auth (embedded) users
+- `packages/ee/embed-sdk/src/index.ts` — embed SDK; adds `authorizeMcp()` (in-embed OAuth consent) and `mcpSettings()` (MCP settings dialog) public methods
 - `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/index.tsx` — dialog to add an external MCP server as an agent tool
 - `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/add-mcp-tool-form.tsx` — form inside the dialog
 - `packages/web/src/features/agents/agent-tools/components/mcp-tool.tsx` — inline display of an MCP tool in agent settings
@@ -35,6 +39,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - **MCP trigger piece** — `@activepieces/piece-mcp`; a flow with this trigger is exposed as a callable tool via MCP
 - **disabledTools** — JSONB array of controllable tool names currently disabled; `null` or `[]` means all controllable tools are enabled
 - **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. `ProjectScopedMcpServer` carries `userId?` so the tools can attribute ownership.
+- **Embedded MCP OAuth** — in-embed consent flow where a managed-auth (embedded) user approves an MCP OAuth request inside the host app via the SDK's `authorizeMcp()`, instead of being redirected to a standalone Activepieces login they don't have. Backed by the `/embed/mcp-authorize` route and the existing `POST /v1/mcp-oauth/approve` (which accepts the embed USER session). `mcpSettings()` similarly renders the MCP settings page inside the embed.
 
 ## Entity
 
@@ -47,7 +52,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
 - `ap_validate_flow`, `ap_validate_step_config` — validation helpers
-- `ap_research_pieces`, `ap_get_piece_props` — piece discovery and schema
+- `ap_research_pieces` — piece discovery
+- `ap_get_piece_props` — action/trigger input schema, AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
 - `ap_resolve_property_options`, `ap_resolve_property_chain` — dropdown/property resolution
 - `ap_list_connections` — list app connections
 - `ap_list_ai_models` — list AI providers and models

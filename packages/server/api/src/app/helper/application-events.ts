@@ -63,7 +63,7 @@ export const applicationEvents = (log: FastifyBaseLogger) => ({
                 listener(projectId, event)
             }
         }).catch((error) => {
-            log.error({ err: error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
+            log.error({ error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
         })
     },
 })

@@ -61,7 +61,7 @@ export const apRetryRunTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
                 return { content: [{ type: 'text', text: formatRunResult(completedRun) }] }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_retry_run failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_retry_run failed')
                 return mcpUtils.mcpToolError('Failed to retry run', err)
             }
         },
