@@ -22,6 +22,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "assemblyai": "4.7.0",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   }
 }

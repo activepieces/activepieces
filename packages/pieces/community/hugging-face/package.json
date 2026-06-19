@@ -9,7 +9,9 @@
     "@activepieces/shared": "workspace:*",
     "@huggingface/inference": "4.7.1",
     "@huggingface/tasks": "0.19.85",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

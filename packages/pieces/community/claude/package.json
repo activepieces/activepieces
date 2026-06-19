@@ -11,7 +11,9 @@
     "ajv": "8.18.0",
     "mime-types": "2.1.35",
     "zod": "4.3.6",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

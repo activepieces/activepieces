@@ -13,7 +13,9 @@
     "@activepieces/shared": "workspace:*",
     "form-data": "4.0.4",
     "jsonwebtoken": "9.0.1",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "9.0.10"

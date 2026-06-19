@@ -9,7 +9,9 @@
     "@activepieces/shared": "workspace:*",
     "@google/genai": "1.43.0",
     "google-auth-library": "10.6.1",
-    "mime-types": "2.1.35"
+    "mime-types": "2.1.35",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/mime-types": "2.1.1"

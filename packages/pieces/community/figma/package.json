@@ -12,6 +12,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "nanoid": "3.3.8",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   }
 }

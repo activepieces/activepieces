@@ -9,7 +9,9 @@
     "@activepieces/shared": "workspace:*",
     "amqplib": "0.10.7",
     "dayjs": "1.11.9",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/amqplib": "0.10.7"

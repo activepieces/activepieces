@@ -13,7 +13,9 @@
     "@activepieces/shared": "workspace:*",
     "deep-equal": "2.2.2",
     "zod": "4.3.6",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/deep-equal": "1.0.4"

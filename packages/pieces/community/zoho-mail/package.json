@@ -9,7 +9,9 @@
     "@activepieces/shared": "workspace:*",
     "form-data": "4.0.4",
     "mailparser": "3.9.3",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

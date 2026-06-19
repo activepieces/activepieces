@@ -7,4 +7,10 @@ export type PopulatedFlowSummary = {
     id: string
     externalId?: string
     displayName: string
+    status?: string
+    version: {
+        id?: string
+        displayName: string
+        valid?: boolean
+    }
 }

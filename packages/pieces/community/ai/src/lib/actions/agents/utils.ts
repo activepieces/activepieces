@@ -1,4 +1,4 @@
-import { isNil, SeekPage } from '@activepieces/pieces-framework';
+import { isNil, SeekPage, PopulatedFlowSummary } from '@activepieces/pieces-framework';
 import { AgentOutputField, AgentOutputFieldType, TASK_COMPLETION_TOOL_NAME, PopulatedFlow, McpTrigger, ExecuteToolResponse, ExecutionToolStatus, McpProperty, McpPropertyType, AgentFlowTool, mcpToolNameUtils, RAW_PAYLOAD_HEADER } from '@activepieces/shared';
 import { z, ZodObject } from 'zod';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -93,7 +93,7 @@ export const agentUtils = {
     }).filter(tool => !isNil(tool));
 
     const flowsToolsList = await Promise.all(flowToolsWithPopulatedFlows.map(async (tool) => {
-      const triggerSettings = tool.flow.version.trigger.settings as McpTrigger
+      const triggerSettings = (tool.flow as unknown as PopulatedFlow).version.trigger.settings as McpTrigger
       const toolDescription = triggerSettings.input?.toolDescription
       const returnsResponse = triggerSettings.input?.returnsResponse
 
@@ -203,7 +203,7 @@ function mcpPropertyToSchema(property: McpProperty): z.ZodTypeAny {
 
 type ConstructFlowsToolsParams = {
   tools: AgentFlowTool[]
-  fetchFlows: (params: { externalIds: string[] }) => Promise<SeekPage<PopulatedFlow>>
+  fetchFlows: (params: { externalIds: string[] }) => Promise<SeekPage<PopulatedFlowSummary>>
   publicUrl: string;
   token: string
 }

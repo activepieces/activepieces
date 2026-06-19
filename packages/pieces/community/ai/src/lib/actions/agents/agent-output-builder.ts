@@ -178,6 +178,12 @@ function getToolMetadata({
         sourceType: tool.sourceType,
       };
     }
+    default:
+      return {
+        ...baseTool,
+        toolCallType: ToolCallType.UNKNOWN,
+        displayName: toolName,
+      };
   }
 }
 

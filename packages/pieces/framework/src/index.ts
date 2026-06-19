@@ -13,4 +13,4 @@ export {
   ExecutionType,
   AgentToolType,
 } from '@activepieces/core-piece-types';
-export type { BasicAuthConnectionValue, CustomAuthConnectionValue } from '@activepieces/core-piece-types';
+export type { BasicAuthConnectionValue, CustomAuthConnectionValue, PopulatedFlowSummary } from '@activepieces/core-piece-types';

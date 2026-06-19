@@ -13,6 +13,8 @@
     "@activepieces/shared": "workspace:*",
     "form-data": "4.0.4",
     "zod": "4.3.6",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   }
 }

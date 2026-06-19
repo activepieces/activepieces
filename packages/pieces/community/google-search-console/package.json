@@ -10,7 +10,9 @@
     "@googleapis/webmasters": "2.0.1",
     "dayjs": "1.11.9",
     "google-auth-library": "10.5.0",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

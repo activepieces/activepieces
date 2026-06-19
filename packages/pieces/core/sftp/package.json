@@ -12,7 +12,9 @@
     "ssh2": "1.16.0",
     "ssh2-sftp-client": "9.1.0",
     "zod": "4.3.6",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/ssh2": "1.15.5",
