@@ -1,6 +1,7 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
+    DefaultProjectRole,
     PieceType,
     PrincipalType,
     PackageType,
@@ -15,7 +16,7 @@ import { db } from '../../../helpers/db'
 import {
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
-import { createTestContext } from '../../../helpers/test-context'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -346,6 +347,28 @@ describe('Piece Metadata CE API', () => {
             await pieceCache(mockLog).setup()
 
             const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).not.toBeNull()
+        })
+
+        it('should reject deletion by a non-admin platform member with 403', async () => {
+            const ownerCtx = await createTestContext(app!)
+            const memberCtx = await createMemberContext(app!, ownerCtx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/member-cannot-delete',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ownerCtx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await memberCtx.delete(`/v1/pieces/${mockPiece.id}`)
 
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })

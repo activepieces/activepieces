@@ -193,7 +193,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     params: { message: 'Only custom pieces can be deleted' },
                 })
             }
-            await pieceRepos().delete({ name: piece.name, platformId })
+            await pieceRepos().delete({ name: piece.name, platformId, pieceType: PieceType.CUSTOM })
             await pieceCache(log).invalidate()
         },
     }
