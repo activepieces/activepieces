@@ -42,7 +42,7 @@ test.describe('Piece isolation — CE', () => {
 
     await page.locator('div.cm-activeLine.cm-line').fill('');
     await page.locator('div.cm-activeLine.cm-line').fill(
-      '{"runVersion": "{{trigger[\'queryParams\'][\'runVersion\']}}"}'
+      '{"runVersion": "{{trigger[\'output\'][\'queryParams\'][\'runVersion\']}}"}'
     );
 
     await page.waitForTimeout(1000);
