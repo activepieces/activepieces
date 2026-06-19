@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { sendJiraRequest } from './lib/common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { AppConnectionType } from '@activepieces/pieces-framework';
 
@@ -34,7 +34,7 @@ To generate a Personal Access Token (PAT):
 	validate: async ({ auth }) => {
 		try {
 			await propsValidation.validateZod(auth, {
-				instanceUrl: z.string().url(),
+				instanceUrl: z.string().check(z.url()),
 			});
 
 			await sendJiraRequest({

@@ -8,7 +8,7 @@ const commonAuthProps = {
     displayName: z.string(),
     pieceName: z.string(),
     projectId: z.string(),
-    metadata: Metadata.optional(),
+    metadata: z.optional(Metadata),
     pieceVersion: z.string().optional(),
 }
 
@@ -143,13 +143,13 @@ export type UpsertAppConnectionRequestBody = z.infer<typeof UpsertAppConnectionR
 
 export const UpdateConnectionValueRequestBody = z.object({
     displayName: z.string().min(1),
-    metadata: Metadata.optional(),
+    metadata: z.optional(Metadata),
 })
 
 export const UpdateGlobalConnectionValueRequestBody = z.object({
     displayName: z.string().min(1),
     projectIds: z.array(z.string()).optional(),
-    metadata: Metadata.optional(),
+    metadata: z.optional(Metadata),
     preSelectForNewProjects: z.boolean().optional(),
 })
 
@@ -159,7 +159,7 @@ const GlobalConnectionExtras = z.object({
     scope: z.literal(AppConnectionScope.PLATFORM),
     projectIds: z.array(z.string()),
     externalId: z.string().optional(),
-    metadata: Metadata.optional(),
+    metadata: z.optional(Metadata),
     preSelectForNewProjects: z.boolean().optional(),
 })
 export const UpsertGlobalConnectionRequestBody =

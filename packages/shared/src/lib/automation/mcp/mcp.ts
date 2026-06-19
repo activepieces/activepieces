@@ -15,8 +15,8 @@ export enum McpServerType {
 
 export const McpServer = z.object({
     ...BaseModelSchema,
-    platformId: ApId.nullable(),
-    projectId: ApId.nullable(),
+    platformId: z.nullable(ApId),
+    projectId: z.nullable(ApId),
     type: z.enum([McpServerType.PLATFORM, McpServerType.PROJECT]),
     token: ApId,
     disabledTools: z.array(z.string()).nullable(),

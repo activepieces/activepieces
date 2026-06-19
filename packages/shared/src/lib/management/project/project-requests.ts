@@ -8,14 +8,14 @@ export const UpdateProjectPlatformRequest = z.object({
     releasesEnabled: z.boolean().optional(),
     displayName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
     externalId: z.string().optional(),
-    metadata: Metadata.optional(),
+    metadata: z.optional(Metadata),
     icon: ProjectIcon.optional(),
     plan: z.object({
         pieces: z.array(z.string()).optional(),
         piecesFilterType: z.nativeEnum(PiecesFilterType).optional(),
     }).optional(),
     globalConnectionExternalIds: z.array(z.string()).optional(),
-    maxConcurrentJobs: Nullable(z.number().int().positive()).optional(),
+    maxConcurrentJobs: z.optional(Nullable(z.number().int().positive())),
 })
 
 export type UpdateProjectPlatformRequest = z.infer<typeof UpdateProjectPlatformRequest>

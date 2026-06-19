@@ -2,7 +2,7 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { deleteSubscriber } from '../api';
 import { buildListDropdown } from '../props';
@@ -33,7 +33,7 @@ export const deleteAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
+      email: z.string().check(z.email()),
     });
 
     return await deleteSubscriber(context.auth, {

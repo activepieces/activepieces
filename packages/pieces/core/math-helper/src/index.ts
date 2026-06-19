@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/core-piece-types';
 import { addition } from './lib/actions/addition';
 import { division } from './lib/actions/division';
 import { generateRandom } from './lib/actions/generateRandom';

@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { searchIssuesByJql, mapFieldNames } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const searchIssues = createAction({
@@ -56,7 +56,7 @@ Example: *all and -comment returns everything except comments.`,
   },
   run: async ({ auth, propsValue }) => {
     await propsValidation.validateZod(propsValue, {
-      maxResults: z.number().min(1).max(5000),
+      maxResults: z.number().check(z.minimum(1), z.maximum(5000)),
     });
 
     const { jql, maxResults, sanitizeJql, fields, mapNames } = propsValue;

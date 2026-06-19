@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod/mini'
 
 export type BaseModel<T> = {
     id: T
@@ -6,8 +6,8 @@ export type BaseModel<T> = {
     updated: string
 }
 
-export const DateOrString = z.preprocess(
-    (val) => (val instanceof Date ? val.toISOString() : val),
+export const DateOrString = z.pipe(
+    z.transform((val) => (val instanceof Date ? val.toISOString() : val)),
     z.string(),
 )
 
@@ -18,19 +18,19 @@ export const BaseModelSchema = {
 }
 
 // Used to generate valid nullable in OpenAPI Schema
-export const Nullable = <T extends z.ZodType>(schema: T) => schema.nullable().optional()
+export const Nullable = <T extends z.ZodMiniType>(schema: T) => z.optional(z.nullable(schema))
 
 export function NullableEnum<T extends Record<string, string | number>>(enumObj: T) {
-    return z.nativeEnum(enumObj).nullable().optional()
+    return z.optional(z.nullable(z.enum(enumObj)))
 }
 
-export const OptionalBooleanFromQuery = z.preprocess(
-    (val) => val === 'true' || val === true ? true : val === 'false' || val === false ? false : undefined,
-    z.boolean().optional(),
+export const OptionalBooleanFromQuery = z.pipe(
+    z.transform((val) => val === 'true' || val === true ? true : val === 'false' || val === false ? false : undefined),
+    z.optional(z.boolean()),
 )
 
-export const OptionalArrayFromQuery = <T extends z.ZodType>(schema: T) =>
-    z.preprocess(
-        (val) => (Array.isArray(val) ? val : val !== undefined ? [val] : undefined),
-        z.array(schema).optional(),
+export const OptionalArrayFromQuery = <T extends z.ZodMiniType>(schema: T) =>
+    z.pipe(
+        z.transform((val) => (Array.isArray(val) ? val : val !== undefined ? [val] : undefined)),
+        z.optional(z.array(schema)),
     )

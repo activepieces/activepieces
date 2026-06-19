@@ -47,15 +47,16 @@ async function preparePieceDistForPublish(piecePath: string): Promise<void> {
     console.info(`[preparePiece] bundled ${piecePath} → ${(bundleBytes / 1024).toFixed(0)} KB (${ratio}x smaller than ${(rawBytes / 1024).toFixed(0)} KB raw inputs)${extNote}`)
 }
 
-// The published artifact bundles @activepieces/* workspace code into the self-contained
-// bundle. Third-party deps are external by default and kept here so the runtime installer
-// resolves them; a piece opts into inlining (and shrinking) via bundleDeps in its package.json.
+// The published artifact inlines @activepieces/* workspace code AND third-party deps into the
+// self-contained bundle by default. Only deps that cannot be safely inlined (native addons,
+// dynamic require) stay external and are kept here so the runtime installer resolves them.
+// A piece can force a dep external via bundleDeps in its package.json (escape hatch).
 function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: string, external: string[], repoRoot: string }): void {
     const distPackageJsonPath = join(distPath, 'package.json')
     const json = JSON.parse(readFileSync(distPackageJsonPath, 'utf-8'))
 
     const workspaceVersionMap = buildWorkspaceVersionMap(repoRoot)
-    const resolvedDeps = stripSemverRanges(resolveWorkspaceDependencies(json.dependencies ?? {}, workspaceVersionMap))
+    const resolvedDeps = stripSemverRanges(resolveWorkspaceDependencies(json.dependencies ?? {}, workspaceVersionMap)) ?? {}
 
     const externalDeps: Record<string, string> = {}
     for (const dep of external) {

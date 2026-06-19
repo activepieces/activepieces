@@ -6,12 +6,12 @@ export const UpsertVariableRequestBody = z.object({
     projectId: z.string(),
     name: z.string().min(1, 'formErrors.required').regex(VARIABLE_NAME_REGEX, 'invalidVariableName'),
     value: z.string().min(1, 'formErrors.required'),
-    metadata: Metadata.optional(),
+    metadata: z.optional(Metadata),
 })
 export type UpsertVariableRequestBody = z.infer<typeof UpsertVariableRequestBody>
 
 export const UpdateVariableRequestBody = z.object({
     value: z.string().min(1, 'formErrors.required').optional(),
-    metadata: Metadata.optional(),
+    metadata: z.optional(Metadata),
 })
 export type UpdateVariableRequestBody = z.infer<typeof UpdateVariableRequestBody>

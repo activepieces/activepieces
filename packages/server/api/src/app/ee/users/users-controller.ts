@@ -73,7 +73,7 @@ const UpdateMeRequest = {
     schema: {
         consumes: ['multipart/form-data'],
         body: z.object({
-            profilePicture: ApMultipartFile.optional(),
+            profilePicture: z.optional(ApMultipartFile),
         }),
         response: {
             [StatusCodes.OK]: UpdateMeResponse,

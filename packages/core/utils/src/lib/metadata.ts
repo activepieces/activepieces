@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod/mini'
 
 /**
  * Flexible key-value record type for storing arbitrary data

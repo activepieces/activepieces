@@ -1,11 +1,11 @@
-import { z } from 'zod'
+import * as z from 'zod/mini'
 
 
 export const ApMultipartFile = z.object({
     filename: z.string(),
     data: z.unknown(),
     type: z.literal('file'),
-    mimetype: z.string().optional(),
+    mimetype: z.optional(z.string()),
 })
 
 export type ApMultipartFile = z.infer<typeof ApMultipartFile> & {

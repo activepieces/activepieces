@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import * as zMini from 'zod/mini'
 import { Flow } from '../../automation/flows/flow'
 import { FlowVersion } from '../../automation/flows/flow-version'
 import { Folder } from '../../automation/flows/folders/folder'
@@ -408,7 +409,7 @@ export const ProjectRoleEvent = z.object({
         z.literal(ApplicationEventName.PROJECT_ROLE_DELETED),
     ]),
     data: z.object({
-        projectRole: ProjectRole.pick({
+        projectRole: zMini.pick(ProjectRole, {
             id: true,
             created: true,
             updated: true,

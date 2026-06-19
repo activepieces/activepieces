@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { saveContent } from './api';
 import { AppConnectionType } from '@activepieces/pieces-framework';
@@ -23,7 +23,7 @@ export const cmsAuth = PieceAuth.CustomAuth({
   required: true,
   async validate({ auth }) {
     await propsValidation.validateZod(auth, {
-      domain: z.string().url(),
+      domain: z.string().check(z.url()),
       license: z.string(),
     });
 

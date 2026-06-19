@@ -8,7 +8,7 @@ export const CreateFlowRequest = z.object({
     folderName: z.string().optional(),
     projectId: z.string(),
     templateId: z.string().optional(),
-    metadata: Metadata.optional(),
+    metadata: z.optional(Metadata),
 })
 
 export type CreateFlowRequest = z.infer<typeof CreateFlowRequest>

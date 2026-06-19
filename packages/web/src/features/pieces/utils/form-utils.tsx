@@ -212,7 +212,7 @@ const GLOBAL_CONNECTION_EXTRAS_SCHEMA = z.object({
   projectIds: z
     .array(z.string())
     .min(1, { error: t('Please select at least one project') }),
-  metadata: Metadata.optional(),
+  metadata: z.optional(Metadata),
   preSelectForNewProjects: z.boolean().optional(),
 });
 

@@ -132,14 +132,14 @@ export const ChatConversation = z.object({
 export type ChatConversation = z.infer<typeof ChatConversation>
 
 export const CreateChatConversationRequest = z.object({
-    title: Nullable(z.string()).optional(),
-    modelName: Nullable(z.string()).optional(),
+    title: z.optional(Nullable(z.string())),
+    modelName: z.optional(Nullable(z.string())),
 })
 export type CreateChatConversationRequest = z.infer<typeof CreateChatConversationRequest>
 
 export const UpdateChatConversationRequest = z.object({
-    title: Nullable(z.string()).optional(),
-    modelName: Nullable(z.string()).optional(),
+    title: z.optional(Nullable(z.string())),
+    modelName: z.optional(Nullable(z.string())),
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 
