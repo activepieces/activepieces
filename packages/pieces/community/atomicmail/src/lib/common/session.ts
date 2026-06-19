@@ -93,12 +93,16 @@ function inlineApiKeyFromContext(context: SessionContext): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+export function resolveApiKey(context: SessionContext): string | undefined {
+  const props = authPropsFromContext(context);
+  return inlineApiKeyFromContext(context) ?? apiKeyFromProps(props);
+}
+
 export async function assertStoredCredentials(
-  context: StoreContext,
+  context: SessionContext,
   accountId: string,
-  apiKey?: string,
 ): Promise<void> {
-  if (apiKey) return;
+  if (resolveApiKey(context)) return;
   const storage = createKeyValueStore(context, accountId);
   // agentic-core KeyValueCredentialStore uses account:{id}:credentials.json;
   // createKeyValueStore prepends atomicmail:{id}: for Activepieces isolation.
@@ -109,7 +113,7 @@ export async function assertStoredCredentials(
     throw new Error(
       `No Atomic Mail credentials for account "${accountId}". ` +
         'Run **Register Inbox** in this project first (Account ID `default`), ' +
-        'or paste an API key on this step.',
+        'paste an API key on this step, or attach a connection with an API key.',
     );
   }
 }
@@ -119,7 +123,7 @@ export async function createSession(
   accountId = 'default',
 ): Promise<AgentSession> {
   const props = authPropsFromContext(context);
-  const apiKey = inlineApiKeyFromContext(context) ?? apiKeyFromProps(props);
+  const apiKey = resolveApiKey(context);
   const env: IntegrationEnv = authEnvFromProps(props);
   return createAgentSessionFromKeyValue({
     storage: createKeyValueStore(context, accountId),

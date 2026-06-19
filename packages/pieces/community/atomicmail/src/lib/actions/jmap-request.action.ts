@@ -67,8 +67,7 @@ export const jmapRequestAction = createAction({
     }
 
     const accountId = normalizeAccountId(context.propsValue.account_id);
-    const inlineKey = context.propsValue.api_key?.trim();
-    await assertStoredCredentials(context, accountId, inlineKey || undefined);
+    await assertStoredCredentials(context, accountId);
     const session = await createSession(context, accountId);
     const vars = parseVarsJson(context.propsValue.vars);
 

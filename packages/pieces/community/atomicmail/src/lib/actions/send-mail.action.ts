@@ -57,8 +57,7 @@ export const sendMailAction = createAction({
   async run(context) {
     const { to, subject, body, attachments } = context.propsValue;
     const accountId = normalizeAccountId(context.propsValue.account_id);
-    const inlineKey = context.propsValue.api_key?.trim();
-    await assertStoredCredentials(context, accountId, inlineKey || undefined);
+    await assertStoredCredentials(context, accountId);
     const session = await createSession(context, accountId);
 
     const attachmentRows = attachments as Array<{ file: ApFile }> | undefined;

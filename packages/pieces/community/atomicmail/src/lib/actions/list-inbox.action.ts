@@ -31,8 +31,7 @@ export const listInboxAction = createAction({
   },
   async run(context) {
     const accountId = normalizeAccountId(context.propsValue.account_id);
-    const inlineKey = context.propsValue.api_key?.trim();
-    await assertStoredCredentials(context, accountId, inlineKey || undefined);
+    await assertStoredCredentials(context, accountId);
     const session = await createSession(context, accountId);
     const result = await executePreset(session, 'list_inbox.json');
     return result.body;
