@@ -51,7 +51,7 @@ export const postEvent = createTrigger({
       displayName: 'Events',
       description:
         'Which events to listen for. Leave empty to receive all events.',
-      required: true,
+      required: false,
       options: {
         options: [
           { label: 'Post queued', value: 'post.queued' },
