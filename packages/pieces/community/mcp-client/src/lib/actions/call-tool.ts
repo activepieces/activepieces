@@ -1,6 +1,6 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { experimental_createMCPClient as createMCPClient } from '@ai-sdk/mcp';
-import { McpProtocol, buildAuthHeaders } from "@activepieces/shared";
+import { McpProtocol, buildAuthHeaders, McpAuthType } from "@activepieces/shared";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 export const callToolAction = createAction({
@@ -26,7 +26,7 @@ export const callToolAction = createAction({
         auth: Property.Json({
             displayName: 'Auth Configuration',
             required: false,
-            description: 'Optional JSON for authentication (e.g., {"type": "BearerToken", "token": "..."})'
+            description: 'Optional JSON for authentication (e.g., {"type": "HEADERS", "headers": {"Authorization": "Bearer ..."}})'
         }),
         toolName: Property.Dropdown({
             displayName: 'Tool Name',
@@ -36,12 +36,12 @@ export const callToolAction = createAction({
                 if (!propsValue['protocol'] || !propsValue['serverUrl']) {
                     return { options: [], placeholder: 'Please provide protocol and server URL' };
                 }
+                const transport = createTransport(
+                    propsValue['protocol'] as McpProtocol,
+                    propsValue['serverUrl'] as string,
+                    buildAuthHeaders((propsValue['auth'] as any) ?? { type: McpAuthType.NONE })
+                );
                 try {
-                    const transport = createTransport(
-                        propsValue['protocol'] as McpProtocol,
-                        propsValue['serverUrl'] as string,
-                        buildAuthHeaders(propsValue['auth'] as any)
-                    );
                     const client = await createMCPClient({ transport: transport as any });
                     const tools = await client.tools();
                     return {
@@ -49,6 +49,8 @@ export const callToolAction = createAction({
                     };
                 } catch (e) {
                     return { options: [], placeholder: `Error: ${e}` };
+                } finally {
+                    await closeTransport(transport);
                 }
             }
         }),
@@ -60,23 +62,17 @@ export const callToolAction = createAction({
                 if (!propsValue['protocol'] || !propsValue['serverUrl'] || !propsValue['toolName']) {
                     return {};
                 }
+                const transport = createTransport(
+                    propsValue['protocol'] as McpProtocol,
+                    propsValue['serverUrl'] as string,
+                    buildAuthHeaders((propsValue['auth'] as any) ?? { type: McpAuthType.NONE })
+                );
                 try {
-                    const transport = createTransport(
-                        propsValue['protocol'] as McpProtocol,
-                        propsValue['serverUrl'] as string,
-                        buildAuthHeaders(propsValue['auth'] as any)
-                    );
                     const client = await createMCPClient({ transport: transport as any });
                     const tools = await client.tools();
                     const tool = tools[propsValue['toolName'] as string];
-                    
-                    // Note: ai-sdk tools don't directly expose JSON schema in a simple way 
-                    // in some versions, but we can try to extract or handle it.
-                    // For a robust implementation, we might need a more direct MCP client 
-                    // or use the internal schema if available.
-                    
-                    // For now, let's assume we can prompt for a JSON object or 
-                    // if we have the schema, map it.
+                    if (!tool) return {};
+
                     return {
                         'input': Property.Json({
                             displayName: 'Tool Arguments (JSON)',
@@ -86,6 +82,8 @@ export const callToolAction = createAction({
                     };
                 } catch (e) {
                     return {};
+                } finally {
+                    await closeTransport(transport);
                 }
             }
         })
@@ -94,14 +92,21 @@ export const callToolAction = createAction({
         const transport = createTransport(
             propsValue.protocol as McpProtocol,
             propsValue.serverUrl,
-            buildAuthHeaders(propsValue.auth as any)
+            buildAuthHeaders((propsValue.auth as any) ?? { type: McpAuthType.NONE })
         );
-        const client = await createMCPClient({ transport: transport as any });
-        const tools = await client.tools();
-        const tool = tools[propsValue.toolName as string];
-        
-        const result = await tool.execute(propsValue.arguments['input']);
-        return result;
+        try {
+            const client = await createMCPClient({ transport: transport as any });
+            const tools = await client.tools();
+            const tool = tools[propsValue.toolName as string];
+            if (!tool) {
+                throw new Error(`Tool ${propsValue.toolName} not found on server`);
+            }
+            
+            const result = await tool.execute(propsValue.arguments['input']);
+            return result;
+        } finally {
+            await closeTransport(transport);
+        }
     }
 });
 
@@ -116,5 +121,15 @@ function createTransport(protocol: McpProtocol, serverUrl: string, headers: Reco
             return { type: 'sse', url: serverUrl, headers };
         default:
             throw new Error(`Unsupported protocol: ${protocol}`);
+    }
+}
+
+async function closeTransport(transport: any) {
+    if (transport && typeof transport.close === 'function') {
+        try {
+            await transport.close();
+        } catch (e) {
+            console.error('Error closing MCP transport:', e);
+        }
     }
 }
