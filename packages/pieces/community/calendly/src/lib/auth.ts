@@ -14,7 +14,7 @@ export const calendlyAuth = PieceAuth.SecretText({
   description: markdown,
   validate: async ({ auth }) => {
     try {
-      calendlyCommon.getUser(auth);
+      await calendlyCommon.getUser(calendlyCommon.getToken(auth));
       return {
         valid: true,
       };
