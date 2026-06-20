@@ -37,6 +37,7 @@ import {
   SidebarGroupLabel,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
+import { useUnseenSecurityAdvisories } from '@/features/platform-admin';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -55,6 +56,7 @@ export function PlatformSidebar() {
     chatEnabled: platform.plan.chatEnabled,
   });
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
+  const unseenAdvisories = useUnseenSecurityAdvisories();
 
   const setupItems = [
     {
@@ -112,6 +114,8 @@ export function PlatformSidebar() {
       label: string;
       icon?: ComponentType<{ className?: string }>;
       locked?: boolean;
+      notification?: boolean;
+      notificationCount?: number;
     }[];
   }[] = [
     {
@@ -197,6 +201,8 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/health',
           label: t('Health'),
           icon: FileHeartIcon,
+          notification: unseenAdvisories.length > 0,
+          notificationCount: unseenAdvisories.length,
         },
         {
           to: '/platform/infrastructure/triggers',
@@ -239,6 +245,8 @@ export function PlatformSidebar() {
                       label={item.label}
                       icon={item.icon}
                       locked={item.locked}
+                      notification={item.notification}
+                      notificationCount={item.notificationCount}
                     />
                   ))}
                 </SidebarMenu>

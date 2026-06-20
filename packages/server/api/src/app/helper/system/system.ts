@@ -69,6 +69,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.NETWORK_MODE]: NetworkMode.UNRESTRICTED,
     [AppSystemProp.LOG_SAMPLE_RATE_INFO]: '100',
     [AppSystemProp.LOG_KEEP_SLOW_MS]: '2000',
+    [AppSystemProp.SECURITY_ADVISORIES_FEED_URL]: 'https://canary.activepieces.com/api/v1/webhooks/9F66rOPV0alXnqZiJddib/sync',
 }
 
 let globalLogger: FastifyBaseLogger

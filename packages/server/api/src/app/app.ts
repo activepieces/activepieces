@@ -93,6 +93,7 @@ import { tagsModule } from './pieces/tags/tags-module'
 import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
+import { securityAdvisoryModule } from './security-advisory/security-advisory.module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
@@ -243,6 +244,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(templateModule)
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
+    await app.register(securityAdvisoryModule)
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 

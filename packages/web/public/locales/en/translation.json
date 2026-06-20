@@ -1989,5 +1989,19 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Security Issues": "Security Issues",
+  "Security advisories": "Security advisories",
+  "Security issue affects this version": "Security issue affects this version",
+  "Update v{version} to patch {count, plural, =1 {# issue} other {# issues}}": "Update v{version} to patch {count, plural, =1 {# issue} other {# issues}}",
+  "Some advisory sources are unavailable; the list may be incomplete.": "Some advisory sources are unavailable; the list may be incomplete.",
+  "No advisories affect your version.": "No advisories affect your version.",
+  "Affects": "Affects",
+  "Fixed in": "Fixed in",
+  "No fix yet": "No fix yet",
+  "Open advisory": "Open advisory",
+  "Critical": "Critical",
+  "High": "High",
+  "Medium": "Medium",
+  "Low": "Low"
 }
