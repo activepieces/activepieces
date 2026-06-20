@@ -9,7 +9,7 @@ export const mcpClient = createPiece({
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
   ],
-    logoUrl: "https://cdn.activepieces.com/pieces/new-core/mcp.svg",
+  logoUrl: "https://cdn.activepieces.com/pieces/new-core/mcp.svg",
   authors: ['Angelebeats'],
   actions: [callToolAction],
   triggers: [],

@@ -26,7 +26,7 @@ export const callToolAction = createAction({
         auth: Property.Json({
             displayName: 'Auth Configuration',
             required: false,
-            description: 'Optional JSON for authentication (e.g., {"type": "HEADERS", "headers": {"Authorization": "Bearer ..."}})'
+            description: 'Optional JSON for authentication (e.g., {"type": "headers", "headers": {"Authorization": "Bearer ..."}})'
         }),
         toolName: Property.Dropdown({
             displayName: 'Tool Name',
@@ -45,7 +45,11 @@ export const callToolAction = createAction({
                     const client = await createMCPClient({ transport: transport as any });
                     const tools = await client.tools();
                     return {
-                        options: Object.keys(tools).map(t => ({ label: t, value: t }))
+                        options: Object.entries(tools).map(([name, tool]) => ({ 
+                            label: name, 
+                            value: name,
+                            description: (tool as any).description 
+                        }))
                     };
                 } catch (e) {
                     return { options: [], placeholder: `Error: ${e}` };
@@ -73,9 +77,13 @@ export const callToolAction = createAction({
                     const tool = tools[propsValue['toolName'] as string];
                     if (!tool) return {};
 
+                    const description = (tool as any).description || 'Tool Arguments (JSON)';
+                    // In the future, we can use zod-to-json-schema to show the schema here
+                    // For now, at least we use the tool's description
                     return {
                         'input': Property.Json({
-                            displayName: 'Tool Arguments (JSON)',
+                            displayName: 'Arguments (JSON)',
+                            description: description,
                             required: true,
                             defaultValue: {}
                         })
