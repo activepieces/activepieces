@@ -69,8 +69,17 @@ export const listDatabases = createAction({
       icon:
         database.icon?.type === 'emoji'
           ? database.icon.emoji
-          : database.icon?.external?.url,
-      cover: database.cover?.external?.url,
+          : database.icon?.type === 'external'
+            ? database.icon.external?.url
+            : database.icon?.type === 'file'
+              ? database.icon.file?.url
+              : undefined,
+      cover:
+        database.cover?.type === 'external'
+          ? database.cover.external?.url
+          : database.cover?.type === 'file'
+            ? database.cover.file?.url
+            : undefined,
       properties: Object.keys(database.properties ?? {}),
     }));
 

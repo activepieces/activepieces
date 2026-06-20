@@ -162,6 +162,14 @@ export const listDatabasePages = createAction({
             });
           }
           break;
+        case 'people':
+          filters.push({
+            property: fieldKey,
+            people: {
+              contains: value,
+            },
+          });
+          break;
       }
     }
 
