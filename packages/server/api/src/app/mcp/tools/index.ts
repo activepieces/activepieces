@@ -32,6 +32,7 @@ import { apResolvePropertyChainTool } from './ap-resolve-property-chain'
 import { apResolvePropertyOptionsTool } from './ap-resolve-property-options'
 import { apRetryRunTool } from './ap-retry-run'
 import { apRunActionTool } from './ap-run-action'
+import { apSearchActionsTool } from './ap-search-actions'
 import { apSetupGuideTool } from './ap-setup-guide'
 import { apTestFlowTool } from './ap-test-flow'
 import { apTestStepTool } from './ap-test-step'
@@ -48,6 +49,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_read_step_code',
     'ap_validate_flow',
     'ap_research_pieces',
+    'ap_search_actions',
     'ap_get_piece_props',
     'ap_resolve_property_options',
     'ap_resolve_property_chain',
@@ -63,6 +65,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
 
 export const PLATFORM_LEVEL_TOOL_NAMES: string[] = [
     'ap_research_pieces',
+    'ap_search_actions',
     'ap_list_ai_models',
     'ap_get_piece_props',
 ]
@@ -108,6 +111,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apReadStepCodeTool(mcp, log),
     apValidateFlowTool(mcp, log),
     apResearchPiecesTool(mcp, log),
+    apSearchActionsTool(mcp, log),
     apGetPiecePropsTool(mcp, log),
     apResolvePropertyOptionsTool(mcp, log),
     apResolvePropertyChainTool(mcp, log),

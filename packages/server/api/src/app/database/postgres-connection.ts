@@ -383,6 +383,7 @@ import { AddVariableTable1793000000000 } from './migration/postgres/179300000000
 import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
+import { AddToolSearchIndexTable1796000000000 } from './migration/postgres/1796000000000-AddToolSearchIndexTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -781,6 +782,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDataManipulationEnabledToPlatformPlan1794000000000,
         AddThemeColorsToPlatform1781206955649,
         AddExternalIdToFolder1795000000000,
+        AddToolSearchIndexTable1796000000000,
     ]
     return migrations
 }
