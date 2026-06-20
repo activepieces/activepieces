@@ -93,13 +93,16 @@ const JsonViewer = React.memo(
         type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
-      handleDownloadFile(url);
+      handleDownloadFile(url, '.json');
     };
 
     const handleDownloadFile = (fileUrl: string, ext = '') => {
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = `${typeof title === 'string' ? title : 'data'}${ext}`;
+      const rawName =
+        typeof title === 'string' && title.trim() ? title : 'data';
+      const safeName = rawName.replace(/[/\\:*?"<>|]/g, '_');
+      link.download = `${safeName}${ext}`;
       link.click();
       URL.revokeObjectURL(fileUrl);
     };
