@@ -66,14 +66,19 @@
   "Triggers when a new incoming call is received": "新しい着信があったときにトリガーする",
   "Triggers when a new outgoing call is initiated": "新しい発信呼び出しが開始されたときにトリガーします",
   "Triggers when a new voicemail is received": "新しいボイスメールを受信したときにトリガーする",
-  "Triggers when a new SMS message is received": "新しいSMSメッセージを受信したときにトリガーします",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent",
   "Users": "ユーザー",
   "Status": "Status",
-  "Select Recipients": "受信者を選択",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
   "Select users to which this trigger applies": "このトリガーが適用されるユーザーを選択",
   "Filter by call status": "通話状態でフィルター",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "Select the SMS recipient numbers to which this trigger applies": "このトリガーが適用されるSMS受信者番号を選択します",
+  "Filter by message direction": "Filter by message direction",
   "Ringing": "着信中",
   "Answered": "回答済み",
-  "Both": "両方とも"
+  "Both": "両方とも",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing"
 }
