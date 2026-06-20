@@ -47,6 +47,8 @@ export async function crawlsnapGet(
     queryParams,
   });
 
+  // Unwrap to `data` only when the key is present, so an explicit `data: null`
+  // is preserved instead of leaking the full envelope back to the caller.
   const body = response.body as { data?: unknown } | undefined;
-  return body?.data ?? body;
+  return body && typeof body === 'object' && 'data' in body ? body.data : body;
 }

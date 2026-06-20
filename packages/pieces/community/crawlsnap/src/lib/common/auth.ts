@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const DEFAULT_BASE_URL = 'https://api.crawlsnap.com';
@@ -38,10 +38,22 @@ export const crawlsnapAuth = PieceAuth.CustomAuth({
         queryParams: { query: '8.8.8.8' },
       });
       return { valid: true };
-    } catch {
+    } catch (e) {
+      // Only 401/403 actually mean a bad key; surface other failures (rate
+      // limits, server or network errors) accurately instead of blaming the key.
+      if (e instanceof HttpError) {
+        const status = e.response.status;
+        if (status === 401 || status === 403) {
+          return { valid: false, error: 'Invalid CrawlSnap API key.' };
+        }
+        return {
+          valid: false,
+          error: `CrawlSnap returned HTTP ${status}. Check the Base URL or try again later.`,
+        };
+      }
       return {
         valid: false,
-        error: 'Invalid CrawlSnap API key or unreachable Base URL.',
+        error: 'Could not reach CrawlSnap. Check the Base URL and your connection.',
       };
     }
   },
