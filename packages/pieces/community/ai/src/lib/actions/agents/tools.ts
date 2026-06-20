@@ -8,7 +8,7 @@ import { ActionContext } from "@activepieces/pieces-framework";
 import { ProviderOptions } from "@ai-sdk/provider-utils";
 import { createMCPClient } from '@ai-sdk/mcp';
 
-type MCPClient = ReturnType<typeof createMCPClient>;
+type MCPClient = Awaited<ReturnType<typeof createMCPClient>>;
 type MCPTransport = Parameters<typeof createMCPClient>[0]['transport'];
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 
