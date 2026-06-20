@@ -3,6 +3,7 @@ import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis-connections'
+import { healthStatusService } from '../../health/health.service'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
@@ -207,6 +208,7 @@ export { tryDequeue }
 export const jobBroker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         await ensureBullMQWorker(QueueName.WORKER_JOBS, log)
+        await healthStatusService(log).markWorkerHealthy()
         log.info('[jobBroker] Job broker initialized')
     },
 
