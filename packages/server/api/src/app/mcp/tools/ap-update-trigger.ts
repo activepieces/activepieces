@@ -78,6 +78,11 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
 
+            const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input, platformId: project.platformId, log })
+            if (unknownPropsError) {
+                return unknownPropsError
+            }
+
             const triggerPayload = {
                 name: flow.version.trigger.name,
                 displayName,
@@ -158,7 +163,7 @@ async function diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerNa
         return parts.join(' ')
     }
     catch (err) {
-        log.warn({ err, pieceName, triggerName }, 'diagnoseMissingTriggerInputs: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, trigger: { name: triggerName } }, 'diagnoseMissingTriggerInputs: failed to fetch piece metadata')
         return null
     }
 }

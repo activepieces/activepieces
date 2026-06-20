@@ -84,7 +84,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                 ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             })
             if (!isNil(existingForPlaceholder) && existingForPlaceholder.status !== AppConnectionStatus.MISSING) {
-                log.info({ connectionId: existingForPlaceholder.id, pieceName, platformId, existingStatus: existingForPlaceholder.status }, 'Placeholder upsert skipped — non-missing connection already exists')
+                log.info({ connection: { id: existingForPlaceholder.id }, piece: { name: pieceName }, platform: { id: platformId }, existingStatus: existingForPlaceholder.status }, 'Placeholder upsert skipped — non-missing connection already exists')
                 return this.removeSensitiveData(existingForPlaceholder)
             }
         }
@@ -135,7 +135,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             scope,
         })
-        log.info({ connectionId: newId, pieceName, platformId, isNew: isNil(existingConnection) }, 'App connection upserted')
+        log.info({ connection: { id: newId }, piece: { name: pieceName }, platform: { id: platformId }, isNew: isNil(existingConnection) }, 'App connection upserted')
         return this.removeSensitiveData(updatedConnection)
     },
     async update(params: UpdateParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -225,7 +225,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions } = params
         const sourceAppConnection = await this.getOneOrThrowWithoutValue({
             id: sourceAppConnectionId,
             projectId,
@@ -257,13 +257,33 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             connectionExternalIds: [sourceAppConnection.externalId],
         })
 
+        // Reject up-front (before mutating any flow) when the source connection
+        // can't be deleted because published versions we won't touch still use it.
+        const publishedFlowsUsingConnection = deleteSourceConnection && !applyToPublishedVersions
+            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection(flows.data, sourceAppConnection.externalId)
+            : 0
+        if (publishedFlowsUsingConnection > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Cannot delete the old connection because it is still used by published flows that were not updated',
+                },
+            })
+        }
+
         await appConnectionHandler(log).updateFlowsWithAppConnection(flows.data, {
             appConnection: sourceAppConnection,
             newAppConnection: targetAppConnection,
             userId,
+            applyToPublishedVersions,
         })
 
-        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length }, 'App connection replaced')
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length, deleteSourceConnection, applyToPublishedVersions }, 'App connection replaced')
+
+        if (!deleteSourceConnection) {
+            return
+        }
+
         await this.delete({
             id: sourceAppConnection.id,
             platformId,
@@ -279,7 +299,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope: params.scope,
             ...(params.projectId ? { projectIds: ArrayContains([params.projectId]) } : {}),
         })
-        log.info({ connectionId: params.id, platformId: params.platformId }, 'App connection deleted')
+        log.info({ connection: { id: params.id }, platform: { id: params.platformId } }, 'App connection deleted')
     },
 
     async list({
@@ -579,6 +599,7 @@ const validateConnectionValue = async (
         case AppConnectionType.NO_AUTH:
             break
         case AppConnectionType.CUSTOM_AUTH:
+        case AppConnectionType.OIDC:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
             await engineValidateAuth({
@@ -817,5 +838,7 @@ type ReplaceParams = {
     projectId: ProjectId
     platformId: string
     userId: UserId
+    deleteSourceConnection: boolean
+    applyToPublishedVersions: boolean
 }
 

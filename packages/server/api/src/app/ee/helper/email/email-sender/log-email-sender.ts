@@ -10,7 +10,7 @@ export const logEmailSender = (log: FastifyBaseLogger): EmailSender => {
             log.debug({
                 name: 'LogEmailSender#send',
                 emails,
-                platformId,
+                platform: { id: platformId },
                 templateData,
             })
         },

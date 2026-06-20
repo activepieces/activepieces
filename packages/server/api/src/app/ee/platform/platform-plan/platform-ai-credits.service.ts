@@ -232,7 +232,7 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
 
         if (autoTopUpCreditsThisMonthAfterThisTopUp > plan.maxAutoTopUpCreditsMonthly) {
             log.info({
-                platformId: plan.platformId,
+                platform: { id: plan.platformId },
                 totalCreditsThisMonth,
                 creditsToAdd: plan.aiCreditsAutoTopUpCreditsToAdd,
                 maxMonthlyLimit: plan.maxAutoTopUpCreditsMonthly,

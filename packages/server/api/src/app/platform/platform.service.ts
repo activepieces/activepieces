@@ -16,6 +16,7 @@ import {
     PlatformWithoutSensitiveData,
     ProjectType,
     spreadIfDefined,
+    spreadIfNotUndefined,
     SsoDomainVerification,
     SsoDomainVerificationStatus,
     UpdatePlatformRequestBody,
@@ -92,7 +93,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             platformId: savedPlatform.id,
         })
 
-        log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
+        log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
     },
     async createPlatformWithProject({ identityId, name, invalidatePreviousTokens }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
@@ -172,6 +173,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
+            ...spreadIfNotUndefined('themeColors', params.themeColors),
             ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
             ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
@@ -199,7 +201,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         if (!isNil(params.federatedAuthProviders?.saml)) {
             invalidateSamlClientCache(params.id)
         }
-        log.info({ platformId: params.id }, 'Platform updated')
+        log.info({ platform: { id: params.id } }, 'Platform updated')
         const saved = await platformRepo().save(updatedPlatform)
         return stripFederatedAuth(saved)
     },

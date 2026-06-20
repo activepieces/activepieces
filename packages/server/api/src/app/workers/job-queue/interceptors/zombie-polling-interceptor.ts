@@ -18,7 +18,7 @@ export const zombiePollingInterceptor: JobInterceptor = {
         if (!isNil(activeTriggerSource)) {
             return { verdict: InterceptorVerdict.ALLOW }
         }
-        log.warn({ flowVersionId }, '[zombiePollingInterceptor] No active trigger source — discarding repeat job (flow disabled, re-published, or deleted)')
+        log.warn({ flowVersion: { id: flowVersionId } }, '[zombiePollingInterceptor] No active trigger source — discarding repeat job (flow disabled, re-published, or deleted)')
         await jobQueue(log).removeRepeatingJob({ flowVersionId })
         return { verdict: InterceptorVerdict.DISCARD }
     },

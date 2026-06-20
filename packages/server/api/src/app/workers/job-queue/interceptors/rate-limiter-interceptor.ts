@@ -135,12 +135,12 @@ export const rateLimiterInterceptor: JobInterceptor = {
 
         const allowed = await tryAcquireSlot({ jobId, jobData, log })
         if (allowed) {
-            log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Job allowed')
+            log.debug({ job: { id: jobId }, project: { id: jobData.projectId } }, '[rateLimiterInterceptor] Job allowed')
             return { verdict: InterceptorVerdict.ALLOW }
         }
 
         const delayInMs = Math.min(600_000, 20_000 * Math.pow(2, job.attemptsMade))
-        log.info({ jobId, projectId: jobData.projectId, delayInMs }, '[rateLimiterInterceptor] Job rate limited')
+        log.info({ job: { id: jobId }, project: { id: jobData.projectId }, delayInMs }, '[rateLimiterInterceptor] Job rate limited')
         return {
             verdict: InterceptorVerdict.REJECT,
             delayInMs,
@@ -153,6 +153,6 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return
         }
         await releaseSlot({ jobId, jobData, log })
-        log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Slot released')
+        log.debug({ job: { id: jobId }, project: { id: jobData.projectId } }, '[rateLimiterInterceptor] Slot released')
     },
 }

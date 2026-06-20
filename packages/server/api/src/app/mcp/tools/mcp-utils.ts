@@ -1,4 +1,4 @@
-import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, tryCatch, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -169,6 +169,37 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     return { parts, missing, unknownKeys, uiRequired, hasAuth }
 }
 
+async function detectUnknownInputProps({ pieceName, pieceVersion, componentName, componentType, input, platformId, log }: DetectUnknownInputPropsParams): Promise<{ unknownKeys: string[], message: string }> {
+    if (!isObject(input) || Object.keys(input).length === 0) {
+        return { unknownKeys: [], message: '' }
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
+        const component = componentType === 'action' ? piece.actions[componentName] : piece.triggers[componentName]
+        if (isNil(component)) {
+            return { unknownKeys: [], message: '' }
+        }
+        const { unknownKeys, parts } = diagnosePieceProps({ props: component.props, input, pieceAuth: piece.auth, requireAuth: component.requireAuth, componentType })
+        if (unknownKeys.length === 0) {
+            return { unknownKeys: [], message: '' }
+        }
+        const unknownMessage = parts.find((p) => p.startsWith('Unknown properties:')) ?? `Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.`
+        return { unknownKeys, message: unknownMessage }
+    }
+    catch (err) {
+        log.warn({ error: err, piece: { name: pieceName }, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
+        return { unknownKeys: [], message: '' }
+    }
+}
+
+async function rejectUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<McpToolResult | null> {
+    const { unknownKeys, message } = await detectUnknownInputProps(params)
+    if (unknownKeys.length === 0) {
+        return null
+    }
+    return { content: [{ type: 'text', text: `❌ ${message}` }] }
+}
+
 const MAX_PROP_DEPTH = 3
 
 function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
@@ -202,6 +233,39 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
             }
             return summary
         })
+}
+
+function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
+    return fields.flatMap((field) => {
+        const path = prefix ? `${prefix}.${field.key}` : field.key
+        if (field.children && field.children.length > 0) {
+            return flattenOutputSchemaFields(field.children, path)
+        }
+        if (field.listItems && field.listItems.length > 0) {
+            return flattenOutputSchemaFields(field.listItems, `${path}[]`)
+        }
+        const typeHint = field.format ? ` (${field.format})` : ''
+        const dynamicNote = field.dynamicKey ? ' (dynamic key)' : ''
+        return [`${path}${typeHint}${dynamicNote}`]
+    })
+}
+
+function deriveFieldPathsFromSample(value: unknown, prefix = ''): string[] {
+    if (Array.isArray(value)) {
+        return value.length > 0
+            ? deriveFieldPathsFromSample(value[0], `${prefix}[]`)
+            : (prefix ? [`${prefix}[]`] : [])
+    }
+    if (value !== null && typeof value === 'object') {
+        const entries = Object.entries(value)
+        return entries.length > 0
+            ? entries.flatMap(([key, val]) => deriveFieldPathsFromSample(val, prefix ? `${prefix}.${key}` : key))
+            : (prefix ? [`${prefix} (object)`] : [])
+    }
+    if (!prefix) {
+        return []
+    }
+    return [`${prefix} (${value === null ? 'null' : typeof value})`]
 }
 
 function normalizePieceName(pieceName: string | undefined): string | undefined {
@@ -360,7 +424,7 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
         settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
     }
     catch (err) {
-        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
+        log.warn({ error: err, piece: { name: pieceName }, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
     }
 }
 
@@ -504,7 +568,11 @@ export const mcpUtils = {
     routerInvalidWarning,
     publishedFlowWarning,
     diagnosePieceProps,
+    detectUnknownInputProps,
+    rejectUnknownInputProps,
     buildPropSummaries,
+    flattenOutputSchemaFields,
+    deriveFieldPathsFromSample,
     normalizePieceName,
     lookupPieceComponent,
     findResolvableProps,
@@ -535,6 +603,16 @@ type FindResolvablePropsParams = {
     componentProps: PiecePropertyMap
     auth: string | undefined
     providedInput: Record<string, unknown>
+}
+
+type DetectUnknownInputPropsParams = {
+    pieceName: string
+    pieceVersion: string
+    componentName: string
+    componentType: 'action' | 'trigger'
+    input: unknown
+    platformId: string
+    log: FastifyBaseLogger
 }
 
 type DiagnosePiecePropsParams = {
@@ -576,7 +654,7 @@ type LookupPieceComponentParams = {
 }
 
 type LookupPieceComponentResult =
-    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
+    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never }
     | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveRouterStepResult =

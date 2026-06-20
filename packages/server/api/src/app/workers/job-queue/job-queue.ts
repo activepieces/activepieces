@@ -1,7 +1,6 @@
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
 import { ApId, EventDestinationJobData, ExecuteChatAgentJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
-import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
@@ -64,7 +63,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         )
 
         log.info({
-            flowVersionId,
+            flowVersion: { id: flowVersionId },
         }, '[jobQueue#removeRepeatingJob] removed jobs from all queues')
     },
 
@@ -75,13 +74,13 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         if (!isNil(job)) {
             await job.remove()
             log.info({
-                jobId,
+                job: { id: jobId },
                 queueName,
             }, '[jobQueue#removeOneTimeJob] removed job from queue')
             return
         }
         log.info({
-            jobId,
+            job: { id: jobId },
             queueName,
         }, '[jobQueue#removeOneTimeJob] job not found in queue')
     },
@@ -124,9 +123,7 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
                 return existingQueue
             }
 
-            const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
             const queue = new Queue(queueName, {
-                telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
                 connection: await redisConnections.create(),
                 defaultJobOptions: {
                     attempts: 2,

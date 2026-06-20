@@ -1,19 +1,27 @@
 ---
-title: "How to Setup OpenTelemetry"
-description: "Configure OpenTelemetry for observability and tracing"
+title: "How to Setup Observability"
+description: "Configure log export and sampling for observability"
 icon: "chart-line"
 ---
 
-Activepieces supports both standard OpenTelemetry environment variables and vendor-specific configuration for observability and tracing.
+Activepieces exports structured logs via evlog. Each API request and worker job execution emits a single wide-event JSON object including duration, status, and sampling context.
 
-## Environment Variables
+## Log Export Variables
 
 | Variable | Description | Default Value | Example |
 |----------|-------------|---------------|---------|
-| `AP_OTEL_ENABLED` | Enable OpenTelemetry tracing | `false` | `true` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP exporter endpoint URL | None | `https://your-collector:4317/v1/traces` |
+| `AP_OTEL_ENABLED` | Export logs via OTLP log drain (no traces or metrics) | `false` | `true` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint for log export | None | `https://your-collector:4317` |
 | `OTEL_EXPORTER_OTLP_HEADERS` | Headers for OTLP exporter (comma-separated key=value pairs) | None | `Authorization=Bearer token` |
 
+## Sampling Variables
+
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `AP_LOG_SAMPLE_RATE_INFO` | Percentage of info-level events to keep (0–100) | `100` |
+| `AP_LOG_KEEP_SLOW_MS` | Always keep requests slower than this threshold (ms) | `2000` |
+
 <Note>
-Both `AP_OTEL_ENABLED` and `OTEL_EXPORTER_OTLP_ENDPOINT` must be set for OpenTelemetry to be enabled.
+Events with level `warn` or `error` are always kept regardless of sampling configuration.
+`AP_OTEL_ENABLED=true` enables the OTLP **log** drain only — OpenTelemetry tracing and metrics are no longer emitted.
 </Note>

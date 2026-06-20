@@ -54,7 +54,7 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_insert_records failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_insert_records failed')
                 return mcpUtils.mcpToolError('Failed to insert records', err)
             }
         },

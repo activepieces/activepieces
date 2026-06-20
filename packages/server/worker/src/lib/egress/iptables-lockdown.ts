@@ -1,6 +1,6 @@
 import net from 'node:net'
+import { type ApLogger } from '@activepieces/server-utils'
 import { tryCatch } from '@activepieces/shared'
-import { Logger } from 'pino'
 import { spawnWithKill } from '../utils/exec'
 
 const CHAIN = 'AP_EGRESS_LOCKDOWN'
@@ -20,7 +20,7 @@ export const iptablesLockdown = {
             for (const args of buildApplyCommandsForFamily({ params, rejectWith: family.rejectWith, family: family.ipFamily })) {
                 const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
                 if (error) {
-                    log.error({ err: error, binary: family.binary, args }, 'iptables rule failed; rolling back')
+                    log.error({ error, binary: family.binary, args }, 'iptables rule failed; rolling back')
                     await removeLockdown({ log, params })
                     throw new IptablesLockdownError(
                         `Failed to apply ${family.binary} rule "${args.join(' ')}" — ` +
@@ -80,20 +80,20 @@ function buildApplyCommandsForFamily({ params, rejectWith, family }: { params: A
     ]
 }
 
-async function preflightCleanup({ log, params }: { log: Logger, params: ApplyParams }): Promise<void> {
+async function preflightCleanup({ log, params }: { log: ApLogger, params: ApplyParams }): Promise<void> {
     for (const family of FAMILIES) {
         for (const args of iptablesLockdown.buildRemoveCommands(params)) {
             const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
-            if (error) log.debug({ err: error, binary: family.binary, args }, 'preflight cleanup step had no prior state (expected on fresh start)')
+            if (error) log.debug({ error, binary: family.binary, args }, 'preflight cleanup step had no prior state (expected on fresh start)')
         }
     }
 }
 
-async function removeLockdown({ log, params }: { log: Logger, params: ApplyParams }): Promise<void> {
+async function removeLockdown({ log, params }: { log: ApLogger, params: ApplyParams }): Promise<void> {
     for (const family of FAMILIES) {
         for (const args of iptablesLockdown.buildRemoveCommands(params)) {
             const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
-            if (error) log.warn({ err: error, binary: family.binary, args }, 'iptables cleanup command failed (best-effort)')
+            if (error) log.warn({ error, binary: family.binary, args }, 'iptables cleanup command failed (best-effort)')
         }
     }
 }
@@ -130,7 +130,7 @@ type ApplyParams = {
     firstBoxUid: number
     numBoxes: number
     nameservers: string[]
-    log: Logger
+    log: ApLogger
 }
 
 export type IptablesLockdown = {

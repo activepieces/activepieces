@@ -28,7 +28,7 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
                     error_description: e.errorDescription,
                 })
             }
-            req.log.error({ err: e, clientId: client_id }, 'OAuth token error')
+            req.log.error({ error: e, clientId: client_id }, 'OAuth token error')
             return reply.status(500).send({ error: 'server_error' })
         }
     })

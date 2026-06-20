@@ -112,6 +112,7 @@
                     "admin-guide/guides/permissions",
                     "admin-guide/guides/event-streaming",
                     "admin-guide/guides/project-releases",
+                    "admin-guide/guides/project-replace-cli",
                     "admin-guide/guides/manage-concurrency"
                   ]
                },
@@ -232,6 +233,7 @@
                   "pages": [
                      "embedding/customize-pieces",
                      "embedding/embed-connections",
+                     "embedding/embeddable-mcp",
                      "embedding/navigation",
                      "embedding/predefined-connection",
                      "embedding/sdk-changelog",
@@ -289,6 +291,7 @@
                      "build-pieces/piece-reference/piece-versioning",
                      "build-pieces/piece-reference/examples",
                      "build-pieces/piece-reference/custom-api-calls",
+                     "build-pieces/piece-reference/output-schema",
                      "build-pieces/piece-reference/i18n"
                   ]
                },
@@ -526,6 +529,7 @@
                      "handbook/engineering/playbooks/canary-deployment",
                      "handbook/engineering/playbooks/infrastructure",
                      "handbook/engineering/playbooks/database-migration",
+                     "handbook/engineering/playbooks/structured-logging",
                      "handbook/engineering/playbooks/security-advisory-response",
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",

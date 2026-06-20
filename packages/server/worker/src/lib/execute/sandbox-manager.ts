@@ -1,5 +1,5 @@
+import { type ApLogger } from '@activepieces/server-utils'
 import { ApEnvironment, ExecutionMode, isNil, WorkerToApiContract } from '@activepieces/shared'
-import { Logger } from 'pino'
 import { system, WorkerSystemProp } from '../config/configs'
 import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'
@@ -9,20 +9,20 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
     let currentSandbox: Sandbox | null = null
 
     return {
-        acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox {
+        acquire(params: { log: ApLogger, apiClient: WorkerToApiContract }): Sandbox {
             if (canReuseSandbox() && currentSandbox && currentSandbox.isReady()) {
                 return currentSandbox
             }
             if (currentSandbox) {
                 params.log.info('Sandbox not ready or not reusable, creating fresh one')
                 currentSandbox.shutdown().catch((err) =>
-                    params.log.error({ err }, 'Error shutting down previous sandbox'),
+                    params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
             }
             currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
             return currentSandbox
         },
-        async invalidate(log: Logger): Promise<void> {
+        async invalidate(log: ApLogger): Promise<void> {
             if (currentSandbox) {
                 log.info('Invalidating sandbox')
                 const sb = currentSandbox
@@ -30,12 +30,12 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
                 await sb.shutdown()
             }
         },
-        async release(log: Logger): Promise<void> {
+        async release(log: ApLogger): Promise<void> {
             if (!canReuseSandbox()) {
                 await this.invalidate(log)
             }
         },
-        async shutdown(log: Logger): Promise<void> {
+        async shutdown(log: ApLogger): Promise<void> {
             await this.invalidate(log)
         },
         getActiveSandbox(): ActiveSandboxInfo | null {
@@ -80,9 +80,9 @@ export type ActiveSandboxInfo = {
 }
 
 export type SandboxManager = {
-    acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox
-    invalidate(log: Logger): Promise<void>
-    release(log: Logger): Promise<void>
-    shutdown(log: Logger): Promise<void>
+    acquire(params: { log: ApLogger, apiClient: WorkerToApiContract }): Sandbox
+    invalidate(log: ApLogger): Promise<void>
+    release(log: ApLogger): Promise<void>
+    shutdown(log: ApLogger): Promise<void>
     getActiveSandbox(): ActiveSandboxInfo | null
 }

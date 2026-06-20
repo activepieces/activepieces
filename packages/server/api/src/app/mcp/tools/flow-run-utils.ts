@@ -27,6 +27,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         return { content: [{ type: 'text', text: '❌ Flow trigger is not configured. Use ap_update_trigger to set up the trigger before testing.' }] }
     }
 
+    const usedMockTriggerData = !isNil(triggerTestData)
     let warning = ''
     if (stepName) {
         const step = flowStructureUtil.getStep(stepName, flow.version.trigger)
@@ -64,7 +65,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
             },
         })
         flow = updatedFlow
-        warning += '⚠️ This test ran on mock trigger data you supplied, not a real trigger event. A passing test here does NOT prove the live flow works: if the real trigger payload uses different field names or casing than your mock, downstream steps will read empty values in production. Verify your mock keys match a real sample (e.g. trigger the flow once for real, or check the trigger sample shape).\n\n'
+        warning += '⚠️ This test ran on mock trigger data you supplied, not a real trigger event. A passing test here does NOT prove the live flow works: if the real trigger payload uses different field names or casing than your mock, downstream steps will read empty values in production. Verify your mock keys match a real sample (e.g. trigger the flow once for real, or check the trigger sample shape). When reporting this to the user, describe it as "tested with sample data" — NEVER claim it was "verified with real runs".\n\n'
         warning += buildTriggerShapeHint(flow.version.trigger)
     }
 
@@ -94,7 +95,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         }
     }
 
-    return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }] }
+    return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }], structuredContent: { usedMockTriggerData } }
 }
 
 export async function executeAdhocAction({
@@ -267,12 +268,12 @@ export async function executeAdhocAction({
         return { content: [{ type: 'text', text: formatAdhocActionResult(completedRun, stepName, action.displayName) }] }
     }
     catch (err) {
-        log.error({ err, projectId, flowId: flow.id }, 'executeAdhocAction failed')
+        log.error({ error: err, project: { id: projectId }, flow: { id: flow.id } }, 'executeAdhocAction failed')
         return mcpUtils.mcpToolError('Failed to run action', err)
     }
     finally {
         flowService(log).delete({ id: flow.id, projectId }).catch(err => {
-            log.warn({ err, flowId: flow.id }, 'adhoc flow cleanup failed')
+            log.warn({ error: err, flow: { id: flow.id } }, 'adhoc flow cleanup failed')
         })
     }
 }

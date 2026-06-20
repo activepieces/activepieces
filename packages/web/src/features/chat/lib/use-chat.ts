@@ -56,37 +56,40 @@ function buildToolCallMetaFromGate(gate: {
     return {};
   }
   const gateInput = gate.toolInput ?? {};
+  let actionPreview: ActionPreviewEvent | null = null;
   if (gate.toolName === 'ap_execute_action') {
-    return {
-      [gate.gateId]: {
-        actionPreview: {
-          toolCallId: gate.gateId,
-          pieceName:
-            typeof gateInput.pieceName === 'string' ? gateInput.pieceName : '',
-          actionName:
-            typeof gateInput.actionName === 'string'
-              ? gateInput.actionName
-              : '',
-          actionDisplayName: gate.displayName,
-          input:
-            typeof gateInput.input === 'object' && gateInput.input !== null
-              ? (gateInput.input as Record<string, unknown>)
-              : {},
-          isBatch:
-            typeof gateInput.batchCount === 'number' &&
-            gateInput.batchCount > 0,
-          batchCount:
-            typeof gateInput.batchCount === 'number'
-              ? gateInput.batchCount
-              : undefined,
-          batchSamples: Array.isArray(gateInput.items)
-            ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
-            : undefined,
-        },
-      },
+    actionPreview = {
+      toolCallId: gate.gateId,
+      pieceName:
+        typeof gateInput.pieceName === 'string' ? gateInput.pieceName : '',
+      actionName:
+        typeof gateInput.actionName === 'string' ? gateInput.actionName : '',
+      actionDisplayName: gate.displayName,
+      input:
+        typeof gateInput.input === 'object' && gateInput.input !== null
+          ? (gateInput.input as Record<string, unknown>)
+          : {},
+      isBatch:
+        typeof gateInput.batchCount === 'number' && gateInput.batchCount > 0,
+      batchCount:
+        typeof gateInput.batchCount === 'number'
+          ? gateInput.batchCount
+          : undefined,
+      batchSamples: Array.isArray(gateInput.items)
+        ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
+        : undefined,
+    };
+  } else if (gate.toolName === 'ap_test_flow') {
+    actionPreview = {
+      toolCallId: gate.gateId,
+      pieceName: '',
+      actionName: 'ap_test_flow',
+      actionDisplayName: gate.displayName,
+      input: {},
+      isBatch: false,
     };
   }
-  return {};
+  return actionPreview ? { [gate.gateId]: { actionPreview } } : {};
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);

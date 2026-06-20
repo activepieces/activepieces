@@ -1,7 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { dealUidDropdown } from '../common/dropdowns';
 
 export const deleteDealAction = createAction({
   name: 'delete_deal',
@@ -15,7 +14,11 @@ export const deleteDealAction = createAction({
     idempotent: false,
   },
   props: {
-    dealUid: dealUidDropdown(),
+    dealUid: Property.ShortText({
+      displayName: 'Deal UID',
+      description: 'The UID of the deal to delete.',
+      required: true,
+    }),
   },
   async run(context) {
     const client = new OutsetaClient({

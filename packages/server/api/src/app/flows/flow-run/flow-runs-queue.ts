@@ -1,6 +1,5 @@
 import { apId, FlowRun, FlowRunStatus, isFlowRunStateTerminal, isNil, spreadIfDefined } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
-import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../helper/domain-helper'
@@ -22,10 +21,8 @@ const queue = runsMetadataQueueFactory({ createRedisConnection: redisConnections
 export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         const queueName = QueueName.RUNS_METADATA
-        const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED) ?? false
 
         const config: RunsMetadataQueueConfig = {
-            isOtelEnabled,
             redisFailedJobRetentionDays: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
             redisFailedJobRetentionMaxCount: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
         }
@@ -34,8 +31,8 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
             queueName,
             async (job) => {
                 log.info({
-                    jobId: job.id,
-                    runId: job.data.runId,
+                    job: { id: job.id },
+                    flowRun: { id: job.data.runId },
                 }, '[runsMetadataQueue#worker] Saving runs metadata')
                 const key = redisMetadataKey(job.data.runId)
                 await distributedLock(log).runExclusive({
@@ -47,8 +44,8 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
                                 log.info({
-                                    jobId: job.id,
-                                    runId: job.data.runId,
+                                    job: { id: job.id },
+                                    flowRun: { id: job.data.runId },
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
@@ -76,8 +73,8 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 const updatedFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
                                 if (isNil(updatedFlowRun)) {
                                     log.info({
-                                        jobId: job.id,
-                                        runId: job.data.runId,
+                                        job: { id: job.id },
+                                        flowRun: { id: job.data.runId },
                                     }, '[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
                                     return
                                 }
@@ -88,8 +85,8 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 const flowExists = !isNil(flowId) && await flowService(log).exists(flowId)
                                 if (!flowExists) {
                                     log.info({
-                                        jobId: job.id,
-                                        runId: job.data.runId,
+                                        job: { id: job.id },
+                                        flowRun: { id: job.data.runId },
                                     }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
                                     return
                                 }
@@ -141,7 +138,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
             },
             {
                 connection: await redisConnections.create(),
-                telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
                 concurrency: system.getNumberOrThrow(AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY),
                 autorun: true,
             },
@@ -152,8 +148,8 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
     async add(params: RunsMetadataUpsertData): Promise<void> {
         log.info({
-            runId: params.id,
-            projectId: params.projectId,
+            flowRun: { id: params.id },
+            project: { id: params.projectId },
         }, '[runsMetadataQueue#add] Adding runs metadata to queue')
         await queue.add(params)
     },
