@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { experimental_createMCPClient as createMCPClient } from '@ai-sdk/mcp';
+import { createMCPClient } from '@ai-sdk/mcp';
 import { McpProtocol, buildAuthHeaders, McpAuthType } from "@activepieces/shared";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
@@ -109,7 +109,7 @@ export const callToolAction = createAction({
             if (!tool) {
                 throw new Error(`Tool ${propsValue.toolName} not found on server`);
             }
-            
+
             const result = await tool.execute(propsValue.arguments['input']);
             return result;
         } finally {

@@ -6,7 +6,10 @@ import { AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentTaskStatus
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
 import { ProviderOptions } from "@ai-sdk/provider-utils";
-import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
+import { createMCPClient } from '@ai-sdk/mcp';
+
+type MCPClient = ReturnType<typeof createMCPClient>;
+type MCPTransport = Parameters<typeof createMCPClient>[0]['transport'];
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 function createTransportConfig(
