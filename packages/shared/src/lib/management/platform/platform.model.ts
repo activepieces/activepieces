@@ -141,7 +141,7 @@ export const PIECE_SELECTOR_BUILTIN_TABS = ['EXPLORE', 'APPS', 'UTILITY', 'AI_AN
 
 export const PieceSelectorTabSection = z.object({
     id: z.string(),
-    title: z.string().max(40),
+    title: z.string().min(1).max(40),
     pieceNames: z.array(z.string()),
 })
 export type PieceSelectorTabSection = z.infer<typeof PieceSelectorTabSection>
