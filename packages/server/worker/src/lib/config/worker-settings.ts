@@ -4,8 +4,10 @@ import { WorkerSettingsResponse } from '@activepieces/shared'
 let settings: WorkerSettingsResponse | undefined
 let settingsResolver: (() => void) | null = null
 const settingsReady = new Promise<void>((resolve) => {
-    settingsResolver = resolve 
+    settingsResolver = resolve
 })
+
+let egressProxyEnabled = false
 
 export const workerSettings = {
     set(response: WorkerSettingsResponse): void {
@@ -20,5 +22,13 @@ export const workerSettings = {
 
     waitForSettings(): Promise<WorkerSettingsResponse> {
         return settingsReady.then(() => settings!)
+    },
+
+    setEgressProxy(proxyPort: number | null): void {
+        egressProxyEnabled = proxyPort !== null
+    },
+
+    isEgressProxyEnabled(): boolean {
+        return egressProxyEnabled
     },
 }
