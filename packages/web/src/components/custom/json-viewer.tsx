@@ -93,7 +93,7 @@ const JsonViewer = React.memo(
         type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
-      handleDownloadFile(url);
+      handleDownloadFile(url, ".json");
     };
 
     const handleDownloadFile = (fileUrl: string, ext = '') => {
