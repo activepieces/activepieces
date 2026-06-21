@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, existsSync, copyFileSync, readdirSync, mkdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync, writeFileSync, existsSync, copyFileSync, readdirSync, mkdirSync, statSync, rmSync } from 'node:fs'
+import { join, relative } from 'node:path'
 import { buildWorkspaceVersionMap, findRepoRoot, resolveWorkspaceDependencies, stripSemverRanges } from './workspace-utils'
 import { bundlePieceUtils } from './bundle-piece-utils'
 
@@ -41,6 +41,7 @@ async function preparePieceDistForPublish(piecePath: string): Promise<void> {
     const { bundleBytes, rawBytes, external } = await bundlePieceUtils.bundlePiece({ ...paths, repoRoot })
 
     rewriteManifestForBundle({ distPath, external, repoRoot })
+    pruneDistToPublishedFiles({ distPath })
 
     const ratio = rawBytes > 0 ? (rawBytes / bundleBytes).toFixed(1) : '—'
     const extNote = external.length ? ` external=[${external.join(', ')}]` : ''
@@ -75,6 +76,56 @@ function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: 
     json.files = [bundlePieceUtils.BUNDLE_FILENAME, 'package.json', 'src/i18n']
 
     writeFileSync(distPackageJsonPath, JSON.stringify(json, null, 2) + '\n')
+}
+
+// After bundling, dist/ still holds the full tsc output (compiled lib/*, .d.ts, .map). Prune it
+// down to EXACTLY what npm would publish — the manifest's `files` allow-list (the self-contained
+// bundle + i18n) plus package.json — so `dist/` mirrors the published artifact 1:1.
+function pruneDistToPublishedFiles({ distPath }: { distPath: string }): void {
+    const json = JSON.parse(readFileSync(join(distPath, 'package.json'), 'utf-8'))
+    const entries: string[] = json.files ?? []
+
+    const keepFiles = new Set<string>(['package.json'])
+    const keepDirs: string[] = []
+    for (const entry of entries) {
+        const normalized = entry.replace(/\/$/, '')
+        const abs = join(distPath, normalized)
+        if (existsSync(abs) && statSync(abs).isDirectory()) {
+            keepDirs.push(normalized)
+        }
+        else {
+            keepFiles.add(normalized)
+        }
+    }
+
+    const toPosix = (p: string): string => p.split('\\').join('/')
+    const isKept = (rel: string): boolean =>
+        keepFiles.has(rel) || keepDirs.some((dir) => rel === dir || rel.startsWith(`${dir}/`))
+
+    const removeUnpublished = (dir: string): boolean => {
+        let empty = true
+        for (const name of readdirSync(dir)) {
+            const full = join(dir, name)
+            if (statSync(full).isDirectory()) {
+                const childEmpty = removeUnpublished(full)
+                if (childEmpty) {
+                    rmSync(full, { recursive: true, force: true })
+                }
+                else {
+                    empty = false
+                }
+            }
+            else if (isKept(toPosix(relative(distPath, full)))) {
+                empty = false
+            }
+            else {
+                rmSync(full, { force: true })
+            }
+        }
+        return empty
+    }
+
+    removeUnpublished(distPath)
 }
 
 export { preparePieceDistForPublish }
