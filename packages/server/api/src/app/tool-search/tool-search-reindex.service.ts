@@ -87,8 +87,9 @@ async function deleteRemovedRows(desired: DesiredRecord[], modelVersion: string,
     // A platform-scoped reconcile must only ever delete that tenant's rows — without this clause a
     // scoped run would wipe the shared catalog (none of its keys are in the scoped desired set).
     const scopeClause = scope.type === 'platform' ? ` AND "platformId" = $${params.push(scope.platformId)}` : ''
-    // RETURNING "id" so the deleted-row count is read uniformly from the result array (the raw
-    // affected-count shape differs between the pg driver and PGlite).
+    // RETURNING "id" so PGlite reports the deleted rows as a rows array; node-postgres reports
+    // `[rows, affectedCount]`. rawWriteRowCount normalizes both — do NOT read `.length` directly
+    // (it is always 2 on node-postgres, which silently over-counts deletes on real Postgres).
     const deleted = await databaseConnection().query(
         `DELETE FROM "tool_search_index"
          WHERE "modelVersion" = $1${scopeClause}
@@ -98,7 +99,22 @@ async function deleteRemovedRows(desired: DesiredRecord[], modelVersion: string,
          RETURNING "id"`,
         params,
     )
-    return deleted.length
+    return rawWriteRowCount(deleted)
+}
+
+/**
+ * Count rows written by a raw `DELETE`/`UPDATE … RETURNING` query, normalizing TypeORM's non-uniform
+ * `query()` return: the node-postgres driver returns `[returnedRows, affectedCount]`, whereas PGlite
+ * returns the RETURNING rows array directly (as do all SELECTs). Reading `.length` on the node-postgres
+ * tuple always yields 2 — the bug that over-counted incremental-reconcile deletes on real Postgres while
+ * passing on PGlite. Detect the `[rows, count]` shape (2-element array whose first element is itself the
+ * rows array and second is the numeric count) and read the count; otherwise the result IS the rows array.
+ */
+export function rawWriteRowCount(result: unknown): number {
+    if (Array.isArray(result) && result.length === 2 && Array.isArray(result[0]) && typeof result[1] === 'number') {
+        return result[1]
+    }
+    return Array.isArray(result) ? result.length : 0
 }
 
 /**
