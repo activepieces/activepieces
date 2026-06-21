@@ -13,6 +13,7 @@ import { useSearchParams } from 'react-router-dom';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { RequestTrial } from '@/app/components/request-trial';
 import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
+import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
@@ -195,6 +196,7 @@ const PlatformPiecesPage = () => {
             },
           ]}
           toolbarButtons={[
+            <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
             <SyncPiecesButton key="sync" />,
             <InstallPieceDialog
               key="install"

@@ -9,7 +9,7 @@ A Platform is the top-level tenant namespace in Activepieces. Every installation
 - `packages/server/api/src/app/platform/platform.entity.ts` — `platform` TypeORM entity
 - `packages/server/api/src/app/platform/platform.utils.ts` — `getPlatformIdForRequest`, `isCustomerOnDedicatedDomain`
 - `packages/server/api/src/app/platform/platform-jobs.ts` — `HARD_DELETE_PLATFORM` job handler
-- `packages/core/shared/src/lib/management/platform/platform.model.ts` — `Platform`, `PlatformWithoutSensitiveData`, `PlatformPlan`, `PlatformUsage`, `PlatformThemeColors` Zod schemas
+- `packages/core/shared/src/lib/management/platform/platform.model.ts` — `Platform`, `PlatformWithoutSensitiveData`, `PlatformPlan`, `PlatformUsage`, `PlatformThemeColors`, `PieceSelectorConfig`, `PieceSelectorTabConfig`, `PieceSelectorTabSection` Zod schemas
 - `packages/core/shared/src/lib/management/platform/platform.request.ts` — `UpdatePlatformRequestBody`
 - `packages/web/src/hooks/platform-hooks.ts` — `useCurrentPlatform()` React Query hook
 - `packages/web/src/features/platform-admin/hooks/branding-hooks.ts` — branding mutation hooks
@@ -24,6 +24,9 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 - **federatedAuthProviders** — JSONB column storing OAuth2 / SAML config; sensitive fields (secrets, certs) are stripped before returning `PlatformWithoutSensitiveData`
 - **pinnedPieces** — ordered list of piece names shown at the top of the piece selector
 - **cloudAuthEnabled** — whether platform-managed OAuth (Activepieces-hosted app credentials) is active
+- **PieceSelectorConfig** — JSONB config controlling the order, visibility, names, and icons of the piece-selector tab strip in the flow builder; `null` means use the default built-in layout
+- **PieceSelectorTabConfig** — a single tab entry: either `BUILTIN` (referencing one of the five built-in tabs) or `CUSTOM` (a user-created tab with its own ordered piece list and optional sections)
+- **PieceSelectorTabSection** — a named sub-group inside a `CUSTOM` tab; holds a title and an ordered list of piece names
 
 ## Entity
 
@@ -46,6 +49,7 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 | emailAuthEnabled | boolean | |
 | federatedAuthProviders | jsonb | OAuth2 + SAML config |
 | pinnedPieces | string[] | ordered piece name list |
+| pieceSelectorConfig | jsonb (nullable) | piece-selector tab layout (`PieceSelectorConfig`); null = default built-in tabs |
 
 ## Endpoints
 
