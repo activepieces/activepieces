@@ -8,7 +8,15 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, Clock3, MousePointer2 } from 'lucide-react';
+import {
+  Check,
+  ChevronsUpDown,
+  CircleAlert,
+  Clock3,
+  LoaderCircle,
+  MousePointer2,
+  Pause,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -138,17 +146,14 @@ function TimelineStepButton({
                 <Button
                   className={cn(
                     'size-6 rounded-full p-0 text-[11px]',
+                    getIterationButtonClassName(iteration.status),
                     iteration.isSelected && 'ring-2 ring-primary ring-offset-1',
                   )}
                   onClick={() => onSelectIteration(iteration.index)}
                   size="icon"
-                  variant={iteration.isFailed ? 'destructive' : 'outline'}
+                  variant="outline"
                 >
-                  {iteration.status === StepOutputStatus.SUCCEEDED ? (
-                    <Check className="size-3" />
-                  ) : (
-                    iteration.index + 1
-                  )}
+                  <IterationStatusContent iteration={iteration} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -243,6 +248,34 @@ function hasStepWithStatus({
   );
 }
 
+function IterationStatusContent({ iteration }: IterationStatusContentProps) {
+  switch (iteration.status) {
+    case StepOutputStatus.FAILED:
+      return <CircleAlert className="size-3" />;
+    case StepOutputStatus.RUNNING:
+      return <LoaderCircle className="size-3 animate-spin" />;
+    case StepOutputStatus.PAUSED:
+      return <Pause className="size-3" />;
+    case StepOutputStatus.SUCCEEDED:
+      return <Check className="size-3" />;
+  }
+}
+
+function getIterationButtonClassName(status: StepOutputStatus): string {
+  switch (status) {
+    case StepOutputStatus.FAILED:
+      return 'border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground';
+    case StepOutputStatus.RUNNING:
+      return 'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary';
+    case StepOutputStatus.PAUSED:
+      return 'border-warning/40 bg-warning/5 text-warning hover:bg-warning/10 hover:text-warning';
+    case StepOutputStatus.SUCCEEDED:
+      return 'border-success/40 bg-success/5 text-success hover:bg-success/10 hover:text-success';
+    default:
+      return '';
+  }
+}
+
 function formatDuration(duration: number | undefined): string {
   if (duration === undefined) {
     return t('Not available');
@@ -285,6 +318,10 @@ type TimelineStepButtonProps = {
   onSelectIteration: (iterationIndex: number) => void;
   onSelectStep: () => void;
   order: number;
+};
+
+type IterationStatusContentProps = {
+  iteration: TimelineIteration;
 };
 
 type HasStepWithStatusParams = {

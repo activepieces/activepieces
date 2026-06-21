@@ -111,7 +111,7 @@ A separate scheduled EE job (`ee/flow-run-tracking/`, `SystemJobName.FLOW_RUN_TR
 
 ## Frontend Integration
 
-`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs (infinite query, auto-refetching every 15s while runs are still executing) and deduplicates entries by `id` when flattening pages — a safeguard against page overlap during live refetch. The run-details panel renders step-by-step input/output from the populated run's execution logs. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
+`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs (infinite query, auto-refetching every 15s while runs are still executing) and deduplicates entries by `id` when flattening pages — a safeguard against page overlap during live refetch. The run-details panel renders step-by-step input/output from the populated run's execution logs. `RunTimelinePanel` sits above that inspector and lists executed steps in flow order with their current status and duration; loop steps also render per-iteration status buttons (succeeded/failed/running/paused) that call `setLoopIndex` and `selectStepByName` so users can jump straight to a failed or active iteration. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
 
 ### Runs Table Filters
 
