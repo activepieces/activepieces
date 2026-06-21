@@ -155,7 +155,10 @@ export const PieceSelectorTabConfig = z.object({
     hidden: z.boolean(),
     pieceNames: z.array(z.string()).optional(),
     sections: z.array(PieceSelectorTabSection).optional(),
-})
+}).refine(
+    (tab) => tab.kind !== 'CUSTOM' || (tab.title?.trim().length ?? 0) > 0,
+    { message: 'Custom tabs must have a name', path: ['title'] },
+)
 export type PieceSelectorTabConfig = z.infer<typeof PieceSelectorTabConfig>
 
 export const PieceSelectorConfig = z.object({

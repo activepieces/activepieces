@@ -448,6 +448,41 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         }),
 
+        it('rejects a custom piece selector tab without a name', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    pieceSelectorConfig: {
+                        tabs: [
+                            { id: apId(), kind: 'CUSTOM', title: '   ', hidden: false, pieceNames: [] },
+                        ],
+                    },
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        }),
+
         it('fails if user is not owner', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
