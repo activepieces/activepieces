@@ -38,6 +38,8 @@ import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
 
+import { RunTimelinePanel } from './run-timeline-panel';
+
 type RunActiveTab = 'input' | 'output' | 'timeline';
 
 export const FlowStepInputOutput = () => {
@@ -218,6 +220,7 @@ export const FlowStepInputOutput = () => {
         lastTestDate={run.created}
         viewMode="run"
       />
+      <RunTimelinePanel />
       <ScrollArea className="flex-1 p-3">
         <Tabs
           value={activeTab}
