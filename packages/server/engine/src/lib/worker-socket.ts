@@ -16,11 +16,24 @@ import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
 import { execute } from './operations'
 
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
+const DEFAULT_FLOW_TIMEOUT_SECONDS = 600
+const AI_CLIENT_TIMEOUT_BUFFER_SECONDS = 30
 
 let socket: Socket | undefined
 let workerClient: WorkerContract | undefined
+let aiWorkerClient: WorkerContract | undefined
 let notifyClient: WorkerNotifyContract | undefined
 let initialConnectWatchdog: NodeJS.Timeout | undefined
+
+// A single image/reasoning generation or an agent run routinely exceeds the default 60s RPC
+// client; today these run in-sandbox bounded only by FLOW_TIMEOUT. So AI delegation uses a
+// dedicated client whose timeout matches the flow budget (+buffer) — only an upper bound, the
+// worker's AbortController is the real limiter for agents (see plan decision #1).
+function aiClientTimeoutMs(): number {
+    const flowTimeoutSeconds = Number(process.env['AP_FLOW_TIMEOUT_SECONDS'] ?? DEFAULT_FLOW_TIMEOUT_SECONDS)
+    const resolved = Number.isFinite(flowTimeoutSeconds) ? flowTimeoutSeconds : DEFAULT_FLOW_TIMEOUT_SECONDS
+    return (resolved + AI_CLIENT_TIMEOUT_BUFFER_SECONDS) * 1000
+}
 
 function clearInitialConnectWatchdog(): void {
     if (initialConnectWatchdog) {
@@ -46,6 +59,7 @@ export const workerSocket = {
         }, INITIAL_CONNECT_TIMEOUT_MS)
 
         workerClient = createRpcClient<WorkerContract>(socket, 60_000)
+        aiWorkerClient = createRpcClient<WorkerContract>(socket, aiClientTimeoutMs())
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
 
         socket.on('connect', () => {
@@ -117,6 +131,11 @@ export const workerSocket = {
         return workerClient
     },
 
+    getAiWorkerClient: (): WorkerContract => {
+        if (!aiWorkerClient) throw new Error('AI worker client not initialized')
+        return aiWorkerClient
+    },
+
     sendError: (error: unknown): void => {
         notifyClient?.stderr({ message: inspect(error) })
     },
@@ -126,6 +145,7 @@ export const workerSocket = {
         socket?.disconnect()
         socket = undefined
         workerClient = undefined
+        aiWorkerClient = undefined
         notifyClient = undefined
     },
 }

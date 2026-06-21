@@ -58,3 +58,7 @@ export * from './lib/engine-tools'
 export type { PopulatedFlowSummary } from './lib/flows'
 
 export * from './lib/execution-contracts'
+
+export * from './lib/ai-transport'
+
+export * from './lib/ai-usage'

@@ -1,16 +1,24 @@
 import {
   AgentPieceTool,
+  AgentPieceToolDescriptor,
+  AgentYield,
   AppConnectionType,
   AppConnectionValue,
+  ContinueAgentRequest,
+  ExecuteAiRequest,
+  ExecuteAiResponse,
+  ExecuteToolResponse,
   ExecutionType,
   RespondResponse,
   ResumePayload,
+  RunAgentRequest,
   TriggerPayload,
   TriggerStrategy,
   DelayPauseMetadata,
   PauseMetadata,
   WebhookPauseMetadata,
 } from '@activepieces/core-piece-types';
+import { AIProviderName } from '@activepieces/core-utils';
 import type { SeekPage } from '@activepieces/core-utils';
 import type { FlowRunId, ProjectId } from '@activepieces/core-utils';
 import { LanguageModel, Tool } from 'ai'
@@ -230,6 +238,7 @@ type BaseActionContext<
   files: FilesService;
   output: OutputContext;
   agent: AgentContext;
+  ai: AiContext;
   run: RunContext;
   /** @deprecated Use waitpoint.buildResumeUrl() from createWaitpoint result instead */
   generateResumeUrl?: (params: {
@@ -262,11 +271,37 @@ export type ActionContext<
 
 export type ConstructToolParams = {
   tools: AgentPieceTool[]
-  model: LanguageModel,
+  provider: AIProviderName
+  model: string
 }
 
+/**
+ * Runs one agent piece-tool: the worker yields the tool call (the LLM ran on the worker), the engine
+ * executes the piece in-process via flowExecutor, resolving its inputs from the natural-language
+ * `instruction`. Returned to the worker via `continueRun`.
+ */
+export type AgentToolExecutor = (input: { instruction: string }) => Promise<ExecuteToolResponse>;
+
+export type AgentToolsResult = {
+  executors: Record<string, AgentToolExecutor>;
+  descriptors: AgentPieceToolDescriptor[];
+};
+
 export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
+  tools: (params: ConstructToolParams) => Promise<AgentToolsResult>;
+  run: (request: RunAgentRequest) => Promise<AgentYield>;
+  continueRun: (request: ContinueAgentRequest) => Promise<AgentYield>;
+}
+
+/**
+ * Single-shot AI execution. The engine resolves provider credentials server-side and runs the
+ * model on the worker, so credentials never enter the sandbox. The engine injects the trusted
+ * `engineToken`/`projectId`/`flowId`/`runId`/`stepName`; the piece supplies only the request shape.
+ */
+export type AiExecuteRequest = Omit<ExecuteAiRequest, 'engineToken' | 'projectId' | 'flowId' | 'runId' | 'stepName'>;
+
+export interface AiContext {
+  execute: (request: AiExecuteRequest) => Promise<ExecuteAiResponse>;
 }
 
 export interface FilesService {

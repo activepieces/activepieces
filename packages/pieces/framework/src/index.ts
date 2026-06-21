@@ -51,6 +51,9 @@ export {
   buildAuthHeaders,
   mcpToolNameUtils,
   normalizeToolOutputToExecuteResponse,
+  AgentPieceTool,
+  AgentYieldStatus,
+  ExecuteAiMode,
   // ai providers
   AIProviderModel,
   AIProviderWithoutSensitiveData,
@@ -107,4 +110,7 @@ export type {
   ToolCallBase,
   ExecuteToolResponse,
   PopulatedFlow,
+  ExecuteAiImage,
+  AgentToolCall,
+  RunAgentRequest,
 } from '@activepieces/core-piece-types';

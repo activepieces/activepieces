@@ -29,6 +29,17 @@ export type SandboxResult = EngineResponse<unknown> & {
     logs: string | undefined
 }
 
+/**
+ * The absolute deadline (`flowStart + FLOW_TIMEOUT`, epoch ms) of the in-flight operation, owned by
+ * the worker — it armed the sandbox-kill timer. Shared with the worker AI service so the agent loop
+ * can derive its remaining budget and arm an AbortController that fires cleanly just before the
+ * sandbox-kill backstop. `null` between operations. The engine cannot see elapsed flow time, which
+ * is why this lives on the worker, not "at the step".
+ */
+export type ExecutionDeadlineRef = {
+    epochMs: number | null
+}
+
 export type Sandbox = {
     id: string
     start: (options: SandboxStartOptions) => Promise<void>
