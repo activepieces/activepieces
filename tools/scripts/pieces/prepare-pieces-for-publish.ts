@@ -16,7 +16,7 @@ async function main(): Promise<void> {
     console.info(`[preparePieces] processing ${piecePaths.length} pieces${changedPaths ? ' (scoped to changed)' : ' (all)'}`)
 
     for (const piecePath of piecePaths) {
-        preparePieceDistForPublish(piecePath)
+        await preparePieceDistForPublish(piecePath)
     }
 
     console.info(`[preparePieces] done, prepared ${piecePaths.length} pieces`)
