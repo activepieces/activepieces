@@ -1,6 +1,8 @@
-import { isNil } from '@activepieces/shared'
+import { AppConnectionStatus, isNil, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { appConnectionService } from '../app-connection/app-connection-service/app-connection-service'
 import { databaseConnection } from '../database/database-connection'
+import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 import { ToolSearchEmbedder } from './embedder'
 import { applyNoMatchGate } from './no-match-gate'
 import { resolveEmbedder } from './resolve-embedder'
@@ -8,14 +10,25 @@ import { extractRetrievalDocDescription } from './retrieval-doc'
 
 const DEFAULT_LIMIT = 5
 
+// The closed audience domain. `audience` is nullable in the index (an unset audience reads as 'both').
+const ALL_AUDIENCES = ['human', 'ai', 'both']
+
+// Over-fetch this many ranked candidates under the SQL filters, then apply the app-layer filters
+// (enabled-piece) and the τ gate before slicing to the caller's top-k. Generous headroom so that
+// dropping disabled pieces still leaves enough to fill the requested limit. Per the retrieval contract.
+const CANDIDATE_POOL = 50
+
 export const toolSearchService = (log: FastifyBaseLogger) => ({
     /**
      * Semantic action search. Embed the query with the same model + L2-normalization used at index
-     * time, run the exact cosine `<=>` scan over embedded rows under tenant isolation, apply the τ
-     * no-match gate (Phase 2 — abstain with an empty list when the top match is below the model's τ),
-     * and return a top-k tiered envelope (lightweight rows — the agent fetches schemas on demand via
-     * `ap_get_piece_props`). Deliberately deferred: the audience / connection-status filters (Phase 4)
-     * and the keyword floor (Phase 5).
+     * time, run the exact cosine `<=>` scan over embedded rows under tenant isolation + the optional
+     * audience / pieceName SQL filters (Phase 4), over-fetch a candidate pool, drop pieces disabled for
+     * the caller, apply the τ no-match gate (Phase 2 — abstain with an empty list when the top match is
+     * below the model's τ), take the top-k, and fold each row's per-tenant `connected` flag. Returns a
+     * tiered envelope of lightweight rows — the agent fetches schemas on demand via `ap_get_piece_props`.
+     * The enabled-piece and connection sets are resolved from `platformId`/`projectId` unless injected
+     * (the injection seam keeps the filters unit-testable without a live tenant). Deferred: keyword
+     * floor (Phase 5).
      */
     async searchActions(query: string, opts: SearchActionsParams): Promise<ToolSearchResponse> {
         const embedder = opts.embedder ?? (isNil(opts.platformId)
@@ -27,20 +40,41 @@ export const toolSearchService = (log: FastifyBaseLogger) => ({
 
         const [queryVector] = await embedder.embed([query])
         const limit = opts.limit ?? DEFAULT_LIMIT
+
+        // Build the candidate query filter-by-filter so each clause is parameter-bound. Tenant
+        // isolation, audience exclusion and the optional pieceName scope are all expressible in SQL.
+        const params: unknown[] = [`[${queryVector.join(',')}]`, embedder.modelVersion]
+        const where = [
+            '"embedding" IS NOT NULL',
+            `"modelVersion" = $${params.length}`,
+            `"objectKind" = 'action'`,
+            `("platformId" IS NULL OR "platformId" = $${params.push(opts.platformId ?? null)})`,
+        ]
+        if (!isNil(opts.pieceName)) {
+            where.push(`"pieceName" = $${params.push(opts.pieceName)}`)
+        }
+        // Audience exclusion (default all). Expressed as the complement — exclude the audiences the
+        // caller did NOT ask for — over COALESCE(audience,'both'), never an `IN (...)` inclusion list:
+        // a plain `audience IN (...)` would silently drop NULL-audience rows (SQL `NULL IN` is never
+        // true), whereas COALESCE maps an unset audience to 'both' so it survives unless 'both' itself
+        // was excluded. Requesting every audience (or omitting the param) yields no clause.
+        if (!isNil(opts.audiences)) {
+            const excluded = ALL_AUDIENCES.filter((audience) => !opts.audiences!.includes(audience))
+            if (excluded.length > 0) {
+                where.push(`COALESCE("audience", 'both') <> ALL($${params.push(excluded)}::text[])`)
+            }
+        }
         const rows = await databaseConnection().query(
             `SELECT "pieceName", "objectName", "displayName", "retrievalDoc", "requiresConnection",
                     1 - ("embedding" <=> $1::vector) AS cosine
              FROM "tool_search_index"
-             WHERE "embedding" IS NOT NULL
-               AND "modelVersion" = $2
-               AND "objectKind" = 'action'
-               AND ("platformId" IS NULL OR "platformId" = $3)
+             WHERE ${where.join(' AND ')}
              ORDER BY "embedding" <=> $1::vector
-             LIMIT $4`,
-            [`[${queryVector.join(',')}]`, embedder.modelVersion, opts.platformId ?? null, limit],
+             LIMIT $${params.push(Math.max(limit, CANDIDATE_POOL))}`,
+            params,
         )
 
-        const results = rows.map((row: SearchRow): ToolSearchActionResult => ({
+        let candidates: ToolSearchActionResult[] = rows.map((row: SearchRow): ToolSearchActionResult => ({
             pieceName: row.pieceName,
             actionName: row.objectName,
             displayName: row.displayName,
@@ -48,14 +82,108 @@ export const toolSearchService = (log: FastifyBaseLogger) => ({
             requiresConnection: row.requiresConnection,
             cosine: Number(row.cosine),
         }))
-        return { results: applyNoMatchGate(results, embedder.tau), mode: 'semantic' }
+
+        // Enabled-piece filter (per-tenant): drop actions whose piece is disabled for this caller.
+        // The platform/project allow/block lists aren't in the index, so they're resolved out-of-band
+        // (the canonical pieceMetadataService.list path) and intersected here. Undefined = no filter
+        // (no tenant context, or resolution failed → fail open rather than hide the whole catalog).
+        const enabledPieceNames = opts.enabledPieceNames ?? await resolveEnabledPieceNames(opts, log)
+        if (!isNil(enabledPieceNames)) {
+            candidates = candidates.filter((row) => enabledPieceNames.has(row.pieceName))
+        }
+
+        // τ no-match gate on the filtered candidates (top-1 decides abstention), then take the top-k.
+        const results = applyNoMatchGate(candidates, embedder.tau).slice(0, limit)
+
+        // Fold per-tenant connection status onto each surviving row so the agent knows which actions
+        // are ready to run vs. need a connection set up first. Left undefined when no connection
+        // context is available (a platform-scoped, project-less call) or resolution failed.
+        const connectedPieceNames = opts.connectedPieceNames ?? await resolveConnectedPieceNames(opts, log)
+        if (!isNil(connectedPieceNames)) {
+            for (const row of results) {
+                row.connected = connectedPieceNames.has(row.pieceName)
+            }
+        }
+        return { results, mode: 'semantic' }
     },
 })
+
+const CONNECTION_LOOKUP_CAP = 1000
+
+/**
+ * The set of piece names enabled for this caller, via the canonical piece-metadata list (which applies
+ * the platform + project allow/block filtering — the single source of truth used everywhere else).
+ * Returns `undefined` (= no filter) when there is no platform context or the lookup fails, so a
+ * transient error fails open (the tenant-isolation SQL still applies) rather than hiding the catalog.
+ */
+async function resolveEnabledPieceNames(opts: SearchActionsParams, log: FastifyBaseLogger): Promise<ReadonlySet<string> | undefined> {
+    const { platformId, projectId } = opts
+    if (isNil(platformId)) {
+        return undefined
+    }
+    const { data: pieces, error } = await tryCatch(() => pieceMetadataService(log).list({
+        platformId,
+        projectId,
+        includeHidden: false,
+    }))
+    if (isNil(pieces)) {
+        log.warn({ error, platformId }, '[toolSearchService] Enabled-piece resolution failed — serving without the enabled filter.')
+        return undefined
+    }
+    return new Set(pieces.map((piece) => piece.name))
+}
+
+/**
+ * The set of piece names the calling project has an active connection for, folded onto each row's
+ * `connected` flag. Needs a project scope (connections are project-scoped); `undefined` (= flag left
+ * unset) when project-less or on lookup failure. One bounded list call — a project realistically holds
+ * far fewer than the cap, so distinct piece coverage is complete.
+ */
+async function resolveConnectedPieceNames(opts: SearchActionsParams, log: FastifyBaseLogger): Promise<ReadonlySet<string> | undefined> {
+    const { platformId, projectId } = opts
+    if (isNil(projectId) || isNil(platformId)) {
+        return undefined
+    }
+    const { data: connections, error } = await tryCatch(() => appConnectionService(log).list({
+        projectId,
+        platformId,
+        status: [AppConnectionStatus.ACTIVE],
+        cursorRequest: null,
+        scope: undefined,
+        displayName: undefined,
+        pieceName: undefined,
+        externalIds: undefined,
+        limit: CONNECTION_LOOKUP_CAP,
+    }))
+    if (isNil(connections)) {
+        log.warn({ error, projectId }, '[toolSearchService] Connection-status resolution failed — connected flag left unset.')
+        return undefined
+    }
+    return new Set(connections.data.map((connection) => connection.pieceName))
+}
 
 type SearchActionsParams = {
     platformId?: string
     projectId?: string
     limit?: number
+    /** Restrict results to a single piece's actions (exact, fully-qualified piece name). */
+    pieceName?: string
+    /**
+     * Audiences the caller wants to see. Omit (or pass all of `human`/`ai`/`both`) for no filtering.
+     * Passing a subset excludes the others while keeping NULL-audience rows (treated as 'both').
+     */
+    audiences?: string[]
+    /**
+     * Fully-qualified names of the pieces enabled for this caller (platform + project allow/block
+     * lists, resolved via the canonical piece-metadata list). Results are intersected with this set.
+     * Omit to skip the filter (e.g. when no tenant context is available).
+     */
+    enabledPieceNames?: ReadonlySet<string>
+    /**
+     * Fully-qualified names of pieces this caller has an active connection for. Each returned row's
+     * `connected` flag is set from this set. Omit when there is no connection context (project-less).
+     */
+    connectedPieceNames?: ReadonlySet<string>
     embedder?: ToolSearchEmbedder | null
 }
 
@@ -75,6 +203,8 @@ export type ToolSearchActionResult = {
     oneLineDescription: string | undefined
     requiresConnection: boolean
     cosine: number
+    /** Whether the calling tenant has an active connection for this piece. Undefined = not resolved. */
+    connected?: boolean
 }
 
 export type ToolSearchResponse = {

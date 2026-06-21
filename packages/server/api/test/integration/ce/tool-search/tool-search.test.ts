@@ -1,8 +1,9 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
-import { PackageType, PieceType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
+import { apId, PackageType, PieceType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
+import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { system } from '../../../../src/app/helper/system/system'
 import { l2normalize, ToolSearchEmbedder } from '../../../../src/app/tool-search/embedder'
 import { toolSearchReindexService } from '../../../../src/app/tool-search/tool-search-reindex.service'
@@ -33,8 +34,8 @@ const fakeEmbedder: ToolSearchEmbedder = {
     embed: (texts) => Promise.resolve(texts.map(bagOfWords)),
 }
 
-function action(over: Pick<ActionBase, 'name' | 'displayName' | 'description'> & { requireAuth?: boolean }): ActionBase {
-    return { name: over.name, displayName: over.displayName, description: over.description, props: {}, requireAuth: over.requireAuth ?? true }
+function action(over: Pick<ActionBase, 'name' | 'displayName' | 'description'> & { requireAuth?: boolean, audience?: ActionBase['audience'] }): ActionBase {
+    return { name: over.name, displayName: over.displayName, description: over.description, props: {}, requireAuth: over.requireAuth ?? true, audience: over.audience }
 }
 
 function trigger(over: Pick<TriggerBase, 'name' | 'displayName' | 'description'>): TriggerBase {
@@ -390,5 +391,218 @@ describe('Tool Search Engine (Phase 3 — incremental catalog sync)', () => {
         expect(second.objectsEmbedded).toBe(0)
         expect(second.objectsDeleted).toBe(0)
         expect(await indexRowCount()).toBe(4)
+    })
+})
+
+// One piece whose four actions span every audience value (incl. an unset/NULL one) so the
+// COALESCE-based exclusion can be exercised without dropping NULL-audience rows.
+async function seedAudiences(): Promise<void> {
+    await db.save('piece_metadata', createMockPieceMetadata({
+        name: '@activepieces/piece-notify',
+        displayName: 'Notify',
+        version: '1.0.0',
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+        actions: {
+            send_human: action({ name: 'send_human', displayName: 'Send (human)', description: 'Send a message to a channel', audience: 'human' }),
+            send_ai: action({ name: 'send_ai', displayName: 'Send (ai)', description: 'Send a message to a channel', audience: 'ai' }),
+            send_both: action({ name: 'send_both', displayName: 'Send (both)', description: 'Send a message to a channel', audience: 'both' }),
+            send_unset: action({ name: 'send_unset', displayName: 'Send (unset)', description: 'Send a message to a channel' }),
+        },
+        triggers: {},
+    }))
+}
+
+function actionNames(results: { actionName: string }[]): string[] {
+    return results.map((r) => r.actionName).sort()
+}
+
+describe('Tool Search Engine (Phase 4 — multi-tenancy & filtering)', () => {
+    it('audiences [ai, both] excludes human rows without dropping NULL-audience rows', async () => {
+        await seedAudiences()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 10,
+            audiences: ['ai', 'both'],
+        })
+
+        // human excluded; ai + both kept; NULL-audience (COALESCE → 'both') kept.
+        expect(actionNames(results)).toEqual(['send_ai', 'send_both', 'send_unset'])
+    })
+
+    it('omitting audiences returns every audience (no filter)', async () => {
+        await seedAudiences()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 10,
+        })
+
+        expect(actionNames(results)).toEqual(['send_ai', 'send_both', 'send_human', 'send_unset'])
+    })
+
+    it('a tenant query returns base-catalog + its own custom pieces, never another tenant’s', async () => {
+        await seedCatalog()
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@acme/piece-internal',
+            displayName: 'Acme Internal',
+            version: '1.0.0',
+            platformId: 'platform-a',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            actions: { send_alert: action({ name: 'send_alert', displayName: 'Send Alert', description: 'Send an internal alert message to a channel' }) },
+            triggers: {},
+        }))
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@globex/piece-secret',
+            displayName: 'Globex Secret',
+            version: '1.0.0',
+            platformId: 'platform-b',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            actions: { send_secret: action({ name: 'send_secret', displayName: 'Send Secret', description: 'Send a secret message to a channel' }) },
+            triggers: {},
+        }))
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 20,
+            platformId: 'platform-a',
+        })
+
+        const pieces = results.map((r) => r.pieceName)
+        expect(pieces).toContain('@activepieces/piece-slack') // shared base catalog
+        expect(pieces).toContain('@acme/piece-internal') // own custom piece
+        expect(pieces).not.toContain('@globex/piece-secret') // another tenant's — never visible
+    })
+
+    it('disabled pieces do not surface — only enabledPieceNames are returned', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        // Gmail is disabled for this tenant (absent from the enabled set); Slack + Calendar are on.
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 10,
+            enabledPieceNames: new Set(['@activepieces/piece-slack', '@activepieces/piece-google-calendar']),
+        })
+
+        const pieces = results.map((r) => r.pieceName)
+        expect(pieces).toContain('@activepieces/piece-slack')
+        expect(pieces).not.toContain('@activepieces/piece-gmail')
+    })
+
+    it('applies tenant + audience + enabled-piece + connected filters together', async () => {
+        await seedAudiences() // @activepieces/piece-notify: send_human/ai/both/unset
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-other',
+            displayName: 'Other',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_other: action({ name: 'send_other', displayName: 'Send Other', description: 'Send a message to a channel', audience: 'ai' }) },
+            triggers: {},
+        }))
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 20,
+            audiences: ['ai', 'both'], // excludes send_human
+            enabledPieceNames: new Set(['@activepieces/piece-notify']), // excludes @piece-other
+            connectedPieceNames: new Set(['@activepieces/piece-notify']),
+        })
+
+        // Only Notify's non-human actions survive both filters, each flagged connected.
+        expect(actionNames(results)).toEqual(['send_ai', 'send_both', 'send_unset'])
+        expect(results.every((r) => r.pieceName === '@activepieces/piece-notify' && r.connected === true)).toBe(true)
+    })
+
+    it('each row carries an accurate connected flag for the calling tenant', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        // The tenant has a Slack connection but no Gmail/Calendar connection.
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 10,
+            connectedPieceNames: new Set(['@activepieces/piece-slack']),
+        })
+
+        const slack = results.find((r) => r.pieceName === '@activepieces/piece-slack')
+        const gmail = results.find((r) => r.pieceName === '@activepieces/piece-gmail')
+        expect(slack?.connected).toBe(true)
+        expect(gmail?.connected).toBe(false)
+    })
+
+    it('resolves the connected flag from real app_connection rows (no injected set)', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        // A real ACTIVE Slack connection for this project; ownerId NULL to sidestep the user FK.
+        const projectId = apId()
+        await db.save('app_connection', {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            displayName: 'My Slack',
+            externalId: apId(),
+            type: 'SECRET_TEXT',
+            status: 'ACTIVE',
+            platformId: 'platform-conn',
+            pieceName: '@activepieces/piece-slack',
+            ownerId: null,
+            projectIds: [projectId],
+            scope: 'PROJECT',
+            // list() decrypts every row, so the stored value must be a real encrypted object.
+            value: await encryptUtils.encryptObject({ type: 'SECRET_TEXT', secret_text: 'x' }),
+            metadata: {},
+            pieceVersion: '1.0.0',
+            preSelectForNewProjects: false,
+        })
+
+        // No injected connectedPieceNames — the service resolves from app_connection itself.
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 10,
+            platformId: 'platform-conn',
+            projectId,
+        })
+
+        const slack = results.find((r) => r.pieceName === '@activepieces/piece-slack')
+        const gmail = results.find((r) => r.pieceName === '@activepieces/piece-gmail')
+        expect(slack?.connected).toBe(true)
+        expect(gmail?.connected).toBe(false)
+    })
+
+    it('the connected flag is omitted when no tenant connection context is available', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 10,
+        })
+
+        expect(results.every((r) => r.connected === undefined)).toBe(true)
+    })
+
+    it('pieceName scope restricts results to that piece’s actions', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        // A broad query that otherwise matches several pieces, scoped to Slack only.
+        const { results } = await toolSearchService(log).searchActions('send a message', {
+            embedder: fakeEmbedder,
+            limit: 10,
+            pieceName: '@activepieces/piece-slack',
+        })
+
+        expect(results.length).toBeGreaterThan(0)
+        expect(results.every((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
     })
 })
