@@ -640,3 +640,98 @@ describe('Tool Search Engine (Phase 5 — keyword floor / degradation)', () => {
         expect(results.some((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
     })
 })
+
+// Two pieces each carrying both an action and a trigger, so the trigger-side query path can be
+// exercised for ranking, action/trigger isolation, and pieceName scope on the same vocabulary.
+async function seedTriggerCatalog(): Promise<void> {
+    await db.save('piece_metadata', createMockPieceMetadata({
+        name: '@activepieces/piece-slack',
+        displayName: 'Slack',
+        version: '1.0.0',
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+        actions: { send_channel_message: action({ name: 'send_channel_message', displayName: 'Send Channel Message', description: 'Send a message to a Slack channel' }) },
+        triggers: { new_message: trigger({ name: 'new_message', displayName: 'New Message', description: 'Triggers when a new message is posted to a Slack channel' }) },
+    }))
+    await db.save('piece_metadata', createMockPieceMetadata({
+        name: '@activepieces/piece-google-calendar',
+        displayName: 'Google Calendar',
+        version: '1.0.0',
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+        actions: { create_event: action({ name: 'create_event', displayName: 'Create Event', description: 'Create a new event in a Google Calendar' }) },
+        triggers: { new_event: trigger({ name: 'new_event', displayName: 'New Event', description: 'Triggers when a new event is created in a Google Calendar' }) },
+    }))
+}
+
+function triggerNames(results: { triggerName: string }[]): string[] {
+    return results.map((r) => r.triggerName).sort()
+}
+
+describe('Tool Search Engine (Phase 6 — ap_search_triggers)', () => {
+    it('searchTriggers ranks the semantically closest trigger first and returns the tiered envelope', async () => {
+        await seedTriggerCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results, mode } = await toolSearchService(log).searchTriggers('a new message posted to a channel', { embedder: fakeEmbedder, limit: 5 })
+
+        expect(mode).toBe('semantic')
+        expect(results[0]).toMatchObject({
+            pieceName: '@activepieces/piece-slack',
+            triggerName: 'new_message',
+            displayName: 'New Message',
+            oneLineDescription: 'Triggers when a new message is posted to a Slack channel',
+            requiresConnection: true,
+        })
+        expect(results[0].cosine).toBeGreaterThan(results[1].cosine)
+    })
+
+    it('searchTriggers returns only triggers — actions never cross-contaminate', async () => {
+        await seedTriggerCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results } = await toolSearchService(log).searchTriggers('a new calendar event is created', { embedder: fakeEmbedder, limit: 10 })
+
+        // Both triggers returned; no action (create_event / send_channel_message) leaks into the results.
+        expect(triggerNames(results)).toEqual(['new_event', 'new_message'])
+        expect(results.every((r) => r.triggerName !== 'create_event' && r.triggerName !== 'send_channel_message')).toBe(true)
+    })
+
+    it('searchTriggers abstains with an empty semantic result when the best cosine is below τ', async () => {
+        await seedTriggerCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const response = await toolSearchService(log).searchTriggers('a new message posted to a channel', { embedder: { ...fakeEmbedder, tau: 0.99 }, limit: 5 })
+
+        expect(response).toEqual({ results: [], mode: 'semantic' })
+    })
+
+    it('searchTriggers degrades to the keyword floor when no embedder/key is available', async () => {
+        await seedTriggerCatalog()
+        // No reindex, no embedder, no platformId → embedder resolves to null → keyword floor.
+
+        const { results, mode } = await toolSearchService(log).searchTriggers('new message', { limit: 5 })
+
+        expect(mode).toBe('keyword')
+        const slack = results.find((r) => r.pieceName === '@activepieces/piece-slack')
+        expect(slack).toMatchObject({
+            triggerName: 'new_message',
+            displayName: 'New Message',
+            oneLineDescription: 'Triggers when a new message is posted to a Slack channel',
+            requiresConnection: true,
+        })
+        // Keyword rows carry no cosine, and actions never cross into trigger results.
+        expect(slack?.cosine).toBeUndefined()
+        expect(results.every((r) => r.triggerName !== 'send_channel_message' && r.triggerName !== 'create_event')).toBe(true)
+    })
+
+    it('searchTriggers pieceName scope restricts results to that piece’s triggers', async () => {
+        await seedTriggerCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results } = await toolSearchService(log).searchTriggers('a new message or event', { embedder: fakeEmbedder, limit: 10, pieceName: '@activepieces/piece-slack' })
+
+        expect(results.length).toBeGreaterThan(0)
+        expect(results.every((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
+    })
+})
