@@ -8,7 +8,7 @@ import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { platformService } from '../platform/platform.service'
 import { isToolSearchEnabled } from './tool-search-flag'
-import { ReindexScope, toolSearchReindexService } from './tool-search-reindex.service'
+import { ReindexScope, toolSearchReindexService, toolSearchTableExists } from './tool-search-reindex.service'
 
 // One global lock TTL; RedLock auto-extends it while the reconcile runs, so this only needs to be
 // comfortably larger than a single embed round-trip — a full re-embed (model swap) keeps extending.
@@ -87,6 +87,10 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
      */
     async backfillIfEmpty(): Promise<void> {
         if (!isToolSearchEnabled()) {
+            return
+        }
+        if (!await toolSearchTableExists()) {
+            log.info('[toolSearchReindexJob#backfillIfEmpty] tool_search_index is absent (pgvector not installed) — skipping backfill; keyword floor serves.')
             return
         }
         const existing = await databaseConnection().query('SELECT 1 FROM "tool_search_index" LIMIT 1')

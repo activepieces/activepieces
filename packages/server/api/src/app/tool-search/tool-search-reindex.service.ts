@@ -37,6 +37,13 @@ export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
             log.info('[toolSearchReindexService#reindex] No embedder resolved — skipping reindex (keyword floor serves).')
             return { status: 'no-embedder', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0 }
         }
+        // The migration no-ops when pgvector is absent, so the table can be missing even with the flag
+        // on. Degrade gracefully (keyword floor) instead of throwing "relation does not exist" on every
+        // catalog-change reconcile.
+        if (!await toolSearchTableExists()) {
+            log.warn('[toolSearchReindexService#reindex] tool_search_index is absent (pgvector not installed) — skipping reindex; keyword floor serves.')
+            return { status: 'no-table', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0 }
+        }
 
         const currentRelease = apVersionUtil.getCurrentRelease()
         const pieces = await fetchLatestCompatiblePiecesFromDB(currentRelease)
@@ -115,6 +122,16 @@ export function rawWriteRowCount(result: unknown): number {
         return result[1]
     }
     return Array.isArray(result) ? result.length : 0
+}
+
+/**
+ * Whether the tool_search_index table exists. The migration no-ops when the pgvector extension is
+ * absent, so on such a deployment the table is never created — reindex and the cold-start backfill
+ * must degrade gracefully (keyword floor) rather than throw "relation does not exist".
+ */
+export async function toolSearchTableExists(): Promise<boolean> {
+    const result = await databaseConnection().query(`SELECT to_regclass('tool_search_index') AS reg`)
+    return !isNil(result?.[0]?.reg)
 }
 
 /**
@@ -270,7 +287,7 @@ type ReindexParams = {
 }
 
 type ReindexResult = {
-    status: 'done' | 'no-embedder'
+    status: 'done' | 'no-embedder' | 'no-table'
     /** desired-state object count (latest version per piece, exploded into actions + triggers). */
     objectsIndexed: number
     /** rows that were (re)embedded this run — 0 when nothing changed. */
