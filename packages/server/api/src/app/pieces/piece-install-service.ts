@@ -19,6 +19,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { toolSearchReindexJob } from '../tool-search/tool-search-reindex.job'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
 
@@ -50,6 +52,9 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 pieceType: PieceType.CUSTOM,
                 archiveId,
             })
+            // Reconcile tool-search for this tenant only (async, never blocking the install) so the new
+            // custom piece's actions/triggers become searchable. Scoped → the shared catalog is untouched.
+            rejectedPromiseHandler(toolSearchReindexJob(log).enqueue({ type: 'platform', platformId }), log)
             return savedPiece
         }
         catch (error) {

@@ -1,5 +1,5 @@
 import { apVersionUtil } from '@activepieces/server-utils'
-import { apId, chunk, isNil } from '@activepieces/shared'
+import { apId, chunk, isNil, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
 import { PieceMetadataSchema } from '../pieces/metadata/piece-metadata-entity'
@@ -12,52 +12,130 @@ const EMBED_BATCH_SIZE = 256
 
 export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
     /**
-     * Phase 1: a manually-invokable FULL rebuild of `tool_search_index` from the live catalog.
-     * Enumerate the latest version of every piece, explode its actions+triggers JSON into one row
-     * each, embed the retrieval docs, and upsert by the object's unique key. The hash-gated
-     * incremental diff + delete-of-removed and the async job/event hook are deferred to Phase 3;
-     * here every desired object is (re)embedded and written.
+     * Reconcile `tool_search_index` against the live catalog — an idempotent, hash-gated incremental
+     * diff (Phase 3). Re-derive the desired state from `piece_metadata` (latest version per piece,
+     * exploded into one row per action/trigger), then: upsert by unique key (new rows land with
+     * embedding=NULL; a row's embedding survives a pure version bump but is nulled when its retrieval
+     * text changes), delete rows whose key left the catalog, and embed only the rows still missing an
+     * embedding. A re-run with an unchanged catalog is a no-op (0 embedded, 0 deleted).
+     *
+     * `scope` bounds the reconcile: `all` (default — the global sync hook) reconciles the whole index;
+     * `platform` reconciles only one tenant's custom pieces (the custom-piece install hook) and never
+     * touches the shared base catalog. A `model_version` change rebuilds under the new version while
+     * old-version rows keep serving reads until cutover.
      *
      * The embedder is injectable so tests can drive a deterministic fake with no key/network. In
      * production `platformId` names the platform whose OpenAI key funds the embedding; when neither
      * an embedder nor a resolvable key is available the reindex is a no-op (keyword floor serves).
      */
     async reindex(params: ReindexParams): Promise<ReindexResult> {
+        const scope: ReindexScope = params.scope ?? { type: 'all' }
         const embedder = params.embedder ?? (isNil(params.platformId)
             ? null
             : await resolveEmbedder({ platformId: params.platformId, log }))
         if (isNil(embedder)) {
             log.info('[toolSearchReindexService#reindex] No embedder resolved — skipping reindex (keyword floor serves).')
-            return { status: 'no-embedder', objectsIndexed: 0 }
+            return { status: 'no-embedder', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0 }
         }
 
         const currentRelease = apVersionUtil.getCurrentRelease()
         const pieces = await fetchLatestCompatiblePiecesFromDB(currentRelease)
-        const records = pieces.flatMap((piece) => explodePiece(piece, embedder.modelVersion))
-        if (records.length === 0) {
-            return { status: 'done', objectsIndexed: 0 }
+        const desired = pieces
+            .flatMap((piece) => explodePiece(piece, embedder.modelVersion))
+            .filter((record) => scopeMatches(record, scope))
+
+        // Upsert the desired rows by unique key. A new row lands with embedding=NULL; an existing row
+        // keeps its embedding unless the retrieval text (→ hash) changed, in which case it is nulled to
+        // force a re-embed. Rows whose content is unchanged are not touched at all (idempotent).
+        for (const record of desired) {
+            await upsertRow(record, embedder.modelVersion)
         }
 
-        const embeddings = await embedInBatches(embedder, records.map((record) => record.retrievalDoc))
-        for (let i = 0; i < records.length; i++) {
-            await upsertRow(records[i], embeddings[i], embedder.modelVersion)
-        }
+        // Remove rows whose object key is no longer in the desired catalog (deleted pieces, removed
+        // actions, superseded old versions). Done before embedding so a row that is both pending and
+        // gone is never wastefully embedded.
+        const objectsDeleted = await deleteRemovedRows(desired, embedder.modelVersion, scope)
 
-        log.info({ objectsIndexed: records.length }, '[toolSearchReindexService#reindex] Reindex complete.')
-        return { status: 'done', objectsIndexed: records.length }
+        // Embed only the rows still missing an embedding (the new + changed ones, plus any that failed
+        // a previous run). Embedding is batched and never blocks the upsert diff above.
+        const objectsEmbedded = await embedPendingRows(embedder, scope, log)
+
+        log.info({ scope: scope.type, objectsIndexed: desired.length, objectsEmbedded, objectsDeleted }, '[toolSearchReindexService#reindex] Reindex complete.')
+        return { status: 'done', objectsIndexed: desired.length, objectsEmbedded, objectsDeleted }
     },
 })
 
-async function embedInBatches(embedder: ToolSearchEmbedder, docs: string[]): Promise<number[][]> {
-    const embeddings: number[][] = []
-    for (const batch of chunk(docs, EMBED_BATCH_SIZE)) {
-        const batchEmbeddings = await embedder.embed(batch)
-        if (batchEmbeddings.length !== batch.length) {
-            throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${batchEmbeddings.length}`)
+/** A platform-scoped reconcile only owns that tenant's custom pieces; `all` owns the whole index. */
+function scopeMatches(record: DesiredRecord, scope: ReindexScope): boolean {
+    return scope.type === 'all' || record.platformId === scope.platformId
+}
+
+/**
+ * Delete every row at the current model_version whose (pieceName, objectKind, objectName) key is not
+ * in the desired set — i.e. deleted pieces, removed actions/triggers, and versions superseded by a
+ * newer one. Rows at OTHER model_versions are left untouched (a model swap keeps them serving reads
+ * until cutover). The desired keys are passed as parallel arrays so the statement is parameter-bounded
+ * regardless of catalog size. Returns the number of rows deleted.
+ */
+async function deleteRemovedRows(desired: DesiredRecord[], modelVersion: string, scope: ReindexScope): Promise<number> {
+    const params: unknown[] = [
+        modelVersion,
+        desired.map((record) => record.pieceName),
+        desired.map((record) => record.objectKind),
+        desired.map((record) => record.objectName),
+    ]
+    // A platform-scoped reconcile must only ever delete that tenant's rows — without this clause a
+    // scoped run would wipe the shared catalog (none of its keys are in the scoped desired set).
+    const scopeClause = scope.type === 'platform' ? ` AND "platformId" = $${params.push(scope.platformId)}` : ''
+    // RETURNING "id" so the deleted-row count is read uniformly from the result array (the raw
+    // affected-count shape differs between the pg driver and PGlite).
+    const deleted = await databaseConnection().query(
+        `DELETE FROM "tool_search_index"
+         WHERE "modelVersion" = $1${scopeClause}
+           AND ("pieceName", "objectKind", "objectName") NOT IN (
+               SELECT * FROM unnest($2::text[], $3::text[], $4::text[])
+           )
+         RETURNING "id"`,
+        params,
+    )
+    return deleted.length
+}
+
+/**
+ * Embed every row that still lacks an embedding at the current model_version (new rows, rows whose
+ * text changed and were nulled by the upsert, and rows that failed a prior reindex). Batched; the
+ * embedder owns retry/backoff. Returns the number of objects embedded.
+ */
+async function embedPendingRows(embedder: ToolSearchEmbedder, scope: ReindexScope, log: FastifyBaseLogger): Promise<number> {
+    const params: unknown[] = [embedder.modelVersion]
+    const scopeClause = scope.type === 'platform' ? ` AND "platformId" = $${params.push(scope.platformId)}` : ''
+    const pending: PendingRow[] = await databaseConnection().query(
+        `SELECT "id", "retrievalDoc" FROM "tool_search_index"
+         WHERE "embedding" IS NULL AND "modelVersion" = $1${scopeClause}`,
+        params,
+    )
+    let embedded = 0
+    for (const batch of chunk(pending, EMBED_BATCH_SIZE)) {
+        // A batch that fails after the embedder's own retries leaves its rows NULL and is skipped, not
+        // fatal — the next reindex re-selects them (still NULL) and retries. One bad batch never aborts
+        // the whole reconcile or rolls back the rows that did embed.
+        const { data: vectors, error } = await tryCatch(() => embedder.embed(batch.map((row) => row.retrievalDoc)))
+        if (isNil(vectors)) {
+            log.warn({ error, batchSize: batch.length, modelVersion: embedder.modelVersion }, '[toolSearchReindexService#embed] Embedding batch failed — rows kept NULL, retried next reindex.')
+            continue
         }
-        embeddings.push(...batchEmbeddings)
+        if (vectors.length !== batch.length) {
+            throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${vectors.length}`)
+        }
+        for (let i = 0; i < batch.length; i++) {
+            await databaseConnection().query(
+                'UPDATE "tool_search_index" SET "embedding" = $1::vector, "updated" = now() WHERE "id" = $2',
+                [`[${vectors[i].join(',')}]`, batch[i].id],
+            )
+        }
+        embedded += batch.length
     }
-    return embeddings
+    return embedded
 }
 
 function explodePiece(piece: PieceMetadataSchema, modelVersion: string): DesiredRecord[] {
@@ -109,20 +187,22 @@ function buildRecord(params: BuildRecordParams): DesiredRecord {
     }
 }
 
-async function upsertRow(record: DesiredRecord, embedding: number[], modelVersion: string): Promise<void> {
-    // Match the partial unique index for this row's tenancy: shared catalog rows (platformId IS NULL)
-    // arbitrate on uq_tsi_object_shared, tenant rows on uq_tsi_object_tenant. The ON CONFLICT predicate
-    // must equal the index predicate for inference to pick it. (Replaces a single NULLS NOT DISTINCT
-    // arbiter, which is PG15+ syntax — AP pins Postgres 14.)
+async function upsertRow(record: DesiredRecord, modelVersion: string): Promise<void> {
+    // A new row is inserted WITHOUT an embedding (embedPendingRows fills it); an existing row's
+    // embedding survives a pure version bump (hash unchanged) but is nulled the moment its retrieval
+    // text changes, forcing a re-embed. The DO UPDATE is skipped entirely when nothing changed so a
+    // re-run is a true no-op. Match the partial unique index for this row's tenancy: shared catalog
+    // rows (platformId IS NULL) arbitrate on uq_tsi_object_shared, tenant rows on uq_tsi_object_tenant
+    // — the ON CONFLICT predicate must equal the index predicate (PG14 has no NULLS NOT DISTINCT).
     const conflictTarget = isNil(record.platformId)
         ? '("pieceName", "objectKind", "objectName", "modelVersion") WHERE "platformId" IS NULL'
         : '("pieceName", "objectKind", "objectName", "platformId", "modelVersion") WHERE "platformId" IS NOT NULL'
     await databaseConnection().query(
-        `INSERT INTO "tool_search_index" (
+        `INSERT INTO "tool_search_index" AS tsi (
             "id", "objectKind", "pieceName", "pieceVersion", "objectName", "displayName",
             "retrievalDoc", "audience", "requiresConnection", "categories", "modelVersion",
-            "embeddingInputHash", "embedding", "platformId"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::varchar[], $11, $12, $13::vector, $14)
+            "embeddingInputHash", "platformId"
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::varchar[], $11, $12, $13)
         ON CONFLICT ${conflictTarget}
         DO UPDATE SET
             "pieceVersion" = EXCLUDED."pieceVersion",
@@ -132,8 +212,16 @@ async function upsertRow(record: DesiredRecord, embedding: number[], modelVersio
             "requiresConnection" = EXCLUDED."requiresConnection",
             "categories" = EXCLUDED."categories",
             "embeddingInputHash" = EXCLUDED."embeddingInputHash",
-            "embedding" = EXCLUDED."embedding",
-            "updated" = now()`,
+            "embedding" = CASE WHEN tsi."embeddingInputHash" IS DISTINCT FROM EXCLUDED."embeddingInputHash"
+                THEN NULL ELSE tsi."embedding" END,
+            "updated" = now()
+        WHERE tsi."pieceVersion" IS DISTINCT FROM EXCLUDED."pieceVersion"
+           OR tsi."displayName" IS DISTINCT FROM EXCLUDED."displayName"
+           OR tsi."retrievalDoc" IS DISTINCT FROM EXCLUDED."retrievalDoc"
+           OR tsi."audience" IS DISTINCT FROM EXCLUDED."audience"
+           OR tsi."requiresConnection" IS DISTINCT FROM EXCLUDED."requiresConnection"
+           OR tsi."categories" IS DISTINCT FROM EXCLUDED."categories"
+           OR tsi."embeddingInputHash" IS DISTINCT FROM EXCLUDED."embeddingInputHash"`,
         [
             apId(),
             record.objectKind,
@@ -147,20 +235,37 @@ async function upsertRow(record: DesiredRecord, embedding: number[], modelVersio
             record.categories,
             modelVersion,
             record.embeddingInputHash,
-            `[${embedding.join(',')}]`,
             record.platformId,
         ],
     )
 }
 
+/** Bounds the reconcile: the whole index, or only one tenant's custom pieces. */
+export type ReindexScope =
+    | { type: 'all' }
+    | { type: 'platform', platformId: string }
+
 type ReindexParams = {
+    /** Defaults to `{ type: 'all' }`. A `platform` scope never touches the shared base catalog. */
+    scope?: ReindexScope
+    /** Platform whose configured OpenAI key funds embedding when `embedder` is not injected. */
     platformId?: string
     embedder?: ToolSearchEmbedder | null
 }
 
 type ReindexResult = {
     status: 'done' | 'no-embedder'
+    /** desired-state object count (latest version per piece, exploded into actions + triggers). */
     objectsIndexed: number
+    /** rows that were (re)embedded this run — 0 when nothing changed. */
+    objectsEmbedded: number
+    /** rows removed because their key is no longer in the desired catalog. */
+    objectsDeleted: number
+}
+
+type PendingRow = {
+    id: string
+    retrievalDoc: string
 }
 
 type DesiredRecord = {

@@ -84,6 +84,24 @@ function indexRowCount(): Promise<number> {
     return databaseConnection().getRepository('tool_search_index').count()
 }
 
+async function nullEmbeddingCount(): Promise<number> {
+    const [{ count }] = await databaseConnection().query(
+        'SELECT COUNT(*)::int AS count FROM "tool_search_index" WHERE "embedding" IS NULL',
+    )
+    return count
+}
+
+type IndexRowProbe = { pieceVersion: string, embeddingInputHash: string, embedding: string | null, modelVersion: string }
+
+async function getIndexRow(pieceName: string, objectName: string): Promise<IndexRowProbe | undefined> {
+    const rows = await databaseConnection().query(
+        `SELECT "pieceVersion", "embeddingInputHash", "embedding"::text AS embedding, "modelVersion"
+         FROM "tool_search_index" WHERE "pieceName" = $1 AND "objectName" = $2`,
+        [pieceName, objectName],
+    )
+    return rows[0]
+}
+
 beforeAll(async () => {
     resetDatabaseConnection()
     await databaseConnection().initialize()
@@ -186,5 +204,191 @@ describe('Tool Search Engine (Phase 2 — τ no-match gate)', () => {
         expect(mode).toBe('semantic')
         expect(results[0]).toMatchObject({ pieceName: '@activepieces/piece-slack', actionName: 'send_channel_message' })
         expect(results[0].cosine).toBeGreaterThanOrEqual(0.1)
+    })
+})
+
+describe('Tool Search Engine (Phase 3 — incremental catalog sync)', () => {
+    it('a pure version bump (no text change) re-embeds nothing — the hash is unchanged', async () => {
+        await seedCatalog()
+        const first = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        expect(first.objectsEmbedded).toBe(4)
+        const before = await getIndexRow('@activepieces/piece-slack', 'send_channel_message')
+
+        // New version row, identical actions/triggers text → same retrieval doc → same hash.
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-slack',
+            displayName: 'Slack',
+            version: '1.0.1',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_channel_message: action({ name: 'send_channel_message', displayName: 'Send Channel Message', description: 'Send a message to a Slack channel' }) },
+            triggers: { new_message: trigger({ name: 'new_message', displayName: 'New Message', description: 'Triggers when a new message is posted to a Slack channel' }) },
+        }))
+
+        const second = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        expect(second.objectsIndexed).toBe(4)
+        expect(second.objectsEmbedded).toBe(0)
+        expect(await indexRowCount()).toBe(4)
+        const after = await getIndexRow('@activepieces/piece-slack', 'send_channel_message')
+        expect(after?.pieceVersion).toBe('1.0.1')
+        expect(after?.embedding).toBe(before?.embedding)
+        expect(after?.embedding).not.toBeNull()
+    })
+
+    it('a deleted piece has its index rows removed on the next reindex', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        expect(await indexRowCount()).toBe(4)
+
+        await databaseConnection().getRepository('piece_metadata').delete({ name: '@activepieces/piece-gmail' })
+        const result = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        expect(result.objectsDeleted).toBe(1)
+        expect(result.objectsEmbedded).toBe(0)
+        expect(await indexRowCount()).toBe(3)
+        expect(await getIndexRow('@activepieces/piece-gmail', 'send_email')).toBeUndefined()
+    })
+
+    it('a model_version swap builds new-version rows while the old rows survive (serving reads until cutover)', async () => {
+        const fakeEmbedderV2: ToolSearchEmbedder = { ...fakeEmbedder, modelVersion: `${fakeEmbedder.modelVersion}:v2` }
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const result = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedderV2 })
+
+        // The new model's rows are built and embedded; the old ones are neither re-embedded nor deleted.
+        expect(result.objectsEmbedded).toBe(4)
+        expect(result.objectsDeleted).toBe(0)
+        expect(await indexRowCount()).toBe(8)
+
+        const oldRow = await getIndexRow('@activepieces/piece-slack', 'send_channel_message')
+        expect(oldRow?.embedding).not.toBeNull()
+
+        const [{ count: newRows }] = await databaseConnection().query(
+            'SELECT COUNT(*)::int AS count FROM "tool_search_index" WHERE "modelVersion" = $1 AND "embedding" IS NOT NULL',
+            [fakeEmbedderV2.modelVersion],
+        )
+        expect(newRows).toBe(4)
+    })
+
+    it('a platform-scoped reindex touches only that platform — shared catalog rows are never re-derived or deleted', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        expect(await indexRowCount()).toBe(4)
+
+        // A custom piece is installed for one tenant.
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@acme/piece-internal',
+            displayName: 'Acme Internal',
+            version: '1.0.0',
+            platformId: 'platform-a',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            actions: { send_alert: action({ name: 'send_alert', displayName: 'Send Alert', description: 'Send an internal alert message' }) },
+            triggers: {},
+        }))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder, scope: { type: 'platform', platformId: 'platform-a' } })
+
+        // Desired set is scoped to platform-a's single object; only it is embedded; the 4 shared rows
+        // are neither touched nor deleted (a NOT-IN-desired delete that ignored scope would wipe them).
+        expect(result.objectsIndexed).toBe(1)
+        expect(result.objectsEmbedded).toBe(1)
+        expect(result.objectsDeleted).toBe(0)
+        expect(await indexRowCount()).toBe(5)
+
+        const [{ count: sharedRows }] = await databaseConnection().query(
+            'SELECT COUNT(*)::int AS count FROM "tool_search_index" WHERE "platformId" IS NULL',
+        )
+        expect(sharedRows).toBe(4)
+
+        const custom = await getIndexRow('@acme/piece-internal', 'send_alert')
+        expect(custom?.embedding).not.toBeNull()
+    })
+
+    it('a failed embed batch leaves those rows NULL (reindex still completes) and they are retried next run', async () => {
+        let calls = 0
+        const flakyEmbedder: ToolSearchEmbedder = {
+            ...fakeEmbedder,
+            embed: (texts) => {
+                calls++
+                return calls === 1 ? Promise.reject(new Error('429 rate limited')) : Promise.resolve(texts.map(bagOfWords))
+            },
+        }
+        await seedCatalog()
+
+        const first = await toolSearchReindexService(log).reindex({ embedder: flakyEmbedder })
+
+        // The diff still landed the rows; they just have no embedding yet.
+        expect(first.status).toBe('done')
+        expect(first.objectsEmbedded).toBe(0)
+        expect(await indexRowCount()).toBe(4)
+        expect(await nullEmbeddingCount()).toBe(4)
+
+        const second = await toolSearchReindexService(log).reindex({ embedder: flakyEmbedder })
+
+        expect(second.objectsEmbedded).toBe(4)
+        expect(await nullEmbeddingCount()).toBe(0)
+    })
+
+    it('adding a new piece embeds only the new piece’s objects', async () => {
+        await seedCatalog()
+        const first = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        expect(first.objectsEmbedded).toBe(4)
+
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-trello',
+            displayName: 'Trello',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { create_card: action({ name: 'create_card', displayName: 'Create Card', description: 'Create a new card on a Trello board' }) },
+            triggers: {},
+        }))
+
+        const second = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        expect(second.objectsIndexed).toBe(5)
+        expect(second.objectsEmbedded).toBe(1)
+        expect(second.objectsDeleted).toBe(0)
+        expect(await indexRowCount()).toBe(5)
+    })
+
+    it('a changed description re-embeds only that object', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        const before = await getIndexRow('@activepieces/piece-gmail', 'send_email')
+
+        // New version of gmail with different action text → hash changes for that one object only.
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-gmail',
+            displayName: 'Gmail',
+            version: '1.0.1',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_email: action({ name: 'send_email', displayName: 'Send Email', description: 'Create and send a new email message via Gmail' }) },
+            triggers: {},
+        }))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        expect(result.objectsEmbedded).toBe(1)
+        expect(result.objectsDeleted).toBe(0)
+        const after = await getIndexRow('@activepieces/piece-gmail', 'send_email')
+        expect(after?.embeddingInputHash).not.toBe(before?.embeddingInputHash)
+        expect(after?.embedding).not.toBeNull()
+    })
+
+    it('a second identical reindex is a no-op — nothing re-embedded, nothing deleted', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const second = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        expect(second.objectsIndexed).toBe(4)
+        expect(second.objectsEmbedded).toBe(0)
+        expect(second.objectsDeleted).toBe(0)
+        expect(await indexRowCount()).toBe(4)
     })
 })
