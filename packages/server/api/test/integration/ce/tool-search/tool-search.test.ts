@@ -161,3 +161,30 @@ describe('Tool Search Engine (Phase 1)', () => {
         expect(await indexRowCount()).toBe(0)
     })
 })
+
+describe('Tool Search Engine (Phase 2 — τ no-match gate)', () => {
+    // The index is built once at the fake model_version; the gate is exercised by querying with the
+    // SAME embedder (so model_version still matches the rows) at a τ above vs below the achievable
+    // top-1 cosine. "send a slack message" lands its best match at cosine ≈ 0.87 on this vocabulary.
+    const withTau = (tau: number): ToolSearchEmbedder => ({ ...fakeEmbedder, tau })
+
+    it('abstains with an empty semantic result when the best cosine is below τ', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const response = await toolSearchService(log).searchActions('send a slack message', { embedder: withTau(0.99), limit: 5 })
+
+        expect(response).toEqual({ results: [], mode: 'semantic' })
+    })
+
+    it('returns the ranked row when the best cosine clears τ', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const { results, mode } = await toolSearchService(log).searchActions('send a slack message', { embedder: withTau(0.1), limit: 5 })
+
+        expect(mode).toBe('semantic')
+        expect(results[0]).toMatchObject({ pieceName: '@activepieces/piece-slack', actionName: 'send_channel_message' })
+        expect(results[0].cosine).toBeGreaterThanOrEqual(0.1)
+    })
+})

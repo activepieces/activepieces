@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
 import { ToolSearchEmbedder } from './embedder'
+import { applyNoMatchGate } from './no-match-gate'
 import { resolveEmbedder } from './resolve-embedder'
 import { extractRetrievalDocDescription } from './retrieval-doc'
 
@@ -9,11 +10,12 @@ const DEFAULT_LIMIT = 5
 
 export const toolSearchService = (log: FastifyBaseLogger) => ({
     /**
-     * Phase 1: semantic action search. Embed the query with the same model + L2-normalization used
-     * at index time, run the exact cosine `<=>` scan over embedded rows under tenant isolation, and
-     * return a top-k tiered envelope (lightweight rows — the agent fetches schemas on demand via
-     * `ap_get_piece_props`). Deliberately deferred: the τ no-match gate (Phase 2), the audience /
-     * connection-status filters (Phase 4), and the keyword floor (Phase 5).
+     * Semantic action search. Embed the query with the same model + L2-normalization used at index
+     * time, run the exact cosine `<=>` scan over embedded rows under tenant isolation, apply the τ
+     * no-match gate (Phase 2 — abstain with an empty list when the top match is below the model's τ),
+     * and return a top-k tiered envelope (lightweight rows — the agent fetches schemas on demand via
+     * `ap_get_piece_props`). Deliberately deferred: the audience / connection-status filters (Phase 4)
+     * and the keyword floor (Phase 5).
      */
     async searchActions(query: string, opts: SearchActionsParams): Promise<ToolSearchResponse> {
         const embedder = opts.embedder ?? (isNil(opts.platformId)
@@ -46,7 +48,7 @@ export const toolSearchService = (log: FastifyBaseLogger) => ({
             requiresConnection: row.requiresConnection,
             cosine: Number(row.cosine),
         }))
-        return { results, mode: 'semantic' }
+        return { results: applyNoMatchGate(results, embedder.tau), mode: 'semantic' }
     },
 })
 
