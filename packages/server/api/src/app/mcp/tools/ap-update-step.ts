@@ -230,7 +230,7 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
         return parts.join(' ')
     }
     catch (err) {
-        log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
         return null
     }
 }

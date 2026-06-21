@@ -370,6 +370,9 @@
       "@activepieces/piece-datadog": [
         "packages/pieces/community/datadog/src/index.ts"
       ],
+      "@activepieces/piece-dataforb2b": [
+        "packages/pieces/community/dataforb2b/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/core/date-helper/src/index.ts"
       ],
@@ -995,6 +998,9 @@
       ],
       "@activepieces/piece-podio": [
         "packages/pieces/community/podio/src/index.ts"
+      ],
+      "@activepieces/piece-polydoc": [
+        "packages/pieces/community/polydoc/src/index.ts"
       ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
@@ -1691,6 +1697,9 @@
       "@activepieces/piece-linkup": [
         "packages/pieces/community/linkup/src/index.ts"
       ],
+      "@activepieces/piece-linkupapi": [
+        "packages/pieces/community/linkupapi/src/index.ts"
+      ],
       "@activepieces/piece-youform": [
         "packages/pieces/community/youform/src/index.ts"
       ],
@@ -1869,7 +1878,7 @@
       "@activepieces/piece-omnihr": [
         "packages/pieces/community/omnihr/src/index.ts"
       ],
-      "@activepieces/piece-clicdata": [
+      "@activepieces/piece-clicdog": [
         "packages/pieces/community/clicdata/src/index.ts"
       ],
       "@activepieces/piece-katana": [

@@ -96,6 +96,7 @@ export const piecesHooks = {
       pieceModel: query.data,
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
+      isError: query.isError,
       refetch: query.refetch,
     };
   },

@@ -58,7 +58,7 @@ export const embedSubdomainService = (log: FastifyBaseLogger) => ({
 
         const deleteResult = await tryCatch(() => cloudflareService(log).deleteCustomHostname({ cloudflareId: oldCloudflareId }))
         if (deleteResult.error) {
-            log.warn({ platformId, oldCloudflareId, error: deleteResult.error }, 'Failed to delete previous Cloudflare custom hostname; manual cleanup may be required')
+            log.warn({ platform: { id: platformId }, oldCloudflareId, error: deleteResult.error }, 'Failed to delete previous Cloudflare custom hostname; manual cleanup may be required')
         }
 
         return updated
@@ -76,7 +76,7 @@ export const embedSubdomainService = (log: FastifyBaseLogger) => ({
 
         const statusResult = await tryCatch(() => cloudflareService(log).getCustomHostname({ cloudflareId: record.cloudflareId }))
         if (statusResult.error) {
-            log.warn({ platformId, cloudflareId: record.cloudflareId, error: statusResult.error }, 'Failed to refresh hostname status from Cloudflare; returning cached record')
+            log.warn({ platform: { id: platformId }, cloudflareId: record.cloudflareId, error: statusResult.error }, 'Failed to refresh hostname status from Cloudflare; returning cached record')
             return record
         }
         const cloudflareStatus = statusResult.data
@@ -84,7 +84,7 @@ export const embedSubdomainService = (log: FastifyBaseLogger) => ({
 
         const recordsChanged = JSON.stringify(record.verificationRecords) !== JSON.stringify(cloudflareStatus.verificationRecords)
         if (newStatus !== record.status || recordsChanged) {
-            log.info({ platformId, oldStatus: record.status, newStatus, cloudflareStatus: cloudflareStatus.status, sslStatus: cloudflareStatus.sslStatus }, 'Embed hostname status refreshed')
+            log.info({ platform: { id: platformId }, oldStatus: record.status, newStatus, cloudflareStatus: cloudflareStatus.status, sslStatus: cloudflareStatus.sslStatus }, 'Embed hostname status refreshed')
             return repo().save({
                 ...record,
                 status: newStatus,

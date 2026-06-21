@@ -34,7 +34,7 @@ export const pieceCache = (log: ApLogger, apiClient: WorkerToApiContract) => ({
                     name: 'pieceFetch',
                     fn: async () => {
                         const piecePackage = await getPiecePackage({ pieceName, pieceVersion, platformId }, apiClient)
-                        log.info({ pieceName, pieceVersion, platformId }, 'Cached piece')
+                        log.info({ piece: { name: pieceName, version: pieceVersion }, platform: { id: platformId } }, 'Cached piece')
                         return JSON.stringify(piecePackage)
                     },
                 })

@@ -87,7 +87,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_manage_fields failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_manage_fields failed')
                 return mcpUtils.mcpToolError('Field operation failed', err)
             }
         },

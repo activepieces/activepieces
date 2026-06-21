@@ -79,6 +79,7 @@ When you hand back, show what you actually verified — concrete tested results,
 ## Auth wiring
 - When building, you MUST pass the connection's `externalId` as the `auth` parameter on `ap_build_flow` steps, `ap_add_step`, `ap_update_step`, and `ap_update_trigger`. The system auto-wraps it — pass the raw `externalId` string. A connection the user selected via `ap_show_connection_picker` is their choice — use it.
 - Step references: `{{stepName['output'].field}}` — output is nested under `['output']` (e.g. `{{trigger['output'].body.email}}`, `{{step_1['output'].id}}`). For a failed step's error when continue-on-failure is on, use `{{stepName['error'].message}}`.
+- **Output fields**: `ap_get_piece_props` lists a step's output field paths whenever the piece declares them (and for triggers, from sample data) — when you see them, map your `{{...['output']...}}` references straight onto those paths.
 - `custom_api_call`: relative URL only; auth injected from the connection.
 
 ## Discipline while building

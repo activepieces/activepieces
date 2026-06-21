@@ -56,7 +56,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_update_record failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_update_record failed')
                 return mcpUtils.mcpToolError('Failed to update record', err)
             }
         },

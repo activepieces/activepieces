@@ -221,10 +221,6 @@ function ChatBoxContent({
                   );
                 })}
 
-                {!isStreaming && !wasCancelled && quickReplies.length > 0 && (
-                  <QuickReplies replies={quickReplies} onSend={handleSend} />
-                )}
-
                 {wasCancelled && (
                   <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground animate-in fade-in duration-200">
                     <Square className="h-3 w-3 fill-current" />
@@ -263,6 +259,12 @@ function ChatBoxContent({
 
       <div className="px-6 pb-4">
         <div className="max-w-3xl mx-auto relative">
+          {!isStreaming &&
+            !wasCancelled &&
+            !hasBlockingCard &&
+            quickReplies.length > 0 && (
+              <QuickReplies replies={quickReplies} onSend={handleSend} />
+            )}
           <div
             className={cn(
               !hasBlockingCard &&

@@ -47,6 +47,6 @@ export async function deleteStaleCache(): Promise<void> {
         }
     }
     catch (error) {
-        logger.error({ err: error }, 'Failed to delete stale cache')
+        logger.error({ error }, 'Failed to delete stale cache')
     }
 }
