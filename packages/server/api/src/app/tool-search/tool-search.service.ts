@@ -1,4 +1,4 @@
-import { AppConnectionStatus, isNil, tryCatch } from '@activepieces/shared'
+import { AppConnectionStatus, isNil, SuggestionType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../app-connection/app-connection-service/app-connection-service'
 import { databaseConnection } from '../database/database-connection'
@@ -20,93 +20,128 @@ const CANDIDATE_POOL = 50
 
 export const toolSearchService = (log: FastifyBaseLogger) => ({
     /**
-     * Semantic action search. Embed the query with the same model + L2-normalization used at index
-     * time, run the exact cosine `<=>` scan over embedded rows under tenant isolation + the optional
-     * audience / pieceName SQL filters (Phase 4), over-fetch a candidate pool, drop pieces disabled for
-     * the caller, apply the τ no-match gate (Phase 2 — abstain with an empty list when the top match is
-     * below the model's τ), take the top-k, and fold each row's per-tenant `connected` flag. Returns a
-     * tiered envelope of lightweight rows — the agent fetches schemas on demand via `ap_get_piece_props`.
-     * The enabled-piece and connection sets are resolved from `platformId`/`projectId` unless injected
-     * (the injection seam keeps the filters unit-testable without a live tenant). Deferred: keyword
-     * floor (Phase 5).
+     * Action search with a keyword floor. When an embedder is available, run the full semantic
+     * pipeline ({@link semanticSearchActions}: cosine scan + Phase-4 filters + τ gate + connected flag).
+     * When no embedder/AI key resolves — or a live embed/query call fails — degrade to the keyword floor
+     * ({@link keywordSearchActions}: the pre-existing Fuse catalog search behind `ap_research_pieces`),
+     * reshaped into the same action-row envelope and flagged `mode:"keyword"` so the agent knows the
+     * matches are lexical, not semantic (ENGINE_IMPLEMENTATION §8). The tool never hard-fails.
      */
     async searchActions(query: string, opts: SearchActionsParams): Promise<ToolSearchResponse> {
         const embedder = opts.embedder ?? (isNil(opts.platformId)
             ? null
             : await resolveEmbedder({ platformId: opts.platformId, log }))
         if (isNil(embedder)) {
-            return { results: [], mode: 'semantic' }
+            return keywordSearchActions({ query, opts, log })
         }
 
-        const [queryVector] = await embedder.embed([query])
-        const limit = opts.limit ?? DEFAULT_LIMIT
-
-        // Build the candidate query filter-by-filter so each clause is parameter-bound. Tenant
-        // isolation, audience exclusion and the optional pieceName scope are all expressible in SQL.
-        const params: unknown[] = [`[${queryVector.join(',')}]`, embedder.modelVersion]
-        const where = [
-            '"embedding" IS NOT NULL',
-            `"modelVersion" = $${params.length}`,
-            `"objectKind" = 'action'`,
-            `("platformId" IS NULL OR "platformId" = $${params.push(opts.platformId ?? null)})`,
-        ]
-        if (!isNil(opts.pieceName)) {
-            where.push(`"pieceName" = $${params.push(opts.pieceName)}`)
+        const semantic = await tryCatch(() => semanticSearchActions({ query, opts, embedder, log }))
+        if (semantic.error !== null) {
+            log.warn({ error: semantic.error }, '[toolSearchService#searchActions] Semantic search failed — degrading to the keyword floor.')
+            return keywordSearchActions({ query, opts, log })
         }
-        // Audience exclusion (default all). Expressed as the complement — exclude the audiences the
-        // caller did NOT ask for — over COALESCE(audience,'both'), never an `IN (...)` inclusion list:
-        // a plain `audience IN (...)` would silently drop NULL-audience rows (SQL `NULL IN` is never
-        // true), whereas COALESCE maps an unset audience to 'both' so it survives unless 'both' itself
-        // was excluded. Requesting every audience (or omitting the param) yields no clause.
-        if (!isNil(opts.audiences)) {
-            const excluded = ALL_AUDIENCES.filter((audience) => !opts.audiences!.includes(audience))
-            if (excluded.length > 0) {
-                where.push(`COALESCE("audience", 'both') <> ALL($${params.push(excluded)}::text[])`)
-            }
-        }
-        const rows = await databaseConnection().query(
-            `SELECT "pieceName", "objectName", "displayName", "retrievalDoc", "requiresConnection",
-                    1 - ("embedding" <=> $1::vector) AS cosine
-             FROM "tool_search_index"
-             WHERE ${where.join(' AND ')}
-             ORDER BY "embedding" <=> $1::vector
-             LIMIT $${params.push(Math.max(limit, CANDIDATE_POOL))}`,
-            params,
-        )
-
-        let candidates: ToolSearchActionResult[] = rows.map((row: SearchRow): ToolSearchActionResult => ({
-            pieceName: row.pieceName,
-            actionName: row.objectName,
-            displayName: row.displayName,
-            oneLineDescription: extractRetrievalDocDescription(row.retrievalDoc),
-            requiresConnection: row.requiresConnection,
-            cosine: Number(row.cosine),
-        }))
-
-        // Enabled-piece filter (per-tenant): drop actions whose piece is disabled for this caller.
-        // The platform/project allow/block lists aren't in the index, so they're resolved out-of-band
-        // (the canonical pieceMetadataService.list path) and intersected here. Undefined = no filter
-        // (no tenant context, or resolution failed → fail open rather than hide the whole catalog).
-        const enabledPieceNames = opts.enabledPieceNames ?? await resolveEnabledPieceNames(opts, log)
-        if (!isNil(enabledPieceNames)) {
-            candidates = candidates.filter((row) => enabledPieceNames.has(row.pieceName))
-        }
-
-        // τ no-match gate on the filtered candidates (top-1 decides abstention), then take the top-k.
-        const results = applyNoMatchGate(candidates, embedder.tau).slice(0, limit)
-
-        // Fold per-tenant connection status onto each surviving row so the agent knows which actions
-        // are ready to run vs. need a connection set up first. Left undefined when no connection
-        // context is available (a platform-scoped, project-less call) or resolution failed.
-        const connectedPieceNames = opts.connectedPieceNames ?? await resolveConnectedPieceNames(opts, log)
-        if (!isNil(connectedPieceNames)) {
-            for (const row of results) {
-                row.connected = connectedPieceNames.has(row.pieceName)
-            }
-        }
-        return { results, mode: 'semantic' }
+        return semantic.data
     },
 })
+
+async function semanticSearchActions({ query, opts, embedder, log }: SemanticSearchParams): Promise<ToolSearchResponse> {
+    const [queryVector] = await embedder.embed([query])
+    const limit = opts.limit ?? DEFAULT_LIMIT
+
+    // Build the candidate query filter-by-filter so each clause is parameter-bound. Tenant
+    // isolation, audience exclusion and the optional pieceName scope are all expressible in SQL.
+    const params: unknown[] = [`[${queryVector.join(',')}]`, embedder.modelVersion]
+    const where = [
+        '"embedding" IS NOT NULL',
+        `"modelVersion" = $${params.length}`,
+        `"objectKind" = 'action'`,
+        `("platformId" IS NULL OR "platformId" = $${params.push(opts.platformId ?? null)})`,
+    ]
+    if (!isNil(opts.pieceName)) {
+        where.push(`"pieceName" = $${params.push(opts.pieceName)}`)
+    }
+    // Audience exclusion (default all). Expressed as the complement — exclude the audiences the
+    // caller did NOT ask for — over COALESCE(audience,'both'), never an `IN (...)` inclusion list:
+    // a plain `audience IN (...)` would silently drop NULL-audience rows (SQL `NULL IN` is never
+    // true), whereas COALESCE maps an unset audience to 'both' so it survives unless 'both' itself
+    // was excluded. Requesting every audience (or omitting the param) yields no clause.
+    if (!isNil(opts.audiences)) {
+        const excluded = ALL_AUDIENCES.filter((audience) => !opts.audiences!.includes(audience))
+        if (excluded.length > 0) {
+            where.push(`COALESCE("audience", 'both') <> ALL($${params.push(excluded)}::text[])`)
+        }
+    }
+    const rows = await databaseConnection().query(
+        `SELECT "pieceName", "objectName", "displayName", "retrievalDoc", "requiresConnection",
+                1 - ("embedding" <=> $1::vector) AS cosine
+         FROM "tool_search_index"
+         WHERE ${where.join(' AND ')}
+         ORDER BY "embedding" <=> $1::vector
+         LIMIT $${params.push(Math.max(limit, CANDIDATE_POOL))}`,
+        params,
+    )
+
+    let candidates: ToolSearchActionResult[] = rows.map((row: SearchRow): ToolSearchActionResult => ({
+        pieceName: row.pieceName,
+        actionName: row.objectName,
+        displayName: row.displayName,
+        oneLineDescription: extractRetrievalDocDescription(row.retrievalDoc),
+        requiresConnection: row.requiresConnection,
+        cosine: Number(row.cosine),
+    }))
+
+    // Enabled-piece filter (per-tenant): drop actions whose piece is disabled for this caller.
+    // The platform/project allow/block lists aren't in the index, so they're resolved out-of-band
+    // (the canonical pieceMetadataService.list path) and intersected here. Undefined = no filter
+    // (no tenant context, or resolution failed → fail open rather than hide the whole catalog).
+    const enabledPieceNames = opts.enabledPieceNames ?? await resolveEnabledPieceNames(opts, log)
+    if (!isNil(enabledPieceNames)) {
+        candidates = candidates.filter((row) => enabledPieceNames.has(row.pieceName))
+    }
+
+    // τ no-match gate on the filtered candidates (top-1 decides abstention), then take the top-k.
+    const results = applyNoMatchGate(candidates, embedder.tau).slice(0, limit)
+
+    // Fold per-tenant connection status onto each surviving row so the agent knows which actions
+    // are ready to run vs. need a connection set up first. Left undefined when no connection
+    // context is available (a platform-scoped, project-less call) or resolution failed.
+    const connectedPieceNames = opts.connectedPieceNames ?? await resolveConnectedPieceNames(opts, log)
+    if (!isNil(connectedPieceNames)) {
+        for (const row of results) {
+            row.connected = connectedPieceNames.has(row.pieceName)
+        }
+    }
+    return { results, mode: 'semantic' }
+}
+
+/**
+ * The keyword floor: the pre-existing Fuse catalog search (the engine behind `ap_research_pieces`),
+ * reshaped into the action-row envelope. Reuses `pieceMetadataService.list` — which already applies the
+ * caller's platform/project enabled-piece filtering — with the action suggestion mode, then flattens the
+ * matched actions. A best-effort lexical fallback: it does not replicate the semantic path's audience or
+ * connection filters (no embeddings means no τ gate either). Flagged `mode:"keyword"`.
+ */
+async function keywordSearchActions({ query, opts, log }: KeywordSearchParams): Promise<ToolSearchResponse> {
+    const limit = opts.limit ?? DEFAULT_LIMIT
+    const pieces = await pieceMetadataService(log).list({
+        platformId: opts.platformId,
+        projectId: opts.projectId,
+        includeHidden: false,
+        searchQuery: query,
+        suggestionType: SuggestionType.ACTION,
+    })
+
+    const results = pieces.flatMap((piece) =>
+        (piece.suggestedActions ?? []).map((action): ToolSearchActionResult => ({
+            pieceName: piece.name,
+            actionName: action.name,
+            displayName: action.displayName,
+            oneLineDescription: action.description,
+            requiresConnection: action.requireAuth,
+        })),
+    ).slice(0, limit)
+    return { results, mode: 'keyword' }
+}
 
 const CONNECTION_LOOKUP_CAP = 1000
 
@@ -187,6 +222,19 @@ type SearchActionsParams = {
     embedder?: ToolSearchEmbedder | null
 }
 
+type SemanticSearchParams = {
+    query: string
+    opts: SearchActionsParams
+    embedder: ToolSearchEmbedder
+    log: FastifyBaseLogger
+}
+
+type KeywordSearchParams = {
+    query: string
+    opts: SearchActionsParams
+    log: FastifyBaseLogger
+}
+
 type SearchRow = {
     pieceName: string
     objectName: string
@@ -202,7 +250,8 @@ export type ToolSearchActionResult = {
     displayName: string
     oneLineDescription: string | undefined
     requiresConnection: boolean
-    cosine: number
+    /** Cosine similarity in semantic mode; omitted in the keyword floor (no embeddings). */
+    cosine?: number
     /** Whether the calling tenant has an active connection for this piece. Undefined = not resolved. */
     connected?: boolean
 }

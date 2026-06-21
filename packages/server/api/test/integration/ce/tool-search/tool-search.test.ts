@@ -606,3 +606,37 @@ describe('Tool Search Engine (Phase 4 — multi-tenancy & filtering)', () => {
         expect(results.every((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
     })
 })
+
+describe('Tool Search Engine (Phase 5 — keyword floor / degradation)', () => {
+    it('degrades to the keyword floor (the pre-existing Fuse catalog search) when no embedder/key is available', async () => {
+        await seedCatalog()
+        // No reindex, no embedder, no platformId → embedder resolves to null → keyword floor.
+
+        const { results, mode } = await toolSearchService(log).searchActions('send message', { limit: 5 })
+
+        expect(mode).toBe('keyword')
+        const slack = results.find((r) => r.pieceName === '@activepieces/piece-slack')
+        expect(slack).toMatchObject({
+            actionName: 'send_channel_message',
+            displayName: 'Send Channel Message',
+            oneLineDescription: 'Send a message to a Slack channel',
+            requiresConnection: true,
+        })
+        // Keyword rows carry no cosine, and triggers never cross into action results.
+        expect(slack?.cosine).toBeUndefined()
+        expect(results.every((r) => r.actionName !== 'new_message')).toBe(true)
+    })
+
+    it('degrades to the keyword floor when the embed call itself fails', async () => {
+        await seedCatalog()
+        const throwingEmbedder: ToolSearchEmbedder = {
+            ...fakeEmbedder,
+            embed: () => Promise.reject(new Error('openai unreachable')),
+        }
+
+        const { results, mode } = await toolSearchService(log).searchActions('send message', { embedder: throwingEmbedder, limit: 5 })
+
+        expect(mode).toBe('keyword')
+        expect(results.some((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
+    })
+})
