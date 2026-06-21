@@ -4,7 +4,7 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { ExecutionType } from '@activepieces/shared';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { TranscriptParams } from 'assemblyai';
 import { assemblyaiAuth } from '../../auth';
 import { getAssemblyAIClient } from '../../client';

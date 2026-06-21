@@ -103,7 +103,7 @@ export default defineConfig(({ command, mode }) => {
         '@': path.resolve(__dirname, './src'),
         '@activepieces/shared': path.resolve(
           __dirname,
-          '../../packages/shared/src',
+          '../../packages/core/shared/src',
         ),
         'ee-embed-sdk': path.resolve(
           __dirname,
@@ -112,6 +112,22 @@ export default defineConfig(({ command, mode }) => {
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
           '../../packages/pieces/framework/src',
+        ),
+        '@activepieces/core-utils': path.resolve(
+          __dirname,
+          '../../packages/core/utils/src',
+        ),
+        '@activepieces/core-formula': path.resolve(
+          __dirname,
+          '../../packages/core/formula/src',
+        ),
+        '@activepieces/core-piece-types': path.resolve(
+          __dirname,
+          '../../packages/core/piece-types/src',
+        ),
+        '@activepieces/core-execution': path.resolve(
+          __dirname,
+          '../../packages/core/execution/src',
         ),
       },
     },

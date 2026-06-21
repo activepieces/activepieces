@@ -1,6 +1,6 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AIProviderConfig,
-  AIProviderName,
   AnthropicProviderAuthConfig,
   AnthropicProviderConfig,
   AzureProviderAuthConfig,
@@ -12,7 +12,6 @@ import {
   CreateAIProviderRequest,
   GoogleProviderAuthConfig,
   GoogleProviderConfig,
-  isNil,
   OpenAICompatibleProviderAuthConfig,
   OpenAICompatibleProviderConfig,
   OpenAIProviderAuthConfig,

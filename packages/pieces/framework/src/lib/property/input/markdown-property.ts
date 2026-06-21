@@ -1,7 +1,7 @@
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { BasePropertySchema, TPropertyValue } from './common';
 import { PropertyType } from './property-type';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/core-piece-types';
 
 export const MarkDownProperty = z.object({
   ...BasePropertySchema.shape,

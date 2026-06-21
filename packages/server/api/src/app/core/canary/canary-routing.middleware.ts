@@ -1,5 +1,6 @@
 import '@fastify/reply-from'
-import { isNil, PrincipalType, tryCatch } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'

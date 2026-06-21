@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import { Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { jobQueue } from './job-queue/job-queue'

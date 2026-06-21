@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { stableDiffusionAuth } from '../auth';
-import { kebabCase } from '@activepieces/shared';
+import { kebabCase } from '@activepieces/pieces-framework';
 
 export const textToImage = createAction({
   name: 'textToImage',

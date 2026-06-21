@@ -1,6 +1,6 @@
 import http from 'node:http'
 import https from 'node:https'
-import { tryCatchSync } from '@activepieces/shared'
+import { tryCatchSync } from '@activepieces/core-utils'
 import { HttpProxyAgent } from 'http-proxy-agent'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 import type { UninstallFn } from './ssrf-guard'

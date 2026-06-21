@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { tryCatchSync } from '@activepieces/shared'
+import { tryCatchSync } from '@activepieces/core-utils';
 import { repoRoot } from './repo-root'
 
 const PROMPTS_DIR = path.join(repoRoot, 'packages/server/api/src/assets/prompts')

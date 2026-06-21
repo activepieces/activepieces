@@ -1,24 +1,6 @@
+import { ApId, Permission, SeekPage } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { ApId,
-    AppConnectionOwners,
-    AppConnectionScope,
-    AppConnectionStatus,
-    AppConnectionType,
-    AppConnectionWithoutSensitiveData,
-    ApplicationEventName,
-    GetOAuth2AuthorizationUrlRequestBody,
-    GetOAuth2AuthorizationUrlResponse,
-    ListAppConnectionOwnersRequestQuery,
-    ListAppConnectionsRequestQuery,
-    Permission,
-    PLACEHOLDER_CONNECTION_TYPE,
-    PrincipalType,
-    ReplaceAppConnectionsRequestBody,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateConnectionValueRequestBody,
-    UpsertAppConnectionRequestBody,
-} from '@activepieces/shared'
+import { AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionWithoutSensitiveData, ApplicationEventName, GetOAuth2AuthorizationUrlRequestBody, GetOAuth2AuthorizationUrlResponse, ListAppConnectionOwnersRequestQuery, ListAppConnectionsRequestQuery, PLACEHOLDER_CONNECTION_TYPE, PrincipalType, ReplaceAppConnectionsRequestBody, SERVICE_KEY_SECURITY_OPENAPI, UpdateConnectionValueRequestBody, UpsertAppConnectionRequestBody } from '@activepieces/shared'
 import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'

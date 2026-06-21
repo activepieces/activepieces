@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { ArrayProperty } from './array-property';
 import { CheckboxProperty } from './checkbox-property';
 import { DateTimeProperty } from './date-time-property';
@@ -14,7 +14,7 @@ import { DynamicProperties } from './dynamic-prop';
 import { FileProperty } from './file-property';
 import { JsonProperty } from './json-property';
 import { MarkDownProperty } from './markdown-property';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/core-piece-types';
 import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';

@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { fragmentAuth } from '../common/auth';
 import { fragmentClient } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const updateTask = createAction({
 	auth: fragmentAuth,

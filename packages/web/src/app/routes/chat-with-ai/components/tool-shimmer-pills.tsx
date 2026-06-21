@@ -1,4 +1,4 @@
-import { isObject } from '@activepieces/shared';
+import { isObject } from '@activepieces/core-utils';
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo } from 'react';
 

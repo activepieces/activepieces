@@ -1,6 +1,6 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   ProjectSyncPlan,
-  SeekPage,
   CreateProjectReleaseRequestBody,
   ProjectRelease,
   DiffReleaseRequest,

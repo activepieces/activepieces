@@ -1,0 +1,31 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@activepieces/core-utils": [
+        "packages/core/utils/dist/src/index.d.ts"
+      ],
+      "@activepieces/core-formula": [
+        "packages/core/formula/dist/src/index.d.ts"
+      ],
+      "@activepieces/core-execution": [
+        "packages/core/execution/dist/src/index.d.ts"
+      ]
+    }
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
+  ]
+}

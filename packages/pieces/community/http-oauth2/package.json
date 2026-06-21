@@ -6,14 +6,15 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
-    "axios": "1.15.2",
     "form-data": "4.0.4",
-    "https-proxy-agent": "7.0.4",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "undici": "7.24.6",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -1,4 +1,5 @@
-import { chunk, FlowStatus, ProjectType, RunEnvironment } from '@activepieces/shared'
+import { chunk } from '@activepieces/core-utils'
+import { FlowStatus, ProjectType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'

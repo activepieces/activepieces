@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     FlowActionType,
     FlowOperationType,
@@ -65,8 +65,8 @@ vi.mock('../../../../../src/app/flows/flow-version/flow-version-validator-util',
     })),
 }))
 
-import { flowVersionService } from '../../../../../src/app/flows/flow-version/flow-version.service'
 import type { FastifyBaseLogger } from 'fastify'
+import { flowVersionService } from '../../../../../src/app/flows/flow-version/flow-version.service'
 
 const mockLog = {
     info: vi.fn(),

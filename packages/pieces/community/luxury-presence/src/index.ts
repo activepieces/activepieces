@@ -1,7 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { newLead } from './lib/triggers/new-lead';
 import { luxuryPresenceAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const luxuryPresence = createPiece({
   displayName: 'Luxury Presence',

@@ -74,6 +74,7 @@ const scaffoldPiece = async (
     },
     scripts: {
       build: 'tsc -p tsconfig.lib.json && cp package.json dist/',
+      bundle: 'node ../../../../dist/packages/cli/src/index.js pieces bundle',
       lint: "eslint 'src/**/*.ts'",
     },
   };

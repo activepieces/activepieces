@@ -2,7 +2,7 @@ import { tarventAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, tarventCommon } from '../common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const createTransaction = createAction({
   auth: tarventAuth,
@@ -129,12 +129,12 @@ export const createTransaction = createAction({
     const { groupName, fromEmail, fromName, toEmail, ccEmail, bccEmail, subject, replyToEmail, replyToName, variables, templateId, mimeType, content, ignoreSuppressCheck } = context.propsValue;
 
     await propsValidation.validateZod(context.propsValue, {
-      groupName: z.string().max(100, 'Group name has to be equal to or less than 100 characters.').optional(),
-      fromEmail: z.string().max(320, 'From email has to be equal to or less than 320 characters.'),
-      fromName: z.string().max(255, 'From name has to be equal to or less than 255 characters.').optional(),
-      subject: z.string().max(500, 'Subject has to be equal to or less than 500 characters.'),
-      replyToEmail: z.string().max(320, 'Reply to email has to be equal to or less than 320 characters.'),
-      replyToName: z.string().max(255, 'Reply to name has to be equal to or less than 255 characters.').optional(),
+      groupName: z.optional(z.string().check(z.maxLength(100, 'Group name has to be equal to or less than 100 characters.'))),
+      fromEmail: z.string().check(z.maxLength(320, 'From email has to be equal to or less than 320 characters.')),
+      fromName: z.optional(z.string().check(z.maxLength(255, 'From name has to be equal to or less than 255 characters.'))),
+      subject: z.string().check(z.maxLength(500, 'Subject has to be equal to or less than 500 characters.')),
+      replyToEmail: z.string().check(z.maxLength(320, 'Reply to email has to be equal to or less than 320 characters.')),
+      replyToName: z.optional(z.string().check(z.maxLength(255, 'Reply to name has to be equal to or less than 255 characters.'))),
     });
 
     const client = makeClient(context.auth);

@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 

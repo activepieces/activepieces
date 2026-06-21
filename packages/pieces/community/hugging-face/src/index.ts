@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { documentQuestionAnswering } from './lib/actions/document-question-answering';
 import { languageTranslation } from './lib/actions/language-translation';
 import { textClassification } from './lib/actions/text-classification';

@@ -9,8 +9,8 @@ Ingests inbound HTTP requests from external services and routes them to flows fo
 - `packages/server/api/src/app/webhooks/webhook-request-converter.ts` — payload normalization and file upload
 - `packages/server/api/src/app/webhooks/webhook-handshake.ts` — handshake verification logic
 - `packages/server/api/src/app/webhooks/webhook-module.ts` — module registration
-- `packages/shared/src/lib/automation/webhook/dto.ts` — WebhookUrlParams schema
-- `packages/shared/src/lib/automation/trigger/index.ts` — WebhookHandshakeStrategy enum and WebhookHandshakeConfiguration schema
+- `packages/core/shared/src/lib/automation/webhook/dto.ts` — WebhookUrlParams schema
+- `packages/core/shared/src/lib/automation/trigger/index.ts` — WebhookHandshakeStrategy enum and WebhookHandshakeConfiguration schema
 - `packages/web/src/app/builder/test-step/custom-test-step/test-webhook-dialog.tsx` — dialog for sending a manual test request to the webhook URL
 - `packages/web/src/app/builder/test-step/test-trigger-section/manual-webhook-test-button.tsx` — button that opens the test webhook dialog
 - `packages/web/src/app/builder/test-step/test-trigger-section/index.tsx` — test trigger panel (includes webhook test entry point)

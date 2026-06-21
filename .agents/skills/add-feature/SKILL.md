@@ -17,7 +17,7 @@ Before writing code, answer:
 5. **Must work embedded?** → Check `EmbeddingState` in frontend
 6. **Project-scoped or platform-scoped?** → Filter queries accordingly
 
-## Step 1: Shared Types (`packages/shared`)
+## Step 1: Shared Types (`packages/core/shared`)
 
 - Define Zod schemas + `z.infer` types in `src/lib/{domain}/`
 - Export from `src/index.ts` barrel

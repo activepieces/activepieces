@@ -1,6 +1,6 @@
 import net from 'node:net'
+import { tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { tryCatch } from '@activepieces/shared'
 import { spawnWithKill } from '../utils/exec'
 
 const CHAIN = 'AP_EGRESS_LOCKDOWN'

@@ -1,6 +1,7 @@
 import path from 'path'
+import { FlowVersionId, isNil } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
-import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION, WorkerToApiContract } from '@activepieces/shared'
+import { FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, WorkerToApiContract } from '@activepieces/shared'
 import { getGlobalCacheFlowsPath } from '../cache-paths'
 import { cacheState } from '../cache-state'
 

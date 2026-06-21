@@ -6,7 +6,7 @@ import {
 	mapRowsToHeaderNames,
 } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { columnNameProp, commonProps } from '../common/props';
 
@@ -61,8 +61,8 @@ description: 'Look up rows in a worksheet based on a column value.',
 	},
 	async run({ propsValue, auth }) {
 		await propsValidation.validateZod(propsValue, {
-			startingRow: z.number().min(1).optional(),
-			numberOfRows: z.number().min(1).optional(),
+			startingRow: z.optional(z.number().check(z.minimum(1))),
+			numberOfRows: z.optional(z.number().check(z.minimum(1))),
 		});
 
 		const spreadsheetId = propsValue.spreadsheetId;

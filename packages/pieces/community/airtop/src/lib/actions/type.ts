@@ -3,7 +3,7 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const typeAction = createAction({
 	name: 'type',
@@ -172,12 +172,12 @@ export const typeAction = createAction({
 		} = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			costThresholdCredits: z.number().min(0).optional(),
-			timeThresholdSeconds: z.number().min(0).optional(),
-			navigationTimeoutSeconds: z.number().min(0).optional(),
-			visualAnalysisMaxScrolls: z.number().min(1).optional(),
-			visualAnalysisOverlap: z.number().min(0).max(100).optional(),
-			visualAnalysisScrollDelay: z.number().min(0).optional(),
+			costThresholdCredits: z.optional(z.number().check(z.minimum(0))),
+			timeThresholdSeconds: z.optional(z.number().check(z.minimum(0))),
+			navigationTimeoutSeconds: z.optional(z.number().check(z.minimum(0))),
+			visualAnalysisMaxScrolls: z.optional(z.number().check(z.minimum(1))),
+			visualAnalysisOverlap: z.optional(z.number().check(z.minimum(0), z.maximum(100))),
+			visualAnalysisScrollDelay: z.optional(z.number().check(z.minimum(0))),
 		});
 
 		const body: Record<string, any> = {

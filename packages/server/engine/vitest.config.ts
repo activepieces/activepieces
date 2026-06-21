@@ -19,9 +19,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@activepieces/shared': path.resolve(__dirname, '../../../packages/shared/src/index.ts'),
+      '@activepieces/shared': path.resolve(__dirname, '../../../packages/core/shared/src/index.ts'),
       '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/framework/src/index.ts'),
       '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/common/src/index.ts'),
+      '@activepieces/core-formula': path.resolve(__dirname, '../../../packages/core/formula/src/index.ts'),
     },
   },
 })

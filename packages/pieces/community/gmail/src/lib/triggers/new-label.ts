@@ -1,8 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import { getFirstFiveOrAll } from '../common/data';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'labels';
 
@@ -20,7 +20,7 @@ export const gmailNewLabelTrigger = createTrigger({
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     const authClient = await createGoogleClient(context.auth);
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const response = await gmail.users.labels.list({
       userId: 'me',
@@ -36,7 +36,7 @@ export const gmailNewLabelTrigger = createTrigger({
   },
   async test(context) {
     const authClient = await createGoogleClient(context.auth);
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const response = await gmail.users.labels.list({
       userId: 'me',
@@ -52,7 +52,7 @@ export const gmailNewLabelTrigger = createTrigger({
 
     const authClient = await createGoogleClient(context.auth);
 
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const response = await gmail.users.labels.list({
       userId: 'me',

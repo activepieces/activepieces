@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     AppConnectionType,
     DefaultProjectRole,
@@ -13,6 +12,7 @@ import {
 } from '../../../helpers/mocks'
 import { describeRolePermissions } from '../../../helpers/permission-test'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger

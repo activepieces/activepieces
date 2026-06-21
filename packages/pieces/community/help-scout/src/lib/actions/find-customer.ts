@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { helpScoutApiRequest } from '../common/api';
 import { helpScoutAuth } from '../common/auth';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findCustomer = createAction({
@@ -24,7 +24,7 @@ export const findCustomer = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      email: z.string().min(1, 'Please provide a email.'),
+      email: z.string().check(z.minLength(1, 'Please provide a email.')),
     });
     const response = await helpScoutApiRequest({
       method: HttpMethod.GET,

@@ -9,7 +9,7 @@ import {
   HttpRequest,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { saasticCommon } from '../common';
 import { saasticAuth } from '../..';
 
@@ -47,7 +47,7 @@ export const createCharge = createAction({
 
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
+      email: z.string().check(z.email()),
     });
 
     const request: HttpRequest = {

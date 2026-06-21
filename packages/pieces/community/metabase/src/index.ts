@@ -14,7 +14,7 @@ import {
 } from '@activepieces/pieces-common';
 import { getGraphQuestion } from './lib/actions/get-graph-question';
 import { embedQuestion } from './lib/actions/embed-question';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 const baseProps = {
   baseUrl: Property.ShortText({

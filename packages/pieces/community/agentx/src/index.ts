@@ -8,7 +8,7 @@ import { findConversation } from "./lib/actions/find-conversation";
 import { newAgent } from "./lib/triggers/new-agent";
 import { newConversation } from "./lib/triggers/new-conversation";
 import { AgentXAuth } from "./lib/common/auth";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 
 export const agentx = createPiece({

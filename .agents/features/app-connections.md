@@ -5,10 +5,10 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 
 ## Key Files
 - `packages/server/api/src/app/app-connection/` — backend module (controller, service, entity)
-- `packages/shared/src/lib/automation/app-connection/app-connection.ts` — core types, enums, and value union types
-- `packages/shared/src/lib/automation/app-connection/dto/upsert-app-connection-request.ts` — upsert DTO
-- `packages/shared/src/lib/automation/app-connection/dto/read-app-connection-request.ts` — list query DTO
-- `packages/shared/src/lib/automation/app-connection/oauth2-authorization-method.ts` — OAuth2 authorization method enum
+- `packages/core/shared/src/lib/automation/app-connection/app-connection.ts` — core types, enums, and value union types
+- `packages/core/shared/src/lib/automation/app-connection/dto/upsert-app-connection-request.ts` — upsert DTO
+- `packages/core/shared/src/lib/automation/app-connection/dto/read-app-connection-request.ts` — list query DTO
+- `packages/core/shared/src/lib/automation/app-connection/oauth2-authorization-method.ts` — OAuth2 authorization method enum
 - `packages/web/src/features/connections/api/app-connections.ts` — frontend API client
 - `packages/web/src/features/connections/api/global-connections.ts` — global (platform-scope) connections API client
 - `packages/web/src/features/connections/hooks/app-connections-hooks.ts` — TanStack Query hooks (`appConnectionsQueries`, `appConnectionsMutations`)

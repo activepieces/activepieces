@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { edenAiAuth } from '../..';
 
 const DATA_EXTRACTION_PROVIDERS = [
@@ -85,13 +85,13 @@ export const receiptParserAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      file_url: z.string().url('Valid file URL is required'),
-      file_password: z.string().nullish(),
-      convert_to_pdf: z.boolean().nullish(),
-      attributes_as_list: z.boolean().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      file_url: z.string().check(z.url('Valid file URL is required')),
+      file_password: z.nullish(z.string()),
+      convert_to_pdf: z.nullish(z.boolean()),
+      attributes_as_list: z.nullish(z.boolean()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 

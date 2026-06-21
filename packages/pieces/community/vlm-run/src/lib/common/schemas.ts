@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from 'zod/mini'
 
 const imageDomains = [
   'image.classification',
@@ -40,7 +40,7 @@ export const analyzeAudioSchema = {
 };
 
 export const analyzeImageSchema = {
-    image: z.string().url(),
+    image: z.string().check(z.url()),
     domain: z.enum(imageDomains)
 };
 

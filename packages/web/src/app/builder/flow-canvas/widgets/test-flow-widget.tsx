@@ -1,8 +1,7 @@
+import { isNil, assertNotNullOrUndefined } from '@activepieces/core-utils';
 import {
-  isNil,
   FlowTriggerType,
   UpdateRunProgressRequest,
-  assertNotNullOrUndefined,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useRef } from 'react';

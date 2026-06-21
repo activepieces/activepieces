@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newTicketInView } from './lib/trigger/new-ticket-in-view';
 import { newTicket } from './lib/trigger/new-ticket';
 import { updatedTicket } from './lib/trigger/updated-ticket';

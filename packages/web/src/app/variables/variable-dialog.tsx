@@ -1,5 +1,5 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import {
-  ErrorCode,
   formErrors,
   VARIABLE_NAME_REGEX,
   VariableWithoutSensitiveData,

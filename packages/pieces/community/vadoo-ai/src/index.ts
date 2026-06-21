@@ -3,7 +3,7 @@ import { generateVideo } from './lib/actions/generate-video';
 import { generatePodcast } from './lib/actions/generate-podcast';
 import { generateAiImage } from './lib/actions/generate-ai-image';
 import { generateAiCaptions } from './lib/actions/generate-ai-captions';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { vadooAiAuth } from './lib/auth';
 
 export const vadooAi = createPiece({

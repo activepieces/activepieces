@@ -1,5 +1,6 @@
+import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { ApEnvironment, ExecutionMode, isNil, WorkerToApiContract } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode, WorkerToApiContract } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../config/configs'
 import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'

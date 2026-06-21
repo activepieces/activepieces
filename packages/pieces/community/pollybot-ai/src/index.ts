@@ -5,7 +5,7 @@ import { getLead } from './lib/actions/get-lead';
 import { updateLead } from './lib/actions/update-lead';
 import { deleteLead } from './lib/actions/delete-lead';
 import { listLeads } from './lib/actions/list-leads';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newLead } from './lib/triggers/new-lead';
 
 export const pollybotAi = createPiece({
