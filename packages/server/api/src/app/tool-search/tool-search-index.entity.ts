@@ -86,10 +86,20 @@ export const ToolSearchIndexEntity = new EntitySchema<ToolSearchIndexSchema>({
         },
     },
     indices: [
+        // Two partial unique indexes mirror the migration's PG14-safe replacement for a single
+        // NULLS NOT DISTINCT index (PG15+ syntax, unsupported on AP's pinned Postgres 14, and not
+        // expressible in TypeORM). Shared catalog (platformId IS NULL) dedupes on the object key.
         {
-            name: 'uq_tsi_object',
+            name: 'uq_tsi_object_shared',
+            columns: ['pieceName', 'objectKind', 'objectName', 'modelVersion'],
+            unique: true,
+            where: '"platformId" IS NULL',
+        },
+        {
+            name: 'uq_tsi_object_tenant',
             columns: ['pieceName', 'objectKind', 'objectName', 'platformId', 'modelVersion'],
             unique: true,
+            where: '"platformId" IS NOT NULL',
         },
         {
             name: 'idx_tsi_filters',

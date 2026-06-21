@@ -40,12 +40,19 @@ export class AddToolSearchIndexTable1796000000000 implements Migration {
             )
         `)
 
-        // NULLS NOT DISTINCT so shared-catalog rows ("platformId" IS NULL) still dedupe on the
-        // object key — without it Postgres treats every NULL as distinct and the reindex
-        // upsert's ON CONFLICT would never fire for official pieces, producing duplicates.
+        // Two partial unique indexes give the same dedupe semantics as a single NULLS NOT DISTINCT
+        // index, but without the PG15+ syntax (AP pins Postgres 14 — pgvector/pgvector:0.8.0-pg14 in
+        // docker-compose.yml — where NULLS NOT DISTINCT is a syntax error). They are also expressible
+        // in the TypeORM entity (synchronize path), so both table-creation paths build the same shape.
+        // Shared catalog ("platformId" IS NULL): dedupe official pieces on the object key.
         await queryRunner.query(`
-            CREATE UNIQUE INDEX IF NOT EXISTS "uq_tsi_object" ON "tool_search_index"
-            ("pieceName", "objectKind", "objectName", "platformId", "modelVersion") NULLS NOT DISTINCT
+            CREATE UNIQUE INDEX IF NOT EXISTS "uq_tsi_object_shared" ON "tool_search_index"
+            ("pieceName", "objectKind", "objectName", "modelVersion") WHERE "platformId" IS NULL
+        `)
+        // Tenant custom pieces ("platformId" set): dedupe within a platform.
+        await queryRunner.query(`
+            CREATE UNIQUE INDEX IF NOT EXISTS "uq_tsi_object_tenant" ON "tool_search_index"
+            ("pieceName", "objectKind", "objectName", "platformId", "modelVersion") WHERE "platformId" IS NOT NULL
         `)
 
         // B-tree to pre-narrow the exact cosine scan under filters. NO ANN/HNSW index at ~6k rows.

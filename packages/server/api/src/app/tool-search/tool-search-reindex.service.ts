@@ -110,13 +110,20 @@ function buildRecord(params: BuildRecordParams): DesiredRecord {
 }
 
 async function upsertRow(record: DesiredRecord, embedding: number[], modelVersion: string): Promise<void> {
+    // Match the partial unique index for this row's tenancy: shared catalog rows (platformId IS NULL)
+    // arbitrate on uq_tsi_object_shared, tenant rows on uq_tsi_object_tenant. The ON CONFLICT predicate
+    // must equal the index predicate for inference to pick it. (Replaces a single NULLS NOT DISTINCT
+    // arbiter, which is PG15+ syntax — AP pins Postgres 14.)
+    const conflictTarget = isNil(record.platformId)
+        ? '("pieceName", "objectKind", "objectName", "modelVersion") WHERE "platformId" IS NULL'
+        : '("pieceName", "objectKind", "objectName", "platformId", "modelVersion") WHERE "platformId" IS NOT NULL'
     await databaseConnection().query(
         `INSERT INTO "tool_search_index" (
             "id", "objectKind", "pieceName", "pieceVersion", "objectName", "displayName",
             "retrievalDoc", "audience", "requiresConnection", "categories", "modelVersion",
             "embeddingInputHash", "embedding", "platformId"
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::varchar[], $11, $12, $13::vector, $14)
-        ON CONFLICT ("pieceName", "objectKind", "objectName", "platformId", "modelVersion")
+        ON CONFLICT ${conflictTarget}
         DO UPDATE SET
             "pieceVersion" = EXCLUDED."pieceVersion",
             "displayName" = EXCLUDED."displayName",
