@@ -384,6 +384,7 @@ import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
+import { AddAutumnBillingColumnsToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddAutumnBillingColumnsToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -783,6 +784,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddThemeColorsToPlatform1781206955649,
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
+        AddAutumnBillingColumnsToPlatformPlan1797000000000,
     ]
     return migrations
 }

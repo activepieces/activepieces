@@ -123,6 +123,18 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             })
         }
     },
+    async getAutumnCredentials(platformId: string): Promise<AutumnCredentials> {
+        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
+        return {
+            autumnCustomerId: platformPlan.autumnCustomerId,
+            autumnApiKey: platformPlan.autumnApiKey,
+        }
+    },
+    async setAutumnCredentials(params: SetAutumnCredentialsParams): Promise<void> {
+        const { platformId, autumnCustomerId, autumnApiKey } = params
+        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
+        await platformPlanRepo().save({ ...platformPlan, autumnCustomerId, autumnApiKey })
+    },
 })
 
 function getPriceIdFor(price: PRICE_NAMES): string {
@@ -189,4 +201,15 @@ async function createInitialCustomer(user: UserWithMetaInformation, platformId: 
 
 type GetBillingAmountParams = {
     subscriptionId?: string | null
+}
+
+type AutumnCredentials = {
+    autumnCustomerId: string | null
+    autumnApiKey: string | null
+}
+
+type SetAutumnCredentialsParams = {
+    platformId: string
+    autumnCustomerId: string | null
+    autumnApiKey: string | null
 }

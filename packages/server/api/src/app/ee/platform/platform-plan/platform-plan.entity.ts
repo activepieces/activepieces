@@ -7,6 +7,8 @@ import {
 
 export type PlatformPlanSchema = PlatformPlan & {
     platform: Platform
+    autumnCustomerId: string | null
+    autumnApiKey: string | null
 }
 
 export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
@@ -111,6 +113,14 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
         },
         licenseKey: {
+            type: String,
+            nullable: true,
+        },
+        autumnCustomerId: {
+            type: String,
+            nullable: true,
+        },
+        autumnApiKey: {
             type: String,
             nullable: true,
         },

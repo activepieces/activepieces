@@ -2,6 +2,9 @@ import { isNil, Nullable, PlatformUsageMetric } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits, TeamProjectsLimit } from '../../management/platform'
 import { PiecesFilterType } from '../../management/project'
+import { AUTUMN_PLAN_ID } from './autumn-catalog'
+
+export * from './autumn-catalog'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
 
@@ -101,6 +104,14 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     dedicatedWorkers: null,
     canary: false,
     customDomainsEnabled: false,
+}
+
+export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
+    ...STANDARD_CLOUD_PLAN,
+    plan: AUTUMN_PLAN_ID.FREE,
+    includedAiCredits: 100,
+    activeFlowsLimit: undefined,
+    projectsLimit: 1,
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
