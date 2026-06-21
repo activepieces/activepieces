@@ -16,10 +16,10 @@ const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 export const engineInstaller = (_log: ApLogger) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerSettings.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
-        // The egress proxy was removed, so the proxy/no-proxy engine bundles are now
-        // functionally identical; isEgressProxyEnabled() stays false in prod and selects
-        // the slimmer main-noproxy.js. Dev keeps building main.js.
-        const useProxyBundle = isDev || workerSettings.isEgressProxyEnabled()
+        // The egress proxy was removed, so the proxy/no-proxy engine bundles now build
+        // identical output. Prod uses main-noproxy.js; dev uses main.js. The two-bundle
+        // build is kept intentionally rather than collapsed.
+        const useProxyBundle = isDev
         const source = useProxyBundle ? engineExecutablePath : engineNoProxyExecutablePath
         const cache = cacheState(path)
         const { cacheHit } = await cache.getOrSetCache({
