@@ -160,12 +160,18 @@ async function embedPendingRows(embedder: ToolSearchEmbedder, scope: ReindexScop
         if (vectors.length !== batch.length) {
             throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${vectors.length}`)
         }
-        for (let i = 0; i < batch.length; i++) {
-            await databaseConnection().query(
-                'UPDATE "tool_search_index" SET "embedding" = $1::vector, "updated" = now() WHERE "id" = $2',
-                [`[${vectors[i].join(',')}]`, batch[i].id],
-            )
-        }
+        // Write the whole batch back in one round-trip via UNNEST rather than one UPDATE per row — the
+        // embed call is already batched, so the writeback should be too (was N round-trips per batch).
+        // No RETURNING, so the affected count is just batch.length.
+        const ids = batch.map((row) => row.id)
+        const vectorLiterals = vectors.map((vector) => `[${vector.join(',')}]`)
+        await databaseConnection().query(
+            `UPDATE "tool_search_index" AS tsi
+             SET "embedding" = v.embedding::vector, "updated" = now()
+             FROM (SELECT unnest($1::text[]) AS id, unnest($2::text[]) AS embedding) v
+             WHERE tsi."id" = v.id`,
+            [ids, vectorLiterals],
+        )
         embedded += batch.length
     }
     return embedded
