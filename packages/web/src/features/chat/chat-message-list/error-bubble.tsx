@@ -1,4 +1,5 @@
-import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
+import { ChatUIResponse } from '@activepieces/shared';
 import { BotIcon, CircleX, RotateCcw } from 'lucide-react';
 import React from 'react';
 

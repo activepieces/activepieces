@@ -2,7 +2,7 @@ import { tarventAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, tarventCommon } from '../common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const createAudienceGroup = createAction({
   auth: tarventAuth,
@@ -38,8 +38,8 @@ export const createAudienceGroup = createAction({
     const { audienceId, name, description, isPublic } = context.propsValue;
 
     await propsValidation.validateZod(context.propsValue, {
-      name: z.string().min(1).max(100, 'Name has to be less than 100 characters.'),
-      description: z.string().min(1).max(255, 'Description has to be less than 255 characters.'),
+      name: z.string().check(z.minLength(1), z.maxLength(100, 'Name has to be less than 100 characters.')),
+      description: z.string().check(z.minLength(1), z.maxLength(255, 'Description has to be less than 255 characters.')),
     });
 
     const client = makeClient(context.auth);

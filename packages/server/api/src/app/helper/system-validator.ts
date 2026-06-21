@@ -1,5 +1,6 @@
 import { inspect } from 'util'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'

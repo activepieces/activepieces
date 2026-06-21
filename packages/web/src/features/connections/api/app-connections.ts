@@ -1,3 +1,4 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   AppConnectionOwners,
   AppConnectionWithoutSensitiveData,
@@ -6,7 +7,6 @@ import {
   ListAppConnectionOwnersRequestQuery,
   ListAppConnectionsRequestQuery,
   ReplaceAppConnectionsRequestBody,
-  SeekPage,
   UpdateConnectionValueRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';

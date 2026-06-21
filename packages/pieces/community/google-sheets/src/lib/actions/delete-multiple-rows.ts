@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 
@@ -51,7 +51,7 @@ export const deleteMultipleRowsAction = createAction({
 
 		const numericSheetId = sheetId as number;
 		const authClient = await createGoogleClient(auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const deletionRanges = buildDeletionRanges({ mode, startingRow, endingRow, rowNumbers });
 

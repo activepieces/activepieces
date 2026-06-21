@@ -2,7 +2,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { youtubeNewVideoTrigger } from './lib/triggers/new-video.trigger';
 import { youtubeAuth } from './lib/common/auth';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';

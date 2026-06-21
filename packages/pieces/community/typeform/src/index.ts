@@ -4,7 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { typeformNewSubmission } from './lib/trigger/new-submission';
 
 export const typeformAuth = PieceAuth.OAuth2({

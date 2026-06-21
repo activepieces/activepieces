@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addRecipientsAction } from "./lib/actions/add-recipients";
 import { countEmailsAction } from "./lib/actions/count-emails";
 import { createLeadAction } from "./lib/actions/create-lead";

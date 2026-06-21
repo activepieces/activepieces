@@ -12,7 +12,7 @@ import { getContactDetails } from './lib/actions/get-contact-details';
 import { newLead } from './lib/triggers/new-lead';
 import { newPayment } from './lib/triggers/new-payment';
 import { newSubscription } from './lib/triggers/new-subscription';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { upgradechatAuth } from './lib/auth';
 
 const markdownDescription = `

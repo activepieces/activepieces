@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, PieceAuth } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { SAVVYCAL_BASE_URL } from './common';
 

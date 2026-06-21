@@ -1,7 +1,7 @@
 import { weblingAuth } from '../auth';
 import { createAction, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { getCalendars, getEventsById } from '../common/helpers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const eventsById = createAction({
@@ -56,7 +56,7 @@ export const eventsById = createAction({
       configValue.propsValue;
 
     await propsValidation.validateZod(configValue.propsValue, {
-      eventIds: z.string().regex(/^\d+(,\d+)*$/),
+      eventIds: z.string().check(z.regex(/^\d+(,\d+)*$/)),
     });
 
     const events = await getEventsById(configValue.auth, eventIds);

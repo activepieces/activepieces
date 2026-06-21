@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { dubAuth } from '../auth';
 
 export const linkClicked = createTrigger({

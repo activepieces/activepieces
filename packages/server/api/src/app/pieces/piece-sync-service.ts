@@ -1,5 +1,6 @@
+import { groupBy, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
+import { PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'

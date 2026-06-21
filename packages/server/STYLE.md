@@ -131,7 +131,7 @@ Rules of thumb:
 
 ## 4. Error handling: throw `ActivepiecesError` at boundaries, use `tryCatch` for recoverable failures
 
-`@activepieces/shared` exports `tryCatch` / `tryCatchSync` (see [`try-catch.ts`](../shared/src/lib/core/common/try-catch.ts)) that turn throws into a discriminated `{ data, error }` result. Two distinct patterns, each with its place.
+`@activepieces/shared` exports `tryCatch` / `tryCatchSync` (see [`try-catch.ts`](../core/shared/src/lib/core/common/try-catch.ts)) that turn throws into a discriminated `{ data, error }` result. Two distinct patterns, each with its place.
 
 ### 4a) Unrecoverable / contract violations — throw `ActivepiecesError`
 

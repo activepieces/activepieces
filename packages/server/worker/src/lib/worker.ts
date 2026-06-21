@@ -1,23 +1,8 @@
 import { createServer } from 'http'
 import os from 'os'
+import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    ConsumeJobRequest,
-    createRpcClient,
-    EngineResponseStatus,
-    ExecutionMode,
-    isNil,
-    JobData,
-    SandboxInformation,
-    spreadIfDefined,
-    tryCatch,
-    WebsocketServerEvent,
-    WorkerMachineHealthcheckRequest,
-    WorkerProps,
-    WorkerSettingsResponse,
-    WorkerToApiContract,
-} from '@activepieces/shared'
+import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -147,6 +132,7 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
     const proxyPort = egressStack?.proxyPort ?? null
+    workerSettings.setEgressProxy(proxyPort)
     sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, proxyPort }))
 
     logger.info({ concurrency }, 'Starting polling workers')

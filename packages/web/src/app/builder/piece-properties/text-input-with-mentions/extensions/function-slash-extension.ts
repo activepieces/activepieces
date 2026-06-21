@@ -1,4 +1,4 @@
-import { ApFunction } from '@activepieces/shared';
+import { ApFunction } from '@activepieces/core-formula';
 import { Editor, Extension } from '@tiptap/core';
 import { JSONContent } from '@tiptap/react';
 

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { ActionContext } from '../context';
 import type { OutputSchema } from '../output-schema';
 import { ActionBase, Audience, AiMetadata } from '../piece-metadata';
@@ -10,12 +10,12 @@ export type ActionRunner<PieceAuth extends PieceAuthProperty | PieceAuthProperty
 
 export const ErrorHandlingOptionsParam = z.object({
   retryOnFailure: z.object({
-    defaultValue: z.boolean().optional(),
-    hide: z.boolean().optional(),
+    defaultValue: z.optional(z.boolean()),
+    hide: z.optional(z.boolean()),
   }),
   continueOnFailure: z.object({
-    defaultValue: z.boolean().optional(),
-    hide: z.boolean().optional(),
+    defaultValue: z.optional(z.boolean()),
+    hide: z.optional(z.boolean()),
   }),
 })
 export type ErrorHandlingOptionsParam = z.infer<typeof ErrorHandlingOptionsParam>

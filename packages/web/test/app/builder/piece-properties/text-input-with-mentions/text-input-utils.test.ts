@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 
 describe('textMentionUtils.parseLabelFromMention — flattenNestedKeys', () => {
-  it('extracts the step name from the [\'output\']-nested form', () => {
+  it("extracts the step name from the ['output']-nested form", () => {
     const label = textMentionUtils.parseLabelFromMention(
       "{{flattenNestedKeys(step_1['output'], ['items'])}}",
       [],

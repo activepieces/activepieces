@@ -1,17 +1,5 @@
-import {
-    ApiKeyResponseWithValue,
-    DefaultProjectRole,
-    FlowStatus,
-
-    Permission,
-    Platform,
-    PlatformRole,
-    PrincipalType,
-    Project,
-    ProjectType,
-    RoleType,
-    UpdateProjectPlatformRequest,
-    User } from '@activepieces/shared'
+import { Permission, RoleType } from '@activepieces/core-utils'
+import { ApiKeyResponseWithValue, DefaultProjectRole, FlowStatus, Platform, PlatformRole, PrincipalType, Project, ProjectType, UpdateProjectPlatformRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

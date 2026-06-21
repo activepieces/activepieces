@@ -1,0 +1,20 @@
+{
+  "name": "@activepieces/core-formula",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "dayjs": "1.11.9",
+    "expr-eval": "2.0.2",
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.11.0",
+    "typescript": "5.5.4"
+  },
+  "typings": "./dist/src/index.d.ts"
+}

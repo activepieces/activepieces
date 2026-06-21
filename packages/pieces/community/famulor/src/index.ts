@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { makePhoneCall } from "./lib/actions/make-phone-call";
 import { phoneCallEnded } from "./lib/triggers/phone-call-ended";
 import { conversationEnded } from "./lib/triggers/conversation-ended";

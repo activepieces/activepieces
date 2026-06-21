@@ -10,7 +10,7 @@ import { linkHit } from './lib/triggers/link-hit';
 import { smsReceived } from './lib/triggers/sms-received';
 import { smsSent } from './lib/triggers/sms-sent';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const kudosity = createPiece({
   displayName: 'Kudosity',

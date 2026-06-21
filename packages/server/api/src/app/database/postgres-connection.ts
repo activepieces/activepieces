@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { isNil, spreadIfDefined } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -383,7 +383,8 @@ import { AddVariableTable1793000000000 } from './migration/postgres/179300000000
 import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
-import { AddToolSearchIndexTable1796000000000 } from './migration/postgres/1796000000000-AddToolSearchIndexTable'
+import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
+import { AddToolSearchIndexTable1797000000000 } from './migration/postgres/1797000000000-AddToolSearchIndexTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -782,7 +783,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDataManipulationEnabledToPlatformPlan1794000000000,
         AddThemeColorsToPlatform1781206955649,
         AddExternalIdToFolder1795000000000,
-        AddToolSearchIndexTable1796000000000,
+        AddPieceSelectorConfigToPlatform1796000000000,
+        AddToolSearchIndexTable1797000000000,
     ]
     return migrations
 }

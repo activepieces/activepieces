@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { confluenceAuth } from '../auth';
 import { confluenceApiCall } from '../common';
 
@@ -45,7 +45,7 @@ export const searchPagesAction = createAction({
 		const { cql, maxResults, expand } = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			maxResults: z.number().min(1).max(1000),
+			maxResults: z.number().check(z.minimum(1), z.maximum(1000)),
 		});
 
 		const all: unknown[] = [];

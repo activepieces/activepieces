@@ -2,7 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { sendTransactionalEmail } from './lib/actions/send-email';
 import { trackEvent } from './lib/actions/track-event';
 import { getContacts } from './lib/actions/get-contacts';

@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { countAction } from './lib/actions/count-subscriber';
 import { createCampaignAction } from './lib/actions/create-campaign';
 import { deleteAction } from './lib/actions/delete-subscriber';

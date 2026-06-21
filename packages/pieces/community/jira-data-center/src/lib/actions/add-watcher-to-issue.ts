@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { jiraDataCenterAuth } from '../../auth';
 import { getUsersDropdown, issueIdOrKeyProp } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { jiraApiCall } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 

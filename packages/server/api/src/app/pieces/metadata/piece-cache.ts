@@ -1,4 +1,5 @@
-import { ApEnvironment, isNil, PieceType } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApEnvironment, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'

@@ -5,7 +5,7 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE } from '../common/constants';
 import {
 	getDefaultPropertiesForObject,

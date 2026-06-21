@@ -6,7 +6,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { generateAiImageSchema } from '../schemas';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const generateAiImage = createAction({
   auth: vadooAiAuth,

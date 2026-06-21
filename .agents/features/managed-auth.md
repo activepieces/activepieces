@@ -8,7 +8,7 @@ Managed Auth (also called "Embedding" or "Managed Authentication") enables SaaS 
 - `packages/server/api/src/app/ee/managed-authn/managed-authn-controller.ts` — single `POST /external-token` endpoint
 - `packages/server/api/src/app/ee/managed-authn/managed-authn-service.ts` — orchestration: token extraction, user/project provisioning, token issuance
 - `packages/server/api/src/app/ee/managed-authn/lib/external-token-extractor.ts` — JWT verification using the platform's signing key; parses v1/v2/v3 token payloads
-- `packages/shared/src/lib/ee/managed-authn/managed-authn-requests.ts` — `ManagedAuthnRequestBody` schema
+- `packages/core/shared/src/lib/ee/managed-authn/managed-authn-requests.ts` — `ManagedAuthnRequestBody` schema
 - `packages/web/src/features/authentication/api/managed-auth-api.ts` — frontend API client (used by embed SDK integration)
 
 ## Edition Availability

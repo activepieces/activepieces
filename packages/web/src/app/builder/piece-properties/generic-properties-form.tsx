@@ -1,13 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   OAuth2Props,
   PiecePropertyMap,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-import {
-  isNil,
-  PropertyExecutionType,
-  PropertySettings,
-} from '@activepieces/shared';
+import { PropertyExecutionType, PropertySettings } from '@activepieces/shared';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 

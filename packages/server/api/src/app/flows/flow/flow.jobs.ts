@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'

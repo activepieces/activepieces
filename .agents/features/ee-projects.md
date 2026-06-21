@@ -9,11 +9,11 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - `packages/server/api/src/app/ee/project-role/` — default and custom role management
 - `packages/server/api/src/app/ee/project-release/` — release creation, diff, apply
 - `packages/server/api/src/app/ee/git-sync/` — SSH repo push/pull
-- `packages/shared/src/lib/ee/project-members/project-member.ts` — `ProjectMember` type
-- `packages/shared/src/lib/ee/project-members/project-member-request.ts` — list/update request DTOs
-- `packages/shared/src/lib/automation/project-release/project-release.ts` — `ProjectRelease` type
-- `packages/shared/src/lib/automation/project-release/project-release.request.ts` — release request DTOs
-- `packages/shared/src/lib/automation/project-release/project-state.ts` — `ProjectSyncPlan`
+- `packages/core/shared/src/lib/ee/project-members/project-member.ts` — `ProjectMember` type
+- `packages/core/shared/src/lib/ee/project-members/project-member-request.ts` — list/update request DTOs
+- `packages/core/shared/src/lib/automation/project-release/project-release.ts` — `ProjectRelease` type
+- `packages/core/shared/src/lib/automation/project-release/project-release.request.ts` — release request DTOs
+- `packages/core/shared/src/lib/automation/project-release/project-state.ts` — `ProjectSyncPlan`
 - `packages/web/src/features/members/api/project-members-api.ts` — `projectMembersApi`
 - `packages/web/src/features/members/hooks/project-members-hooks.ts` — `projectMembersHooks`
 - `packages/web/src/features/members/hooks/user-invitations-hooks.ts` — `userInvitationsHooks`

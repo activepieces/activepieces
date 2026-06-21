@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createVideo } from './lib/actions/create-video';
 import { vidlab7Auth } from './lib/common/auth';
 

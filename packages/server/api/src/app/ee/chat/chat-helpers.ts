@@ -1,15 +1,5 @@
-import {
-    ACTIVEPIECES_CHAT_TIERS,
-    ActivepiecesError,
-    AIProviderName,
-    ChatConversationStatus,
-    DEFAULT_CHAT_TIER_ID,
-    ErrorCode,
-    GetProviderConfigResponse,
-    isNil,
-    Project,
-    ProjectType,
-} from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetProviderConfigResponse, Project, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'

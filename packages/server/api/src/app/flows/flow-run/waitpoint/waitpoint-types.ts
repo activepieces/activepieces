@@ -1,4 +1,5 @@
-import { ApId, FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
+import { ApId } from '@activepieces/core-utils'
+import { FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
 
 enum WaitpointStatus {
     PENDING = 'PENDING',

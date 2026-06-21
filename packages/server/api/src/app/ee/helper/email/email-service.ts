@@ -1,4 +1,5 @@
-import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
+import { AlertChannel, ApEdition, BADGES, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { domainHelper } from '../../../helper/domain-helper'

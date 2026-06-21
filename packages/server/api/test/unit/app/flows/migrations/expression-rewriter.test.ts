@@ -382,19 +382,19 @@ describe('expressionRewriter.rewriteStepReferences', () => {
     // brace-counting tokenizer must keep these intact.
     describe('O. `}}` inside the token (brace-counting tokenizer)', () => {
         it('O1. string literal containing {{ }} does not truncate the token', () => {
-            expect(rewrite("{{step_1.tpl.replace('{{x}}', step_2.y)}}", ['step_1', 'step_2']))
-                .toBe("{{step_1['output'].tpl.replace('{{x}}', step_2['output'].y)}}")
+            expect(rewrite('{{step_1.tpl.replace(\'{{x}}\', step_2.y)}}', ['step_1', 'step_2']))
+                .toBe('{{step_1[\'output\'].tpl.replace(\'{{x}}\', step_2[\'output\'].y)}}')
         })
         it('O2. bracket key containing }} still rewrites the step ref', () => {
-            expect(rewrite("{{ JSON.parse(step_1.raw)['{{k}}'] }}", ['step_1']))
-                .toBe("{{ JSON.parse(step_1['output'].raw)['{{k}}'] }}")
+            expect(rewrite('{{ JSON.parse(step_1.raw)[\'{{k}}\'] }}', ['step_1']))
+                .toBe('{{ JSON.parse(step_1[\'output\'].raw)[\'{{k}}\'] }}')
         })
         it('O3. nested object literal with adjacent closing braces', () => {
             expect(rewrite('{{ {a: step_1.b} }}', ['step_1']))
                 .toBe('{{ {a: step_1[\'output\'].b} }}')
         })
         it('O4. string literal with }} and no step ref is left alone', () => {
-            expect(rewrite("{{ 'ends with }}' }}", ['step_1'])).toBe("{{ 'ends with }}' }}")
+            expect(rewrite('{{ \'ends with }}\' }}', ['step_1'])).toBe('{{ \'ends with }}\' }}')
         })
     })
 })

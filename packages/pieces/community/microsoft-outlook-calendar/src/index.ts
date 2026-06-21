@@ -5,7 +5,7 @@ import {
   OAuth2PropertyValue,
   PieceAuth,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createEventAction } from './lib/actions/create-event';
 import { deleteEventAction } from './lib/actions/delete-event';
 import { listEventsAction } from './lib/actions/list-events';

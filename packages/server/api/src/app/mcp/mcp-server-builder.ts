@@ -1,4 +1,5 @@
-import { FlowStatus, isNil, McpProperty, McpPropertyType, McpToolDefinition, mcpToolNameUtils, McpTrigger, Permission, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowStatus, McpProperty, McpPropertyType, McpToolDefinition, mcpToolNameUtils, McpTrigger, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'

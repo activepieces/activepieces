@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { lokaliseAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createComment } from './lib/actions/create-comment';
 import { createProject } from './lib/actions/create-project';
 import { createKey } from './lib/actions/create-key';
