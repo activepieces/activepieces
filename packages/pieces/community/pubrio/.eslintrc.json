@@ -20,7 +20,8 @@
               "lodash/*",
               "@activepieces/core-*",
               "@activepieces/server*",
-              "@activepieces/engine"
+              "@activepieces/engine",
+              "@activepieces/shared"
             ]
           }
         ]

@@ -1,7 +1,7 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { PopulatedRecord, UpdateRecordRequest } from '@activepieces/shared';
+import { PopulatedRecord, UpdateRecordRequest } from '@activepieces/pieces-framework';
 
 export const updateRecord = createAction({
   audience: 'human',

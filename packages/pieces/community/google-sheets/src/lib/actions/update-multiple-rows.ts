@@ -14,7 +14,7 @@ import {
   ValueInputOption,
 } from '../common/common';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { isString } from '@activepieces/shared';
+import { isString } from '@activepieces/pieces-framework';
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
 import { commonProps } from '../common/props';

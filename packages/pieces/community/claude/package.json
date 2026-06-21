@@ -6,7 +6,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "@anthropic-ai/sdk": "0.39.0",
     "ajv": "8.18.0",
     "mime-types": "2.1.35",

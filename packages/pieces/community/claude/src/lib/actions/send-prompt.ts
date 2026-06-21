@@ -10,7 +10,7 @@ import { TextBlock } from '@anthropic-ai/sdk/resources';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { spreadIfDefined } from '@activepieces/shared';
+import { spreadIfDefined } from '@activepieces/pieces-framework';
 import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({

@@ -6,7 +6,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "@google/genai": "1.29.0",
     "@google/generative-ai": "0.21.0",
     "mime-types": "2.1.35",

@@ -11,7 +11,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "@opentelemetry/api": "1.9.0",
     "dayjs": "1.11.9",
     "form-data": "4.0.4",

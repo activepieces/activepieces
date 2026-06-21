@@ -4,7 +4,7 @@ import {
     TriggerStrategy,
   } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
-import { McpProperty, McpPropertyType } from '@activepieces/shared';
+import { McpProperty, McpPropertyType } from '@activepieces/pieces-framework';
 
 
 export const mcpTool = createTrigger({

@@ -6,7 +6,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "@googleapis/drive": "20.2.0",
     "google-auth-library": "10.5.0",
     "tslib": "2.6.2",

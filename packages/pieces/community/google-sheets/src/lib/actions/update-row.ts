@@ -3,7 +3,7 @@ import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueIn
 import { googleSheetsAuth } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheets as googleSheets } from '@googleapis/sheets';
-import {  isString } from '@activepieces/shared';
+import {  isString } from '@activepieces/pieces-framework';
 import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
 
 export const updateRowAction = createAction({

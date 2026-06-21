@@ -6,7 +6,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "jsonwebtoken": "9.0.1",
     "playwright": "1.56.0",
     "tslib": "2.6.2",

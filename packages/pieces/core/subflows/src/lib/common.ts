@@ -1,4 +1,4 @@
-import { FlowTriggerType, isNil, PopulatedFlow } from "@activepieces/shared";
+import { FlowTriggerType, isNil, PopulatedFlow } from "@activepieces/pieces-framework";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 
 

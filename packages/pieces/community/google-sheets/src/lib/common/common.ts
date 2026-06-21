@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { AppConnectionType } from '@activepieces/pieces-framework';
-import { isString } from '@activepieces/shared';
+import { isString } from '@activepieces/pieces-framework';
 import { JWT, OAuth2Client } from 'google-auth-library';
 import { mapRowsToColumnLabels } from '../triggers/helpers';
 

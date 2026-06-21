@@ -11,7 +11,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "deep-equal": "2.2.2",
     "zod": "4.3.6",
     "tslib": "2.6.2",

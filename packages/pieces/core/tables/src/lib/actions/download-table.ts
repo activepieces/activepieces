@@ -9,7 +9,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { ExportTableResponse } from '@activepieces/shared';
+import { ExportTableResponse } from '@activepieces/pieces-framework';
 
 export const downloadTable = createAction({
   audience: 'human',

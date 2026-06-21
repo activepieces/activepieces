@@ -1,7 +1,7 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from '@activepieces/shared';
+import { AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from '@activepieces/pieces-framework';
 
 type AIModelType = 'text' | 'image';
 

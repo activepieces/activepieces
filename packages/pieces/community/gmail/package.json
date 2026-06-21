@@ -6,7 +6,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "@googleapis/gmail": "17.0.0",
     "@googleapis/oauth2": "5.0.1",
     "dayjs": "1.11.9",

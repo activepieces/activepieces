@@ -7,7 +7,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "hume": "^0.15.6",
     "tslib": "^2.3.0",
     "@activepieces/core-piece-types": "workspace:*",

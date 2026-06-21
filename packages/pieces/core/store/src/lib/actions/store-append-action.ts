@@ -9,7 +9,7 @@ import {
 import { common, getScopeAndKey, PieceStoreScope } from './common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 async function executeStorageAppend(context: ActionContext<PieceAuthProperty | undefined, {
   key: ShortTextProperty<true>;

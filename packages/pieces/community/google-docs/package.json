@@ -6,7 +6,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "@googleapis/docs": "9.3.0",
     "@googleapis/drive": "20.2.0",
     "dayjs": "1.11.9",

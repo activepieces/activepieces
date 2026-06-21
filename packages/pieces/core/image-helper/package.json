@@ -6,7 +6,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "exifreader": "4.20.0",
     "jimp": "^0.22.12",
     "mime-types": "2.1.35",

@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil } from '@activepieces/pieces-framework';
 import { AgentToolType } from '@activepieces/pieces-framework';
-import { AgentResult, AgentStepBlock, AgentTaskStatus, AgentTool, ContentBlockType, ExecutionToolStatus, MarkdownContentBlock, ToolCallBase, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared';
+import { AgentResult, AgentStepBlock, AgentTaskStatus, AgentTool, ContentBlockType, ExecutionToolStatus, MarkdownContentBlock, ToolCallBase, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/pieces-framework';
 
 export const agentOutputBuilder = (prompt: string) => {
   let status: AgentTaskStatus = AgentTaskStatus.IN_PROGRESS;

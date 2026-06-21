@@ -4,7 +4,7 @@ import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
 import { isNil } from '@activepieces/pieces-framework';
 import { AgentToolType } from '@activepieces/pieces-framework';
-import { AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, buildAuthHeaders, isString, KnowledgeBaseSourceType, McpProtocol, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared';
+import { AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, buildAuthHeaders, isString, KnowledgeBaseSourceType, McpProtocol, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from '@activepieces/pieces-framework';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
 import { ProviderOptions } from "@ai-sdk/provider-utils";
