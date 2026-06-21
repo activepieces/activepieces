@@ -6,7 +6,7 @@ import { conversationIdProp } from '../common/props';
 export const assignConversationAction = createAction({
 	auth: intercomAuth,
 	name: 'assignConversationAction',
-	displayName: 'Assign conversation to an admin or a team',
+	displayName: 'Assign Conversation to an Admin or a Team',
 	description: '(Re)assign conversation to a specific admin or team.',
 	audience: 'both',
 	aiMetadata: { description: 'Reassign an existing conversation to a specific admin or team by assignee ID, optionally with a message body. Reapplying the same assignee converges on the same state so it is effectively idempotent, though each call logs an assignment part. The assignee ID must be a valid admin or team ID.', idempotent: true },

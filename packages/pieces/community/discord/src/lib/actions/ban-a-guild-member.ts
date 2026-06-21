@@ -13,7 +13,7 @@ export const discordBanGuildMember = createAction({
   description: 'Bans a guild member',
   audience: 'both',
   aiMetadata: { description: 'Bans a user from a guild, identified by guild ID and user ID, with an optional audit-log reason; this removes them and blocks rejoining until unbanned. Use to permanently remove a disruptive user. Requires the bot to have Ban Members permission; idempotent, since re-banning an already-banned user yields the same end state.', idempotent: true },
-  displayName: 'Ban guild member',
+  displayName: 'Ban Guild Member',
   props: {
     guild_id: discordCommon.guilds,
     user_id: Property.ShortText({

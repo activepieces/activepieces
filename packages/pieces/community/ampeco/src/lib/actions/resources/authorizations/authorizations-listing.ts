@@ -13,7 +13,7 @@ import { AuthorizationsListingResponse } from '../../../models/responses';
 export const authorizationsListingAction = createAction({
   auth: ampecoAuth,
   name: 'authorizationsListing',
-  displayName: 'Resources - Authorizations - Authorizations Listing',
+  displayName: 'List Authorizations',
   description: 'Get all authorizations.',
   audience: 'both',
   aiMetadata: { description: 'List AMPECO authorization records (EV charging access requests), optionally filtered by status (accepted/rejected/pending), method, partner, or created/updated date range. Read-only and idempotent. Enable pagination to retrieve all matches across pages. Use this to discover authorizations before reading one by ID.', idempotent: true },

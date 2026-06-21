@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const subscriptionPlanReplaceAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionPlanReplace',
-  displayName: 'Actions - Subscription Plans - Replace',
+  displayName: 'Replace Subscription Plan',
   description: 'Replace a subscription plan with another one.',
   audience: 'both',
   aiMetadata: { description: 'Replace one subscription plan with a different plan across all tariff restrictions and charge points that reference the old plan, optionally scheduled for a future date (immediate if left empty). A reason note is required for change tracking. Not idempotent: each call records a new replacement and applies the swap.', idempotent: false },

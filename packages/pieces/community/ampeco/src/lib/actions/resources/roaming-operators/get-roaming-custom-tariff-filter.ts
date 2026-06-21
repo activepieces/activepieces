@@ -13,7 +13,7 @@ import { GetRoamingCustomTariffFilterResponse } from '../../../models/responses'
 export const getRoamingCustomTariffFilterAction = createAction({
   auth: ampecoAuth,
   name: 'getRoamingCustomTariffFilter',
-  displayName: 'Resources - Roaming Operators - Get Roaming Custom Tariff Filter',
+  displayName: 'Get Roaming Custom Tariff Filter',
   description: 'Get a specific custom tariff filter.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single custom tariff filter for a roaming operator by the roaming operator ID and the filter ID. Read-only and idempotent. Pick this when you already have both IDs; otherwise list the filters first to find the filter ID.', idempotent: true },

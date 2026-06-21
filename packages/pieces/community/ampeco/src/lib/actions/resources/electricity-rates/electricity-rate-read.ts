@@ -13,7 +13,7 @@ import { ElectricityRateReadResponse } from '../../../models/responses';
 export const electricityRateReadAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateRead',
-  displayName: 'Resources - Electricity Rates - Read',
+  displayName: 'Get Electricity Rate',
   description: 'Get a single Electricity rate.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve one electricity rate from AMPECO by its numeric id, including its name, default price, tax and utility. Read-only and safe to repeat. Use when you have a specific rate id; to discover ids, list rates instead.', idempotent: true },

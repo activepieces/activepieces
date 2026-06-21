@@ -5,7 +5,7 @@ import { talkableAuth } from '../../..';
 export const unsubscribePerson = createAction({
   name: 'unsubscribe_person', // Must be a unique across the piece, this shouldn't be changed.
   auth: talkableAuth,
-  displayName: 'Unsubscribe person',
+  displayName: 'Unsubscribe Person',
   description: 'Unsubscribe person by email',
   audience: 'both',
   aiMetadata: { description: 'Mark a Talkable person, identified by email, as unsubscribed from referral/marketing communications. Use to honor an opt-out request. Idempotent: an already-unsubscribed person stays unsubscribed with no extra effect; the email is required.', idempotent: true },

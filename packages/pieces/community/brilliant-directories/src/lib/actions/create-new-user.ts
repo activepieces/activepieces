@@ -6,7 +6,7 @@ import { parseDirectoryURL } from '../common/brilliant-directories-common';
 export const createNewUser = createAction({
   name: 'create_new_user',
   auth: brilliantDirectoriesAuth,
-  displayName: 'Create new User',
+  displayName: 'Create New User',
   description: 'Creates a new user in your brilliant directories site',
   audience: 'both',
   aiMetadata: { description: 'Registers a new member account on a Brilliant Directories site via the v2 user/create API. Use to onboard a member when you have their email, password, and a subscription ID that maps to a membership plan; extra profile fields can be passed through the Meta object. Not idempotent — each call creates a new account, so calling twice with the same email may produce a duplicate or fail.', idempotent: false },

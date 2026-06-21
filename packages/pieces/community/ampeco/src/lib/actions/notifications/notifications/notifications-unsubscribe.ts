@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const notificationsUnsubscribeAction = createAction({
   auth: ampecoAuth,
   name: 'notificationsUnsubscribe',
-  displayName: 'Notifications - V2.0 - Notifications Unsubscribe',
+  displayName: 'Unsubscribe from Notifications',
   description: 'Unsubscribe for a notification.',
   audience: 'both',
   aiMetadata: { description: 'Delete (unsubscribe) an AMPECO notification subscription by its identifier, stopping further webhook/kafka delivery. Effectively idempotent on the target but destructive, so confirm the subscription ID before running.', idempotent: true },

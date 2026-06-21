@@ -19,7 +19,7 @@ import { ChargePointModelsListingResponse } from '../../../models/responses';
 export const chargePointModelsListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointModelsListing',
-  displayName: 'Resources - Charge Point Models - Listing',
+  displayName: 'List Charge Point Models',
   description: 'Get all Charge Point Models.',
   audience: 'both',
   aiMetadata: { description: 'List charge point models, optionally filtered by vendor ID. Read-only and idempotent. Enable the pagination option to fetch all models across pages; otherwise one page (up to per_page) is returned. Use this to discover a model ID before reading, updating, or deleting a specific model.', idempotent: true },

@@ -13,7 +13,7 @@ import { ChargePointEvsesListingResponse } from '../../../models/responses';
 export const chargePointEvsesListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvsesListing',
-  displayName: 'Resources - Charge Points - Charge Point Evses Listing',
+  displayName: 'List Charge Point EVSEs',
   description: 'Get all EVSEs of the Charge Point.',
   audience: 'both',
   aiMetadata: { description: 'List the EVSEs (charging units) belonging to a given charge point, optionally including related charging profile or connector data. Read-only and idempotent; enable Paginate Results to fetch every page, or leave it off for a single page (up to per_page, max 100). Use to discover an EVSE ID before updating it.', idempotent: true },

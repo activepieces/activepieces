@@ -8,7 +8,7 @@ export const webflowDeleteCollectionItem = createAction({
 	auth: webflowAuth,
 	name: 'delete_collection_item',
 	description: 'Delete collection item',
-	displayName: 'Delete an item in a collection',
+	displayName: 'Delete an Item in a Collection',
 	audience: 'both',
 	aiMetadata: { description: 'Permanently deletes a single item from a Webflow CMS collection, identified by collection ID and item ID. Use when an agent needs to remove existing CMS content. Repeating the call after the item is gone has no further effect, so it is effectively idempotent on the same item ID.', idempotent: true },
 	props: {

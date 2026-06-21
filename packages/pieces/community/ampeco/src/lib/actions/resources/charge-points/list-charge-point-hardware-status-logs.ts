@@ -20,7 +20,7 @@ export const listChargePointHardwareStatusLogsAction = createAction({
   auth: ampecoAuth,
   name: 'listChargePointHardwareStatusLogs',
   displayName:
-    'Resources - Charge Points - List Charge Point Hardware Status Logs',
+    'List Charge Point Hardware Status Logs',
   description:
     'Get paginated list of hardware status logs for a charge point with optional date filtering.',
   audience: 'both',

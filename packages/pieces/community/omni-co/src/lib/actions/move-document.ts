@@ -7,7 +7,7 @@ import { documentIdDropdown } from '../common/props';
 export const moveDocument = createAction({
   auth: omniAuth,
   name: 'moveDocument',
-  displayName: 'Move document',
+  displayName: 'Move Document',
   description: 'Moves a document to a new folder or to the root level',
   audience: 'both',
   aiMetadata: {

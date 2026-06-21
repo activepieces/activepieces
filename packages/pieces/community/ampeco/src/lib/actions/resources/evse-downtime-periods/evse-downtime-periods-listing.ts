@@ -13,7 +13,7 @@ import { EvseDowntimePeriodsListingResponse } from '../../../models/responses';
 export const evseDowntimePeriodsListingAction = createAction({
   auth: ampecoAuth,
   name: 'evseDowntimePeriodsListing',
-  displayName: 'Resources - Evse Downtime Periods - Listing',
+  displayName: 'List EVSE Downtime Periods',
   description: 'Get all EVSE Downtime Periods.',
   audience: 'both',
   aiMetadata: { description: 'List EVSE downtime periods with optional filters by EVSE, charge point, location, entry mode (manual/automatic), type (downtime/exempt), duration, and time windows. Read-only and safe to repeat. Enable Paginate Results to fetch all matches; to read one known period by ID use evse-downtime-period-read.', idempotent: true },

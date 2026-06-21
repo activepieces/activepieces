@@ -13,7 +13,7 @@ import { VendorErrorCodeUpdateResponse } from '../../../models/responses';
 export const vendorErrorCodeUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'vendorErrorCodeUpdate',
-  displayName: 'Resources - Vendor Error Codes - Vendor Error Code Update',
+  displayName: 'Update Vendor Error Code',
   description: 'Vendor Error Code.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing vendor error code entry (by its numeric ID), setting the vendor ID, error code, and optional description/customer-action text. Idempotent: applying the same values repeatedly leaves the entry unchanged. Use this to modify an existing mapping rather than Create (which would add a duplicate).', idempotent: true },

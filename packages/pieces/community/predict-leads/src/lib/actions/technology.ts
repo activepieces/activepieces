@@ -10,7 +10,7 @@ import { prepareQuery } from '../common/client';
 export const findTechnologiesByCompanyAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_technologies_by_domain',
-  displayName: 'List Technologies by domain',
+  displayName: 'List Technologies by Domain',
   description: 'Retrieve technologies used by specific company',
   audience: 'both',
   aiMetadata: { description: "Lists the technologies (technology detections) that a specific company uses, keyed by its domain in PredictLeads. Optional first/last-seen date filters scope detections to a time window. Use for technographic profiling of a known company; requires the company domain. Read-only and idempotent; supports pagination.", idempotent: true },

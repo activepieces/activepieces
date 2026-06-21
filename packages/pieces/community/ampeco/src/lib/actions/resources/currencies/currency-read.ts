@@ -13,7 +13,7 @@ import { CurrencyReadResponse } from '../../../models/responses';
 export const currencyReadAction = createAction({
   auth: ampecoAuth,
   name: 'currencyRead',
-  displayName: 'Resources - Currencies - Read',
+  displayName: 'Get Currency',
   description: 'Currency / Read.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single currency from AMPECO by its numeric currency id, returning its code and display/precision configuration. Read-only and idempotent. Use when you already know the id; there is no list-currencies counterpart here.', idempotent: true },

@@ -13,7 +13,7 @@ import { ChargePointShareCreateResponse } from '../../../models/responses';
 export const chargePointShareCreateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointShareCreate',
-  displayName: 'Resources - Charge Points - Charge Point Share Create',
+  displayName: 'Create Charge Point Share',
   description: 'Create new Share within the Charge Point.',
   audience: 'both',
   aiMetadata: { description: 'Grant a user access to a charge point by creating a new share, given the charge point ID and the user ID. This is a mutating create that adds a new share each call, so it is not idempotent.', idempotent: false },

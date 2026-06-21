@@ -13,7 +13,7 @@ import { TaxIdentificationNumbersListingResponse } from '../../../models/respons
 export const taxIdentificationNumbersListingAction = createAction({
   auth: ampecoAuth,
   name: 'taxIdentificationNumbersListing',
-  displayName: 'Resources - Tax Identification Numbers - Listing',
+  displayName: 'List Tax Identification Numbers',
   description: 'Get all Tax Identification Numbers.',
   audience: 'both',
   aiMetadata: { description: 'List tax identification numbers, optionally auto-paginating across all pages to gather every record. Use to browse or find a TIN; read-only and safe to retry. To fetch one known record by ID use the read action instead.', idempotent: true },

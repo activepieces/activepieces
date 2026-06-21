@@ -5,7 +5,7 @@ import { supabaseCommon } from "../common/props";
 
 export const upsertRow = createAction({
     name: 'upsert_row',
-    displayName: 'Upsert Row',
+    displayName: 'Create or Update Row',
     description: 'Insert or update a row in a table',
     audience: 'both',
     aiMetadata: { description: 'Inserts a row into a Supabase table, or updates the existing row when it collides on the specified unique conflict column. Use when you want to write a record without first checking whether it exists. Idempotent: requires a unique conflict column, and re-running with the same data converges to the same single row.', idempotent: true },

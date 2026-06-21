@@ -4,7 +4,7 @@ import { dustAuth } from '../..';
 
 export const getConversation = createAction({
   name: 'getConversation',
-  displayName: 'Get existing conversation',
+  displayName: 'Get Existing Conversation',
   description: 'Get an existing conversation',
   audience: 'both',
   aiMetadata: {

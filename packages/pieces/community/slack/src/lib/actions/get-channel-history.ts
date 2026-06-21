@@ -8,7 +8,7 @@ export const getChannelHistory = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'getChannelHistory',
   auth: slackAuth,
-  displayName: 'Get channel history',
+  displayName: 'Get Channel History',
   description:
     'Retrieve all messages from a specific channel ("conversation") between specified timestamps',
   audience: 'both',

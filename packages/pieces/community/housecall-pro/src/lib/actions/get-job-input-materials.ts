@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getJobInputMaterials = createAction({
   auth: housecallProAuth,
   name: "get_job_input_materials",
-  displayName: "Lists all job input materials for a job",
+  displayName: "Lists All Job Input Materials for a Job",
   description: "Retrieve all job input materials for a specific job",
   audience: 'both',
   aiMetadata: { description: 'Read-only: lists all input materials recorded on a Housecall Pro job, given a job ID. Use to inspect the materials/line costs logged against a known job; safe to retry. Requires the job_id and does not add or change materials.', idempotent: true },

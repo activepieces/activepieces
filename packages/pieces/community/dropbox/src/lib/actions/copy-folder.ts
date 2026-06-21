@@ -12,7 +12,7 @@ export const dropboxCopyFolder = createAction({
   description: 'Copy a folder',
   audience: 'both',
   aiMetadata: { description: 'Copies the folder at the source path, including its contents, to a new destination path within Dropbox, leaving the original in place; optionally autorenames on conflict. Use to duplicate an entire directory. Not idempotent: each call creates a copy, so repeating it errors on conflict or, with autorename, produces additional duplicates.', idempotent: false },
-  displayName: 'Copy folder',
+  displayName: 'Copy Folder',
   props: {
     from_path: Property.ShortText({
       displayName: 'From Path',

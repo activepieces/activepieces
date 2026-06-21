@@ -13,7 +13,7 @@ import { ElectricityRateUpdateResponse } from '../../../models/responses';
 export const electricityRateUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateUpdate',
-  displayName: 'Resources - Electricity Rates - Update',
+  displayName: 'Update Electricity Rate',
   description: 'Update a Electricity rate.',
   audience: 'both',
   aiMetadata: { description: 'Partially update an existing electricity rate in AMPECO, identified by its numeric id; only the supplied fields (name, utility, default price, tax) change. Targets a stable id and applying the same values repeatedly yields the same state. Use the create action to add a new rate instead.', idempotent: true },

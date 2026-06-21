@@ -13,7 +13,7 @@ import { CircuitUserPriorityReadResponse } from '../../../models/responses';
 export const circuitUserPriorityReadAction = createAction({
   auth: ampecoAuth,
   name: 'circuitUserPriorityRead',
-  displayName: 'Resources - Circuits - Circuit User Priority Read',
+  displayName: 'Get Circuit User Priority',
   description: 'Get a circuit\'s user priority.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single user-priority rule on an AMPECO load-balancing circuit, given the circuit ID and the user-priority ID. Read-only and idempotent; use the circuit user priorities listing action first to discover priority IDs.', idempotent: true },

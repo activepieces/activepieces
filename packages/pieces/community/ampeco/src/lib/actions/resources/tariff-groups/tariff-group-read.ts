@@ -12,7 +12,7 @@ import { TariffGroupReadResponse } from '../../../models/responses';
 export const tariffGroupReadAction = createAction({
   auth: ampecoAuth,
   name: 'tariffGroupRead',
-  displayName: 'Resources - Tariff Groups - Read',
+  displayName: 'Get Tariff Group',
   description: 'Get a tariff group.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO tariff group by its numeric ID, returning its name and ordered tariff list. Read-only and idempotent; use when you already have the group ID. To discover IDs first, use the tariff groups listing action.', idempotent: true },

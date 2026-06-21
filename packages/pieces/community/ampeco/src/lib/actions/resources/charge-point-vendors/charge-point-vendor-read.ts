@@ -13,7 +13,7 @@ import { ChargePointVendorReadResponse } from '../../../models/responses';
 export const chargePointVendorReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointVendorRead',
-  displayName: 'Resources - Charge Point Vendors - Read',
+  displayName: 'Get Charge Point Vendor',
   description: 'Get a Charge Point Vendor.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO charge-point vendor (manufacturer) by its numeric vendor ID. Use when you already know the vendor ID. Read-only and idempotent.', idempotent: true },

@@ -12,7 +12,7 @@ import { NotificationsListingResponse } from '../../../models/responses';
 export const notificationsListingAction = createAction({
   auth: ampecoAuth,
   name: 'notificationsListing',
-  displayName: 'Notifications - V2.0 - Notifications Listing',
+  displayName: 'List Notifications',
   description: 'Notifications / Listing',
   audience: 'both',
   aiMetadata: { description: 'List all AMPECO notification subscriptions (webhook and kafka), optionally auto-paginating across pages when Paginate Results is enabled. Read-only and idempotent. To fetch one subscription by its ID use the notification read action.', idempotent: true },

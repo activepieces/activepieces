@@ -7,7 +7,7 @@ import { makeRequest } from '../common/client';
 export const createContact = createAction({
   auth: videoaskAuth,
   name: 'createContact',
-  displayName: 'create contact',
+  displayName: 'Create Contact',
   description: 'Create a new respondent (contact)',
   audience: 'both',
   aiMetadata: { description: 'Create a new VideoAsk contact (respondent) in an organization; email is required, name and phone optional. Use when you need to register a respondent record. Not idempotent: each call creates a separate contact, with no dedup on email.', idempotent: false },

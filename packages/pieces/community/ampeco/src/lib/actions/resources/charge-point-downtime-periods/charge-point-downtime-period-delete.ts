@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const chargePointDowntimePeriodDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodDelete',
-  displayName: 'Resources - Charge Point Downtime Periods - Delete',
+  displayName: 'Delete Charge Point Downtime Period',
   description: 'Delete Manual Created Charge Point Downtime Period.',
   audience: 'both',
   aiMetadata: { description: 'Delete a manually created charge-point downtime period by its numeric ID. Only manually created periods can be removed (automatically generated ones cannot). Effectively idempotent on the target but destructive and irreversible, so confirm the ID first.', idempotent: true },

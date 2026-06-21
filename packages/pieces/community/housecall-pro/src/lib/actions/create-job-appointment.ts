@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createJobAppointment = createAction({
   auth: housecallProAuth,
   name: "create_job_appointment",
-  displayName: "Create appointment",
+  displayName: "Create Appointment",
   description: "Add an appointment to a job",
   audience: 'both',
   aiMetadata: { description: "Add a new appointment to a Housecall Pro job, specifying start/end times, the dispatched-employee list, and an optional arrival window. Not idempotent: repeated calls create duplicate appointments on the job. Use update-appointment to modify an existing appointment instead.", idempotent: false },

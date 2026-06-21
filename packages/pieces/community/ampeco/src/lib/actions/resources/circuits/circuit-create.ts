@@ -13,7 +13,7 @@ import { CircuitCreateResponse } from '../../../models/responses';
 export const circuitCreateAction = createAction({
   auth: ampecoAuth,
   name: 'circuitCreate',
-  displayName: 'Resources - Circuits - Create',
+  displayName: 'Create Circuit',
   description: 'Create a new circuit.',
   audience: 'both',
   aiMetadata: { description: 'Create a new AMPECO load-management circuit with a name, phase configuration, and max current, plus optional parent circuit (multi-level DLM), electrical configuration, and load-balancing integration. Not idempotent: each call adds another circuit, so re-running creates duplicates. Use the circuit update action to change an existing circuit instead.', idempotent: false },

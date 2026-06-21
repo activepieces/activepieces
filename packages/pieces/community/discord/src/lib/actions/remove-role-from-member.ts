@@ -13,7 +13,7 @@ export const discordRemoveRoleFromMember = createAction({
   description: 'Remove Guild Member Role',
   audience: 'both',
   aiMetadata: { description: 'Removes a role from a guild member, identified by guild ID, user ID, and role ID. Use to revoke permissions or untag a user. Requires the bot to have Manage Roles and a higher role than the target; idempotent, since removing a role the member does not have leaves them unchanged.', idempotent: true },
-  displayName: 'Remove role from member',
+  displayName: 'Remove Role from Member',
   props: {
     guild_id: discordCommon.guilds,
     user_id: Property.ShortText({

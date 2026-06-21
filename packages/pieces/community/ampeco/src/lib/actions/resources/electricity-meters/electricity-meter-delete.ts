@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const electricityMeterDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'electricityMeterDelete',
-  displayName: 'Resources - Electricity Meters - Delete',
+  displayName: 'Delete Electricity Meter',
   description: 'Delete an electricity meter.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an AMPECO electricity meter by its numeric ID. Destructive; deleting an already-removed meter returns an error rather than succeeding silently. Confirm the meter ID via the listing action first.', idempotent: false },

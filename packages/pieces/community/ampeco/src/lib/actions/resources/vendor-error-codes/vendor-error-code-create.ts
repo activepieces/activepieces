@@ -12,7 +12,7 @@ import { VendorErrorCodeCreateResponse } from '../../../models/responses';
 export const vendorErrorCodeCreateAction = createAction({
   auth: ampecoAuth,
   name: 'vendorErrorCodeCreate',
-  displayName: 'Resources - Vendor Error Codes - Vendor Error Code Create',
+  displayName: 'Create Vendor Error Code',
   description: 'Create new Vendor Error Code.',
   audience: 'both',
   aiMetadata: { description: 'Create a new vendor error code mapping from a vendor ID and error code, with optional description and recommended customer action. Not idempotent: each call adds a separate entry, so re-running produces duplicates. Use Update to change an existing mapping.', idempotent: false },

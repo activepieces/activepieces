@@ -13,7 +13,7 @@ import { CreateCurrencyRateResponse } from '../../../models/responses';
 export const createCurrencyRateAction = createAction({
   auth: ampecoAuth,
   name: 'createCurrencyRate',
-  displayName: 'Resources - Currency Rates - Create',
+  displayName: 'Create Currency Rate',
   description: 'Create new Currency Rate.',
   audience: 'both',
   aiMetadata: { description: 'Create a new AMPECO currency-rate record defining the exchange rate from a base currency to a target currency (ISO 4217 codes). Not idempotent: each call adds another rate record, so re-running can create duplicate base/target pairs. Use the update currency rate action to change the rate of an existing record.', idempotent: false },

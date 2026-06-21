@@ -13,7 +13,7 @@ import { GetConfigurationTemplateResponse } from '../../../models/responses';
 export const getConfigurationTemplateAction = createAction({
   auth: ampecoAuth,
   name: 'getConfigurationTemplate',
-  displayName: 'Resources - Configuration Templates - Get Configuration Template',
+  displayName: 'Get Configuration Template',
   description: 'Get Configuration Template.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single OCPP configuration template by its numeric id. Read-only and idempotent; use this when you already know the template id, and use List Configuration Templates to search across templates.', idempotent: true },

@@ -13,7 +13,7 @@ import { ChargePointEvseUpdateResponse } from '../../../models/responses';
 export const chargePointEvseUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvseUpdate',
-  displayName: 'Resources - Charge Points - Charge Point Evse Update',
+  displayName: 'Update Charge Point EVSE',
   description: 'Update an EVSE within the Charge Point.',
   audience: 'both',
   aiMetadata: { description: 'Update an individual EVSE within a charge point (by charge point ID and EVSE ID), changing fields such as physical reference, current type, label, status, tariff group, reservation/booking flags, and power options. Only supplied fields change; idempotent on the given values. Note roaming EVSEs only accept status/tariff changes when manual EVSE management is enabled for the CPO.', idempotent: true },

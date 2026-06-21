@@ -4,7 +4,7 @@ import { spotifyCommon, makeClient } from '../common';
 export default createAction({
   name: 'add_playlist_items',
   auth: spotifyCommon.authentication,
-  displayName: 'Add items to playlist',
+  displayName: 'Add Items to Playlist',
   description: 'Adds tracks or episodes to the playlist',
   audience: 'both',
   aiMetadata: {

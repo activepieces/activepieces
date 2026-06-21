@@ -13,7 +13,7 @@ import { SessionsListingResponse } from '../../../models/responses';
 export const sessionsListingAction = createAction({
   auth: ampecoAuth,
   name: 'sessionsListing',
-  displayName: 'Resources - Sessions - Listing',
+  displayName: 'List Sessions',
   description: 'Sessions / Listing.',
   audience: 'both',
   aiMetadata: { description: 'List AMPECO charging sessions with extensive filters (EVSE, charge point, user, status, stop reason, payment type/status, time windows, partner, and more) and optional embeds for authorization, price breakdown, and charging periods; auto-pagination is available. Use to find sessions or build usage/billing reports; for a single known session use the session read action. Read-only and idempotent.', idempotent: true },

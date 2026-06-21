@@ -5,7 +5,7 @@ import { Property, createAction } from "@activepieces/pieces-framework";
 export const readFile = createAction({
     auth: zohoCrmAuth,
     name: 'read-file',
-    displayName: 'Read file',
+    displayName: 'Read File',
     description: 'Download a file content from Zoho CRM. e.g.: a Backup File',
     audience: 'both',
     aiMetadata: { description: 'Downloads the binary content of a file from Zoho CRM (e.g. a backup or attachment) given its full URL, authenticating with the connected account, and returns it as a stored file. Use when you already hold a Zoho CRM file URL and need its bytes for a later step. Requires the complete URL including the base host; read-only, so repeating the call is safe.', idempotent: true },

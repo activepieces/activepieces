@@ -14,7 +14,7 @@ import { UpsertOptions, DurabilityLevel } from 'couchbase';
 export default createAction({
   auth: couchbaseAuth,
   name: 'upsert_document',
-  displayName: 'Upsert Document',
+  displayName: 'Create or Update Document',
   description: 'Create or update a document. Creates if it doesn\'t exist, updates if it does.',
   audience: 'both',
   aiMetadata: { description: 'Write a Couchbase document by ID, creating it if absent and fully replacing it if present. Use to set a record to a known state regardless of whether it exists; choose Insert Document for create-only semantics. Idempotent when a stable document ID is supplied (same input yields the same stored state); leaving the ID blank generates a random UUID each call, which is not idempotent.', idempotent: true },

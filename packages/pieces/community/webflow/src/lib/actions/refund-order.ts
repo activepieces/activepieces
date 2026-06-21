@@ -8,7 +8,7 @@ export const webflowRefundOrder = createAction({
 	auth: webflowAuth,
 	name: 'refund_order',
 	description: 'Refund order',
-	displayName: 'Refund an order',
+	displayName: 'Refund an Order',
 	audience: 'both',
 	aiMetadata: { description: 'Issues a refund for an existing Webflow Ecommerce order, identified by site ID and order ID. Use to reverse a customer payment. This moves money and is not idempotent — repeating it risks duplicate refund attempts, so call it once per order.', idempotent: false },
 	props: {

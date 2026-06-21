@@ -6,7 +6,7 @@ import { API_BASE_URL, commonHeaders } from '../../common/constants';
 export const create_plan = createAction({
     name: 'create_plan',
     auth: simplirouteAuth,
-    displayName: 'Create an empty plan',
+    displayName: 'Create an Empty Plan',
     description: 'Create an empty plan (execution) without routes (reserve a planning day).',
     audience: 'both',
     aiMetadata: { description: 'Create a new empty routing plan (execution) for a given date range, reserving a planning day before routes are added. Not idempotent: each call creates a separate plan, so guard against duplicate plans for the same date.', idempotent: false },

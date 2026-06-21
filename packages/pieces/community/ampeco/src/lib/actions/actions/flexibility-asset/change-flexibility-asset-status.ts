@@ -13,7 +13,7 @@ import { ChangeFlexibilityAssetStatusResponse } from '../../../models/responses'
 export const changeFlexibilityAssetStatusAction = createAction({
   auth: ampecoAuth,
   name: 'changeFlexibilityAssetStatus',
-  displayName: 'Actions - Flexibility Asset - Change Flexibility Asset Status',
+  displayName: 'Change Flexibility Asset Status',
   description: 'Change the status of the Flexibility Asset.',
   audience: 'both',
   aiMetadata: { description: 'Enable or disable a flexibility asset by its identifier, optionally with an end date after which it is automatically disabled. While ended, no historical time series or forecasts are generated. Idempotent: sets the asset to the chosen status.', idempotent: true },

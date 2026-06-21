@@ -13,7 +13,7 @@ import { ElectricityMeterUpdateResponse } from '../../../models/responses';
 export const electricityMeterUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityMeterUpdate',
-  displayName: 'Resources - Electricity Meters - Update',
+  displayName: 'Update Electricity Meter',
   description: 'Update electricity meter.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing AMPECO electricity meter (its name and/or integration ID) identified by numeric ID, sending only the fields provided as a partial PATCH. Idempotent: applying the same values repeatedly leaves the meter in the same state. Use the create action to add a new meter instead.', idempotent: true },

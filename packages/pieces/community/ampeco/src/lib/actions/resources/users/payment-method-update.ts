@@ -13,7 +13,7 @@ import { PaymentMethodUpdateResponse } from '../../../models/responses';
 export const paymentMethodUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'paymentMethodUpdate',
-  displayName: 'Resources - Users - Payment Method Update',
+  displayName: 'Update Payment Method',
   description: 'Update Payment method. Please note that ";balance"; and ";corporate"; payment methods CANNOT be set as default',
   audience: 'both',
   aiMetadata: { description: "Update a payment method for an AMPECO user, identified by user id and payment method id; primarily toggles whether it is the user's default. Re-running with the same value is safe. Built-in 'balance' and 'corporate' methods cannot be set as default.", idempotent: false },

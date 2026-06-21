@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const subscriptionPlanDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionPlanDelete',
-  displayName: 'Resources - Subscription Plans - Delete',
+  displayName: 'Delete Subscription Plan',
   description: 'Delete a Subscription plan.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an AMPECO subscription plan by its numeric ID. Destructive; deleting an already-removed plan returns an error rather than succeeding silently. Use the listing action first to confirm the correct plan ID.', idempotent: false },

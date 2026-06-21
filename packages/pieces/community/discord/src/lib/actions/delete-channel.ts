@@ -13,7 +13,7 @@ export const discordDeleteChannel = createAction({
   description: 'delete a channel',
   audience: 'both',
   aiMetadata: { description: 'Permanently deletes a channel, identified by channel ID. Use to remove a channel and its messages; this is destructive and cannot be undone. Requires the bot to have Manage Channels permission; idempotent in end state, since deleting an already-removed channel leaves it gone.', idempotent: true },
-  displayName: 'Delete channel',
+  displayName: 'Delete Channel',
   props: {
     channel_id: discordCommon.channel,
   },

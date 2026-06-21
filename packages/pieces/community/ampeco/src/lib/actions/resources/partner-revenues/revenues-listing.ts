@@ -13,7 +13,7 @@ import { RevenuesListingResponse } from '../../../models/responses';
 export const revenuesListingAction = createAction({
   auth: ampecoAuth,
   name: 'revenuesListing',
-  displayName: 'Resources - Partner Revenues - Revenues Listing',
+  displayName: 'List Revenues',
   description: 'Get all revenues.',
   audience: 'both',
   aiMetadata: { description: 'List partner revenue records in AMPECO, optionally filtered by partner, settlement report, date range, origin, or currency code. Read-only and idempotent. Enable Paginate Results to walk every page up to the Per page cap; leave it off to fetch a single page. For the cost side use Partner Expenses Listing instead.', idempotent: true },

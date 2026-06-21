@@ -13,7 +13,7 @@ import { ElectricityRatePricePeriodsListingResponse } from '../../../models/resp
 export const electricityRatePricePeriodsListingAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsListing',
-  displayName: 'Resources - Electricity Rates - Price Periods Listing',
+  displayName: 'List Price Periods',
   description: 'List all of the configured price period days (including week days and dates).',
   audience: 'both',
   aiMetadata: { description: 'List every configured price-period day for an electricity rate in AMPECO, covering both recurring week days and specific calendar dates. Read-only and safe to repeat. Use this for the full overview; the week-day and date listing actions return only one of the two kinds.', idempotent: true },

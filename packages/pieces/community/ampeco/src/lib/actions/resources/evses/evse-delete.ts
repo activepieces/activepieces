@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const evseDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'evseDelete',
-  displayName: 'Resources - Evses - Evse Delete',
+  displayName: 'Delete EVSE',
   description: 'Delete an EVSE.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an EVSE (charging connector) identified by its numeric id. Destructive and not idempotent: deleting an already-removed id will fail. Use Listing or Read first to confirm the correct EVSE before deleting.', idempotent: false },

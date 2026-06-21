@@ -13,7 +13,7 @@ import { RoamingTariffReadResponse } from '../../../models/responses';
 export const roamingTariffReadAction = createAction({
   auth: ampecoAuth,
   name: 'roamingTariffRead',
-  displayName: 'Resources - Roaming Tariffs - Read',
+  displayName: 'Get Roaming Tariff',
   description: 'Get a Roaming Tariff.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single roaming tariff by its numeric ID. Use when you already know the ID and need its details; read-only and safe to retry. To search or browse multiple tariffs use the listing action instead.', idempotent: true },

@@ -13,7 +13,7 @@ import { LocationReadResponse } from '../../../models/responses';
 export const locationReadAction = createAction({
   auth: ampecoAuth,
   name: 'locationRead',
-  displayName: 'Resources - Locations - Read',
+  displayName: 'Get Location',
   description: 'Get a location.',
   audience: 'both',
   aiMetadata: { description: 'Fetches a single charging location from AMPECO by its numeric ID, optionally expanding related data such as charging zones or images via the Include option. Use to retrieve one known location; to search or discover location IDs use the Listing action instead. Read-only and idempotent.', idempotent: true },

@@ -13,7 +13,7 @@ import { ReorderRoamingCustomTariffFiltersResponse } from '../../../models/respo
 export const reorderRoamingCustomTariffFiltersAction = createAction({
   auth: ampecoAuth,
   name: 'reorderRoamingCustomTariffFilters',
-  displayName: 'Resources - Roaming Operators - Reorder Roaming Custom Tariff Filters',
+  displayName: 'Reorder Roaming Custom Tariff Filters',
   description: 'Change the ordering of custom tariff filters for a roaming operator. This operation allows partial reordering - you only need to specify the filters that need to move. Filters not included in the request will maintain their relative positions.',
   audience: 'both',
   aiMetadata: { description: 'Reposition custom tariff filters within a roaming operator by supplying filter IDs paired with their new order positions. Supports partial reordering: only listed filters move, the rest keep their relative order. Idempotent for a given target arrangement. Use the list action first to obtain current filter IDs and positions.', idempotent: true },

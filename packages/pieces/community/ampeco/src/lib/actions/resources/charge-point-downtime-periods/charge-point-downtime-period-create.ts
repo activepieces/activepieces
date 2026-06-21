@@ -13,7 +13,7 @@ import { ChargePointDowntimePeriodCreateResponse } from '../../../models/respons
 export const chargePointDowntimePeriodCreateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodCreate',
-  displayName: 'Resources - Charge Point Downtime Periods - Create',
+  displayName: 'Create Charge Point Downtime Period',
   description: 'Create Manual Exempt Charge Point Downtime Period.',
   audience: 'both',
   aiMetadata: { description: 'Create a manual exempt downtime period for a charge point over a given start/end window, referencing a notice. Not idempotent: each call creates another period, so re-running produces duplicates. The supplied notice must be of type exempt.', idempotent: false },

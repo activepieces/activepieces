@@ -13,7 +13,7 @@ import { ChargePointUpdateResponse } from '../../../models/responses';
 export const chargePointUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointUpdate',
-  displayName: 'Resources - Charge Points - Charge Point Update',
+  displayName: 'Update Charge Point',
   description: 'Update a charge point.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing charge point by its numeric ID, changing fields such as name, type (public/private/personal), status, location, network, capabilities, partner, and smart-charging settings. Only the fields you supply are modified. Note tags are replaced wholesale on PATCH: any tag you omit is removed from the charge point.', idempotent: false },

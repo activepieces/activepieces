@@ -12,7 +12,7 @@ import { TopUpPackagCreateResponse } from '../../../models/responses';
 export const topUpPackagCreateAction = createAction({
   auth: ampecoAuth,
   name: 'topUpPackagCreate',
-  displayName: 'Resources - Top Up Packages - Create',
+  displayName: 'Create Top Up Package',
   description: 'Create new Top-Up Package.',
   audience: 'both',
   aiMetadata: { description: 'Create a new top-up package, requiring a price and bonus amount; the package is disabled by default unless enabled is set to true. Not idempotent: each call creates a separate package. Use Update to change an existing package instead of recreating it.', idempotent: false },

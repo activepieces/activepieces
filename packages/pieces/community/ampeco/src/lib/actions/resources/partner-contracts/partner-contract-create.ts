@@ -13,7 +13,7 @@ import { PartnerContractCreateResponse } from '../../../models/responses';
 export const partnerContractCreateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractCreate',
-  displayName: 'Resources - Partner Contracts -Create',
+  displayName: 'Create Partner Contract',
   description: 'Create new Partner Contract.',
   audience: 'both',
   aiMetadata: { description: 'Create a new AMPECO partner contract, setting its effective period, auto-renewal, access permissions, revenue-sharing percentages, and monthly platform fees for a given partner. Not idempotent: each call creates a separate contract, so guard against duplicates. Requires a valid partner ID and a start date (contract takes effect from the first of the selected month).', idempotent: false },

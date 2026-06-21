@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const chargePointGetInstalledCertificateIdsAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointGetInstalledCertificateIds',
-  displayName: 'Actions - Charge Point - Get Installed Certificate Ids',
+  displayName: 'Get Installed Certificate IDs',
   description: 'Charge Point / Get Installed Certificate IDs. ',
   audience: 'both',
   aiMetadata: { description: 'Send an OCPP GetInstalledCertificateIds request to a charge point to sync and retrieve the certificates currently installed, optionally filtered by certificate type (leave the type empty for all types). This is a read/sync query that does not change device state, so it is safe to repeat. Use to audit which PKI/ISO 15118 certificates a station holds.', idempotent: true },

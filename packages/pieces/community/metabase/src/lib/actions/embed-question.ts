@@ -13,7 +13,7 @@ export const embedQuestion = createAction({
   name: 'embedQuestion',
   auth: metabaseAuth,
   requireAuth: true,
-  displayName: 'Embed question',
+  displayName: 'Embed Question',
   description:
     'Enable embedding for a Metabase question and configure parameters',
   audience: 'both',

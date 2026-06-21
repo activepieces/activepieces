@@ -13,7 +13,7 @@ import { PartnerContractsListingResponse } from '../../../models/responses';
 export const partnerContractsListingAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractsListing',
-  displayName: 'Resources - Partner Contracts - Listing',
+  displayName: 'List Partner Contracts',
   description: 'Get all Partner Contracts.',
   audience: 'both',
   aiMetadata: { description: 'List all AMPECO partner contracts, optionally auto-paginating across pages to gather every result. Use to discover contract IDs or survey existing partner agreements before reading or creating one; for a known single contract use the partner contract read action. Read-only and idempotent.', idempotent: true },

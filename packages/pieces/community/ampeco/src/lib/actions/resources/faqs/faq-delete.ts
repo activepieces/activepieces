@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const faqDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'faqDelete',
-  displayName: 'Resources - Faqs - Faq Delete',
+  displayName: 'Delete FAQ',
   description: 'Delete a FAQ.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete a FAQ entry by its numeric id. Destructive and not reversible; deleting an already-removed id will error. Do not retry blindly.', idempotent: false },

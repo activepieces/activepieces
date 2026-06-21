@@ -13,7 +13,7 @@ import { CustomFeeReadResponse } from '../../../models/responses';
 export const customFeeReadAction = createAction({
   auth: ampecoAuth,
   name: 'customFeeRead',
-  displayName: 'Resources - Custom Fees - Read',
+  displayName: 'Get Custom Fee',
   description: 'Get a single custom fee.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single custom fee by its numeric id. Read-only and idempotent. Use when you already know the fee id; to browse fees or filter by creation date use customFeesListing.', idempotent: true },

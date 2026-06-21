@@ -14,7 +14,7 @@ import { BaserowFieldType } from '../common/constants';
 
 export const upsertRowAction = createAction({
   name: 'baserow_upsert_row',
-  displayName: 'Upsert Row',
+  displayName: 'Create or Update Row',
   description:
     'Creates a new row or updates an existing one by matching a field value.',
   audience: 'both',

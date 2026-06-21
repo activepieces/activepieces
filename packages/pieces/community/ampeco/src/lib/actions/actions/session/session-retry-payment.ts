@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const sessionRetryPaymentAction = createAction({
   auth: ampecoAuth,
   name: 'sessionRetryPayment',
-  displayName: 'Actions - Session - Retry Payment',
+  displayName: 'Retry Payment',
   description: 'Retry failed payment for a session.',
   audience: 'both',
   aiMetadata: { description: 'Re-attempt a failed payment for a charging session, optionally against a specific payment method. Not idempotent: each call triggers a new charge attempt, so repeated calls can result in multiple charges if a prior attempt actually succeeded.', idempotent: false },

@@ -13,7 +13,7 @@ import { UpdatePaymentTerminalResponse } from '../../../models/responses';
 export const updatePaymentTerminalAction = createAction({
   auth: ampecoAuth,
   name: 'updatePaymentTerminal',
-  displayName: 'Resources - Payment Terminals - Update Payment Terminal',
+  displayName: 'Update Payment Terminal',
   description: 'Update Payment terminal.',
   audience: 'both',
   aiMetadata: { description: 'Modify an existing payment terminal identified by its id, supplying fields specific to the selected terminal variant (Payter, Valina, Nayax, Adyen, etc.). Idempotent: applies the supplied fields to that one terminal. Use createPaymentTerminal to register a new terminal, or deletePaymentTerminal to remove one.', idempotent: true },

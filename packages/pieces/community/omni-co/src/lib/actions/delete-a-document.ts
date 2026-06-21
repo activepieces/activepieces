@@ -7,7 +7,7 @@ import { documentIdDropdown } from '../common/props';
 export const deleteADocument = createAction({
   auth: omniAuth,
   name: 'deleteADocument',
-  displayName: 'Delete a document',
+  displayName: 'Delete a Document',
   description: 'Deletes the specified document and places it in the Trash',
   audience: 'both',
   aiMetadata: {

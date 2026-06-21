@@ -13,7 +13,7 @@ import { ChargePointModelReadResponse } from '../../../models/responses';
 export const chargePointModelReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointModelRead',
-  displayName: 'Resources - Charge Point Models - Read',
+  displayName: 'Get Charge Point Model',
   description: 'Get a Charge Point Model.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single charge point model by its numeric model ID. Read-only and idempotent. Use when you already know the model ID; otherwise use Listing to find it first.', idempotent: true },

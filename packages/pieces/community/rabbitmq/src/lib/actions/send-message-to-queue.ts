@@ -5,7 +5,7 @@ import { rabbitmqConnect } from '../common';
 export const sendMessageToQueue = createAction({
   auth: rabbitmqAuth,
   name: 'sendMessageToQueue',
-  displayName: 'sendMessageToQueue',
+  displayName: 'Send Message to Queue',
   description: 'Send a message on a RabbitMQ queue',
   audience: 'both',
   aiMetadata: { description: 'Publishes a JSON message directly to a named RabbitMQ queue (default exchange), bypassing exchange-based routing. Choose this to enqueue work onto one specific queue for its consumers; use the send-to-exchange action when you need routing-key-based fan-out across multiple queues. The target queue must already exist (the call verifies it first). Not idempotent: each call enqueues a new message.', idempotent: false },

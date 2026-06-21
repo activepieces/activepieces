@@ -7,7 +7,7 @@ import { lineItemsProps, unitTypeDropdown } from '../common/props';
 export const createAnItem = createAction({
   auth: bokioAuth,
   name: 'createAnItem',
-  displayName: 'Create an item',
+  displayName: 'Create an Item',
   description: 'Creates a new item in Bokio',
   audience: 'both',
   aiMetadata: { description: 'Creates a new reusable item (a sales item with pricing, or a text item) in a Bokio company catalog. Use to define a product or service that can later be referenced on invoices; item type is required. Not idempotent — each call creates a separate item.', idempotent: false },

@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createAJournalEntry = createAction({
   auth: bokioAuth,
   name: 'createAJournalEntry',
-  displayName: 'Create a journal entry',
+  displayName: 'Create a Journal Entry',
   description: 'Creates a new journal entry in Bokio',
   audience: 'both',
   aiMetadata: { description: 'Records a new bookkeeping journal entry in a Bokio company, posting debit/credit amounts against account numbers. Use for manual double-entry transactions; the entry date is required and items carry the per-account debit/credit lines. Not idempotent — each call posts a separate journal entry.', idempotent: false },

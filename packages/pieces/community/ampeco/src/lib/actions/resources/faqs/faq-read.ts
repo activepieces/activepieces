@@ -13,7 +13,7 @@ import { FaqReadResponse } from '../../../models/responses';
 export const faqReadAction = createAction({
   auth: ampecoAuth,
   name: 'faqRead',
-  displayName: 'Resources - Faqs - Faq Read',
+  displayName: 'Get FAQ',
   description: 'Get a FAQ.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single FAQ entry by its numeric id. Read-only and idempotent. Use this when you already know the id; to browse all FAQs use Faqs Listing instead.', idempotent: true },

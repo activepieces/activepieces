@@ -4,7 +4,7 @@ import { spotifyCommon, makeClient } from '../common';
 export default createAction({
   name: 'remove_library_items',
   auth: spotifyCommon.authentication,
-  displayName: 'Remove items from your library',
+  displayName: 'Remove Items from Your Library',
   description: 'Remove tracks, episodes, albums, shows, audiobooks, users or playlists from your library',
   audience: 'both',
   aiMetadata: { description: 'Removes one or more items (tracks, episodes, albums, shows, audiobooks, or playlists) from the connected Spotify library by their URIs. Use to unsave or unfollow content. Idempotent: removing an item that is not saved leaves the library unchanged, converging to the same state.', idempotent: true },

@@ -13,7 +13,7 @@ import { ListEvseHardwareStatusLogsResponse } from '../../../models/responses';
 export const listEvseHardwareStatusLogsAction = createAction({
   auth: ampecoAuth,
   name: 'listEvseHardwareStatusLogs',
-  displayName: 'Resources - Evses - List Evse Hardware Status Logs',
+  displayName: 'List EVSE Hardware Status Logs',
   description: 'Get paginated list of hardware status logs for an EVSE with optional date filtering.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve the history of hardware status log entries for one EVSE (charging connector), identified by its numeric id, optionally narrowed to a created-after/created-before window. Read-only and idempotent; pick this when you need the full timeline of status changes rather than only the most recent one. Enable pagination to walk all pages.', idempotent: true },

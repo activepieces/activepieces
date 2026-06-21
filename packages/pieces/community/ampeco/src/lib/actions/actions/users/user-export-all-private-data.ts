@@ -12,7 +12,7 @@ import { UserExportAllPrivateDataResponse } from '../../../models/responses';
 export const userExportAllPrivateDataAction = createAction({
   auth: ampecoAuth,
   name: 'userExportAllPrivateData',
-  displayName: 'Actions - Users - Export All Private Data',
+  displayName: 'Export All Private Data',
   description: 'Export all private data.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a full export of a user\'s stored private/personal data (read-only, for GDPR-style data-access requests). Idempotent: it only reads and returns data without changing anything.', idempotent: true },

@@ -13,7 +13,7 @@ import { ReservationsListingResponse } from '../../../models/responses';
 export const reservationsListingAction = createAction({
   auth: ampecoAuth,
   name: 'reservationsListing',
-  displayName: 'Resources - Reservations - Reservations Listing',
+  displayName: 'List Reservations',
   description: 'Get all reservations.',
   audience: 'both',
   aiMetadata: { description: 'List AMPECO EVSE reservations, optionally filtered by EVSE ID, user ID, status (active/expired/canceled/done), or reserved-at date range, with auto-pagination available. Use to discover reservation IDs or survey bookings; for a known reservation use the reservation read action. Read-only and idempotent.', idempotent: true },

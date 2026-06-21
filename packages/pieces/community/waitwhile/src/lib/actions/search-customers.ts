@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const searchCustomers = createAction({
   auth: waitwhileAuth,
   name: 'searchCustomers',
-  displayName: 'Search customers',
+  displayName: 'Search Customers',
   description: 'Search for customers by name, phone, email, or identifier',
   audience: 'both',
   aiMetadata: {

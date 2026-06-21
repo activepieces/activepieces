@@ -3,7 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'remove_playlist_items',
-  displayName: 'Remove items from playlist',
+  displayName: 'Remove Items from Playlist',
   description: 'Removes tracks or episodes from the playlist',
   audience: 'both',
   aiMetadata: {

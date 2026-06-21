@@ -13,7 +13,7 @@ import { ElectricityRatePricePeriodsWeekDayListingResponse } from '../../../mode
 export const electricityRatePricePeriodsWeekDayListingAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsWeekDayListing',
-  displayName: 'Resources - Electricity Rates - Price Periods Week Day Listing',
+  displayName: 'List Price Periods Week Days',
   description: 'List all of the configured price period week days.',
   audience: 'both',
   aiMetadata: { description: 'List the configured recurring week-day price periods for an electricity rate in AMPECO (e.g. Monday, weekend, or any). Read-only and safe to repeat. Use the date listing action for one-off calendar-date periods, or the combined listing for both.', idempotent: true },

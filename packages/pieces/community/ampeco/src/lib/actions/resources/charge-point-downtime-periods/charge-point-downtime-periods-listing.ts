@@ -13,7 +13,7 @@ import { ChargePointDowntimePeriodsListingResponse } from '../../../models/respo
 export const chargePointDowntimePeriodsListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodsListing',
-  displayName: 'Resources - Charge Point Downtime Periods - Listing',
+  displayName: 'List Charge Point Downtime Periods',
   description: 'Get all Charge Point Downtime Periods.',
   audience: 'both',
   aiMetadata: { description: 'List charge-point downtime periods, optionally filtered by charge point, location, entry mode (manual/automatic), type (downtime/exempt), duration, or start/stop/last-updated date ranges. Read-only and idempotent; enable Paginate Results to fetch all pages. To fetch one period by its ID use the downtime period read action.', idempotent: true },

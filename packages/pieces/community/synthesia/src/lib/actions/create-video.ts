@@ -5,7 +5,7 @@ import { synthesiaAuth } from '../common/auth';
 export const createVideo = createAction({
   auth: synthesiaAuth,
   name: 'createVideo',
-  displayName: 'Create video',
+  displayName: 'Create Video',
   description:
     'Create a video within your Synthesia account with one or more scenes',
   audience: 'both',

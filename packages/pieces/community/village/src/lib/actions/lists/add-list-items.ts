@@ -12,7 +12,7 @@ type AddItemRow = {
 export const addListItems = createAction({
   auth: villageAuth,
   name: 'add_list_items',
-  displayName: 'Add items to list',
+  displayName: 'Add Items to List',
   description:
     'Add people or companies to a list. Each identifier is resolved (LinkedIn URLs, company domains, emails, or graph IDs) and added. Returns detailed results per item.',
   audience: 'both',

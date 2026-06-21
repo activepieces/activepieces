@@ -8,7 +8,7 @@ import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'updateMessage',
-  displayName: 'Update message',
+  displayName: 'Update Message',
   description: 'Update an existing message',
   audience: 'both',
   aiMetadata: {

@@ -12,7 +12,7 @@ import { TariffReadResponse } from '../../../models/responses';
 export const tariffReadAction = createAction({
   auth: ampecoAuth,
   name: 'tariffRead',
-  displayName: 'Resources - Tariffs - Read',
+  displayName: 'Get Tariff',
   description: 'Get a tariff.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO tariff by its numeric ID, returning its full pricing definition and settings. Use when you already know the tariff ID; to search or browse tariffs (including resolving the tariff that applies to a user within a group) use the tariffs listing action. Read-only and idempotent.', idempotent: true },

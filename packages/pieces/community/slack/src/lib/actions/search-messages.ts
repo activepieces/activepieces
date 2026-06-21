@@ -5,7 +5,7 @@ import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const searchMessages = createAction({
   name: 'searchMessages',
-  displayName: 'Search messages',
+  displayName: 'Search Messages',
   description: 'Searches for messages matching a query',
   audience: 'both',
   aiMetadata: { description: 'Search across the workspace for messages matching a query string and return all matching messages, paging through every result; read-only and repeatable. Requires a user token (search is not available to bot tokens). Use this to find messages anywhere by content; use Get channel history or Get Message by Timestamp when you already know the channel.', idempotent: true },

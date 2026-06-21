@@ -9,7 +9,7 @@ import {
 
 export const listOpportunityFeedback = createAction({
   name: 'listOpportunityFeedback',
-  displayName: 'List opportunity feedback',
+  displayName: 'List Opportunity Feedback',
   description:
     'Get all feedback for a given opportunity, optionally for a given template',
   audience: 'both',

@@ -11,7 +11,7 @@ import { makeRequest } from '../common/client';
 export const newFormAuthorResponse = createTrigger({
     auth: videoaskAuth,
     name: 'newFormAuthorResponse',
-    displayName: 'New form author response',
+    displayName: 'New Form Author Response',
     description: 'Trigger when a form author responds to a contact message',
     aiMetadata: {
         description: 'Fires when a form author (the form owner/team) replies to a contact within a conversation thread on a specific VideoAsk form, carrying the author message, contact, and form context. Use to react to outbound author replies. Scoped to one form via a registered webhook.',

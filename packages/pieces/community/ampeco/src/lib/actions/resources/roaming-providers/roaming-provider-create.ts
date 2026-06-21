@@ -13,7 +13,7 @@ import { RoamingProviderCreateResponse } from '../../../models/responses';
 export const roamingProviderCreateAction = createAction({
   auth: ampecoAuth,
   name: 'roamingProviderCreate',
-  displayName: 'Resources - Roaming Providers - Create',
+  displayName: 'Create Roaming Provider',
   description: 'Create new Roaming Provider **Only applicable for Hubject, Gireve 2.2.1 and OCPI with missing credentials module emsp roaming connections**.',
   audience: 'both',
   aiMetadata: { description: 'Create a new AMPECO roaming provider for an EMSP roaming connection. Only applicable for Hubject, Gireve 2.2.1, and OCPI connections with a missing credentials module; choose the matching variant (Hubject or OCPI/Gireve 2.2.1) and supply business name and platform ID. Not idempotent: each call creates a separate provider. To modify an existing provider, use the roaming provider update action.', idempotent: false },

@@ -7,7 +7,7 @@ import { makeRequest } from '../common/client';
 export const searchForm = createAction({
   auth: videoaskAuth,
   name: 'searchForm',
-  displayName: 'Search form by keyword(s)',
+  displayName: 'Search Form by Keyword(s)',
   description: 'Search forms by keyword(s) within the organization',
   audience: 'both',
   aiMetadata: { description: 'Search an organization\'s VideoAsk forms by keyword matched against form titles, returning up to a configurable limit. Use to resolve a form name to its ID or discover available forms before referencing one. Read-only and idempotent. The search term is required.', idempotent: true },

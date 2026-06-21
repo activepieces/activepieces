@@ -13,7 +13,7 @@ import { SubscriptionPlanCreateResponse } from '../../../models/responses';
 export const subscriptionPlanCreateAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionPlanCreate',
-  displayName: 'Resources - Subscription Plans -  Create',
+  displayName: 'Create Subscription Plan',
   description: 'Create a new Subscription plans.',
   audience: 'both',
   aiMetadata: { description: 'Create a new AMPECO subscription plan (pre-paid or post-paid) defining renewal cycle, fees, kWh allowances, and visibility restrictions for EV charging subscribers. Not idempotent: each call creates a separate plan, so re-running duplicates it. To change an existing plan, use a subscription-plan update action instead.', idempotent: false },

@@ -13,7 +13,7 @@ import { TariffGroupCreateResponse } from '../../../models/responses';
 export const tariffGroupCreateAction = createAction({
   auth: ampecoAuth,
   name: 'tariffGroupCreate',
-  displayName: 'Resources - Tariff Groups - Create',
+  displayName: 'Create Tariff Group',
   description: 'Create new tariff group. Please note that createing a new tariff group will also automatically create a free base tariff, as it is not allowed to have empty tariff groups.',
   audience: 'both',
   aiMetadata: { description: 'Create a new AMPECO tariff group with a name and optional ordered tariff list and partner assignment. Not idempotent: each call creates a separate group (and auto-adds a free base tariff, since empty groups are disallowed). Use tariff group update to change an existing group instead.', idempotent: false },

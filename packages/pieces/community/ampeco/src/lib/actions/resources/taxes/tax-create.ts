@@ -12,7 +12,7 @@ import { TaxCreateResponse } from '../../../models/responses';
 export const taxCreateAction = createAction({
   auth: ampecoAuth,
   name: 'taxCreate',
-  displayName: 'Resources - Taxes - Create',
+  displayName: 'Create Tax',
   description: 'Create new Tax.',
   audience: 'both',
   aiMetadata: { description: 'Create a new tax rate in AMPECO, supplying a name and percentage (optionally localized display names and a linked tax identification number). Not idempotent: each call adds another tax record even with identical inputs, so check existing taxes first to avoid duplicates.', idempotent: false },

@@ -13,7 +13,7 @@ import { ChargePointSetChargingProfileResponse } from '../../../models/responses
 export const chargePointSetChargingProfileAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSetChargingProfile',
-  displayName: 'Actions - Charge Point - Set Charging Profile',
+  displayName: 'Set Charging Profile',
   description: 'Set a smart charging profile.',
   audience: 'both',
   aiMetadata: { description: 'Apply an OCPP smart-charging profile (purpose, kind, charging schedule with rate limits) to a charge point connector, optionally bound to a transaction. Effectively idempotent at a given stack level: re-sending the same profile at the same stackLevel overwrites it rather than stacking duplicates.', idempotent: true },

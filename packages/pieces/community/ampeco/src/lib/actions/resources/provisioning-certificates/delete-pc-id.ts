@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const deletePcIdAction = createAction({
   auth: ampecoAuth,
   name: 'deletePcId',
-  displayName: 'Resources - Provisioning Certificates - Delete Pc Id',
+  displayName: 'Delete PC ID',
   description: 'Delete a provisioning certificate.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an AMPECO provisioning certificate by its numeric ID. Destructive and not reversible; a repeat call on an already-deleted certificate will fail. Verify the ID via get or list pc ids before deleting.', idempotent: false },

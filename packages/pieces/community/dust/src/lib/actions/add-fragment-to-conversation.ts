@@ -11,7 +11,7 @@ import mime from 'mime-types';
 export const addFragmentToConversation = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'addFragmentToConversation',
-  displayName: 'Add fragment to conversation',
+  displayName: 'Add Fragment to Conversation',
   description:
     'Create a new content fragment in a conversation. Content fragments are pieces of information that can be inserted in conversations and are passed as context to assistants to when they generate an answer.',
   audience: 'both',

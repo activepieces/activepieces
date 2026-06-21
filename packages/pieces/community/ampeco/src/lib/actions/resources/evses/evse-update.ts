@@ -13,7 +13,7 @@ import { EvseUpdateResponse } from '../../../models/responses';
 export const evseUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'evseUpdate',
-  displayName: 'Resources - Evses - Update',
+  displayName: 'Update EVSE',
   description: 'Update an EVSE.',
   audience: 'both',
   aiMetadata: { description: 'Modify an existing EVSE (charging connector), identified by its numeric id, applying only the fields you supply (physical reference, label, current type, status, tariff group, power options, reservation/booking flags, etc.). Not idempotent: each call mutates live state. For roaming EVSEs, status and tariff group can only change when manual management is enabled for the roaming CPO.', idempotent: false },

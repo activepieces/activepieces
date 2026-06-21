@@ -18,7 +18,7 @@ import { BookingsListingResponse } from '../../../models/responses';
 export const bookingsListingAction = createAction({
   auth: ampecoAuth,
   name: 'bookingsListing',
-  displayName: 'Resources - Bookings - Listing',
+  displayName: 'List Bookings',
   description: 'Get all bookings.',
   audience: 'both',
   aiMetadata: { description: 'List AMPECO charger/EVSE bookings, optionally filtered by status (accepted, reserved, completed, cancelled, no-show, failed), user, location, or start/end time window. Read-only and idempotent. Enable pagination to fetch all matches across pages. Use this to find booking IDs before reading a single booking.', idempotent: true },

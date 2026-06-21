@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const deleteJobAppointment = createAction({
   auth: housecallProAuth,
   name: "delete_job_appointment",
-  displayName: "Delete appointment",
+  displayName: "Delete Appointment",
   description: "Delete a job appointment",
   audience: 'both',
   aiMetadata: {

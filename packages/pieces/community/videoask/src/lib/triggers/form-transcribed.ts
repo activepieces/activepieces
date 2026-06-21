@@ -7,7 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const formTranscribed = createTrigger({
     auth: videoaskAuth,
     name: 'formTranscribed',
-    displayName: 'Form transcribed',
+    displayName: 'Form Transcribed',
     description: 'Triggered when a form is transcribed',
     aiMetadata: {
         description: 'Fires when a response submitted to a specific VideoAsk form finishes transcription, signaling that text transcripts of the respondent\'s audio/video answers are now available alongside the contact and form data. Scoped to one form via a registered webhook.',

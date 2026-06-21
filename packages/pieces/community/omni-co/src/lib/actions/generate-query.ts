@@ -7,7 +7,7 @@ import { modelIdDropdown } from '../common/props';
 export const generateQuery = createAction({
   auth: omniAuth,
   name: 'generateQuery',
-  displayName: 'Generate query',
+  displayName: 'Generate Query',
   description:
     'Transforms a natural language description into a structured Omni query',
   audience: 'both',

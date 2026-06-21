@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const transactionUpdatePaymentReferenceAction = createAction({
   auth: ampecoAuth,
   name: 'transactionUpdatePaymentReference',
-  displayName: 'Actions - Transactions - Update Payment Reference',
+  displayName: 'Update Payment Reference',
   description: 'Link the transaction to external resource where the payment took place.',
   audience: 'both',
   aiMetadata: { description: 'Attach an external payment reference (e.g. a payment processor or terminal identifier) to a transaction so the payment can later be traced. Idempotent: it overwrites the reference field on the transaction, so re-running with the same value leaves the same end state.', idempotent: true },

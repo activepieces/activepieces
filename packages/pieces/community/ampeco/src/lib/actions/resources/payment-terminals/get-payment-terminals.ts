@@ -13,7 +13,7 @@ import { GetPaymentTerminalsResponse } from '../../../models/responses';
 export const getPaymentTerminalsAction = createAction({
   auth: ampecoAuth,
   name: 'getPaymentTerminals',
-  displayName: 'Resources - Payment Terminals - Get Payment Terminals',
+  displayName: 'List Payment Terminals',
   description: 'Get all payment terminals.',
   audience: 'both',
   aiMetadata: { description: 'List payment terminals, optionally filtered by serial number. Read-only and idempotent. Enable the Paginate Results option to fetch across pages up to Per page total; otherwise a single page (max 100) is returned. Use getPaymentTerminal when you already know a terminal id.', idempotent: true },

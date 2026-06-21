@@ -13,7 +13,7 @@ import { EvseCreateResponse } from '../../../models/responses';
 export const evseCreateAction = createAction({
   auth: ampecoAuth,
   name: 'evseCreate',
-  displayName: 'Resources - Evses - Create',
+  displayName: 'Create EVSE',
   description: 'Create new EVSE.',
   audience: 'both',
   aiMetadata: { description: 'Create a new EVSE (charging connector) under a charge point, requiring charge point id, physical reference, current type (ac/dc), network id, and status. Not idempotent: each call creates a separate EVSE. Use Update to change an existing EVSE instead of recreating it.', idempotent: false },

@@ -16,7 +16,7 @@ const sampleData = {
 export const channelCreated = createTrigger({
   auth: slackAuth,
   name: 'channel_created',
-  displayName: 'Channel created',
+  displayName: 'Channel Created',
   description: 'Triggers when a channel is created',
   aiMetadata: {
     description:

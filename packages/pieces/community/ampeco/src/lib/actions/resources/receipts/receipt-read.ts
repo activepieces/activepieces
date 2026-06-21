@@ -13,7 +13,7 @@ import { ReceiptReadResponse } from '../../../models/responses';
 export const receiptReadAction = createAction({
   auth: ampecoAuth,
   name: 'receiptRead',
-  displayName: 'Resources - Receipts - Receipt Read',
+  displayName: 'Get Receipt',
   description: 'Get a single receipt.',
   audience: 'both',
   aiMetadata: { description: 'Fetch one receipt by its numeric ID. Read-only and safe to repeat. To find receipts when you do not know the ID (e.g. by user, tax ID, payment status, or period) use receipts-listing instead.', idempotent: true },

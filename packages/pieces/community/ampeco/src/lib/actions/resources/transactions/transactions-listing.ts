@@ -13,7 +13,7 @@ import { TransactionsListingResponse } from '../../../models/responses';
 export const transactionsListingAction = createAction({
   auth: ampecoAuth,
   name: 'transactionsListing',
-  displayName: 'Resources - Transactions - Listing',
+  displayName: 'List Transactions',
   description: 'Get all transactions.',
   audience: 'both',
   aiMetadata: { description: 'List payment transactions, with optional filters by user, status, payment method, date ranges, invoice, session, voucher, terminal, billing type, or purchase type. Read-only and idempotent. Enable the Paginate Results option to fetch across pages up to Per page total; otherwise a single page (max 100) is returned. Use transactionRead when you already know a transaction id.', idempotent: true },

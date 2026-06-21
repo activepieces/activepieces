@@ -7,7 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const deleteAVisit = createAction({
   auth: waitwhileAuth,
   name: 'deleteAVisit',
-  displayName: 'Delete a visit',
+  displayName: 'Delete a Visit',
   description:
     'Permanently remove a visit from the database. The visit will no longer be retrievable and will not be factored into analytics.',
   audience: 'both',

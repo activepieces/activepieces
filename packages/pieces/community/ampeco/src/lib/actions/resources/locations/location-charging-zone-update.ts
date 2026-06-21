@@ -12,7 +12,7 @@ import { LocationChargingZoneUpdateResponse } from '../../../models/responses';
 export const locationChargingZoneUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'locationChargingZoneUpdate',
-  displayName: 'Resources - Locations - Update Charging Zone',
+  displayName: 'Update Charging Zone',
   description: 'Update a existing Charging Zone.',
   audience: 'both',
   aiMetadata: { description: 'Updates editable fields (name, status, localized additional info) of an existing charging zone, identified by its location ID and charging zone ID. Use to modify a known zone; to add a new one use the Create Charging Zone action. Only the fields you supply are changed, so repeating the same call converges to the same state and is idempotent.', idempotent: true },

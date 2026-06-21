@@ -13,7 +13,7 @@ import { GetCurrencyRateResponse } from '../../../models/responses';
 export const getCurrencyRateAction = createAction({
   auth: ampecoAuth,
   name: 'getCurrencyRate',
-  displayName: 'Resources - Currency Rates - Get',
+  displayName: 'Get Currency Rate',
   description: 'Get Currency Rate.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO currency-rate record by its numeric ID. Read-only and safe to repeat. Use when you already know the currency-rate ID; use the list currency rates action to browse or filter by base/target currency.', idempotent: true },

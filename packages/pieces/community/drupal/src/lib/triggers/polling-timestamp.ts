@@ -46,7 +46,7 @@ const polling: Polling<DrupalAuthType, { name: string }> = {
 export const drupalPollingTimestamp = createTrigger({
   auth: drupalAuth,
   name: 'drupalPollingTimestamp',
-  displayName: 'Polling by timestamp',
+  displayName: 'Polling by Timestamp',
   description: 'A trigger that polls the Drupal site by timestamp.',
   aiMetadata: {
     description: 'Fires for each new item pushed to a named Drupal orchestration poll, tracked by timestamp so only items created after the last poll are emitted. Use the time-based variant when items are dated rather than sequentially numbered; the poll name must match the name configured on the Drupal side (e.g. an ECA poll event).',

@@ -7,7 +7,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 export default createAction({
     name: 'get_records',
     auth: odooAuth,
-    displayName: 'Custom Search and read records',
+    displayName: 'Custom Search and Read Records',
     description: 'Records can be listed and filtered',
     audience: 'both',
     aiMetadata: { description: 'Searches and reads records from any Odoo model via the XML-RPC search_read call, returning the chosen fields with optional offset/limit paging. Supply a model name and an optional Odoo domain (a list of [field, operator, value] criteria); an empty domain returns all records of the model. Read-only and idempotent. Use this generic reader when no model-specific get action fits.', idempotent: true },

@@ -13,7 +13,7 @@ import { TopUpPackageUpdateResponse } from '../../../models/responses';
 export const topUpPackageUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'topUpPackageUpdate',
-  displayName: 'Resources - Top Up Packages - Update',
+  displayName: 'Update Top Up Package',
   description: 'Top-Up Packages.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing top-up package, identified by its numeric id, changing only the fields you supply (price, bonus, enabled flag). Not idempotent: each call mutates live state. Use Create to add a new package and Listing to find the package id.', idempotent: false },

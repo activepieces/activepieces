@@ -7,7 +7,7 @@ import { projectDropdown, keyIdProp } from '../common/props';
 export const retrieveAComment = createAction({
   auth: lokaliseAuth,
   name: 'retrieveAComment',
-  displayName: 'Retrieve a comment',
+  displayName: 'Retrieve a Comment',
   description: 'Retrieve a specific comment on a key in your Lokalise project',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single comment on a translation key, identified by project ID, key ID, and comment ID. Use to read one comment\'s text and metadata. Read-only and idempotent.', idempotent: true },

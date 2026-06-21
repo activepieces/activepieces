@@ -13,7 +13,7 @@ import { ExpensesListingResponse } from '../../../models/responses';
 export const expensesListingAction = createAction({
   auth: ampecoAuth,
   name: 'expensesListing',
-  displayName: 'Resources - Partner Expenses - Expenses Listing',
+  displayName: 'List Expenses',
   description: 'Get all expenses.',
   audience: 'both',
   aiMetadata: { description: 'List partner expense records in AMPECO, optionally filtered by partner, settlement report, date range, origin, or currency code, and optionally with a per-record breakdown. Read-only and idempotent. Enable Paginate Results to walk every page up to the Per page cap. For the income side use Partner Revenues Listing instead.', idempotent: true },

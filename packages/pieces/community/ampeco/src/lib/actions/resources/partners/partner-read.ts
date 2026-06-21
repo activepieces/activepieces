@@ -12,7 +12,7 @@ import { PartnerReadResponse } from '../../../models/responses';
 export const partnerReadAction = createAction({
   auth: ampecoAuth,
   name: 'partnerRead',
-  displayName: 'Resources - Partners - Read',
+  displayName: 'Get Partner',
   description: 'Get a partner.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO partner by its numeric ID. Read-only and idempotent; use when you already have the partner ID. To discover IDs or look up by country, regNo, or externalId, use the partners listing action.', idempotent: true },

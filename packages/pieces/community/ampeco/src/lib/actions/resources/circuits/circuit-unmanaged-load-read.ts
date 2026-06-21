@@ -18,7 +18,7 @@ import { CircuitUnmanagedLoadReadResponse } from '../../../models/responses';
 export const circuitUnmanagedLoadReadAction = createAction({
   auth: ampecoAuth,
   name: 'circuitUnmanagedLoadRead',
-  displayName: 'Resources - Circuits - Circuit Unmanaged Load Read',
+  displayName: 'Get Circuit Unmanaged Load',
   description: "Get a circuit's unmanaged load.",
   audience: 'both',
   aiMetadata: { description: "Fetch the unmanaged-load reading for an AMPECO load-balancing circuit by its numeric ID (the load consumed by devices outside AMPECO's control). Read-only and idempotent; use when monitoring available capacity for a known circuit.", idempotent: true },

@@ -6,7 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const runUserVerificationProfileAction = createAction({
   auth: aipriseAuth,
   name: 'run_user_verification_profile',
-  displayName: 'Start Identity Verification for profile',
+  displayName: 'Start Identity Verification for Profile',
   description:
     'Kicks off a new identity check for a person. AiPrise will run the checks defined in your chosen template (e.g. ID document scan, liveness, address).',
   audience: 'both',

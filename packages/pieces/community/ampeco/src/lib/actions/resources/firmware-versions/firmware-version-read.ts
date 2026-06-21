@@ -13,7 +13,7 @@ import { FirmwareVersionReadResponse } from '../../../models/responses';
 export const firmwareVersionReadAction = createAction({
   auth: ampecoAuth,
   name: 'firmwareVersionRead',
-  displayName: 'Resources - Firmware Versions - Read',
+  displayName: 'Get Firmware Version',
   description: 'Get a Firmware Version.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO firmware version by its numeric ID, optionally including its attached charge-point models. Use when you already know the firmware version ID; to discover IDs use the firmware versions listing action. Read-only and idempotent.', idempotent: true },

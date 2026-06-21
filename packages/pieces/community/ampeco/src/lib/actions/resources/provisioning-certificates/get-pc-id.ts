@@ -13,7 +13,7 @@ import { GetPcIdResponse } from '../../../models/responses';
 export const getPcIdAction = createAction({
   auth: ampecoAuth,
   name: 'getPcId',
-  displayName: 'Resources - Provisioning Certificates - Get Pc Id',
+  displayName: 'Get PC ID',
   description: 'Get a Provisioning Certificate.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO provisioning certificate by its numeric ID. Read-only and idempotent; use when you already have the certificate ID. To find IDs first, use the list pc ids action.', idempotent: true },

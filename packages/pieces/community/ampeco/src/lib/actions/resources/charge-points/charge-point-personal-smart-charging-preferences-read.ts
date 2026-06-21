@@ -13,7 +13,7 @@ import { ChargePointPersonalSmartChargingPreferencesReadResponse } from '../../.
 export const chargePointPersonalSmartChargingPreferencesReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointPersonalSmartChargingPreferencesRead',
-  displayName: 'Resources - Charge Points - Charge Point Personal Smart Charging Preferences Read',
+  displayName: 'Get Charge Point Personal Smart Charging Preferences',
   description: 'Get personal smart charging preferences of the charge point.',
   audience: 'both',
   aiMetadata: { description: 'Read the currently configured personal smart-charging preferences for a charge point, by charge point ID. Read-only and safe to retry. Use the matching update action to change these preferences, and the available-modes listing to see which modes can be set.', idempotent: true },

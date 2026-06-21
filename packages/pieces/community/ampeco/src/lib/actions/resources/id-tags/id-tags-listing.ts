@@ -13,7 +13,7 @@ import { IdTagsListingResponse } from '../../../models/responses';
 export const idTagsListingAction = createAction({
   auth: ampecoAuth,
   name: 'idTagsListing',
-  displayName: 'Resources - Id Tags - Listing',
+  displayName: 'List ID Tags',
   description: 'Get all id tags.',
   audience: 'both',
   aiMetadata: { description: 'List id tags with optional filters (UID, label, user, status, type, partner, expiry, last-updated window) and optional auto-pagination to retrieve all matching results. Read-only lookup, safe to repeat.', idempotent: true },

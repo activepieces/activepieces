@@ -12,7 +12,7 @@ import { ListUtilitiesResponse } from '../../../models/responses';
 export const listUtilitiesAction = createAction({
   auth: ampecoAuth,
   name: 'listUtilities',
-  displayName: 'Resources - Utilities - List Utilities',
+  displayName: 'List Utilities',
   description: 'Get all Utilities.',
   audience: 'both',
   aiMetadata: { description: 'List all AMPECO utility (electricity provider) records. Read-only and safe to repeat; supports automatic pagination to fetch every utility across pages. Use to discover utility IDs and names; use the get utility action when you already know a single utility ID.', idempotent: true },

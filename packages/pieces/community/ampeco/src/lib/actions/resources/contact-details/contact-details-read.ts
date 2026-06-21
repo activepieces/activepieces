@@ -13,7 +13,7 @@ import { ContactDetailsReadResponse } from '../../../models/responses';
 export const contactDetailsReadAction = createAction({
   auth: ampecoAuth,
   name: 'contactDetailsRead',
-  displayName: 'Resources - Contact Details - Contact Details Read',
+  displayName: 'Get Contact Details',
   description: 'Get the contact details.',
   audience: 'both',
   aiMetadata: { description: 'Read the account-level contact details (email and phone) for the authenticated account. Takes no parameters and is read-only and safe to repeat.', idempotent: true },

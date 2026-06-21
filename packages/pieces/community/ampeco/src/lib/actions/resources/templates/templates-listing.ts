@@ -13,7 +13,7 @@ import { TemplatesListingResponse } from '../../../models/responses';
 export const templatesListingAction = createAction({
   auth: ampecoAuth,
   name: 'templatesListing',
-  displayName: 'Resources - Templates - Templates Listing',
+  displayName: 'List Templates',
   description: 'Get all charge points templates.',
   audience: 'both',
   aiMetadata: { description: 'List all charge point templates defined in AMPECO. Read-only and idempotent; enable Paginate Results to fetch every page, or leave it off for a single page (up to per_page, max 100). Use to find a template before applying it when creating or configuring charge points.', idempotent: true },

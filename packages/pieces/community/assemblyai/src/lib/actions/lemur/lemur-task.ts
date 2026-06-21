@@ -7,7 +7,7 @@ export const lemurTask = createAction({
   name: 'lemurTask',
   auth: assemblyaiAuth,
   requireAuth: true,
-  displayName: 'Run a Task using LeMUR',
+  displayName: 'Run a Task Using LeMUR',
   description: 'Use the LeMUR task endpoint to input your own LLM prompt.',
   audience: 'both',
   aiMetadata: {

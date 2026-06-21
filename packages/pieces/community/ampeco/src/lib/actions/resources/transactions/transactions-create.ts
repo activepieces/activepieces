@@ -13,7 +13,7 @@ import { TransactionsCreateResponse } from '../../../models/responses';
 export const transactionsCreateAction = createAction({
   auth: ampecoAuth,
   name: 'transactionsCreate',
-  displayName: 'Resources - Transactions - Create',
+  displayName: 'Create Transaction',
   description: 'Create new Transaction.',
   audience: 'both',
   aiMetadata: { description: 'Record a new payment transaction in AMPECO with a total amount, status, and optional payment method and session linkage. Not idempotent: each call creates a distinct transaction, so repeating it produces duplicate records. Use transactionUpdate to amend a non-finalised transaction.', idempotent: false },

@@ -5,7 +5,7 @@ import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 export const addJobAttachment = createAction({
   auth: housecallProAuth,
   name: "add_job_attachment",
-  displayName: "Add an attachment to a job",
+  displayName: "Add an Attachment to a Job",
   description: "Upload an attachment to a job",
   audience: 'both',
   aiMetadata: { description: "Upload a file attachment to a Housecall Pro job identified by job ID, sent as multipart form data. Not idempotent: repeated calls add duplicate attachments.", idempotent: false },

@@ -12,7 +12,7 @@ import { TaxReadResponse } from '../../../models/responses';
 export const taxReadAction = createAction({
   auth: ampecoAuth,
   name: 'taxRead',
-  displayName: 'Resources - Taxes - Read',
+  displayName: 'Get Tax',
   description: 'Get a Tax.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single tax rate by its numeric ID. Read-only and idempotent. Pick this when you already know the tax ID; otherwise use the taxes listing action to find it first.', idempotent: true },

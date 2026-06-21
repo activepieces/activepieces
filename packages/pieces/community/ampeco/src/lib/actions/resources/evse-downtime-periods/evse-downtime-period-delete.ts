@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const evseDowntimePeriodDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'evseDowntimePeriodDelete',
-  displayName: 'Resources - Evse Downtime Periods - Delete',
+  displayName: 'Delete EVSE Downtime Period',
   description: 'Delete Manual Created EVSE Downtime Period.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete a manually created EVSE downtime period by its numeric ID. Destructive and irreversible; a repeat call fails once the period is gone. Only manually created periods can be removed.', idempotent: false },

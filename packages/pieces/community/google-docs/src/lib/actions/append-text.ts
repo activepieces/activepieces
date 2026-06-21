@@ -12,7 +12,7 @@ export const appendText = createAction({
         'Appends text to the end of an existing Google Docs document identified by its ID. Use when an agent needs to add content to a known document without altering its existing text. Requires the document ID; not idempotent, since each call inserts the text again, accumulating duplicates.',
       idempotent: false,
     },
-    displayName: 'Append text to google docs',
+    displayName: 'Append Text to Google Docs',
     props: {
       text: Property.LongText({
         displayName: 'Text to append',

@@ -12,7 +12,7 @@ import { AuthorizationReadResponse } from '../../../models/responses';
 export const authorizationReadAction = createAction({
   auth: ampecoAuth,
   name: 'authorizationRead',
-  displayName: 'Resources - Authorizations - Authorization Read',
+  displayName: 'Get Authorization',
   description: 'Authorization / Read.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO authorization record (an EV charging access request, e.g. via RFID tag, mobile device, or plug-and-charge) by its ID, including its status and method. Read-only and idempotent. To search authorizations by status, method, or date instead of a known ID, use the authorizations listing action.', idempotent: true },

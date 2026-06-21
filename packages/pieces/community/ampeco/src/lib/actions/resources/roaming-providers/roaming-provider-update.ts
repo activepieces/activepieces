@@ -13,7 +13,7 @@ import { RoamingProviderUpdateResponse } from '../../../models/responses';
 export const roamingProviderUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'roamingProviderUpdate',
-  displayName: 'Resources - Roaming Providers - Update',
+  displayName: 'Update Roaming Provider',
   description: 'Update Roaming Providers.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing AMPECO roaming provider identified by numeric ID, sending only the provided fields as a partial PATCH. The request body shape depends on the selected variant: Hubject (hubjectId) or OCPI/Gireve 2.2.1 (countryCode, partyId). Idempotent: applying the same values repeatedly leaves the provider unchanged. Use the create action to add a new provider instead.', idempotent: true },

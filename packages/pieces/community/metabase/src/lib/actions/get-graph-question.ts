@@ -7,7 +7,7 @@ export const getGraphQuestion = createAction({
   name: 'getGraphQuestion',
   auth: metabaseAuth,
   requireAuth: true,
-  displayName: 'Get the graph of the question',
+  displayName: 'Get the Graph of the Question',
   description: 'Get the graph of a Metabase question and save it as a png',
   audience: 'both',
   aiMetadata: {

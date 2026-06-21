@@ -8,7 +8,7 @@ import { tr } from 'zod/v4/locales';
 export const createAVoucher = createAction({
   auth: voucheryIoAuth,
   name: 'createAVoucher',
-  displayName: 'Create a voucher',
+  displayName: 'Create a Voucher',
   description: 'Create a new voucher in a campaign',
   audience: 'both',
   aiMetadata: {

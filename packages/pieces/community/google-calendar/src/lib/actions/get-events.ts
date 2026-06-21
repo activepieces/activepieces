@@ -14,7 +14,7 @@ export const getEvents = createAction({
   description: 'Get Events',
   audience: 'both',
   aiMetadata: { description: 'Lists events from a Google Calendar, optionally filtered by a date range, search term, and event types, and can expand recurring events into individual instances. Use to look up or browse multiple events when you do not already have a specific event ID; use Get Event by ID for a single known event. Read-only and idempotent.', idempotent: true },
-  displayName: 'Get all Events',
+  displayName: 'Get All Events',
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     event_types: Property.StaticMultiSelectDropdown({

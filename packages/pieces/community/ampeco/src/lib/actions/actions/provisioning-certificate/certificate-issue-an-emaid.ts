@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const certificateIssueAnEmaidAction = createAction({
   auth: ampecoAuth,
   name: 'certificateIssueAnEmaid',
-  displayName: 'Actions - Provisioning Certificate - Certificate Issue An EMAID',
+  displayName: 'Issue EMAID Certificate',
   description: 'Certificate / Issue an EMAID.',
   audience: 'both',
   aiMetadata: { description: 'Issue a new e-mobility account identifier (EMAID) from a provisioning certificate, optionally binding a payment method (a card payment-method ID, "corporate:{id}" for corporate billing, or null for last-used). Use this to mint a fresh EMAID; to refresh the certificate on an existing id tag use certificate-reissue-an-emaid. Not idempotent: each call issues a new EMAID.', idempotent: false },

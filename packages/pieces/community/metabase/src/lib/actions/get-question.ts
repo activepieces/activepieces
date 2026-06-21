@@ -14,7 +14,7 @@ export const getQuestion = createAction({
   name: 'getQuestion',
   auth: metabaseAuth,
   requireAuth: true,
-  displayName: 'Get question',
+  displayName: 'Get Question',
   description: 'Fetch the results of a Metabase question',
   audience: 'both',
   aiMetadata: {

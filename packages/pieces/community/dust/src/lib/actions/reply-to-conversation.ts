@@ -17,7 +17,7 @@ import {
 export const replyToConversation = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'replyToConversation',
-  displayName: 'Reply to conversation',
+  displayName: 'Reply to Conversation',
   description: 'Send reply to existing conversation',
   audience: 'both',
   aiMetadata: {

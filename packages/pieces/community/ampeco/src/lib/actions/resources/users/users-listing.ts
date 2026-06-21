@@ -13,7 +13,7 @@ import { UsersListingResponse } from '../../../models/responses';
 export const usersListingAction = createAction({
   auth: ampecoAuth,
   name: 'usersListing',
-  displayName: 'Resources - Users - Users Listing',
+  displayName: 'List Users',
   description: 'Get all users.',
   audience: 'both',
   aiMetadata: { description: 'List AMPECO users, optionally filtered by user group, partner, external id, email, external app data, or last-updated date range. Read-only and idempotent. Filtering by email or external id is the way to look a user up when you do not have their numeric id. Enable Paginate Results to fetch every page up to the Per page cap.', idempotent: true },

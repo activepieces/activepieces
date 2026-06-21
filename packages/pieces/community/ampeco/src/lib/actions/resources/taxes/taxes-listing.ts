@@ -13,7 +13,7 @@ import { TaxesListingResponse } from '../../../models/responses';
 export const taxesListingAction = createAction({
   auth: ampecoAuth,
   name: 'taxesListing',
-  displayName: 'Resources - Taxes - Listing',
+  displayName: 'List Taxes',
   description: 'Get all Taxes.',
   audience: 'both',
   aiMetadata: { description: 'List all tax rates configured in AMPECO. Read-only and idempotent; enable Paginate Results to fetch every page in one call, or leave it off to return a single page (up to per_page, max 100). Use to discover a tax ID before reading, applying, or deleting a specific tax.', idempotent: true },

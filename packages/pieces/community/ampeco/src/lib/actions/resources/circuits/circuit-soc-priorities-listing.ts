@@ -13,7 +13,7 @@ import { CircuitSocPrioritiesListingResponse } from '../../../models/responses';
 export const circuitSocPrioritiesListingAction = createAction({
   auth: ampecoAuth,
   name: 'circuitSocPrioritiesListing',
-  displayName: 'Resources - Circuits - Circuit Soc Priorities Listing',
+  displayName: 'List Circuit SoC Priorities',
   description: 'Get a circuit&#x27;s SoC priority.',
   audience: 'both',
   aiMetadata: { description: 'Read the state-of-charge (SoC) priority configuration for a single AMPECO load-management circuit, identified by numeric circuit ID. Read-only lookup with no side effects. Use when you need the SoC-based priority rules for one specific circuit; for the broader circuit record use the circuit read action.', idempotent: true },

@@ -13,7 +13,7 @@ import { CurrencyCreateResponse } from '../../../models/responses';
 export const currencyCreateAction = createAction({
   auth: ampecoAuth,
   name: 'currencyCreate',
-  displayName: 'Resources - Currencies - Create',
+  displayName: 'Create Currency',
   description: 'Create currency.',
   audience: 'both',
   aiMetadata: { description: 'Add a new currency to AMPECO by its 3-letter alphabetic code, with optional display prefix/suffix, decimal precision, and minor-unit settings. Use to register a currency the platform does not yet support; to change an existing one use Update Currency instead. Not idempotent: repeated calls create duplicate currency records.', idempotent: false },

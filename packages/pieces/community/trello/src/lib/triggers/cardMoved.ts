@@ -8,7 +8,7 @@ import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const cardMovedTrigger = createTrigger({
 	auth: trelloAuth,
 	name: 'card_moved_to_list',
-	displayName: 'Card Moved to list',
+	displayName: 'Card Moved to List',
 	description: 'Trigger when a card is moved to the list specified',
 	aiMetadata: {
 		description: 'Fires when a card is moved into the specified list on a board (from a different list). Represents a card transitioning to a new stage; emits the moved card with its full details.',

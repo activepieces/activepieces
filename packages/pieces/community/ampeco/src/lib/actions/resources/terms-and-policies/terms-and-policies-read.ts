@@ -12,7 +12,7 @@ import { TermsAndPoliciesReadResponse } from '../../../models/responses';
 export const termsAndPoliciesReadAction = createAction({
   auth: ampecoAuth,
   name: 'termsAndPoliciesRead',
-  displayName: 'Resources - Terms And Policies - Read',
+  displayName: 'Get Terms and Policies',
   description: 'Terms and policies / Read.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single terms-and-policies document version by its numeric term version id. Read-only and idempotent. Use when you already know the term version id; to browse versions or filter by document use termsAndPoliciesListing.', idempotent: true },

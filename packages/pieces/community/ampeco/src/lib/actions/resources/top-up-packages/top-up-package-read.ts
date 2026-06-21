@@ -13,7 +13,7 @@ import { TopUpPackageReadResponse } from '../../../models/responses';
 export const topUpPackageReadAction = createAction({
   auth: ampecoAuth,
   name: 'topUpPackageRead',
-  displayName: 'Resources - Top Up Packages - Read',
+  displayName: 'Get Top Up Package',
   description: 'Get a Top-Up Package.',
   audience: 'both',
   aiMetadata: { description: 'Fetches a single top-up package from AMPECO by its numeric ID. Use to look up the details of one known package; requires the package ID. Read-only and idempotent.', idempotent: true },

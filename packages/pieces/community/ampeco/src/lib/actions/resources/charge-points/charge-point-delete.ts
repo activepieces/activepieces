@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const chargePointDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDelete',
-  displayName: 'Resources - Charge Points - Charge Point Delete',
+  displayName: 'Delete Charge Point',
   description: 'Delete a charge point.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete a charge point by its numeric ID. Destructive and irreversible; once removed a repeat call will fail because the charge point no longer exists. Confirm the correct ID first, e.g. via charge-point-read.', idempotent: false },

@@ -13,7 +13,7 @@ import { ChargePointDowntimePeriodUpdateResponse } from '../../../models/respons
 export const chargePointDowntimePeriodUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodUpdate',
-  displayName: 'Resources - Charge Point Downtime Periods - Update',
+  displayName: 'Update Charge Point Downtime Period',
   description: 'Update Charge Point Downtime Period.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing charge-point downtime period identified by its numeric ID, changing its notice and optionally its start/end times. Idempotent: re-applying the same values yields the same state. Editing startedAt/endedAt is only allowed for manual exempt periods (type = exempt and entryMode = manual).', idempotent: true },

@@ -13,7 +13,7 @@ import { UpdateRoamingCustomTariffFilterResponse } from '../../../models/respons
 export const updateRoamingCustomTariffFilterAction = createAction({
   auth: ampecoAuth,
   name: 'updateRoamingCustomTariffFilter',
-  displayName: 'Resources - Roaming Operators - Update Roaming Custom Tariff Filter',
+  displayName: 'Update Roaming Custom Tariff Filter',
   description: 'Update an existing custom tariff filter.',
   audience: 'both',
   aiMetadata: { description: 'Update fields of an existing custom tariff filter for a roaming operator, identified by the roaming operator ID and filter ID. Only the fields you supply are changed. Idempotent on the supplied values; note that setting an already-used order value reshuffles the other filters in the sequence.', idempotent: true },

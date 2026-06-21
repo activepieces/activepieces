@@ -26,7 +26,7 @@ const sampleData = {
 export const addTag = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_tag_add',
-  displayName: 'Tag added to subscriber',
+  displayName: 'Tag Added to Subscriber',
   description: 'Trigger when a tag is added to a subscriber',
   aiMetadata: {
     description:

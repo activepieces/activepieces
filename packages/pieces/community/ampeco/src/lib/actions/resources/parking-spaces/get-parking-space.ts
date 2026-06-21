@@ -13,7 +13,7 @@ import { GetParkingSpaceResponse } from '../../../models/responses';
 export const getParkingSpaceAction = createAction({
   auth: ampecoAuth,
   name: 'getParkingSpace',
-  displayName: 'Resources - Parking Spaces - Get',
+  displayName: 'Get Parking Space',
   description: 'Get Parking Space.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single parking space by its numeric ID, optionally including its related EVSEs. Use when you already know the ID and need its details; read-only and safe to retry.', idempotent: true },

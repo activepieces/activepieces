@@ -5,7 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const getList = createAction({
   auth: villageAuth,
   name: 'get_list',
-  displayName: 'Get a list',
+  displayName: 'Get a List',
   description:
     'Get a list with all its items. Returns the list metadata plus paginated items. For people lists, items are sorted by connection strength (warmth score).',
   audience: 'both',

@@ -5,7 +5,7 @@ import { documentproAuth } from '../common/auth';
 export const uploaddocument = createAction({
   auth: documentproAuth,
   name: 'uploadDocument',
-  displayName: 'Upload document',
+  displayName: 'Upload Document',
   description: 'Uploads a document to a DocumentPro parser',
   audience: 'both',
   aiMetadata: {

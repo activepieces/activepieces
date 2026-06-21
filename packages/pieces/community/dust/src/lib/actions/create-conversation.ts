@@ -14,7 +14,7 @@ import { PublicPostConversationsRequestBody } from '@dust-tt/client';
 export const createConversation = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'createConversation',
-  displayName: 'Create conversation',
+  displayName: 'Create Conversation',
   description: 'Create a new conversation with a specific Dust assistant',
   audience: 'both',
   aiMetadata: {

@@ -13,7 +13,7 @@ import { TariffSnapshotReadResponse } from '../../../models/responses';
 export const tariffSnapshotReadAction = createAction({
   auth: ampecoAuth,
   name: 'tariffSnapshotRead',
-  displayName: 'Resources - Tariff Snapshots - Read Tariff Snapshot',
+  displayName: 'Get Tariff Snapshot',
   description: 'Get a tariff snapshot by id.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single tariff snapshot (a point-in-time record of tariff terms) by its numeric ID. Read-only and safe to repeat.', idempotent: true },

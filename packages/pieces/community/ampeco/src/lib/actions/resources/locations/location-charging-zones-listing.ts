@@ -13,7 +13,7 @@ import { LocationChargingZonesListingResponse } from '../../../models/responses'
 export const locationChargingZonesListingAction = createAction({
   auth: ampecoAuth,
   name: 'locationChargingZonesListing',
-  displayName: 'Resources - Locations - Listing Charging Zones',
+  displayName: 'List Charging Zones',
   description: 'Get all Charging Zones.',
   audience: 'both',
   aiMetadata: { description: 'Lists the charging zones belonging to one AMPECO location, identified by its numeric location ID. Use to enumerate or discover zone IDs within a known location before reading or editing them; enable Paginate Results to fetch every zone across pages rather than a single capped page. Read-only and idempotent.', idempotent: true },

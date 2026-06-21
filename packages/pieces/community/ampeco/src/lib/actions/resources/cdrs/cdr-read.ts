@@ -13,7 +13,7 @@ import { CdrReadResponse } from '../../../models/responses';
 export const cdrReadAction = createAction({
   auth: ampecoAuth,
   name: 'cdrRead',
-  displayName: 'Resources - Cdrs - Read',
+  displayName: 'Get CDR',
   description: 'Get a CDR.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single charge detail record (CDR) by its numeric id, optionally including external app data. Read-only and idempotent. Use when you already know the CDR id; to browse or filter CDRs by time, operator, or platform use cdrsListing.', idempotent: true },

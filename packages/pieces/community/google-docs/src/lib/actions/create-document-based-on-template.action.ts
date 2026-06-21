@@ -25,7 +25,7 @@ export const createDocumentBasedOnTemplate = createAction({
       'Fills a Google Docs template in place by find-and-replacing placeholder tokens (e.g. [[KEY]] or {{KEY}}) with supplied key/value pairs and swapping placeholder images by object ID. Use when an agent has an existing template document and wants to merge data into it rather than build a doc from scratch. Requires the target document ID and the matching placeholder format; idempotent since re-running with the same values replaces no remaining placeholders and leaves the document unchanged.',
     idempotent: true,
   },
-  displayName: 'Edit template file',
+  displayName: 'Edit Template File',
   props: {
     template: Property.ShortText({
       displayName: 'Destination File',

@@ -12,7 +12,7 @@ import { SubscriptionReadResponse } from '../../../models/responses';
 export const subscriptionReadAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionRead',
-  displayName: 'Resources - Subscriptions - Subscription Read',
+  displayName: 'Get Subscription',
   description: 'Get a single subscription.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single subscription by its numeric ID. Read-only and idempotent. Use when you already know the subscription ID; otherwise use the Subscriptions Listing to find it first.', idempotent: true },

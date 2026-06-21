@@ -13,7 +13,7 @@ import { CircuitUserPriorityUpdateResponse } from '../../../models/responses';
 export const circuitUserPriorityUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'circuitUserPriorityUpdate',
-  displayName: 'Resources - Circuits - Circuit User Priority Update',
+  displayName: 'Update Circuit User Priority',
   description: 'Update a circuit\'s user priority.',
   audience: 'both',
   aiMetadata: { description: 'Modify an existing user-priority rule on an AMPECO circuit, identified by circuit ID plus user-priority ID, adjusting its priority weight (1 = baseline, 2 = twice as important, 0.5 = half) and optional partner/userGroup target. Not idempotent: it mutates the targeted priority record, so it requires a pre-existing user priority. Use to retune an existing rule, not to create one.', idempotent: false },

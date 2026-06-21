@@ -6,7 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const rateCandidate = createAction({
   auth: workableAuth,
   name: 'rateCandidate',
-  displayName: 'Rate candidate',
+  displayName: 'Rate Candidate',
   description: 'Rates the candidate on workable.',
   audience: 'both',
   aiMetadata: { description: 'Adds a rating with a comment to a Workable candidate on behalf of a hiring-team member, using one of the thumbs, stars, or numbers scales. Use to record an evaluation of a candidate. Requires the candidate ID, the acting member ID, a comment, the chosen scale, and a grade valid for that scale (thumbs 0-2, stars 0-4, numbers 0-9). Not idempotent — each call appends a new rating.', idempotent: false },

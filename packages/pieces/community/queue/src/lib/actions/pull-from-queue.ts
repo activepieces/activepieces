@@ -14,7 +14,7 @@ export const pullFromQueue = createAction({
   audience: 'human',
     name: 'pull-from-queue',
     description: 'Pull items from queue',
-    displayName: 'Pull items from queue',
+    displayName: 'Pull Items from Queue',
     props: {
         info: Property.MarkDown({
             value: notes,

@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const taxIdentificationNumberDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'taxIdentificationNumberDelete',
-  displayName: 'Resources - Tax Identification Numbers - Delete',
+  displayName: 'Delete Tax Identification Number',
   description: 'Delete a Tax Identification Number.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete a tax identification number by its numeric ID. Use when removing a TIN record; this is destructive and cannot be undone, so confirm the ID first. Re-running after the record is gone will error.', idempotent: false },

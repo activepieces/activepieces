@@ -12,7 +12,7 @@ import { BookingRequestsListingResponse } from '../../../models/responses';
 export const bookingRequestsListingAction = createAction({
   auth: ampecoAuth,
   name: 'bookingRequestsListing',
-  displayName: 'Resources - Booking Requests - Booking Requests Listing',
+  displayName: 'List Booking Requests',
   description: 'Get all booking requests.',
   audience: 'both',
   aiMetadata: { description: 'List booking requests with optional filters by status, user, location, and start/end/created date ranges. Read-only and idempotent. Enable the pagination option to fetch all matching requests across pages; otherwise one page (up to per_page) is returned. Use this to find a booking request ID before reading one.', idempotent: true },

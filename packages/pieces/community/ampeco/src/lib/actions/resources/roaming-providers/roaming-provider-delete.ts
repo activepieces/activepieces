@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const roamingProviderDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'roamingProviderDelete',
-  displayName: 'Resources - Roaming Providers - Delete',
+  displayName: 'Delete Roaming Provider',
   description: 'Delete a Roaming Provider.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an AMPECO roaming provider by its numeric ID. Destructive; deleting an already-removed provider returns an error rather than succeeding silently. Confirm the provider ID via the listing action first.', idempotent: false },

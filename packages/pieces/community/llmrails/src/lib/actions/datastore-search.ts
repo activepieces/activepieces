@@ -9,7 +9,7 @@ import { llmrailsAuth } from '../..';
 export const datastoreSearch = createAction({
   auth: llmrailsAuth,
   name: 'search',
-  displayName: 'Datastore search',
+  displayName: 'Datastore Search',
   description: 'Search in datastore',
   audience: 'both',
   aiMetadata: {

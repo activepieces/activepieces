@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const configurationTemplateBulkCreateVariablesAction = createAction({
   auth: ampecoAuth,
   name: 'configurationTemplateBulkCreateVariables',
-  displayName: 'Actions - Configuration Template - Bulk Create Variables',
+  displayName: 'Bulk Create Variables',
   description: 'Create multiple variables for a specific configuration template, adds them to the already existing keys and validates if there are duplicates.',
   audience: 'both',
   aiMetadata: { description: 'Add several variables in one call to a configuration template, appending to its existing keys and rejecting duplicates. Not idempotent: re-running with keys that now already exist will fail the duplicate validation rather than no-op.', idempotent: false },

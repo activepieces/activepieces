@@ -13,7 +13,7 @@ import { ConfigurationTemplateVariableUpdateResponse } from '../../../models/res
 export const configurationTemplateVariableUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'configurationTemplateVariableUpdate',
-  displayName: 'Resources - Configuration Templates - Configuration Template Variable Update',
+  displayName: 'Update Configuration Template Variable',
   description: 'Update a Configuration Template Variable.',
   audience: 'both',
   aiMetadata: { description: 'Modify an existing configuration variable within an OCPP configuration template, identified by template id and variable id, supplying only the fields to change. Choose the variant matching the template OCPP version (1.6: keyName/value; 2.0.1: component/variableName/value plus optional scoping). Not idempotent: each call mutates live state. Use the Create variant action to add a new variable.', idempotent: false },

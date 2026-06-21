@@ -6,7 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const getSmsInfo = createAction({
   auth: kudosityAuth,
   name: 'getSmsInfo',
-  displayName: 'Get SMS info',
+  displayName: 'Get SMS Info',
   description: 'Retrieve details for a sent SMS by ID',
   audience: 'both',
   aiMetadata: {

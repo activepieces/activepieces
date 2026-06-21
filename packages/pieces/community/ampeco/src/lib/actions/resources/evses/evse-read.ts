@@ -13,7 +13,7 @@ import { EvseReadResponse } from '../../../models/responses';
 export const evseReadAction = createAction({
   auth: ampecoAuth,
   name: 'evseRead',
-  displayName: 'Resources - Evses - Read',
+  displayName: 'Get EVSE',
   description: 'Get an EVSE.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single EVSE (charging connector) by its numeric id, optionally including related charging profile, connectors, or external app data. Read-only and idempotent; use this when you already know the EVSE id, and use Listing to search across many EVSEs.', idempotent: true },

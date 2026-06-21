@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const signrequestDeclined = createTrigger({
   auth: signrequestAuth,
   name: 'signrequestDeclined',
-  displayName: 'signrequest declined',
+  displayName: 'SignRequest Declined',
   description: 'Fires when a SignRequest is declined',
   aiMetadata: { description: 'Fires when a recipient declines a SignRequest. Use to handle rejected or refused signature requests.' },
   props: {},

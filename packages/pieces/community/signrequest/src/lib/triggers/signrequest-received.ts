@@ -5,7 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const signrequestReceived = createTrigger({
   auth: signrequestAuth,
   name: 'signrequestReceived',
-  displayName: 'signrequest received',
+  displayName: 'SignRequest Received',
   description: 'Triggers when a SignRequest is received',
   aiMetadata: { description: 'Fires when a SignRequest document is received for signing. Use to start a flow when a new signature request arrives.' },
   props: {},

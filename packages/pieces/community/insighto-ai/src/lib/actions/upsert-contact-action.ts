@@ -4,7 +4,7 @@ import { insightoAuth } from '../..';
 
 export const upsertContactAction = createAction({
   name: 'upsert_contact',
-  displayName: 'Upsert Contact',
+  displayName: 'Create or Update Contact',
   description: 'Create or update a contact using email or phone number',
   audience: 'both',
   aiMetadata: {

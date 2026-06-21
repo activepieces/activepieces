@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const runQuery = createAction({
   auth: omniAuth,
   name: 'runQuery',
-  displayName: 'Run query',
+  displayName: 'Run Query',
   description:
     'Runs a query and returns the results as base64 encoded Apache Arrow table or in specified format',
   audience: 'both',

@@ -5,7 +5,7 @@ import { talkableAuth } from '../../..';
 export const updatePerson = createAction({
   name: 'update_person', // Must be a unique across the piece, this shouldn't be changed.
   auth: talkableAuth,
-  displayName: 'Update person',
+  displayName: 'Update Person',
   description: 'Update person by email',
   audience: 'both',
   aiMetadata: { description: 'Update a Talkable person identified by email, setting profile fields such as name, phone, username, customer ID, custom properties, and opt-in/unsubscribe status. Use to keep an existing customer\'s details or subscription state current. Idempotent: it overwrites the same fields to the same values on repeat; the email is required.', idempotent: true },

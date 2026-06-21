@@ -19,7 +19,7 @@ import { ChargePointConfigurationUpdateResponse } from '../../../models/response
 export const chargePointConfigurationUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointConfigurationUpdate',
-  displayName: 'Resources - Charge Points - Charge Point Configuration Update',
+  displayName: 'Update Charge Point Configuration',
   description:
     "Update a charge point's configuration. The configuration is applied directly to the charge point and you will get response code 406 in case the application fails.",
   audience: 'both',

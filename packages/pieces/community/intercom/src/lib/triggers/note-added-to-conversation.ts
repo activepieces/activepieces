@@ -6,7 +6,7 @@ import { intercomClient } from '../common';
 export const noteAddedToConversation = createTrigger({
 	// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
 	name: 'noteAddedToConversation',
-	displayName: 'Note added to conversation',
+	displayName: 'Note Added to Conversation',
 	description: 'Triggers when a note is added to a conversation',
 	aiMetadata: {
 		description: 'Fires when an internal note is added to a conversation in Intercom. Notes are private remarks visible only to admins and teammates, not to the contact. An optional keyword input filters to notes containing that text. Outputs the conversation object reflecting the added note.',

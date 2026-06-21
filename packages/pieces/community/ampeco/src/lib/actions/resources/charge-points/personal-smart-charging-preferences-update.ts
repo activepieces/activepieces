@@ -13,7 +13,7 @@ import { PersonalSmartChargingPreferencesUpdateResponse } from '../../../models/
 export const personalSmartChargingPreferencesUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'personalSmartChargingPreferencesUpdate',
-  displayName: 'Resources - Charge Points - Personal Smart Charging Preferences Update',
+  displayName: 'Update Personal Smart Charging Preferences',
   description: 'Update personal smart charging preferences.',
   audience: 'both',
   aiMetadata: { description: 'Set the personal smart-charging preferences for a charge point (by charge point ID). Pick the variant type first (e.g. user-controlled schedule, solar, Octopus Agile/Go, NordPool, electricity rate, or disabled), which determines the required preference fields. This overwrites the current preferences and applies them to the device, so it is a mutating call.', idempotent: false },

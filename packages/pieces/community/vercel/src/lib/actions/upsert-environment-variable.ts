@@ -7,7 +7,7 @@ import { envTargetsProperty, vercelProjectDropdown } from '../common/props';
 export const upsertEnvironmentVariable = createAction({
   auth: vercelAuth,
   name: 'upsert_environment_variable',
-  displayName: 'Upsert Environment Variable',
+  displayName: 'Create or Update Environment Variable',
   description:
     'Create or update a Vercel environment variable using Vercel\'s upsert API.',
   audience: 'both',

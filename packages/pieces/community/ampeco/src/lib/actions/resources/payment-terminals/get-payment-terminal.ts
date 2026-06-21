@@ -13,7 +13,7 @@ import { GetPaymentTerminalResponse } from '../../../models/responses';
 export const getPaymentTerminalAction = createAction({
   auth: ampecoAuth,
   name: 'getPaymentTerminal',
-  displayName: 'Resources - Payment Terminals - Get Payment Terminal',
+  displayName: 'Get Payment Terminal',
   description: 'Get information for a payment terminal by ID.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single payment terminal by its id, returning its configuration and status. Read-only and idempotent. Use when you already know the terminal id; to browse terminals or filter by serial number use getPaymentTerminals.', idempotent: true },

@@ -5,7 +5,7 @@ import { MarkdownTransformer } from '@atlaskit/editor-markdown-transformer';
 
 export const markdownToJiraFormat = createAction({
   name: 'markdownToJiraFormat',
-  displayName: 'Markdown to Jira format',
+  displayName: 'Markdown to Jira Format',
   description:
     "Convert Markdown-formatted text to Jira's ADF syntax for use in comments and descriptions etc",
   audience: 'both',

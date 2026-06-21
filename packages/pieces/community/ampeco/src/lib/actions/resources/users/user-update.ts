@@ -13,7 +13,7 @@ import { UserUpdateResponse } from '../../../models/responses';
 export const userUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'userUpdate',
-  displayName: 'Resources - Users - User Update',
+  displayName: 'Update User',
   description: 'Update user.',
   audience: 'both',
   aiMetadata: { description: "Update an existing AMPECO user, identified by numeric user id, changing profile, contact, address, credentials, group membership, session options, or bank details. Only the fields you supply are modified. Re-running with the same values is safe, but provided values overwrite the current ones. Use User Create to add a new user.", idempotent: false },

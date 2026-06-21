@@ -8,7 +8,7 @@ export const webflowUpdateCollectionItem = createAction({
 	auth: webflowAuth,
 	name: 'update_collection_item',
 	description: 'Update collection item',
-	displayName: 'Update an item in a collection',
+	displayName: 'Update an Item in a Collection',
 	audience: 'both',
 	aiMetadata: { description: 'Updates an existing Webflow CMS collection item, identified by collection ID and item ID, overwriting the supplied field values (keyed by field slug) and the archived/draft flags. Use to edit existing CMS content. Idempotent: applying the same field values repeatedly yields the same item state.', idempotent: true },
 	props: {

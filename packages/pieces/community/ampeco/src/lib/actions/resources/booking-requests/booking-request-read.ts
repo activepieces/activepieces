@@ -12,7 +12,7 @@ import { BookingRequestReadResponse } from '../../../models/responses';
 export const bookingRequestReadAction = createAction({
   auth: ampecoAuth,
   name: 'bookingRequestRead',
-  displayName: 'Resources - Booking Requests - Read',
+  displayName: 'Get Booking Request',
   description: 'Get information for a booking request by ID.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single booking request by its numeric ID. Read-only and idempotent. Use when you already know the booking request ID; otherwise use the Booking Requests Listing to find it first.', idempotent: true },

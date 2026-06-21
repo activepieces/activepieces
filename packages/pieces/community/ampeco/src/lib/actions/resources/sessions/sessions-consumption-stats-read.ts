@@ -13,7 +13,7 @@ import { SessionsConsumptionStatsReadResponse } from '../../../models/responses'
 export const sessionsConsumptionStatsReadAction = createAction({
   auth: ampecoAuth,
   name: 'sessionsConsumptionStatsRead',
-  displayName: 'Resources - Sessions - Read Sessions Consumption Stats',
+  displayName: 'Get Sessions Consumption Stats',
   description: 'Consumption statistics may differ between active and finished sessions, as finished sessions display aggregated final data with a maximum of 300 items.',
   audience: 'both',
   aiMetadata: { description: 'Fetch the energy-consumption statistics time series for a single AMPECO charging session by its session ID. Note that results differ by session state: active sessions return live data points, while finished sessions return aggregated final data capped at 300 items. Read-only and idempotent.', idempotent: true },

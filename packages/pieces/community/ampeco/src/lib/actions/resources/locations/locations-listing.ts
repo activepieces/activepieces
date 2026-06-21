@@ -13,7 +13,7 @@ import { LocationsListingResponse } from '../../../models/responses';
 export const locationsListingAction = createAction({
   auth: ampecoAuth,
   name: 'locationsListing',
-  displayName: 'Resources - Locations - Listing',
+  displayName: 'List Locations',
   description: 'Get all locations.',
   audience: 'both',
   aiMetadata: { description: 'Lists charging locations in AMPECO, optionally narrowing by country/state/region/city, partner or external ID, tag, or last-updated window. Use to discover locations or find a location ID before reading or editing it; with no filters it returns all locations, and enabling Paginate Results walks every page instead of a single capped page. Read-only and idempotent.', idempotent: true },

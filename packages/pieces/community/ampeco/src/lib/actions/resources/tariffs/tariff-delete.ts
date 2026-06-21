@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const tariffDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'tariffDelete',
-  displayName: 'Resources - Tariffs - Delete',
+  displayName: 'Delete Tariff',
   description: 'Delete a tariff.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an AMPECO tariff by its numeric ID. Destructive: removes the pricing definition and cannot be undone, so confirm the tariff is no longer assigned before calling. Deleting an already-removed tariff will error rather than succeed silently.', idempotent: false },

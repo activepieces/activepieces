@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getAJournalEntry = createAction({
   auth: bokioAuth,
   name: 'getAJournalEntry',
-  displayName: 'Get a journal entry',
+  displayName: 'Get a Journal Entry',
   description: 'Retrieve a specific journal entry by its ID',
   audience: 'both',
   aiMetadata: { description: 'Retrieves a single journal entry from a Bokio company by its UUID. Use when you already have the journal entry ID and need its full bookkeeping details. Idempotent read-only lookup.', idempotent: true },

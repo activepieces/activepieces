@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const userAddBalanceAction = createAction({
   auth: ampecoAuth,
   name: 'userAddBalance',
-  displayName: 'Actions - Users - Add Balance',
+  displayName: 'Add Balance',
   description: 'Add to the current balance of the user.',
   audience: 'both',
   aiMetadata: { description: "Credit (or debit, with a negative amount) a user's account balance by the given amount, recording the required reason. Not idempotent: this adds to the existing balance, so each call shifts it further rather than setting an absolute value.", idempotent: false },

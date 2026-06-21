@@ -13,7 +13,7 @@ import { VouchersListingResponse } from '../../../models/responses';
 export const vouchersListingAction = createAction({
   auth: ampecoAuth,
   name: 'vouchersListing',
-  displayName: 'Resources - Vouchers - Vouchers Listing',
+  displayName: 'List Vouchers',
   description: 'Get all Vouchers.',
   audience: 'both',
   aiMetadata: { description: 'List vouchers, with optional filters by type, status, code substring, redeeming user, and creation/redemption/expiry date ranges. Read-only and idempotent. Use this to search or count vouchers; to fetch one known voucher prefer Voucher Read. Enable Paginate Results for the full set across pages.', idempotent: true },

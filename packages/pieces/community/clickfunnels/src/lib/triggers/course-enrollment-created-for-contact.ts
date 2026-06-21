@@ -9,7 +9,7 @@ const MODULE_NAME = 'Course Enrollment Created';
 export const courseEnrollmentCreatedForContact = createTrigger({
   auth: clickfunnelsAuth,
   name: 'courseEnrollmentCreatedForContact',
-  displayName: `${MODULE_NAME} for contact`,
+  displayName: `${MODULE_NAME} for Contact`,
   description: 'Triggers when a course enrollment is created for a contact.',
   aiMetadata: {
     description:

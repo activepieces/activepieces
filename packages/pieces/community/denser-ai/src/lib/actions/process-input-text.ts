@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const processInputText = createAction({
   auth: denserAiAuth,
   name: 'processInputText',
-  displayName: 'Process input text',
+  displayName: 'Process Input Text',
   description: 'Input text processed by the chatbot',
   audience: 'both',
   aiMetadata: {

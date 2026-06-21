@@ -5,7 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const deleteList = createAction({
   auth: villageAuth,
   name: 'delete_list',
-  displayName: 'Delete a list',
+  displayName: 'Delete a List',
   description:
     'Permanently delete a list and all its items. This action cannot be undone.',
   audience: 'both',

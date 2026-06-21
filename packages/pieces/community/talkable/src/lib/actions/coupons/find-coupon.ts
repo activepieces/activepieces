@@ -5,7 +5,7 @@ import { talkableAuth } from '../../..';
 export const findCoupon = createAction({
   name: 'find_coupon', // Must be a unique across the piece, this shouldn't be changed.
   auth: talkableAuth,
-  displayName: 'Find coupon',
+  displayName: 'Find Coupon',
   description: 'Find coupon code',
   audience: 'both',
   aiMetadata: { description: 'Look up a Talkable coupon by its code and return its details. Use to verify a coupon exists or inspect its status/value. Read-only; the coupon code is required.', idempotent: true },

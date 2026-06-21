@@ -10,7 +10,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const copilotInteractionWebhook = createTrigger({
   auth: microsoft365CopilotAuth,
   name: 'copilotInteractionWebhook',
-  displayName: 'When Copilot creates or updates an interaction',
+  displayName: 'When Copilot Creates or Updates an Interaction',
   description:
     'Trigger when a new Copilot AI interaction is created, updated, or deleted',
   type: TriggerStrategy.WEBHOOK,

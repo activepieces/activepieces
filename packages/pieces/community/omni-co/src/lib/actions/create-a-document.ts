@@ -7,7 +7,7 @@ import { modelIdDropdown } from '../common/props';
 export const createADocument = createAction({
   auth: omniAuth,
   name: 'createADocument',
-  displayName: 'Create a document',
+  displayName: 'Create a Document',
   description: 'Creates a new document',
   audience: 'both',
   aiMetadata: {

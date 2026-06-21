@@ -13,7 +13,7 @@ import { CircuitChargePointPrioritiesListingResponse } from '../../../models/res
 export const circuitChargePointPrioritiesListingAction = createAction({
   auth: ampecoAuth,
   name: 'circuitChargePointPrioritiesListing',
-  displayName: 'Resources - Circuits - Circuit Charge Point Priorities Listing',
+  displayName: 'List Circuit Charge Point Priorities',
   description: 'Get all circuit&#x27;s charge point priorities.',
   audience: 'both',
   aiMetadata: { description: 'List the charge-point priority rules configured on a single AMPECO circuit, identified by numeric circuit ID. Read-only and safe to repeat; supports automatic pagination across pages. Use to enumerate which charge points are prioritized on one circuit, distinct from the user-priority and SoC-priority listings on the same circuit.', idempotent: true },

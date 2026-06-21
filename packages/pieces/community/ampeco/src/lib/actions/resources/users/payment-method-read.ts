@@ -13,7 +13,7 @@ import { PaymentMethodReadResponse } from '../../../models/responses';
 export const paymentMethodReadAction = createAction({
   auth: ampecoAuth,
   name: 'paymentMethodRead',
-  displayName: 'Resources - Users - Payment Method Read',
+  displayName: 'Get Payment Method',
   description: 'Get information for a payment method by ID.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single payment method for an AMPECO user, identified by user id and payment method id. Read-only and idempotent. Use Payment Methods Listing to discover the ids first.', idempotent: true },

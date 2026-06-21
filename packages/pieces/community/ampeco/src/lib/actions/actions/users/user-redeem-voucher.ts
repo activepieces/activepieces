@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const userRedeemVoucherAction = createAction({
   auth: ampecoAuth,
   name: 'userRedeemVoucher',
-  displayName: 'Actions - Users - Redeem Voucher',
+  displayName: 'Redeem Voucher',
   description: 'Apply a voucher to a user.',
   audience: 'both',
   aiMetadata: { description: 'Redeem a voucher code on behalf of a user, granting whatever benefit the voucher carries. Not idempotent: each call consumes a redemption, so re-running may redeem again or fail if the code is single-use or already spent.', idempotent: false },

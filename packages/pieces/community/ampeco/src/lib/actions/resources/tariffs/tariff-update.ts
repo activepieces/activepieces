@@ -13,7 +13,7 @@ import { TariffUpdateResponse } from '../../../models/responses';
 export const tariffUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'tariffUpdate',
-  displayName: 'Resources - Tariffs - Update',
+  displayName: 'Update Tariff',
   description: 'Update a tariff.',
   audience: 'both',
   aiMetadata: { description: 'Replace the full configuration of an existing AMPECO tariff identified by its numeric ID, including its type, pricing model, fees, restrictions, and display text. This is a full-replacement PUT, so supply all fields you want to keep; idempotent in that repeating the same payload yields the same final state. Use the create action to add a new tariff instead.', idempotent: true },

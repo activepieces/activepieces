@@ -6,7 +6,7 @@ import { githubAuthHelpers, GithubAuthValue } from '../common/auth-helpers';
 
 export const githubRawGraphqlQuery = createAction({
   name: 'rawGraphqlQuery',
-  displayName: 'Raw GraphQL query',
+  displayName: 'Raw GraphQL Query',
   description: 'Perform a raw GraphQL query',
   audience: 'both',
   aiMetadata: {

@@ -13,7 +13,7 @@ import { FaqUpdateResponse } from '../../../models/responses';
 export const faqUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'faqUpdate',
-  displayName: 'Resources - Faqs - Update',
+  displayName: 'Update FAQ',
   description: 'Update FAQs.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing FAQ entry identified by its numeric id, replacing its localized question and/or answer text. Targets one known entry (it does not create); idempotent when sending the same values. To add a new FAQ use Faq Create instead.', idempotent: true },

@@ -13,7 +13,7 @@ import { InvoiceReadResponse } from '../../../models/responses';
 export const invoiceReadAction = createAction({
   auth: ampecoAuth,
   name: 'invoiceRead',
-  displayName: 'Resources - Invoices - Read',
+  displayName: 'Get Invoice',
   description: 'Invoice / Read.',
   audience: 'both',
   aiMetadata: { description: 'Fetch the details of a single AMPECO invoice by its ID. Read-only and idempotent. Pick this when you already have an invoice ID; to search invoices by issue date or browse them, use the invoices listing action.', idempotent: true },

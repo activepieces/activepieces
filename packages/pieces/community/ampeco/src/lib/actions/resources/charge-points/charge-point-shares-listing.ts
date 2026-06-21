@@ -13,7 +13,7 @@ import { ChargePointSharesListingResponse } from '../../../models/responses';
 export const chargePointSharesListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSharesListing',
-  displayName: 'Resources - Charge Points - Charge Point Shares Listing',
+  displayName: 'List Charge Point Shares',
   description: 'Get all Shares of the Charge Point.',
   audience: 'both',
   aiMetadata: { description: 'List the shares (shared-access grants) for a given charge point. Read-only and idempotent; enable Paginate Results to fetch every page, or leave it off for a single page (up to per_page, max 100). Use to discover a share ID before deleting a specific share.', idempotent: true },

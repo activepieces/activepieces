@@ -9,7 +9,7 @@ import {
 
 export const listOpportunityForms = createAction({
   name: 'listOpportunityForms',
-  displayName: 'List opportunity forms',
+  displayName: 'List Opportunity Forms',
   description:
     'Get all forms for a given opportunity, optionally for a given form template',
   audience: 'both',

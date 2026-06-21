@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createASchedule = createAction({
   auth: omniAuth,
   name: 'createASchedule',
-  displayName: 'Create a schedule',
+  displayName: 'Create a Schedule',
   description:
     'Creates a scheduled task for a dashboard with support for email, SFTP, and webhook destinations',
   audience: 'both',

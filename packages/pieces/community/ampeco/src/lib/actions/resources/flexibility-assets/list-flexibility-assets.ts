@@ -13,7 +13,7 @@ import { ListFlexibilityAssetsResponse } from '../../../models/responses';
 export const listFlexibilityAssetsAction = createAction({
   auth: ampecoAuth,
   name: 'listFlexibilityAssets',
-  displayName: 'Resources - Flexibility Assets - List',
+  displayName: 'List Flexibility Assets',
   description: 'Get a list of Flexibility Assets.',
   audience: 'both',
   aiMetadata: { description: 'List flexibility assets, optionally filtered to those updated since a given timestamp. Read-only and idempotent. Enable the pagination option to fetch all matching assets across pages; otherwise a single page (up to per_page) is returned. Use this to discover asset IDs before reading, updating, or pulling time-series data for a specific asset.', idempotent: true },

@@ -13,7 +13,7 @@ import { TransactionReadResponse } from '../../../models/responses';
 export const transactionReadAction = createAction({
   auth: ampecoAuth,
   name: 'transactionRead',
-  displayName: 'Resources - Transactions - Read',
+  displayName: 'Get Transaction',
   description: 'Get a transation.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single payment transaction by its id, returning its amount, status, payment method and references. Read-only and idempotent. Use when you already have the transaction id; to search by user, status, or date use transactionsListing.', idempotent: true },

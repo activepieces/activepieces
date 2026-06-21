@@ -9,7 +9,7 @@ import { LEVER_BASE_URL } from '../..';
 
 export const updateOpportunityStage = createAction({
   name: 'updateOpportunityStage',
-  displayName: 'Update opportunity stage',
+  displayName: 'Update Opportunity Stage',
   description: "Change an Opportunity's current stage",
   audience: 'both',
   aiMetadata: {

@@ -13,7 +13,7 @@ import { GetDowntimePeriodNoticeResponse } from '../../../models/responses';
 export const getDowntimePeriodNoticeAction = createAction({
   auth: ampecoAuth,
   name: 'getDowntimePeriodNotice',
-  displayName: 'Resources - Downtime Period Notices - Get',
+  displayName: 'Get Downtime Period Notice',
   description: 'Get Downtime Period Notice.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single downtime period notice by its numeric ID. Use when you already know the ID and need its details; read-only and safe to retry. To search or browse multiple notices use the list action instead.', idempotent: true },

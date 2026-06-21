@@ -5,7 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const cleanOcean = createAction({
   auth: oneclickimpactAuth,
   name: 'cleanOcean',
-  displayName: 'Clean ocean',
+  displayName: 'Clean Ocean',
   description: 'Clean  ocean waste yourself or on behalf of the customer',
   audience: 'both',
   aiMetadata: { description: 'Purchases ocean-waste cleanup through 1ClickImpact for a given amount (in lbs, 1 to 10,000,000), optionally attributed to a named customer email/name. Use to fund cleanup as part of a transaction or fulfillment flow. Not idempotent — each call records a new cleanup, so repeating it cleans additional waste.', idempotent: false },

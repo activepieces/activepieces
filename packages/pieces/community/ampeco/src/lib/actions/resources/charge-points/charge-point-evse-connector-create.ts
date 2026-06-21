@@ -18,7 +18,7 @@ import { ChargePointEvseConnectorCreateResponse } from '../../../models/response
 export const chargePointEvseConnectorCreateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvseConnectorCreate',
-  displayName: 'Resources - Charge Points - Charge Point Evse Connector Create',
+  displayName: 'Create Charge Point EVSE Connector',
   description: "Create a charge point evse's connector.",
   audience: 'both',
   aiMetadata: { description: 'Add a new connector to a charge point EVSE, given the charge point ID, EVSE ID, and a required connector type (plus optional format and status). This is a mutating create that adds a connector each call, so it is not idempotent; use the connector-update action to change an existing connector.', idempotent: false },

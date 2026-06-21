@@ -13,7 +13,7 @@ import { GetFlexibilityAssetResponse } from '../../../models/responses';
 export const getFlexibilityAssetAction = createAction({
   auth: ampecoAuth,
   name: 'getFlexibilityAsset',
-  displayName: 'Resources - Flexibility Assets - Get',
+  displayName: 'Get Flexibility Asset',
   description: 'Get a flexibility asset.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single flexibility asset by its numeric ID. Read-only and idempotent. Use when you already know the asset ID; if you only have a charge point, EVSE, or circuit reference, use List Flexibility Assets first to find the matching asset ID.', idempotent: true },

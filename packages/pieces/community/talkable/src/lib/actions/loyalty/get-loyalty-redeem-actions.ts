@@ -5,7 +5,7 @@ import { talkableAuth } from '../../..';
 export const getLoyaltyRedeemActions = createAction({
   name: 'get_loyalty_redeem_actions', // Must be a unique across the piece, this shouldn't be changed.
   auth: talkableAuth,
-  displayName: 'Get loyalty actions',
+  displayName: 'Get Loyalty Actions',
   description: 'Get array of loyalty actions',
   audience: 'both',
   aiMetadata: { description: 'Retrieve the list of loyalty redeem actions available to a Talkable loyalty member, identified by their email. Use to see what rewards a customer can redeem. Read-only; the person\'s email is required.', idempotent: true },

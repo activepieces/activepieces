@@ -13,7 +13,7 @@ import { ChargePointReadResponse } from '../../../models/responses';
 export const chargePointReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointRead',
-  displayName: 'Resources - Charge Points - Charge Point Read',
+  displayName: 'Get Charge Point',
   description: 'Get a charge point.',
   audience: 'both',
   aiMetadata: { description: 'Fetch the full configuration of a single charge point by its numeric ID, optionally expanding related data such as smart charging or last boot notification via Include. Read-only and safe to repeat. For just the live availability use charge-point-status-read; to scan or filter many charge points use charge-points-listing.', idempotent: true },

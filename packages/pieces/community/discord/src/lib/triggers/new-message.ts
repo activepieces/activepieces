@@ -49,7 +49,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { 
 export const newMessage = createTrigger({
   auth: discordAuth,
   name: 'new_message',
-  displayName: 'New message',
+  displayName: 'New Message',
   description: 'Triggers when a message is sent in a channel',
   aiMetadata: {
     description: 'Fires when a new message is posted in the selected Discord channel, emitting one event per message. Polls the channel periodically, so detection is near-real-time rather than instant.',

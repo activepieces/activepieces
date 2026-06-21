@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createACustomer = createAction({
   auth: waitwhileAuth,
   name: 'createACustomer',
-  displayName: 'Create a customer',
+  displayName: 'Create a Customer',
   description: 'Create a new customer in Waitwhile',
   audience: 'both',
   aiMetadata: {

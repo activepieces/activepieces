@@ -13,7 +13,7 @@ import { CurrenciesListingResponse } from '../../../models/responses';
 export const currenciesListingAction = createAction({
   auth: ampecoAuth,
   name: 'currenciesListing',
-  displayName: 'Resources - Currencies - Listing',
+  displayName: 'List Currencies',
   description: 'Currencies / Listing.',
   audience: 'both',
   aiMetadata: { description: 'List the currencies supported by the AMPECO instance. Read-only and safe to repeat; takes no input. Use to discover valid currency codes before configuring rates or other currency-dependent resources.', idempotent: true },

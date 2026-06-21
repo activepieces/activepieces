@@ -13,7 +13,7 @@ import { RoamingOperatorUpdateResponse } from '../../../models/responses';
 export const roamingOperatorUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'roamingOperatorUpdate',
-  displayName: 'Resources - Roaming Operators - Roaming Operator Update',
+  displayName: 'Update Roaming Operator',
   description: 'Update Roaming Operator.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing roaming operator (identified by its numeric ID), changing business name, partner linkage/enabled state, and CPO settings such as QR-code prefix, manual EVSE management, and tariff-integration options. Only supplied fields change; idempotent on the given values.', idempotent: true },

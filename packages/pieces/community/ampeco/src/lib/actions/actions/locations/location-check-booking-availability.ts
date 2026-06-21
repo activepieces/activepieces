@@ -13,7 +13,7 @@ import { LocationCheckBookingAvailabilityResponse } from '../../../models/respon
 export const locationCheckBookingAvailabilityAction = createAction({
   auth: ampecoAuth,
   name: 'locationCheckBookingAvailability',
-  displayName: 'Actions - Locations - Check Booking Availability',
+  displayName: 'Check Booking Availability',
   description: 'Get a consolidated view of EVSEs availability for a given location and time frame. Returns available time slots for each bookable EVSE at the location.',
   audience: 'both',
   aiMetadata: { description: 'Look up bookable EVSE availability at a location across a start/end time window before reserving. The time frame is limited to 7 days. Read-only query: it reports open slots without changing any booking, so it is safe to repeat.', idempotent: true },

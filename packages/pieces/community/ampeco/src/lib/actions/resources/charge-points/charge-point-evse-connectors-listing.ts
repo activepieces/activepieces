@@ -13,7 +13,7 @@ import { ChargePointEvseConnectorsListingResponse } from '../../../models/respon
 export const chargePointEvseConnectorsListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvseConnectorsListing',
-  displayName: 'Resources - Charge Points - Charge Point Evse Connectors Listing',
+  displayName: 'List Charge Point EVSE Connectors',
   description: 'Get a charge point evse\'s all connectors.',
   audience: 'both',
   aiMetadata: { description: 'List all connectors belonging to a specific charge point EVSE, identified by charge point ID and EVSE ID. Read-only and safe to retry. Use the connector-read action when you already know a single connector ID.', idempotent: true },

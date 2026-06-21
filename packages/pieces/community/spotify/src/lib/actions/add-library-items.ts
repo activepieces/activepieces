@@ -4,7 +4,7 @@ import { spotifyCommon, makeClient } from '../common';
 export default createAction({
   name: 'add_library_items',
   auth: spotifyCommon.authentication,
-  displayName: 'Add items to library',
+  displayName: 'Add Items to Library',
   description: 'Add tracks, episodes, albums, shows, audiobooks, users or playlists to your library',
   audience: 'both',
   aiMetadata: { description: 'Saves one or more items (tracks, episodes, albums, shows, audiobooks, or playlists) to the connected Spotify library by their URIs. Use to bookmark or follow content for the authenticated account. Idempotent: re-adding an already-saved item leaves the library unchanged.', idempotent: true },

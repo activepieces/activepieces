@@ -5,7 +5,7 @@ import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '..
 export const addCalendarToCalendarlist = createAction({
   auth: googleCalendarAuth,
   name: 'addCalendarToCalendarlist',
-  displayName: 'Add Calendar to calendarList',
+  displayName: 'Add Calendar to Calendar List',
   description: "Adds other people's calendars to your calendarList",
   props: {
     id: Property.ShortText({

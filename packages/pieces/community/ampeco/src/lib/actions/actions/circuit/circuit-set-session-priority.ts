@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const circuitSetSessionPriorityAction = createAction({
   auth: ampecoAuth,
   name: 'circuitSetSessionPriority',
-  displayName: 'Actions - Circuit - Set Session Priority',
+  displayName: 'Set Session Priority',
   description: 'Circuit / Set Session Priority.',
   audience: 'both',
   aiMetadata: { description: 'Set the dynamic-load-management priority for a specific active charging session within a circuit, addressed by circuit and session IDs. Use to bias load for one ongoing session rather than a whole charge point (circuit-set-charge-point-priority) or connector (circuit-set-charge-point-evse-priority). Idempotent: writes the priority to a fixed value.', idempotent: true },

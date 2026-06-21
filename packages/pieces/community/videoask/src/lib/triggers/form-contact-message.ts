@@ -10,7 +10,7 @@ import { videoaskAuth } from '../common/auth';
 export const formContactMessage = createTrigger({
     auth: videoaskAuth,
     name: 'formContactMessage',
-    displayName: 'Form contact message',
+    displayName: 'Form Contact Message',
     description: 'Triggers when a contact sends a message via a form',
     aiMetadata: {
         description: 'Fires when a respondent (contact) sends a message in a conversation thread on a specific VideoAsk form. Represents an inbound message from the contact, carrying the message, contact, and form context. Scoped to one form via a registered webhook.',

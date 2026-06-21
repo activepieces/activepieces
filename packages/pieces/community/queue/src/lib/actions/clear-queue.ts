@@ -14,7 +14,7 @@ export const clearQueue = createAction({
   audience: 'human',
     name: 'clear-queue',
     description: 'Clears all items inside a queue',
-    displayName: 'Clear queue',
+    displayName: 'Clear Queue',
     props: {
         info: Property.MarkDown({
             value: notes,

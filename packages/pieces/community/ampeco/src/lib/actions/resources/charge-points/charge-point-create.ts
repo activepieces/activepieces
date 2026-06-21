@@ -19,7 +19,7 @@ import { ChargePointCreateResponse } from '../../../models/responses';
 export const chargePointCreateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointCreate',
-  displayName: 'Resources - Charge Points - Charge Point Create',
+  displayName: 'Create Charge Point',
   description: 'Create new charge point.',
   audience: 'both',
   aiMetadata: { description: 'Register a new charge point (public, private, or personal) with its name, status, location, and communication/network configuration. Not idempotent: each call creates a separate charge point, so guard against duplicates. Required fields vary by type (e.g. locationId for commercial chargers, pin for personal); to change an existing charge point use a dedicated update action instead.', idempotent: false },

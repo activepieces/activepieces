@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const chargePointVendorDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointVendorDelete',
-  displayName: 'Resources - Charge Point Vendors - Delete',
+  displayName: 'Delete Charge Point Vendor',
   description: 'Delete a Charge Point Vendor.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an AMPECO charge-point vendor by its numeric vendor ID. Destructive and cannot be undone; deleting an already-removed vendor will error. Confirm the vendor is no longer referenced before calling.', idempotent: false },

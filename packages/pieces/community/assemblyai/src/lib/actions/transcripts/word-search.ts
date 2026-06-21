@@ -7,7 +7,7 @@ export const wordSearch = createAction({
   name: 'wordSearch',
   auth: assemblyaiAuth,
   requireAuth: true,
-  displayName: 'Search words in transcript',
+  displayName: 'Search Words in Transcript',
   description:
     'Search through the transcript for keywords. ' +
     'You can search for individual words, numbers, or phrases containing up to five words or numbers.',

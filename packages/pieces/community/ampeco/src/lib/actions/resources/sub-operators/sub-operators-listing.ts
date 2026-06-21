@@ -13,7 +13,7 @@ import { SubOperatorsListingResponse } from '../../../models/responses';
 export const subOperatorsListingAction = createAction({
   auth: ampecoAuth,
   name: 'subOperatorsListing',
-  displayName: 'Resources - Sub Operators - Listing',
+  displayName: 'List Sub Operators',
   description: 'Get all sub operators.',
   audience: 'both',
   aiMetadata: { description: 'List all sub operators on the AMPECO platform. Read-only and idempotent. Enable Paginate Results to retrieve every page up to the Per page cap; leave it off for a single page. Use to discover sub operator ids, then Sub Operator Read for one record.', idempotent: true },

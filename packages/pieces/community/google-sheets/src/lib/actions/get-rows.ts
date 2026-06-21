@@ -112,7 +112,7 @@ export const getRowsAction = createAction({
       'Reads the next batch of rows from a worksheet, advancing a cursor stored under a memory key so successive calls walk through the sheet without reprocessing rows. Use to iterate a sheet in chunks across runs. Not idempotent — each non-test call moves the stored cursor forward and returns a different batch.',
     idempotent: false,
   },
-  displayName: 'Get next row(s)',
+  displayName: 'Get Next Row(s)',
   props: {
     ...commonProps,
     startRow: Property.Number({

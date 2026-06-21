@@ -13,7 +13,7 @@ import { GetInstallerJobResponse } from '../../../models/responses';
 export const getInstallerJobAction = createAction({
   auth: ampecoAuth,
   name: 'getInstallerJob',
-  displayName: 'Resources - Installer Jobs - Get',
+  displayName: 'Get Installer Job',
   description: 'Get Installer Job.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single installer job by its numeric ID, optionally including related charge points. Use when you already know the ID and need its details; read-only and safe to retry. To find jobs by filter use the list action instead.', idempotent: true },

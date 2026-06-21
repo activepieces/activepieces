@@ -49,7 +49,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof guideliteAuth>, 
 export const newLeadSubmission = createTrigger({
   auth: guideliteAuth,
   name: 'newLeadSubmission',
-  displayName: 'new lead submission',
+  displayName: 'New Lead Submission',
   description:
     'Trigger when a new lead is captured through the assistant conversation',
   aiMetadata: {

@@ -13,7 +13,7 @@ import { ElectricityRateEnergyMixUpdateResponse } from '../../../models/response
 export const electricityRateEnergyMixUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateEnergyMixUpdate',
-  displayName: 'Resources - Electricity Rates - Energy Mix Update',
+  displayName: 'Update Energy Mix',
   description: 'Set an electricity rate energy mix. By default the energy mix generated with creation of the electricity rate is filled with 0.',
   audience: 'both',
   aiMetadata: { description: 'Set the energy-source mix percentages (solar, wind, hydro, nuclear, coal, natural gas, other renewable/non-renewable) for an electricity rate in AMPECO. Replaces the stored mix, so submitting the same values repeatedly leaves the rate in the same state; unspecified sources default to 0.', idempotent: true },

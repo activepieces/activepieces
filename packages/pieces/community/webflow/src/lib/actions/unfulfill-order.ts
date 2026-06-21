@@ -8,7 +8,7 @@ export const webflowUnfulfillOrder = createAction({
 	auth: webflowAuth,
 	name: 'unfulfill_order',
 	description: 'Unfulfill order',
-	displayName: 'Unfulfill an order',
+	displayName: 'Unfulfill an Order',
 	audience: 'both',
 	aiMetadata: { description: 'Reverts an existing Webflow Ecommerce order back to an unfulfilled state, identified by site ID and order ID. Use to undo a fulfillment marking. Idempotent: re-running on an already-unfulfilled order leaves it unfulfilled.', idempotent: true },
 	props: {

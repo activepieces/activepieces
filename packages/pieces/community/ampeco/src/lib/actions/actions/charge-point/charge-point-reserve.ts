@@ -12,7 +12,7 @@ import { ChargePointReserveResponse } from '../../../models/responses';
 export const chargePointReserveAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointReserve',
-  displayName: 'Actions - Charge Point - Reserve',
+  displayName: 'Reserve Charge Point',
   description: 'Reserve an evse.',
   audience: 'both',
   aiMetadata: { description: 'Reserve a specific EVSE (connector) on a charge point for a given user so it is held for their upcoming session. Use when a driver wants to guarantee a connector before arriving. Each call creates a new reservation rather than reusing one, so it is not idempotent.', idempotent: false },

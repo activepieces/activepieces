@@ -13,7 +13,7 @@ import { InvoicesListingResponse } from '../../../models/responses';
 export const invoicesListingAction = createAction({
   auth: ampecoAuth,
   name: 'invoicesListing',
-  displayName: 'Resources - Invoices - Listing',
+  displayName: 'List Invoices',
   description: 'Get all invoices.',
   audience: 'both',
   aiMetadata: { description: 'List AMPECO invoices, optionally filtered by an issued-from/issued-to date range. Read-only and idempotent. Enable pagination to fetch all matching invoices across pages. Use this to discover invoice IDs before reading a single invoice.', idempotent: true },

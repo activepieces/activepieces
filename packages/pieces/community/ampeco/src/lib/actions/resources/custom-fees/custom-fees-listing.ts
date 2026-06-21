@@ -13,7 +13,7 @@ import { CustomFeesListingResponse } from '../../../models/responses';
 export const customFeesListingAction = createAction({
   auth: ampecoAuth,
   name: 'customFeesListing',
-  displayName: 'Resources - Custom Fees - Listing',
+  displayName: 'List Custom Fees',
   description: 'Get all custom fees.',
   audience: 'both',
   aiMetadata: { description: 'List custom fees, optionally filtered by created-after and created-before dates. Read-only and idempotent. Enable the Paginate Results option to fetch across pages up to Per page total; otherwise a single page (max 100) is returned. Use customFeeRead when you already know a fee id.', idempotent: true },

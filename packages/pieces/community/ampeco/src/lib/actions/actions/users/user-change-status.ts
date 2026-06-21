@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const userChangeStatusAction = createAction({
   auth: ampecoAuth,
   name: 'userChangeStatus',
-  displayName: 'Actions - Users - Change Status',
+  displayName: 'Change Status',
   description: 'Set the status for a user.',
   audience: 'both',
   aiMetadata: { description: "Enable or disable a user account (enabled = allowed to use the system, disabled = blocked), recording the required reason. Idempotent: it sets the account to the chosen status, so re-running with the same status leaves the same end state.", idempotent: true },

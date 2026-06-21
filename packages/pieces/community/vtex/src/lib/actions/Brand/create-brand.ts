@@ -6,7 +6,7 @@ import { vtexAuth } from '../../..';
 export const createBrand = createAction({
   auth: vtexAuth,
   name: 'create-brand',
-  displayName: 'Create new Brand',
+  displayName: 'Create New Brand',
   description: 'Create a new Brand to your catalog',
   audience: 'both',
   aiMetadata: {

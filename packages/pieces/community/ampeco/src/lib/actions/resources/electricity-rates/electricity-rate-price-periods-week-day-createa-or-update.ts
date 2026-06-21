@@ -13,7 +13,7 @@ import { ElectricityRatePricePeriodsWeekDayCreateaOrUpdateResponse } from '../..
 export const electricityRatePricePeriodsWeekDayCreateaOrUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsWeekDayCreateaOrUpdate',
-  displayName: 'Resources - Electricity Rates - Price Periods Week Day Createa Or Update',
+  displayName: 'Create or Update Price Periods Week Day',
   description: 'Update the price periods for a specific week day. This operation will overwrite all existing periods for the given day, so a complete list must be provided.',
   audience: 'both',
   aiMetadata: { description: 'Set the full list of time-of-day price periods for one recurring week day (mon-sun or any) of an electricity rate in AMPECO. This replaces all existing periods for that day, so always send the complete list; resending the same list leaves the day in the same state. Use the date variant to set pricing for a specific calendar date.', idempotent: true },

@@ -8,7 +8,7 @@ import { talkableAuth } from '../../..';
 export const createPurchase = createAction({
   name: 'create_purchase', // Must be a unique across the piece, this shouldn't be changed.
   auth: talkableAuth,
-  displayName: 'Create purchase',
+  displayName: 'Create Purchase',
   description: 'Create purchase in Talkable',
   audience: 'both',
   aiMetadata: { description: 'Record a single purchase origin in Talkable for a customer (by email), used to attribute referrals and trigger rewards. Use after a customer completes an order; requires email, order number, and subtotal. Not idempotent: each call posts a new purchase, so guard against duplicates (use Create batch of purchases for multiple at once).', idempotent: false },

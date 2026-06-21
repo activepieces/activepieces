@@ -8,7 +8,7 @@ import { workflowProp } from '../common';
 export const getJobResults = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'getJobResults',
-  displayName: 'Get job results',
+  displayName: 'Get Job Results',
   description: 'Get all results for a specific job',
   audience: 'both',
   aiMetadata: {

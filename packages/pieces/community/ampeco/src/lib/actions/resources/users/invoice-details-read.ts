@@ -13,7 +13,7 @@ import { InvoiceDetailsReadResponse } from '../../../models/responses';
 export const invoiceDetailsReadAction = createAction({
   auth: ampecoAuth,
   name: 'invoiceDetailsRead',
-  displayName: 'Resources - Users - Invoice Details Read',
+  displayName: 'Get Invoice Details',
   description: 'Invoice details / Read.',
   audience: 'both',
   aiMetadata: { description: 'Fetch the stored billing/invoice details for a single AMPECO user, identified by user id. Read-only and idempotent. Use to inspect current invoice settings before changing them with Invoice Details Create Or Update.', idempotent: true },

@@ -16,7 +16,7 @@ import {
 export const userClearSubscriptionAmountDueAction = createAction({
   auth: ampecoAuth,
   name: 'userClearSubscriptionAmountDue',
-  displayName: 'Actions - Users - Clear Subscription Amount Due',
+  displayName: 'Clear Subscription Amount Due',
   description:
     "Clear a user's subscription amount due. Any unsettled transactions related to the user's current subscription — such as fees and charging sessions will be set to an amount of 0.This operation is irreversible.",
   audience: 'both',

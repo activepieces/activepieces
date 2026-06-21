@@ -13,7 +13,7 @@ import { FaqCreateResponse } from '../../../models/responses';
 export const faqCreateAction = createAction({
   auth: ampecoAuth,
   name: 'faqCreate',
-  displayName: 'Resources - Faqs - Create',
+  displayName: 'Create FAQ',
   description: 'Create new FAQ.',
   audience: 'both',
   aiMetadata: { description: 'Create a new FAQ entry with localized question and answer text (one entry per locale). Not idempotent: each call adds a new FAQ, so retrying can create duplicates. To change an existing entry use Faq Update instead.', idempotent: false },

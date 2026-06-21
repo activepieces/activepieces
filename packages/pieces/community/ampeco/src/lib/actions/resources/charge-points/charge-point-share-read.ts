@@ -13,7 +13,7 @@ import { ChargePointShareReadResponse } from '../../../models/responses';
 export const chargePointShareReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointShareRead',
-  displayName: 'Resources - Charge Points - Charge Point Share Read',
+  displayName: 'Get Charge Point Share',
   description: 'Get an Share from a Charge Point.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single charge point share by its charge point ID and share ID. Read-only and safe to retry. Use when you already know the share ID; to enumerate who a charge point is shared with use the shared-partners listing action instead.', idempotent: true },

@@ -13,7 +13,7 @@ import { PatchDowntimePeriodNoticeResponse } from '../../../models/responses';
 export const patchDowntimePeriodNoticeAction = createAction({
   auth: ampecoAuth,
   name: 'patchDowntimePeriodNotice',
-  displayName: 'Resources - Downtime Period Notices - Patch Downtime Period Notice',
+  displayName: 'Patch Downtime Period Notice',
   description: 'Update Downtime Period Notice.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing downtime period notice by its numeric ID, changing its type or description. Use to modify a known notice rather than creating one; targets a specific record so re-running with the same values is safe.', idempotent: true },

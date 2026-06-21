@@ -13,7 +13,7 @@ import { CircuitReadResponse } from '../../../models/responses';
 export const circuitReadAction = createAction({
   auth: ampecoAuth,
   name: 'circuitRead',
-  displayName: 'Resources - Circuits - Read',
+  displayName: 'Get Circuit',
   description: 'Get a circuit.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO load-management circuit by its numeric ID, optionally embedding related data (charge-point/user/SoC priorities, consumption, unmanaged load) via the include option. Read-only and safe to repeat. Use when you already know the circuit ID; use the circuits listing action to search across all circuits.', idempotent: true },

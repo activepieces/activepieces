@@ -6,7 +6,7 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 export const hubSpotListsAddContactAction = createAction({
 	auth: hubspotAuth,
 	name: 'add_contact_to_list',
-	displayName: 'Add contact To List',
+	displayName: 'Add Contact To List',
 	description: 'Add contact to list',
 	audience: 'both',
 	aiMetadata: { description: 'Adds a contact, identified by email, to a chosen HubSpot static contact list. Use to enroll a known contact into a list for segmentation or workflow targeting; the list must be static (not dynamic/active). Idempotent: a contact already on the list stays a single member.', idempotent: true },

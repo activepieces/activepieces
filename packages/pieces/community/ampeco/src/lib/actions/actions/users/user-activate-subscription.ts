@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const userActivateSubscriptionAction = createAction({
   auth: ampecoAuth,
   name: 'userActivateSubscription',
-  displayName: 'Actions - Users - Activate Subscription',
+  displayName: 'Activate Subscription',
   description: 'Activate a subscription to a user.',
   audience: 'both',
   aiMetadata: { description: 'Activate a subscription plan for a user, optionally setting an end date, auto-renewal, and a reason recorded in the audit log. Use cancel-subscription to end one instead. Not idempotent: each call activates a subscription, so re-running can create another or conflict with an existing active one.', idempotent: false },

@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findRoom = createAction({
   auth: webexAuth,
   name: 'findRoom',
-  displayName: 'Find room',
+  displayName: 'Find Room',
   description: 'Retrieve details for a specific room by room id',
   audience: 'both',
   aiMetadata: {

@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const partnerContractDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractDelete',
-  displayName: 'Resources - Partner Contracts - Delete',
+  displayName: 'Delete Partner Contract',
   description: 'Delete a Partner Contract.',
   audience: 'both',
   aiMetadata: { description: 'Deletes one partner contract in AMPECO by its numeric ID. Use to remove a contract; requires the partner contract ID. Idempotent in effect: the end state is the contract being gone, though a repeat call may report it as already removed.', idempotent: true },

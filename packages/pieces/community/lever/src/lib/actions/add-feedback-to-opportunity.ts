@@ -14,7 +14,7 @@ import { LeverFieldMapping } from '../common';
 
 export const addFeedbackToOpportunity = createAction({
   name: 'addFeedbackToOpportunity',
-  displayName: 'Add feedback to opportunity',
+  displayName: 'Add Feedback to Opportunity',
   description: 'Provide feedback to a candidate after an interview',
   audience: 'both',
   aiMetadata: {

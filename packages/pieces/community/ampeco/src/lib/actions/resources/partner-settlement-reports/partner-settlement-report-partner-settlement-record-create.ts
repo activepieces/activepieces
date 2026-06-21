@@ -13,7 +13,7 @@ import { PartnerSettlementReportPartnerSettlementRecordCreateResponse } from '..
 export const partnerSettlementReportPartnerSettlementRecordCreateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerSettlementReportPartnerSettlementRecordCreate',
-  displayName: 'Resources - Partner Settlement Reports - Create Partner Settlement Record',
+  displayName: 'Create Partner Settlement Record',
   description: 'Create Partner Settlement Record.',
   audience: 'both',
   aiMetadata: { description: 'Add a settlement record (date, paid amount, note) to an existing partner settlement report. Not idempotent: each call appends a new record, so retrying can create duplicate payment entries. To change an existing record use Update Partner Settlement Record.', idempotent: false },

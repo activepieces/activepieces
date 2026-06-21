@@ -13,7 +13,7 @@ import { EvseDowntimePeriodReadResponse } from '../../../models/responses';
 export const evseDowntimePeriodReadAction = createAction({
   auth: ampecoAuth,
   name: 'evseDowntimePeriodRead',
-  displayName: 'Resources - Evse Downtime Periods - Read',
+  displayName: 'Get EVSE Downtime Period',
   description: 'Get EVSE Downtime Period.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single EVSE downtime period by its numeric ID. Read-only and safe to repeat. To search across periods by EVSE, type, or time window use evse-downtime-periods-listing.', idempotent: true },

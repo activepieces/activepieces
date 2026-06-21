@@ -7,7 +7,7 @@ export const getLemurResponse = createAction({
   name: 'getLemurResponse',
   auth: assemblyaiAuth,
   requireAuth: true,
-  displayName: 'Retrieve LeMUR response',
+  displayName: 'Retrieve LeMUR Response',
   description: 'Retrieve a LeMUR response that was previously generated.',
   audience: 'both',
   aiMetadata: {

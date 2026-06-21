@@ -7,7 +7,7 @@ import { FileUploadUrlRequestType } from '@dust-tt/client';
 
 export const uploadFile = createAction({
   name: 'uploadFile',
-  displayName: 'Upload file',
+  displayName: 'Upload File',
   description: 'Upload file to be used in conversation',
   audience: 'both',
   aiMetadata: {

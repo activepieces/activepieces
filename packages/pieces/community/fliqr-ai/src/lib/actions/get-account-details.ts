@@ -8,7 +8,7 @@ export const getFliqrAccountDetails = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'get_fliqr_account_details',
   auth: fliqrAuth,
-  displayName: 'Get Business Account details',
+  displayName: 'Get Business Account Details',
   description: 'Get basic account details of business',
   audience: 'both',
   aiMetadata: { description: 'Fetches the basic profile/details of the authenticated Fliqr AI business account (the account that owns the connected API token). Use to retrieve account identity or configuration before acting on the account. Read-only; repeating the call is safe.', idempotent: true },

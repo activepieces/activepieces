@@ -13,7 +13,7 @@ import { UpdateConfigurationTemplateResponse } from '../../../models/responses';
 export const updateConfigurationTemplateAction = createAction({
   auth: ampecoAuth,
   name: 'updateConfigurationTemplate',
-  displayName: 'Resources - Configuration Templates - Update Configuration Template',
+  displayName: 'Update Configuration Template',
   description: 'Update Configuration Template.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing OCPP configuration template (currently its name) identified by its numeric id. Not idempotent in general since it mutates live state; use to rename a template. To change the variables within a template, use the Configuration Template Variable actions instead.', idempotent: false },

@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getEstimates = createAction({
   auth: housecallProAuth,
   name: "get_estimates",
-  displayName: "Get estimates",
+  displayName: "Get Estimates",
   description: "Get a list of estimates with filtering and pagination",
   audience: 'both',
   aiMetadata: { description: "List Housecall Pro estimates with filtering (customer, employees, locations, work status, scheduled-time ranges), sorting, and pagination. Read-only and idempotent. Use this to search or browse estimates; use get-estimate-by-id when you already know the estimate's ID.", idempotent: true },

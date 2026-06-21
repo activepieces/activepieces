@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const circuitDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'circuitDelete',
-  displayName: 'Resources - Circuits - Delete',
+  displayName: 'Delete Circuit',
   description: 'Delete a circuit.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an AMPECO load-balancing circuit by its numeric ID. Destructive and not reversible; re-running on an already-deleted circuit will fail. Confirm the correct circuit ID before deleting.', idempotent: false },

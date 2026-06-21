@@ -13,7 +13,7 @@ import { UserGroupReadResponse } from '../../../models/responses';
 export const userGroupReadAction = createAction({
   auth: ampecoAuth,
   name: 'userGroupRead',
-  displayName: 'Resources - User Groups - Read',
+  displayName: 'Get User Group',
   description: 'Get an user group.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single AMPECO user group by its numeric ID. Read-only and idempotent; pick this when you already know the group ID. To search or enumerate groups instead, use the user groups listing action.', idempotent: true },

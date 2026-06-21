@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const circuitDetachChargePointAction = createAction({
   auth: ampecoAuth,
   name: 'circuitDetachChargePoint',
-  displayName: 'Actions - Circuit - Detach Charge Point',
+  displayName: 'Detach Charge Point',
   description: 'Circuit / Detach Charge Point.',
   audience: 'both',
   aiMetadata: { description: 'Remove a charge point from a circuit\'s dynamic load management, addressed by circuit and charge point IDs. Inverse of circuit-attach-charge-point. Idempotent: detaching a charge point that is not on the circuit has no further effect.', idempotent: true },

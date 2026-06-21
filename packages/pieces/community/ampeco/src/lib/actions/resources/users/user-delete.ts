@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const userDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'userDelete',
-  displayName: 'Resources - Users - User Delete',
+  displayName: 'Delete User',
   description: 'Delete a user.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete a single AMPECO user by numeric user id. Destructive and irreversible; confirm the id (e.g. via User Read or Users Listing) before calling. Not a safe retry against an arbitrary id.', idempotent: false },

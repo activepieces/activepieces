@@ -5,7 +5,7 @@ import { talkableAuth } from '../../..';
 export const anonymizePerson = createAction({
   name: 'anonymize_person', // Must be a unique across the piece, this shouldn't be changed.
   auth: talkableAuth,
-  displayName: 'Anonymize person',
+  displayName: 'Anonymize Person',
   description: 'Anonymize person by email',
   audience: 'both',
   aiMetadata: { description: 'Permanently anonymize a Talkable person\'s personal data, identified by email, for privacy/GDPR-style erasure requests. Use only when a customer\'s identifying information must be scrubbed. Destructive and irreversible; repeating leaves the record anonymized (no further effect). The email is required.', idempotent: true },

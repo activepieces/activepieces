@@ -12,7 +12,7 @@ import { UserGroupCreateResponse } from '../../../models/responses';
 export const userGroupCreateAction = createAction({
   auth: ampecoAuth,
   name: 'userGroupCreate',
-  displayName: 'Resources - User Groups - Create',
+  displayName: 'Create User Group',
   description: 'Create new user group.',
   audience: 'both',
   aiMetadata: { description: 'Create a new AMPECO user group with a name and optional description and partner association. Not idempotent: each call adds another group, so re-running creates duplicates. Note that partnerId can only be set while the group has no users; use the update action to modify an existing group.', idempotent: false },

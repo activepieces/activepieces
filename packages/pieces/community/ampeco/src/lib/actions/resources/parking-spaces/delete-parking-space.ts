@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const deleteParkingSpaceAction = createAction({
   auth: ampecoAuth,
   name: 'deleteParkingSpace',
-  displayName: 'Resources - Parking Spaces - Delete',
+  displayName: 'Delete Parking Space',
   description: 'Delete Parking Space.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete a parking space by its numeric id. Destructive and not reversible; deleting an already-removed id will error. Naturally idempotent in effect (the space ends up gone) but treat as unsafe to retry blindly.', idempotent: false },

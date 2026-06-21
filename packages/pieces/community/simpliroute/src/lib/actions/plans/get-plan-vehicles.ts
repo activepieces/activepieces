@@ -6,7 +6,7 @@ import { API_BASE_URL, commonHeaders } from '../../common/constants';
 export const get_plan_vehicles = createAction({
     name: 'get_plan_vehicles',
     auth: simplirouteAuth,
-    displayName: 'Get vehicles with routes on date',
+    displayName: 'Get Vehicles with Routes on Date',
     description: 'Returns the vehicles that have planned routes on the indicated date.',
     audience: 'both',
     aiMetadata: { description: 'Look up which vehicles have planned routes on a specific date. Read-only and idempotent; use when you need the routed-vehicle subset for a day rather than the full plan or the entire vehicle fleet.', idempotent: true },

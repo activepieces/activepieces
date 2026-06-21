@@ -4,7 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const smsReceived = createTrigger({
   auth: kudosityAuth,
   name: 'smsReceived',
-  displayName: 'SMS received',
+  displayName: 'SMS Received',
   description: 'Triggered when an inbound SMS is received',
   aiMetadata: {
     description:

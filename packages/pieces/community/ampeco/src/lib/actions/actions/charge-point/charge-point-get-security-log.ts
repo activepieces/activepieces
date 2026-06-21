@@ -13,7 +13,7 @@ import { ChargePointGetSecurityLogResponse } from '../../../models/responses';
 export const chargePointGetSecurityLogAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointGetSecurityLog',
-  displayName: 'Actions - Charge Point - Get Security Log',
+  displayName: 'Get Security Log',
   description: 'Charge Point / Get Security Log. ',
   audience: 'both',
   aiMetadata: { description: 'Send an OCPP GetLog (security log) command instructing a charge point to upload its security log to the given remote URL, optionally bounded by a start/stop time window and with retry settings. Use to collect security/audit logs from a station for investigation. Each call triggers a fresh upload, so it is not idempotent.', idempotent: false },

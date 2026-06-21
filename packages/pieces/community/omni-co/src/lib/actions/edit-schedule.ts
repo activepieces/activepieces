@@ -7,7 +7,7 @@ import { scheduleIdDropdown } from '../common/props';
 export const editSchedule = createAction({
   auth: omniAuth,
   name: 'editSchedule',
-  displayName: 'Edit schedule',
+  displayName: 'Edit Schedule',
   description:
     'Updates a scheduled task. Only properties included will be updated',
   audience: 'both',

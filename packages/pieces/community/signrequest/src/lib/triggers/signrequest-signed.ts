@@ -5,7 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const signrequestSigned = createTrigger({
   auth: signrequestAuth,
   name: 'signrequestSigned',
-  displayName: 'signrequest signed',
+  displayName: 'SignRequest Signed',
   description: 'Triggers when a SignRequest signer is signed',
   aiMetadata: { description: 'Fires when a signer completes signing a SignRequest. Use to react once a document has been signed by a party.' },
   props: {},

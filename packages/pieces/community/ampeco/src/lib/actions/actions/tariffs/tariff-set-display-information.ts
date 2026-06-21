@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const tariffSetDisplayInformationAction = createAction({
   auth: ampecoAuth,
   name: 'tariffSetDisplayInformation',
-  displayName: 'Actions - Tariffs - Set Display Information',
+  displayName: 'Set Display Information',
   description: 'Apply a Tariff Display Information to tariff.',
   audience: 'both',
   aiMetadata: { description: 'Set the text shown on a charge point\'s display for a tariff, covering the eligible-user price, total-cost summary, and (base tariffs only) default and offline default price information. Idempotent: overwrites the tariff\'s display fields with the supplied values.', idempotent: true },

@@ -12,7 +12,7 @@ export const dropboxGetFileLink = createAction({
   description: 'Get a temporary file link',
   audience: 'both',
   aiMetadata: { description: 'Returns a temporary, directly downloadable URL for the file at the given Dropbox path. Use when an agent needs a shareable or fetchable link to file contents rather than downloading the bytes into the flow. Read-only lookup; safe to repeat, though the returned URL is short-lived.', idempotent: true },
-  displayName: 'Get temporary file link',
+  displayName: 'Get Temporary File Link',
   props: {
     path: Property.ShortText({
       displayName: 'Path',

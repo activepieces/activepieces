@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const chargePointMoveEvsesToSatelliteAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointMoveEvsesToSatellite',
-  displayName: 'Actions - Charge Point - Move EVSEs To Satellite',
+  displayName: 'Move EVSEs to Satellite',
   description: 'Move one or more EVSEs from this charge point to a satellite charge point.',
   audience: 'both',
   aiMetadata: { description: 'Reassign one or more EVSEs from this charge point to a specified satellite charge point. Use when restructuring how connectors are grouped across a master/satellite station topology. Once the EVSEs are moved, repeating the call for the same target is effectively a no-op, but mid-state retries can fail if an EVSE no longer belongs here, so treat it as a mutating operation.', idempotent: false },

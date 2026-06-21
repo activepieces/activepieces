@@ -13,7 +13,7 @@ import { CircuitsListingResponse } from '../../../models/responses';
 export const circuitsListingAction = createAction({
   auth: ampecoAuth,
   name: 'circuitsListing',
-  displayName: 'Resources - Circuits - Circuits Listing',
+  displayName: 'List Circuits',
   description: 'Get all circuits.',
   audience: 'both',
   aiMetadata: { description: 'List all AMPECO load-management circuits, optionally embedding related data (charge-point/user/SoC priorities, consumption, unmanaged load) via the include option. Read-only and safe to repeat. Supports automatic pagination to fetch every circuit across pages. Use to discover circuit IDs or survey circuits; use the circuit read action when you already know a single circuit ID.', idempotent: true },

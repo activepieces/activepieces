@@ -12,7 +12,7 @@ import { PartialBlockObjectResponse } from '@notionhq/client/build/src/api-endpo
 export const getPageOrBlockChildren = createAction({
   auth: notionAuth,
   name: 'getPageOrBlockChildren',
-  displayName: 'Get block content',
+  displayName: 'Get Block Content',
   description: 'Retrieve the actual content of a page (represented by blocks).',
   audience: 'both',
   aiMetadata: {

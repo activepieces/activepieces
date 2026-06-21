@@ -6,7 +6,7 @@ import { templateIdDropdown } from '../common/props';
 export const createAVideoFromATemplate = createAction({
   auth: synthesiaAuth,
   name: 'createAVideoFromATemplate',
-  displayName: 'Create a video from a template',
+  displayName: 'Create a Video from a Template',
   description: 'Create a video based on a template created in Synthesia',
   audience: 'both',
   aiMetadata: {

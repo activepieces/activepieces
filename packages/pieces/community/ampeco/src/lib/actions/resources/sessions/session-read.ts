@@ -13,7 +13,7 @@ import { SessionReadResponse } from '../../../models/responses';
 export const sessionReadAction = createAction({
   auth: ampecoAuth,
   name: 'sessionRead',
-  displayName: 'Resources - Sessions - Read',
+  displayName: 'Get Session',
   description: 'Session / Read.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO charging session by its session ID, with optional embeds for authorization, price breakdown, charging periods, and clock-aligned energy consumption. Use when you already know the session ID; to search across sessions use the sessions listing action. Read-only and idempotent.', idempotent: true },

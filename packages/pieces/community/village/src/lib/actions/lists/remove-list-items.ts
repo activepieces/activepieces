@@ -7,7 +7,7 @@ const MAX_ITEM_IDS = 100;
 export const removeListItems = createAction({
   auth: villageAuth,
   name: 'remove_list_items',
-  displayName: 'Remove items from list',
+  displayName: 'Remove Items from List',
   description:
     'Remove items from a list by their item IDs (obtained from get_list). Returns the count of successfully removed items.',
   audience: 'both',

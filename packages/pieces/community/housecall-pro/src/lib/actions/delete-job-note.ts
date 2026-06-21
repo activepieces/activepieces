@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const deleteJobNote = createAction({
   auth: housecallProAuth,
   name: "delete_job_note",
-  displayName: "Delete job note",
+  displayName: "Delete Job Note",
   description: "Delete a specific job note",
   audience: 'both',
   aiMetadata: { description: "Delete a single note from a Housecall Pro job, identified by job ID and note ID. Idempotent: deleting an already-removed note has no further effect.", idempotent: true },

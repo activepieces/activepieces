@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const githubUnlockIssueAction = createAction({
   auth: githubAuth,
   name: 'unlockIssue',
-  displayName: 'Unlock issue',
+  displayName: 'Unlock Issue',
   description: 'Unlocks the specified issue',
   audience: 'both',
   aiMetadata: {

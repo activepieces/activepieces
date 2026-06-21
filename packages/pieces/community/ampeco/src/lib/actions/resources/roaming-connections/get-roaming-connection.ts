@@ -13,7 +13,7 @@ import { GetRoamingConnectionResponse } from '../../../models/responses';
 export const getRoamingConnectionAction = createAction({
   auth: ampecoAuth,
   name: 'getRoamingConnection',
-  displayName: 'Resources - Roaming Connections - Get Roaming Connection',
+  displayName: 'Get Roaming Connection',
   description: 'Get a Roaming Connections.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single roaming connection by its numeric ID. Read-only and safe to repeat. To enumerate all roaming connections use list-roaming-connections instead.', idempotent: true },

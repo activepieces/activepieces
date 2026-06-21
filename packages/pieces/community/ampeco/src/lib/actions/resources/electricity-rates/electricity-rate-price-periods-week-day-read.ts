@@ -13,7 +13,7 @@ import { ElectricityRatePricePeriodsWeekDayReadResponse } from '../../../models/
 export const electricityRatePricePeriodsWeekDayReadAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsWeekDayRead',
-  displayName: 'Resources - Electricity Rates - Price Periods Week Day Read',
+  displayName: 'Get Price Periods Week Day',
   description: 'Get the price periods for a specific week day.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve the configured time-of-day price periods for one recurring week day (mon-sun or any) of an electricity rate in AMPECO. Read-only and safe to repeat. Use the date read action for a specific calendar date instead.', idempotent: true },

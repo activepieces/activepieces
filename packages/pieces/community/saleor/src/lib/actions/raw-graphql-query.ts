@@ -5,7 +5,7 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 
 export const saleorRawGraphqlQuery = createAction({
     name: 'rawGraphqlQuery',
-    displayName: 'Raw GraphQL query',
+    displayName: 'Raw GraphQL Query',
     description: 'Perform a raw GraphQL query',
     audience: 'both',
     aiMetadata: { description: 'Sends an arbitrary GraphQL operation (query or mutation) to the Saleor GraphQL endpoint with optional variables. Use this as the escape hatch when no dedicated action covers the data or operation you need. Not idempotent in general: it can run mutations, so repeating it may create or change data depending on the operation you supply.', idempotent: false },

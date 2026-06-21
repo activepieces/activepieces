@@ -19,7 +19,7 @@ import { ChargePointModelCreateResponse } from '../../../models/responses';
 export const chargePointModelCreateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointModelCreate',
-  displayName: 'Resources - Charge Point Models - Create',
+  displayName: 'Create Charge Point Model',
   description: 'Create new Charge Point Model.',
   audience: 'both',
   aiMetadata: { description: 'Create a new charge point model with a name and vendor ID (optional user/installer manual links). Not idempotent: each call creates a separate model, so re-running produces duplicates. Use Listing first to check for an existing model, and Update to modify one.', idempotent: false },

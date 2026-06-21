@@ -13,7 +13,7 @@ import { ChargePointGetDiagnosticsResponse } from '../../../models/responses';
 export const chargePointGetDiagnosticsAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointGetDiagnostics',
-  displayName: 'Actions - Charge Point - Get Diagnostics',
+  displayName: 'Get Diagnostics',
   description: 'Request a get diagnostics upload from the charge point.',
   audience: 'both',
   aiMetadata: { description: 'Send an OCPP GetDiagnostics command instructing a charge point to upload its diagnostics file to the given FTP location, optionally bounded by a start/stop date-time window. Use to collect device diagnostics for troubleshooting. Each call triggers a fresh upload, so it is not idempotent.', idempotent: false },

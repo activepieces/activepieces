@@ -10,7 +10,7 @@ import { dustAuth } from '../..';
 export const upsertDocument = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'addDocument',
-  displayName: 'Add or update document',
+  displayName: 'Add or Update Document',
   description:
     'Insert a new document to a Data Source (or update an existing one)',
   audience: 'both',

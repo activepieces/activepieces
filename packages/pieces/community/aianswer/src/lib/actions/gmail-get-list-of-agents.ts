@@ -6,7 +6,7 @@ import { aiAnswerAuth } from '../auth';
 export const gmailGetListOfAgents = createAction({
   name: 'gmailGetListOfAgents',
   auth: aiAnswerAuth,
-  displayName: 'Gmail get list of Agents',
+  displayName: 'Gmail Get List of Agents',
   description: 'get the lists of agents with Gmail',
   audience: 'both',
   aiMetadata: { description: 'Lists the available Gmail-connected AI Answer agents on the account, returning their IDs. Use this to discover a valid agent ID before initiating or scheduling a call (those actions require an agent ID). Takes no input; read-only and idempotent.', idempotent: true },

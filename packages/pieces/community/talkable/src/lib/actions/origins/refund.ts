@@ -5,7 +5,7 @@ import { talkableAuth } from '../../..';
 export const refund = createAction({
   name: 'refund', // Must be a unique across the piece, this shouldn't be changed.
   auth: talkableAuth,
-  displayName: 'Refund purchase/event',
+  displayName: 'Refund Purchase/Event',
   description: 'Mark origin as refund',
   audience: 'both',
   aiMetadata: { description: 'Mark an existing purchase or event origin in Talkable as refunded, identified by its order/event number (origin slug), optionally with a partial refund subtotal and refund date. Use when an order is returned or canceled so referral attribution is reversed. Not idempotent: each call records a refund against the origin.', idempotent: false },

@@ -18,7 +18,7 @@ const TRIGGER_DATA_STORE_KEY = 'figma_new_comment_trigger_data';
 export const newCommentTrigger = createTrigger({
   auth: figmaAuth,
   name: 'new_comment',
-  displayName: 'New Comment (Figma Professional plan only)',
+  displayName: 'New Comment (Figma Professional Plan Only)',
   description: 'Triggers when a new comment is posted',
   aiMetadata: {
     description: 'Fires when a new comment is posted on any file within the specified Figma team (subscribes to the team-level FILE_COMMENT webhook event). Requires a Figma Professional plan.',

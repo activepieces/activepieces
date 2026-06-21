@@ -12,7 +12,7 @@ import { VendorErrorCodeReadResponse } from '../../../models/responses';
 export const vendorErrorCodeReadAction = createAction({
   auth: ampecoAuth,
   name: 'vendorErrorCodeRead',
-  displayName: 'Resources - Vendor Error Codes - Vendor Error Code Read',
+  displayName: 'Get Vendor Error Code',
   description: 'Get a Vendor Error Code.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single vendor error code from AMPECO by its numeric identifier. Read-only lookup, safe to repeat; returns the same record on each call. Use when you already know the specific code and want its full detail rather than scanning the full list.', idempotent: true },

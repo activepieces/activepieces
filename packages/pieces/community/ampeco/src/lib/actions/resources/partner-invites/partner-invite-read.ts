@@ -13,7 +13,7 @@ import { PartnerInviteReadResponse } from '../../../models/responses';
 export const partnerInviteReadAction = createAction({
   auth: ampecoAuth,
   name: 'partnerInviteRead',
-  displayName: 'Resources - Partner Invites - Read',
+  displayName: 'Get Partner Invite',
   description: 'Get a invite.',
   audience: 'both',
   aiMetadata: { description: 'Fetches a single partner invite from AMPECO by its numeric ID. Use to retrieve one known invite; to search or discover invite IDs use the Listing action. Read-only and idempotent.', idempotent: true },

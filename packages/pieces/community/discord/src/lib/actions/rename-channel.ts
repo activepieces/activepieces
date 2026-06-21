@@ -13,7 +13,7 @@ export const discordRenameChannel = createAction({
   description: 'rename a channel',
   audience: 'both',
   aiMetadata: { description: 'Renames an existing channel, identified by channel ID, to a new name. Use to update a channel title. Requires the bot to have Manage Channels permission; idempotent, since setting the same name repeatedly yields the same result.', idempotent: true },
-  displayName: 'Rename channel',
+  displayName: 'Rename Channel',
   props: {
     channel_id: discordCommon.channel,
     name: Property.ShortText({

@@ -13,7 +13,7 @@ import { ChargePointDowntimePeriodReadResponse } from '../../../models/responses
 export const chargePointDowntimePeriodReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodRead',
-  displayName: 'Resources - Charge Point Downtime Periods - Read',
+  displayName: 'Get Charge Point Downtime Period',
   description: 'Get Charge Point Downtime Period.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve a single charge-point downtime period by its numeric ID. Read-only and idempotent; use it when you already know the period ID. To search or enumerate periods (e.g. by charge point, type, or date range) use the downtime periods listing action.', idempotent: true },

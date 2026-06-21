@@ -12,7 +12,7 @@ export const dropboxDeleteFile = createAction({
   description: 'Delete a file',
   audience: 'both',
   aiMetadata: { description: 'Permanently deletes the file at the given Dropbox path. Use to remove a specific file an agent has resolved the path for. Effectively idempotent on the end state once the path is gone, but a repeat call fails because the path no longer exists; treat as a destructive, non-recoverable mutation.', idempotent: false },
-  displayName: 'Delete file',
+  displayName: 'Delete File',
   props: {
     path: Property.ShortText({
       displayName: 'Path',

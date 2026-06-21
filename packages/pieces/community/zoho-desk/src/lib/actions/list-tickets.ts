@@ -10,7 +10,7 @@ export const listTicketsAction = createAction({
 	description: 'List tickets',
 	audience: 'both',
 	aiMetadata: { description: 'Retrieves tickets from a Zoho Desk organization, optionally expanding related data (contacts, products, departments, team, isRead, assignee) via the include option. Use to browse or page through existing tickets when you do not have a specific ticket ID; requires the organization ID. Read-only and idempotent.', idempotent: true },
-	displayName: 'List tickets.',
+	displayName: 'List Tickets.',
 	props: {
 		orgId: organizationId({ displayName: 'Organization', required: true }),
 		include: Property.StaticMultiSelectDropdown({

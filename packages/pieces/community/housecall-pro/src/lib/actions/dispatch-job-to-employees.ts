@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const dispatchJobToEmployees = createAction({
   auth: housecallProAuth,
   name: "dispatch_job_to_employees",
-  displayName: "Dispatch job to employees",
+  displayName: "Dispatch Job to Employees",
   description: "Dispatch a job to employees",
   audience: 'both',
   aiMetadata: {

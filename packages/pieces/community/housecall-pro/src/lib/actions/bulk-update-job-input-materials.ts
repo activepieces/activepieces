@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const bulkUpdateJobInputMaterials = createAction({
   auth: housecallProAuth,
   name: "bulk_update_job_input_materials",
-  displayName: "Bulk update a job's input materials",
+  displayName: "Bulk Update a Job's Input Materials",
   description: "Bulk update job input materials. If upsert not define for a job input material it will be consider as a new entry.",
   audience: 'both',
   aiMetadata: {

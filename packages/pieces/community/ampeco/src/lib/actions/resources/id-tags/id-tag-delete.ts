@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const idTagDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'idTagDelete',
-  displayName: 'Resources - Id Tags - Delete',
+  displayName: 'Delete ID Tag',
   description: 'Delete a Id Tag.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an id tag by its numeric ID. Idempotent: deleting an already-removed id tag leaves it absent.', idempotent: true },

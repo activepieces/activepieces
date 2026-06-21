@@ -13,7 +13,7 @@ import { PartnerInvitesListingResponse } from '../../../models/responses';
 export const partnerInvitesListingAction = createAction({
   auth: ampecoAuth,
   name: 'partnerInvitesListing',
-  displayName: 'Resources - Partner Invites - Listing',
+  displayName: 'List Partner Invites',
   description: 'Get all partner invites.',
   audience: 'both',
   aiMetadata: { description: 'Lists partner invites in AMPECO, optionally filtered by partner, status (pending/sent/accepted), accepting user, invite email, or a creation date range. Use to find an invite ID or audit invite status; with no filters it returns all invites, and enabling Paginate Results walks every page rather than a single capped page. Read-only and idempotent.', idempotent: true },

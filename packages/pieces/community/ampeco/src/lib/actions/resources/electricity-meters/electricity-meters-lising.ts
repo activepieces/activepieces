@@ -13,7 +13,7 @@ import { ElectricityMetersLisingResponse } from '../../../models/responses';
 export const electricityMetersLisingAction = createAction({
   auth: ampecoAuth,
   name: 'electricityMetersLising',
-  displayName: 'Resources - Electricity Meters - Lising',
+  displayName: 'List Electricity Meters',
   description: 'Get all electricity meters.',
   audience: 'both',
   aiMetadata: { description: 'List all AMPECO electricity meters on the platform. Read-only and idempotent. Enable pagination to fetch every meter across pages; otherwise a single page (up to per_page results) is returned. Use this to discover meter IDs before reading, updating, or deleting a specific meter.', idempotent: true },

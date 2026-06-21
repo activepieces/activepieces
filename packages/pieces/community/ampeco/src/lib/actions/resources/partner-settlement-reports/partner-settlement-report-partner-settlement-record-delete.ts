@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const partnerSettlementReportPartnerSettlementRecordDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'partnerSettlementReportPartnerSettlementRecordDelete',
-  displayName: 'Resources - Partner Settlement Reports - Delete Partner Settlement Record',
+  displayName: 'Delete Partner Settlement Record',
   description: 'Delete a single Partner Settlement Record.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete one settlement record from a partner settlement report, identified by the report id plus the record id. Destructive and not reversible; deleting an already-removed record will error. Do not retry blindly.', idempotent: false },

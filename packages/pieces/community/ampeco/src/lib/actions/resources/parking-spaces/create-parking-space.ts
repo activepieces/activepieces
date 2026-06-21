@@ -13,7 +13,7 @@ import { CreateParkingSpaceResponse } from '../../../models/responses';
 export const createParkingSpaceAction = createAction({
   auth: ampecoAuth,
   name: 'createParkingSpace',
-  displayName: 'Resources - Parking Spaces - Create',
+  displayName: 'Create Parking Space',
   description: 'Create new Parking Space.',
   audience: 'both',
   aiMetadata: { description: 'Create a new parking space in AMPECO, tied to a location and optionally linked to EVSEs in the same charging zone. Not idempotent: calling it repeatedly produces duplicate spaces, so pass a stable externalId and check via the list action first if you need dedup.', idempotent: false },

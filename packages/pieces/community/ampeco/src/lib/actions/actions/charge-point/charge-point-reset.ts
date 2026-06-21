@@ -13,7 +13,7 @@ import { ChargePointResetResponse } from '../../../models/responses';
 export const chargePointResetAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointReset',
-  displayName: 'Actions - Charge Point - Reset',
+  displayName: 'Reset Charge Point',
   description: 'Reset a charge point.',
   audience: 'both',
   aiMetadata: { description: 'Reboot a charge point, either a soft reset (restart the application) or a hard reset (full power cycle). Not idempotent: each call issues a new reboot command to the device.', idempotent: false },

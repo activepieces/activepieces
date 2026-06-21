@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const addJobLineItem = createAction({
   auth: housecallProAuth,
   name: "add_job_line_item",
-  displayName: "Add a line item to a job",
+  displayName: "Add a Line Item to a Job",
   description: "Add a line item to a job. This is a rate limited request.",
   audience: 'both',
   aiMetadata: {

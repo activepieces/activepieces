@@ -7,7 +7,7 @@ import { projectDropdown, keyIdProp } from '../common/props';
 export const retrieveAKey = createAction({
   auth: lokaliseAuth,
   name: 'retrieveAKey',
-  displayName: 'Retrieve a key',
+  displayName: 'Retrieve a Key',
   description: 'Retrieve detailed information about a specific key in your Lokalise project',
   audience: 'both',
   aiMetadata: { description: 'Fetch the details of a single translation key, including its translations and metadata, by project ID and key ID. Use to inspect a key before updating or referencing it. Read-only and idempotent.', idempotent: true },

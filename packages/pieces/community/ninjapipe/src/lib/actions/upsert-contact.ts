@@ -6,7 +6,7 @@ import { ninjapipeApiCall, extractItems, flattenCustomFields, getAuth, ninjapipe
 export const upsertContact = createAction({
   auth: ninjapipeAuth,
   name: 'upsert_contact',
-  displayName: 'Upsert Contact',
+  displayName: 'Create or Update Contact',
   description: 'Creates a contact or updates an existing one by email.',
   audience: 'both',
   aiMetadata: { description: 'Create-or-update a contact keyed on email: if a contact with the given email exists it is updated, otherwise a new one is created. Email is required and serves as the stable match key, making this safe to re-run (idempotent) unlike plain create-contact.', idempotent: true },

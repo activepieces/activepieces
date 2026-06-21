@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newRoom = createTrigger({
   auth: webexAuth,
   name: 'newRoom',
-  displayName: 'New room',
+  displayName: 'New Room',
   description: 'Triggers when a new room is created',
   aiMetadata: {
     description:

@@ -6,7 +6,7 @@ import { datadogAuth } from '../common/auth';
 
 export const sendMultipleLogs = createAction({
   name: 'sendMultipleLogs',
-  displayName: 'Send Multiple logs',
+  displayName: 'Send Multiple Logs',
   description: 'Send your logs to your Datadog platform over HTTP.',
   audience: 'both',
   aiMetadata: {

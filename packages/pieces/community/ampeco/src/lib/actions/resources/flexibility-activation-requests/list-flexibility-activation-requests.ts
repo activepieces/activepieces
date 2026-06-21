@@ -13,7 +13,7 @@ import { ListFlexibilityActivationRequestsResponse } from '../../../models/respo
 export const listFlexibilityActivationRequestsAction = createAction({
   auth: ampecoAuth,
   name: 'listFlexibilityActivationRequests',
-  displayName: 'Resources - Flexibility Activation Requests - List',
+  displayName: 'List Flexibility Activation Requests',
   description: 'Get a list of Flexibility Requests.',
   audience: 'both',
   aiMetadata: { description: 'List flexibility activation requests, optionally filtered by flexibility asset id. Read-only and idempotent. Enable the Paginate Results option to fetch across pages up to Per page total; otherwise a single page (max 100) is returned. Use getFlexibilityActivationRequest when you already know a request id.', idempotent: true },

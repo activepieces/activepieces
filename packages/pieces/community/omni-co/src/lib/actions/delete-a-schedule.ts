@@ -7,7 +7,7 @@ import { scheduleIdDropdown } from '../common/props';
 export const deleteASchedule = createAction({
   auth: omniAuth,
   name: 'deleteASchedule',
-  displayName: 'Delete a schedule',
+  displayName: 'Delete a Schedule',
   description: 'Deletes a schedule using its UUID',
   audience: 'both',
   aiMetadata: {

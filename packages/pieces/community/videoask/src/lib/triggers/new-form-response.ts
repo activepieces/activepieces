@@ -7,7 +7,7 @@ import { videoaskAuth } from '../common/auth';
 export const newFormResponse = createTrigger({
     auth: videoaskAuth,
     name: 'newFormResponse',
-    displayName: 'new form response',
+    displayName: 'New Form Response',
     description: 'Trigger when a new form response is submitted',
     aiMetadata: {
         description: 'Fires when a respondent submits a new response to a specific VideoAsk form, carrying the contact and their answers along with the form context. Use as the entry point for processing incoming form submissions. Scoped to one form via a registered webhook.',

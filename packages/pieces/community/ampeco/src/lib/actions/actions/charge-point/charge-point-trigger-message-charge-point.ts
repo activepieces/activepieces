@@ -11,7 +11,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBo
 export const chargePointTriggerMessageChargePointAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointTriggerMessageChargePoint',
-  displayName: 'Actions - Charge Point - Trigger Message Charge Point',
+  displayName: 'Trigger Message Charge Point',
   description: 'Trigger message to given Charge Point.',
   audience: 'both',
   aiMetadata: { description: 'Send an OCPP TriggerMessage command asking a charge point to immediately emit a chosen message such as BootNotification, StatusNotification, Heartbeat, MeterValues, or a certificate-signing request (several types apply only to OCPP 2.0.1 stations). Use to force an on-demand status/diagnostic report from a station. Each call prompts a fresh emission, so it is not idempotent.', idempotent: false },

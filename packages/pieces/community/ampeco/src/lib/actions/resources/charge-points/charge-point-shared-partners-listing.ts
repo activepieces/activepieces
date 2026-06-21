@@ -13,7 +13,7 @@ import { ChargePointSharedPartnersListingResponse } from '../../../models/respon
 export const chargePointSharedPartnersListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSharedPartnersListing',
-  displayName: 'Resources - Charge Points - Charge Point Shared Partners Listing',
+  displayName: 'List Charge Point Shared Partners',
   description: 'Get all Shared Partners of the Charge Point.',
   audience: 'both',
   aiMetadata: { description: 'List the partners a specific charge point is shared with, identified by its numeric charge point ID. Read-only and safe to retry; enable pagination to fetch all results across pages rather than a single page.', idempotent: true },

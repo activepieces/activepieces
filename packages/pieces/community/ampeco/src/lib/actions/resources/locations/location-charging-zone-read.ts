@@ -13,7 +13,7 @@ import { LocationChargingZoneReadResponse } from '../../../models/responses';
 export const locationChargingZoneReadAction = createAction({
   auth: ampecoAuth,
   name: 'locationChargingZoneRead',
-  displayName: 'Resources - Locations - Read Charging Zone',
+  displayName: 'Get Charging Zone',
   description: 'Get a Charging Zone.',
   audience: 'both',
   aiMetadata: { description: 'Fetches a single charging zone within an AMPECO location; requires both the location ID and the charging zone ID. Use to retrieve one known zone; to enumerate the zones of a location use the Listing Charging Zones action. Read-only and idempotent.', idempotent: true },

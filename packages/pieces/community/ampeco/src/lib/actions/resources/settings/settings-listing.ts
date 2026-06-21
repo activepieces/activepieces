@@ -13,7 +13,7 @@ import { SettingsListingResponse } from '../../../models/responses';
 export const settingsListingAction = createAction({
   auth: ampecoAuth,
   name: 'settingsListing',
-  displayName: 'Resources - Settings - Settings Listing',
+  displayName: 'List Settings',
   description: 'Get all settings.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve all account/platform settings. Read-only and idempotent; takes no input. Use to inspect the current configuration values exposed by the AMPECO instance.', idempotent: true },

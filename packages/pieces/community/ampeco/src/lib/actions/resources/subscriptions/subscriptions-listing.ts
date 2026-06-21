@@ -12,7 +12,7 @@ import { SubscriptionsListingResponse } from '../../../models/responses';
 export const subscriptionsListingAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionsListing',
-  displayName: 'Resources - Subscriptions - Subscriptions Listing',
+  displayName: 'List Subscriptions',
   description: 'Get all subscriptions.',
   audience: 'both',
   aiMetadata: { description: 'List subscriptions with optional filters by plan ID, status, end-date range, and external-billing flag. Read-only and idempotent. Enable the pagination option to fetch all matching subscriptions across pages; otherwise one page (up to per_page) is returned. Use this to find a subscription ID before reading one.', idempotent: true },

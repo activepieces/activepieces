@@ -14,7 +14,7 @@ export const discordFindChannel = createAction({
   description: 'find a channel by name',
   audience: 'both',
   aiMetadata: { description: 'Looks up a channel in a guild by its exact name and returns its channel ID, given the guild ID. Use to resolve a channel name into the ID required by message, rename, or delete actions. Read-only and idempotent; matching is exact and returns the first match.', idempotent: true },
-  displayName: 'Find channel',
+  displayName: 'Find Channel',
   props: {
     guild_id: discordCommon.guilds,
     name: Property.ShortText({

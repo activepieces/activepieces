@@ -18,7 +18,7 @@ import { BookingRequestCreateResponse } from '../../../models/responses';
 export const bookingRequestCreateAction = createAction({
   auth: ampecoAuth,
   name: 'bookingRequestCreate',
-  displayName: 'Resources - Booking Requests - Create',
+  displayName: 'Create Booking Request',
   description:
     'Create a new booking request. If you want to find the available slots for a given location use the Actions / Location / Check Booking Availability.',
   audience: 'both',

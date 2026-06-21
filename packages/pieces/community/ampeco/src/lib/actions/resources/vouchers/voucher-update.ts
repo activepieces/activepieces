@@ -12,7 +12,7 @@ import { VoucherUpdateResponse } from '../../../models/responses';
 export const voucherUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'voucherUpdate',
-  displayName: 'Resources - Vouchers - Voucher Update',
+  displayName: 'Update Voucher',
   description: 'Update a Voucher.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing voucher identified by its numeric id - status, amount, expiry/validity period, assign-before date, prefix, and localized titles. Targets one known voucher (it does not create); idempotent when sending the same values, since it sets fields to the supplied state.', idempotent: true },

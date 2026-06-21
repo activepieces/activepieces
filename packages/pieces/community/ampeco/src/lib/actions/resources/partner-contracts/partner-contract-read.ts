@@ -13,7 +13,7 @@ import { PartnerContractReadResponse } from '../../../models/responses';
 export const partnerContractReadAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractRead',
-  displayName: 'Resources - Partner Contracts - Read',
+  displayName: 'Get Partner Contract',
   description: 'Get a Partner Contract.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single AMPECO partner contract by its numeric ID, returning its terms such as revenue-sharing rules, access permissions, and platform fees. Use when you already know the contract ID; to discover IDs or browse contracts, use the partner contracts listing action instead. Read-only and idempotent.', idempotent: true },

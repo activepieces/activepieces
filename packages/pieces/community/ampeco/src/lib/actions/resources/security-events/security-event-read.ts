@@ -12,7 +12,7 @@ import { SecurityEventReadResponse } from '../../../models/responses';
 export const securityEventReadAction = createAction({
   auth: ampecoAuth,
   name: 'securityEventRead',
-  displayName: 'Resources - Security Events - Security Event Read',
+  displayName: 'Get Security Event',
   description: 'Get a Security Event.',
   audience: 'both',
   aiMetadata: { description: 'Fetches a single charge-point security event from AMPECO by its numeric ID. Use to inspect one known event; to discover event IDs or scan by type/charge point/time use the Security Events Listing action. Read-only and idempotent.', idempotent: true },

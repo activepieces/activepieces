@@ -5,7 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const bulkUpdateJobLineItems = createAction({
   auth: housecallProAuth,
   name: "bulk_update_job_line_items",
-  displayName: "Bulk update a job's line items",
+  displayName: "Bulk Update a Job's Line Items",
   description: "Bulk update job line items. If upsert not define for a line item it will be considered as a new line item for the job.",
   audience: 'both',
   aiMetadata: { description: "Bulk replace or upsert the line items on a Housecall Pro job in a single call. Line items carrying a stable identifier are upserted in place; those without are added as new, so the result is only idempotent when every item is keyed for upsert. Set append_line_items to add to existing items rather than replacing the set. Use get-job-line-items first to read current items.", idempotent: false },

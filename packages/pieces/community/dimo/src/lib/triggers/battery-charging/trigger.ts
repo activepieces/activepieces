@@ -16,7 +16,7 @@ const TRIGGER_KEY = 'dimo-battery-is-charging-trigger';
 export const batteryChargingTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'battery-is-charging-trigger',
-	displayName: 'Battery is Charging Trigger',
+	displayName: 'Battery Is Charging Trigger',
 	description: 'Triggers when vehicle battery charging status changes (True/False).',
 	aiMetadata: {
 		description:

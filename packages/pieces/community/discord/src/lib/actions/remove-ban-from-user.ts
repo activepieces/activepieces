@@ -10,7 +10,7 @@ import {
 export const discordRemoveBanFromUser = createAction({
   auth: discordAuth,
   name: 'remove_ban_from_user',
-  displayName: 'Remove ban from user',
+  displayName: 'Remove Ban from User',
   description: 'Removes the guild ban from a user',
   audience: 'both',
   aiMetadata: { description: 'Lifts a guild ban for a user, identified by guild ID and user ID, with an optional audit-log reason; the user may rejoin afterward. Use to reverse a previous ban. Requires the bot to have Ban Members permission; idempotent, since unbanning a user who is not banned yields the same end state.', idempotent: true },

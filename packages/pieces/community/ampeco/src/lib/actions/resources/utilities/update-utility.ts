@@ -13,7 +13,7 @@ import { UpdateUtilityResponse } from '../../../models/responses';
 export const updateUtilityAction = createAction({
   auth: ampecoAuth,
   name: 'updateUtility',
-  displayName: 'Resources - Utilities - Update Utility',
+  displayName: 'Update Utility',
   description: 'Update a single Utility.',
   audience: 'both',
   aiMetadata: { description: 'Update an existing AMPECO utility (electricity provider) record by its numeric ID, setting its name. Not idempotent in the create sense: the utility must already exist and this overwrites its name. Use the create utility action to add a new utility.', idempotent: false },

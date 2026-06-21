@@ -13,7 +13,7 @@ import { IdTagReadResponse } from '../../../models/responses';
 export const idTagReadAction = createAction({
   auth: ampecoAuth,
   name: 'idTagRead',
-  displayName: 'Resources - Id Tags - Read',
+  displayName: 'Get ID Tag',
   description: 'Get a Id Tag.',
   audience: 'both',
   aiMetadata: { description: 'Fetch a single ID tag by its numeric id, returning its status, type, associated user and payment method. Read-only and idempotent. Use when you already know the tag id; to find tags by other criteria, list them through another action.', idempotent: true },

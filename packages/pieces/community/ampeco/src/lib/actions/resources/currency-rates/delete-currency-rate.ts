@@ -12,7 +12,7 @@ import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParam
 export const deleteCurrencyRateAction = createAction({
   auth: ampecoAuth,
   name: 'deleteCurrencyRate',
-  displayName: 'Resources - Currency Rates - Delete',
+  displayName: 'Delete Currency Rate',
   description: 'Delete Currency Rate.',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an AMPECO currency-rate record by its numeric ID. Destructive and not reversible. Effectively idempotent once removed, but the first call removes the rate, so confirm the ID before running.', idempotent: false },

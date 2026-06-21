@@ -13,7 +13,7 @@ import { GetTimeSeriesForecastResponse } from '../../../models/responses';
 export const getTimeSeriesForecastAction = createAction({
   auth: ampecoAuth,
   name: 'getTimeSeriesForecast',
-  displayName: 'Resources - Flexibility Assets - Get Time Series Forecast',
+  displayName: 'Get Time Series Forecast',
   description: 'Get Time Series Forecast for a Flexibility Asset.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve forward-looking forecast time-series for one flexibility asset (by ID), optionally bounded by a start/end time window. Read-only and idempotent. Pick this for predicted/future values; use Get Historical Time Series for past measured values of the same asset.', idempotent: true },

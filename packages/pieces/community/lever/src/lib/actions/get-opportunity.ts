@@ -10,7 +10,7 @@ import {
 
 export const getOpportunity = createAction({
   name: 'getOpportunity',
-  displayName: 'Get opportunity',
+  displayName: 'Get Opportunity',
   description:
     "Retrieve a single opportunity, i.e. an individual's unique candidacy or journey for a given job position",
   audience: 'both',

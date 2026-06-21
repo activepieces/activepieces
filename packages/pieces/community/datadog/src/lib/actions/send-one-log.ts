@@ -5,7 +5,7 @@ import { datadogAuth } from '../common/auth';
 
 export const sendOneLog = createAction({
   name: 'sendOneLog',
-  displayName: 'Send One log',
+  displayName: 'Send One Log',
   description: 'Send one log to your Datadog platform over HTTP.',
   audience: 'both',
   aiMetadata: {
