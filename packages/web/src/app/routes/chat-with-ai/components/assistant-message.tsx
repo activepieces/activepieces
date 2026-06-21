@@ -537,10 +537,15 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
       <div className="max-w-[80%] bg-muted rounded-2xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
-            <p className="text-sm font-semibold">{`Q${i + 1}. ${
-              pair.question
-            }`}</p>
-            <p className="text-sm">{`→ ${pair.answer}`}</p>
+            <p className="text-sm font-semibold">
+              {t('Q{number}. {question}', {
+                number: i + 1,
+                question: pair.question,
+              })}
+            </p>
+            <p className="text-sm">
+              {t('→ {answer}', { answer: pair.answer })}
+            </p>
           </div>
         ))}
       </div>
