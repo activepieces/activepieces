@@ -24,23 +24,19 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId })
+
+        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient, execution })
         if (!provisioned) {
             ctx.log.info({ flow: { id: data.flowId } }, 'Failed to provision pieces for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         const { data: result, error } = await tryCatch(async () => {
-            await sandbox.start({
-                flowVersionId: flowVersion.id,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
-            return sandbox.execute(
-                EngineOperationType.EXECUTE_TRIGGER_HOOK,
-                {
+            return execution.run({
+                operationType: EngineOperationType.EXECUTE_TRIGGER_HOOK,
+                operation: {
                     hookType: data.hookType,
                     flowVersion,
                     webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId, data.test),
@@ -53,13 +49,13 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
                     publicApiUrl: ctx.publicApiUrl,
                     timeoutInSeconds,
                 },
-                { timeoutInSeconds },
-            )
+                timeoutInSeconds,
+            })
         })
-        await ctx.sandboxManager.release(ctx.log)
+        await execution.dispose({ invalidate: false })
 
         if (error) {
-            await ctx.sandboxManager.invalidate(ctx.log)
+            await execution.dispose({ invalidate: true })
             if (isSandboxTimeout(error)) {
                 return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.TIMEOUT, response: undefined }
             }

@@ -12,6 +12,7 @@ import { PieceNotFoundError } from '../../../../src/lib/cache/pieces/piece-cache
 
 const mockGetPiece = vi.fn()
 const mockProvision = vi.fn()
+const mockExecution = { provision: mockProvision } as any
 
 vi.mock('../../../../src/lib/cache/pieces/piece-cache', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../../../../src/lib/cache/pieces/piece-cache')>()
@@ -22,12 +23,6 @@ vi.mock('../../../../src/lib/cache/pieces/piece-cache', async (importOriginal) =
         }),
     }
 })
-
-vi.mock('../../../../src/lib/cache/provisioner', () => ({
-    provisioner: () => ({
-        provision: mockProvision,
-    }),
-}))
 
 function makeFlowVersion(trigger: FlowVersion['trigger']): FlowVersion {
     return {
@@ -222,6 +217,7 @@ describe('provisionFlowPieces', () => {
             projectId: 'project-1',
             log: logWithWarn,
             apiClient: apiClientWithDisable,
+            execution: mockExecution,
         })
         expect(result).toBe(true)
         expect(mockDisableFlow).not.toHaveBeenCalled()
@@ -240,6 +236,7 @@ describe('provisionFlowPieces', () => {
             projectId: 'project-1',
             log: logWithWarn,
             apiClient: apiClientWithDisable,
+            execution: mockExecution,
         })
         expect(result).toBe(false)
         expect(mockDisableFlow).toHaveBeenCalledWith({
@@ -261,6 +258,7 @@ describe('provisionFlowPieces', () => {
             projectId: 'project-1',
             log: logWithWarn,
             apiClient: apiClientWithDisable,
+            execution: mockExecution,
         })).rejects.toThrow('Failed to provision piece')
         expect(mockDisableFlow).not.toHaveBeenCalled()
     })
@@ -281,6 +279,7 @@ describe('provisionFlowPieces', () => {
             projectId: 'project-1',
             log: logWithError,
             apiClient: apiClientWithDisable,
+            execution: mockExecution,
         })
         expect(result).toBe(false)
         expect(mockError).toHaveBeenCalled()
