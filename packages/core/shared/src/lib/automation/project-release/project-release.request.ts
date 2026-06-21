@@ -1,5 +1,5 @@
+import { Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { Nullable } from '../../core/common'
 
 export enum ProjectReleaseType {
     GIT = 'GIT',

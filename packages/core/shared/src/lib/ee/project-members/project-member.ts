@@ -1,9 +1,7 @@
+import { ApId, BaseModelSchema, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema } from '../../core/common/base-model'
-import { ApId } from '../../core/common/id-generator'
 import { UserWithMetaInformation } from '../../core/user/user'
 import { ProjectMetaData } from '../../management/project/project'
-import { ProjectRole } from '../../management/project-role/project-role'
 
 export type ProjectMemberId = string
 

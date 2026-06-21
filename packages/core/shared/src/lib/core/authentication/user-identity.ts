@@ -1,5 +1,5 @@
+import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, Nullable } from '../common'
 
 
 export enum UserIdentityProvider {

@@ -1,5 +1,5 @@
+import { Metadata } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { Metadata } from '../../../core/common/metadata'
 import { AppConnectionScope, AppConnectionType } from '../app-connection'
 import { OAuth2AuthorizationMethod } from '../oauth2-authorization-method'
 

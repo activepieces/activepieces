@@ -1,5 +1,5 @@
+import { Metadata } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { Metadata } from '../../../core/common/metadata'
 import { VARIABLE_NAME_REGEX } from '../variable'
 
 export const UpsertVariableRequestBody = z.object({

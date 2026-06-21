@@ -1,8 +1,6 @@
 import { PopulatedFlow } from '@activepieces/core-execution'
+import { ApId, BaseModelSchema, Permission } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema } from '../../core/common'
-import { ApId } from '../../core/common/id-generator'
-import { Permission } from '../../core/common/security/permission'
 
 export type McpId = ApId
 

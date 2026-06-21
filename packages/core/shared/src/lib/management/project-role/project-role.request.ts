@@ -1,5 +1,5 @@
+import { RoleType, SAFE_STRING_PATTERN } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { RoleType, SAFE_STRING_PATTERN } from '../../core/common'
 
 export const CreateProjectRoleRequestBody = z.object({
     name: z.string().regex(new RegExp(SAFE_STRING_PATTERN)),

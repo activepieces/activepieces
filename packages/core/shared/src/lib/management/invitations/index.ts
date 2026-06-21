@@ -1,7 +1,6 @@
+import { BaseModelSchema, Nullable, NullableEnum, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, Nullable, NullableEnum } from '../../core/common'
 import { PlatformRole } from '../../core/user/index'
-import { ProjectRole } from '../project-role/project-role'
 
 export enum InvitationType {
     PLATFORM = 'PLATFORM',

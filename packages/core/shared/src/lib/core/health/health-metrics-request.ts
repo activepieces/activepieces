@@ -1,6 +1,6 @@
 import { FlowRunStatus } from '@activepieces/core-execution'
+import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { ApId } from '../common/id-generator'
 
 export const PlatformMetricsReportRequest = z.object({
     createdAfter: z.string(),

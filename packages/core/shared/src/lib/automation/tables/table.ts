@@ -1,5 +1,5 @@
+import { BaseModelSchema, Nullable, NullableEnum } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, Nullable, NullableEnum } from '../../core/common'
 import { Field } from './field'
 
 export enum TableAutomationTrigger {

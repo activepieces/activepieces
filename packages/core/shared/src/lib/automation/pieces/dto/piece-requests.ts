@@ -1,6 +1,5 @@
+import { ApMultipartFile, OptionalArrayFromQuery, OptionalBooleanFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { ApMultipartFile } from '../../../core/common'
-import { OptionalArrayFromQuery, OptionalBooleanFromQuery } from '../../../core/common/base-model'
 import { ApEdition } from '../../../core/flag/flag'
 import { PackageType, PieceCategory } from '../piece'
 

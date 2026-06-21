@@ -1,6 +1,5 @@
+import { ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, Nullable } from '../common/base-model'
-import { ApId } from '../common/id-generator'
 
 export type FileId = ApId
 

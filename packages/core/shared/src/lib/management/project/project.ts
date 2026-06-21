@@ -1,7 +1,5 @@
+import { ApId, BaseModelSchema, DateOrString, Metadata, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
-import { ApId } from '../../core/common/id-generator'
-import { Metadata } from '../../core/common/metadata'
 
 export enum ColorName {
     RED = 'RED',

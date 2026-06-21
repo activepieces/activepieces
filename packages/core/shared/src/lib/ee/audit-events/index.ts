@@ -1,9 +1,8 @@
 import { Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
+import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
 import * as zMini from 'zod/mini'
-import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery } from '../../core/common/base-model'
 import { UserWithMetaInformation } from '../../core/user/user'
-import { ProjectRole } from '../../management/project-role/project-role'
 import { SigningKey } from '../signing-key'
 export const ListAuditEventsRequest = z.object({
     limit: z.coerce.number().optional(),

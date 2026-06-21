@@ -1,5 +1,4 @@
-import { assertNotNullOrUndefined } from '../../core/common'
-import { ActivepiecesError, ErrorCode } from '../../core/common/activepieces-error'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode } from '@activepieces/core-utils'
 
 /**
  * @param {string} pieceName - starts with `@activepieces/piece-`

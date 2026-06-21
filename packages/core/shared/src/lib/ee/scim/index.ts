@@ -1,5 +1,5 @@
+import { isNil } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { isNil } from '../../core/common'
 import { PlatformRole } from '../../core/user'
 
 export const SCIM_USER_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:User'

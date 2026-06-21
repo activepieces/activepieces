@@ -1,5 +1,5 @@
+import { Metadata, Nullable, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { Metadata, Nullable, OptionalArrayFromQuery } from '../../core/common'
 import { FlowVersionTemplate, TemplateStatus, TemplateTag, TemplateType } from './template'
 
 export const CreateTemplateRequestBody = z.object({

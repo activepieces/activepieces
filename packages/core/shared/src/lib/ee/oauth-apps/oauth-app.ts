@@ -1,5 +1,5 @@
+import { BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema } from '../../core/common/base-model'
 
 export const OAuthApp = z.object({
     ...BaseModelSchema,

@@ -1,6 +1,5 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema } from '../../core/common/base-model'
 
 export enum AIProviderModelType {
     IMAGE = 'image',

@@ -1,5 +1,4 @@
-import type { PlatformId, ProjectId } from '@activepieces/core-utils'
-import type { ApId } from '../../common/id-generator'
+import type { ApId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { PrincipalType } from './principal-type'
 
 export type WorkerPrincipal = {

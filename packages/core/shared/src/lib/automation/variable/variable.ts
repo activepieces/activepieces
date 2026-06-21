@@ -1,6 +1,5 @@
+import { BaseModel, BaseModelSchema, Metadata, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModel, BaseModelSchema, Nullable } from '../../core/common/base-model'
-import { Metadata } from '../../core/common/metadata'
 import { UserWithMetaInformation } from '../../core/user'
 
 export const VARIABLE_NAME_REGEX = /^[a-zA-Z0-9_]+$/

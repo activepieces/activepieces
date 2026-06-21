@@ -1,6 +1,6 @@
 import { FlowStatus } from '@activepieces/core-execution'
+import { BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { UserWithMetaInformation } from '../../core/user'
 
 export enum AnalyticsTimePeriod {

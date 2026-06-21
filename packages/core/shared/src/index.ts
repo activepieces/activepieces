@@ -17,14 +17,14 @@ export * from './lib/core/license-keys'
 export * from './lib/core/support-url'
 export * from './lib/core/feedback-url'
 export * from './lib/core/health'
-// `formErrors` is re-exported transitively from @activepieces/core-utils (via core/common);
-// the local ./lib/form-errors file remains for internal relative imports only, to avoid a
-// duplicate barrel export (TS2308).
+// Foundation utilities/types live in @activepieces/core-utils; shared re-exports the whole
+// surface here once (instead of via per-file `export *` shim files under lib/core/common).
+// The local ./lib/form-errors file remains for internal relative imports only.
+export * from '@activepieces/core-utils'
 
 // management
 export * from './lib/management/platform'
 export * from './lib/management/project'
-export * from './lib/management/project-role/project-role'
 export * from './lib/management/project-role/project-role.request'
 export * from './lib/management/invitations'
 export * from './lib/management/analytics'

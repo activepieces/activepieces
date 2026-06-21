@@ -1,5 +1,5 @@
+import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { formErrors } from '../../form-errors'
 
 const SAFE_SLUG_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/

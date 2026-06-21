@@ -1,6 +1,6 @@
+import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { SignUpRequest } from '../../../core/authentication/dto/sign-up-request'
-import { ApId } from '../../../core/common/id-generator'
 
 export const VerifyEmailRequestBody = z.object({
     identityId: ApId,

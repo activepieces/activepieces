@@ -1,5 +1,5 @@
+import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { ApId } from '../../core/common/id-generator'
 
 export const WebhookUrlParams = z.object({
     flowId: ApId,

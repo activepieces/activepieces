@@ -1,7 +1,5 @@
+import { ApId, BaseModel, BaseModelSchema, Metadata, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModel, BaseModelSchema, Nullable } from '../../core/common/base-model'
-import { ApId } from '../../core/common/id-generator'
-import { Metadata } from '../../core/common/metadata'
 import { UserWithMetaInformation } from '../../core/user'
 import { OAuth2GrantType } from './dto/upsert-app-connection-request'
 import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'

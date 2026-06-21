@@ -1,6 +1,5 @@
+import { ApId, BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
-import { ApId } from '../../core/common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
 import { SsoDomainVerification } from './sso-domain-verification'
 

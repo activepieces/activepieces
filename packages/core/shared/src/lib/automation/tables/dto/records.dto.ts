@@ -1,6 +1,5 @@
+import { Cursor, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { OptionalArrayFromQuery } from '../../../core/common/base-model'
-import { Cursor } from '../../../core/common/seek-page'
 
 const coerceToString = z.preprocess(
     (v) => (v === null || v === undefined ? v : String(v)),

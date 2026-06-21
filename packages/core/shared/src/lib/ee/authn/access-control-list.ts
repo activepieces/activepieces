@@ -1,4 +1,4 @@
-import { Permission } from '../../core/common/security/permission'
+import { Permission } from '@activepieces/core-utils'
 import { DefaultProjectRole } from '../../management/project/project-member'
 
 export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {

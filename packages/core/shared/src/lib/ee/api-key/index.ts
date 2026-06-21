@@ -1,6 +1,5 @@
+import { ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, Nullable } from '../../core/common/base-model'
-import { ApId } from '../../core/common/id-generator'
 
 export const ApiKey = z.object({
     ...BaseModelSchema,

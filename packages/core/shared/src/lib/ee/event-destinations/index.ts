@@ -1,5 +1,5 @@
+import { BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema } from '../../core/common/base-model'
 import { ApplicationEventName } from '../audit-events/index'
 import { EventDestinationScope } from './dto'
 

@@ -1,6 +1,5 @@
+import { Nullable, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { Nullable } from '../../../core/common'
-import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { formErrors } from '../../../form-errors'
 import { FieldState } from '../../project-release/project-state'
 import { TableAutomationStatus, TableAutomationTrigger } from '../table'

@@ -1,6 +1,5 @@
+import { ApId, SAFE_STRING_PATTERN } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { SAFE_STRING_PATTERN } from '../../common'
-import { ApId } from '../../common/id-generator'
 import { EmailType, PasswordType } from '../../user/user'
 
 export const SignUpRequest = z.object({

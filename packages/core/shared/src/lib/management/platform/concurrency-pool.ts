@@ -1,6 +1,5 @@
+import { ApId, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema } from '../../core/common/base-model'
-import { ApId } from '../../core/common/id-generator'
 
 export const ConcurrencyPool = z.object({
     ...BaseModelSchema,

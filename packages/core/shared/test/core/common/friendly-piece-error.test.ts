@@ -1,4 +1,4 @@
-import { formatPieceError, tryParseFriendlyPieceError } from '../../../src/lib/core/common/friendly-piece-error'
+import { formatPieceError, tryParseFriendlyPieceError } from '@activepieces/core-utils'
 
 class TestHttpError extends Error {
     constructor(public readonly response: { status: number, body: unknown, headers?: Record<string, unknown> }, public readonly request: { body?: unknown, url?: string, method?: string }) {

@@ -1,6 +1,4 @@
-import type { ProjectId } from '@activepieces/core-utils'
-import type { BaseModel } from '../common/base-model'
-import type { ApId } from '../common/id-generator'
+import type { ApId, BaseModel, ProjectId } from '@activepieces/core-utils'
 
 export type StoreEntryId = ApId
 

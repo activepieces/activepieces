@@ -1,5 +1,5 @@
+import { BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, DateOrString, Nullable } from '../common/base-model'
 import { UserBadge } from './badges'
 
 export enum PlatformRole {

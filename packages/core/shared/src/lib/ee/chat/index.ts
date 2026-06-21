@@ -1,6 +1,6 @@
 import { ChatPromptOverride } from '@activepieces/core-execution'
+import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema, Nullable } from '../../core/common'
 import { formErrors } from '../../form-errors'
 
 const MAX_FILE_BINARY_SIZE = 10 * 1024 * 1024

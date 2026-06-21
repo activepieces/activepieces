@@ -15,7 +15,7 @@ import {
     startCase,
     unique,
     validateIndexBound,
-} from '../../../../src/lib/core/common/utils/utils'
+} from '@activepieces/core-utils'
 
 describe('setAtPath', () => {
     it('should set a value at a dot-separated path', () => {

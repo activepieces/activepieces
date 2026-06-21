@@ -1,5 +1,5 @@
+import { OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { ProjectType } from '../../../management/project/project'
 import { AppConnectionScope, AppConnectionStatus, AppConnectionWithoutSensitiveData } from '../app-connection'
 

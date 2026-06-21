@@ -1,6 +1,6 @@
 import { PopulatedFlow } from '@activepieces/core-execution'
+import { Nullable, NullableEnum } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { Nullable, NullableEnum } from '../../core/common'
 import { TableAutomationStatus, TableAutomationTrigger } from '../tables/table'
 
 export enum FlowProjectOperationType {

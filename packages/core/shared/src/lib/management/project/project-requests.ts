@@ -1,7 +1,5 @@
+import { Metadata, Nullable, OptionalArrayFromQuery, SAFE_STRING_PATTERN } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { Nullable, OptionalArrayFromQuery } from '../../core/common/base-model'
-import { Metadata } from '../../core/common/metadata'
-import { SAFE_STRING_PATTERN } from '../../core/common/security'
 import { PiecesFilterType, ProjectIcon, ProjectType } from './project'
 
 export const UpdateProjectPlatformRequest = z.object({

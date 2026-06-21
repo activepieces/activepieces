@@ -1,5 +1,4 @@
-import { BaseModel } from '../common/base-model'
-import { ApId } from '../common/id-generator'
+import { ApId, BaseModel } from '@activepieces/core-utils'
 
 export type FlagId = ApId
 

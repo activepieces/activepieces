@@ -9,7 +9,7 @@ import {
     sanitizeObjectForPostgresql,
     spreadIfDefined,
     spreadIfNotUndefined,
-} from '../../../../src/lib/core/common/utils/object-utils'
+} from '@activepieces/core-utils'
 
 describe('applyFunctionToValuesSync', () => {
     it('should apply function to string values in nested objects', () => {

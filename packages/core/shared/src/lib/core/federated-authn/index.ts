@@ -1,5 +1,5 @@
+import { Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { Nullable } from '../common'
 import { ThirdPartyAuthnProviderEnum } from './authn-provider-name'
 
 export * from './authn-provider-name'

@@ -1,5 +1,5 @@
+import { BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { BaseModelSchema } from '../common/base-model'
 
 export const Tag = z.object({
     ...BaseModelSchema,
