@@ -5,6 +5,7 @@ import { platformPlanService } from '../../ee/platform/platform-plan/platform-pl
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
+import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { aiUsageExtractor } from './ai-usage-extractor'
 import { flowRunService } from './flow-run-service'
@@ -18,11 +19,6 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
         if (isNil(project)) {
             return
         }
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-        const licenseKey = platformPlan.licenseKey
-        if (isNil(licenseKey) || licenseKey.length === 0) {
-            return
-        }
         const steps = await flowRunService(log).getStepsOrNull({ flowRun })
         if (isNil(steps)) {
             return
@@ -34,6 +30,23 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
             fetchSlice: (ref) => fetchSlice({ log, projectId: flowRun.projectId, ref }),
         })
         if (usage.messages === 0 && usage.toolCalls === 0) {
+            return
+        }
+        await billingProvider.get(log).trackCredits({
+            platformId: project.platformId,
+            value: usage.messages + usage.toolCalls,
+            source: CreditUsageSource.AI,
+            idempotencyKey: `${flowRun.id}:ai`,
+            properties: {
+                projectId: flowRun.projectId,
+                flowId: flowRun.flowId,
+                flowRunId: flowRun.id,
+                environment: flowRun.environment,
+            },
+        })
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
+        const licenseKey = platformPlan.licenseKey
+        if (isNil(licenseKey) || licenseKey.length === 0) {
             return
         }
         captureBillingEvent({
