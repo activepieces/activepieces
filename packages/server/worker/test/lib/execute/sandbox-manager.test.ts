@@ -56,7 +56,7 @@ function buildSettings({ executionMode, environment }: { executionMode: string, 
         S3_USE_SIGNED_URLS: 'false',
         EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
         EDITION: 'community',
-        NETWORK_MODE: NetworkMode.UNRESTRICTED,
+        NETWORK_MODE: NetworkMode.NONE,
         SSRF_ALLOW_LIST: [],
     }
 }

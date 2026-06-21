@@ -84,7 +84,7 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
         S3_USE_SIGNED_URLS: 'false',
         EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
         EDITION: 'community',
-        NETWORK_MODE: NetworkMode.UNRESTRICTED,
+        NETWORK_MODE: NetworkMode.NONE,
         SSRF_ALLOW_LIST: [],
     }
     return { ...base, ...overrides }
@@ -233,7 +233,7 @@ describe('createSandboxForJob', () => {
     // AP_NETWORK_MODE in the sandbox env now mirrors the live workerSettings.NETWORK_MODE
     // directly. There is no egress proxy or kernel firewall to drift against, so the
     // proxyPort axis (and AP_EGRESS_PROXY_URL) is gone — STRICT only toggles the engine's
-    // best-effort in-process ssrfGuard. See .agents/features/network-security.md.
+    // best-effort in-process ssrfGuard.
     describe('sandbox network mode mirrors settings', () => {
         it('NETWORK_MODE=STRICT in settings → engine sees STRICT, no proxy URL', () => {
             getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.STRICT }))
@@ -244,12 +244,12 @@ describe('createSandboxForJob', () => {
             expect('AP_EGRESS_PROXY_URL' in env).toBe(false)
         })
 
-        it('NETWORK_MODE=UNRESTRICTED in settings → engine sees UNRESTRICTED', () => {
-            getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.UNRESTRICTED }))
+        it('NETWORK_MODE=NONE in settings → engine sees NONE', () => {
+            getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.NONE }))
             createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
 
             const env = createSandboxMock.mock.calls[0][2].env
-            expect(env.AP_NETWORK_MODE).toBe(NetworkMode.UNRESTRICTED)
+            expect(env.AP_NETWORK_MODE).toBe(NetworkMode.NONE)
         })
     })
 })
