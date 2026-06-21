@@ -1,0 +1,96 @@
+---
+title: 'Migrate Pieces to Self-Contained Bundles'
+icon: 'package'
+---
+
+<Note>
+This applies to forks with custom pieces created before pieces moved to self-contained bundles. Pieces created with `npm run cli pieces create` already use the bundle model — nothing to do.
+</Note>
+
+Activepieces builds each piece into a single self-contained bundle — see [Bundling Pieces](./bundling-pieces) for how that works. If you maintain custom pieces from before this change, update them so they conform to the new model.
+
+## What changed
+
+| | **Before** | **Now** |
+|---|---|---|
+| Piece dependencies | `@activepieces/shared` + framework + common | framework + common only |
+| Imports in piece code | `@activepieces/shared` and `@activepieces/pieces-framework` | `@activepieces/pieces-framework` only |
+| Build output | compiled files + dependency tree | one self-contained bundle |
+| `@activepieces/shared` location | `packages/shared` | `packages/core/shared` (same package name) |
+
+Pieces now import only from `@activepieces/pieces-framework` and `@activepieces/pieces-common`. The framework re-exports the foundation symbols (`isNil`, `SeekPage`, `PieceCategory`, `AppConnectionType`, and so on) that used to come from `@activepieces/shared`.
+
+## Update each piece
+
+<Steps>
+<Step title="Repoint imports to the framework">
+Replace any `@activepieces/shared` (or `@activepieces/core-*`) import with `@activepieces/pieces-framework`:
+
+```ts
+// Before
+import { PieceCategory, ExecutionType } from '@activepieces/shared';
+
+// After
+import { PieceCategory, ExecutionType } from '@activepieces/pieces-framework';
+```
+
+If a symbol isn't re-exported by the framework, it was server-only and shouldn't be imported into a piece.
+</Step>
+
+<Step title="Update package.json dependencies and scripts">
+Remove `@activepieces/shared` and move `tslib` to `devDependencies`. Add `@activepieces/core-piece-types` and `@activepieces/core-utils` — these are build-time only (they let `tsc` emit portable type declarations; your source never imports them directly). Add the `bundle` script.
+
+```jsonc
+{
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
+    "lint": "eslint 'src/**/*.ts'"
+  }
+}
+```
+</Step>
+
+<Step title="Add the import-boundary lint rule">
+Add a `no-restricted-imports` rule to the `*.ts`/`*.tsx` override in the piece's `.eslintrc.json` so it can't regress to importing packages that defeat bundling:
+
+```json
+{
+  "files": ["*.ts", "*.tsx"],
+  "rules": {
+    "no-restricted-imports": ["error", {
+      "patterns": [
+        "lodash",
+        "lodash/*",
+        "@activepieces/core-*",
+        "@activepieces/server*",
+        "@activepieces/engine",
+        "@activepieces/shared"
+      ]
+    }]
+  }
+}
+```
+</Step>
+
+<Step title="Build and verify">
+```bash
+npm run build-piece your-piece
+```
+
+The archive produced in `packages/pieces/<type>/your-piece/dist/` is now a self-contained bundle.
+</Step>
+</Steps>
+
+<Tip>
+A freshly scaffolded piece (`npm run cli pieces create`) already includes all of the above. Use one as a reference if you're unsure what a migrated piece should look like.
+</Tip>
