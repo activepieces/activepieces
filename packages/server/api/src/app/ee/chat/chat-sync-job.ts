@@ -1,4 +1,5 @@
-import { ACTIVEPIECES_CHAT_TIERS, AIProviderName, ApEdition, ChatConversation, ChatHistoryMessage, chunk, isNil, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus, tryCatch } from '@activepieces/shared'
+import { AIProviderName, chunk, isNil, tryCatch } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, ChatHistoryMessage, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -145,7 +146,7 @@ async function pushBatch({ conversations, licenseKey, log, userCache, platformCa
     for (const conversation of conversations) {
         const payloadResult = await tryCatch(() => toSyncPayload({ conversation, log, userCache, platformCache, providerCache }))
         if (payloadResult.error) {
-            log.error({ conversationId: conversation.id, error: String(payloadResult.error) }, 'Failed to build sync payload for conversation, skipping')
+            log.error({ conversation: { id: conversation.id }, error: String(payloadResult.error) }, 'Failed to build sync payload for conversation, skipping')
             continue
         }
         payloads.push(payloadResult.data)

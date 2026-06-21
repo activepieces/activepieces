@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { lettaAuth } from "./lib/common/auth";
 import { createAgentFromTemplate } from "./lib/actions/create-agent-from-template";
 import { createIdentity } from "./lib/actions/create-identity";

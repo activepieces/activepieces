@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { trashGdriveFileActionOutputSchema } from '../output-schemas';
 
 export const googleDriveTrashFile = createAction({
@@ -23,7 +23,7 @@ export const googleDriveTrashFile = createAction({
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
     const body_value = {
       trashed: true,
     };

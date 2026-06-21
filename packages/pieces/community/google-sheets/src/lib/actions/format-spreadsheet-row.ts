@@ -2,8 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
-import { google } from 'googleapis';
-import { isNil } from '@activepieces/shared';
+import { sheets as googleSheets } from '@googleapis/sheets';
+import { isNil } from '@activepieces/pieces-framework';
 import { formatRowActionOutputSchema } from '../output-schemas';
 
 export const formatRowAction = createAction({
@@ -63,7 +63,7 @@ export const formatRowAction = createAction({
 		}
 
 		const authClient = await createGoogleClient(context.auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const response = await sheets.spreadsheets.batchUpdate({
 			spreadsheetId: context.propsValue.spreadsheetId,

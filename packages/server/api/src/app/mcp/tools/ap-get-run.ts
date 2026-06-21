@@ -1,4 +1,5 @@
-import { isNil, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -57,7 +58,7 @@ export const apGetRunTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_get_run failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_get_run failed')
                 return mcpUtils.mcpToolError('Failed to get run', err)
             }
         },

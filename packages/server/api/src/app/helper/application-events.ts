@@ -1,4 +1,5 @@
-import { apId, ApplicationEvent, isNil, PrincipalType } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { ApplicationEvent, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -63,7 +64,7 @@ export const applicationEvents = (log: FastifyBaseLogger) => ({
                 listener(projectId, event)
             }
         }).catch((error) => {
-            log.error({ err: error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
+            log.error({ error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
         })
     },
 })

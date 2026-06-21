@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   getAuthPropertyForValue,
   PieceAuthProperty,
@@ -11,7 +12,6 @@ import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,11 +54,13 @@ import {
 } from '@/features/connections';
 import { formUtils } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import { MutliAuthList, AuthListItem } from './multi-auth-list';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
+import { OIDCConnectionSettings } from './oidc-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 function CreateOrEditConnectionSection({
@@ -88,6 +90,7 @@ function CreateOrEditConnectionSection({
   const { data: redirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
+  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
   const form = useForm<ConnectionFormValues>({
     defaultValues: {
       request: {
@@ -126,6 +129,14 @@ function CreateOrEditConnectionSection({
       setOpen,
     });
 
+  // The OIDC issuer the server signs into the token's `iss` claim is derived from the
+  // server's configured public URL (AP_FRONTEND_URL), exposed here as the PUBLIC_URL flag —
+  // NOT the browser origin, which can differ behind a proxy/custom host and would make the
+  // provider URL the user registers in AWS mismatch the token issuer.
+  const publicOrigin = publicUrl ?? window.location.origin;
+  const oidcIssuerUrl = publicOrigin.replace(/\/$/, '');
+  const oidcIssuerHost = oidcIssuerUrl.replace(/^https?:\/\//, '');
+
   return (
     <>
       <DialogHeader className="mb-0">
@@ -153,6 +164,10 @@ function CreateOrEditConnectionSection({
               markdown={selectedAuth.authProperty.description}
               variables={{
                 redirectUrl: redirectUrl ?? '',
+                platformId: authenticationSession.getPlatformId() ?? '',
+                projectId: authenticationSession.getProjectId() ?? '',
+                frontendUrl: oidcIssuerUrl,
+                frontendHost: oidcIssuerHost,
               }}
             ></ApMarkdown>
             {selectedAuth.authProperty.description && (
@@ -282,6 +297,10 @@ function ConnectionSettings({ selectedAuth, piece }: ConnectionSettingsProps) {
         <CustomAuthConnectionSettings
           authProperty={selectedAuth.authProperty}
         />
+      );
+    case PropertyType.OIDC:
+      return (
+        <OIDCConnectionSettings authProperty={selectedAuth.authProperty} />
       );
     case PropertyType.OAUTH2:
       if (isNil(selectedAuth.grantType) || isNil(selectedAuth.oauth2App)) {

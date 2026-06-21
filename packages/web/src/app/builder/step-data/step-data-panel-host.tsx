@@ -1,4 +1,5 @@
-import { FlowActionType, FlowTriggerType, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';

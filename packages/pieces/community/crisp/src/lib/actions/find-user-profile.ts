@@ -4,7 +4,6 @@ import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { crispAuth } from '../common/auth';
 import { websiteIdProp } from '../common/props';
 import { crispApiCall } from '../common/client';
-import { HttpStatusCode } from 'axios';
 
 export const findUserProfileAction = createAction({
 	auth: crispAuth,
@@ -37,7 +36,7 @@ export const findUserProfileAction = createAction({
 			};
 		} catch (e) {
 			const err = e as HttpError;
-			if (err.response.status === HttpStatusCode.NotFound) {
+			if (err.response.status === 404) {
 				return {
 					found: false,
 					data: {},

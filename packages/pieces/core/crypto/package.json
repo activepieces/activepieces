@@ -6,18 +6,20 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "buffer": "6.0.3",
     "openpgp": "^6.2.0",
     "zod": "4.3.6",
-    "tslib": "2.6.2"
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "tslib": "2.6.2"
   }
 }

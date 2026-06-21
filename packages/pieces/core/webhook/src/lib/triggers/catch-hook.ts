@@ -8,7 +8,7 @@ import {
 import {
   assertNotNullOrUndefined,
   MarkdownVariant,
-} from '@activepieces/shared';
+} from '@activepieces/pieces-framework';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 const liveMarkdown = `**Live URL:**

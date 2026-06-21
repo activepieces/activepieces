@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../common/common';
 import { areSheetIdsValid, columnToLabel, labelToColumn } from '../common/common';
 import {

@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import {
   parseStream,
   convertAttachment,
@@ -52,12 +52,11 @@ export const gmailNewAttachmentTrigger = createTrigger({
         'Only trigger for emails containing this text in the subject.',
       required: false,
     }),
-    label: {
-      ...GmailProps.label,
+    label: GmailProps.label({
       description: 'Filter by Gmail label.',
       displayName: 'Label',
       required: false,
-    },
+    }),
     category: {
       ...GmailProps.category,
       description: 'Filter by Gmail category.',
@@ -131,7 +130,7 @@ async function pollRecentMessages({
 > {
   const authClient = await createGoogleClient(auth);
 
-  const gmail = google.gmail({ version: 'v1', auth: authClient });
+  const gmail = googleGmail({ version: 'v1', auth: authClient });
 
   // construct query
   const query = ['has:attachment'];

@@ -12,7 +12,7 @@ import { newContact } from './lib/triggers/new-contact';
 import { newNote } from './lib/triggers/new-note';
 import { newNumberCreated } from './lib/triggers/new-number-created';
 import { newSms } from './lib/triggers/new-sms';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
 

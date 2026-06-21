@@ -16,9 +16,10 @@ import {
 } from 'ai';
 import { generateImage } from 'ai';
 import mime from 'mime-types';
-import { isNil, getEffectiveProviderAndModel } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { getEffectiveProviderAndModel } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName } from '@activepieces/pieces-framework';
 import { aiProps } from '../../common/props';
 
 export const generateImageAction = createAction({

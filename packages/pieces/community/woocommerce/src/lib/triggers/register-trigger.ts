@@ -5,7 +5,8 @@ import {
 } from '@activepieces/pieces-framework';
 import { wooAuth } from '../auth';
 import { WebhookInformation, wooCommon } from '../common';
-import { isEmpty, WebhookHandshakeStrategy } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   httpClient,

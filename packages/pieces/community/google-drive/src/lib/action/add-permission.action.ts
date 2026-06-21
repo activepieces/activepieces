@@ -1,6 +1,6 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { googleDriveAuth, createGoogleClient } from '../auth';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { common } from "../common";
 import { updatePermissionsActionOutputSchema } from '../output-schemas';
 
@@ -66,7 +66,7 @@ export const addPermission = createAction({
 
         const authClient = await createGoogleClient(context.auth);
 
-        const drive = google.drive({ version: 'v3', auth: authClient });
+        const drive = googleDrive({ version: 'v3', auth: authClient });
 
         const permission = { 'type': 'user', 'role': permission_name, 'emailAddress': user_email };
 

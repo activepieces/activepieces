@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
 import React, { useRef } from 'react';
 
 import { Input } from '@/components/ui/input';

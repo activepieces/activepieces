@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowTrigger,
   FlowTriggerType,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Zap } from 'lucide-react';

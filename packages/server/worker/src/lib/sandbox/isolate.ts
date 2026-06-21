@@ -115,7 +115,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 engineSandboxPath,
             ]
 
-            log.debug({ sandboxId, command: `${isolateBinaryPath} ${args.join(' ')}` }, 'Spawning isolate process')
+            log.debug({ sandbox: { id: sandboxId }, command: `${isolateBinaryPath} ${args.join(' ')}` }, 'Spawning isolate process')
 
             const child = spawn(isolateBinaryPath, args, {
                 shell: false,

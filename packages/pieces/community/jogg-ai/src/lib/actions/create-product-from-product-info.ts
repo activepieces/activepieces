@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const createProductFromProductInfo = createAction({
@@ -92,26 +92,16 @@ export const createProductFromProductInfo = createAction({
     }
 
     await propsValidation.validateZod(propsValue, {
-      url: z.string().url('URL must be a valid URL').optional(),
-      name: z.string().min(1, 'Product name cannot be empty').optional(),
-      description: z
-        .string()
-        .min(1, 'Product description cannot be empty')
-        .optional(),
-      target_audience: z
-        .string()
-        .min(1, 'Target audience cannot be empty')
-        .optional(),
-      media: z
-        .array(
-          z.object({
-            type: z.number().min(1).max(2),
-            name: z.string().min(1, 'Media name is required'),
-            url: z.string().url('Media URL must be a valid URL'),
-            description: z.string().optional(),
-          })
-        )
-        .optional(),
+      url: z.optional(z.string().check(z.url('URL must be a valid URL'))),
+      name: z.optional(z.string().check(z.minLength(1, 'Product name cannot be empty'))),
+      description: z.optional(z.string().check(z.minLength(1, 'Product description cannot be empty'))),
+      target_audience: z.optional(z.string().check(z.minLength(1, 'Target audience cannot be empty'))),
+      media: z.optional(z.array(z.object({
+            type: z.number().check(z.minimum(1), z.maximum(2)),
+            name: z.string().check(z.minLength(1, 'Media name is required')),
+            url: z.string().check(z.url('Media URL must be a valid URL')),
+            description: z.optional(z.string()),
+          }))),
     });
 
     const requestBody: {

@@ -1,11 +1,5 @@
-import {
-    EngineOperationType,
-    EngineResponseStatus,
-    ExecuteTriggerHookJobData,
-    isNil,
-    tryCatch,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { EngineOperationType, EngineResponseStatus, ExecuteTriggerHookJobData, WorkerJobType } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
@@ -20,13 +14,13 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (!flowVersion) {
-            ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found for trigger hook, skipping')
+            ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
         const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
         if (!provisioned) {
-            ctx.log.info({ flowId: data.flowId }, 'Failed to provision pieces for trigger hook, skipping')
+            ctx.log.info({ flow: { id: data.flowId } }, 'Failed to provision pieces for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 

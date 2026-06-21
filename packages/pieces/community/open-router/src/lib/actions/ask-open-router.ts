@@ -10,7 +10,7 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { askLmmActionOutputSchema } from '../output-schemas';
 
@@ -96,8 +96,8 @@ export const askOpenRouterAction = createAction({
   outputSchema: askLmmActionOutputSchema,
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      temperature: z.number().min(0).max(1.0).optional(),
-      topP: z.number().min(0).max(1.0).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
+      topP: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
     });
 
     const openRouterModel = context.propsValue.model;

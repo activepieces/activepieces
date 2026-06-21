@@ -21,13 +21,15 @@ import {
     FlowVersionState,
     PackageType,
     PieceType,
+    RunEnvironment,
     StepOutputType,
     StreamStepProgress,
-    RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { worker } from '../../../../../../worker/src/lib/worker'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { db } from '../../../../helpers/db'
 import { setupE2eEnvironment } from '../../../../helpers/e2e-setup'
 import {
     createMockFlow,
@@ -35,8 +37,6 @@ import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
-import { db } from '../../../../helpers/db'
-import { worker } from '../../../../../../worker/src/lib/worker'
 
 let app: FastifyInstance
 
@@ -89,8 +89,8 @@ async function setupSubflowFixtures() {
                 mode: 'simple',
                 response: {
                     response: {
-                        greeting: "{{step_1['output'].greeting}}",
-                        processed: "{{step_1['output'].processed}}",
+                        greeting: '{{step_1[\'output\'].greeting}}',
+                        processed: '{{step_1[\'output\'].processed}}',
                     },
                 },
             },
@@ -115,7 +115,7 @@ async function setupSubflowFixtures() {
                 packageJson: '{}',
             },
             input: {
-                name: "{{trigger['output'].data.name}}",
+                name: '{{trigger[\'output\'].data.name}}',
             },
             errorHandlingOptions: {},
         },
@@ -182,7 +182,7 @@ async function setupSubflowFixtures() {
                 mode: 'simple',
                 flowProps: {
                     payload: {
-                        name: "{{trigger['output'].body.name}}",
+                        name: '{{trigger[\'output\'].body.name}}',
                     },
                 },
                 waitForResponse: true,
@@ -254,7 +254,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 mode: 'simple',
                 response: {
                     response: {
-                        echo: "{{trigger['output'].data.message}}",
+                        echo: '{{trigger[\'output\'].data.message}}',
                     },
                 },
             },
@@ -316,7 +316,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 fields: {
                     status: 200,
                     headers: {},
-                    body: { echo: "{{step_1['output'].data.echo}}" },
+                    body: { echo: '{{step_1[\'output\'].data.echo}}' },
                 },
             },
             propertySettings: {},
@@ -345,7 +345,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 mode: 'simple',
                 flowProps: {
                     payload: {
-                        message: "{{trigger['output'].body.message}}",
+                        message: '{{trigger[\'output\'].body.message}}',
                     },
                 },
                 waitForResponse: true,
@@ -451,7 +451,7 @@ describe('Execute Flow E2E', () => {
                     packageJson: '{}',
                 },
                 input: {
-                    data: "{{step_1['output']}}",
+                    data: '{{step_1[\'output\']}}',
                 },
                 errorHandlingOptions: {},
             },
@@ -468,8 +468,8 @@ describe('Execute Flow E2E', () => {
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
-                        fullName: "{{trigger['output'].body.name}}",
-                        emailAddress: "{{trigger['output'].body.email}}",
+                        fullName: '{{trigger[\'output\'].body.name}}',
+                        emailAddress: '{{trigger[\'output\'].body.email}}',
                     },
                 },
                 propertySettings: {},
@@ -871,7 +871,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 sourceCode: {
-                    code: `export const code = async () => ({ big: 'x'.repeat(40000) });`,
+                    code: 'export const code = async () => ({ big: \'x\'.repeat(40000) });',
                     packageJson: '{}',
                 },
                 input: {},

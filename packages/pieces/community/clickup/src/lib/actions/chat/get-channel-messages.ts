@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { createAction } from '@activepieces/pieces-framework';
 import { channelMessagesOutputSchema } from '../../output-schemas';
 
@@ -43,10 +43,7 @@ export const getClickupChannelMessages = createAction({
   outputSchema: channelMessagesOutputSchema,
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
-      limit: z
-        .number()
-        .min(0)
-        .max(100, 'You can fetch between 1 and 100 messages'),
+      limit: z.number().check(z.minimum(0), z.maximum(100, 'You can fetch between 1 and 100 messages')),
     });
 
     const { workspace_id, channel_id, limit, content_format } =

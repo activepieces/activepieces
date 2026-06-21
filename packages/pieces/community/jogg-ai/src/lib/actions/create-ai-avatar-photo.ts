@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const createAiAvatarPhoto = createAction({
@@ -123,15 +123,9 @@ export const createAiAvatarPhoto = createAction({
     } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      image_url: z.string().url('Image URL must be a valid URL').optional(),
-      appearance: z
-        .string()
-        .min(1, 'Appearance description cannot be empty')
-        .optional(),
-      background: z
-        .string()
-        .min(1, 'Background description cannot be empty')
-        .optional(),
+      image_url: z.optional(z.string().check(z.url('Image URL must be a valid URL'))),
+      appearance: z.optional(z.string().check(z.minLength(1, 'Appearance description cannot be empty'))),
+      background: z.optional(z.string().check(z.minLength(1, 'Background description cannot be empty'))),
     });
 
     const requestBody: {

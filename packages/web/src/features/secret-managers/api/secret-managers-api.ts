@@ -1,6 +1,6 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   ConnectSecretManagerRequest,
-  SeekPage,
   SecretManagerConnectionWithStatus,
 } from '@activepieces/shared';
 

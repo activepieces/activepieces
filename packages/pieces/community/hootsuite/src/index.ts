@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createMessageAction } from './lib/actions/create-message';
 import { getMessageAction } from './lib/actions/get-message';
 import { deleteMessageAction } from './lib/actions/delete-message';

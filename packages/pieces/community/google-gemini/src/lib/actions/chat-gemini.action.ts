@@ -4,7 +4,8 @@ import {
   StoreScope,
   createAction,
 } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import mime from 'mime-types';
+import * as z from 'zod/mini'
 import { googleGeminiAuth } from '../auth';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { propsValidation } from '@activepieces/pieces-common';
@@ -41,7 +42,7 @@ export const chatGemini = createAction({
   outputSchema: chatGeminiActionOutputSchema,
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      memoryKey: z.string().max(128).optional(),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
 
     const { model, prompt, memoryKey } = propsValue;  

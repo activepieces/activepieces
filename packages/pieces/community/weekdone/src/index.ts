@@ -1,6 +1,6 @@
 import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { weekdoneAuth } from './lib/auth';
 import { createItemAction } from './lib/actions/create-item';
 import { updateItemAction } from './lib/actions/update-item';

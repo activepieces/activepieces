@@ -1,5 +1,6 @@
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -37,7 +38,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             })
             await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
-            log.info({ email: params.email, platformId }, 'User signed up to existing platform')
+            log.info({ email: params.email, platform: { id: platformId } }, 'User signed up to existing platform')
             return authenticationUtils(log).getProjectAndToken({
                 userId: user.id,
                 platformId,
@@ -97,7 +98,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             platformId,
         })
         assertNotNullOrUndefined(user, 'User not found')
-        log.info({ email: params.email, platformId }, 'User signed in with password')
+        log.info({ email: params.email, platform: { id: platformId } }, 'User signed in with password')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
@@ -163,7 +164,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         assertNotNullOrUndefined(platform, 'Platform not found')
         const user = await getUserForPlatform(params.identityId, platform, log)
-        log.info({ userId: user.id, platformId: platform.id }, 'User switched platform')
+        log.info({ user: { id: user.id }, platform: { id: platform.id } }, 'User switched platform')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId: platform.id,

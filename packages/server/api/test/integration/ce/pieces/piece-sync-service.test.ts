@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     PackageType,
     PieceType,
@@ -6,7 +5,7 @@ import {
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
-import { db } from '../../../helpers/db'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 
 let app: FastifyInstance | null = null

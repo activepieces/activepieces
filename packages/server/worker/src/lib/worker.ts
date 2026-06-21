@@ -1,23 +1,8 @@
 import { createServer } from 'http'
 import os from 'os'
-import { apVersionUtil, systemUsage, wideEvent } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    ConsumeJobRequest,
-    createRpcClient,
-    EngineResponseStatus,
-    ExecutionMode,
-    isNil,
-    JobData,
-    SandboxInformation,
-    spreadIfDefined,
-    tryCatch,
-    WebsocketServerEvent,
-    WorkerMachineHealthcheckRequest,
-    WorkerProps,
-    WorkerSettingsResponse,
-    WorkerToApiContract,
-} from '@activepieces/shared'
+import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -34,6 +19,22 @@ import { JobContext, JobResult, JobResultKind } from './execute/types'
 const AP_VERSION = apVersionUtil.getCurrentRelease()
 
 const VERSION_MISMATCH_POLL_PAUSE_MS = 10_000
+
+let pagedForUnreadableWorkerVersion = false
+
+function pageOnceForUnreadableWorkerVersion(workerLog: typeof logger): void {
+    if (pagedForUnreadableWorkerVersion) {
+        return
+    }
+    pagedForUnreadableWorkerVersion = true
+    onCallService(workerLog, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+        code: 'WORKER_VERSION_READ_FAILED',
+        message: 'Worker could not read its release version from package.json (reported as 0.0.0); polling is paused and will NOT self-heal on reconnect until the deployment is fixed (check cwd/packaging)',
+        params: { workerVersion: AP_VERSION },
+    }).catch((pageError) => {
+        workerLog.error({ pageError }, 'Failed to send on-call page for unreadable worker version')
+    })
+}
 
 let socket: Socket | null = null
 let polling = false
@@ -70,7 +71,7 @@ export const worker = {
                     // Kill switch: if SSRF hardening can't be applied, refuse to accept any job.
                     // Running without egress protection in a configured-hardened worker is
                     // more dangerous than crash-looping — the orchestrator will restart us.
-                    logger.fatal({ err: error }, 'Egress stack failed to start; aborting worker to avoid running unprotected')
+                    logger.fatal({ error }, 'Egress stack failed to start; aborting worker to avoid running unprotected')
                     process.exit(1)
                 }
                 egressStack = data
@@ -131,6 +132,7 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
     const proxyPort = egressStack?.proxyPort ?? null
+    workerSettings.setEgressProxy(proxyPort)
     sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, proxyPort }))
 
     logger.info({ concurrency }, 'Starting polling workers')
@@ -147,8 +149,17 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
 
     while (polling && connectionGeneration === generation) {
         const appVersion = workerSettings.getSettings().APP_VERSION
-        if (appVersion !== AP_VERSION) {
-            workerLog.warn({ appVersion, workerVersion: AP_VERSION }, 'Connected app version mismatch — pausing polling until reconnect to a compatible app')
+        if (!apVersionUtil.versionsAreCompatible({ versionA: appVersion, versionB: AP_VERSION })) {
+            const versionUnreadable = appVersion === UNKNOWN_VERSION || AP_VERSION === UNKNOWN_VERSION
+            if (versionUnreadable) {
+                workerLog.error({ appVersion, workerVersion: AP_VERSION }, 'Pausing polling — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on reconnect, check the worker/app deployment (cwd/packaging)')
+            }
+            else {
+                workerLog.warn({ appVersion, workerVersion: AP_VERSION }, 'Connected app version mismatch — pausing polling until reconnect to a compatible app')
+            }
+            if (AP_VERSION === UNKNOWN_VERSION) {
+                pageOnceForUnreadableWorkerVersion(workerLog)
+            }
             await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
             continue
         }
@@ -172,12 +183,12 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
             continue
         }
 
-        workerLog.debug({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
+        workerLog.debug({ job: { id: job.jobId, type: job.jobData.jobType } }, 'Job received from poll')
 
         const lockExtensionInterval = setInterval(() => {
             void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
                 if (error) {
-                    workerLog.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
+                    workerLog.warn({ error, job: { id: job.jobId } }, 'Failed to extend lock')
                 }
             })
         }, 30_000)
@@ -204,7 +215,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         clearInterval(lockExtensionInterval)
 
         if (completeError) {
-            workerLog.error({ error: completeError, jobId: job.jobId }, 'Failed to complete job')
+            workerLog.error({ error: completeError, job: { id: job.jobId } }, 'Failed to complete job')
         }
     }
 }
@@ -214,19 +225,18 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     const jobData = JobData.parse(rawData)
     const jobLogger = createLogger({
         event: 'job.execute',
-        jobId: job.jobId,
-        jobType: jobData.jobType,
+        job: { id: job.jobId, type: jobData.jobType },
         ...spreadIfDefined('requestId', 'requestId' in jobData ? jobData.requestId : 'httpRequestId' in jobData ? jobData.httpRequestId : undefined),
-        ...spreadIfDefined('projectId', 'projectId' in jobData && jobData.projectId != null ? jobData.projectId : undefined),
-        ...spreadIfDefined('platformId', 'platformId' in jobData ? jobData.platformId : undefined),
-        ...spreadIfDefined('flowId', 'flowId' in jobData ? jobData.flowId : undefined),
-        ...spreadIfDefined('runId', 'runId' in jobData ? jobData.runId : undefined),
-        ...spreadIfDefined('flowVersionId', 'flowVersionId' in jobData ? jobData.flowVersionId : undefined),
+        ...spreadIfDefined('project', 'projectId' in jobData && jobData.projectId != null ? { id: jobData.projectId } : undefined),
+        ...spreadIfDefined('platform', 'platformId' in jobData ? { id: jobData.platformId } : undefined),
+        ...spreadIfDefined('flow', 'flowId' in jobData ? { id: jobData.flowId } : undefined),
+        ...spreadIfDefined('flowRun', 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
     })
     return wideEvent.run({
         logger: jobLogger,
         fn: async () => {
-            const log = logger.child({ jobId: job.jobId, jobType: jobData.jobType })
+            const log = logger.child({ job: { id: job.jobId, type: jobData.jobType } })
             const apiUrl = getApiUrl()
             const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
             log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
@@ -244,7 +254,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
                 const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
                 if (error) {
-                    log.error({ err: error }, 'Job execution failed')
+                    log.error({ error }, 'Job execution failed')
                     wideEvent.error(error)
                     wideEvent.set({ outcome: 'failed' })
                     throw error

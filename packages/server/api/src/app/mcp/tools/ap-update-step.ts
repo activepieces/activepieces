@@ -1,15 +1,5 @@
-import {
-    FlowActionType,
-    FlowOperationRequest,
-    FlowOperationType,
-    flowStructureUtil,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    PieceActionSettings,
-    ProjectScopedMcpServer,
-    UpdateActionRequest,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolDefinition, PieceActionSettings, ProjectScopedMcpServer, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -230,7 +220,7 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
         return parts.join(' ')
     }
     catch (err) {
-        log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
         return null
     }
 }

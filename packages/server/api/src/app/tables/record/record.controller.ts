@@ -1,14 +1,5 @@
-import {
-    CreateRecordsRequest,
-    DeleteRecordsRequest,
-    ListRecordsRequest,
-    Permission,
-    PopulatedRecord,
-    PrincipalType,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateRecordRequest,
-} from '@activepieces/shared'
+import { Permission, SeekPage } from '@activepieces/core-utils'
+import { CreateRecordsRequest, DeleteRecordsRequest, ListRecordsRequest, PopulatedRecord, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'

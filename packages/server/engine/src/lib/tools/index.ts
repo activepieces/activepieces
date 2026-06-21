@@ -1,5 +1,6 @@
+import { isNil, isObject, isString } from '@activepieces/core-utils'
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, isObject, isString, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
+import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
 import dayjs from 'dayjs'
 import { z } from 'zod'
@@ -80,6 +81,7 @@ async function resolveProperties(
                 PropertyType.BASIC_AUTH,
                 PropertyType.OAUTH2,
                 PropertyType.CUSTOM_AUTH,
+                PropertyType.OIDC,
                 PropertyType.CUSTOM,
                 PropertyType.MARKDOWN,
             ]
@@ -299,6 +301,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
         case PropertyType.OAUTH2:
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
+        case PropertyType.OIDC:
         case PropertyType.SECRET_TEXT:
             throw new Error(`Unsupported property type: ${property.type}`)
     }

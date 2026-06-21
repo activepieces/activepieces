@@ -2,8 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueInputOption } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
-import { google } from 'googleapis';
-import {  isString } from '@activepieces/shared';
+import { sheets as googleSheets } from '@googleapis/sheets';
+import {  isString } from '@activepieces/pieces-framework';
 import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
 import { updateRowActionOutputSchema } from '../output-schemas';
 
@@ -45,7 +45,7 @@ export const updateRowAction = createAction({
 
     const authClient = await createGoogleClient(context.auth);
 
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    const sheets = googleSheets({ version: 'v4', auth: authClient });
 
     const sheetName = await getWorkSheetName(
       context.auth,

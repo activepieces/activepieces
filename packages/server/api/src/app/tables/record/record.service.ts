@@ -1,20 +1,5 @@
-import {
-    ActivepiecesError,
-    apId,
-    Cell,
-    chunk,
-    CreateRecordsRequest,
-    Cursor,
-    ErrorCode,
-    Field,
-    Filter,
-    FilterOperator,
-    isNil,
-    PopulatedRecord,
-    SeekPage,
-    TableWebhookEventType,
-    UpdateRecordRequest,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
+import { Cell, CreateRecordsRequest, Field, Filter, FilterOperator, PopulatedRecord, TableWebhookEventType, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'

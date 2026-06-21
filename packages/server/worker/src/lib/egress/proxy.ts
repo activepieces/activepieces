@@ -1,7 +1,7 @@
 import dns from 'node:dns/promises'
 import net from 'node:net'
+import { ssrfIpClassifier } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { ssrfIpClassifier } from '@activepieces/shared'
 import { Server as ProxyServer, RequestError } from 'proxy-chain'
 
 export async function startEgressProxy({ log, allowList }: StartOptions): Promise<EgressProxy> {

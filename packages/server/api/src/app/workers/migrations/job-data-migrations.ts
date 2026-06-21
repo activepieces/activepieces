@@ -1,4 +1,5 @@
-import { apId, ExecutionType, isNil, JobData, ResumeReason, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { ExecutionType, JobData, ResumeReason, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -125,8 +126,8 @@ export const jobMigrations = (log: FastifyBaseLogger) => ({
         let jobData = job as JobData
         log.info({
             schemaVersion: jobData.schemaVersion,
-            jobType: jobData.jobType,
-            projectId: jobData.projectId,
+            job: { type: jobData.jobType },
+            project: { id: jobData.projectId },
         }, '[jobMigrations] Apply migration for job')
         const migrations = createMigrations(log)
         for (const migration of migrations) {

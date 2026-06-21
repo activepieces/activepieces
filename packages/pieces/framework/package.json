@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/pieces-framework",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -10,14 +10,15 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
+    "@activepieces/core-piece-types": "workspace:*",
     "zod": "4.3.6",
     "ai": "^6.0.0",
-    "semver": "7.6.0",
-    "tslib": "2.6.2"
+    "semver": "7.6.0"
   },
   "devDependencies": {
     "@types/semver": "7.5.6",
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "tslib": "2.6.2"
   }
 }

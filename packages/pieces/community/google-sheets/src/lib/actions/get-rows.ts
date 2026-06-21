@@ -11,9 +11,9 @@ import {
   googleSheetsCommon,
   mapRowsToHeaderNames,
 } from '../common/common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { getWorkSheetGridSize } from '../triggers/helpers';
 import { commonProps } from '../common/props';
@@ -158,8 +158,8 @@ export const getRowsAction = createAction({
 		}
 
     await propsValidation.validateZod(propsValue, {
-      startRow: z.number().min(1),
-      groupSize: z.number().min(1),
+      startRow: z.number().check(z.minimum(1)),
+      groupSize: z.number().check(z.minimum(1)),
     });
 
     try {

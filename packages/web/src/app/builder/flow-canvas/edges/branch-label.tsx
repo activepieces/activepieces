@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowActionType,
   BranchExecutionType,
   FlowOperationType,
   flowStructureUtil,
-  isNil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';

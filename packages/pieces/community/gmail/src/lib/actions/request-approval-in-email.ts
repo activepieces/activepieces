@@ -5,10 +5,11 @@ import {
   getAccessToken,
   getUserEmail,
 } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
-import { assertNotNullOrUndefined, ExecutionType } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { requestApprovalInMailActionOutputSchema } from '../output-schemas';
 
 export const requestApprovalInEmail = createAction({
@@ -111,7 +112,7 @@ export const requestApprovalInEmail = createAction({
 
         const authClient = await createGoogleClient(context.auth);
 
-        const gmail = google.gmail({ version: 'v1', auth: authClient });
+        const gmail = googleGmail({ version: 'v1', auth: authClient });
 
         const subjectBase64 = Buffer.from(
           context.propsValue['subject']

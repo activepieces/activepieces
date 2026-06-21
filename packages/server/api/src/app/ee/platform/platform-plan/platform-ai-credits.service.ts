@@ -1,4 +1,5 @@
-import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, isNil, PlatformPlan, tryCatch, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
+import { AiCreditsAutoTopUpState, CreateAICreditCheckoutSessionParamsSchema, PlatformPlan, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
@@ -232,7 +233,7 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
 
         if (autoTopUpCreditsThisMonthAfterThisTopUp > plan.maxAutoTopUpCreditsMonthly) {
             log.info({
-                platformId: plan.platformId,
+                platform: { id: plan.platformId },
                 totalCreditsThisMonth,
                 creditsToAdd: plan.aiCreditsAutoTopUpCreditsToAdd,
                 maxMonthlyLimit: plan.maxAutoTopUpCreditsMonthly,

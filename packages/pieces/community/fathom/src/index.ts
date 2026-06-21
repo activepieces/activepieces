@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getRecordingSummary } from './lib/actions/get-recording-summary';
 import { getRecordingTranscript } from './lib/actions/get-recording-transcript';
 import { listMeetings } from './lib/actions/list-meetings';

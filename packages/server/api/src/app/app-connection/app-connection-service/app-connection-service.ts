@@ -1,43 +1,5 @@
-import {
-    ActivepiecesError,
-    ApEdition,
-    ApEnvironment,
-    apId,
-    AppConnection,
-    AppConnectionId,
-    AppConnectionOwners,
-    AppConnectionScope,
-    AppConnectionStatus,
-    AppConnectionType,
-    AppConnectionValue,
-    AppConnectionWithoutSensitiveData,
-    ConnectionState,
-    Cursor,
-    EngineResponse,
-    EngineResponseStatus,
-    ErrorCode,
-    ExecuteValidateAuthResponse,
-    isNil,
-    MAX_PLATFORM_APP_CONNECTION_OWNERS,
-    Metadata,
-    OAuth2GrantType,
-    PlatformAppConnectionOwner,
-    PlatformAppConnectionOwnersResponse,
-    PlatformAppConnectionProjectInfo,
-    PlatformAppConnectionsListItem,
-    PlatformId,
-    PlatformRole,
-    ProjectId,
-    SeekPage,
-    spreadIfDefined,
-    unique,
-    UpsertAppConnectionRequestBody,
-    User,
-    UserId,
-    UserIdentity,
-    UserWithMetaInformation,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, unique, UserId } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
@@ -84,7 +46,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                 ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             })
             if (!isNil(existingForPlaceholder) && existingForPlaceholder.status !== AppConnectionStatus.MISSING) {
-                log.info({ connectionId: existingForPlaceholder.id, pieceName, platformId, existingStatus: existingForPlaceholder.status }, 'Placeholder upsert skipped — non-missing connection already exists')
+                log.info({ connection: { id: existingForPlaceholder.id }, piece: { name: pieceName }, platform: { id: platformId }, existingStatus: existingForPlaceholder.status }, 'Placeholder upsert skipped — non-missing connection already exists')
                 return this.removeSensitiveData(existingForPlaceholder)
             }
         }
@@ -135,7 +97,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             scope,
         })
-        log.info({ connectionId: newId, pieceName, platformId, isNew: isNil(existingConnection) }, 'App connection upserted')
+        log.info({ connection: { id: newId }, piece: { name: pieceName }, platform: { id: platformId }, isNew: isNil(existingConnection) }, 'App connection upserted')
         return this.removeSensitiveData(updatedConnection)
     },
     async update(params: UpdateParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -299,7 +261,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope: params.scope,
             ...(params.projectId ? { projectIds: ArrayContains([params.projectId]) } : {}),
         })
-        log.info({ connectionId: params.id, platformId: params.platformId }, 'App connection deleted')
+        log.info({ connection: { id: params.id }, platform: { id: params.platformId } }, 'App connection deleted')
     },
 
     async list({
@@ -599,6 +561,7 @@ const validateConnectionValue = async (
         case AppConnectionType.NO_AUTH:
             break
         case AppConnectionType.CUSTOM_AUTH:
+        case AppConnectionType.OIDC:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
             await engineValidateAuth({

@@ -1,5 +1,6 @@
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ActivepiecesError, AiCreditsAutoTopUpState, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isCloudPlanButNotEnterprise, isNil, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, ApEdition, ApEnvironment, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getPlatformPlanNameKey } from '../../../database/redis/keys'
@@ -53,7 +54,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
         const { platformId, ...update } = params
-        log.info({ platformId }, 'updating platform billing')
+        log.info({ platform: { id: platformId } }, 'updating platform billing')
 
         const platformPlan = await platformPlanRepo().findOneByOrFail({
             platformId,

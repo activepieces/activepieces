@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { common, OnfleetWebhookTriggers } from '../common';
 import { onfleetAuth } from '../..';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const workerDutyChange = createTrigger({
   auth: onfleetAuth,
   name: 'worker_duty_change',

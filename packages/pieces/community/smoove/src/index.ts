@@ -9,7 +9,7 @@ import { newListCreated } from "./lib/triggers/new-list-created";
 import { newSubscriber } from "./lib/triggers/new-subscriber";
 import { newFormCreated } from "./lib/triggers/new-form-created";
 import { newLeadSubmitted } from "./lib/triggers/new-lead-submitted";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const smoove = createPiece({
   displayName: "Smoove",

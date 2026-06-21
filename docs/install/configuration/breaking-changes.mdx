@@ -4,6 +4,37 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+
+## 0.86.0
+
+### What has changed?
+
+#### Log fields are now grouped by entity
+Log fields are now grouped under the entity they belong to, so each thing has one name. A flow run id is `flowRun.id` (it used to appear as `runId`, `flowRunId`, or a bare `id`), and other ids follow the same shape (`flow.id`, `project.id`, `job.id`, …). Errors are logged under `error`. This only changes how logs look — nothing about the API, database, or flows changes.
+
+### Do you need to take action?
+- Only if you build dashboards or alerts on Activepieces logs. Update them to the new grouped names, e.g. `runId` → `flowRun.id` and `err` → `error`.
+
+## 0.85.4
+### What has changed?
+
+#### Observability: OpenTelemetry replaced with evlog
+Logging moved from pino + OpenTelemetry to [evlog](https://evlog.dev). Logs are now one rich event per request/job instead of many small lines, so the JSON shape changed.
+
+**Traces and metrics are no longer exported.** OpenTelemetry tracing produced a huge volume of low-value spans — far more data (and cost) than it was worth — so we dropped it in favour of these wide events, which carry the same context in one place. `AP_OTEL_ENABLED=true` now sends **logs** only, over OTLP.
+
+New optional env vars: `AP_LOG_SAMPLE_RATE_INFO` (percent of info logs to keep, default `100`) and `AP_LOG_KEEP_SLOW_MS` (always keep requests slower than this, default `2000`). Drain settings (`AP_AXIOM_*`, `AP_BETTERSTACK_*`, `AP_LOKI_*`, `AP_HYPERDX_TOKEN`) are unchanged.
+
+**Action:** only if you ingest Activepieces telemetry — update log dashboards to the new shape, and move any trace- or metric-based monitoring to logs.
+
+#### Referencing step outputs
+Previously if you had a step called step_1 you would had to reference it "step_1['the_property_you_want']" but now you must reference it as "step_1['output']['the_property_you_want']", there is already a migration that will take care of this for you, but if you must abide by this new syntax if you are writing/editing step references manually not through the builder.
+You can now also reference the step error via "step_1['error']", these changes come with the error handling feature.
+Also step names there were shown on hover in the builder are now removed, you can right click the step and copy its reference instead.
+
+#### Enforcing same version of docker image on both worker and app servers
+Previously if your worker was on a different version of your app server, the worker would work fine most of the time, but because some changes we do will require both of them to be on the same version we added this safeguard.
+
 ## 0.84.0
 
 ### What has changed?
@@ -20,11 +51,6 @@ This is an important behavior change in how flow run logs are stored and capped,
 ### Do you need to take action?
 - **Embedding** — if you are embedding your self-hosted activepieces somewhere make sure it's on the allow list
 
-
-## 0.84.0
-
-### What has changed?
-Now both workers and app servers must be on the same version to run flows (to avoid mismatch errors and unpredictability).
 
 ## 0.83.0 
 

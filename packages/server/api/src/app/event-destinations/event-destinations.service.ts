@@ -1,11 +1,5 @@
-import {
-    apId,
-    ApplicationEvent,
-    ApplicationEventName,
-    buildMockEvent,
-    CreatePlatformEventDestinationRequestBody,
-    Cursor,
-    EventDestination, EventDestinationScope, FlowRunEvent, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, tryCatchSync, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+import { apId, Cursor, isNil, PlatformId, ProjectId, SeekPage, tryCatchSync } from '@activepieces/core-utils'
+import { ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -185,7 +179,7 @@ const skipInternalDestinationsOnFlowCycle = async ({
         return destinations
     }
     log.warn({
-        flowId: eventFlowId,
+        flow: { id: eventFlowId },
         action: event.action,
     }, '[eventDestinationService#trigger] Source flow is wired as an internal webhook target; dropping internal destinations to break the cycle, external destinations will still fire')
     return destinationsWithFlowIds

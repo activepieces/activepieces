@@ -5,7 +5,7 @@ import {
 import { subscribe } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const subscribeMultipleAction = createAction({
@@ -67,8 +67,8 @@ export const subscribeMultipleAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
-      referrer: z.string().url().optional(),
+      email: z.string().check(z.email()),
+      referrer: z.optional(z.string().check(z.url())),
     });
 
     const returnValues: any[] = [];

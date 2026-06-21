@@ -1,24 +1,6 @@
-import { apVersionUtil } from '@activepieces/server-utils'
-import {
-    ApEdition,
-    ExecutionType,
-    ExecutioOutputFile,
-    FileCompression,
-    FileType,
-    FlowOperationType,
-    FlowStatus,
-    isFlowRunStateTerminal,
-    isNil,
-    logSerializer,
-    PiecePackage,
-    RunInternalError,
-    RunInternalErrorSource,
-    StreamStepProgress,
-    truncateFailedStepMessage,
-    tryCatch,
-    WebsocketClientEvent,
-    WorkerToApiContract,
-} from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
+import { ApEdition, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowOperationType, FlowStatus, isFlowRunStateTerminal, logSerializer, PiecePackage, RunInternalError, RunInternalErrorSource, StreamStepProgress, truncateFailedStepMessage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
@@ -32,6 +14,7 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
@@ -45,30 +28,55 @@ const getPollQueueName = (workerGroupId?: string): string => {
     return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
 }
 
+let pagedForUnreadableAppVersion = false
+
+function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: string): void {
+    if (pagedForUnreadableAppVersion) {
+        return
+    }
+    pagedForUnreadableAppVersion = true
+    onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
+        code: 'APP_VERSION_READ_FAILED',
+        message: 'App could not read its release version from package.json (reported as 0.0.0); worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)',
+        params: { appVersion },
+    }).catch((pageError) => {
+        log.error({ pageError }, '[workerRpc#poll] Failed to send on-call page for unreadable app version')
+    })
+}
+
 export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
+            log.info({ worker: { id: input.workerId }, workerGroupId }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, workerGroupId)
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
-            if (workerVersion !== appVersion) {
-                log.warn({ workerId: input.workerId, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
+            if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
+                const versionUnreadable = workerVersion === UNKNOWN_VERSION || appVersion === UNKNOWN_VERSION
+                if (versionUnreadable) {
+                    log.error({ worker: { id: input.workerId }, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on deploy completion, check the worker/app deployment (cwd/packaging)')
+                }
+                else {
+                    log.warn({ worker: { id: input.workerId }, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
+                }
+                if (appVersion === UNKNOWN_VERSION) {
+                    pageOnceForUnreadableAppVersion(log, appVersion)
+                }
                 return null
             }
             const pollQueueName = getPollQueueName(workerGroupId)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
-                log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
+                log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }
             else {
-                log.debug({ workerId: input.workerId }, '[workerRpc#poll] No job available, returning null')
+                log.debug({ worker: { id: input.workerId } }, '[workerRpc#poll] No job available, returning null')
             }
             return job
         },
 
         async completeJob(input) {
-            log.info({ jobId: input.jobId, status: input.status }, '[workerRpc#completeJob] Job completed by worker')
+            log.info({ job: { id: input.jobId }, status: input.status }, '[workerRpc#completeJob] Job completed by worker')
             await jobBroker(log).completeJob(input)
         },
 
@@ -245,7 +253,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                     request: { status: FlowStatus.DISABLED },
                 },
             })
-            log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled by worker request')
+            log.info({ flow: { id: flowId }, project: { id: projectId } }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
 
         async sendChatEvent(input) {
@@ -308,7 +316,7 @@ async function persistInternalErrorToLogs({ log, projectId, logsFileId, internal
     })
 
     if (error) {
-        log.error({ error, logsFileId, projectId }, '[workerRpc#uploadRunLog] Failed to persist internal error to logs file')
+        log.error({ error, logsFileId, project: { id: projectId } }, '[workerRpc#uploadRunLog] Failed to persist internal error to logs file')
     }
 }
 

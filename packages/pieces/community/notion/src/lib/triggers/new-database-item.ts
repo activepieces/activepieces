@@ -12,7 +12,7 @@ import dayjs from 'dayjs';
 import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { newDatabaseItemTriggerOutputSchema } from '../output-schemas';
 
 export const newDatabaseItem = createTrigger({

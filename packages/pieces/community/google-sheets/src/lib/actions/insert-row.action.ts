@@ -10,7 +10,7 @@ import {
 	ValueInputOption,
 } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import {
 	AuthenticationType,
 	httpClient,

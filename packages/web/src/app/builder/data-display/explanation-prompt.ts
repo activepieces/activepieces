@@ -1,4 +1,4 @@
-import { FriendlyPieceError, isNil } from '@activepieces/shared';
+import { FriendlyPieceError, isNil } from '@activepieces/core-utils';
 
 const MAX_BODY_PAYLOAD_CHARS = 4000;
 const MAX_PROPERTY_VALUE_CHARS = 400;

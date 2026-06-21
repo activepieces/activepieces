@@ -1,4 +1,5 @@
-import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId, SigningKey, SigningKeyId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PlatformId } from '@activepieces/core-utils'
+import { DefaultProjectRole, PiecesFilterType, SigningKey, SigningKeyId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
@@ -54,7 +55,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                 }
             }
             catch (error) {
-                log.error({ err: error }, '[externalTokenExtractor#extract] Failed to extract external token')
+                log.error({ error }, '[externalTokenExtractor#extract] Failed to extract external token')
 
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_BEARER_TOKEN,

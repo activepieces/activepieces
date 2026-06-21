@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createTranscription } from './lib/actions/create-transcription';
 import { uploadAFile } from './lib/actions/upload-a-file';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';

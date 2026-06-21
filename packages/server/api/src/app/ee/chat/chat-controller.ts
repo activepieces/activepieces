@@ -1,17 +1,5 @@
-import {
-    ActivepiecesError,
-    AIProviderName,
-    apId,
-    ChatConversationStatus,
-    CreateChatConversationRequest,
-    ErrorCode,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    PrincipalType,
-    SendChatMessageRequest,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateChatConversationRequest,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
+import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'

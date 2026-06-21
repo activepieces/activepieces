@@ -1,5 +1,6 @@
+import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { ApEnvironment, ExecutionMode, isNil, WorkerToApiContract } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode, WorkerToApiContract } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../config/configs'
 import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'
@@ -16,7 +17,7 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
             if (currentSandbox) {
                 params.log.info('Sandbox not ready or not reusable, creating fresh one')
                 currentSandbox.shutdown().catch((err) =>
-                    params.log.error({ err }, 'Error shutting down previous sandbox'),
+                    params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
             }
             currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
