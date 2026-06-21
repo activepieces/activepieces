@@ -1,5 +1,5 @@
 import { ApId, BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
-import { z } from 'zod'
+import * as z from 'zod/mini'
 import { PackageType, PieceType } from './piece'
 import { TriggerStrategy } from './trigger'
 
@@ -15,13 +15,13 @@ export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
 export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
 const VERSION_PATTERN = '^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$'
 
-export const ExactVersionType = z.string().regex(new RegExp(EXACT_VERSION_PATTERN))
-export const VersionType = z.string().regex(new RegExp(VERSION_PATTERN))
+export const ExactVersionType = z.string().check(z.regex(new RegExp(EXACT_VERSION_PATTERN)))
+export const VersionType = z.string().check(z.regex(new RegExp(VERSION_PATTERN)))
 
 // ── piece package ──────────────────────────────────────────────────────────
 export const PrivatePiecePackage = z.object({
     packageType: z.literal(PackageType.ARCHIVE),
-    pieceType: z.nativeEnum(PieceType),
+    pieceType: z.enum(PieceType),
     pieceName: z.string(),
     pieceVersion: z.string(),
     archiveId: z.string(),
@@ -58,7 +58,7 @@ export enum TriggerSourceScheduleType {
 }
 
 export const ScheduleOptions = z.object({
-    type: z.nativeEnum(TriggerSourceScheduleType),
+    type: z.enum(TriggerSourceScheduleType),
     cronExpression: z.string(),
     timezone: z.string(),
 })
@@ -66,7 +66,7 @@ export type ScheduleOptions = z.infer<typeof ScheduleOptions>
 
 export const TriggerSource = z.object({
     ...BaseModelSchema,
-    type: z.nativeEnum(TriggerStrategy),
+    type: z.enum(TriggerStrategy),
     projectId: z.string(),
     flowId: z.string(),
     triggerName: z.string(),
@@ -114,10 +114,10 @@ export const File = z.object({
     ...BaseModelSchema,
     projectId: Nullable(z.string()),
     platformId: Nullable(z.string()),
-    type: z.nativeEnum(FileType),
-    compression: z.nativeEnum(FileCompression),
-    data: z.unknown().optional(),
-    location: z.nativeEnum(FileLocation),
+    type: z.enum(FileType),
+    compression: z.enum(FileCompression),
+    data: z.optional(z.unknown()),
+    location: z.enum(FileLocation),
     size: Nullable(z.number()),
     fileName: Nullable(z.string()),
     s3Key: Nullable(z.string()),
@@ -143,10 +143,10 @@ export const UserWithMetaInformation = z.object({
     id: z.string(),
     email: z.string(),
     firstName: z.string(),
-    status: z.nativeEnum(UserStatus),
+    status: z.enum(UserStatus),
     externalId: Nullable(z.string()),
     platformId: Nullable(z.string()),
-    platformRole: z.nativeEnum(PlatformRole),
+    platformRole: z.enum(PlatformRole),
     lastName: z.string(),
     created: DateOrString,
     updated: DateOrString,
