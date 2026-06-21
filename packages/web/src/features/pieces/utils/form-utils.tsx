@@ -41,15 +41,19 @@ import {
 import { t } from 'i18next';
 import { z, ZodObject, ZodType } from 'zod';
 
-// `piecePropertiesUtils.buildSchema` returns a zod/mini schema (pieces-framework
-// uses zod/mini for bundle size), but the web app validates with classic zod
-// (react-hook-form + zodResolver) and extends classic schemas from @activepieces/shared.
-// Zod 4's classic and mini schemas share the same runtime core, so this only bridges the
-// nominal type at the boundary — there is no runtime conversion.
+// `piecePropertiesUtils.buildSchema` returns a zod/mini object (pieces-framework uses zod/mini
+// for bundle size), but the web validates with classic zod (react-hook-form + zodResolver) and
+// calls classic instance methods on this schema — `.optional()`, `.extend()`, `.omit()`,
+// `.safeParseAsync()`. zod/mini objects do NOT expose those methods, so a bare type cast lies to
+// the compiler and crashes at runtime (`propsSchema.optional is not a function`). Rebuild it as a
+// classic `z.object` over the same field schemas: zod 4's classic and mini schemas share one
+// runtime core, so the classic wrapper validates the (still-mini) fields with no conversion while
+// giving the web the classic method surface it relies on.
 function buildClassicSchema(
   ...args: Parameters<typeof piecePropertiesUtils.buildSchema>
 ): ZodType {
-  return piecePropertiesUtils.buildSchema(...args) as unknown as ZodType;
+  const miniSchema = piecePropertiesUtils.buildSchema(...args);
+  return z.object((miniSchema as unknown as ZodObject).shape);
 }
 
 function buildInputSchemaForStep(
