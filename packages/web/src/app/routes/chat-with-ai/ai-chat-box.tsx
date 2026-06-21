@@ -218,7 +218,6 @@ function ChatBoxContent({
                       message={msg}
                       isStreaming={isLastStreamingAssistant}
                       isLastMessage={isLastAssistant}
-                      onRetry={handleRetry}
                     />
                   );
                 })}

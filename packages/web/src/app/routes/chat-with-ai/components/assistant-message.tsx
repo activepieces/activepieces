@@ -1,6 +1,6 @@
 import { BatchProgressData } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
+import { Check, Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
@@ -49,12 +49,10 @@ export const AssistantMessage = memo(function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
-  onRetry,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
-  onRetry: () => void;
 }) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
@@ -403,23 +401,12 @@ export const AssistantMessage = memo(function AssistantMessage({
 
           {!isStreaming && !hasContent && hasRenderedContent && (
             <motion.div
-              className="flex items-center gap-2 py-3 text-sm text-muted-foreground"
+              className="py-3 text-sm text-muted-foreground"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <span>
-                {t(
-                  "The agent completed its work but didn't provide a summary.",
-                )}
-              </span>
-              <button
-                type="button"
-                onClick={onRetry}
-                className={cn(ACTION_BUTTON_CLASS, 'inline-flex')}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-              </button>
+              {t("The agent completed its work but didn't provide a summary.")}
             </motion.div>
           )}
 
@@ -456,15 +443,6 @@ export const AssistantMessage = memo(function AssistantMessage({
                     </button>
                   </MessageAction>
                 )}
-                <MessageAction tooltip={t('Regenerate')}>
-                  <button
-                    type="button"
-                    onClick={onRetry}
-                    className={ACTION_BUTTON_CLASS}
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                </MessageAction>
               </>
             )}
           </MessageActions>
