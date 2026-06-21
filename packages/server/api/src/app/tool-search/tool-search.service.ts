@@ -54,7 +54,7 @@ async function semanticSearchActions({ query, opts, embedder, log }: SemanticSea
     const where = [
         '"embedding" IS NOT NULL',
         `"modelVersion" = $${params.length}`,
-        `"objectKind" = 'action'`,
+        '"objectKind" = \'action\'',
         `("platformId" IS NULL OR "platformId" = $${params.push(opts.platformId ?? null)})`,
     ]
     if (!isNil(opts.pieceName)) {
