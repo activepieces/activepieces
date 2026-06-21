@@ -45,7 +45,7 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
 
     const bundleBytes = statSync(outfile).size
     const rawBytes = totalInputBytes(pass.result.metafile)
-    const external = directDepsOf(manifest).filter((dep) => !pass.inlined.has(dep) && !dep.startsWith('@activepieces/'))
+    const external = directDepsOf(manifest).filter((dep) => !pass.inlined.has(dep) && !dep.startsWith('@activepieces/') && !BUNDLE_HELPER_DEPS.has(dep))
 
     enforceSizeGate({ piecePath, bundleBytes })
 
@@ -253,6 +253,11 @@ function enforceSizeGate({ piecePath, bundleBytes }: SizeGateParams): void {
 // "main"). Emitting a single self-contained src/index.js keeps bundled pieces installable
 // on every engine version while still inlining all @activepieces/* workspace code.
 const BUNDLE_FILENAME = 'src/index.js'
+// tslib only exists to back tsc's `importHelpers` down-levelling. esbuild emits its own inline
+// helpers, so the published bundle never requires it. Drop it from every manifest rather than
+// telling the runtime installer to fetch a package the bundle does not use. (Deps loaded
+// out-of-band — e.g. a forked child requiring oracledb — are NOT declared-dead and stay.)
+const BUNDLE_HELPER_DEPS = new Set<string>(['tslib'])
 const WARN_BYTES = 3 * 1024 * 1024
 const FAIL_BYTES = 5 * 1024 * 1024
 const NODE_BUILTINS = new Set(builtinModules)

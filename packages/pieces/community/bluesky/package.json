@@ -9,9 +9,11 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@atproto/api": "0.16.0",
     "dayjs": "1.11.9",
-    "tslib": "^2.3.0",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "^2.3.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

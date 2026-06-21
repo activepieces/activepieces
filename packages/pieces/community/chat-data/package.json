@@ -8,10 +8,12 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "form-data": "4.0.4",
-    "tslib": "^2.3.0",
     "zod": "4.3.6",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "^2.3.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

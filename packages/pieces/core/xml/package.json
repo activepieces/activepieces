@@ -8,7 +8,6 @@
     "@activepieces/pieces-framework": "workspace:*",
     "fast-xml-parser": "5.7.0",
     "json2xml": "0.1.3",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -20,6 +19,7 @@
   },
   "devDependencies": {
     "@types/json2xml": "0.1.4",
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "tslib": "2.6.2"
   }
 }

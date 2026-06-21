@@ -10,7 +10,6 @@
     "ajv": "8.18.0",
     "mime-types": "2.1.35",
     "zod": "4.3.6",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -20,6 +19,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/mime-types": "2.1.1"
+    "@types/mime-types": "2.1.1",
+    "tslib": "2.6.2"
   }
 }

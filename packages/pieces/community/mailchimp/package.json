@@ -7,7 +7,6 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@mailchimp/mailchimp_marketing": "3.0.80",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -17,6 +16,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/mailchimp__mailchimp_marketing": "3.0.22"
+    "@types/mailchimp__mailchimp_marketing": "3.0.22",
+    "tslib": "2.6.2"
   }
 }

@@ -12,9 +12,11 @@
     "@aws-sdk/client-bedrock-runtime": "^3.987.0",
     "@smithy/protocol-http": "5.3.8",
     "@smithy/signature-v4": "5.3.8",
-    "tslib": "^2.3.0",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "^2.3.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

@@ -70,6 +70,8 @@ const scaffoldPiece = async (
       '@activepieces/pieces-common': 'workspace:*',
       '@activepieces/pieces-framework': 'workspace:*',
       '@activepieces/shared': 'workspace:*',
+    },
+    devDependencies: {
       tslib: '2.6.2',
     },
     scripts: {
