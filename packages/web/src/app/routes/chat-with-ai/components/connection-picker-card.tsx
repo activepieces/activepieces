@@ -146,15 +146,12 @@ function useLiveConnections({
 export function ConnectionPickerCard({
   picker,
   onResolve,
-  isInteractive = true,
   selectedProjectId,
-  selectedConnectionLabel,
 }: ConnectionPickerCardProps) {
   const queryClient = useQueryClient();
   const conversationId = useConversationId();
   const pieceName = normalizePieceName(picker.piece);
-  const shouldFetch =
-    !picker.connections?.length && !!conversationId && isInteractive;
+  const shouldFetch = !picker.connections?.length && !!conversationId;
   const { data: fetchedConnections, isLoading: isFetchingConnections } =
     useQuery({
       queryKey: ['chat-picker-connections', conversationId, pieceName],
@@ -197,7 +194,7 @@ export function ConnectionPickerCard({
   } = useLiveConnections({
     connections: filteredPicker.connections,
     pieceName,
-    enabled: isInteractive && !selectedConnection,
+    enabled: !selectedConnection,
   });
 
   const handleReconnect = (externalId: string) => {
@@ -224,23 +221,6 @@ export function ConnectionPickerCard({
 
   if (shouldFetch && isFetchingConnections) {
     return null;
-  }
-
-  if (!isInteractive) {
-    const historyLabel = selectedConnectionLabel ?? filteredPicker.displayName;
-    return (
-      <SelectedState
-        pieceName={pieceName}
-        connection={{
-          label: historyLabel,
-          project: '',
-          externalId: '',
-          projectId: '',
-          status: AppConnectionStatus.ACTIVE,
-        }}
-        displayName={filteredPicker.displayName}
-      />
-    );
   }
 
   return (
@@ -394,7 +374,5 @@ export function ConnectionPickerCard({
 type ConnectionPickerCardProps = {
   picker: ConnectionPickerData;
   onResolve: (payload: Record<string, unknown>) => void;
-  isInteractive?: boolean;
   selectedProjectId?: string | null;
-  selectedConnectionLabel?: string;
 };

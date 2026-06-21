@@ -12,6 +12,7 @@ import {
 
 import {
   ConnectionPickerData,
+  parseConnectionsInput,
   ProjectPickerData,
 } from '../lib/message-parsers';
 
@@ -19,10 +20,7 @@ import { ActionPreviewCard } from './action-preview-card';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
-import {
-  ConnectionRequiredData,
-  ConnectionsRequiredCard,
-} from './connections-required-card';
+import { ConnectionsRequiredCard } from './connections-required-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
 
@@ -81,6 +79,7 @@ export function ChatBottomBar({
         activeQuestions={activeQuestions}
         approveGate={approveGate}
         rejectGate={rejectGate}
+        onSend={onSend}
       />
     );
   }
@@ -132,12 +131,14 @@ function BlockingDisplayCard({
   activeQuestions,
   approveGate,
   rejectGate,
+  onSend,
 }: {
   toolPart: AnyToolPart;
   toolCallId: string;
   activeQuestions: MultiQuestion[];
   approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
   rejectGate: (gateId: string) => void;
+  onSend: (text: string, files?: File[]) => void;
 }) {
   const toolName = chatPartUtils.getToolPartName(toolPart);
   const data = toolPart.input as Record<string, unknown>;
@@ -155,8 +156,9 @@ function BlockingDisplayCard({
     case 'ap_show_connection_required':
       return (
         <ConnectionsRequiredCard
-          connections={[data as unknown as ConnectionRequiredData]}
+          connections={parseConnectionsInput(data)}
           onResolve={(payload) => approveGate(toolCallId, payload)}
+          onSendMessage={(text) => onSend(text)}
         />
       );
     case 'ap_show_connection_picker':

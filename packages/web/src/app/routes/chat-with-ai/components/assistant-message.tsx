@@ -2,7 +2,7 @@ import { BatchProgressData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
-import { memo, useMemo, useState } from 'react';
+import { memo, type ReactNode, useMemo, useState } from 'react';
 
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
@@ -18,22 +18,19 @@ import {
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { useTts } from '@/features/chat/lib/use-tts';
+import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { cn } from '@/lib/utils';
 
 import {
   ConnectionPickerData,
   getTextFromParts,
+  normalizePieceName,
   ProjectPickerData,
 } from '../lib/message-parsers';
 
 import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
-import { ConnectionPickerCard } from './connection-picker-card';
-import {
-  ConnectionRequiredData,
-  ConnectionsRequiredCard,
-} from './connections-required-card';
 import { CopyIconButton } from './copy-icon-button';
 import { ProjectPickerCard } from './project-picker-card';
 import { StreamingText } from './streaming-text';
@@ -372,7 +369,6 @@ export const AssistantMessage = memo(function AssistantMessage({
                       <DisplayToolCard
                         part={block.part}
                         onResolve={approveGate}
-                        isInteractive={false}
                       />
                     </div>
                   );
@@ -455,11 +451,9 @@ export const AssistantMessage = memo(function AssistantMessage({
 function DisplayToolCard({
   part,
   onResolve,
-  isInteractive,
 }: {
   part: AnyToolPart;
   onResolve: (gateId: string, payload?: Record<string, unknown>) => void;
-  isInteractive: boolean;
 }) {
   if (!chatPartUtils.isReady(part)) return null;
   const data = part.input as Record<string, unknown>;
@@ -473,26 +467,27 @@ function DisplayToolCard({
 
   switch (toolName) {
     case 'ap_show_connection_required': {
-      if (!isInteractive && toolOutput?.['dismissed'] === true) return null;
-      return (
-        <ConnectionsRequiredCard
-          connections={[data as unknown as ConnectionRequiredData]}
-          onResolve={(payload) => onResolve(toolCallId, payload)}
-          isInteractive={isInteractive}
-        />
-      );
+      if (toolOutput?.['dismissed'] === true) return null;
+      const connected = toRecapItems(toolOutput?.['connected']);
+      if (connected.length === 0) return null;
+      return <ConnectedAccountsRecap connected={connected} />;
     }
     case 'ap_show_connection_picker': {
-      const selectedLabel =
+      if (toolOutput?.['dismissed'] === true) return null;
+      const pickerData = data as unknown as ConnectionPickerData;
+      const account =
         typeof toolOutput?.['label'] === 'string'
           ? (toolOutput['label'] as string)
           : undefined;
       return (
-        <ConnectionPickerCard
-          picker={data as unknown as ConnectionPickerData}
-          onResolve={(payload) => onResolve(toolCallId, payload)}
-          isInteractive={isInteractive}
-          selectedConnectionLabel={selectedLabel}
+        <ConnectedAccountsRecap
+          connected={[
+            {
+              piece: pickerData.piece,
+              displayName: pickerData.displayName,
+              account,
+            },
+          ]}
         />
       );
     }
@@ -504,7 +499,7 @@ function DisplayToolCard({
       return (
         <ProjectPickerCard
           picker={data as unknown as ProjectPickerData}
-          isInteractive={isInteractive}
+          isInteractive={false}
           onResolve={(payload) => onResolve(toolCallId, payload)}
           selectedProjectId={selectedProjectId}
         />
@@ -523,10 +518,7 @@ function DisplayToolCard({
   }
 }
 
-function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
-  const pairs = useMemo(() => parseAnswerPairs(answersText), [answersText]);
-  if (pairs.length === 0) return null;
-
+function RecapBubble({ children }: { children: ReactNode }) {
   return (
     <motion.div
       className="flex justify-end my-2"
@@ -534,7 +526,20 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%] bg-muted rounded-2xl rounded-br-md px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-muted rounded-2xl rounded-br-md px-4 py-3">
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
+  const pairs = useMemo(() => parseAnswerPairs(answersText), [answersText]);
+  if (pairs.length === 0) return null;
+
+  return (
+    <RecapBubble>
+      <div className="space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
             <p className="text-sm font-semibold">
@@ -549,8 +554,63 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
           </div>
         ))}
       </div>
-    </motion.div>
+    </RecapBubble>
   );
+}
+
+function ConnectedAccountsRecap({ connected }: { connected: RecapItem[] }) {
+  if (connected.length === 0) return null;
+
+  return (
+    <RecapBubble>
+      {connected.length === 1 ? (
+        <RecapRow item={connected[0]} />
+      ) : (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">
+            {t('Connected the following accounts:')}
+          </p>
+          <div className="space-y-1.5">
+            {connected.map((item) => (
+              <RecapRow key={item.piece} item={item} />
+            ))}
+          </div>
+        </div>
+      )}
+    </RecapBubble>
+  );
+}
+
+function RecapRow({ item }: { item: RecapItem }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <PieceIconWithPieceName
+        pieceName={normalizePieceName(item.piece)}
+        size="sm"
+        border={false}
+        showTooltip={false}
+      />
+      <span>
+        <span className="font-semibold">{item.displayName}</span>{' '}
+        {item.account ? `· ${item.account}` : t('connected')}
+      </span>
+    </div>
+  );
+}
+
+function toRecapItems(value: unknown): RecapItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item !== 'object' || item === null) return null;
+      const obj = item as Record<string, unknown>;
+      const piece = typeof obj['piece'] === 'string' ? obj['piece'] : null;
+      const displayName =
+        typeof obj['displayName'] === 'string' ? obj['displayName'] : null;
+      if (!piece || !displayName) return null;
+      return { piece, displayName };
+    })
+    .filter((x): x is RecapItem => x !== null);
 }
 
 function StreamingCursor() {
@@ -586,3 +646,5 @@ type MessageBlock =
   | { kind: 'display-tool'; part: AnyToolPart }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | { kind: 'action-receipt'; toolCallId: string };
+
+type RecapItem = { piece: string; displayName: string; account?: string };

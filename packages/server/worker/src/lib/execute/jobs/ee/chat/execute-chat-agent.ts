@@ -304,7 +304,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects
     const displayTools = chatWorkerTools.createDisplayTools({
         waitForApproval,
         displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS,
-        log,
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             await tryCatch(() => ctx.apiClient.executeChatTool({
                 toolName: '__store_selected_connection',

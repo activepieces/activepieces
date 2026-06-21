@@ -30,6 +30,25 @@ async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
     }
 }
 
+function displayNamesOf(items: unknown[]): string[] {
+    return items
+        .map((item) => (isObject(item) && typeof item['displayName'] === 'string' ? item['displayName'] : null))
+        .filter((name): name is string => !!name)
+}
+
+function buildConnectionResultMessage({ connectedNames, skippedNames }: {
+    connectedNames: string[]
+    skippedNames: string[]
+}): string {
+    const connectedPart = connectedNames.length > 0 ? `Connected ${connectedNames.join(', ')}.` : ''
+    if (skippedNames.length === 0) {
+        return connectedPart || 'Continue building.'
+    }
+    const skippedList = skippedNames.join(', ')
+    const skippedPart = `The user skipped ${skippedList} — build those steps with an empty placeholder connection. Do NOT ask the user for any value that needs ${skippedList} to resolve (channel, spreadsheet, sheet, base, folder, label, etc.) — they cannot answer without connecting; leave those inputs empty. In your closing summary, remind them to connect ${skippedList} and pick those details before the automation can run.`
+    return [connectedPart, skippedPart].filter(Boolean).join(' ')
+}
+
 function truncateLargeResult(result: unknown): unknown {
     const serialized = JSON.stringify(result)
     const byteSize = Buffer.byteLength(serialized, 'utf8')
@@ -144,12 +163,11 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
-function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened, log }: {
+function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onGateOpened }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): ToolSet {
     function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved }: {
         dismissMessage: string | ((input: Record<string, unknown>) => string)
@@ -181,36 +199,39 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
 
     return {
         ap_show_connection_required: tool({
-            description: 'Display a card prompting the user to connect a service. Use when no connection exists for a required piece. After the user connects, briefly confirm before proceeding. If the user dismisses, respect their decision — do not proceed without the connection.',
+            description: 'Display a single card prompting the user to connect one or more services. Pass ALL pieces that currently need a connection in one call (one entry per piece) — do not call this tool repeatedly for each piece. The user can connect or skip each one individually. After they continue, any skipped pieces are returned in "skipped"; build those steps with an empty placeholder connection and remind the user in your closing summary which apps still need connecting before the automation can run.',
             inputSchema: z.object({
-                piece: z.string().describe('Piece short name (e.g. "gmail", "slack")'),
-                displayName: z.string().describe('Human-readable name (e.g. "Gmail", "Slack")'),
-                status: z.enum(['missing', 'error']).optional().describe('Set to "error" when connection exists but needs reconnecting'),
+                connections: z.array(z.object({
+                    piece: z.string().describe('Piece short name (e.g. "gmail", "slack")'),
+                    displayName: z.string().describe('Human-readable name (e.g. "Gmail", "Slack")'),
+                    status: z.enum(['missing', 'error']).optional().describe('Set to "error" when connection exists but needs reconnecting'),
+                })).min(1).describe('Every piece that currently needs a connection'),
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_required',
-                dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
-                onApproved: async ({ input, payload }) => {
-                    const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
-                    const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
-                    if (onConnectionSelected && payload) {
-                        const connections = payload['connections']
-                        if (Array.isArray(connections)) {
-                            await Promise.all(connections
-                                .filter((conn): conn is Record<string, unknown> =>
-                                    isObject(conn) && typeof conn['connectionExternalId'] === 'string' && !!conn['connectionExternalId'])
-                                .map((conn) => onConnectionSelected({
-                                    pieceName: normalizePieceName(typeof conn['piece'] === 'string' ? conn['piece'] : piece),
-                                    connectionExternalId: conn['connectionExternalId'] as string,
-                                    label: typeof conn['displayName'] === 'string' ? conn['displayName'] as string : displayName,
-                                    projectId: typeof conn['projectId'] === 'string' ? conn['projectId'] as string : '',
-                                })))
-                        }
-                        else {
-                            log?.warn({ piece, payload }, 'ap_show_connection_required approved but payload missing connections array')
-                        }
+                dismissMessage: 'The user chose not to connect these services right now. Keep going: build the rest with empty placeholder connections, and do NOT ask the user for any value that needs those connections to resolve (channel, spreadsheet, sheet, base, folder, label, etc.) — they cannot answer without connecting. In your closing summary, name which apps still need connecting (and that they will pick those details then). Only stop if nothing meaningful can be built without the connection.',
+                onApproved: async ({ payload }) => {
+                    const connected = Array.isArray(payload?.['connections']) ? payload['connections'] : []
+                    const skipped = Array.isArray(payload?.['skipped']) ? payload['skipped'] : []
+                    if (onConnectionSelected) {
+                        await Promise.all(connected
+                            .filter((conn): conn is Record<string, unknown> =>
+                                isObject(conn) && typeof conn['connectionExternalId'] === 'string' && !!conn['connectionExternalId'])
+                            .map((conn) => onConnectionSelected({
+                                pieceName: normalizePieceName(typeof conn['piece'] === 'string' ? conn['piece'] : ''),
+                                connectionExternalId: conn['connectionExternalId'] as string,
+                                label: typeof conn['displayName'] === 'string' ? conn['displayName'] as string : '',
+                                projectId: typeof conn['projectId'] === 'string' ? conn['projectId'] as string : '',
+                            })))
                     }
-                    return { connected: true }
+                    return {
+                        connected,
+                        skipped,
+                        message: buildConnectionResultMessage({
+                            connectedNames: displayNamesOf(connected),
+                            skippedNames: displayNamesOf(skipped),
+                        }),
+                    }
                 },
             }),
         }),
