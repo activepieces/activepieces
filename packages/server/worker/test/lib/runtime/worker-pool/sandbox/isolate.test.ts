@@ -16,12 +16,12 @@ vi.mock('fs/promises', () => ({
     mkdir: mkdirMock,
 }))
 
-vi.mock('../../../src/lib/utils/exec', () => ({
+vi.mock('../../../../../src/lib/utils/exec', () => ({
     execPromise: execPromiseMock,
 }))
 
-import { isolateProcess, getIsolateExecutableName } from '../../../src/lib/sandbox/isolate'
-import { SandboxLogger, SandboxMount } from '../../../src/lib/sandbox/types'
+import { isolateProcess, getIsolateExecutableName } from '../../../../../src/lib/runtime/worker-pool/sandbox/isolate'
+import { SandboxLogger, SandboxMount } from '../../../../../src/lib/runtime/worker-pool/sandbox/types'
 
 function createMockLogger(): SandboxLogger {
     return {

@@ -5,7 +5,7 @@ import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
-import { getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from '../cache/cache-paths'
+import { getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from '../../../cache/cache-paths'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
 function assertSafePathSegment(value: string, field: string): void {

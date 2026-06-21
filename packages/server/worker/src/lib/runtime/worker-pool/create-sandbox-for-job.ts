@@ -1,13 +1,13 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
-import { getEnginePath, getGlobalCacheCommonPath, getGlobalCodeCachePath } from '../cache/cache-paths'
-import { workerSettings } from '../config/worker-settings'
-import { sandboxCapacity } from '../sandbox/capacity'
-import { simpleProcess } from '../sandbox/fork'
-import { isolateProcess } from '../sandbox/isolate'
-import { createSandbox } from '../sandbox/sandbox'
-import { Sandbox, SandboxMount } from '../sandbox/types'
+import { getEnginePath, getGlobalCacheCommonPath, getGlobalCodeCachePath } from '../../cache/cache-paths'
+import { workerSettings } from '../../config/worker-settings'
+import { sandboxCapacity } from './sandbox/capacity'
+import { simpleProcess } from './sandbox/fork'
+import { isolateProcess } from './sandbox/isolate'
+import { createSandbox } from './sandbox/sandbox'
+import { Sandbox, SandboxMount } from './sandbox/types'
 
 export function createSandboxForJob(params: {
     log: ApLogger

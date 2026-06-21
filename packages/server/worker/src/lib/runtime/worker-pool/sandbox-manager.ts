@@ -1,9 +1,9 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { ApEnvironment, ExecutionMode, isNil, WorkerToApiContract } from '@activepieces/shared'
-import { system, WorkerSystemProp } from '../config/configs'
-import { workerSettings } from '../config/worker-settings'
-import { Sandbox } from '../sandbox/types'
+import { system, WorkerSystemProp } from '../../config/configs'
+import { workerSettings } from '../../config/worker-settings'
 import { createSandboxForJob } from './create-sandbox-for-job'
+import { Sandbox } from './sandbox/types'
 
 export function createSandboxManager({ boxId, proxyPort }: { boxId: number, proxyPort: number | null }): SandboxManager {
     let currentSandbox: Sandbox | null = null
