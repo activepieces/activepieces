@@ -1,0 +1,3 @@
+# Side effects are isolated in `*-side-effects.ts` and called explicitly
+
+Operations that ripple beyond a single entity write (registering a trigger source, invalidating execution cache, emitting WebSocket/telemetry events, queueing jobs) live in dedicated `*-side-effects.ts` files and are invoked explicitly by the service after the mutation, not hidden inside entity hooks or ORM lifecycle callbacks. Keeping side effects explicit and out of the persistence layer makes mutation flows readable and testable, and lets fire-and-forget effects (e.g. telemetry via `rejectedPromiseHandler`) fail without rolling back or blocking the primary write.

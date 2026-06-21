@@ -5,3 +5,5 @@
 The thin members (`core-utils`, `core-piece-types`, `core-formula`, `core-execution`) are framework-agnostic foundation libraries: they MUST NOT import from `@activepieces/shared`, `@activepieces/server-*`, any piece package, or any web/React package. The dependency graph must stay acyclic, and these thin members ship dual-format (CJS + ESM) with `"sideEffects": false`.
 
 **Import boundary (enforced per-package, not by folder name):** pieces and the engine may import `@activepieces/core-utils | core-piece-types | core-formula | core-execution`, but **never** `@activepieces/shared` (`packages/core/shared`). Pieces get the symbols they need re-exported through `@activepieces/pieces-framework`.
+
+Rationale: [docs/adr/0005-core-packages-thin-thick-split.md](../../docs/adr/0005-core-packages-thin-thick-split.md).

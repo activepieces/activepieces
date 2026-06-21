@@ -1,0 +1,3 @@
+# All customer-facing UI is white-labeled and edition-gated
+
+Every user-visible surface — sign-in/signup, email templates, logos, branding copy — must render the platform's configured appearance (name, colors, logos) and never hardcode "Activepieces". Appearance is edition-gated: Community always uses the default theme, Cloud always applies custom branding, and self-hosted Enterprise requires `platform.plan.customAppearanceEnabled` (see `packages/server/api/src/app/ee/helper/appearance-helper.ts`). We gate by edition because white-labeling is a paid Enterprise capability, yet the same components serve all editions — so branding is resolved at render time from platform config, not baked into the build.

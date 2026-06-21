@@ -25,7 +25,7 @@ Before writing code, answer:
 
 ## Step 2: Server (`packages/server/api`)
 
-Read `.agents/features/<module-name>.md` first (e.g. `.agents/features/tables.md` for the tables module).
+Read the module's co-located `CONTEXT.md` first for its domain vocabulary (e.g. `packages/server/api/src/app/tables/CONTEXT.md` for the tables module; find any context via `CONTEXT-MAP.md`), plus relevant ADRs in `docs/adr/`.
 
 - **Entity**: Use `EntitySchema` + `BaseColumnSchemaPart` + `ApIdSchema`. See `tables/table/table.entity.ts`.
 - **Register entity**: Add to `getEntities()` in `database-connection.ts` (REQUIRED — TypeORM doesn't auto-discover)

@@ -1,0 +1,3 @@
+# Flow mutations go through one endpoint as a discriminated union
+
+Every modification to a flow — adding/moving/deleting steps and branches, updating the trigger, publishing, renaming, importing, sample-data capture — is dispatched through a single `POST /v1/flows/:id` endpoint whose body is a `FlowOperationRequest` discriminated union (26 operation types). A single mutation surface lets the server validate, version, and apply every change uniformly (and keeps the builder's optimistic-update logic in one place) rather than spreading flow-graph mutation across dozens of endpoints; a reader expecting per-action REST routes will otherwise be surprised there is only one.

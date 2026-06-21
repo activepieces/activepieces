@@ -13,10 +13,11 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **Side effects**: Separated into `*-side-effects.ts` files, called explicitly after mutations.
 - **Multi-server**: Use `distributedLock`, BullMQ deduplication, or `FOR UPDATE SKIP LOCKED` for concurrent operations.
 - **Managed PostgreSQL**: No custom extensions. Use `sanitizeObjectForPostgresql()` for external data.
-- **Before modifying a module**: Read its `.agents/features/<name>.md` file for entities, services, and integration details.
+- **Before modifying a module**: read the co-located `CONTEXT.md` for its domain vocabulary (locate it via [`CONTEXT-MAP.md`](CONTEXT-MAP.md)) and the relevant decisions in [`docs/adr/`](docs/adr/). Use the `domain-modeling` skill when you change the model (new terms, new decisions) so `CONTEXT.md`/ADRs stay current.
 - **Cross-cutting libraries live in `packages/core/*`**, ordered thin → thick: `core-utils`, `core-piece-types`, `core-formula`, `core-execution` (thin, bundleable, framework-agnostic) and `core/shared` (the one thick, app-level member — **keeps the name `@activepieces/shared`**, carries DB/EE/management schemas + heavy deps). Pieces and the engine may import the thin members but **never** `@activepieces/shared`; pieces get what they need via `@activepieces/pieces-framework`. See `.claude/rules/core-packages.md`.
-| `.agents/features/*.md` | ~60 lines each | When Claude explores the feature | Entity schemas, services, data flows |
-| `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety) |
+| `CONTEXT-MAP.md` + per-context `CONTEXT.md` | glossary | When pinning down terminology | Domain vocabulary (ubiquitous language) + `_Avoid_` aliases, glossary-only |
+| `docs/adr/*.md` | 1-3 sentences each | When a decision's rationale matters | Hard-to-reverse architectural decisions and *why* |
+| `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety); each links its backing ADR |
 | `.agents/skills/` | 30-65 lines each | When invoked | Step-by-step workflows (`/add-feature`, `/add-entity`, `/add-endpoint`) |
 - **Exported types and constants must be placed at the end of the file**, after all logic (functions, hooks, components, classes, etc.). This keeps the logic front and centre when reading a file, and groups the public contract at a predictable location.
 

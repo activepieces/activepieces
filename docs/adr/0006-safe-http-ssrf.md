@@ -1,0 +1,3 @@
+# Outbound HTTP in server packages goes through `safeHttp`
+
+Any outbound HTTP in `packages/server/{api,worker,utils}` must use `safeHttp.axios` / `safeHttp.createAxios(...)` from `@activepieces/server-utils`, which wraps `request-filtering-agent` to reject private, loopback, link-local, and cloud-metadata IPs (configurable via `AP_SSRF_ALLOW_LIST`). Raw `fetch` / `axios.create` are forbidden for URLs from user input, admin config, OAuth endpoints, or third-party integrations because they bypass the SSRF filter and reopen the DNS-rebinding TOCTOU window; even trusted Activepieces endpoints use `apAxios`, which is itself built on `safeHttp`. See `.claude/rules/safe-http.md`.

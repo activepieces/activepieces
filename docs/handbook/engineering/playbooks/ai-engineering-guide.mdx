@@ -17,8 +17,9 @@ Our repo has a layered AI assistance system:
 |---|---|---|---|
 | `CLAUDE.md` (root) | ~55 lines | Every session | Non-obvious architecture rules |
 | `packages/*/CLAUDE.md` | ~30-55 lines each | When working in that package | Package-specific patterns |
-| `.agents/features/*.md` | ~60 lines each | When Claude explores the feature | Entity schemas, services, data flows |
-| `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety) |
+| `CONTEXT-MAP.md` + per-context `CONTEXT.md` | glossary | When pinning down terminology | Domain vocabulary (ubiquitous language) + `_Avoid_` aliases |
+| `docs/adr/*.md` | 1-3 sentences each | When a decision's rationale matters | Hard-to-reverse architectural decisions and *why* |
+| `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety); each links its backing ADR |
 | `.agents/skills/` | 30-65 lines each | When invoked | Step-by-step workflows (`/add-feature`, `/add-entity`, `/add-endpoint`) |
 
 Total context per session: ~150 lines. Claude has ~150 instruction slots — we use them all, nothing wasted.
@@ -44,7 +45,7 @@ Press `Shift+Tab` twice to enter Plan Mode, then paste your brief.
 
 Claude will:
 
-- Read relevant feature files in `.agents/features/` for the modules you'll touch
+- Read the relevant `CONTEXT.md` (via `CONTEXT-MAP.md`) and `docs/adr/` entries for the modules you'll touch
 - Explore existing patterns in the codebase
 - Ask you clarifying questions
 - Propose which files to create/modify
@@ -158,7 +159,7 @@ Planning on Day N, implementing on Day N+1 produces better code than doing both 
 
 3. **Use the skills.** `/add-feature` exists for a reason — it encodes every step we've learned from past mistakes.
 
-4. **Read the feature docs yourself.** Before starting a feature in a module, spend 2 minutes reading its `.agents/features/*.md`. You'll ask better questions.
+4. **Read the domain model yourself.** Before starting a feature in a module, spend 2 minutes reading its co-located `CONTEXT.md` (via `CONTEXT-MAP.md`) and the relevant `docs/adr/` entries. You'll ask better questions.
 
 5. **Don't babysit.** Start Claude on a task, switch to another tab, come back when it's done. Check notifications.
 
