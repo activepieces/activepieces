@@ -1,8 +1,8 @@
+import { AgentKnowledgeChunk, GetProviderConfigResponse, GetTableSchemaRequest, GetTableSchemaResponse, InvokeFlowToolRequest, InvokeFlowToolResponse, KnowledgeSearchResult, ListKnowledgeChunksRequest, ListPopulatedFlowsRequest, ListPopulatedFlowsResponse, ListTableRecordsRequest, ListTableRecordsResponse, PiecePackage, ReportAiUsageRequest, ResolveAiProviderRequest, SearchKnowledgeRequest, StoreKnowledgeChunksRequest } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PiecePackage } from '@activepieces/core-piece-types'
 import { ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
@@ -53,6 +53,15 @@ export type WorkerToApiContract = {
     updateChatProgress(input: UpdateChatProgressRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
+    reportAiUsage(input: ReportAiUsageRequest): Promise<void>
+    resolveAiProvider(input: ResolveAiProviderRequest): Promise<GetProviderConfigResponse>
+    listKnowledgeChunks(input: ListKnowledgeChunksRequest): Promise<AgentKnowledgeChunk[]>
+    storeKnowledgeChunks(input: StoreKnowledgeChunksRequest): Promise<void>
+    searchKnowledge(input: SearchKnowledgeRequest): Promise<KnowledgeSearchResult[]>
+    getTableSchema(input: GetTableSchemaRequest): Promise<GetTableSchemaResponse>
+    listTableRecords(input: ListTableRecordsRequest): Promise<ListTableRecordsResponse>
+    listPopulatedFlows(input: ListPopulatedFlowsRequest): Promise<ListPopulatedFlowsResponse>
+    invokeFlowTool(input: InvokeFlowToolRequest): Promise<InvokeFlowToolResponse>
 }
 
 export type SendChatEventRequest = {

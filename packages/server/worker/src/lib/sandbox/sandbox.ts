@@ -7,7 +7,7 @@ import { createNotifyServer, createRpcClient, createRpcServer, EngineContract, E
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from '../cache/cache-paths'
-import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
+import { ExecutionDeadlineRef, Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
 function assertSafePathSegment(value: string, field: string): void {
     const isUnsafe = value.length === 0
@@ -61,6 +61,8 @@ export function createSandbox(
     options: SandboxInitOptions,
     processMaker: SandboxProcessMaker,
     workerHandlers: WorkerContract,
+    executionDeadline: ExecutionDeadlineRef,
+    onEngineDisconnect?: () => void,
 ): Sandbox {
     let childProcess: ChildProcess | null = null
     let httpServer: HttpServer | null = null
@@ -97,6 +99,10 @@ export function createSandbox(
                 if (connectedSocket === socket) {
                     connectedSocket = null
                 }
+                // Decision #6: a dead engine↔worker socket means any in-flight agent run can no longer
+                // be continued (runAgent/continueAgent acks are undeliverable), so abort the loops and
+                // dispose their sessions to stop LLM spend and free memory.
+                onEngineDisconnect?.()
             })
 
             if (connectionResolve) {
@@ -208,6 +214,7 @@ export function createSandbox(
         },
         execute: async (operationType: EngineOperationType, operation: EngineOperation, executeOptions: SandboxOptions) => {
             busy = true
+            executionDeadline.epochMs = Date.now() + executeOptions.timeoutInSeconds * 1000
             let killedByTimeout = false
             let timeout: NodeJS.Timeout | null = null
             const executeSocket = connectedSocket
@@ -270,6 +277,7 @@ export function createSandbox(
             }
             finally {
                 busy = false
+                executionDeadline.epochMs = null
                 log.debug({
                     sandbox: { id: sandboxId },
                     operationType,

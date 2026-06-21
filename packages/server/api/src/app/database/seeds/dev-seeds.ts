@@ -66,8 +66,8 @@ const seedDevData = async (): Promise<void> => {
         return
     }
 
-    await seedDevUser()
-    await setDevDataSeededFlag()
+    // await seedDevUser()
+    // await setDevDataSeededFlag()
 }
 
 export const devDataSeed: DataSeed = {

@@ -68,3 +68,22 @@ describe('safeHttp end-to-end blocking', () => {
         })
     })
 })
+
+describe('safeHttp.createSafeFetch', () => {
+    it.each([
+        ['loopback v4', 'http://127.0.0.1/'],
+        ['loopback v6', 'http://[::1]/'],
+        ['private v4', 'http://10.0.0.1/'],
+        ['link-local / metadata', 'http://169.254.169.254/latest/meta-data/'],
+    ])('rejects %s (SSRF-filtered fetch for MCP transports)', async (_label, url) => {
+        const safeFetch = safeHttp.createSafeFetch()
+        await expect(safeFetch(url)).rejects.toMatchObject({
+            message: expect.stringMatching(/DNS lookup .* not allowed|IP .* not allowed|is not allowed/i),
+        })
+    })
+
+    it('accepts a URL object and a string interchangeably', async () => {
+        const safeFetch = safeHttp.createSafeFetch()
+        await expect(safeFetch(new URL('http://10.0.0.1/'))).rejects.toBeInstanceOf(Error)
+    })
+})
