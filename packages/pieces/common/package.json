@@ -13,8 +13,9 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
     "form-data": "4.0.4",
-    "tslib": "2.6.2",
     "zod": "4.3.6"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "tslib": "2.6.2"
+  }
 }

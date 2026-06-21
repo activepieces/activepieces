@@ -5,13 +5,13 @@
   "types": "./dist/src/index.d.ts",
   "devDependencies": {
     "@types/qrcode": "^1.5.5",
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "tslib": "2.6.2"
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "qrcode": "1.5.4",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },

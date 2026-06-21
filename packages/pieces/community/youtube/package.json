@@ -9,7 +9,6 @@
     "cheerio": "1.0.0-rc.12",
     "dayjs": "1.11.9",
     "feedparser": "2.2.10",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -19,6 +18,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/feedparser": "2.2.8"
+    "@types/feedparser": "2.2.8",
+    "tslib": "2.6.2"
   }
 }

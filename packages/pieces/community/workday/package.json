@@ -9,7 +9,6 @@
     "@activepieces/pieces-framework": "workspace:*",
     "dayjs": "1.11.9",
     "fast-xml-parser": "5.7.0",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -20,6 +19,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "tslib": "2.6.2"
   }
 }

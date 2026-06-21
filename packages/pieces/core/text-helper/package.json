@@ -12,7 +12,6 @@
     "string-strip-html": "8.5.0",
     "turndown": "7.2.0",
     "zod": "4.3.6",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -26,6 +25,7 @@
     "@types/jsdom": "^21.1.6",
     "@types/showdown": "2.0.6",
     "@types/turndown": "5.0.6",
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "tslib": "2.6.2"
   }
 }

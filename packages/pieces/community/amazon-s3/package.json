@@ -13,7 +13,6 @@
     "dayjs": "1.11.9",
     "mime-types": "2.1.35",
     "openpgp": "^6.3.0",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -23,6 +22,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/mime-types": "2.1.1"
+    "@types/mime-types": "2.1.1",
+    "tslib": "2.6.2"
   }
 }

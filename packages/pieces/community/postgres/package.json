@@ -9,7 +9,6 @@
     "dayjs": "1.11.9",
     "pg": "8.11.3",
     "pg-format": "1.0.4",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -20,6 +19,7 @@
   },
   "devDependencies": {
     "@types/pg": "8.16.0",
-    "@types/pg-format": "1.0.5"
+    "@types/pg-format": "1.0.5",
+    "tslib": "2.6.2"
   }
 }

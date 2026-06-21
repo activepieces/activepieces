@@ -13,11 +13,11 @@
     "@activepieces/pieces-framework": "workspace:*",
     "http-status-codes": "2.2.0",
     "mime-types": "2.1.35",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
-    "@types/mime-types": "2.1.1"
+    "@types/mime-types": "2.1.1",
+    "tslib": "2.6.2"
   }
 }

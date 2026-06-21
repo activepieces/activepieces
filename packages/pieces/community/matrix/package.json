@@ -7,7 +7,6 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "marked": "4.3.0",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -17,6 +16,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/marked": "4.3.2"
+    "@types/marked": "4.3.2",
+    "tslib": "2.6.2"
   }
 }
