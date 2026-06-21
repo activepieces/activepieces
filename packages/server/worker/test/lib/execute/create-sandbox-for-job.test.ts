@@ -84,7 +84,7 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
         S3_USE_SIGNED_URLS: 'false',
         EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
         EDITION: 'community',
-        NETWORK_MODE: NetworkMode.NONE,
+        NETWORK_MODE: NetworkMode.UNRESTRICTED,
         SSRF_ALLOW_LIST: [],
     }
     return { ...base, ...overrides }
@@ -244,12 +244,12 @@ describe('createSandboxForJob', () => {
             expect('AP_EGRESS_PROXY_URL' in env).toBe(false)
         })
 
-        it('NETWORK_MODE=NONE in settings → engine sees NONE', () => {
-            getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.NONE }))
+        it('NETWORK_MODE=UNRESTRICTED in settings → engine sees UNRESTRICTED', () => {
+            getSettingsMock.mockReturnValue(buildSettings({ NETWORK_MODE: NetworkMode.UNRESTRICTED }))
             createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
 
             const env = createSandboxMock.mock.calls[0][2].env
-            expect(env.AP_NETWORK_MODE).toBe(NetworkMode.NONE)
+            expect(env.AP_NETWORK_MODE).toBe(NetworkMode.UNRESTRICTED)
         })
     })
 })

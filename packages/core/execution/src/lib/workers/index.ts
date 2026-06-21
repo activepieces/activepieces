@@ -14,7 +14,7 @@ export enum WorkerMachineType {
 }
 
 export enum NetworkMode {
-    NONE = 'NONE',
+    UNRESTRICTED = 'UNRESTRICTED',
     STRICT = 'STRICT',
 }
 
