@@ -39,6 +39,7 @@ import {
   usePieceSelectorTabs,
 } from '../stores/piece-selector-tabs-provider';
 import { pieceSearchUtils } from '../utils/piece-search-utils';
+import { pieceSelectorCustomization } from '../utils/piece-selector-customization';
 
 import { stepsHooks } from './steps-hooks';
 
@@ -190,7 +191,7 @@ export const piecesHooks = {
     isLoading: boolean;
     data: CategorizedStepMetadataWithSuggestions[];
   } => {
-    const { selectedTab } = usePieceSelectorTabs();
+    const { selectedTab, selectedCustomTabId } = usePieceSelectorTabs();
     const { capture } = useTelemetry();
     const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
       ApFlagId.ENVIRONMENT,
@@ -278,6 +279,39 @@ export const piecesHooks = {
           isLoading: false,
           data: [],
         };
+      case PieceSelectorTabType.CUSTOM: {
+        const customTab = pieceSelectorCustomization.getCustomTab({
+          config: platform.pieceSelectorConfig,
+          customTabId: selectedCustomTabId,
+        });
+        const categories: CategorizedStepMetadataWithSuggestions[] = [];
+        const flatPieces = getPinnedPieces(
+          piecesMetadataWithoutEmptySuggestions,
+          customTab?.pieceNames ?? [],
+        );
+        if (flatPieces.length > 0) {
+          categories.push({
+            title: customTab?.title ?? t('All'),
+            metadata: flatPieces,
+          });
+        }
+        for (const section of customTab?.sections ?? []) {
+          const sectionPieces = getPinnedPieces(
+            piecesMetadataWithoutEmptySuggestions,
+            section.pieceNames,
+          );
+          if (sectionPieces.length > 0) {
+            categories.push({
+              title: section.title,
+              metadata: sectionPieces,
+            });
+          }
+        }
+        return {
+          isLoading: false,
+          data: categories,
+        };
+      }
       case PieceSelectorTabType.APPS: {
         const popularAppsCategory = {
           ...popularCategory,

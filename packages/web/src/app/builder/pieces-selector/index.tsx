@@ -28,6 +28,7 @@ import {
   PieceSelectorTabType,
   PieceSelectorOperation,
   pieceSelectorUtils,
+  pieceSelectorCustomization,
   PieceSearchProvider,
   usePieceSearchContext,
 } from '@/features/pieces';
@@ -146,12 +147,16 @@ const PieceSelectorContent = ({
   };
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const tabsList = getTabsList(
-    operation.type,
-    platform.plan.agentsEnabled &&
-      !isNil(aiProviders) &&
-      aiProviders.length > 0,
-  );
+  const tabsList = pieceSelectorCustomization.buildResolvedTabs({
+    availableBuiltinTabs: getTabsList(
+      operation.type,
+      platform.plan.agentsEnabled &&
+        !isNil(aiProviders) &&
+        aiProviders.length > 0,
+    ),
+    config: platform.pieceSelectorConfig,
+  });
+  const firstTab = tabsList[0];
 
   return (
     <Popover
@@ -183,7 +188,10 @@ const PieceSelectorContent = ({
         initiallySelectedTab={
           isForReplace || isMobile
             ? PieceSelectorTabType.NONE
-            : PieceSelectorTabType.EXPLORE
+            : firstTab?.type ?? PieceSelectorTabType.EXPLORE
+        }
+        initiallySelectedCustomTabId={
+          isForReplace || isMobile ? null : firstTab?.customTabId ?? null
         }
         onTabChange={clearSearch}
         key={isOpen ? 'open' : 'closed'}
