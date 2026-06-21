@@ -205,6 +205,12 @@ export const SearchableSelect = <T,>({
         </div>
       </PopoverTrigger>
       <PopoverContent
+        onPointerDownOutside={(e) => {
+          const target = e.detail.originalEvent.target;
+          if (target instanceof Node && triggerRef.current?.contains(target)) {
+            e.preventDefault();
+          }
+        }}
         style={{
           maxWidth: triggerWidth,
           minWidth: triggerWidth,
