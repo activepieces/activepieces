@@ -7,7 +7,7 @@ const log = system.globalLogger()
 export class AddToolSearchIndexTable1796000000000 implements Migration {
     name = 'AddToolSearchIndexTable1796000000000'
     breaking = false
-    release = '0.86.0'
+    release = '0.85.4'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const vectorAvailable = await queryRunner.query(`
