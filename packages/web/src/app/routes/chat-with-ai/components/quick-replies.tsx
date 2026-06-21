@@ -20,9 +20,9 @@ export function QuickReplies({
           type="button"
           onClick={() => onSend(reply)}
           className="flex w-full items-start gap-2 text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer min-w-0"
-          initial={{ opacity: 0, y: -4 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: i * 0.04 }}
+          transition={{ duration: 0.25, delay: i * 0.06, ease: 'easeOut' }}
         >
           <CornerDownRight className="size-4 shrink-0 mt-0.5" />
           <TextWithTooltip tooltipMessage={reply}>

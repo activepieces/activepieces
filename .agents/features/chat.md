@@ -31,7 +31,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/web/src/features/chat/lib/chat-api.ts` — API client for `/v1/chat/*` endpoints
 - `packages/web/src/features/chat/lib/chat-store.ts` — Zustand store for interaction state (approvals, plan progress, display cards, thinking panel)
 - `packages/web/src/features/chat/lib/chat-store-context.tsx` — React context provider and `useChatStoreContext` selector hook
-- `packages/web/src/features/chat/lib/use-chat.ts` — `useAgentChat()` hook managing message state (persisted, optimistic, streaming); stale-check only reconciles when the server reports the conversation is no longer STREAMING
+- `packages/web/src/features/chat/lib/use-chat.ts` — `useAgentChat()` hook managing message state (persisted, optimistic, streaming); stale-check only reconciles when the server reports the conversation is no longer STREAMING; exposes `isAwaitingResponse` (true while `awaiting-stream`/`streaming`/`submitting`, drops the polling/reconcile tail) for quick-reply reveal timing
 - `packages/web/src/features/chat/lib/chunk-reducer.ts` — pure streaming state machine that accumulates `UIMessageChunk` events into a `ChatUIMessage`
 - `packages/web/src/features/chat/lib/use-streaming-reducer.ts` — WebSocket-driven streaming lifecycle hook; buffers chunks and throttles React re-renders
 - `packages/web/src/features/chat/lib/chat-types.ts` — frontend type definitions, tool output parsing, display/hidden tool name sets, `CreditsWarning` type
@@ -100,7 +100,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `ap_show_connection_picker` — lets the user choose between multiple connections; no longer receives connections array from LLM (server-managed); returns only `{ selected: true, label }` to LLM, stripping externalIds
 - `ap_show_project_picker` — lets the user select a project
 - `ap_show_questions` — renders an interactive multi-question form
-- `ap_show_quick_replies` — shows up to 3 suggested follow-ups as a stacked list above the chat input (hidden during blocking cards); emitted only when concrete, relevant next steps exist
+- `ap_show_quick_replies` — shows up to 3 suggested follow-ups as a stacked list docked above the chat input within the message flow (via `mt-auto`, so they dock above the input when at the bottom and scroll away when scrolling up; hidden during blocking cards and while the answer is streaming); revealed as soon as text streaming completes rather than waiting for the post-stream reconcile tail; emitted only when concrete, relevant next steps exist
 
 ## Endpoints
 - `POST /v1/chat/conversations` — create conversation
