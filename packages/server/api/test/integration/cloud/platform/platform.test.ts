@@ -348,6 +348,141 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         }),
 
+        it('updates and clears piece selector config', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const pieceSelectorConfig = {
+                tabs: [
+                    { id: 'EXPLORE', kind: 'BUILTIN', builtinTab: 'EXPLORE', hidden: false },
+                    { id: 'APPS', kind: 'BUILTIN', builtinTab: 'APPS', hidden: true },
+                    {
+                        id: apId(),
+                        kind: 'CUSTOM',
+                        title: 'Internal Tools',
+                        icon: 'Star',
+                        hidden: false,
+                        pieceNames: ['@activepieces/piece-internal-a', '@activepieces/piece-internal-b'],
+                        sections: [
+                            {
+                                id: apId(),
+                                title: 'CRM',
+                                pieceNames: ['@activepieces/piece-internal-crm'],
+                            },
+                        ],
+                    },
+                ],
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { pieceSelectorConfig },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().pieceSelectorConfig).toStrictEqual(pieceSelectorConfig)
+
+            // act - clear the config
+            const clearResponse = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { pieceSelectorConfig: null },
+            })
+
+            // assert
+            expect(clearResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(clearResponse?.json().pieceSelectorConfig).toBeNull()
+        }),
+
+        it('rejects invalid piece selector config', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    pieceSelectorConfig: {
+                        tabs: [
+                            { id: 'x', kind: 'BUILTIN', builtinTab: 'NOT_A_REAL_TAB', hidden: false },
+                        ],
+                    },
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        }),
+
+        it('rejects a custom piece selector tab without a name', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    pieceSelectorConfig: {
+                        tabs: [
+                            { id: apId(), kind: 'CUSTOM', title: '   ', hidden: false, pieceNames: [] },
+                        ],
+                    },
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        }),
+
         it('fails if user is not owner', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -460,13 +595,14 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(24)
+            expect(Object.keys(responseBody).length).toBe(25)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.themeColors).toBeNull()
+            expect(responseBody.pieceSelectorConfig).toBeNull()
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)

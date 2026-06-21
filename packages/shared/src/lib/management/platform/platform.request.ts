@@ -5,7 +5,7 @@ import { ApId } from '../../core/common/id-generator'
 import { ApMultipartFile } from '../../core/common/multipart-file'
 import { tryCatchSync } from '../../core/common/try-catch'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
-import { FilteredPieceBehavior, PlatformThemeColors } from './platform.model'
+import { FilteredPieceBehavior, PieceSelectorConfig, PlatformThemeColors } from './platform.model'
 
 export const MAX_EMBED_ORIGIN_LENGTH = 300
 
@@ -40,13 +40,17 @@ export const CreatePlatformRequest = z.object({
 export type CreatePlatformRequest = z.infer<typeof CreatePlatformRequest>
 
 // The branding form submits as multipart (logo uploads), where every field arrives as a string
-const NullableThemeColorsFromMultipart = z.preprocess((value) => {
+const jsonFromMultipart = (value: unknown): unknown => {
     if (typeof value !== 'string') {
         return value
     }
     const { data, error } = tryCatchSync<unknown>(() => JSON.parse(value))
     return error ? value : data
-}, Nullable(PlatformThemeColors))
+}
+
+const NullableThemeColorsFromMultipart = z.preprocess(jsonFromMultipart, Nullable(PlatformThemeColors))
+
+const NullablePieceSelectorConfigFromMultipart = z.preprocess(jsonFromMultipart, Nullable(PieceSelectorConfig))
 
 export const UpdatePlatformRequestBody = z.object({
     name: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
@@ -64,6 +68,7 @@ export const UpdatePlatformRequestBody = z.object({
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,
     pinnedPieces: OptionalArrayFromQuery(z.string()),
+    pieceSelectorConfig: NullablePieceSelectorConfigFromMultipart.optional(),
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
         .optional(),
 })
