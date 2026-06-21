@@ -137,6 +137,32 @@ export const PlatformThemeColors = z.object({
 })
 export type PlatformThemeColors = z.infer<typeof PlatformThemeColors>
 
+export const PIECE_SELECTOR_BUILTIN_TABS = ['EXPLORE', 'APPS', 'UTILITY', 'AI_AND_AGENTS', 'APPROVALS'] as const
+
+export const PieceSelectorTabSection = z.object({
+    id: z.string(),
+    title: z.string().max(40),
+    pieceNames: z.array(z.string()),
+})
+export type PieceSelectorTabSection = z.infer<typeof PieceSelectorTabSection>
+
+export const PieceSelectorTabConfig = z.object({
+    id: z.string(),
+    kind: z.enum(['BUILTIN', 'CUSTOM']),
+    builtinTab: z.enum(PIECE_SELECTOR_BUILTIN_TABS).optional(),
+    title: z.string().max(40).optional(),
+    icon: z.string().optional(),
+    hidden: z.boolean(),
+    pieceNames: z.array(z.string()).optional(),
+    sections: z.array(PieceSelectorTabSection).optional(),
+})
+export type PieceSelectorTabConfig = z.infer<typeof PieceSelectorTabConfig>
+
+export const PieceSelectorConfig = z.object({
+    tabs: z.array(PieceSelectorTabConfig),
+})
+export type PieceSelectorConfig = z.infer<typeof PieceSelectorConfig>
+
 export const Platform = z.object({
     ...BaseModelSchema,
     ownerId: ApId,
@@ -164,6 +190,7 @@ export const Platform = z.object({
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
+    pieceSelectorConfig: Nullable(PieceSelectorConfig),
 })
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
@@ -193,6 +220,7 @@ export const PlatformWithoutSensitiveData = z.object({
     ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
+    pieceSelectorConfig: Nullable(PieceSelectorConfig),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 
