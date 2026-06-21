@@ -16,9 +16,14 @@ export class AddAutumnBillingColumnsToPlatformPlan1797000000000 implements Migra
             ALTER TABLE "platform_plan"
             ADD COLUMN IF NOT EXISTS "autumnApiKey" character varying
         `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ADD COLUMN IF NOT EXISTS "billingEnforced" boolean
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('ALTER TABLE "platform_plan" DROP COLUMN IF EXISTS "billingEnforced"')
         await queryRunner.query('ALTER TABLE "platform_plan" DROP COLUMN IF EXISTS "autumnApiKey"')
         await queryRunner.query('ALTER TABLE "platform_plan" DROP COLUMN IF EXISTS "autumnCustomerId"')
     }

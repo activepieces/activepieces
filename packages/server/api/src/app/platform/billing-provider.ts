@@ -4,6 +4,12 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     trackCredits: async () => {
         return
     },
+    refreshEntitlements: async () => {
+        return
+    },
+    shouldBlock: async () => {
+        return false
+    },
 }))
 
 export enum CreditUsageSource {
@@ -22,4 +28,6 @@ export type TrackCreditsParams = {
 
 export type BillingProvider = {
     trackCredits(params: TrackCreditsParams): Promise<void>
+    refreshEntitlements(platformId: string): Promise<void>
+    shouldBlock(platformId: string): Promise<boolean>
 }

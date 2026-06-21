@@ -75,6 +75,7 @@ export function projectAutumnEntitlements(entitlements: AutumnEntitlements): Par
         projectsLimit: isNil(projects) || projects.unlimited ? null : projects.granted,
         includedAiCredits: credits?.granted ?? 0,
         activeFlowsLimit: undefined,
+        billingEnforced: entitlements.flags[AUTUMN_FEATURE.BILLING_ENFORCED] ?? false,
     }
 }
 
