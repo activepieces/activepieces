@@ -6,6 +6,7 @@ import { aiProviderService } from '../../ai/ai-provider-service'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
+import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -273,6 +274,20 @@ async function emitMessageBillingEvent({ conversation, log }: {
     conversation: ChatConversation
     log: FastifyBaseLogger
 }): Promise<void> {
+    const messages = resolveMessages(conversation)
+    const toolsUsed = countToolCallsInLatestTurn(messages)
+    const turnIndex = messages.filter((message) => message.role === PersistedChatRole.USER).length
+
+    await billingProvider.get(log).trackCredits({
+        platformId: conversation.platformId,
+        value: 1 + toolsUsed,
+        source: CreditUsageSource.CHAT,
+        idempotencyKey: `${conversation.id}:chat:${turnIndex}`,
+        properties: {
+            conversationId: conversation.id,
+        },
+    })
+
     const licenseKeyByPlatform = await resolveLicenseKeysByPlatform({ platformIds: [conversation.platformId] })
     const licenseKey = licenseKeyByPlatform.get(conversation.platformId)
     if (isNil(licenseKey)) {
@@ -281,7 +296,6 @@ async function emitMessageBillingEvent({ conversation, log }: {
 
     const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
     const model = resolveModelId({ tierId: conversation.modelName ?? null, provider })
-    const toolsUsed = countToolCallsInLatestTurn(resolveMessages(conversation))
 
     captureBillingEvent({
         licenseKey,
