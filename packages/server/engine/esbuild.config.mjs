@@ -12,6 +12,21 @@ const watch = process.argv.includes('--watch');
 
 fs.rmSync(outdir, { recursive: true, force: true });
 
+const zodLocaleTrim = {
+  // Drop zod's 46 unused locale packs (~184KB). The app surfaces validation
+  // errors via its own i18n (translation.json) and never calls z.locales/z.config,
+  // so only `en` (zod core's default error formatter) is needed.
+  name: 'zod-locale-trim',
+  setup(build) {
+    build.onLoad(
+      { filter: /zod[\\/].*[\\/]locales[\\/]index\.(js|mjs|cjs)$/ },
+      () => ({
+        contents: "export { default as en } from './en.js'",
+      })
+    );
+  },
+};
+
 function rebuildLogger(outfile) {
   const label = path.basename(outfile);
   return {
@@ -68,7 +83,7 @@ function buildOptions({ outfile, includeProxyDispatcher }) {
       ),
     },
     external: ['isolated-vm', 'utf-8-validate', 'bufferutil'],
-    plugins: [rebuildLogger(outfile)],
+    plugins: [zodLocaleTrim, rebuildLogger(outfile)],
   };
 }
 
