@@ -349,6 +349,11 @@ export function useAgentChat({
     sendStatusRef.current.type === 'submitting' ||
     isPollingForAgentReply;
 
+  const isAwaitingResponse =
+    streamPhase === 'awaiting-stream' ||
+    streamPhase === 'streaming' ||
+    sendStatus.type === 'submitting';
+
   const messages: ChatUIMessage[] = useMemo(() => {
     const base = [...persistedMessages];
     if (optimisticUserMessage) base.push(optimisticUserMessage);
@@ -671,6 +676,7 @@ export function useAgentChat({
     modelName,
     messages,
     isStreaming,
+    isAwaitingResponse,
     wasCancelled,
     isLoadingHistory,
     error,
