@@ -100,7 +100,7 @@ const JsonViewer = React.memo(
       const link = document.createElement('a');
       link.href = fileUrl;
       const rawName =
-        typeof title === 'string' && title.trim() ? title : 'data';
+        typeof title === 'string' && title.trim() ? title.trim() : 'data';
       const safeName = rawName.replace(/[/\\:*?"<>|]/g, '_');
       link.download = `${safeName}${ext}`;
       link.click();
