@@ -147,6 +147,7 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
     const proxyPort = egressStack?.proxyPort ?? null
+    workerSettings.setEgressProxy(proxyPort)
     sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, proxyPort }))
 
     logger.info({ concurrency }, 'Starting polling workers')

@@ -9,12 +9,19 @@ import { workerSettings } from '../../config/worker-settings'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 
 const engineExecutablePath = 'dist/packages/engine/main.js'
+const engineNoProxyExecutablePath = 'dist/packages/engine/main-noproxy.js'
 const ENGINE_CACHE_ID = nanoid()
 const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
 export const engineInstaller = (_log: ApLogger) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerSettings.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
+        // Track the SAME boot-stable signal that sets AP_EGRESS_PROXY_URL in the sandbox env
+        // (the armed egress proxy, not the drift-prone NETWORK_MODE setting): when the proxy is
+        // armed, sandbox fetch() must route through it, so the engine needs the undici dispatcher
+        // (main.js). Otherwise use the slimmer main-noproxy.js. Dev only builds main.js.
+        const useProxyBundle = isDev || workerSettings.isEgressProxyEnabled()
+        const source = useProxyBundle ? engineExecutablePath : engineNoProxyExecutablePath
         const cache = cacheState(path)
         const { cacheHit } = await cache.getOrSetCache({
             key: ENGINE_INSTALLED,
@@ -23,8 +30,8 @@ export const engineInstaller = (_log: ApLogger) => ({
                 return !isEngineInstalled || isDev
             },
             installFn: async () => {
-                await atomicCopy(engineExecutablePath, `${path}/main.js`)
-                await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
+                await atomicCopy(source, `${path}/main.js`)
+                await atomicCopy(`${source}.map`, `${path}/main.js.map`)
                 return ENGINE_CACHE_ID
             },
             skipSave: NO_SAVE_GUARD,
