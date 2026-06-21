@@ -56,3 +56,5 @@ export * from './lib/mcp-piece'
 export * from './lib/engine-tools'
 
 export type { PopulatedFlowSummary } from './lib/flows'
+
+export * from './lib/execution-contracts'

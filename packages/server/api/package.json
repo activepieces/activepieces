@@ -103,7 +103,9 @@
     "unpdf": "1.4.0",
     "zod": "4.3.6",
     "@activepieces/core-utils": "workspace:*",
-    "@activepieces/core-formula": "workspace:*"
+    "@activepieces/core-formula": "workspace:*",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-execution": "workspace:*"
   },
   "devDependencies": {
     "@activepieces/piece-facebook-leads": "workspace:*",

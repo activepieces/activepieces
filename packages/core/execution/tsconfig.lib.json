@@ -9,7 +9,9 @@
       "node"
     ],
     "module": "commonjs",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {}
   },
   "include": [
     "src/**/*.ts"

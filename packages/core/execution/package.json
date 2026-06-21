@@ -5,7 +5,8 @@
   "main": "./dist/src/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   },
   "dependencies": {
     "@activepieces/core-utils": "workspace:*",
@@ -19,7 +20,8 @@
   "devDependencies": {
     "@types/node": "24.11.0",
     "@types/semver": "7.5.6",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "vitest": "3.0.8"
   },
   "typings": "./dist/src/index.d.ts"
 }

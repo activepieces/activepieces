@@ -1,5 +1,5 @@
+import { FlowRunStatus } from '@activepieces/core-execution'
 import { z } from 'zod'
-import { FlowRunStatus } from '../../automation/flow-run/execution/flow-execution'
 import { ApId } from '../common/id-generator'
 
 export const PlatformMetricsReportRequest = z.object({

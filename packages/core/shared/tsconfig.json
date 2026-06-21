@@ -15,6 +15,9 @@
       ],
       "@activepieces/core-formula": [
         "packages/core/formula/dist/src/index.d.ts"
+      ],
+      "@activepieces/core-execution": [
+        "packages/core/execution/dist/src/index.d.ts"
       ]
     }
   },

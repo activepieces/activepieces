@@ -1,11 +1,12 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.98.1",
+  "version": "0.98.2",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
+    "@activepieces/core-execution": "workspace:*",
     "@activepieces/core-formula": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
     "dayjs": "1.11.9",

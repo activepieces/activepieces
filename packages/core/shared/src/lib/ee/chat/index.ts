@@ -1,5 +1,5 @@
+import { ChatPromptOverride } from '@activepieces/core-execution'
 import { z } from 'zod'
-import { ChatPromptOverride } from '../../automation/workers/job-data'
 import { BaseModelSchema, Nullable } from '../../core/common'
 import { formErrors } from '../../form-errors'
 

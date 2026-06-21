@@ -20,6 +20,7 @@
       "@activepieces/core-utils": ["packages/core/utils/src/index.ts"],
       "@activepieces/core-formula": ["packages/core/formula/src/index.ts"],
       "@activepieces/core-piece-types": ["packages/core/piece-types/src/index.ts"],
+      "@activepieces/core-execution": ["packages/core/execution/src/index.ts"],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/engine": ["packages/server/engine/src/main.ts"],

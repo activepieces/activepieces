@@ -372,6 +372,7 @@
         "@types/node": "24.11.0",
         "@types/semver": "7.5.6",
         "typescript": "5.5.4",
+        "vitest": "3.0.8",
       },
     },
     "packages/core/formula": {
@@ -402,8 +403,9 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.98.1",
+      "version": "0.98.2",
       "dependencies": {
+        "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "dayjs": "1.11.9",
@@ -9388,7 +9390,9 @@
       "version": "0.0.1",
       "dependencies": {
         "@1password/sdk": "0.4.0",
+        "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
+        "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/engine": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",

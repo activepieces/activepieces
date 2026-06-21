@@ -1,5 +1,5 @@
+import { StepRunResponse } from '@activepieces/core-execution'
 import { z } from 'zod'
-import { StepRunResponse } from '../flows/sample-data'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',

@@ -1,5 +1,5 @@
+import { FlowStatus } from '@activepieces/core-execution'
 import { z } from 'zod'
-import { FlowStatus } from '../../automation/flows/flow'
 import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { UserWithMetaInformation } from '../../core/user'
 

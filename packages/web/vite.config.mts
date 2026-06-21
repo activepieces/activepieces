@@ -125,6 +125,10 @@ export default defineConfig(({ command, mode }) => {
           __dirname,
           '../../packages/core/piece-types/src',
         ),
+        '@activepieces/core-execution': path.resolve(
+          __dirname,
+          '../../packages/core/execution/src',
+        ),
       },
     },
     plugins: [

@@ -1,6 +1,5 @@
+import { FlowVersion, Note } from '@activepieces/core-execution'
 import { z } from 'zod'
-import { Note } from '../../automation/flows'
-import { FlowVersion } from '../../automation/flows/flow-version'
 import { BaseModelSchema, ColorHex, Metadata, Nullable } from '../../core/common'
 
 export const TemplateTag = z.object({
