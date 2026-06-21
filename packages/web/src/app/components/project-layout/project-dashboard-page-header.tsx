@@ -1,7 +1,6 @@
+import { isNil, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
-  isNil,
-  Permission,
   PlatformRole,
   ProjectType,
   UserStatus,

@@ -1,4 +1,5 @@
-import { ConsumeJobRequest, isNil, tryCatch } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ConsumeJobRequest } from '@activepieces/shared'
 import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 

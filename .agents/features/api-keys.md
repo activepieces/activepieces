@@ -7,7 +7,7 @@ Platform API Keys allow platform admins to generate long-lived service credentia
 - `packages/server/api/src/app/ee/api-keys/api-key-module.ts` — module registration with `platformMustHaveFeatureEnabled` guard
 - `packages/server/api/src/app/ee/api-keys/api-key-entity.ts` — TypeORM entity
 - `packages/server/api/src/app/ee/api-keys/api-key-service.ts` — service (add, list, delete, lookup by value)
-- `packages/shared/src/lib/ee/api-key/index.ts` — `ApiKey`, `ApiKeyResponseWithValue`, `ApiKeyResponseWithoutValue`, `CreateApiKeyRequest` types
+- `packages/core/shared/src/lib/ee/api-key/index.ts` — `ApiKey`, `ApiKeyResponseWithValue`, `ApiKeyResponseWithoutValue`, `CreateApiKeyRequest` types
 - `packages/web/src/features/platform-admin/api/api-key-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/api-key-hooks.ts` — React query hooks
 - `packages/web/src/app/routes/platform/security/api-keys/` — platform admin UI page

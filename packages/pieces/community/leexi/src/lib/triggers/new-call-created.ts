@@ -4,7 +4,7 @@ import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, po
 import dayjs from 'dayjs';
 import { BASE_URL } from "../common/constants";
 import { ListCallResponse } from "../common/types";
-import { isEmpty } from "@activepieces/shared";
+import { isEmpty } from '@activepieces/pieces-framework';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof leexiAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,

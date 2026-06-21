@@ -20,7 +20,7 @@ import { findForm } from './lib/actions/find-form';
 import { findSpace } from './lib/actions/find-space';
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { paperformCommon } from "./lib/common/client";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const paperform = createPiece({
   displayName: "Paperform",

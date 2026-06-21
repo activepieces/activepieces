@@ -1,6 +1,6 @@
 
 import { PieceAuth, createPiece, Property } from "@activepieces/pieces-framework";
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { ContextualAI } from 'contextual-client';
 import { queryAgentAction } from './lib/actions/query-agent';
 import { generateAction } from './lib/actions/generate';

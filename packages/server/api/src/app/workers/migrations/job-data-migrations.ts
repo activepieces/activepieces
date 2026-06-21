@@ -1,4 +1,5 @@
-import { apId, ExecutionType, isNil, JobData, ResumeReason, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { ExecutionType, JobData, ResumeReason, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'

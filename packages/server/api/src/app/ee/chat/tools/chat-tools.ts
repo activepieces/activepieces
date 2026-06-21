@@ -1,4 +1,5 @@
-import { AppConnectionStatus, AppConnectionType, chatToolClassification, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { isNil, isObject, parseToJsonIfPossible } from '@activepieces/core-utils'
+import { AppConnectionStatus, AppConnectionType, chatToolClassification, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../../flows/flow/flow.service'

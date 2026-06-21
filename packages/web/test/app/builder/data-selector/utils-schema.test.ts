@@ -634,7 +634,12 @@ describe('schemaTreeUtils.buildTreeFromSchema — labelKey', () => {
   it('drills dynamicKey entries whose values are objects (mirrors the viewer)', () => {
     const schema: OutputSchema = {
       fields: [
-        { key: 'servers', label: 'Servers', value: 'servers', dynamicKey: true },
+        {
+          key: 'servers',
+          label: 'Servers',
+          value: 'servers',
+          dynamicKey: true,
+        },
       ],
     };
 

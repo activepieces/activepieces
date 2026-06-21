@@ -4,7 +4,7 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { filterIdProp } from '../common/props';
 import { pipedriveApiCall, pipedrivePaginatedV2ApiCall } from '../common';
 import { LeadListResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const activityMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,

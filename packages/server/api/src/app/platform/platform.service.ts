@@ -1,28 +1,5 @@
-import {
-    ActivepiecesError,
-    ApEdition,
-    apId,
-    AuthenticationResponse,
-    ErrorCode,
-    FilteredPieceBehavior,
-    isNil,
-    OPEN_SOURCE_PLAN,
-    Platform,
-    PlatformId,
-    PlatformPlanLimits,
-    PlatformRole,
-    PlatformUsage,
-    PlatformWithoutFederatedAuth,
-    PlatformWithoutSensitiveData,
-    ProjectType,
-    spreadIfDefined,
-    spreadIfNotUndefined,
-    SsoDomainVerification,
-    SsoDomainVerificationStatus,
-    UpdatePlatformRequestBody,
-    UserId,
-    UserStatus,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
+import { ApEdition, AuthenticationResponse, FilteredPieceBehavior, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'

@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createChatCompletionAction } from './lib/actions/create-chat-completion.action';
 import { perplexityAiAuth } from './lib/auth';
 

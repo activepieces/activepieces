@@ -5,7 +5,7 @@ import { listVoices } from './lib/actions/list-voices';
 import { translateText } from './lib/actions/translate-text';
 import { voiceChange } from './lib/actions/voice-change';
 import { textToSpeech } from './lib/actions/text-to-speech';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
 

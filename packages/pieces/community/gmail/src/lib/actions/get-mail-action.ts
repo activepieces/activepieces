@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import { convertAttachment, parseStream } from '../common/data';
 
 export const gmailGetEmailAction = createAction({
@@ -24,7 +24,7 @@ export const gmailGetEmailAction = createAction({
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const rawMailResponse = await gmail.users.messages.get({
       userId: 'me',

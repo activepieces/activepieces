@@ -10,7 +10,7 @@ import {
 import { jiraApiCall, jiraPaginatedApiCall } from '../common';
 import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 function normalizeFields(fields: any[]): IssueFieldMetaData[] {
 	return fields.map((field) => ({

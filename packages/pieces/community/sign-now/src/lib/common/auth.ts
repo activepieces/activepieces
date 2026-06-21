@@ -1,5 +1,5 @@
 import { PieceAuth, OAuth2AuthorizationMethod, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const signNowOAuth2Auth = PieceAuth.OAuth2({

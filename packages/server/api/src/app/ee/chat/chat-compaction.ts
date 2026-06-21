@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesError, AIProviderName, aiProviderUtils, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
+import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 

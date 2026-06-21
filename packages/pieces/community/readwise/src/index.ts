@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { readwiseAuth } from './lib/common/auth';
 import { READWISE_BASE_URL } from './lib/common/client';
 import { getHighlights } from './lib/actions/get-highlights';

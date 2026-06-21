@@ -7,7 +7,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "@ai-sdk/amazon-bedrock": "3.0.97",
     "@ai-sdk/anthropic": "3.0.72",
     "@ai-sdk/azure": "3.0.55",
@@ -23,10 +22,13 @@
     "ajv": "8.18.0",
     "mime-types": "2.1.35",
     "tslib": "2.6.2",
-    "zod": "4.3.6"
+    "zod": "4.3.6",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {

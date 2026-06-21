@@ -1,4 +1,4 @@
-import { isObject } from '@activepieces/shared';
+import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
 import React, { useMemo } from 'react';

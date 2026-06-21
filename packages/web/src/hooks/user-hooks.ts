@@ -1,4 +1,5 @@
-import { isNil, UserWithBadges } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { UserWithBadges } from '@activepieces/shared';
 import {
   QueryClient,
   useMutation,

@@ -1,4 +1,5 @@
-import { AlertChannel, isNil, Permission } from '@activepieces/shared';
+import { isNil, Permission } from '@activepieces/core-utils';
+import { AlertChannel } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { Label } from '@/components/ui/label';

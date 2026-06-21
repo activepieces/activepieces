@@ -1,24 +1,10 @@
+import { isNil, PlatformId, UserId } from '@activepieces/core-utils'
 import {
     PieceAuthProperty,
     piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
-import {
-    CodeActionSettings,
-    FlowActionType,
-    FlowOperationRequest,
-    FlowOperationType,
-    flowPieceUtil,
-    FlowTriggerType,
-    isNil,
-    LoopOnItemsActionSettings,
-    PieceActionSettings,
-    PieceTriggerSettings,
-    PlatformId,
-    RouterActionSettingsWithValidation,
-    SourceCode,
-    UserId,
-} from '@activepieces/shared'
+import { CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -204,7 +190,7 @@ function validateProps(
     requireAuth: boolean | undefined = true,
 ): ValidationResult {
     const propsSchema = piecePropertiesUtils.buildSchema(props, auth, requireAuth)
-    const schemaKeys = Object.keys((propsSchema as z.ZodObject<z.ZodRawShape>).shape)
+    const schemaKeys = Object.keys((propsSchema as unknown as z.ZodObject<z.ZodRawShape>).shape)
     const cleanInput = !isNil(input) ? Object.fromEntries(
         schemaKeys.map(key => [key, input?.[key]]),
     ) : undefined

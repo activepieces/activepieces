@@ -7,7 +7,7 @@ on:
       - main
     paths:
       - 'packages/pieces/**'
-      - 'packages/shared/**'
+      - 'packages/core/shared/**'
 
 concurrency:
   group: release-pieces
@@ -47,7 +47,7 @@ jobs:
         run: cp .npmrc $HOME/.npmrc
 
       - name: publish shared package
-        run: npx turbo run build --filter=@activepieces/shared --force && npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/shared 
+        run: npx turbo run build --filter=@activepieces/shared --force && npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/core/shared 
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 

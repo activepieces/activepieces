@@ -5,7 +5,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newContact } from './lib/triggers/new-contact';
 import { readFile } from './lib/actions/read-file';
 import { zohoCrmAuth } from './lib/auth';

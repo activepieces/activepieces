@@ -23,9 +23,13 @@ const buildOptions = {
     metafile: true,
     treeShaking: true,
     alias: {
-        '@activepieces/shared': path.resolve(__dirname, '../../shared/src'),
+        '@activepieces/shared': path.resolve(__dirname, '../../core/shared/src'),
         '@activepieces/pieces-framework': path.resolve(__dirname, '../../pieces/framework/src'),
         '@activepieces/pieces-common': path.resolve(__dirname, '../../pieces/common/src'),
+        '@activepieces/core-utils': path.resolve(__dirname, '../../core/utils/src'),
+        '@activepieces/core-piece-types': path.resolve(__dirname, '../../core/piece-types/src'),
+        '@activepieces/core-formula': path.resolve(__dirname, '../../core/formula/src'),
+        '@activepieces/core-execution': path.resolve(__dirname, '../../core/execution/src'),
     },
     external: ['isolated-vm', 'utf-8-validate', 'bufferutil'],
     plugins: [

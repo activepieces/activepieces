@@ -1,4 +1,4 @@
-import { extractMustacheTokens, isNil } from '@activepieces/shared'
+import { extractMustacheTokens, isNil } from '@activepieces/core-utils'
 import { AnyNode, AssignmentProperty, Identifier, MemberExpression, parse, Property } from 'acorn'
 import { ancestor } from 'acorn-walk'
 import { analyze } from 'eslint-scope'

@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CHAT_ROUTE, determineDefaultRoute } from '@/lib/route-utils';

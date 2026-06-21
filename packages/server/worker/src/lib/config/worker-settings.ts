@@ -1,4 +1,5 @@
-import { assertNotNullOrUndefined, WorkerSettingsResponse } from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { WorkerSettingsResponse } from '@activepieces/shared'
 
 let settings: WorkerSettingsResponse | undefined
 let settingsResolver: (() => void) | null = null

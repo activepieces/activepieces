@@ -1,4 +1,5 @@
-import { isNil, ProjectState, TableOperation, TableOperationType, TableState } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ProjectState, TableOperation, TableOperationType, TableState } from '@activepieces/shared'
 import deepEqual from 'deep-equal'
 
 export const tableDiffService = {

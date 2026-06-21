@@ -19,7 +19,7 @@ import { removeEmail } from './lib/actions/remove-email';
 import { setSchedule } from './lib/actions/set-schedule';
 import { startCampaign } from './lib/actions/start-campaign';
 import { updateLead } from './lib/actions/update-lead';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 /**
  * Define the API Key authentication using PieceAuth.SecretText

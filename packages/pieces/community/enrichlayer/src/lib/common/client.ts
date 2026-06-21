@@ -4,7 +4,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { BASE_URL } from './constants';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export async function enrichlayerApiCall(
   auth: string,

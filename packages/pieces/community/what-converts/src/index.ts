@@ -6,7 +6,7 @@ import { updateLeadAction } from '../src/lib/actions/update-lead';
 import { findLeadAction } from '../src/lib/actions/find-lead';
 import { newLeadTrigger } from '../src/lib/triggers/new-lead';
 import { updatedLeadTrigger } from '../src/lib/triggers/update-lead';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const whatConverts = createPiece({
   displayName: 'WhatConverts',

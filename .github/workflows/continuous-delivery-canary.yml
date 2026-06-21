@@ -73,7 +73,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build shared package
-        run: bun run --cwd packages/shared build
+        run: bun run --cwd packages/core/shared build
 
       - name: Build server-utils package
         run: bun run --cwd packages/server/utils build

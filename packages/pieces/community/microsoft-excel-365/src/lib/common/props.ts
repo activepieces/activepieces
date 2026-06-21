@@ -2,7 +2,7 @@ import { DropdownOption, DynamicPropsValue, OAuth2PropertyValue, Property } from
 import { createMSGraphClient, getHeaders } from './helpers';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Drive, DriveItem, Site } from '@microsoft/microsoft-graph-types';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 
 const MAX_FOLDER_OPTIONS = 1000;

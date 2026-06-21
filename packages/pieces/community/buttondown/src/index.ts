@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { buttondownAuth } from './lib/common/auth';
 import { createSubscriber } from './lib/actions/create-subscriber';
 import { listSubscribers } from './lib/actions/list-subscribers';
