@@ -299,6 +299,7 @@
                   "group": "Misc",
                   "pages": [
                      "build-pieces/misc/build-piece",
+                     "build-pieces/misc/bundling-pieces",
                      "build-pieces/misc/publish-piece",
                      "build-pieces/misc/pieces-ci-cd",
                      "build-pieces/misc/migrate-nx-to-turbo",
