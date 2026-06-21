@@ -50,9 +50,6 @@ export function ConnectionsRequiredCard({
 }: {
   connections: ConnectionRequiredData[];
   onResolve?: (payload: Record<string, unknown>) => void;
-  // Sends a chat reply (skip-all / typed answer). The server cancels the
-  // pending connection gate's run when a new message arrives, so this both
-  // dismisses the card and continues the conversation.
   onSendMessage?: (text: string) => void;
 }) {
   const queryClient = useQueryClient();
@@ -127,9 +124,6 @@ export function ConnectionsRequiredCard({
     (c) => statusByPiece[c.piece] !== undefined,
   );
 
-  // Resolve the gate once every card is connected or skipped: proceed with the
-  // connected accounts, or — when the user skipped everything — reply in chat so
-  // the agent can continue conversationally.
   useEffect(() => {
     if (finishedRef.current || !allResolved) return;
     finishedRef.current = true;
@@ -354,7 +348,6 @@ function ProjectSelectorPill({
   onChange: (projectId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  // useAll() already scopes to the current user's visible projects.
   const { data: projects = [] } = projectCollectionUtils.useAll();
   const selected = projects.find((p) => p.id === value) ?? null;
 
