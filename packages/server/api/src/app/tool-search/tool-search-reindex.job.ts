@@ -1,11 +1,13 @@
 import { apDayjs } from '@activepieces/server-utils'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { databaseConnection } from '../database/database-connection'
 import { distributedLock } from '../database/redis-connections'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { platformService } from '../platform/platform.service'
+import { isToolSearchEnabled } from './tool-search-flag'
 import { ReindexScope, toolSearchReindexService } from './tool-search-reindex.service'
 
 // One global lock TTL; RedLock auto-extends it while the reconcile runs, so this only needs to be
@@ -69,5 +71,29 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
                 date: apDayjs(),
             },
         })
+    },
+
+    /**
+     * Cold-start path: schedule the first global reconcile if the index has never been built. The
+     * steady-state hook (piece-sync) only fires on a catalog delta, so on a deployment whose
+     * piece_metadata is already populated, flipping AP_TOOL_SEARCH_ENABLED on would otherwise leave
+     * the index empty until the next upstream piece add/delete. Covers both the fresh-deploy and the
+     * already-populated-deploy cases.
+     *
+     * No-op unless the flag is on AND the index is empty: once any row exists the index is considered
+     * built and the sync hook owns deltas from there — so a re-run at every boot is a cheap single
+     * SELECT … LIMIT 1 with no side effects. Called fire-and-forget at boot (after register()); it
+     * must never throw fatally, so any DB error surfaces through rejectedPromiseHandler, not boot.
+     */
+    async backfillIfEmpty(): Promise<void> {
+        if (!isToolSearchEnabled()) {
+            return
+        }
+        const existing = await databaseConnection().query('SELECT 1 FROM "tool_search_index" LIMIT 1')
+        if (!isNil(existing) && existing.length > 0) {
+            return
+        }
+        log.info('[toolSearchReindexJob#backfillIfEmpty] Tool-search enabled with an empty index — scheduling a one-time global reconcile (cold-start backfill).')
+        await this.enqueue({ type: 'all' })
     },
 })
