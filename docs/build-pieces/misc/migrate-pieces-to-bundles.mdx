@@ -20,7 +20,30 @@ Activepieces builds each piece into a single self-contained bundle — see [Bund
 
 Pieces now import only from `@activepieces/pieces-framework` and `@activepieces/pieces-common`. The framework re-exports the foundation symbols (`isNil`, `SeekPage`, `PieceCategory`, `AppConnectionType`, and so on) that used to come from `@activepieces/shared`.
 
-## Update each piece
+## Migrate with the CLI
+
+The `pieces migrate` command applies every change below for you:
+
+```bash
+# preview the changes without writing anything
+npm run cli -- pieces migrate <piece-name> --dry-run
+
+# apply them
+npm run cli -- pieces migrate <piece-name>
+```
+
+- Pass `--all` to migrate every piece under `packages/pieces`.
+- It is idempotent — re-running it on an already-migrated piece makes no changes.
+
+Then build the piece to verify:
+
+```bash
+npm run build-piece <piece-name>
+```
+
+To migrate by hand — or to see exactly what the command changes — follow the steps below.
+
+## What it changes (or migrate by hand)
 
 <Steps>
 <Step title="Repoint imports to the framework">
