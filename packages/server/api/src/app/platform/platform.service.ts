@@ -83,6 +83,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             federatedAuthProviders: { saml: null },
             cloudAuthEnabled: true,
             pinnedPieces: [],
+            pieceSelectorConfig: null,
             allowedEmbedOrigins: [],
             googleAuthEnabled: true,
         }
@@ -191,6 +192,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('ssoDomain', params.ssoDomain),
             ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
+            ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
         }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
