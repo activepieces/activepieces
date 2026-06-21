@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
     "declaration": true,
@@ -11,10 +11,10 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@activepieces/core-utils": [
-        "../core/utils/dist/src/index.d.ts"
+        "packages/core/utils/dist/src/index.d.ts"
       ],
       "@activepieces/core-formula": [
-        "../core/formula/dist/src/index.d.ts"
+        "packages/core/formula/dist/src/index.d.ts"
       ]
     }
   },

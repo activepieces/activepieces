@@ -1557,7 +1557,7 @@
         "packages/pieces/community/meistertask/src/index.ts"
       ],
       "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
-      "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/shared": ["packages/core/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [

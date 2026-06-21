@@ -17,7 +17,9 @@ export * from './lib/core/license-keys'
 export * from './lib/core/support-url'
 export * from './lib/core/feedback-url'
 export * from './lib/core/health'
-export * from './lib/form-errors'
+// `formErrors` is re-exported transitively from @activepieces/core-utils (via core/common);
+// the local ./lib/form-errors file remains for internal relative imports only, to avoid a
+// duplicate barrel export (TS2308).
 
 // management
 export * from './lib/management/platform'

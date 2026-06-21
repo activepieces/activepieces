@@ -5,7 +5,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 
 ## Key Files
 - `packages/server/api/src/app/ai/` — backend module (controller, service, entity)
-- `packages/shared/src/lib/management/ai-providers/index.ts` — all shared Zod schemas, enums, and request/response types
+- `packages/core/shared/src/lib/management/ai-providers/index.ts` — all shared Zod schemas, enums, and request/response types
 - `packages/web/src/features/platform-admin/api/ai-provider-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/ai-provider-hooks.ts` — TanStack Query hooks
 - `packages/web/src/app/routes/platform/setup/ai/index.tsx` — platform admin AI setup page

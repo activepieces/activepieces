@@ -23,7 +23,7 @@ const main = async () => {
   )
 
   if (!sharedResults.every(p => p)) {
-    validationResults.push(await packagePrePublishChecks('packages/shared'))
+    validationResults.push(await packagePrePublishChecks('packages/core/shared'))
   }
 }
 

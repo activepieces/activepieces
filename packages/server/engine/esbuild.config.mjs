@@ -23,7 +23,7 @@ const buildOptions = {
     metafile: true,
     treeShaking: true,
     alias: {
-        '@activepieces/shared': path.resolve(__dirname, '../../shared/src'),
+        '@activepieces/shared': path.resolve(__dirname, '../../core/shared/src'),
         '@activepieces/pieces-framework': path.resolve(__dirname, '../../pieces/framework/src'),
         '@activepieces/pieces-common': path.resolve(__dirname, '../../pieces/common/src'),
         '@activepieces/core-utils': path.resolve(__dirname, '../../core/utils/src'),

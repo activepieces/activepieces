@@ -375,7 +375,6 @@
     "@rollup/rollup-linux-arm64-gnu": "4.20.0"
   },
   "workspaces": [
-    "packages/shared",
     "packages/cli",
     "packages/core/*",
     "packages/server/engine",

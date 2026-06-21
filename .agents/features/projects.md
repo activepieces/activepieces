@@ -10,7 +10,7 @@ A Project is the workspace within a platform where flows, connections, tables, a
 - `packages/server/api/src/app/project/project-repo.ts` — `repoFactory` wrapper with optional `EntityManager` support
 - `packages/server/api/src/app/project/project-hooks.ts` — `hooksFactory` hook point for EE post-create behavior
 - `packages/server/api/src/app/project/project-worker-controller.ts` — internal endpoint used by engine to read project data
-- `packages/shared/src/lib/management/project/project.ts` — `Project`, `ProjectPlan`, `ProjectIcon`, `UpdateProjectRequestInCommunity` schemas
+- `packages/core/shared/src/lib/management/project/project.ts` — `Project`, `ProjectPlan`, `ProjectIcon`, `UpdateProjectRequestInCommunity` schemas
 - `packages/web/src/features/projects/components/projects-selector.tsx` — project-switcher dropdown in the sidebar
 - `packages/web/src/features/projects/components/platform-switcher.tsx` — platform-level switcher component
 - `packages/web/src/features/projects/stores/project-collection.ts` — Zustand store for current project

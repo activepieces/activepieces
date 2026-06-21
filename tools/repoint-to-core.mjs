@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const ROOTS = ['packages/server', 'packages/web', 'packages/ee', 'packages/shared']
+const ROOTS = ['packages/server', 'packages/web', 'packages/ee', 'packages/core/shared']
 const CORE_UTILS = new Set(JSON.parse(fs.readFileSync('/tmp/core-utils-syms.json', 'utf8')))
 const CORE_FORMULA = new Set(JSON.parse(fs.readFileSync('/tmp/core-formula-syms.json', 'utf8')))
 

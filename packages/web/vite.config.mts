@@ -103,7 +103,7 @@ export default defineConfig(({ command, mode }) => {
         '@': path.resolve(__dirname, './src'),
         '@activepieces/shared': path.resolve(
           __dirname,
-          '../../packages/shared/src',
+          '../../packages/core/shared/src',
         ),
         'ee-embed-sdk': path.resolve(
           __dirname,
