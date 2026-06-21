@@ -221,7 +221,7 @@ function workspaceAliases(repoRoot: string): Record<string, string> {
     return {
         // form-data → mime-types → mime-db pulls ~133 KB of MIME data into every HTTP piece
         // bundle. Swap in a minimal common-types table; uncommon types fall back gracefully.
-        'mime-db': resolve(repoRoot, 'tools', 'mime-db-min.cjs'),
+        'mime-db': resolve(repoRoot, 'packages', 'pieces', 'framework', 'src', 'mime-db-min.cjs'),
         '@activepieces/shared': resolve(repoRoot, 'packages', 'shared', 'src'),
         '@activepieces/pieces-framework': resolve(repoRoot, 'packages', 'pieces', 'framework', 'src'),
         '@activepieces/pieces-common': resolve(repoRoot, 'packages', 'pieces', 'common', 'src'),
