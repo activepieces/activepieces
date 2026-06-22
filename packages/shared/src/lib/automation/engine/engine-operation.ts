@@ -21,7 +21,8 @@ export enum EngineOperationType {
 
 // Selects HOW the engine makes pieces/code available before executing. LOCAL_CACHE is the
 // original worker behavior (bun install npm packages into a persistent local cache).
-// BUNDLED_TGZ installs all pieces from a single pre-built .tgz with no local cache (serverless).
+// BUNDLED_TGZ installs the flow's pieces from pre-built .tgz bundles in parallel
+// (Promise.all of bun install) with no local cache (serverless).
 export enum PieceInstallStrategyKind {
     LOCAL_CACHE = 'LOCAL_CACHE',
     BUNDLED_TGZ = 'BUNDLED_TGZ',
@@ -76,13 +77,13 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
 // Run by the engine before EXECUTE_FLOW to make the flow's pieces/code available. The engine
 // fetches piece archives directly from the API (engineToken + internalApiUrl) and installs via
 // the selected strategy. `flowVersion` is the source for CODE step artifacts; `cacheDir` is the
-// install target for LOCAL_CACHE (ignored by BUNDLED_TGZ, which is stateless).
+// install target for LOCAL_CACHE (ignored by BUNDLED_TGZ, which is stateless and installs each
+// piece's bundled .tgz in parallel).
 export type ProvisionOperation = BaseEngineOperation & {
     installStrategy: PieceInstallStrategyKind
     pieces: PiecePackage[]
     flowVersion?: FlowVersion
     cacheDir?: string
-    bundledArchiveId?: string
 }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }

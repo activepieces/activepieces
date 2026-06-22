@@ -12,11 +12,10 @@ export enum ExecutionMode {
 }
 
 // Selects WHERE flow execution happens. WORKER_POOL is the original long-lived worker
-// that spawns the engine as a local sandboxed process. The serverless kinds run the
-// engine on a function platform; ExecutionMode (isolate vs fork) is a WORKER_POOL-internal
-// sub-choice and does not apply to them.
+// that spawns the engine as a local sandboxed process. GCP_CLOUD_FUNCTION runs the engine
+// on a serverless function platform; ExecutionMode (isolate vs fork) is a WORKER_POOL-internal
+// sub-choice and does not apply to it.
 export enum RuntimeKind {
     WORKER_POOL = 'WORKER_POOL',
-    AWS_LAMBDA = 'AWS_LAMBDA',
     GCP_CLOUD_FUNCTION = 'GCP_CLOUD_FUNCTION',
 }
