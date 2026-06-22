@@ -1,6 +1,8 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AIProviderConfig,
+  AIMLAPIProviderAuthConfig,
+  AIMLAPIProviderConfig,
   AnthropicProviderAuthConfig,
   AnthropicProviderConfig,
   AzureProviderAuthConfig,
@@ -159,7 +161,7 @@ export const UpsertAIProviderDialogContent = ({
     defaultValues: {
       provider,
       displayName: defaultDisplayName,
-      config: config,
+      config: config ?? (provider === AIProviderName.AIMLAPI ? {} : undefined),
     } as CreateAIProviderRequest,
   });
 
@@ -324,6 +326,14 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
       provider: z.literal(AIProviderName.BEDROCK),
       config: BedrockProviderConfig,
       auth: editMode ? OptionalAuthSchema : BedrockProviderAuthConfig,
+    });
+  }
+  if (provider === AIProviderName.AIMLAPI) {
+    return z.object({
+      displayName: z.string().min(1),
+      provider: z.literal(AIProviderName.AIMLAPI),
+      config: AIMLAPIProviderConfig,
+      auth: editMode ? OptionalAuthSchema : AIMLAPIProviderAuthConfig,
     });
   }
   const authSchema = z.union([

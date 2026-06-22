@@ -1,6 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { AIProviderAuthConfig, AIProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
+import { aimlapiProvider } from './aimlapi-provider'
 import { anthropicProvider } from './anthropic-provider'
 import { azureProvider } from './azure-provider'
 import { bedrockProvider } from './bedrock-provider'
@@ -21,6 +22,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.CUSTOM]: openAICompatibleProvider,
     [AIProviderName.BEDROCK]: bedrockProvider,
     [AIProviderName.MISTRAL]: mistralProvider,
+    [AIProviderName.AIMLAPI]: aimlapiProvider,
     [AIProviderName.ACTIVEPIECES]: {
         ...openRouterProvider,
         name: 'Activepieces',

@@ -99,6 +99,14 @@ function createChatModel({ provider, auth, config, modelId, webSearchEnabled = f
                 },
             }).chatModel(modelId)
         }
+        case AIProviderName.AIMLAPI: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAICompatible({
+                name: 'aimlapi',
+                baseURL: 'https://api.aimlapi.com/v1',
+                apiKey,
+            }).chatModel(modelId)
+        }
         case AIProviderName.MISTRAL:
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {

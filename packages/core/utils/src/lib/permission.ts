@@ -53,4 +53,5 @@ export enum AIProviderName {
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
     MISTRAL = 'mistral',
+    AIMLAPI = 'aimlapi',
 }

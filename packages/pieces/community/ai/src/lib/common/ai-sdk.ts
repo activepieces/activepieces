@@ -202,6 +202,18 @@ export async function createAIModel({
             })
             return provider.chatModel(modelId)
         }
+        case AIProviderName.AIMLAPI: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            if (isImage) {
+                throw new Error(`Provider ${AIProviderName.AIMLAPI} does not support image models`)
+            }
+            const provider = createOpenAICompatible({
+                name: 'aimlapi',
+                baseURL: 'https://api.aimlapi.com/v1',
+                apiKey,
+            })
+            return provider.chatModel(modelId)
+        }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig

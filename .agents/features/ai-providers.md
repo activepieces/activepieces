@@ -1,10 +1,11 @@
 # AI Providers
 
 ## Summary
-The AI Providers module lets platform admins configure one or more LLM backends (OpenAI, Anthropic, Google, Azure, OpenRouter, Cloudflare, or a custom OpenAI-compatible endpoint) for use by AI pieces inside flows. It also supports an auto-provisioned "Activepieces" provider backed by OpenRouter when the platform's `aiCreditsEnabled` plan flag is set, complete with a Stripe-integrated credit top-up system and monthly reset via a system job.
+The AI Providers module lets platform admins configure one or more LLM backends (OpenAI, Anthropic, Google, Azure, OpenRouter, Cloudflare, AIMLAPI, or a custom OpenAI-compatible endpoint) for use by AI pieces inside flows. It also supports an auto-provisioned "Activepieces" provider backed by OpenRouter when the platform's `aiCreditsEnabled` plan flag is set, complete with a Stripe-integrated credit top-up system and monthly reset via a system job.
 
 ## Key Files
 - `packages/server/api/src/app/ai/` — backend module (controller, service, entity)
+- `packages/server/api/src/app/ai/providers/aimlapi-provider.ts` - AIMLAPI provider strategy
 - `packages/core/shared/src/lib/management/ai-providers/index.ts` — all shared Zod schemas, enums, and request/response types
 - `packages/web/src/features/platform-admin/api/ai-provider-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/ai-provider-hooks.ts` — TanStack Query hooks
@@ -23,7 +24,8 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 
 ## Domain Terms
 - **AIProvider**: A platform-scoped entity linking an LLM vendor's credentials to the platform.
-- **AIProviderName**: Enum of supported vendors (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `cloudflare-gateway`, `custom`, `activepieces`).
+- **AIProviderName**: Enum of supported vendors (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `cloudflare-gateway`, `aimlapi`, `custom`, `activepieces`).
+- **aimlapi**: AI/ML API, a curated OpenAI-compatible gateway with fixed endpoint `https://api.aimlapi.com/v1`.
 - **EncryptedObject**: The `auth` field is AES-256-encrypted at rest; decrypted only for engine access.
 - **AI Credits**: Platform-level usage budget (1000 credits = $1 USD) metered through OpenRouter; drives the ACTIVEPIECES auto-provision flow.
 - **aiCreditsEnabled**: Platform plan flag that triggers auto-provisioning of the ACTIVEPIECES provider.
@@ -33,7 +35,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 
 **AIProvider**: id, displayName, platformId (UNIQUE with provider), provider (AIProviderName enum), auth (EncryptedObject), config (JSON). Relation: platform (CASCADE).
 
-## Supported Providers (8)
+## Supported Providers (9)
 
 | Provider | Auth Fields | Notes |
 |----------|------------|-------|
@@ -43,6 +45,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 | AZURE | apiKey, deploymentName, instanceName | Azure OpenAI |
 | OPENROUTER | apiKey | 200+ models |
 | CLOUDFLARE | apiKey, accountId, gatewayId | Proxied via Cloudflare Workers AI |
+| AIMLAPI | apiKey | Fixed OpenAI-compatible endpoint; curated chat models; no live `/models` discovery |
 | CUSTOM | apiKey, baseUrl | OpenAI-compatible (LM Studio, Ollama) |
 | ACTIVEPIECES | apiKey, apiKeyHash (auto-provisioned) | Uses OpenRouter, managed by platform |
 

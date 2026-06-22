@@ -3,6 +3,17 @@ import { t } from 'i18next';
 
 export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
   {
+    provider: AIProviderName.AIMLAPI,
+    name: 'AI/ML API',
+    logoUrl: 'https://aimlapi.com/favicon.ico',
+    markdown: t(`Follow these instructions to get your AI/ML API key:
+
+1. Go to https://aimlapi.com/app/keys.
+2. Create or copy an API key and paste it below.
+3. Activepieces will use the fixed OpenAI-compatible endpoint https://api.aimlapi.com/v1.
+`),
+  },
+  {
     provider: AIProviderName.ANTHROPIC,
     name: 'Anthropic',
     markdown: t(`Follow these instructions to get your Claude API Key:

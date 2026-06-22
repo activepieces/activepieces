@@ -46,6 +46,9 @@ export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig
 export const MistralProviderAuthConfig = BaseAIProviderAuthConfig
 export type MistralProviderAuthConfig = z.infer<typeof MistralProviderAuthConfig>
 
+export const AIMLAPIProviderAuthConfig = BaseAIProviderAuthConfig
+export type AIMLAPIProviderAuthConfig = z.infer<typeof AIMLAPIProviderAuthConfig>
+
 export const AnthropicProviderConfig = z.object({})
 export type AnthropicProviderConfig = z.infer<typeof AnthropicProviderConfig>
 
@@ -105,6 +108,9 @@ export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
 
+export const AIMLAPIProviderConfig = z.object({})
+export type AIMLAPIProviderConfig = z.infer<typeof AIMLAPIProviderConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
@@ -116,6 +122,7 @@ export const AIProviderAuthConfig = z.union([
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
     MistralProviderAuthConfig,
+    AIMLAPIProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
 // Order matters, put schemas with required fields first, empty ones last. This is to avoid empty objects matching any object.
@@ -130,6 +137,7 @@ export const AIProviderConfig = z.union([
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
+    AIMLAPIProviderConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -193,6 +201,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.MISTRAL),
         config: MistralProviderConfig,
         auth: MistralProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.AIMLAPI),
+        config: AIMLAPIProviderConfig,
+        auth: AIMLAPIProviderAuthConfig,
     }),
 ])
 
@@ -272,6 +286,16 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
     [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
+    [AIProviderName.AIMLAPI]: [
+        'gpt-5-chat',
+        'openai/gpt-4o-mini',
+        'openai/gpt-4o',
+        'anthropic/claude-sonnet-4.5',
+        'google/gemini-2.5-flash',
+        'google/gemini-3-flash-preview',
+        'deepseek/deepseek-chat',
+        'x-ai/grok-4',
+    ],
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
@@ -373,6 +397,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
     [AIProviderName.MISTRAL]: 128_000,
+    [AIProviderName.AIMLAPI]: 128_000,
 }
 
 function getMaxContextTokens({ provider }: { provider: AIProviderName | undefined }): number {
