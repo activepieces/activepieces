@@ -1,4 +1,4 @@
-import { access, mkdir, writeFile } from 'node:fs/promises'
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -11,16 +11,11 @@ import type { ApLogger } from '@activepieces/server-utils'
 let testWorkspace = ''
 
 const mockInstall = vi.fn()
-const mockDecompress = vi.fn()
 
 vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
     bunRunner: () => ({
         install: mockInstall,
     }),
-}))
-
-vi.mock('decompress', () => ({
-    default: (...args: unknown[]) => mockDecompress(...args),
 }))
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
@@ -187,43 +182,26 @@ describe('pieceInstaller', () => {
         expect(mockInstall).not.toHaveBeenCalled()
     })
 
-    it('archive piece already installed (src/index.js layout, no index.bundle.js) — not re-extracted', async () => {
-        const piece = makeArchivePiece('@activepieces/piece-archived')
-        const pieceDir = pieceDirPath(piece)
-
-        // The extracted bundle ships package.json + src/index.js at the folder root — never index.bundle.js.
-        await mkdir(join(pieceDir, 'src'), { recursive: true })
-        await writeFile(join(pieceDir, 'package.json'), JSON.stringify({ main: './src/index.js' }))
-        await writeFile(join(pieceDir, 'src', 'index.js'), '')
-        await writeFile(join(pieceDir, 'ready'), 'true')
-
-        const getPieceArchive = vi.fn()
-        const installer = pieceInstaller(fakeLog, { getPieceArchive } as never, testWorkspace, fakeGetSettings)
-        await installer.install({ pieces: [piece], includeFilters: true })
-
-        // The cache hit must hold: no archive re-download, no decompress, no bun install, ready preserved.
-        expect(getPieceArchive).not.toHaveBeenCalled()
-        expect(mockDecompress).not.toHaveBeenCalled()
-        expect(mockInstall).not.toHaveBeenCalled()
-        expect(await pathExists(readyFilePath(piece))).toBe(true)
-    })
-
-    it('archive piece ready but content missing — marker cleared and re-extracted', async () => {
-        const piece = makeArchivePiece('@activepieces/piece-stale')
-        const pieceDir = pieceDirPath(piece)
-
-        // 'ready' present but the extracted content (package.json) is gone — a corrupt/half cache.
-        await mkdir(pieceDir, { recursive: true })
-        await writeFile(join(pieceDir, 'ready'), 'true')
-
+    it('archive piece installs through bun with a unique suffixed workspace name pointing at its tgz', async () => {
+        const piece = makeArchivePiece('@acme/piece-sample', '0.3.3')
         const getPieceArchive = vi.fn().mockResolvedValue(Buffer.from('tgz'))
-        mockDecompress.mockResolvedValueOnce(undefined)
         const installer = pieceInstaller(fakeLog, { getPieceArchive } as never, testWorkspace, fakeGetSettings)
+
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
         await installer.install({ pieces: [piece], includeFilters: true })
 
-        // Defensive check fires: the stale 'ready' is treated as not-installed and the bundle is re-fetched + re-extracted.
+        // The archive is downloaded once and installed through the shared bun workspace.
         expect(getPieceArchive).toHaveBeenCalledOnce()
-        expect(mockDecompress).toHaveBeenCalledOnce()
+        expect(mockInstall).toHaveBeenCalledOnce()
+        expect(await pathExists(readyFilePath(piece))).toBe(true)
+
+        // The folder's package.json carries the unique `<pieceName>-<pieceVersion>` workspace name
+        // (never the raw piece name) and depends on the saved .tgz — so multiple cached versions of
+        // the same piece can never collide on a bun workspace name.
+        const manifest = JSON.parse(await readFile(join(pieceDirPath(piece), 'package.json'), 'utf8'))
+        expect(manifest.name).toBe('@acme/piece-sample-0.3.3')
+        expect(manifest.dependencies['@acme/piece-sample']).toContain('.tgz')
     })
 
     it('individual fallback always passes --filter path regardless of includeFilters', async () => {
