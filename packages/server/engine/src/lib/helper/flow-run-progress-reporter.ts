@@ -225,7 +225,7 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
         success: isSuccess,
         input: stepOutput.input,
         output: stepOutput.output,
-        standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
+        standardError: isSuccess ? '' : (stepOutput.errorMessage ?? ''),
         standardOutput: '',
     }
 }
