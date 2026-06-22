@@ -6,7 +6,9 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { billingProvider } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { readCreditsBalance } from '../platform/platform-plan/autumn/credits-cache'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
@@ -182,6 +184,16 @@ async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: st
     const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
     if (!chatProvider || chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
         return
+    }
+    if (await billingProvider.get(log).shouldBlockOnCredits(platformId)) {
+        const balance = await readCreditsBalance(platformId)
+        throw new ActivepiecesError({
+            code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
+            params: {
+                usage: balance?.usage ?? 0,
+                limit: balance?.granted ?? 0,
+            },
+        })
     }
     const usage = await platformAiCreditsService(log).getUsage(platformId)
     if (usage.usageRemaining <= 0) {
