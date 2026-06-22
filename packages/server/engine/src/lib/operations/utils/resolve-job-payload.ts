@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { JobPayload } from '@activepieces/shared'
-import { engineFileApi } from '../../engine-file-api'
+import { engineApiClient } from '../../engine-api-client'
 
 export async function resolveJobPayload({ payload, apiUrl, engineToken }: ResolveJobPayloadParams): Promise<unknown> {
     if (isNil(payload)) {
@@ -9,7 +9,7 @@ export async function resolveJobPayload({ payload, apiUrl, engineToken }: Resolv
     if (payload.type === 'inline') {
         return payload.value
     }
-    const bytes = await engineFileApi.download({
+    const bytes = await engineApiClient.downloadFile({
         fileId: payload.fileId,
         apiUrl,
         engineToken,

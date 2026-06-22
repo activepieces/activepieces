@@ -60,11 +60,14 @@ export const GetFlowVersionForWorkerRequest = z.object({
 
 export type GetFlowVersionForWorkerRequest = z.infer<typeof GetFlowVersionForWorkerRequest>
 
-export type UpdateRunProgressRequest = {
-    flowRun: Omit<FlowRun, 'steps'>
-    step?: {
-        name: string
-        path: readonly [string, number][]
-        output: StepOutput
-    }
-}
+export const UpdateRunProgressRequest = z.object({
+    flowRun: FlowRun.omit({ steps: true }),
+    step: z.object({
+        name: z.string(),
+        path: z.array(z.tuple([z.string(), z.number()])).readonly(),
+        // StepOutput is a runtime class, not a schema — it travels as serialized JSON and
+        // is forwarded verbatim to websocket clients, so it is passed through unvalidated.
+        output: z.custom<StepOutput>(),
+    }).optional(),
+})
+export type UpdateRunProgressRequest = z.infer<typeof UpdateRunProgressRequest>

@@ -3,6 +3,7 @@ import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, 
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
+import { engineApiClient } from '../engine-api-client'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { pieceLoader } from '../helper/piece-loader'
@@ -13,7 +14,6 @@ import { waitpointClient } from '../piece-context/waitpoint-client'
 import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
-import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 
@@ -159,13 +159,17 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
         if (!isNil(webhookResponse) && !isNil(constants.workerHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
-            await workerSocket.getWorkerClient().sendFlowResponse({
-                workerHandlerId: constants.workerHandlerId,
-                httpRequestId: constants.httpRequestId,
-                runResponse: {
-                    status: webhookResponse.status ?? 200,
-                    body: webhookResponse.body ?? {},
-                    headers: webhookResponse.headers ?? {},
+            await engineApiClient.sendFlowResponse({
+                engineToken: constants.engineToken,
+                apiUrl: constants.internalApiUrl,
+                request: {
+                    workerHandlerId: constants.workerHandlerId,
+                    httpRequestId: constants.httpRequestId,
+                    runResponse: {
+                        status: webhookResponse.status ?? 200,
+                        body: webhookResponse.body ?? {},
+                        headers: webhookResponse.headers ?? {},
+                    },
                 },
             })
         }

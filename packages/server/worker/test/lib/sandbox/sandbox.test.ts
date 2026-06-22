@@ -1,7 +1,7 @@
 import { ChildProcess } from 'child_process'
+import http from 'http'
 import { EventEmitter } from 'node:events'
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils';
 import { EngineResponseStatus, WorkerContract } from '@activepieces/shared';
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
@@ -38,25 +38,60 @@ function createMockWorkerHandlers(): WorkerContract {
     }
 }
 
+type EngineEmitter = {
+    stdout: (message: string) => void
+    stderr: (message: string) => void
+    rpc: (method: string, payload: unknown) => void
+    result: (response: unknown) => void
+    error: (message: string) => void
+}
+
+type ExecuteHandler = (emit: EngineEmitter, operation: { operationType: string, operation: unknown }) => void
+
+// Stands in for the real engine: an HTTP server that serves POST /execute and streams
+// an SSE response (notify / rpc / result / error frames) exactly like worker-http.ts.
 function createTestProcessMaker() {
-    let client: ClientSocket | null = null
     let child: (ChildProcess & EventEmitter) | null = null
+    let engineServer: http.Server | null = null
+    let onExecute: ExecuteHandler | null = null
+
+    function frame(event: unknown): string {
+        return `data: ${JSON.stringify(event)}\n\n`
+    }
 
     const maker: SandboxProcessMaker = {
         create: vi.fn(async (params) => {
-            const port = params.env.AP_SANDBOX_WS_PORT
-            const token = params.env.AP_SANDBOX_WS_TOKEN ?? null
+            const port = Number(params.env.AP_SANDBOX_WS_PORT)
+            const token = params.env.AP_SANDBOX_WS_TOKEN
             child = new EventEmitter() as ChildProcess & EventEmitter
             ;(child as ChildProcess).pid = 12345
             ;(child as ChildProcess).exitCode = null
             ;(child as ChildProcess).kill = vi.fn()
 
-            client = ioClient(`http://127.0.0.1:${port}`, {
-                path: '/worker/ws',
-                autoConnect: true,
-                reconnection: false,
-                auth: { sandboxId: params.sandboxId, connectionToken: token },
+            engineServer = http.createServer((req, res) => {
+                if (req.method !== 'POST' || req.url !== '/execute') {
+                    res.writeHead(404)
+                    res.end()
+                    return
+                }
+                if (req.headers['x-connection-token'] !== token) {
+                    res.writeHead(401)
+                    res.end()
+                    return
+                }
+                res.writeHead(200, { 'Content-Type': 'text/event-stream' })
+                const emit: EngineEmitter = {
+                    stdout: (message) => res.write(frame({ t: 'notify', method: 'stdout', payload: { message } })),
+                    stderr: (message) => res.write(frame({ t: 'notify', method: 'stderr', payload: { message } })),
+                    rpc: (method, payload) => res.write(frame({ t: 'rpc', method, payload })),
+                    result: (response) => { res.write(frame({ t: 'result', payload: response })); res.end() },
+                    error: (message) => { res.write(frame({ t: 'error', message })); res.end() },
+                }
+                let body = ''
+                req.on('data', (chunk) => { body += chunk })
+                req.on('end', () => onExecute?.(emit, JSON.parse(body)))
             })
+            await new Promise<void>((resolve) => engineServer!.listen(port, '127.0.0.1', resolve))
 
             return child as ChildProcess
         }),
@@ -64,8 +99,15 @@ function createTestProcessMaker() {
 
     return {
         maker,
-        getClient: () => client!,
         getChild: () => child!,
+        setOnExecute: (fn: ExecuteHandler) => { onExecute = fn },
+        close: async () => {
+            if (engineServer) {
+                engineServer.closeAllConnections?.()
+                await new Promise<void>((resolve) => engineServer!.close(() => resolve()))
+                engineServer = null
+            }
+        },
     }
 }
 
@@ -89,18 +131,15 @@ describe('createSandbox', () => {
     let testPM: ReturnType<typeof createTestProcessMaker>
 
     afterEach(async () => {
-        const client = testPM?.getClient()
-        if (client?.connected) {
-            client.disconnect()
-        }
         if (sandbox) {
             await sandbox.shutdown()
             sandbox = null
         }
+        await testPM?.close()
     })
 
     describe('start', () => {
-        it('creates socket server and calls processMaker.create with correct params', async () => {
+        it('passes the engine HTTP port and calls processMaker.create with correct params', async () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
@@ -375,84 +414,6 @@ describe('createSandbox', () => {
             expect(secondToken).toBeTruthy()
             expect(firstToken).not.toBe(secondToken)
         })
-
-        it('rejects an unauthenticated Socket.IO connection', async () => {
-            const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
-            testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-noauth', defaultOptions, testPM.maker, workerHandlers)
-
-            await sandbox.start(startOptions)
-            const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
-
-            const attacker = ioClient(`http://127.0.0.1:${port}`, {
-                path: '/worker/ws',
-                autoConnect: true,
-                reconnection: false,
-            })
-            const err = await new Promise<Error>((resolve, reject) => {
-                attacker.on('connect_error', resolve)
-                attacker.on('connect', () => reject(new Error('attacker should not have connected')))
-                setTimeout(() => reject(new Error('no connect_error received')), 2000)
-            })
-            attacker.disconnect()
-
-            expect(err.message).toBe('unauthorized')
-            expect(testPM.getClient().connected).toBe(true)
-        })
-
-        it('rejects a Socket.IO connection that presents the wrong token', async () => {
-            const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
-            testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-wrong', defaultOptions, testPM.maker, workerHandlers)
-
-            await sandbox.start(startOptions)
-            const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
-
-            const attacker = ioClient(`http://127.0.0.1:${port}`, {
-                path: '/worker/ws',
-                autoConnect: true,
-                reconnection: false,
-                auth: { sandboxId: 'spoof', connectionToken: 'definitely-not-the-real-token' },
-            })
-            const err = await new Promise<Error>((resolve, reject) => {
-                attacker.on('connect_error', resolve)
-                attacker.on('connect', () => reject(new Error('attacker should not have connected')))
-                setTimeout(() => reject(new Error('no connect_error received')), 2000)
-            })
-            attacker.disconnect()
-
-            expect(err.message).toBe('unauthorized')
-            expect(testPM.getClient().connected).toBe(true)
-        })
-
-        it('disconnects a second authenticated connection while keeping the first active', async () => {
-            const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
-            testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-second', defaultOptions, testPM.maker, workerHandlers)
-
-            await sandbox.start(startOptions)
-            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
-            const port = createCall.env.AP_SANDBOX_WS_PORT
-            const token = createCall.env.AP_SANDBOX_WS_TOKEN
-
-            const second = ioClient(`http://127.0.0.1:${port}`, {
-                path: '/worker/ws',
-                autoConnect: true,
-                reconnection: false,
-                auth: { sandboxId: 'second', connectionToken: token },
-            })
-            await new Promise<void>((resolve, reject) => {
-                second.on('disconnect', () => resolve())
-                second.on('connect_error', (e) => reject(new Error(`unexpected connect_error: ${e.message}`)))
-                setTimeout(() => reject(new Error('second connection was not disconnected')), 2000)
-            })
-
-            expect(second.connected).toBe(false)
-            expect(testPM.getClient().connected).toBe(true)
-        })
     })
 
     describe('execute', () => {
@@ -465,17 +426,11 @@ describe('createSandbox', () => {
             return { sandbox, log, workerHandlers }
         }
 
-        it('sends RPC executeOperation and resolves on response', async () => {
+        it('POSTs the operation and resolves on the result frame', async () => {
             const { sandbox } = await startSandbox()
-            const client = testPM.getClient()
 
             const engineResponse = { status: 200, body: 'ok' }
-
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
-                if (msg.method === 'executeOperation') {
-                    ack(engineResponse)
-                }
-            })
+            testPM.setOnExecute((emit) => emit.result(engineResponse))
 
             const result = await sandbox.execute(
                 'EXECUTE_FLOW' as any,
@@ -488,22 +443,19 @@ describe('createSandbox', () => {
 
         it('recovers after engine returns INTERNAL_ERROR and handles next job', async () => {
             const { sandbox } = await startSandbox()
-            const client = testPM.getClient()
 
             let callCount = 0
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
-                if (msg.method === 'executeOperation') {
-                    callCount++
-                    if (callCount === 1) {
-                        ack({
-                            response: undefined,
-                            status: EngineResponseStatus.INTERNAL_ERROR,
-                            error: 'Engine error: AppWebhookUrlNotAvailableError',
-                        })
-                    }
-                    else {
-                        ack({ response: { success: true }, status: EngineResponseStatus.OK })
-                    }
+            testPM.setOnExecute((emit) => {
+                callCount++
+                if (callCount === 1) {
+                    emit.result({
+                        response: undefined,
+                        status: EngineResponseStatus.INTERNAL_ERROR,
+                        error: 'Engine error: AppWebhookUrlNotAvailableError',
+                    })
+                }
+                else {
+                    emit.result({ response: { success: true }, status: EngineResponseStatus.OK })
                 }
             })
 
@@ -526,18 +478,13 @@ describe('createSandbox', () => {
 
         it('resolves with engine response and captures stdout/stderr', async () => {
             const { sandbox } = await startSandbox()
-            const client = testPM.getClient()
 
             const engineResponse = { status: 200, body: 'ok' }
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
-                if (msg.method === 'executeOperation') {
-                    client.emit('rpc-notify', { method: 'stdout', payload: { message: 'line1\n' } })
-                    client.emit('rpc-notify', { method: 'stderr', payload: { message: 'err1\n' } })
-                    client.emit('rpc-notify', { method: 'stdout', payload: { message: 'line2\n' } })
-                    setTimeout(() => {
-                        ack(engineResponse)
-                    }, 50)
-                }
+            testPM.setOnExecute((emit) => {
+                emit.stdout('line1\n')
+                emit.stderr('err1\n')
+                emit.stdout('line2\n')
+                emit.result(engineResponse)
             })
 
             const result = await sandbox.execute(
@@ -551,15 +498,10 @@ describe('createSandbox', () => {
 
         it('delegates worker contract calls to handlers', async () => {
             const { sandbox, workerHandlers } = await startSandbox()
-            const client = testPM.getClient()
 
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
-                if (msg.method === 'executeOperation') {
-                    // Simulate calling back to worker via RPC
-                    client.timeout(5000).emitWithAck('rpc', { method: 'updateRunProgress', payload: { progress: 50 } }).then(() => {
-                        ack({ status: 200 })
-                    })
-                }
+            testPM.setOnExecute((emit) => {
+                emit.rpc('updateRunProgress', { progress: 50 })
+                emit.result({ status: 200 })
             })
 
             await sandbox.execute(
@@ -575,7 +517,8 @@ describe('createSandbox', () => {
             const { sandbox } = await startSandbox()
             const child = testPM.getChild()
 
-            // Don't respond to RPC — let it timeout
+            // Never send a result — let the operation time out.
+            testPM.setOnExecute(() => { })
             treeKillMock.mockImplementation((_pid: number, _signal: string, cb: (err?: Error) => void) => {
                 child.emit('exit', null, 'SIGKILL')
                 cb()
@@ -598,12 +541,9 @@ describe('createSandbox', () => {
 
         it('rejects with SANDBOX_MEMORY_ISSUE on exit code 134 / SIGABRT', async () => {
             const { sandbox } = await startSandbox()
-            const client = testPM.getClient()
             const child = testPM.getChild()
 
-            client.on('rpc', () => {
-                child.emit('exit', 134, null)
-            })
+            testPM.setOnExecute(() => child.emit('exit', 134, null))
 
             const executePromise = sandbox.execute(
                 'EXECUTE_FLOW' as any,
@@ -622,14 +562,11 @@ describe('createSandbox', () => {
 
         it('rejects with SANDBOX_LOG_SIZE_EXCEEDED', async () => {
             const { sandbox } = await startSandbox()
-            const client = testPM.getClient()
             const child = testPM.getChild()
 
-            client.on('rpc', () => {
-                client.emit('rpc-notify', { method: 'stderr', payload: { message: 'Flow run data size exceeded the maximum allowed size' } })
-                setTimeout(() => {
-                    child.emit('exit', 1, null)
-                }, 50)
+            testPM.setOnExecute((emit) => {
+                emit.stderr('Flow run data size exceeded the maximum allowed size')
+                setTimeout(() => child.emit('exit', 1, null), 50)
             })
 
             const executePromise = sandbox.execute(
@@ -649,12 +586,9 @@ describe('createSandbox', () => {
 
         it('rejects with SANDBOX_INTERNAL_ERROR for other exit codes', async () => {
             const { sandbox } = await startSandbox()
-            const client = testPM.getClient()
             const child = testPM.getChild()
 
-            client.on('rpc', () => {
-                child.emit('exit', 1, null)
-            })
+            testPM.setOnExecute(() => child.emit('exit', 1, null))
 
             const executePromise = sandbox.execute(
                 'EXECUTE_FLOW' as any,
@@ -671,17 +605,12 @@ describe('createSandbox', () => {
             }
         })
 
-        it('cleans up listener, timeout, and event handlers in finally block', async () => {
+        it('cleans up timeout and process event handlers in finally block', async () => {
             const { sandbox } = await startSandbox()
-            const client = testPM.getClient()
             const child = testPM.getChild()
             const removeAllListenersSpy = vi.spyOn(child, 'removeAllListeners')
 
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
-                if (msg.method === 'executeOperation') {
-                    ack({ status: 200 })
-                }
-            })
+            testPM.setOnExecute((emit) => emit.result({ status: 200 }))
 
             await sandbox.execute(
                 'EXECUTE_FLOW' as any,
@@ -695,7 +624,7 @@ describe('createSandbox', () => {
     })
 
     describe('shutdown', () => {
-        it('kills process, disconnects socket, closes io server', async () => {
+        it('kills the process tree', async () => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()

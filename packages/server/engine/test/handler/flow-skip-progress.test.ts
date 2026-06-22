@@ -3,18 +3,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
+type EngineCall<T> = { engineToken: string, apiUrl: string, request: T }
+
 const { updateRunProgressMock } = vi.hoisted(() => ({
-    updateRunProgressMock: vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>().mockResolvedValue(undefined),
+    updateRunProgressMock: vi.fn<(input: EngineCall<UpdateRunProgressRequest>) => Promise<void>>().mockResolvedValue(undefined),
 }))
 
-vi.mock('../../src/lib/worker-socket', () => ({
-    workerSocket: {
-        getWorkerClient: () => ({
-            updateRunProgress: updateRunProgressMock,
-            updateStepProgress: vi.fn(),
-            uploadRunLog: vi.fn(),
-            sendFlowResponse: vi.fn(),
-        }),
+vi.mock('../../src/lib/engine-api-client', () => ({
+    engineApiClient: {
+        updateRunProgress: updateRunProgressMock,
+        updateStepProgress: vi.fn(),
+        uploadRunLog: vi.fn(),
+        sendFlowResponse: vi.fn(),
+        uploadFile: vi.fn(async () => ({ fileId: 'f', readUrl: 'u' })),
+        downloadFile: vi.fn(async () => new Uint8Array()),
     },
 }))
 
@@ -75,7 +77,7 @@ describe('flowExecutor — progress events with skipped neighbours', () => {
 
 const lastStatusByStep = (): Record<string, StepOutputStatus> => {
     const result: Record<string, StepOutputStatus> = {}
-    for (const [request] of updateRunProgressMock.mock.calls) {
+    for (const [{ request }] of updateRunProgressMock.mock.calls) {
         if (request.step) {
             result[request.step.name] = request.step.output.status
         }

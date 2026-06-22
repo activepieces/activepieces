@@ -1,6 +1,6 @@
 import { apId, assertEqual, isNil } from '@activepieces/core-utils'
 import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
-import { engineFileApi } from '../../engine-file-api'
+import { engineApiClient } from '../../engine-api-client'
 import { loggingUtils } from '../../helper/logging-utils'
 import { utils } from '../../utils'
 import { StepExecutionPath } from './step-execution-path'
@@ -211,7 +211,7 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
         return undefined
     }
     const data = new TextEncoder().encode(JSON.stringify(value))
-    const { fileId, readUrl } = await engineFileApi.upload({
+    const { fileId, readUrl } = await engineApiClient.uploadFile({
         apiUrl: engineApi.internalApiUrl,
         engineToken: engineApi.engineToken,
         fileId: apId(),
@@ -233,7 +233,7 @@ async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | 
     if (!isNil(existing)) {
         return existing
     }
-    const promise = engineFileApi.download({ apiUrl: engineApi.internalApiUrl, engineToken: engineApi.engineToken, fileId: ref.fileId })
+    const promise = engineApiClient.downloadFile({ apiUrl: engineApi.internalApiUrl, engineToken: engineApi.engineToken, fileId: ref.fileId })
         .then((bytes) => JSON.parse(new TextDecoder('utf-8').decode(bytes)))
     cache.set(ref.fileId, promise)
     return promise

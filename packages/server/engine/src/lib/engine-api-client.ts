@@ -1,6 +1,15 @@
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
+import {
+    EngineGenericError,
+    FileCompression,
+    FileType,
+    isZstdCompressed,
+    SendFlowResponseRequest,
+    UpdateRunProgressRequest,
+    UpdateStepProgressRequest,
+    UploadRunLogsRequest,
+} from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
@@ -14,8 +23,24 @@ const READ_URL_HEADER = 'x-ap-file-read-url'
 const FILE_TYPE_HEADER = 'x-ap-file-type'
 const FILE_NAME_HEADER = 'x-ap-file-name'
 
-export const engineFileApi = {
-    async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
+// The engine's direct client to the API. Run progress/logs/response are sent straight to
+// the API as the ENGINE principal (Bearer engineToken), not relayed through the worker.
+// File transport keeps the `?token=` query param the /v1/files endpoints expect.
+export const engineApiClient = {
+    async updateRunProgress({ engineToken, apiUrl, request }: EngineRequest<UpdateRunProgressRequest>): Promise<void> {
+        await postAsEngine({ engineToken, apiUrl, path: 'v1/engine/run-progress', body: request, errorName: 'ProgressUpdateError' })
+    },
+    async uploadRunLog({ engineToken, apiUrl, request }: EngineRequest<UploadRunLogsRequest>): Promise<void> {
+        await postAsEngine({ engineToken, apiUrl, path: 'v1/engine/run-logs', body: request, errorName: 'ProgressUpdateError' })
+    },
+    async sendFlowResponse({ engineToken, apiUrl, request }: EngineRequest<SendFlowResponseRequest>): Promise<void> {
+        await postAsEngine({ engineToken, apiUrl, path: 'v1/engine/flow-response', body: request, errorName: 'FlowResponseError' })
+    },
+    async updateStepProgress({ engineToken, apiUrl, request }: EngineRequest<UpdateStepProgressRequest>): Promise<void> {
+        await postAsEngine({ engineToken, apiUrl, path: 'v1/engine/step-progress', body: request, errorName: 'StepProgressError' })
+    },
+
+    async uploadFile({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
         const fetchWithRetry = fetchRetry(global.fetch)
         const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
         const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
@@ -70,7 +95,8 @@ export const engineFileApi = {
         }
         return { fileId, readUrl: body.readUrl }
     },
-    async download({ engineToken, apiUrl, fileId }: DownloadFileParams): Promise<Uint8Array> {
+
+    async downloadFile({ engineToken, apiUrl, fileId }: DownloadFileParams): Promise<Uint8Array> {
         const fetchWithRetry = fetchRetry(global.fetch)
         const response = await fetchWithRetry(`${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`, {
             method: 'GET',
@@ -98,6 +124,22 @@ export const engineFileApi = {
     },
 }
 
+async function postAsEngine({ engineToken, apiUrl, path, body, errorName }: PostAsEngineParams): Promise<void> {
+    const fetchWithRetry = fetchRetry(global.fetch)
+    const response = await fetchWithRetry(`${apiUrl}${path}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${engineToken}`,
+        },
+        body: JSON.stringify(body),
+        ...RETRY_CONFIG,
+    })
+    if (!response.ok) {
+        throw new EngineGenericError(errorName, `Failed to POST ${path}: ${response.status} ${response.statusText}`)
+    }
+}
+
 function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHeadersParams): Record<string, string> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/octet-stream',
@@ -121,6 +163,20 @@ function stripApHeaders(headers: Record<string, string>): Record<string, string>
         }
     }
     return result
+}
+
+type EngineRequest<T> = {
+    engineToken: string
+    apiUrl: string
+    request: T
+}
+
+type PostAsEngineParams = {
+    engineToken: string
+    apiUrl: string
+    path: string
+    body: unknown
+    errorName: string
 }
 
 type UploadParams = {

@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
-import { engineFileApi } from '../engine-file-api'
+import { engineApiClient } from '../engine-api-client'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
@@ -186,7 +186,7 @@ async function fetchExecutionStateFromLogs(logsFileId: string | undefined, opera
     if (isNil(logsFileId)) {
         throw new EngineGenericError('ResumeLogsFileMissing', 'logsFileId is missing for RESUME operation')
     }
-    const bytes = await engineFileApi.download({
+    const bytes = await engineApiClient.downloadFile({
         fileId: logsFileId,
         apiUrl: operation.internalApiUrl,
         engineToken: operation.engineToken,

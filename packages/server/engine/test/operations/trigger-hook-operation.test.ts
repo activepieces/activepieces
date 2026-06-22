@@ -9,10 +9,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const { mockDownload } = vi.hoisted(() => ({
     mockDownload: vi.fn(),
 }))
-vi.mock('../../src/lib/engine-file-api', () => ({
-    engineFileApi: {
-        download: mockDownload,
-        upload: vi.fn(),
+vi.mock('../../src/lib/engine-api-client', () => ({
+    engineApiClient: {
+        downloadFile: mockDownload,
+        uploadFile: vi.fn(),
+        updateRunProgress: vi.fn(),
+        updateStepProgress: vi.fn(),
+        uploadRunLog: vi.fn(),
+        sendFlowResponse: vi.fn(),
     },
 }))
 

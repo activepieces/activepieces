@@ -1,7 +1,7 @@
 import { apId } from '@activepieces/core-utils'
 import { FilesService } from '@activepieces/pieces-framework'
 import { FileSizeError, FileType } from '@activepieces/shared'
-import { engineFileApi } from '../engine-file-api'
+import { engineApiClient } from '../engine-api-client'
 
 export function createFileUploader({ engineToken, apiUrl }: CreateFileUploaderParams): FilesService {
     const maxFileSizeMb = Number(process.env.AP_MAX_FILE_SIZE_MB)
@@ -13,7 +13,7 @@ export function createFileUploader({ engineToken, apiUrl }: CreateFileUploaderPa
                 )
             }
             validateFileSize(data, maxFileSizeMb)
-            const { readUrl } = await engineFileApi.upload({
+            const { readUrl } = await engineApiClient.uploadFile({
                 engineToken,
                 apiUrl,
                 fileId: apId(),
