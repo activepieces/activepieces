@@ -1,8 +1,7 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { FlowVersion, RuntimeKind, WorkerToApiContract } from '@activepieces/shared'
-import { resolveFlowArtifacts } from './cache/flow/flow-artifacts'
-import { flowCache } from './cache/flow/flow-cache'
+import { FlowVersion, PiecePackage, RuntimeKind, WorkerToApiContract } from '@activepieces/shared'
+import { flowProvisioning } from './cache/flow/flow-provisioning'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { Sandbox } from './sandbox/types'
 import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './sandbox-manager'
@@ -62,31 +61,24 @@ function createLocalPoolExecution({ manager, log, apiClient, basePath, getSettin
             let pieces = input.pieces ?? []
             let codes = input.codes ?? []
             let flowVersion: FlowVersion | undefined
+            let pendingPublish: { flowVersion: FlowVersion, pieces: PiecePackage[] } | null = null
 
             if (!isNil(input.flow)) {
                 // Resolve FIRST, acquire LATER — no sandbox slot consumed for a missing/disabled flow.
-                const fetched = await flowCache(log, apiClient, basePath).getVersion({ flowVersionId: input.flow.versionId })
-                if (isNil(fetched)) {
+                // The Flow Provisioning module hides the bundle hit vs. fetch-resolve-and-publish decision.
+                const resolved = await flowProvisioning(log, apiClient, basePath, getSettings).resolve({ flow: input.flow, platformId: input.platformId })
+                if (resolved.kind === 'flow-not-found') {
                     return { kind: 'flow-not-found' }
                 }
-                flowVersion = fetched
-
-                const artifacts = await resolveFlowArtifacts({
-                    flowVersion,
-                    platformId: input.platformId,
-                    flowId: input.flow.id,
-                    projectId: input.flow.projectId,
-                    log,
-                    apiClient,
-                    basePath,
-                    getSettings,
-                })
-                if (artifacts.disabled) {
+                if (resolved.kind === 'disabled') {
                     return { kind: 'disabled' }
                 }
-
-                pieces = [...pieces, ...artifacts.pieces]
-                codes = [...codes, ...artifacts.codeSteps]
+                flowVersion = resolved.flowVersion
+                pieces = [...pieces, ...resolved.pieces]
+                codes = [...codes, ...resolved.codeSteps]
+                if (resolved.needsPublish) {
+                    pendingPublish = { flowVersion: resolved.flowVersion, pieces: resolved.pieces }
+                }
             }
 
             sandbox = manager.acquire({ log, apiClient })
@@ -99,6 +91,16 @@ function createLocalPoolExecution({ manager, log, apiClient, basePath, getSettin
                 sandbox = null
                 mountContext = null
                 throw error
+            }
+
+            if (!isNil(pendingPublish) && !isNil(input.flow)) {
+                // Best-effort: build once, share via the store. A failed upload never fails the run.
+                void flowProvisioning(log, apiClient, basePath, getSettings).publishBundle({
+                    flowVersion: pendingPublish.flowVersion,
+                    pieces: pendingPublish.pieces,
+                    projectId: input.flow.projectId,
+                    platformId: input.platformId,
+                })
             }
             return { kind: 'ready', flowVersion }
         },

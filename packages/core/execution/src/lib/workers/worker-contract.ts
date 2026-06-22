@@ -31,6 +31,18 @@ export type GetPieceRequest = {
     platformId?: string
 }
 
+export type GetFlowBundleRequest = {
+    flowVersionId: string
+    projectId: string
+}
+
+export type UploadFlowBundleRequest = {
+    flowVersionId: string
+    projectId: string
+    platformId: string
+    data: Buffer
+}
+
 export type WorkerToApiContract = {
     poll(input: WorkerMachineHealthcheckRequest): Promise<ConsumeJobRequest | null>
     completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void>
@@ -43,6 +55,8 @@ export type WorkerToApiContract = {
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
+    getFlowBundle(input: GetFlowBundleRequest): Promise<Buffer | null>
+    uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>

@@ -220,6 +220,35 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             return data
         },
 
+        async getFlowBundle(input) {
+            const file = await fileService(log).getFile({
+                fileId: input.flowVersionId,
+                projectId: input.projectId,
+                type: FileType.FLOW_BUNDLE,
+            })
+            if (isNil(file)) {
+                return null
+            }
+            const { data } = await fileService(log).getDataOrThrow({
+                fileId: input.flowVersionId,
+                projectId: input.projectId,
+                type: FileType.FLOW_BUNDLE,
+            })
+            return data
+        },
+
+        async uploadFlowBundle(input) {
+            await fileService(log).save({
+                fileId: input.flowVersionId,
+                projectId: input.projectId,
+                platformId: input.platformId,
+                type: FileType.FLOW_BUNDLE,
+                data: input.data,
+                size: input.data.length,
+                compression: FileCompression.NONE,
+            })
+        },
+
         async getUsedPieces() {
             const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
             const pieces = await distributedStore.get<PiecePackage[]>(redisKey)

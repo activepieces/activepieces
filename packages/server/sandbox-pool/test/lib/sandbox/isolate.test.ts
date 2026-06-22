@@ -16,7 +16,7 @@ vi.mock('fs/promises', () => ({
     mkdir: mkdirMock,
 }))
 
-vi.mock('../../../src/lib/exec', () => ({
+vi.mock('../../../src/lib/utils/exec', () => ({
     execPromise: execPromiseMock,
 }))
 

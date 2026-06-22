@@ -2,7 +2,7 @@ import { spawn } from 'child_process'
 import { mkdir } from 'fs/promises'
 import path from 'path'
 import { arch } from 'process'
-import { execPromise } from '../exec'
+import { execPromise } from '../utils/exec'
 import { CreateSandboxProcessParams, SandboxLogger, SandboxMount, SandboxProcessMaker } from './types'
 
 export function getIsolateExecutableName(nodeArch: NodeJS.Architecture = arch): string {

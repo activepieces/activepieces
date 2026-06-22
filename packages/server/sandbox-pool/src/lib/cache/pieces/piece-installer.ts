@@ -6,8 +6,8 @@ import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceT
 import decompress from 'decompress'
 import writeFileAtomic from 'write-file-atomic'
 import { SandboxPoolSettings } from '../../types'
+import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
-import { bunRunner } from '../code/bun-runner'
 
 export const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
 
