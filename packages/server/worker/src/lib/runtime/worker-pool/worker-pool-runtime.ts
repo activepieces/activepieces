@@ -1,6 +1,5 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { ActivepiecesError, ErrorCode, isNil, RuntimeKind, tryCatch, WorkerToApiContract } from '@activepieces/shared'
-import { localCacheInstall } from '../provision/piece-install-strategy'
 import {
     CreateExecutionParams,
     DisposeParams,
@@ -11,6 +10,7 @@ import {
     RuntimeExecutionResult,
     RuntimeExecutorInfo,
 } from '../types'
+import { localExecutionCache } from './cache/local-execution-cache'
 import { Sandbox } from './sandbox/types'
 import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './sandbox-manager'
 
@@ -59,9 +59,13 @@ function createWorkerPoolExecution({ manager, log, apiClient }: CreateWorkerPool
             // sandbox bind-mounts (the locked engine sandbox never runs bun itself).
             sandbox = manager.acquire({ log, apiClient })
             mountContext = { flowVersionId, platformId }
+            // Install host-side (NOT inside the locked engine sandbox) into the persistent local
+            // cache that the sandbox bind-mounts — the locked engine never runs bun itself. The
+            // serverless runtime is the engine-side counterpart: it self-installs bundled .tgz
+            // pieces inside the function (see the GCP runtime stub), so it does not go through here.
             // Keep init atomic: if the install fails, release the lane we just took so callers
             // (which only guard run()) never leak the slot.
-            const { error } = await tryCatch(() => localCacheInstall({ log, apiClient }).install({ pieces, codeSteps }))
+            const { error } = await tryCatch(() => localExecutionCache(log, apiClient).provision({ pieces, codeSteps }))
             if (error) {
                 await manager.invalidate(log)
                 sandbox = null

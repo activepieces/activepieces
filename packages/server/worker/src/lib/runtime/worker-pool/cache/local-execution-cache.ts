@@ -6,7 +6,7 @@ import { codeBuilder } from './code/code-builder'
 import { engineInstaller } from './engine/engine-installer'
 import { pieceInstaller } from './pieces/piece-installer'
 
-export const provisioner = (log: ApLogger, apiClient: WorkerToApiContract) => ({
+export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContract) => ({
     async provision({
         pieces,
         codeSteps,
