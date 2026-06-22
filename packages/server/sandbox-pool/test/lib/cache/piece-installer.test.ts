@@ -10,18 +10,33 @@ import type { ApLogger } from '@activepieces/server-utils'
 // Module-level variable updated per test so the vi.mock factory can reference it
 let testWorkspace = ''
 
-const mockInstall = vi.fn()
+const mockGet = vi.fn()
+const mockBunInstall = vi.fn()
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@activepieces/server-utils')>()
+    return {
+        ...actual,
+        safeHttp: { retryingAxios: { get: mockGet } },
+    }
+})
 
 vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
-    bunRunner: () => ({
-        install: mockInstall,
-    }),
+    bunRunner: () => ({ install: mockBunInstall }),
 }))
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
     cacheUtils: () => ({
         getGlobalCacheCommonPath: () => testWorkspace,
         getGlobalCachePathLatestVersion: () => testWorkspace,
+    }),
+}))
+
+// decompress writes the bundle entry file so the "already installed" marker check passes
+vi.mock('decompress', () => ({
+    default: vi.fn(async (_input: unknown, folder: string) => {
+        await mkdir(folder, { recursive: true })
+        await writeFile(join(folder, 'index.bundle.js'), '// bundle')
     }),
 }))
 
@@ -61,27 +76,30 @@ const fakeLog = {
     child: vi.fn().mockReturnThis(),
 } as unknown as ApLogger
 
-// REGISTRY pieces don't call apiClient.getPieceArchive so an empty object suffices
 const fakeApiClient = {} as never
 
-const fakeGetSettings = () => ({
-    EXECUTION_MODE: 'UNSANDBOXED',
-    DEV_PIECES: [] as string[],
-    ENVIRONMENT: 'production',
-    REUSE_SANDBOX: undefined,
-    FLOW_TIMEOUT_SECONDS: 600,
-    MAX_FILE_SIZE_MB: 10,
-    MAX_FLOW_RUN_LOG_SIZE_MB: 10,
-    NETWORK_MODE: 'UNRESTRICTED' as never,
-    SANDBOX_MEMORY_LIMIT: '1048576',
-    SANDBOX_PROPAGATED_ENV_VARS: [] as string[],
-    SSRF_ALLOW_LIST: [] as string[],
-})
+function settingsWith(bundleBaseUrl: string | undefined) {
+    return () => ({
+        EXECUTION_MODE: 'UNSANDBOXED',
+        DEV_PIECES: [] as string[],
+        ENVIRONMENT: 'production',
+        REUSE_SANDBOX: undefined,
+        FLOW_TIMEOUT_SECONDS: 600,
+        MAX_FILE_SIZE_MB: 10,
+        MAX_FLOW_RUN_LOG_SIZE_MB: 10,
+        NETWORK_MODE: 'UNRESTRICTED' as never,
+        SANDBOX_MEMORY_LIMIT: '1048576',
+        SANDBOX_PROPAGATED_ENV_VARS: [] as string[],
+        SSRF_ALLOW_LIST: [] as string[],
+        PIECES_BUNDLE_BASE_URL: bundleBaseUrl,
+    })
+}
 
 beforeEach(async () => {
     testWorkspace = join(tmpdir(), `piece-installer-test-${randomUUID()}`)
     await mkdir(testWorkspace, { recursive: true })
     vi.clearAllMocks()
+    mockGet.mockResolvedValue({ data: new ArrayBuffer(8) })
 })
 
 afterEach(async () => {
@@ -89,112 +107,66 @@ afterEach(async () => {
     await rm(testWorkspace, { recursive: true, force: true })
 })
 
-describe('pieceInstaller', () => {
-    it('batch install succeeds — all pieces marked ready', async () => {
-        const piece1 = makePiece('@activepieces/piece-a')
-        const piece2 = makePiece('@activepieces/piece-b')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+describe('pieceInstaller (registry pieces)', () => {
+    it('downloads from npm when no bundle base url is configured', async () => {
+        const piece = makePiece('@activepieces/piece-a')
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith(undefined))
 
-        mockInstall.mockResolvedValueOnce({ output: '' })
+        await installer.install({ pieces: [piece], includeFilters: true })
 
-        await installer.install({ pieces: [piece1, piece2], includeFilters: true })
-
-        expect(mockInstall).toHaveBeenCalledOnce()
-        expect(await pathExists(readyFilePath(piece1))).toBe(true)
-        expect(await pathExists(readyFilePath(piece2))).toBe(true)
+        expect(mockGet).toHaveBeenCalledOnce()
+        expect(mockGet.mock.calls[0]?.[0]).toBe('https://registry.npmjs.org/@activepieces/piece-a/-/piece-a-1.0.0.tgz')
+        expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('batch fails with good and bad piece — good piece marked ready, bad piece rolled back', async () => {
-        const good = makePiece('@activepieces/piece-good')
-        const bad = makePiece('@activepieces/piece-bad')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+    it('downloads from the bundle store when base url is set', async () => {
+        const piece = makePiece('@activepieces/piece-b')
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith('https://cdn.example.com/'))
 
-        mockInstall
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // batch attempt
-            .mockResolvedValueOnce({ output: '' })                           // good individual
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // bad individual
+        await installer.install({ pieces: [piece], includeFilters: true })
 
-        const error = await installer.install({ pieces: [good, bad], includeFilters: false }).catch(e => e as Error)
-
-        expect(error).toBeInstanceOf(Error)
-        expect(error.message).toContain('@activepieces/piece-bad@1.0.0')
-        expect(error.message).not.toContain('@activepieces/piece-good@1.0.0')
-        expect(mockInstall).toHaveBeenCalledTimes(3)
-
-        expect(await pathExists(readyFilePath(good))).toBe(true)
-        expect(await pathExists(pieceDirPath(bad))).toBe(false)
+        expect(mockGet).toHaveBeenCalledOnce()
+        expect(mockGet.mock.calls[0]?.[0]).toBe('https://cdn.example.com/pieces/@activepieces-piece-b-1.0.0.tgz')
+        expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('batch fails with both pieces bad — both rolled back, error names both', async () => {
-        const piece1 = makePiece('@activepieces/piece-x')
-        const piece2 = makePiece('@activepieces/piece-y')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+    it('falls back to npm when the bundle store download fails', async () => {
+        const piece = makePiece('@activepieces/piece-c')
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith('https://cdn.example.com'))
 
-        mockInstall
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // batch
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-x individual
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-y individual
+        mockGet
+            .mockReset()
+            .mockRejectedValueOnce(new Error('404 not found'))
+            .mockResolvedValueOnce({ data: new ArrayBuffer(8) })
 
-        const error = await installer.install({ pieces: [piece1, piece2], includeFilters: false }).catch(e => e as Error)
+        await installer.install({ pieces: [piece], includeFilters: true })
 
-        expect(error).toBeInstanceOf(Error)
-        expect(error.message).toContain('@activepieces/piece-x@1.0.0')
-        expect(error.message).toContain('@activepieces/piece-y@1.0.0')
-        expect(mockInstall).toHaveBeenCalledTimes(3)
-
-        expect(await pathExists(pieceDirPath(piece1))).toBe(false)
-        expect(await pathExists(pieceDirPath(piece2))).toBe(false)
+        expect(mockGet).toHaveBeenCalledTimes(2)
+        expect(mockGet.mock.calls[0]?.[0]).toBe('https://cdn.example.com/pieces/@activepieces-piece-c-1.0.0.tgz')
+        expect(mockGet.mock.calls[1]?.[0]).toBe('https://registry.npmjs.org/@activepieces/piece-c/-/piece-c-1.0.0.tgz')
+        expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('single piece fails — rolled back immediately, no individual retry', async () => {
-        const piece = makePiece('@activepieces/piece-solo')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+    it('rolls back and throws when both store and npm fail', async () => {
+        const piece = makePiece('@activepieces/piece-d')
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith(undefined))
 
-        mockInstall.mockRejectedValueOnce(new Error('install failure'))
+        mockGet.mockReset().mockRejectedValue(new Error('network down'))
 
-        await expect(installer.install({ pieces: [piece], includeFilters: true })).rejects.toThrow('install failure')
-
-        expect(mockInstall).toHaveBeenCalledOnce()
+        await expect(installer.install({ pieces: [piece], includeFilters: true })).rejects.toThrow('@activepieces/piece-d@1.0.0')
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
     })
 
-    it('piece already installed — bun install never called', async () => {
+    it('skips pieces that are already installed', async () => {
         const piece = makePiece('@activepieces/piece-cached')
         const pieceDir = pieceDirPath(piece)
-
-        await mkdir(join(pieceDir, 'node_modules'), { recursive: true })
+        await mkdir(pieceDir, { recursive: true })
+        await writeFile(join(pieceDir, 'index.bundle.js'), '// bundle')
         await writeFile(join(pieceDir, 'ready'), 'true')
 
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith(undefined))
         await installer.install({ pieces: [piece], includeFilters: true })
 
-        expect(mockInstall).not.toHaveBeenCalled()
-    })
-
-    it('individual fallback always passes --filter path regardless of includeFilters', async () => {
-        const piece1 = makePiece('@activepieces/piece-filter-a')
-        const piece2 = makePiece('@activepieces/piece-filter-b')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
-
-        mockInstall
-            .mockRejectedValueOnce(new Error('batch error'))
-            .mockResolvedValueOnce({ output: '' })
-            .mockResolvedValueOnce({ output: '' })
-
-        // Use includeFilters: false so the batch call has no filters
-        await installer.install({ pieces: [piece1, piece2], includeFilters: false })
-
-        expect(mockInstall).toHaveBeenCalledTimes(3)
-
-        // Batch call uses empty filtersPath because includeFilters is false
-        expect(mockInstall.mock.calls[0]?.[0]).toMatchObject({ filtersPath: [] })
-
-        // Individual calls must always include the --filter path (sequential order)
-        expect(mockInstall.mock.calls[1]?.[0]).toMatchObject({
-            filtersPath: [expect.stringContaining(`${piece1.pieceName}-${piece1.pieceVersion}`)],
-        })
-        expect(mockInstall.mock.calls[2]?.[0]).toMatchObject({
-            filtersPath: [expect.stringContaining(`${piece2.pieceName}-${piece2.pieceVersion}`)],
-        })
+        expect(mockGet).not.toHaveBeenCalled()
     })
 })

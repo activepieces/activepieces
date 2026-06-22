@@ -1,7 +1,7 @@
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
-import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
+import { isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
+import { type ApLogger, fileSystemUtils, memoryLock, safeHttp, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, PrivatePiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import decompress from 'decompress'
 import writeFileAtomic from 'write-file-atomic'
@@ -9,19 +9,12 @@ import { SandboxPoolSettings } from '../../types'
 import { cacheUtils } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
 
-export const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
-
-const usedPiecesMemoryCache: Record<string, boolean> = {}
-const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
-const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
-
 export const pieceInstaller = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
-    async install({ pieces, includeFilters }: InstallParams): Promise<void> {
+    async install({ pieces }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
-        const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log, apiClient, getSettings)
-        })
-        await Promise.all(installPromises)
+        await Promise.all(Object.entries(groupedPieces).map(([packagePath, piecesInGroup]) =>
+            installPieces(packagePath, piecesInGroup, log, apiClient, getSettings),
+        ))
     },
 
     getCustomPiecesPath(platformId: string): string {
@@ -29,40 +22,20 @@ export const pieceInstaller = (log: ApLogger, apiClient: WorkerToApiContract, ba
     },
 })
 
-function getCustomPiecesPath(basePath: string, platformId: string, getSettings: () => SandboxPoolSettings): string {
-    const paths = cacheUtils(basePath)
-    switch (getSettings().EXECUTION_MODE) {
-        case ExecutionMode.SANDBOX_PROCESS:
-        case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
-            return path.resolve(paths.getGlobalCachePathLatestVersion(), 'custom_pieces', platformId)
-        case ExecutionMode.UNSANDBOXED:
-        case ExecutionMode.SANDBOX_CODE_ONLY:
-            return paths.getGlobalCacheCommonPath()
-        default:
-            throw new Error('Invalid execution mode')
-    }
-}
-
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, apiClient: WorkerToApiContract, getSettings: () => SandboxPoolSettings): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], log: ApLogger, apiClient: WorkerToApiContract, getSettings: () => SandboxPoolSettings): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
-
     if (isEmpty(piecesToInstall)) {
         log.debug({ rootWorkspace }, '[pieceInstaller] No new pieces to install (already installed)')
         return
     }
-    log.info({
-        rootWorkspace,
-        piecesToInstall: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-    }, '[pieceInstaller] Installing pieces in workspace')
 
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
-            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, pieces)
+            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
             if (isEmpty(piecesToInstall)) {
-                log.info({ rootWorkspace }, '[pieceInstaller] No new pieces to install in lock (already installed)')
                 return
             }
             log.info({
@@ -74,23 +47,71 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
             const registryPieces = piecesToInstall.filter(piece => piece.packageType === PackageType.REGISTRY)
 
             await savePackageArchivesToDiskIfNotCached(rootWorkspace, archivePieces, apiClient)
-
             await wideEvent.timed({
-                name: 'extractBundles',
+                name: 'extractArchiveBundles',
                 fn: async () => {
-                    await Promise.all(archivePieces.map(piece => extractPieceBundle({ rootWorkspace, piecePackage: piece, log })))
+                    await Promise.all(archivePieces.map(piece => extractArchiveBundle({ rootWorkspace, piecePackage: piece, log })))
                     await markPiecesAsUsed(rootWorkspace, archivePieces)
                 },
             })
 
             if (!isEmpty(registryPieces)) {
-                await installRegistryPieces({ rootWorkspace, registryPieces, includeFilters, log })
+                await wideEvent.timed({
+                    name: 'installRegistryPieces',
+                    fn: async () => {
+                        await Promise.all(registryPieces.map(piece => installRegistryPiece({ rootWorkspace, piece, log, getSettings })))
+                        await markPiecesAsUsed(rootWorkspace, registryPieces)
+                    },
+                })
             }
         },
     })
 }
 
-async function extractPieceBundle({ rootWorkspace, piecePackage, log }: {
+// Registry pieces are self-contained published bundles. Download the tarball directly —
+// from the public bundle store (S3/CDN) when configured, otherwise from npm — and decompress
+// it in place. This replaces the previous bun workspace-resolution install.
+async function installRegistryPiece({ rootWorkspace, piece, log, getSettings }: {
+    rootWorkspace: string
+    piece: PiecePackage
+    log: ApLogger
+    getSettings: () => SandboxPoolSettings
+}): Promise<void> {
+    const folder = piecePath(rootWorkspace, piece)
+    const { error } = await tryCatch(async () => {
+        const bundle = await downloadBundle(piece, log, getSettings)
+        await fileSystemUtils.threadSafeMkdir(folder)
+        // npm tarballs nest everything under `package/`; strip it so the bundle lands at the folder root.
+        await decompress(bundle, folder, { strip: 1 })
+        await installExternalDependenciesIfAny({ folder, log })
+    })
+    if (error) {
+        log.error({ piece: `${piece.pieceName}@${piece.pieceVersion}`, error }, '[pieceInstaller] Registry piece installation failed, rolling back')
+        await rm(folder, { recursive: true, force: true })
+        throw new Error(`[pieceInstaller] Failed to install: ${piece.pieceName}@${piece.pieceVersion}`)
+    }
+}
+
+async function downloadBundle(piece: PiecePackage, log: ApLogger, getSettings: () => SandboxPoolSettings): Promise<Buffer> {
+    const baseUrl = getSettings().PIECES_BUNDLE_BASE_URL
+    if (!isNil(baseUrl)) {
+        const fromStore = await tryCatch(() => downloadFromUrl(bundleStoreUrl(baseUrl, piece)))
+        if (isNil(fromStore.error) && !isNil(fromStore.data)) {
+            return fromStore.data
+        }
+        log.info({ piece: { name: piece.pieceName, version: piece.pieceVersion } }, '[pieceInstaller] Bundle not found in store, falling back to npm')
+    }
+    return downloadFromUrl(npmTarballUrl(piece))
+}
+
+async function downloadFromUrl(url: string): Promise<Buffer> {
+    const response = await safeHttp.retryingAxios.get<ArrayBuffer>(url, {
+        responseType: 'arraybuffer',
+    })
+    return Buffer.from(response.data)
+}
+
+async function extractArchiveBundle({ rootWorkspace, piecePackage, log }: {
     rootWorkspace: string
     piecePackage: PrivatePiecePackage
     log: ApLogger
@@ -98,10 +119,25 @@ async function extractPieceBundle({ rootWorkspace, piecePackage, log }: {
     const folder = piecePath(rootWorkspace, piecePackage)
     const archivePath = getPackageArchivePathForPiece(rootWorkspace, piecePackage)
     await fileSystemUtils.threadSafeMkdir(folder)
-    // The published artifact is a single self-contained bundle. npm tarballs nest
-    // everything under `package/`; strip it so the bundle lands at the folder root.
     await decompress(archivePath, folder, { strip: 1 })
     await installExternalDependenciesIfAny({ folder, log })
+}
+
+async function savePackageArchivesToDiskIfNotCached(
+    rootWorkspace: string,
+    pieces: PrivatePiecePackage[],
+    apiClient: WorkerToApiContract,
+): Promise<void> {
+    const saveToDiskJobs = pieces.map(async (piece) => {
+        const archivePath = getPackageArchivePathForPiece(rootWorkspace, piece)
+        if (await fileSystemUtils.fileExists(archivePath)) {
+            return
+        }
+        await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
+        const archive = await apiClient.getPieceArchive({ archiveId: piece.archiveId })
+        await writeFile(archivePath, archive)
+    })
+    await Promise.all(saveToDiskJobs)
 }
 
 // Third-party deps are external by default, so a bundle ships a package.json listing its
@@ -119,177 +155,53 @@ async function installExternalDependenciesIfAny({ folder, log }: { folder: strin
     await bunRunner(log).install({ path: folder, filtersPath: [] })
 }
 
-async function installRegistryPieces({ rootWorkspace, registryPieces, includeFilters, log }: {
-    rootWorkspace: string
-    registryPieces: PiecePackage[]
-    includeFilters: boolean
-    log: ApLogger
-}): Promise<void> {
-    await createRootPackageJson({ path: rootWorkspace })
-
-    await Promise.all(registryPieces.map(piece => createPiecePackageJson({
-        rootWorkspace,
-        piecePackage: piece,
-    })))
-
-    await wideEvent.timed({
-        name: 'bunInstall',
-        fn: async () => {
-            const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
-                path: rootWorkspace,
-                filtersPath: includeFilters ? registryPieces.map(relativePiecePath) : [],
-            }))
-
-            if (isNil(batchError)) {
-                await markPiecesAsUsed(rootWorkspace, registryPieces)
-                log.info({
-                    rootWorkspace,
-                    piecesCount: registryPieces.length,
-                }, '[pieceInstaller] Installed registry pieces using bun')
-                return
-            }
-
-            if (registryPieces.length === 1) {
-                log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
-                await rollbackInstallation(rootWorkspace, registryPieces)
-                throw batchError
-            }
-
-            log.warn({
-                rootWorkspace,
-                pieces: registryPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-                error: batchError,
-            }, '[pieceInstaller] Batch install failed, retrying pieces individually')
-
-            const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, registryPieces, log)
-
-            if (failedPieces.length > 0) {
-                const names = failedPieces.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
-                throw new Error(`[pieceInstaller] Failed to install: ${names}`)
-            }
-
-            log.info({
-                rootWorkspace,
-                piecesCount: registryPieces.length,
-            }, '[pieceInstaller] Installed registry pieces using bun (individual fallback)')
-        },
-    })
-}
-
-async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
-    await Promise.all(pieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
-        recursive: true,
-        force: true,
-    })))
-}
-
-async function tryInstallPiecesIndividually(
-    rootWorkspace: string,
-    pieces: PiecePackage[],
-    log: ApLogger,
-): Promise<PiecePackage[]> {
-    const failures: PiecePackage[] = []
-    for (const piece of pieces) {
-        const { error } = await tryCatch(async () =>
-            bunRunner(log).install({
-                path: rootWorkspace,
-                filtersPath: [relativePiecePath(piece)],
-            }),
-        )
-        if (error) {
-            log.error({
-                piece: `${piece.pieceName}@${piece.pieceVersion}`,
-                error,
-            }, '[pieceInstaller] Individual piece installation failed, rolling back')
-            await rollbackInstallation(rootWorkspace, [piece])
-            failures.push(piece)
-        }
-        else {
-            await markPiecesAsUsed(rootWorkspace, [piece])
-        }
-    }
-    return failures
-}
-
 function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getSettings: () => SandboxPoolSettings): Record<string, PiecePackage[]> {
     const paths = cacheUtils(basePath)
-    return groupBy(pieces, (piece) => {
-        switch (piece.packageType) {
-            case PackageType.ARCHIVE:
+    return pieces.reduce<Record<string, PiecePackage[]>>((groups, piece) => {
+        const packagePath = packagePathForPiece(piece, basePath, paths, getSettings)
+        groups[packagePath] = [...(groups[packagePath] ?? []), piece]
+        return groups
+    }, {})
+}
+
+function packagePathForPiece(piece: PiecePackage, basePath: string, paths: ReturnType<typeof cacheUtils>, getSettings: () => SandboxPoolSettings): string {
+    switch (piece.packageType) {
+        case PackageType.ARCHIVE:
+            return getCustomPiecesPath(basePath, piece.platformId, getSettings)
+        case PackageType.REGISTRY: {
+            if (piece.pieceType === PieceType.CUSTOM && !isNil(piece.platformId)) {
                 return getCustomPiecesPath(basePath, piece.platformId, getSettings)
-            case PackageType.REGISTRY: {
-                if (piece.pieceType === PieceType.CUSTOM && !isNil(piece.platformId)) {
-                    return getCustomPiecesPath(basePath, piece.platformId, getSettings)
-                }
-                return paths.getGlobalCacheCommonPath()
             }
-            default:
-                throw new Error('Invalid package type')
+            return paths.getGlobalCacheCommonPath()
         }
-    })
-}
-
-async function savePackageArchivesToDiskIfNotCached(
-    rootWorkspace: string,
-    pieces: PiecePackage[],
-    apiClient: WorkerToApiContract,
-): Promise<void> {
-    const saveToDiskJobs = pieces.map(async (piece) => {
-        if (piece.packageType !== PackageType.ARCHIVE) {
-            return
-        }
-        const archivePath = getPackageArchivePathForPiece(rootWorkspace, piece)
-        if (await fileSystemUtils.fileExists(archivePath)) {
-            return
-        }
-        await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
-        const archive = await apiClient.getPieceArchive({ archiveId: piece.archiveId })
-        await writeFile(archivePath, archive)
-    })
-    await Promise.all(saveToDiskJobs)
-}
-
-async function createRootPackageJson({ path }: { path: string }): Promise<void> {
-    const packageJsonPath = join(path, 'package.json')
-    await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
-    await writeFileAtomic(packageJsonPath, JSON.stringify({
-        'name': 'fast-workspace',
-        'version': '1.0.0',
-        'workspaces': [
-            'pieces/**',
-        ],
-    }, null, 2), 'utf8')
-}
-
-async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
-    rootWorkspace: string
-    piecePackage: PiecePackage
-}): Promise<void> {
-    const packageJsonPath = join(piecePath(rootWorkspace, piecePackage), 'package.json')
-
-    const packageJson = {
-        'name': `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
-        'version': `${piecePackage.pieceVersion}`,
-        'dependencies': {
-            [piecePackage.pieceName]: piecePackage.packageType === PackageType.REGISTRY ? piecePackage.pieceVersion : getPackageArchivePathForPiece(rootWorkspace, piecePackage),
-        },
+        default:
+            throw new Error('Invalid package type')
     }
-    await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
-    await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
 }
 
-async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {
+function getCustomPiecesPath(basePath: string, platformId: string, getSettings: () => SandboxPoolSettings): string {
+    const paths = cacheUtils(basePath)
+    switch (getSettings().EXECUTION_MODE) {
+        case ExecutionMode.SANDBOX_PROCESS:
+        case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
+            return path.resolve(paths.getGlobalCachePathLatestVersion(), 'custom_pieces', platformId)
+        case ExecutionMode.UNSANDBOXED:
+        case ExecutionMode.SANDBOX_CODE_ONLY:
+            return paths.getGlobalCacheCommonPath()
+        default:
+            throw new Error('Invalid execution mode')
+    }
+}
+
+async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePackage[]): Promise<{ piecesToInstall: PiecePackage[] }> {
     const piecesWithCheck = await Promise.all(
         pieces.map(async (piece) => {
             const installed = await pieceCheckIfAlreadyInstalled(rootWorkspace, piece)
             return { piece, installed }
         }),
     )
-
-    const piecesToInstall = piecesWithCheck.filter(({ installed }) => !installed).map(({ piece }) => piece)
-
     return {
-        piecesToInstall,
+        piecesToInstall: piecesWithCheck.filter(({ installed }) => !installed).map(({ piece }) => piece),
     }
 }
 
@@ -302,10 +214,7 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
     if (!readyExists) {
         return false
     }
-    const entryMarker = piece.packageType === PackageType.ARCHIVE
-        ? join(pieceFolder, PIECE_BUNDLE_FILENAME)
-        : join(pieceFolder, 'node_modules')
-    if (!await fileSystemUtils.fileExists(entryMarker)) {
+    if (!await fileSystemUtils.fileExists(join(pieceFolder, PIECE_BUNDLE_FILENAME))) {
         await rm(join(pieceFolder, 'ready'), { force: true })
         return false
     }
@@ -314,26 +223,42 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
-    const writeToDiskJobs = pieces.map(async (piece) => {
+    await Promise.all(pieces.map(async (piece) => {
         const pieceFolder = piecePath(rootWorkspace, piece)
         await fileSystemUtils.threadSafeMkdir(pieceFolder)
-        await writeFileAtomic(
-            join(pieceFolder, 'ready'),
-            'true',
-        )
-    })
-    await Promise.all(writeToDiskJobs)
+        await writeFileAtomic(join(pieceFolder, 'ready'), 'true')
+        usedPiecesMemoryCache[pieceFolder] = true
+    }))
+}
+
+function piecePath(rootWorkspace: string, piece: PiecePackage): string {
+    return join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 }
 
 function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: PrivatePiecePackage): string {
     return join(piecePath(rootWorkspace, piecePackage), `${piecePackage.archiveId}.tgz`)
 }
 
+function bundleStoreUrl(baseUrl: string, piece: PiecePackage): string {
+    const normalizedBase = baseUrl.replace(/\/+$/, '')
+    return `${normalizedBase}/${S3_PIECES_PREFIX}${piece.pieceName.replace('/', '-')}-${piece.pieceVersion}.tgz`
+}
+
+function npmTarballUrl(piece: PiecePackage): string {
+    return `${NPM_REGISTRY_URL}/${piece.pieceName}/-/${unscopedName(piece.pieceName)}-${piece.pieceVersion}.tgz`
+}
+
+function unscopedName(name: string): string {
+    return name.startsWith('@') ? name.split('/')[1] : name
+}
+
+const usedPiecesMemoryCache: Record<string, boolean> = {}
+const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
+const S3_PIECES_PREFIX = 'pieces/'
+
+export const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
+
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
-}
-
-type PieceInstallationResult = {
-    piecesToInstall: PiecePackage[]
 }
