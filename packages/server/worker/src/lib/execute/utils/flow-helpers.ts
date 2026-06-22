@@ -1,8 +1,7 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
-import { CodeArtifact } from '../../cache/code/code-builder'
-import { pieceCache, PieceNotFoundError } from '../../cache/pieces/piece-cache'
-import { RuntimeExecution } from '../../runtime/types'
+import { CodeArtifact, RuntimeExecution } from '../../runtime/types'
+import { pieceCache, PieceNotFoundError } from '../../runtime/worker-pool/cache/pieces/piece-cache'
 
 export async function provisionFlowPieces(params: {
     flowVersion: FlowVersion

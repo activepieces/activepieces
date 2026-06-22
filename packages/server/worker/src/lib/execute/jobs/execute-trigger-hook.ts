@@ -6,8 +6,8 @@ import {
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
-import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
+import { flowCache } from '../../runtime/worker-pool/cache/flow/flow-cache'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'

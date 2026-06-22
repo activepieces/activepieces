@@ -14,7 +14,7 @@ vi.mock('tree-kill', () => ({
     default: treeKillMock,
 }))
 
-vi.mock('../../../../../src/lib/cache/cache-paths', () => ({
+vi.mock('../../../../../src/lib/runtime/worker-pool/cache/cache-paths', () => ({
     getGlobalCachePathLatestVersion: vi.fn(() => '/tmp/test-cache'),
     getGlobalCodeCachePath: vi.fn(() => '/tmp/test-cache/codes'),
 }))

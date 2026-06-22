@@ -29,7 +29,7 @@ vi.mock('../../../../src/lib/runtime/worker-pool/sandbox/fork', () => ({
     simpleProcess: simpleProcessMock,
 }))
 
-vi.mock('../../../../src/lib/cache/cache-paths', () => ({
+vi.mock('../../../../src/lib/runtime/worker-pool/cache/cache-paths', () => ({
     getGlobalCacheCommonPath: getGlobalCacheCommonPathMock,
     getGlobalCodeCachePath: getGlobalCodeCachePathMock,
     getEnginePath: getEnginePathMock,

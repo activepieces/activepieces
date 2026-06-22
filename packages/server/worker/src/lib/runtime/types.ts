@@ -1,6 +1,5 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { EngineOperation, EngineOperationType, EngineResponse, PiecePackage, RuntimeKind, WorkerToApiContract } from '@activepieces/shared'
-import { CodeArtifact } from '../cache/code/code-builder'
+import { EngineOperation, EngineOperationType, EngineResponse, FlowVersionState, PiecePackage, RuntimeKind, SourceCode, WorkerToApiContract } from '@activepieces/shared'
 
 // A Runtime is the pluggable seam that decides WHERE each step of a job runs. The worker always
 // drives the lifecycle (createExecution -> init -> provision -> run -> dispose); the runtime impl
@@ -64,4 +63,13 @@ export type RuntimeExecutorInfo = {
     boxId: number
     pid: number
     busy: boolean
+}
+
+// A code step to provision. Part of the generic provision contract (ProvisionParams.codeSteps),
+// so it lives here rather than in the worker-pool code-builder that consumes it.
+export type CodeArtifact = {
+    name: string
+    sourceCode: SourceCode
+    flowVersionId: string
+    flowVersionState: FlowVersionState
 }

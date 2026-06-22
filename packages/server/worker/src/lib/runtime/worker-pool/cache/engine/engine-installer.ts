@@ -5,7 +5,7 @@ import { fileSystemUtils } from '@activepieces/server-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ApEnvironment } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
-import { workerSettings } from '../../config/worker-settings'
+import { workerSettings } from '../../../../config/worker-settings'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 
 const engineExecutablePath = 'dist/packages/engine/main.js'

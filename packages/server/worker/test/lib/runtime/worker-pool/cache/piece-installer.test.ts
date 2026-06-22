@@ -12,13 +12,13 @@ let testWorkspace = ''
 
 const mockInstall = vi.fn()
 
-vi.mock('../src/lib/cache/code/bun-runner', () => ({
+vi.mock('../../../../../src/lib/runtime/worker-pool/cache/code/bun-runner', () => ({
     bunRunner: () => ({
         install: mockInstall,
     }),
 }))
 
-vi.mock('../src/lib/config/worker-settings', () => ({
+vi.mock('../../../../../src/lib/config/worker-settings', () => ({
     workerSettings: {
         getSettings: () => ({
             EXECUTION_MODE: 'UNSANDBOXED',
@@ -27,13 +27,13 @@ vi.mock('../src/lib/config/worker-settings', () => ({
     },
 }))
 
-vi.mock('../src/lib/cache/cache-paths', () => ({
+vi.mock('../../../../../src/lib/runtime/worker-pool/cache/cache-paths', () => ({
     getGlobalCacheCommonPath: () => testWorkspace,
     getGlobalCachePathLatestVersion: () => testWorkspace,
 }))
 
 // Import after mocks are registered
-const { pieceInstaller } = await import('../src/lib/cache/pieces/piece-installer')
+const { pieceInstaller } = await import('../../../../../src/lib/runtime/worker-pool/cache/pieces/piece-installer')
 
 function makePiece(name: string, version = '1.0.0'): OfficialPiecePackage {
     return {

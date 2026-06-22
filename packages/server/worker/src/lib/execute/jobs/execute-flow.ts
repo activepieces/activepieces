@@ -17,9 +17,9 @@ import {
     tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
-import { flowCache } from '../../cache/flow/flow-cache'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
+import { flowCache } from '../../runtime/worker-pool/cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { provisionFlowPieces } from '../utils/flow-helpers'
 

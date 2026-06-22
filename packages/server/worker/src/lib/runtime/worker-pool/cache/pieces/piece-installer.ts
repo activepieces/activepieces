@@ -15,7 +15,7 @@ import {
     WorkerToApiContract,
 } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
-import { workerSettings } from '../../config/worker-settings'
+import { workerSettings } from '../../../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
 

@@ -1,7 +1,7 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { PiecePackage, WorkerToApiContract } from '@activepieces/shared'
-import { CodeArtifact } from '../../cache/code/code-builder'
-import { provisioner } from '../../cache/provisioner'
+import { CodeArtifact } from '../types'
+import { provisioner } from '../worker-pool/cache/provisioner'
 
 // LocalCacheInstall is the worker-pool strategy: it runs host-side (NOT inside the locked engine
 // sandbox), installing pieces/code into the persistent local cache that is then mounted into the

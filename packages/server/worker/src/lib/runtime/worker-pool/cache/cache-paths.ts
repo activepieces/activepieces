@@ -1,6 +1,6 @@
 import { readdir, rm } from 'fs/promises'
 import path from 'path'
-import { logger } from '../config/logger'
+import { logger } from '../../../config/logger'
 
 // The cache root is injectable so different runtimes can point the on-disk piece/code/engine
 // cache at a writable location of their choosing (e.g. a host-mounted persistent dir for the
