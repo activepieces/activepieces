@@ -45,7 +45,7 @@ The engine SSRF guard is **best-effort, in-process protection**. It reliably sto
 For multi-tenant deployments that run untrusted code, enforce the real egress boundary in **infrastructure** — a VPC firewall / network policy / egress gateway that blocks the cloud-metadata IP (`169.254.169.254`) and your private ranges independently of the application. Treat `AP_NETWORK_MODE=STRICT` as defense-in-depth on top of that, not as a replacement for it.
 </Warning>
 
-The guard is independent of the sandbox execution mode — it is installed in every mode when `AP_NETWORK_MODE=STRICT`. See [Sandboxing](/install/architecture/sandboxing) for what each sandbox mode isolates at the process level; network security is orthogonal — it constrains what code is allowed to *reach*, regardless of *how* it runs.
+The guard is independent of the sandbox execution mode — it is installed in every mode when `AP_NETWORK_MODE=STRICT`. See [Sandboxing](./sandboxing) for what each sandbox mode isolates at the process level; network security is orthogonal — it constrains what code is allowed to *reach*, regardless of *how* it runs.
 
 ## Verifying Your Setup
 

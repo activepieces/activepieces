@@ -1,10 +1,10 @@
-import { access, mkdir, writeFile } from 'node:fs/promises'
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PackageType, PieceType } from '@activepieces/shared'
-import type { OfficialPiecePackage } from '@activepieces/shared'
+import type { OfficialPiecePackage, PrivatePiecePackage } from '@activepieces/shared'
 import type { ApLogger } from '@activepieces/server-utils'
 
 // Module-level variable updated per test so the vi.mock factory can reference it
@@ -37,11 +37,22 @@ function makePiece(name: string, version = '1.0.0'): OfficialPiecePackage {
     }
 }
 
-function pieceDirPath(piece: OfficialPiecePackage): string {
+function makeArchivePiece(name: string, version = '1.0.0'): PrivatePiecePackage {
+    return {
+        packageType: PackageType.ARCHIVE,
+        pieceType: PieceType.CUSTOM,
+        pieceName: name,
+        pieceVersion: version,
+        archiveId: randomUUID(),
+        platformId: 'platform-1',
+    }
+}
+
+function pieceDirPath(piece: OfficialPiecePackage | PrivatePiecePackage): string {
     return join(testWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 }
 
-function readyFilePath(piece: OfficialPiecePackage): string {
+function readyFilePath(piece: OfficialPiecePackage | PrivatePiecePackage): string {
     return join(pieceDirPath(piece), 'ready')
 }
 
@@ -169,6 +180,28 @@ describe('pieceInstaller', () => {
         await installer.install({ pieces: [piece], includeFilters: true })
 
         expect(mockInstall).not.toHaveBeenCalled()
+    })
+
+    it('archive piece installs through bun with a unique suffixed workspace name pointing at its tgz', async () => {
+        const piece = makeArchivePiece('@acme/piece-sample', '0.3.3')
+        const getPieceArchive = vi.fn().mockResolvedValue(Buffer.from('tgz'))
+        const installer = pieceInstaller(fakeLog, { getPieceArchive } as never, testWorkspace, fakeGetSettings)
+
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [piece], includeFilters: true })
+
+        // The archive is downloaded once and installed through the shared bun workspace.
+        expect(getPieceArchive).toHaveBeenCalledOnce()
+        expect(mockInstall).toHaveBeenCalledOnce()
+        expect(await pathExists(readyFilePath(piece))).toBe(true)
+
+        // The folder's package.json carries the unique `<pieceName>-<pieceVersion>` workspace name
+        // (never the raw piece name) and depends on the saved .tgz — so multiple cached versions of
+        // the same piece can never collide on a bun workspace name.
+        const manifest = JSON.parse(await readFile(join(pieceDirPath(piece), 'package.json'), 'utf8'))
+        expect(manifest.name).toBe('@acme/piece-sample-0.3.3')
+        expect(manifest.dependencies['@acme/piece-sample']).toContain('.tgz')
     })
 
     it('individual fallback always passes --filter path regardless of includeFilters', async () => {
