@@ -4,33 +4,44 @@ import { onCallService } from '@activepieces/server-utils'
 import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
-import { flowCache } from '../../runtime/local-pool/cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { resolveFlowArtifacts } from '../utils/flow-helpers'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
     async execute(ctx: JobContext, data: ExecuteFlowJobData): Promise<FireAndForgetJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().FLOW_TIMEOUT_SECONDS
 
-        const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
-        if (isNil(flowVersion)) {
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        const { data: p, error: provisionError } = await tryCatch(() =>
+            execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
+        )
+        if (provisionError) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, provisionError))
+            throw provisionError
+        }
+
+        if (p.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found, skipping')
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        const { data: artifacts, error: resolveError } = await tryCatch(() => resolveFlowArtifacts({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
-        if (resolveError) {
-            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, resolveError))
-            throw resolveError
-        }
-        if (artifacts.disabled) {
+        if (p.kind === 'disabled') {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
+        // p.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to provision
+        if (isNil(p.flowVersion)) {
+            await execution.dispose({ invalidate: true })
+            const error = new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'flowVersion missing after provision' } })
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, error))
+            throw error
+        }
+        const flowVersion: FlowVersion = p.flowVersion
+
         if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
+            await execution.dispose({ invalidate: true })
             const error = new ActivepiecesError({
                 code: ErrorCode.RESUME_LOGS_FILE_MISSING,
                 params: { runId: data.runId },
@@ -39,9 +50,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             throw error
         }
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
         try {
-            await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId, pieces: artifacts.pieces, codeSteps: artifacts.codeSteps })
             const operation = buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
             const result = await execution.run({
                 operationType: EngineOperationType.EXECUTE_FLOW,

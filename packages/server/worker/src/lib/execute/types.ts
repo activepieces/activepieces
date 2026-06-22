@@ -1,6 +1,6 @@
+import { Runtime } from '@activepieces/sandbox-pool'
 import { type ApLogger } from '@activepieces/server-utils'
 import { EngineResponseStatus, JobData, WorkerJobType, WorkerToApiContract } from '@activepieces/shared'
-import { Runtime } from '../runtime/types'
 
 export enum JobResultKind {
     FIRE_AND_FORGET = 'FIRE_AND_FORGET',
