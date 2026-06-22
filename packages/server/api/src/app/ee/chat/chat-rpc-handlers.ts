@@ -1,24 +1,6 @@
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    ChatConfigResponse,
-    ChatConversationStatus,
-    chatToolClassification,
-    ErrorCode,
-    ExecuteChatToolRequest,
-    ExecuteChatToolResponse,
-    FlowActionType,
-    flowStructureUtil,
-    GetChatConfigRequest,
-    isNil,
-    PersistedChatMessage,
-    PersistedChatPartType,
-    PersistedChatRole,
-    sanitizeObjectForPostgresql,
-    SaveChatMessagesRequest,
-    UpdateChatProgressRequest,
-    UpdateProjectContextRequest,
-} from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FlowActionType, flowStructureUtil, GetChatConfigRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatMessagesRequest, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
@@ -162,7 +144,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const saveResult = await chatHelpers.conversationRepo().update(input.conversationId, updates)
         if (saveResult.affected === 0) {
-            log.warn({ conversationId: input.conversationId }, 'saveChatMessages: conversation not found, may have been deleted')
+            log.warn({ conversation: { id: input.conversationId } }, 'saveChatMessages: conversation not found, may have been deleted')
         }
 
         if (input.messages.length > 0) {

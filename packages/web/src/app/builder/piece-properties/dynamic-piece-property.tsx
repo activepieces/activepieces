@@ -1,7 +1,7 @@
+import { isNil } from '@activepieces/core-utils';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 import {
   AUTHENTICATION_PROPERTY_NAME,
-  isNil,
   PropertySettings,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';

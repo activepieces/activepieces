@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { triggers } from './lib/triggers';
 
 export const calcomAuth = PieceAuth.SecretText({

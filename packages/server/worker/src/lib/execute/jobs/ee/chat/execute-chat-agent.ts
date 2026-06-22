@@ -1,19 +1,6 @@
+import { AIProviderName, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import {
-    AIProviderName,
-    ChatAgentEvent,
-    ChatAgentEventType,
-    ChatPhase,
-    EngineResponseStatus,
-    ErrorCode,
-    ExecuteChatAgentJobData,
-    isNil,
-    PersistedChatMessage,
-    PersistedChatRole,
-    spreadIfDefined,
-    tryCatch,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
@@ -33,7 +20,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
     async execute(ctx: JobContext, data: ExecuteChatAgentJobData): Promise<FireAndForgetJobResult> {
         const { conversationId, runId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = data
-        const log = ctx.log.child({ conversationId })
+        const log = ctx.log.child({ conversation: { id: conversationId } })
 
         const config = await ctx.apiClient.getChatConfig({
             conversationId, runId, platformId, userId, userMessage, modelName, files,
@@ -127,9 +114,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             if (abortController.signal.aborted) {
                 if (streamError) {
-                    log.warn({ err: streamError, conversationId }, 'Stream error occurred during abort')
+                    log.warn({ error: streamError, conversation: { id: conversationId } }, 'Stream error occurred during abort')
                 }
-                log.info({ conversationId, completedSteps: abortedStepMessages.length }, 'Chat agent cancelled by user')
+                log.info({ conversation: { id: conversationId }, completedSteps: abortedStepMessages.length }, 'Chat agent cancelled by user')
                 const thinkingDurationMs = Date.now() - thinkingStartTime
                 const cancelSavePayload = {
                     conversationId,
@@ -141,11 +128,11 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveChatMessages(cancelSavePayload))
                 if (cancelSaveError) {
-                    log.warn({ err: cancelSaveError, conversationId }, 'Cancel save failed, retrying')
+                    log.warn({ error: cancelSaveError, conversation: { id: conversationId } }, 'Cancel save failed, retrying')
                     await new Promise((resolve) => setTimeout(resolve, 1_000))
                     const { error: retryError } = await tryCatch(() => ctx.apiClient.saveChatMessages(cancelSavePayload))
                     if (retryError) {
-                        log.error({ err: retryError, conversationId }, 'Cancel save retry also failed')
+                        log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
                 await sendEventWithRetry({
@@ -161,7 +148,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             const autoTitle = await autoTitlePromise
 
             log.info({
-                conversationId,
+                conversation: { id: conversationId },
                 continuations,
                 inputTokens: totalInputTokens,
                 outputTokens: totalOutputTokens,
@@ -183,11 +170,11 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             }
             const { error: saveError } = await tryCatch(() => ctx.apiClient.saveChatMessages(savePayload))
             if (saveError) {
-                log.warn({ err: saveError, conversationId }, 'First saveChatMessages attempt failed, retrying')
+                log.warn({ error: saveError, conversation: { id: conversationId } }, 'First saveChatMessages attempt failed, retrying')
                 await new Promise((resolve) => setTimeout(resolve, 1_000))
                 const { error: retryError } = await tryCatch(() => ctx.apiClient.saveChatMessages(savePayload))
                 if (retryError) {
-                    log.error({ err: retryError, conversationId }, 'saveChatMessages retry also failed')
+                    log.error({ error: retryError, conversation: { id: conversationId } }, 'saveChatMessages retry also failed')
                     throw retryError
                 }
             }
@@ -209,7 +196,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             })
         }
         catch (err) {
-            log.error({ err, conversationId }, '[executeChatAgent] Agent job failed')
+            log.error({ error: err, conversation: { id: conversationId } }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
             await ctx.apiClient.saveChatMessages({
@@ -227,7 +214,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             clearInterval(cancelCheckInterval)
             if (mcpClient) {
                 await mcpClient.close().catch((closeErr: unknown) => {
-                    log.warn({ err: closeErr }, 'Failed to close MCP client')
+                    log.warn({ error: closeErr }, 'Failed to close MCP client')
                 })
             }
         }
@@ -279,7 +266,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects
                 toolName: '__approval_wait', toolInput: { gateId, timeoutMs: blockMs }, platformId, userId,
             }))
             if (error) {
-                log.warn({ err: error, gateId }, 'Approval wait RPC failed, retrying')
+                log.warn({ error, gateId }, 'Approval wait RPC failed, retrying')
                 await new Promise((resolve) => setTimeout(resolve, 1_000))
                 continue
             }
@@ -395,7 +382,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
                 flushTimer = setTimeout(() => {
                     flushTimer = null
                     flushChunks().catch((err: unknown) => {
-                        log.error({ err, conversationId }, 'Failed to flush chat chunk batch')
+                        log.error({ error: err, conversation: { id: conversationId } }, 'Failed to flush chat chunk batch')
                     })
                 }, BATCH_FLUSH_MS)
             }
@@ -430,7 +417,7 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
     })
 
     if (!generatedTitle) {
-        log.warn({ conversationId }, 'Failed to auto-generate title')
+        log.warn({ conversation: { id: conversationId } }, 'Failed to auto-generate title')
     }
     return generatedTitle ?? undefined
 }
@@ -450,7 +437,7 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
         const { error } = await tryCatch(fn)
         if (!error) return
         if (attempt === maxAttempts) {
-            log?.warn({ err: error, attempt }, 'All retry attempts exhausted')
+            log?.warn({ error, attempt }, 'All retry attempts exhausted')
             return
         }
         await delayWithJitter(RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1))

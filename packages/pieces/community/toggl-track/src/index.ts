@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { createClient } from './lib/actions/create-client';
 import { createProject } from './lib/actions/create-project';

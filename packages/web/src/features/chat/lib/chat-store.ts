@@ -1,8 +1,8 @@
+import { omit } from '@activepieces/core-utils';
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
   BatchProgressData,
-  omit,
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 

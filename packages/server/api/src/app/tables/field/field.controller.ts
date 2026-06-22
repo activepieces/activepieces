@@ -1,4 +1,5 @@
-import { CreateFieldRequest, Field, ListFieldsRequestQuery, Permission, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'

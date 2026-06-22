@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 
@@ -53,7 +53,7 @@ export const duplicateFileAction = createAction({
     const parentFolderId = context.propsValue.folderId;
     const mimeType = context.propsValue.mimeType;
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const requestBody: any = {
       name: nameForNewFile,

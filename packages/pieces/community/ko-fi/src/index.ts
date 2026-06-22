@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { koFiAuth } from './lib/auth';
 import { newCommission } from './lib/triggers/new-commission';

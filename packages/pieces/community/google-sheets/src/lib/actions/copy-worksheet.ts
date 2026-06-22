@@ -1,7 +1,7 @@
 import { googleSheetsAuth } from '../common/common';
 import { createAction } from '@activepieces/pieces-framework';
 import { includeTeamDrivesProp, sheetIdProp, spreadsheetIdProp } from '../common/props';
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient } from '../common/common';
 
 export const copyWorksheetAction = createAction({
@@ -23,7 +23,7 @@ export const copyWorksheetAction = createAction({
 	},
 	async run(context) {
 		const authClient = await createGoogleClient(context.auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const response = await sheets.spreadsheets.sheets.copyTo({
 			spreadsheetId: context.propsValue.spreadsheetId,

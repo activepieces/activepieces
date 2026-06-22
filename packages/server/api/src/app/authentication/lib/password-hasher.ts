@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
 import bcrypt from 'bcrypt'
 import { FirebaseScrypt } from 'firebase-scrypt'
 import { system } from '../../helper/system/system'

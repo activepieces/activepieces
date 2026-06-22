@@ -1,9 +1,6 @@
+import { isNil } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
-import {
-    isNil,
-    McpToolDefinition,
-    ProjectScopedMcpServer,
-} from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { mcpUtils } from './mcp-utils'

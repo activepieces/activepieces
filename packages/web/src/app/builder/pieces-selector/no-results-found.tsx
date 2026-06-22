@@ -1,6 +1,6 @@
 import { ApFlagId, feedbackUrl } from '@activepieces/shared';
 import { t } from 'i18next';
-import { SearchX } from 'lucide-react';
+import { MessageSquarePlusIcon, SearchXIcon } from 'lucide-react';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -14,18 +14,28 @@ const NoResultsFound = () => {
   const showRequestPieceButton = showCommunityLinks && !isEmbedding;
 
   return (
-    <div className="flex flex-col gap-2 items-center justify-center h-full ">
-      <SearchX className="w-14 h-14" />
-      <div className="text-sm ">{t('No pieces found')}</div>
-      <div className="text-sm ">{t('Try adjusting your search')}</div>
+    <div className="flex flex-col items-center justify-center gap-3 h-full px-6 text-center">
+      <div className="flex items-center justify-center size-12 rounded-full bg-muted">
+        <SearchXIcon className="size-6 text-muted-foreground" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <div className="text-sm font-medium text-foreground">
+          {t('No pieces found')}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {t('Try a different search term')}
+        </div>
+      </div>
       {showRequestPieceButton && (
         <Button
-          variant="default"
+          variant="outline"
           size="sm"
+          className="mt-1"
           onClick={() => {
             window.open(`${feedbackUrl}`, '_blank', 'noopener noreferrer');
           }}
         >
+          <MessageSquarePlusIcon className="size-4 mr-2" />
           {t('Request Piece')}
         </Button>
       )}

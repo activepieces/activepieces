@@ -1,10 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   PopulatedFlow,
   Template,
   TemplateTelemetryEventType,
   TemplateType,
   UncategorizedFolderId,
-  isNil,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';

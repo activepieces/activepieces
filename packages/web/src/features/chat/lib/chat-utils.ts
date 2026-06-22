@@ -1,7 +1,7 @@
+import { isObject } from '@activepieces/core-utils';
 import {
   ActionReceiptEvent,
   ChatHistoryMessage,
-  isObject,
   PersistedChatMessage,
   PersistedChatPart,
   PersistedChatPartType,

@@ -69,17 +69,21 @@ const scaffoldPiece = async (
     dependencies: {
       '@activepieces/pieces-common': 'workspace:*',
       '@activepieces/pieces-framework': 'workspace:*',
-      '@activepieces/shared': 'workspace:*',
+      '@activepieces/core-piece-types': 'workspace:*',
+      '@activepieces/core-utils': 'workspace:*',
+    },
+    devDependencies: {
       tslib: '2.6.2',
     },
     scripts: {
       build: 'tsc -p tsconfig.lib.json && cp package.json dist/',
+      bundle: 'node ../../../../dist/packages/cli/src/index.js pieces bundle',
       lint: "eslint 'src/**/*.ts'",
     },
   };
   await writeFile(
     path.join(baseDir, 'package.json'),
-    JSON.stringify(packageJson, null, 2)
+    JSON.stringify(packageJson, null, 2) + '\n'
   );
 
   // Create tsconfig.json
@@ -100,7 +104,7 @@ const scaffoldPiece = async (
   };
   await writeFile(
     path.join(baseDir, 'tsconfig.json'),
-    JSON.stringify(tsconfig, null, 2)
+    JSON.stringify(tsconfig, null, 2) + '\n'
   );
 
   // Create tsconfig.lib.json
@@ -120,7 +124,7 @@ const scaffoldPiece = async (
   };
   await writeFile(
     path.join(baseDir, 'tsconfig.lib.json'),
-    JSON.stringify(tsconfigLib, null, 2)
+    JSON.stringify(tsconfigLib, null, 2) + '\n'
   );
 
   // Create .eslintrc.json
@@ -129,13 +133,30 @@ const scaffoldPiece = async (
     ignorePatterns: ['!**/*'],
     overrides: [
       { files: ['*.ts', '*.tsx', '*.js', '*.jsx'], rules: {} },
-      { files: ['*.ts', '*.tsx'], rules: {} },
+      {
+        files: ['*.ts', '*.tsx'],
+        rules: {
+          'no-restricted-imports': [
+            'error',
+            {
+              patterns: [
+                'lodash',
+                'lodash/*',
+                '@activepieces/core-*',
+                '@activepieces/server*',
+                '@activepieces/engine',
+                '@activepieces/shared',
+              ],
+            },
+          ],
+        },
+      },
       { files: ['*.js', '*.jsx'], rules: {} },
     ],
   };
   await writeFile(
     path.join(baseDir, '.eslintrc.json'),
-    JSON.stringify(eslintConfig, null, 2)
+    JSON.stringify(eslintConfig, null, 2) + '\n'
   );
 
   // Create index.ts

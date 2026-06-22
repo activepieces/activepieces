@@ -1,15 +1,5 @@
-import {
-    ACTIVEPIECES_CHAT_TIERS,
-    ActivepiecesError,
-    AIProviderName,
-    ChatConversationStatus,
-    DEFAULT_CHAT_TIER_ID,
-    ErrorCode,
-    GetProviderConfigResponse,
-    isNil,
-    Project,
-    ProjectType,
-} from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetProviderConfigResponse, Project, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -18,6 +8,14 @@ import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
+
+// Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
+// eval endpoints and the regular chat path can tell them apart from real user conversations.
+export const EVAL_CONVERSATION_ID_PREFIX = 'evalconv'
+
+export function isEvalConversationId(id: string): boolean {
+    return id.startsWith(EVAL_CONVERSATION_ID_PREFIX)
+}
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 

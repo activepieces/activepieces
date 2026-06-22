@@ -1,16 +1,6 @@
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import {
-    FlowActionType,
-    flowStructureUtil,
-    FlowTriggerType,
-    FlowVersion,
-    GenericStepOutput,
-    isNil,
-    LoopStepOutput,
-    RouterStepOutput,
-    spreadIfDefined,
-    StepOutputStatus,
-} from '@activepieces/shared'
+import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, GenericStepOutput, LoopStepOutput, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { createPropsResolver } from '../../variables/props-resolver'
 import { EngineConstants } from './engine-constants'
 import { FlowExecutorContext } from './flow-execution-context'

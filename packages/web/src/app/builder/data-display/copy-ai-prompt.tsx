@@ -1,4 +1,4 @@
-import { FriendlyPieceError } from '@activepieces/shared';
+import { FriendlyPieceError } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Check, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';

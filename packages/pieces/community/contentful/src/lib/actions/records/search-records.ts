@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
 import { ContentfulProperty } from '../../properties';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const ContentfulSearchRecordsAction = createAction({
@@ -47,7 +47,7 @@ export const ContentfulSearchRecordsAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      [PropertyKeys.QUERY_INCLUDE]: z.number().min(1),
+      [PropertyKeys.QUERY_INCLUDE]: z.number().check(z.minimum(1)),
     });
 
     const { client } = makeClient(auth);

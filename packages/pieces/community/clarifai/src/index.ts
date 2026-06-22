@@ -4,7 +4,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { clarifaiAskLLM } from './lib/actions/ask-llm';
 import { audioToTextModelPredictAction } from './lib/actions/call-audio-model';
 import {

@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { BasicAuthConnectionValue, CustomAuthConnectionValue } from '@activepieces/shared';
+import { BasicAuthConnectionValue, CustomAuthConnectionValue } from '@activepieces/pieces-framework';
 import { cloudinaryAuth } from './auth';
 
 export const BASE_URL = 'https://api.cloudinary.com/v1_1';

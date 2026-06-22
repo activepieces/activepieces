@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   FlowRetryStrategy,
   FlowRun,
@@ -5,7 +6,6 @@ import {
   FlowRunWithRetryError,
   isFailedState,
   isFlowRunStateTerminal,
-  Permission,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';

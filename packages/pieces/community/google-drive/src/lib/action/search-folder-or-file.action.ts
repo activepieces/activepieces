@@ -1,6 +1,6 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { common } from '../common';
 
 export const googleDriveSearchFolder = createAction({
@@ -60,7 +60,7 @@ export const googleDriveSearchFolder = createAction({
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
     const operator = context.propsValue.operator ?? 'contains';
     const queryTerm = context.propsValue.queryTerm ?? 'name';
     let finalQuery = `${queryTerm} ${operator} '${context.propsValue.query}'`;

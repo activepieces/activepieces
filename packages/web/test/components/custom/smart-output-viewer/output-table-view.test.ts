@@ -154,7 +154,11 @@ describe('selectArrayFriendlyView', () => {
     const wrapper: OutputSchema = {
       itemLabel: 'Row {row}',
       fields: [
-        { key: 'rows', value: '', listItems: [{ key: 'row' }, { key: 'name' }] },
+        {
+          key: 'rows',
+          value: '',
+          listItems: [{ key: 'row' }, { key: 'name' }],
+        },
       ],
     };
     const view = selectArrayFriendlyView({ items: single, schema: wrapper });
@@ -170,9 +174,9 @@ describe('selectArrayFriendlyView', () => {
     expect(selectArrayFriendlyView({ items: ['hi'], schema: null }).kind).toBe(
       'list',
     );
-    expect(selectArrayFriendlyView({ items: [[1, 2]], schema: null }).kind).toBe(
-      'list',
-    );
+    expect(
+      selectArrayFriendlyView({ items: [[1, 2]], schema: null }).kind,
+    ).toBe('list');
   });
 
   it('passes a per-item schema through unchanged for a non-tabular array', () => {

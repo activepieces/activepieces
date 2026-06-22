@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { jiraDataCenterAuth } from '../../auth';
 import { searchIssuesByJql } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const searchIssuesAction = createAction({
@@ -30,7 +30,7 @@ export const searchIssuesAction = createAction({
 	},
 	run: async ({ auth, propsValue }) => {
 		await propsValidation.validateZod(propsValue, {
-			maxResults: z.number().min(1).max(100),
+			maxResults: z.number().check(z.minimum(1), z.maximum(100)),
 		});
 		const { jql, maxResults } = propsValue;
 		return await searchIssuesByJql({

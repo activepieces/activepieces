@@ -10,7 +10,7 @@ import { addTagToContact } from "./lib/actions/add-tag-to-contact";
 import { removeTagFromContact } from "./lib/actions/remove-tag-from-contact";
 import { findContactByEmail } from "./lib/actions/find-contact-by-email";
 import { updateContact } from "./lib/actions/update-contact"
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const systemeIo = createPiece({
   displayName: "Systeme.io",

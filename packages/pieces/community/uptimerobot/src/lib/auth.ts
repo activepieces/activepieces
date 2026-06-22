@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 import { toFormUrlEncoded } from './common/form';
 
 export const uptimeRobotAuth = PieceAuth.SecretText({

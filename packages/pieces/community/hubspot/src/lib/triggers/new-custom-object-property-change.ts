@@ -10,7 +10,8 @@ import {
 	customObjectPropertiesDropdown,
 } from '../common/props';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { chunk, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';

@@ -11,7 +11,7 @@ import { getDraftInvoiceByCustomerName } from './lib/actions/get-draft-invoice-b
 import { getAnInvoice } from './lib/actions/get-an-invoice';
 import { getAJournalEntry } from './lib/actions/get-a-journal-entry';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const bokio = createPiece({
   displayName: 'Bokio',

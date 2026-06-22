@@ -1,4 +1,5 @@
-import { apId, FlowRunStatus, isNil, PauseType } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -18,7 +19,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             status: WaitpointStatus.COMPLETED,
         })
         if (!isNil(preCompleted)) {
-            log.info({ flowRunId: params.flowRunId, stepName: params.stepName, existingStatus: preCompleted.status }, '[waitpointService#createForPause] Waitpoint already pre-completed for this step')
+            log.info({ flowRun: { id: params.flowRunId }, step: { name: params.stepName }, existingStatus: preCompleted.status }, '[waitpointService#createForPause] Waitpoint already pre-completed for this step')
             return { inserted: false, waitpoint: preCompleted }
         }
 
@@ -47,7 +48,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
         const inserted = waitpoint.id === id
         if (inserted) {
-            log.info({ flowRunId: params.flowRunId, waitpointId: id }, '[waitpointService#createForPause] Waitpoint created')
+            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
             if (params.type === PauseType.DELAY && !isNil(params.resumeDateTime)) {
                 await systemJobsSchedule(log).upsertJob({
                     job: {
@@ -63,7 +64,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             }
         }
         else {
-            log.info({ flowRunId: params.flowRunId, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+            log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
         }
         return { inserted, waitpoint }
     },
@@ -79,7 +80,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 .getOne()
 
             if (isNil(pending)) {
-                log.info({ flowRunId: params.flowRunId, waitpointId: params.waitpointId }, '[waitpointService#complete] No pending waitpoint matches; dropping stale resume signal')
+                log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: params.waitpointId } }, '[waitpointService#complete] No pending waitpoint matches; dropping stale resume signal')
                 return { completedExisting: false, waitpoint: null }
             }
 
@@ -90,7 +91,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 workerHandlerId: params.workerHandlerId ?? pending.workerHandlerId,
             }
             await repo.save(updated)
-            log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Completed existing PENDING waitpoint')
+            log.info({ flowRun: { id: params.flowRunId } }, '[waitpointService#complete] Completed existing PENDING waitpoint')
             return { completedExisting: true, waitpoint: updated }
         })
     },
@@ -114,24 +115,24 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 return found
             })
             if (isNil(waitpoint)) {
-                log.info({ flowRunId, waitpointId }, '[waitpointService#handleResumeSignal] Stale waitpointId, ignoring')
+                log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Stale waitpointId, ignoring')
                 return false
             }
-            log.info({ flowRunId, waitpointId }, '[waitpointService#handleResumeSignal] Resume triggered')
+            log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Resume triggered')
             return true
         }
 
         if (flowRunStatus === FlowRunStatus.RUNNING || flowRunStatus === FlowRunStatus.QUEUED) {
             const { completedExisting } = await this.complete({ flowRunId, projectId, waitpointId, resumePayload, workerHandlerId })
             if (!completedExisting) {
-                log.info({ flowRunId, waitpointId }, '[waitpointService#handleResumeSignal] Stale resume signal during RUNNING/QUEUED, ignoring')
+                log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Stale resume signal during RUNNING/QUEUED, ignoring')
                 return false
             }
-            log.info({ flowRunId }, '[waitpointService#handleResumeSignal] Marked PENDING waitpoint COMPLETED while flow still RUNNING/QUEUED; runsMetadataQueue will trigger resume on PAUSED upload')
+            log.info({ flowRun: { id: flowRunId } }, '[waitpointService#handleResumeSignal] Marked PENDING waitpoint COMPLETED while flow still RUNNING/QUEUED; runsMetadataQueue will trigger resume on PAUSED upload')
             return true
         }
 
-        log.info({ flowRunId, flowRunStatus }, '[waitpointService#handleResumeSignal] Flow run not in resumable state, ignoring')
+        log.info({ flowRun: { id: flowRunId }, flowRunStatus }, '[waitpointService#handleResumeSignal] Flow run not in resumable state, ignoring')
         return false
     },
 
@@ -148,6 +149,6 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
 
     async deleteByFlowRunId(flowRunId: string): Promise<void> {
         await waitpointRepo().delete({ flowRunId })
-        log.info({ flowRunId }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
+        log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })

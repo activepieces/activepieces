@@ -1,4 +1,5 @@
-import { FilterOperator, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FilterOperator, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
@@ -107,7 +108,7 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_find_records failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_find_records failed')
                 return mcpUtils.mcpToolError('Failed to find records', err)
             }
         },

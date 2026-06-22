@@ -1,15 +1,6 @@
+import { isNil, partition } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import {
-    ExecutionMode,
-    isNil,
-    NetworkMode,
-    partition,
-    WorkerMachineHealthcheckRequest,
-    WorkerMachineStatus,
-    WorkerMachineType,
-    WorkerMachineWithStatus,
-    WorkerSettingsResponse,
-} from '@activepieces/shared'
+import { ExecutionMode, NetworkMode, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -73,7 +64,7 @@ export const machineService = (log: FastifyBaseLogger) => {
         async onDisconnect(request: OnDisconnectParams): Promise<void> {
             log.info({
                 message: 'Worker disconnected',
-                workerId: request.workerId,
+                worker: { id: request.workerId },
             })
             await workerMachineCache().delete([request.workerId])
         },

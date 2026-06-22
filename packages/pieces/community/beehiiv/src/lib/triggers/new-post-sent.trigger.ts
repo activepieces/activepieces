@@ -3,7 +3,7 @@ import { publicationId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
 import { beehiivApiCall, WebhookPayload } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'new-post-sent-trigger';
 

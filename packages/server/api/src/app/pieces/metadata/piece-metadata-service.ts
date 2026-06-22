@@ -1,25 +1,7 @@
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, LocalesEnum, PlatformId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { apVersionUtil } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    apId,
-    assertNotNullOrUndefined,
-    ErrorCode,
-    EXACT_VERSION_REGEX,
-    flowPieceUtil,
-    isNil,
-    LocalesEnum,
-    PackageType,
-    PieceCategory,
-    PieceOrderBy,
-    PiecePackage,
-    PieceSortBy,
-    PieceType,
-    PlatformId,
-    PrivatePiecePackage,
-    PublicPiecePackage,
-    SuggestionType,
-} from '@activepieces/shared'
+import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
@@ -287,6 +269,9 @@ export const getPiecePackageWithoutArchive = async (
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
             }
+        }
+        default: {
+            throw new Error(`Unhandled packageType: ${(pieceMetadata as { packageType: string }).packageType}`)
         }
     }
 }

@@ -3,7 +3,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createRecordAction } from './lib/actions/create-record.action';
 import { deleteRecordAction } from './lib/actions/delete-record.action';
 import { getRecordAction } from './lib/actions/get-record.action';

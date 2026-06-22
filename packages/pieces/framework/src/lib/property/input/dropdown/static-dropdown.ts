@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 import { BasePropertySchema, TPropertyValue } from "../common";
 import { DropdownState } from "./common";
 import { PropertyType } from "../property-type";

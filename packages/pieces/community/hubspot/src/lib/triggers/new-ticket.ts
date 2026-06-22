@@ -5,7 +5,8 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import dayjs from 'dayjs';
 import { hubspotAuth } from '../auth';
-import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';

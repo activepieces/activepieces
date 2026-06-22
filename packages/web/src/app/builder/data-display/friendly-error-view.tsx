@@ -1,4 +1,4 @@
-import { FriendlyPieceError, isNil } from '@activepieces/shared';
+import { FriendlyPieceError, isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import {
   AlertOctagon,

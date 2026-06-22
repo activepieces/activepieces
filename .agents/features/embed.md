@@ -15,9 +15,9 @@ The cryptographic core is **Signing Keys**: RSA-4096 key pairs generated server-
 - `packages/server/api/src/app/ee/signing-key/signing-key-service.ts` — service (add, list, get, delete)
 - `packages/server/api/src/app/ee/signing-key/signing-key-generator.ts` — RSA-4096 key pair generation using Node.js `crypto`
 - `packages/server/api/src/app/ee/signing-key/signing-key-entity.ts` — TypeORM entity
-- `packages/shared/src/lib/ee/signing-key/signing-key-model.ts` — `SigningKey` type and `KeyAlgorithm` enum
-- `packages/shared/src/lib/ee/signing-key/signing-key-response.ts` — `AddSigningKeyResponse` type (includes `privateKey`)
-- `packages/shared/src/lib/ee/signing-key/signing-key.request.ts` — `AddSigningKeyRequestBody` schema
+- `packages/core/shared/src/lib/ee/signing-key/signing-key-model.ts` — `SigningKey` type and `KeyAlgorithm` enum
+- `packages/core/shared/src/lib/ee/signing-key/signing-key-response.ts` — `AddSigningKeyResponse` type (includes `privateKey`)
+- `packages/core/shared/src/lib/ee/signing-key/signing-key.request.ts` — `AddSigningKeyRequestBody` schema
 - `packages/web/src/features/platform-admin/api/signing-key-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/signing-key-hooks.ts` — React query hooks
 - `packages/web/src/features/platform-admin/components/new-signing-key-dialog.tsx` — UI dialog showing the private key once on creation

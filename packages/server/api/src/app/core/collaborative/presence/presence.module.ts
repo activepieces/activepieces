@@ -32,7 +32,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.({ users })
             }
             catch (error) {
-                app.log.error({ err: error }, '[JOIN_PRESENCE] Failed to join presence')
+                app.log.error({ error }, '[JOIN_PRESENCE] Failed to join presence')
                 callback?.({ users: [] })
             }
         }
@@ -53,7 +53,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                 })
             }
             catch (error) {
-                app.log.error({ err: error }, '[LEAVE_PRESENCE] Failed to leave presence')
+                app.log.error({ error }, '[LEAVE_PRESENCE] Failed to leave presence')
             }
         }
     })

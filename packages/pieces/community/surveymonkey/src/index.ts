@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newResponse } from './lib/triggers/new-response';
 
 export const smAuth = PieceAuth.OAuth2({

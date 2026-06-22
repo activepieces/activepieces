@@ -1,9 +1,8 @@
+import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
 import {
   BatchProgressData,
   ChatToolName,
   ChatToolOutputs,
-  isObject,
-  parseToJsonIfPossible,
 } from '@activepieces/shared';
 import {
   DynamicToolUIPart,

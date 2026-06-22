@@ -1,4 +1,5 @@
-import { AppConnectionScope, isNil, PopulatedFlow } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown, GlobeIcon, Info, WorkflowIcon } from 'lucide-react';

@@ -1,4 +1,5 @@
-import { Permission, UserInvitation } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import { UserInvitation } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 

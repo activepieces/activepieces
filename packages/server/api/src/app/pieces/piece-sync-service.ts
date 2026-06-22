@@ -1,5 +1,6 @@
+import { groupBy, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
+import { PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -81,7 +82,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
             const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
             const response = await fetch(url)
             if (!response.ok) {
-                log.warn({ pieceName: piece.name, version: piece.version, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
+                log.warn({ piece: { name: piece.name, version: piece.version }, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
                 return
             }
             const pieceMetadata = await response.json()
@@ -92,7 +93,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 publishCacheRefresh: false,
             }))
             if (error) {
-                log.debug({ pieceName: piece.name, version: piece.version }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
+                log.debug({ piece: { name: piece.name, version: piece.version } }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
             }
         }))
     }

@@ -4,7 +4,7 @@ import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { objectAttributeDropdown, objectTypeIdDropdown } from '../common/props';
 import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'updated-record-trigger';
 

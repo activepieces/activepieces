@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     FlowOperationType,
@@ -24,6 +23,7 @@ import {
     createMockPieceMetadata,
 } from '../../../../helpers/mocks'
 import { createTestContext } from '../../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

@@ -9,7 +9,7 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { confluenceAuth, confluenceAuthValue } from '../auth';
 import { confluenceApiCall, PaginatedResponse } from '../common';
 import { pageIdProp, spaceIdProp } from '../common/props';

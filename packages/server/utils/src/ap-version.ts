@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils';
 import fs from 'fs'
 import path from 'path'
 import { apLogger } from './ap-logger'
@@ -24,7 +24,7 @@ function readCurrentRelease(): string {
         }
     }
     catch (e) {
-        logger.warn({ err: e, packageJsonPath, cwd: process.cwd() }, 'failed to read package.json, defaulting current release to 0.0.0')
+        logger.warn({ error: e, packageJsonPath, cwd: process.cwd() }, 'failed to read package.json, defaulting current release to 0.0.0')
         cachedCurrentRelease = UNKNOWN_VERSION
     }
     return cachedCurrentRelease

@@ -4,7 +4,7 @@ import {
   AppConnectionValueForAuthProperty,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { intercomAuth } from '../auth';
 
 export type IntercomAuthValue = AppConnectionValueForAuthProperty<

@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { telnyxAuth } from './lib/auth';
 import { sendSmsAction } from './lib/actions/send-sms';
 import { makeCallAction } from './lib/actions/make-call';

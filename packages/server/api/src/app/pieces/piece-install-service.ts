@@ -1,22 +1,6 @@
+import { ActivepiecesError, ErrorCode, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    AddPieceRequestBody,
-    EngineResponse,
-    EngineResponseStatus,
-    ErrorCode,
-    ExecuteExtractPieceMetadata,
-    FileCompression,
-    FileId,
-    FileType,
-    isNil,
-    PackageType,
-    PiecePackage,
-    PieceType,
-    PlatformId,
-    ProjectId,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { AddPieceRequestBody, EngineResponse, EngineResponseStatus, ExecuteExtractPieceMetadata, FileCompression, FileId, FileType, PackageType, PiecePackage, PieceType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
@@ -53,7 +37,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
             return savedPiece
         }
         catch (error) {
-            log.error({ err: error }, '[pieceInstallService#add] Failed to add piece')
+            log.error({ error }, '[pieceInstallService#add] Failed to add piece')
 
             if (error instanceof ActivepiecesError && error.error.code === ErrorCode.VALIDATION) {
                 throw error
