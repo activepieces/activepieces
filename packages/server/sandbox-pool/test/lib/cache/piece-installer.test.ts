@@ -4,18 +4,23 @@ import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PackageType, PieceType } from '@activepieces/shared'
-import type { OfficialPiecePackage } from '@activepieces/shared'
+import type { OfficialPiecePackage, PrivatePiecePackage } from '@activepieces/shared'
 import type { ApLogger } from '@activepieces/server-utils'
 
 // Module-level variable updated per test so the vi.mock factory can reference it
 let testWorkspace = ''
 
 const mockInstall = vi.fn()
+const mockDecompress = vi.fn()
 
 vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
     bunRunner: () => ({
         install: mockInstall,
     }),
+}))
+
+vi.mock('decompress', () => ({
+    default: (...args: unknown[]) => mockDecompress(...args),
 }))
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
@@ -37,11 +42,22 @@ function makePiece(name: string, version = '1.0.0'): OfficialPiecePackage {
     }
 }
 
-function pieceDirPath(piece: OfficialPiecePackage): string {
+function makeArchivePiece(name: string, version = '1.0.0'): PrivatePiecePackage {
+    return {
+        packageType: PackageType.ARCHIVE,
+        pieceType: PieceType.CUSTOM,
+        pieceName: name,
+        pieceVersion: version,
+        archiveId: randomUUID(),
+        platformId: 'platform-1',
+    }
+}
+
+function pieceDirPath(piece: OfficialPiecePackage | PrivatePiecePackage): string {
     return join(testWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 }
 
-function readyFilePath(piece: OfficialPiecePackage): string {
+function readyFilePath(piece: OfficialPiecePackage | PrivatePiecePackage): string {
     return join(pieceDirPath(piece), 'ready')
 }
 
@@ -169,6 +185,45 @@ describe('pieceInstaller', () => {
         await installer.install({ pieces: [piece], includeFilters: true })
 
         expect(mockInstall).not.toHaveBeenCalled()
+    })
+
+    it('archive piece already installed (src/index.js layout, no index.bundle.js) — not re-extracted', async () => {
+        const piece = makeArchivePiece('@activepieces/piece-archived')
+        const pieceDir = pieceDirPath(piece)
+
+        // The extracted bundle ships package.json + src/index.js at the folder root — never index.bundle.js.
+        await mkdir(join(pieceDir, 'src'), { recursive: true })
+        await writeFile(join(pieceDir, 'package.json'), JSON.stringify({ main: './src/index.js' }))
+        await writeFile(join(pieceDir, 'src', 'index.js'), '')
+        await writeFile(join(pieceDir, 'ready'), 'true')
+
+        const getPieceArchive = vi.fn()
+        const installer = pieceInstaller(fakeLog, { getPieceArchive } as never, testWorkspace, fakeGetSettings)
+        await installer.install({ pieces: [piece], includeFilters: true })
+
+        // The cache hit must hold: no archive re-download, no decompress, no bun install, ready preserved.
+        expect(getPieceArchive).not.toHaveBeenCalled()
+        expect(mockDecompress).not.toHaveBeenCalled()
+        expect(mockInstall).not.toHaveBeenCalled()
+        expect(await pathExists(readyFilePath(piece))).toBe(true)
+    })
+
+    it('archive piece ready but content missing — marker cleared and re-extracted', async () => {
+        const piece = makeArchivePiece('@activepieces/piece-stale')
+        const pieceDir = pieceDirPath(piece)
+
+        // 'ready' present but the extracted content (package.json) is gone — a corrupt/half cache.
+        await mkdir(pieceDir, { recursive: true })
+        await writeFile(join(pieceDir, 'ready'), 'true')
+
+        const getPieceArchive = vi.fn().mockResolvedValue(Buffer.from('tgz'))
+        mockDecompress.mockResolvedValueOnce(undefined)
+        const installer = pieceInstaller(fakeLog, { getPieceArchive } as never, testWorkspace, fakeGetSettings)
+        await installer.install({ pieces: [piece], includeFilters: true })
+
+        // Defensive check fires: the stale 'ready' is treated as not-installed and the bundle is re-fetched + re-extracted.
+        expect(getPieceArchive).toHaveBeenCalledOnce()
+        expect(mockDecompress).toHaveBeenCalledOnce()
     })
 
     it('individual fallback always passes --filter path regardless of includeFilters', async () => {
