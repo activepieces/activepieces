@@ -4,7 +4,6 @@ import { PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxPoolSettings } from '../types'
 import { cacheUtils } from './cache-paths'
 import { codeBuilder } from './code/code-builder'
-import { engineInstaller } from './engine/engine-installer'
 import { pieceInstaller } from './pieces/piece-installer'
 
 export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
@@ -33,16 +32,6 @@ export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContrac
                             })
                         }
                         log.info({ path: codeCachePath }, 'Installed code in sandbox')
-                    },
-                })
-
-                await wideEvent.timed({
-                    name: 'installEngine',
-                    fn: async () => {
-                        const { cacheHit } = await engineInstaller(log, getSettings).install({
-                            path: commonPath,
-                        })
-                        log.info({ path: commonPath, cacheHit }, 'Installed engine in sandbox')
                     },
                 })
 

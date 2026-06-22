@@ -1,6 +1,7 @@
 import { readdir, rm } from 'fs/promises'
 import path from 'path'
 import { type ApLogger } from '@activepieces/server-utils'
+import cacheVersion from './cache-version.json'
 
 export const cacheUtils = (basePath: string) => ({
     getGlobalCachePathLatestVersion(): string {
@@ -44,7 +45,9 @@ export const cacheUtils = (basePath: string) => ({
     },
 })
 
-export const LATEST_CACHE_VERSION = 'v12'
+// Single source of truth shared with the engine build (esbuild.config.mjs reads the
+// same JSON) so a version bump can never desync the dev engine-copy destination.
+export const LATEST_CACHE_VERSION = cacheVersion.version
 
 export enum CacheState {
     READY = 'READY',

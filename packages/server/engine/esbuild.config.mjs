@@ -4,9 +4,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const outdir = path.resolve(__dirname, '../../../dist/packages/engine');
-const proxyOutfile = path.join(outdir, 'main.js');
-const noProxyOutfile = path.join(outdir, 'main-noproxy.js');
+const repoRoot = path.resolve(__dirname, '../../..');
+const outdir = path.resolve(repoRoot, 'dist/packages/engine');
+const outfile = path.join(outdir, 'main.js');
 
 const watch = process.argv.includes('--watch');
 
@@ -27,7 +27,34 @@ const zodLocaleTrim = {
   },
 };
 
-function rebuildLogger(outfile) {
+// The engine bundle is consumed from the cache common dir mounted into the sandbox, not from
+// dist. In prod the worker copies it there once at boot; in dev the worker process is long-lived
+// across engine rebuilds, so this hook re-copies on every --watch rebuild to keep it fresh.
+// The destination version is read from the same JSON the runtime uses (LATEST_CACHE_VERSION) so
+// a version bump can't desync. Only runs under --watch; the prod build happens at image-build
+// time where the runtime cache dir does not exist yet.
+const cacheVersion = JSON.parse(
+  fs.readFileSync(
+    path.resolve(repoRoot, 'packages/server/sandbox-pool/src/lib/cache/cache-version.json'),
+    'utf8'
+  )
+).version;
+
+function copyEngineToCache() {
+  const cacheBase = process.env.AP_CACHE_BASE_PATH ?? 'cache';
+  const commonDir = path.resolve(repoRoot, cacheBase, cacheVersion, 'common');
+  fs.mkdirSync(commonDir, { recursive: true });
+  for (const file of ['main.js', 'main.js.map']) {
+    const src = path.join(outdir, file);
+    if (!fs.existsSync(src)) continue;
+    const dest = path.join(commonDir, file);
+    const temp = `${dest}.temp.${process.pid}.${Date.now()}`;
+    fs.copyFileSync(src, temp);
+    fs.renameSync(temp, dest);
+  }
+}
+
+function rebuildLogger() {
   const label = path.basename(outfile);
   return {
     name: 'engine-rebuild-logger',
@@ -47,18 +74,18 @@ function rebuildLogger(outfile) {
         const errors = result.errors?.length ?? 0;
         if (errors > 0) {
           console.log(`[engine] ${label} failed with ${errors} error(s)`);
-        } else {
-          console.log(`[engine] ${label} done in ${Date.now() - startedAt}ms`);
+          return;
+        }
+        console.log(`[engine] ${label} done in ${Date.now() - startedAt}ms`);
+        if (watch) {
+          copyEngineToCache();
         }
       });
     },
   };
 }
 
-// `includeProxyDispatcher` drives the __AP_PROXY_DISPATCHER__ define in proxy-dispatcher.ts:
-// true keeps the undici proxy dispatcher (~291KB), false dead-code-eliminates it. The worker
-// installs main.js for STRICT network mode and the slimmer main-noproxy.js otherwise.
-function buildOptions({ outfile, includeProxyDispatcher }) {
+function buildOptions() {
   return {
     entryPoints: [path.resolve(__dirname, 'src/main.ts')],
     bundle: true,
@@ -70,7 +97,6 @@ function buildOptions({ outfile, includeProxyDispatcher }) {
     minify: !watch,
     metafile: true,
     treeShaking: true,
-    define: { __AP_PROXY_DISPATCHER__: String(includeProxyDispatcher) },
     alias: {
         '@activepieces/shared': path.resolve(__dirname, '../../core/shared/src'),
         '@activepieces/pieces-framework': path.resolve(__dirname, '../../pieces/framework/src'),
@@ -81,24 +107,14 @@ function buildOptions({ outfile, includeProxyDispatcher }) {
         '@activepieces/core-execution': path.resolve(__dirname, '../../core/execution/src'),
     },
     external: ['isolated-vm', 'utf-8-validate', 'bufferutil'],
-    plugins: [zodLocaleTrim, rebuildLogger(outfile)],
+    plugins: [zodLocaleTrim, rebuildLogger()],
   };
 }
 
 if (watch) {
-  // Dev only needs the full bundle; STRICT-mode sandboxing isn't exercised under --watch.
-  const ctx = await esbuild.context(
-    buildOptions({ outfile: proxyOutfile, includeProxyDispatcher: true })
-  );
+  const ctx = await esbuild.context(buildOptions());
   await ctx.rebuild();
   await ctx.watch();
 } else {
-  await Promise.all([
-    esbuild.build(
-      buildOptions({ outfile: proxyOutfile, includeProxyDispatcher: true })
-    ),
-    esbuild.build(
-      buildOptions({ outfile: noProxyOutfile, includeProxyDispatcher: false })
-    ),
-  ]);
+  await esbuild.build(buildOptions());
 }
