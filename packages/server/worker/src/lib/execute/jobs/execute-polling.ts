@@ -13,8 +13,8 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
         const p = await execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
 
         if (p.kind === 'flow-not-found') {
-            ctx.log.error({ flow: { id: data.flowId, version: data.flowVersionId }, project: { id: data.projectId } }, 'Polling trigger skipped: flow version not found during provision')
-            throw new Error(`Flow version not found during polling provision (flowVersionId=${data.flowVersionId})`)
+            ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found for polling trigger, skipping')
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
         if (p.kind === 'disabled') {
