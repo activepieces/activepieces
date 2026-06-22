@@ -477,7 +477,7 @@ function createWebTools(): ToolSet {
                 }
                 return withToolTimeout({
                     fn: async (signal) => {
-                        const { data: response, error } = await tryCatch(() => safeHttp.retryingAxios.get<string>(toolInput.url, {
+                        const { data: response, error } = await tryCatch(() => safeHttp.axios.get<string>(toolInput.url, {
                             signal,
                             timeout: FETCH_URL_TIMEOUT_MS,
                             maxContentLength: MAX_FETCH_URL_BYTES,

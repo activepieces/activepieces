@@ -14,7 +14,6 @@ const MAX_WEB_SEARCH_RESULTS = 5
 
 const WEB_SEARCH_PROVIDERS = new Set<AIProviderName>([
     AIProviderName.ANTHROPIC,
-    AIProviderName.OPENAI,
     AIProviderName.GOOGLE,
     AIProviderName.ACTIVEPIECES,
     AIProviderName.OPENROUTER,
@@ -25,9 +24,11 @@ function supportsWebSearch(provider: AIProviderName): boolean {
 }
 
 /**
- * Provider-native web search tools live in the toolset (Anthropic/OpenAI/Google).
+ * Provider-native web search tools live in the toolset (Anthropic/Google).
  * OpenRouter exposes web search through its `web` plugin instead (wired at model
  * creation), so it returns nothing here. Unsupported providers also return nothing.
+ * OpenAI is intentionally excluded: its web search requires the Responses API,
+ * which breaks legacy BYOK models (gpt-4, gpt-3.5-turbo) — it degrades to no search.
  */
 function buildWebSearchTools({ provider, auth }: {
     provider: AIProviderName
@@ -37,10 +38,6 @@ function buildWebSearchTools({ provider, auth }: {
         case AIProviderName.ANTHROPIC: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             return { web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }
-        }
-        case AIProviderName.OPENAI: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            return { web_search: createOpenAI({ apiKey }).tools.webSearch({}) }
         }
         case AIProviderName.GOOGLE: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -61,8 +58,7 @@ function createChatModel({ provider, auth, config, modelId, webSearchEnabled = f
     switch (provider) {
         case AIProviderName.OPENAI: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const openai = createOpenAI({ apiKey })
-            return webSearchEnabled ? openai.responses(modelId) : openai.chat(modelId)
+            return createOpenAI({ apiKey }).chat(modelId)
         }
         case AIProviderName.ANTHROPIC: {
             const { apiKey } = auth as BaseAIProviderAuthConfig

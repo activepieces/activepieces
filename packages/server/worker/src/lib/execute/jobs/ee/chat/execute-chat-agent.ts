@@ -28,7 +28,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         })
 
         const provider = config.provider as AIProviderName
-        const webSearchActive = chatAiUtils.supportsWebSearch(provider)
+        const webSearchActive = !dryRun && chatAiUtils.supportsWebSearch(provider)
         const model = chatAiUtils.createChatModel({
             provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
             webSearchEnabled: webSearchActive,
@@ -70,7 +70,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         try {
             const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
 
-            const webTools: ToolSet = {
+            const webTools: ToolSet = dryRun ? {} : {
                 ...chatWorkerTools.createWebTools(),
                 ...(webSearchActive ? chatAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
             }
