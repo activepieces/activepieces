@@ -17,6 +17,8 @@ const installs = new Map<string, Promise<void>>()
 export function installEngine({ basePath, log }: InstallEngineParams): Promise<void> {
     const existing = installs.get(basePath)
     if (!existing) {
+        // Drop the memo on failure so a transient error (artifact momentarily absent, disk
+        // full) is retried by the next caller rather than wedging the pool for its lifetime.
         const promise = copyEngineToCommon({ basePath, log }).catch((error) => {
             installs.delete(basePath)
             throw error

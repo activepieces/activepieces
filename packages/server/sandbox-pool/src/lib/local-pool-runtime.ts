@@ -25,10 +25,11 @@ export function createSandboxPool({ concurrency, basePath, getSettings, log }: C
         createSandboxManager({ boxId: index + 1, basePath, getSettings }),
     )
 
-    // The engine bundle is static per build; place it in the cache once at pool init rather
-    // than re-installing per provision. Memoized in engine-cache, so provision awaits the
-    // same one-shot copy before the first sandbox runs.
-    const engineInstall = installEngine({ basePath, log })
+    // The engine bundle is static per build; install it into the cache once rather than
+    // per provision. Warm the one-shot copy at pool init; provision awaits the memoized
+    // result. A transient failure clears the memo (see engine-cache), so the next
+    // provision retries instead of the pool being wedged for its lifetime.
+    void installEngine({ basePath, log }).catch(() => undefined)
 
     return {
         kind: RuntimeKind.LOCAL,
@@ -40,7 +41,7 @@ export function createSandboxPool({ concurrency, basePath, getSettings, log }: C
                     params: { message: `No sandbox manager for worker index ${workerIndex} (concurrency=${concurrency})` },
                 })
             }
-            return createLocalPoolExecution({ manager, log: execLog, apiClient, basePath, getSettings, engineInstall })
+            return createLocalPoolExecution({ manager, log: execLog, apiClient, basePath, getSettings })
         },
         getActiveExecutors(): RuntimeExecutorInfo[] {
             return managers
@@ -59,13 +60,13 @@ export function createSandboxPool({ concurrency, basePath, getSettings, log }: C
     }
 }
 
-function createLocalPoolExecution({ manager, log, apiClient, basePath, getSettings, engineInstall }: CreateLocalPoolExecutionParams): RuntimeExecution {
+function createLocalPoolExecution({ manager, log, apiClient, basePath, getSettings }: CreateLocalPoolExecutionParams): RuntimeExecution {
     let sandbox: Sandbox | null = null
     let mountContext: MountContext | null = null
 
     return {
         async provision(input: ProvisionInput): Promise<ProvisionResult> {
-            await engineInstall
+            await installEngine({ basePath, log })
             let pieces = input.pieces ?? []
             let codes = input.codes ?? []
             let flowVersion: FlowVersion | undefined
@@ -142,7 +143,6 @@ type CreateLocalPoolExecutionParams = {
     apiClient: WorkerToApiContract
     basePath: string
     getSettings: () => SandboxPoolSettings
-    engineInstall: Promise<void>
 }
 
 type MountContext = {
