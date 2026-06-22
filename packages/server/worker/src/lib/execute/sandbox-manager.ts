@@ -6,7 +6,7 @@ import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'
 import { createSandboxForJob } from './create-sandbox-for-job'
 
-export function createSandboxManager({ boxId, proxyPort }: { boxId: number, proxyPort: number | null }): SandboxManager {
+export function createSandboxManager({ boxId }: { boxId: number }): SandboxManager {
     let currentSandbox: Sandbox | null = null
 
     return {
@@ -20,7 +20,7 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
                     params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
             }
-            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
+            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox() })
             return currentSandbox
         },
         async invalidate(log: ApLogger): Promise<void> {

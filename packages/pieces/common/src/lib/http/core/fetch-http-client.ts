@@ -7,9 +7,11 @@ import { HttpRequest } from './http-request';
 import { HttpRequestBody } from './http-request-body';
 import { HttpResponse } from './http-response';
 
-// Native-fetch implementation of HttpClient. Proxy/SSRF egress is handled by the
-// engine's global undici dispatcher + http(s).globalAgent (see ssrf-guard.ts), so
-// there is no per-request proxy configuration here — that path is intentionally gone.
+// Native-fetch implementation of HttpClient. SSRF egress is enforced by the engine's
+// in-process dns.lookup / Socket.connect guards (see ssrf-guard.ts) when
+// AP_NETWORK_MODE=STRICT, which cover fetch via net.connect — so there is no egress
+// proxy wiring here. A caller may still pass options.dispatcher for a user-configured
+// per-request proxy (the HTTP piece's "Use Proxy" feature).
 export class FetchHttpClient extends BaseHttpClient {
   constructor(
     baseUrl = '',
