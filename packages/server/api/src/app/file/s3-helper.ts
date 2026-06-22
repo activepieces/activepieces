@@ -28,11 +28,11 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             throw new Error('Either platformId or projectId must be provided')
         }
     },
-    async uploadFile(s3Key: string, data: Buffer): Promise<string> {
+    async uploadFile(s3Key: string, data: Buffer, silent: boolean = false): Promise<string> {
         if (!Buffer.isBuffer(data)) {
             throw new Error(`Expected Buffer for S3 upload, received ${typeof data}`)
         }
-        log.info({
+        if (!silent) log.info({
             s3Key,
         }, 'uploading file to s3')
         try {
@@ -42,7 +42,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                 Body: Readable.from(data),
                 ContentLength: data.length,
             })
-            log.info({
+            if (!silent) log.info({
                 s3Key,
             }, 'file uploaded to s3')
         }
@@ -57,6 +57,26 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         return s3Key
     },
 
+    async listKeys(prefix: string): Promise<Set<string>> {
+        const client = getS3Client()
+        const bucket = getS3BucketName()
+        const keys = new Set<string>()
+        let continuationToken: string | undefined = undefined
+        do {
+            const response = await client.listObjectsV2({
+                Bucket: bucket,
+                Prefix: prefix,
+                ContinuationToken: continuationToken,
+            })
+            for (const object of response.Contents ?? []) {
+                if (!isNil(object.Key)) {
+                    keys.add(object.Key)
+                }
+            }
+            continuationToken = response.NextContinuationToken
+        } while (!isNil(continuationToken))
+        return keys
+    },
     async getFile(s3Key: string): Promise<Buffer> {
         const response = await getS3Client().getObject({
             Bucket: getS3BucketName(),

@@ -12,6 +12,7 @@ import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { pieceCache } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
+import { pieceBundleUploader } from './piece-bundle-uploader'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
@@ -19,9 +20,9 @@ const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-            await pieceSyncService(log).sync({ publishCacheRefresh: true })
+            await pieceSyncService(log).sync()
         })
-        rejectedPromiseHandler(pieceSyncService(log).sync({ publishCacheRefresh: false }), log)
+        rejectedPromiseHandler(pieceSyncService(log).sync(), log)
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.PIECES_SYNC,
@@ -34,23 +35,30 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async sync({ publishCacheRefresh }: { publishCacheRefresh: boolean }): Promise<void> {
+    async sync(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
             log.info('Piece sync service is disabled')
             return
         }
+        const cloudPieces = await listCloudPieces()
+        await Promise.all([
+            pieceSyncService(log).syncToDb(cloudPieces),
+            pieceSyncService(log).syncToS3(cloudPieces),
+        ])
+    },
+    async syncToDb(cloudPieces: PieceRegistryResponse[]): Promise<void> {
         try {
             log.info('Starting piece synchronization')
             const startTime = performance.now()
-            const [dbPieces, cloudPieces] = await Promise.all([pieceRepos().find({
+            const dbPieces = await pieceRepos().find({
                 select: {
                     name: true,
                     version: true,
                     pieceType: true,
                 },
-            }), listCloudPieces()])
+            })
             log.info({ dbCount: dbPieces.length, cloudCount: cloudPieces.length }, 'Fetched pieces from DB and Cloud')
-            const added = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
+            const added = await installNewPieces(cloudPieces, dbPieces, log)
             const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
 
             log.info({
@@ -63,6 +71,14 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             log.error({ error }, 'Error syncing pieces')
         }
     },
+    async syncToS3(cloudPieces: PieceRegistryResponse[]): Promise<void> {
+        try {
+            await pieceBundleUploader(log).uploadMissingBundles(cloudPieces)
+        }
+        catch (error) {
+            log.error({ error }, 'Error syncing piece bundles to S3')
+        }
+    },
 })
 
 async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPieces: PieceRegistryResponse[], log: FastifyBaseLogger): Promise<number> {
@@ -72,7 +88,7 @@ async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPiec
     return piecesToDelete.length
 }
 
-async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<number> {
+async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger): Promise<number> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
     const batchSize = 5
@@ -136,6 +152,5 @@ type PieceRegistryResponse = {
     name: string
     version: string
 }
-
 
 type PieceMetadataOnly = Pick<PieceMetadataSchema, 'name' | 'version' | 'pieceType'>
