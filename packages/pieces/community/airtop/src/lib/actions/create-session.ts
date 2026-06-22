@@ -8,7 +8,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const createSessionAction = createAction({
 	name: 'create-session',
@@ -184,7 +184,7 @@ export const createSessionAction = createAction({
 		};
 
 		await propsValidation.validateZod(context.propsValue, {
-			timeoutMinutes: z.number().min(1).max(10080).optional(),
+			timeoutMinutes: z.optional(z.number().check(z.minimum(1), z.maximum(10080))),
 		});
 
 		const config: Record<string, any> = {};

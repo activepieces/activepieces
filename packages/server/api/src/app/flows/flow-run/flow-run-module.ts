@@ -39,8 +39,8 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
             .getRawMany()
         for (const { projectId, flowId, environment, count } of projectFlowCounts) {
             app.log.info({
-                projectId,
-                flowId,
+                project: { id: projectId },
+                flow: { id: flowId },
                 environment,
                 count: parseInt(count, 10),
             }, 'Tracking flow run created')
@@ -72,11 +72,11 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {
         const flowRun = await flowRunService(app.log).getOneOrThrow({ id: data.flowRunId, projectId: data.projectId })
         if (flowRun.status !== FlowRunStatus.PAUSED) {
-            app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId, status: flowRun.status },
+            app.log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId }, status: flowRun.status },
                 '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
             return
         }
-        app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId },
+        app.log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
             '[RESUME_DELAY_WAITPOINT] Resuming flow')
         await resumeService(app.log).resumeFromWaitpoint({
             flowRunId: data.flowRunId,

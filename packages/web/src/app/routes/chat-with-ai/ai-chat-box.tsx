@@ -1,4 +1,5 @@
-import { ChatConversation, SeekPage } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { ChatConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
@@ -75,6 +76,7 @@ function ChatBoxContent({
     messages,
     modelName,
     isStreaming,
+    isAwaitingResponse,
     wasCancelled,
     isLoadingHistory,
     error,
@@ -186,12 +188,12 @@ function ChatBoxContent({
               className="flex-1 relative h-full"
               style={{
                 maskImage:
-                  'linear-gradient(to bottom, black 0%, black calc(100% - 40px), transparent 100%)',
+                  'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
                 WebkitMaskImage:
-                  'linear-gradient(to bottom, black 0%, black calc(100% - 40px), transparent 100%)',
+                  'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto px-6 pt-8 pb-16 gap-0">
+              <ChatContainerContent className="max-w-3xl mx-auto px-6 pt-8 pb-4 gap-0 min-h-full">
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -216,14 +218,21 @@ function ChatBoxContent({
                       message={msg}
                       isStreaming={isLastStreamingAssistant}
                       isLastMessage={isLastAssistant}
-                      onRetry={handleRetry}
                     />
                   );
                 })}
 
-                {!isStreaming && !wasCancelled && quickReplies.length > 0 && (
-                  <QuickReplies replies={quickReplies} onSend={handleSend} />
-                )}
+                {!isAwaitingResponse &&
+                  !wasCancelled &&
+                  !hasBlockingCard &&
+                  quickReplies.length > 0 && (
+                    <div className="mt-auto pt-2">
+                      <QuickReplies
+                        replies={quickReplies}
+                        onSend={handleSend}
+                      />
+                    </div>
+                  )}
 
                 {wasCancelled && (
                   <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground animate-in fade-in duration-200">

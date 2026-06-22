@@ -12,11 +12,11 @@ The Enterprise Authentication module extends the Community Edition auth layer wi
 - `packages/server/api/src/app/ee/authentication/project-role/` — RBAC enforcement service
 - `packages/server/api/src/app/ee/authentication/ee-authorization.ts` — Fastify preHandler hooks for plan/ownership checks
 - `packages/server/api/src/app/ee/managed-authn/` — managed auth JWT exchange controller + service
-- `packages/shared/src/lib/ee/authn/index.ts` — enterprise authn shared exports
-- `packages/shared/src/lib/ee/authn/access-control-list.ts` — ACL types for RBAC
-- `packages/shared/src/lib/ee/authn/enterprise-local-authn/requests.ts` — verify email / reset password DTOs
-- `packages/shared/src/lib/ee/otp/otp-model.ts` — OTP entity Zod schema and state enum
-- `packages/shared/src/lib/ee/otp/otp-type.ts` — `OtpType` enum (`EMAIL_VERIFICATION`, `PASSWORD_RESET`)
+- `packages/core/shared/src/lib/ee/authn/index.ts` — enterprise authn shared exports
+- `packages/core/shared/src/lib/ee/authn/access-control-list.ts` — ACL types for RBAC
+- `packages/core/shared/src/lib/ee/authn/enterprise-local-authn/requests.ts` — verify email / reset password DTOs
+- `packages/core/shared/src/lib/ee/otp/otp-model.ts` — OTP entity Zod schema and state enum
+- `packages/core/shared/src/lib/ee/otp/otp-type.ts` — `OtpType` enum (`EMAIL_VERIFICATION`, `PASSWORD_RESET`)
 - `packages/web/src/features/authentication/components/sign-in-form.tsx` — sign-in form (includes federated login buttons)
 - `packages/web/src/features/authentication/components/third-party-logins.tsx` — Google/GitHub login buttons
 - `packages/web/src/features/authentication/components/verify-email.tsx` — OTP email verification UI

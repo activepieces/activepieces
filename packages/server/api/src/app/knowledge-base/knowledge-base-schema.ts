@@ -1,4 +1,4 @@
-import { tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'

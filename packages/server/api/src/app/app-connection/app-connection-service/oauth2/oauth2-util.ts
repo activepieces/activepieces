@@ -1,17 +1,7 @@
 import { createHash, randomBytes } from 'crypto'
+import { ActivepiecesError, assertNotNullOrUndefined, deleteProps, ErrorCode, PlatformId } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
-import { ActivepiecesError,
-    AppConnection,
-    AppConnectionType,
-    assertNotNullOrUndefined,
-    BaseOAuth2ConnectionValue,
-    deleteProps,
-    ErrorCode,
-    GetOAuth2AuthorizationUrlResponse,
-    OAuth2GrantType,
-    PlatformId,
-    resolveValueFromProps,
-} from '@activepieces/shared'
+import { AppConnection, AppConnectionType, BaseOAuth2ConnectionValue, GetOAuth2AuthorizationUrlResponse, OAuth2GrantType, resolveValueFromProps } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'

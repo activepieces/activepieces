@@ -1,4 +1,5 @@
-import { apId, FieldType, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { apId, Permission } from '@activepieces/core-utils'
+import { FieldType, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
@@ -70,7 +71,7 @@ export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_create_table failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_create_table failed')
                 return mcpUtils.mcpToolError('Failed to create table', err)
             }
         },

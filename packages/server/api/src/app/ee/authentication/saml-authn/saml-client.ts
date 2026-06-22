@@ -1,5 +1,6 @@
+import { ActivepiecesError, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, SAMLAttributeMapping, SAMLAuthnProviderConfig, tryCatch } from '@activepieces/shared'
+import { SAMLAttributeMapping, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import * as saml from 'samlify'
 import { resolveSamlAttributes, SamlAttributes } from './saml-attributes'

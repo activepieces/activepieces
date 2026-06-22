@@ -1,5 +1,6 @@
 import { Readable } from 'stream'
-import { apId, FileType, isNil, ProjectId } from '@activepieces/shared'
+import { apId, isNil, ProjectId } from '@activepieces/core-utils'
+import { FileType } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'

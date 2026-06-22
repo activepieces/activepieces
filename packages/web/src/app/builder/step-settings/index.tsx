@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -6,7 +7,6 @@ import {
   FlowTriggerType,
   flowPieceUtil,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import deepEqual from 'deep-equal';

@@ -1,4 +1,5 @@
-import { isNil, PopulatedFlow } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { PopulatedFlow } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';

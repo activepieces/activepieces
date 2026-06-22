@@ -18,10 +18,10 @@ type CustomFixtures = {
 };
 
 export const test = base.extend<CustomFixtures>({
-  // Override page fixture to automatically authenticate before each test
+  // Authenticate before each test, then land on the automations dashboard.
   page: async ({ page }, use) => {
     const authPage = new AuthenticationPage(page);
-    
+
     if (process.env.E2E_EMAIL && process.env.E2E_PASSWORD) {
       await authPage.signIn({
         email: process.env.E2E_EMAIL,
@@ -33,7 +33,9 @@ export const test = base.extend<CustomFixtures>({
         password: DEFAULT_PASSWORD,
       });
     }
-    
+
+    await new AutomationsPage(page).open();
+
     await use(page);
   },
 

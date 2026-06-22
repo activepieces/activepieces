@@ -1,5 +1,6 @@
+import { tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
+import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact } from '../../cache/code/code-builder'
 import { pieceCache, PieceNotFoundError } from '../../cache/pieces/piece-cache'
 import { provisioner } from '../../cache/provisioner'
@@ -22,12 +23,12 @@ export async function provisionFlowPieces(params: {
         if (!(error instanceof PieceNotFoundError)) {
             throw error
         }
-        log.warn({ error: String(error), flowId }, 'Flow disabled due to missing piece')
+        log.warn({ error: String(error), flow: { id: flowId } }, 'Flow disabled due to missing piece')
         const { error: disableError } = await tryCatch(
             () => apiClient.disableFlow({ flowId, projectId }),
         )
         if (disableError) {
-            log.error({ error: String(disableError), flowId }, 'Failed to disable flow after missing piece')
+            log.error({ error: String(disableError), flow: { id: flowId } }, 'Failed to disable flow after missing piece')
         }
         return false
     }

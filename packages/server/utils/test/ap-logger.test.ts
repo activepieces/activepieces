@@ -79,22 +79,22 @@ describe('apLogger', () => {
             expect(arg.msg).toBeUndefined()
         })
 
-        it('error(Error) logs to log.error with err details', () => {
+        it('error(Error) logs to log.error with error details', () => {
             const logger = apLogger.create({})
             const err = new Error('boom')
             logger.error(err)
             expect(spies.logErrorSpy).toHaveBeenCalledOnce()
             const arg = spies.logErrorSpy.mock.calls[0][0]
-            expect(arg.err).toContain('boom')
+            expect(arg.error).toContain('boom')
         })
 
-        it('error(obj with .err Error) extracts the error', () => {
+        it('error(obj with .err Error) extracts the error under the error key', () => {
             const logger = apLogger.create({})
             const err = new Error('nested')
             logger.error({ err, requestId: 'r1' }, 'context msg')
             expect(spies.logErrorSpy).toHaveBeenCalledOnce()
             const arg = spies.logErrorSpy.mock.calls[0][0]
-            expect(arg.err).toContain('nested')
+            expect(arg.error).toContain('nested')
             expect(arg.requestId).toBe('r1')
         })
 

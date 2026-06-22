@@ -11,7 +11,7 @@ import {
 import { jiraApiCall, jiraPaginatedApiCall } from '../common';
 import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 async function getFields(auth: JiraAuth, projectId: string, issueTypeId: string): Promise<IssueFieldMetaData[]> {
 	const fields = await jiraPaginatedApiCall<IssueFieldMetaData, 'fields'>({

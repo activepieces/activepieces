@@ -58,15 +58,21 @@ export async function workdayRequest<T extends HttpMessageBody>(
 export async function workdayWqlRequest<T extends HttpMessageBody>(
 	auth: OAuth2PropertyValue,
 	query: string,
+	limit?: number,
+	offset?: number,
 ): Promise<HttpResponse<T>> {
 	if (!auth || !auth.access_token) {
 		throw new Error('Workday connection is not configured. Please select a valid Workday connection.');
 	}
 	const tenant = getTenant(auth);
+	const queryParams: QueryParams = {};
+	if (limit !== undefined) queryParams['limit'] = String(limit);
+	if (offset !== undefined) queryParams['offset'] = String(offset);
 	return httpClient.sendRequest<T>({
 		method: HttpMethod.POST,
 		url: `https://${getHost(auth)}/ccx/api/${WQL_BASE}/${tenant}/data`,
 		body: { query },
+		queryParams,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: auth.access_token,
@@ -98,13 +104,17 @@ export async function fetchAllPages<T>(
 
 		const items = (response.body[dataKey] ?? []) as T[];
 		allItems.push(...items);
-
-		const total =
-			typeof response.body['total'] === 'number'
-				? response.body['total']
-				: allItems.length;
 		offset += limit;
-		hasMore = offset < total && items.length === limit;
+
+		// A short page is the only reliable end signal. `total` stops us one
+		// round-trip early, but ONLY when the API returns it — falling back to
+		// allItems.length would halt after the first full page.
+		if (items.length < limit) {
+			hasMore = false;
+		} else {
+			const total = response.body['total'];
+			hasMore = typeof total !== 'number' || offset < total;
+		}
 	}
 
 	return allItems;
@@ -189,4 +199,109 @@ export async function workdaySoapRequest(
 
 export function escapeWql(value: string): string {
 	return value.replace(/'/g, "''");
+}
+
+export function getApiHost(auth: OAuth2PropertyValue): string {
+	return getHost(auth);
+}
+
+export async function workdayWqlRequestAll(
+	auth: OAuth2PropertyValue,
+	query: string,
+): Promise<Record<string, unknown>[]> {
+	const allRows: Record<string, unknown>[] = [];
+	const limit = 1000;
+	let offset = 0;
+
+	while (true) {
+		const response = await workdayWqlRequest<{
+			data?: Record<string, unknown>[];
+			total?: number;
+		}>(auth, query, limit, offset);
+		const rows = response.body.data ?? [];
+		allRows.push(...rows);
+
+		// A short page is the only reliable end-of-data signal. `total` is used to
+		// stop one round-trip early, but ONLY when the API actually returns it —
+		// falling back to allRows.length would halt after the first full page.
+		if (rows.length < limit) {
+			break;
+		}
+		offset += limit;
+		const total = response.body.total;
+		if (typeof total === 'number' && offset >= total) {
+			break;
+		}
+	}
+
+	return allRows;
+}
+
+export async function workdayGetReport(
+	auth: OAuth2PropertyValue,
+	reportId: string,
+	queryParams?: QueryParams,
+): Promise<Record<string, unknown>> {
+	const response = await workdayRequest<Record<string, unknown>>(
+		auth,
+		HttpMethod.GET,
+		`/reports/${reportId}`,
+		undefined,
+		queryParams,
+		WorkdayService.common,
+	);
+	return response.body;
+}
+
+export async function workdayListCustomObjectDefinitions(
+	auth: OAuth2PropertyValue,
+): Promise<Record<string, unknown>[]> {
+	const tenant = getTenant(auth);
+	const response = await httpClient.sendRequest<{
+		data?: Record<string, unknown>[];
+	}>({
+		method: HttpMethod.GET,
+		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjectDefinitions`,
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: auth.access_token,
+		},
+	});
+	return response.body.data ?? [];
+}
+
+export async function workdayGetCustomObject(
+	auth: OAuth2PropertyValue,
+	definitionId: string,
+	objectId: string,
+): Promise<Record<string, unknown>> {
+	const tenant = getTenant(auth);
+	const response = await httpClient.sendRequest<Record<string, unknown>>({
+		method: HttpMethod.GET,
+		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjects/${definitionId}`,
+		queryParams: { id: objectId },
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: auth.access_token,
+		},
+	});
+	return response.body;
+}
+
+export async function workdayUpsertCustomObject(
+	auth: OAuth2PropertyValue,
+	definitionId: string,
+	body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+	const tenant = getTenant(auth);
+	const response = await httpClient.sendRequest<Record<string, unknown>>({
+		method: HttpMethod.PUT,
+		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjects/${definitionId}`,
+		body,
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: auth.access_token,
+		},
+	});
+	return response.body;
 }

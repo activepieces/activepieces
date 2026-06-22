@@ -1,8 +1,8 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   AppConnectionOwners,
   ListVariablesRequestQuery,
   RevealVariableResponse,
-  SeekPage,
   UpdateVariableRequestBody,
   UpsertVariableRequestBody,
   VariableWithoutSensitiveData,

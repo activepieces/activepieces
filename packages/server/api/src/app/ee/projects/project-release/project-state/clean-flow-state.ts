@@ -1,4 +1,5 @@
-import { ContinueOnFailureBranches, FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ContinueOnFailureBranches, FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion } from '@activepieces/shared'
 
 function cleanFlowState(flowState: FlowState): FlowState {
     return {

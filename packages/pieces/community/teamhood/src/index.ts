@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { teamhoodAuth, TeamhoodAuth } from './lib/common';
 import { createItemAction } from './lib/actions/create-item';
 import { updateItemAction } from './lib/actions/update-item';

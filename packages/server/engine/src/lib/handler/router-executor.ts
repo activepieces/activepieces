@@ -1,5 +1,6 @@
+import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'

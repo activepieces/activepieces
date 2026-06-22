@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { uptimeRobotAuth } from './lib/auth';
 import { getMonitorsAction } from './lib/actions/get-monitors';
 import { createMonitorAction } from './lib/actions/create-monitor';

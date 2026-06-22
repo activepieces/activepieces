@@ -1,4 +1,5 @@
-import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { hubspotAuth } from '../auth';
 import {
 	createTrigger,

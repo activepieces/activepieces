@@ -1,4 +1,5 @@
-import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Shield, AlertTriangle, Check, ExternalLink } from 'lucide-react';

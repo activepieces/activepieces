@@ -7,7 +7,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 const selfHostedAuth = PieceAuth.CustomAuth({
   displayName: 'Self-hosted (Username & Password)',

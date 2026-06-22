@@ -1,11 +1,5 @@
-import {
-    EngineOperationType,
-    EngineResponseStatus,
-    isNil,
-    RenewWebhookJobData,
-    TriggerHookType,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { EngineOperationType, EngineResponseStatus, RenewWebhookJobData, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
@@ -19,7 +13,7 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobRe
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {
-            ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found for renew webhook, skipping')
+            ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found for renew webhook, skipping')
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 

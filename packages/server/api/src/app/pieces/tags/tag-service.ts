@@ -1,4 +1,5 @@
-import { apId, ListTagsRequest, SeekPage, Tag } from '@activepieces/shared'
+import { apId, SeekPage } from '@activepieces/core-utils'
+import { ListTagsRequest, Tag } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'

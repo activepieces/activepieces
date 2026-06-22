@@ -1,5 +1,6 @@
 import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { webmasters as googleWebmasters } from '@googleapis/webmasters';
+import { OAuth2Client } from 'google-auth-library';
 import { urlInspection } from './lib/actions/url-inspection';
 import { searchAnalytics } from './lib/actions/search-analytics';
 import { listSitemaps } from './lib/actions/list-sitemaps';
@@ -11,9 +12,9 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { googleSearchConsoleAuth } from './lib/auth';
 
 export const createAuthClient = (accessToken: string) => {
-  const auth = new google.auth.OAuth2();
+  const auth = new OAuth2Client();
   auth.setCredentials({ access_token: accessToken });
-  return google.webmasters({ version: 'v3', auth });
+  return googleWebmasters({ version: 'v3', auth });
 };
 
 export const googleSearchConsolePiece = createPiece({

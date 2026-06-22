@@ -1,4 +1,5 @@
-import { apId, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, isObject, McpToolResult, RunEnvironment, SampleDataFileType, Step, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
+import { apId, isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, RunEnvironment, SampleDataFileType, Step, StepLocationRelativeToParent, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
@@ -268,12 +269,12 @@ export async function executeAdhocAction({
         return { content: [{ type: 'text', text: formatAdhocActionResult(completedRun, stepName, action.displayName) }] }
     }
     catch (err) {
-        log.error({ err, projectId, flowId: flow.id }, 'executeAdhocAction failed')
+        log.error({ error: err, project: { id: projectId }, flow: { id: flow.id } }, 'executeAdhocAction failed')
         return mcpUtils.mcpToolError('Failed to run action', err)
     }
     finally {
         flowService(log).delete({ id: flow.id, projectId }).catch(err => {
-            log.warn({ err, flowId: flow.id }, 'adhoc flow cleanup failed')
+            log.warn({ error: err, flow: { id: flow.id } }, 'adhoc flow cleanup failed')
         })
     }
 }

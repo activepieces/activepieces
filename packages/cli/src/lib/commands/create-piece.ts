@@ -70,10 +70,13 @@ const scaffoldPiece = async (
       '@activepieces/pieces-common': 'workspace:*',
       '@activepieces/pieces-framework': 'workspace:*',
       '@activepieces/shared': 'workspace:*',
+    },
+    devDependencies: {
       tslib: '2.6.2',
     },
     scripts: {
       build: 'tsc -p tsconfig.lib.json && cp package.json dist/',
+      bundle: 'node ../../../../dist/packages/cli/src/index.js pieces bundle',
       lint: "eslint 'src/**/*.ts'",
     },
   };

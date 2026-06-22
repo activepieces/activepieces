@@ -19,8 +19,8 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             wideEvent.set({
+                flow: { id: request.params.flowId },
                 webhook: {
-                    flowId: request.params.flowId,
                     method: request.method,
                     async: false,
                 },
@@ -52,8 +52,8 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             wideEvent.set({
+                flow: { id: request.params.flowId },
                 webhook: {
-                    flowId: request.params.flowId,
                     method: request.method,
                     async: true,
                 },

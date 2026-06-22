@@ -66,14 +66,19 @@
   "Triggers when a new incoming call is received": "Triggers when a new incoming call is received",
   "Triggers when a new outgoing call is initiated": "Triggers when a new outgoing call is initiated",
   "Triggers when a new voicemail is received": "Triggers when a new voicemail is received",
-  "Triggers when a new SMS message is received": "Triggers when a new SMS message is received",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent",
   "Users": "Users",
   "Status": "Status",
-  "Select Recipients": "Select Recipients",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
   "Select users to which this trigger applies": "Select users to which this trigger applies",
   "Filter by call status": "Filter by call status",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "Select the SMS recipient numbers to which this trigger applies": "Select the SMS recipient numbers to which this trigger applies",
+  "Filter by message direction": "Filter by message direction",
   "Ringing": "Ringing",
   "Answered": "Answered",
-  "Both": "Both"
+  "Both": "Both",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing"
 }

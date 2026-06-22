@@ -1,4 +1,5 @@
-import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -32,8 +33,8 @@ export const websocketService = {
                 await validateProjectId({ userId: principal.id, projectId, log })
                 log.info({
                     message: 'User connected',
-                    userId: principal.id,
-                    projectId,
+                    user: { id: principal.id },
+                    project: { id: projectId },
                 })
                 await socket.join(projectId)
                 await socket.join(principal.id)
@@ -43,7 +44,7 @@ export const websocketService = {
                 const workerId = socket.handshake.auth.workerId
                 log.info({
                     message: 'Worker connected',
-                    workerId,
+                    worker: { id: workerId },
                 })
                 await socket.join(workerId)
                 break

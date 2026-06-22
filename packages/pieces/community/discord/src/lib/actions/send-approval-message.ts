@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
-import { ExecutionType } from '@activepieces/shared';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { discordCommon } from '../common';
 
 export const discordSendApprovalMessage = createAction({

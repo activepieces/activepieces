@@ -3,7 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { ListFoundationModelsCommand } from '@aws-sdk/client-bedrock';
 import { sendPrompt } from './lib/actions/send-prompt';
 import { generateContentFromImage } from './lib/actions/generate-content-from-image';

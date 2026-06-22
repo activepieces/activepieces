@@ -1,4 +1,5 @@
-import { ConsumeJobRequest, isNil, tryCatch } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ConsumeJobRequest } from '@activepieces/shared'
 import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -54,10 +55,10 @@ function createQueueDispatcher(params: {
 
             const waiter = waiters.shift()
             if (isNil(waiter)) {
-                log.warn({ queueName, jobId: job.jobId }, '[QueueDispatcher] job dequeued but no waiter available, returning to queue')
+                log.warn({ queueName, job: { id: job.jobId } }, '[QueueDispatcher] job dequeued but no waiter available, returning to queue')
                 const { error: orphanError } = await tryCatch(() => onOrphanedJob(job.jobId, job.token, job.queueName, log))
                 if (orphanError) {
-                    log.error({ queueName, jobId: job.jobId, error: String(orphanError) }, '[QueueDispatcher] failed to return orphaned job to queue')
+                    log.error({ queueName, job: { id: job.jobId }, error: String(orphanError) }, '[QueueDispatcher] failed to return orphaned job to queue')
                 }
                 continue
             }

@@ -1,4 +1,5 @@
-import { ApEdition, ApFlagId, isNil, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApEdition, ApFlagId, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'

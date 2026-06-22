@@ -4,7 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createOrUpdateContact } from './lib/actions/create-or-update-contact';
 import { constantContactAuth } from './lib/auth';
 

@@ -1,22 +1,7 @@
 import { inspect } from 'node:util'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { onCallService } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    BeginExecuteFlowOperation,
-    EngineOperationType,
-    EngineResponseStatus,
-    ErrorCode,
-    ExecuteFlowJobData,
-    ExecutionType,
-    FlowRunStatus,
-    FlowVersion,
-    isNil,
-    ResumeExecuteFlowOperation,
-    RunInternalError,
-    RunInternalErrorSource,
-    tryCatch,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
@@ -30,7 +15,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {
-            ctx.log.info({ flowVersionId: data.flowVersionId }, 'Flow version not found, skipping')
+            ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found, skipping')
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
@@ -183,7 +168,7 @@ async function reportFlowStatus(
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
             params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
-        }).catch((e) => ctx.log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
+        }).catch((e) => ctx.log.error({ flowRun: { id: data.runId }, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
     }
 }
 

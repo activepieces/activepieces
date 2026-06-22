@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 const webhookInstructions = `**Setup Instructions:**
 1. Copy the webhook URL below.

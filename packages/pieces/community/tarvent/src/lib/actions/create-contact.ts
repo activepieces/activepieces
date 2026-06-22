@@ -2,7 +2,7 @@ import { tarventAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, tarventCommon } from '../common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const createContact = createAction({
   auth: tarventAuth,
@@ -130,15 +130,15 @@ export const createContact = createAction({
       streetAddress, streetAddress2, addressLocality, addressRegion, postalCode, addressCountry, audienceDataFields } = context.propsValue;
 
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().max(100, 'Email has to be equal to or less than 100 characters.'),
-      firstName: z.string().max(100, 'First name has to be equal to or less than 100 characters.').optional(),
-      lastName: z.string().max(100, 'Last name has to be equal to or less than 100 characters.').optional(),
-      streetAddress: z.string().max(100, 'Street address has to be equal to or less than 100 characters.').optional(),
-      streetAddress2: z.string().max(100, 'Street address 2 has to be equal to or less than 100 characters.').optional(),
-      addressLocality: z.string().max(100, 'City (Locality) has to be equal to or less than 100 characters.').optional(),
-      addressRegion: z.string().max(100, 'State (Region) has to be equal to or less than 100 characters.').optional(),
-      postalCode: z.string().max(15, 'Zip code (Postal code) has to be equal to or less than 15 characters.').optional(),
-      addressCountry: z.string().max(100, 'Country has to be equal to or less than 100 characters.').optional(),
+      email: z.string().check(z.maxLength(100, 'Email has to be equal to or less than 100 characters.')),
+      firstName: z.optional(z.string().check(z.maxLength(100, 'First name has to be equal to or less than 100 characters.'))),
+      lastName: z.optional(z.string().check(z.maxLength(100, 'Last name has to be equal to or less than 100 characters.'))),
+      streetAddress: z.optional(z.string().check(z.maxLength(100, 'Street address has to be equal to or less than 100 characters.'))),
+      streetAddress2: z.optional(z.string().check(z.maxLength(100, 'Street address 2 has to be equal to or less than 100 characters.'))),
+      addressLocality: z.optional(z.string().check(z.maxLength(100, 'City (Locality) has to be equal to or less than 100 characters.'))),
+      addressRegion: z.optional(z.string().check(z.maxLength(100, 'State (Region) has to be equal to or less than 100 characters.'))),
+      postalCode: z.optional(z.string().check(z.maxLength(15, 'Zip code (Postal code) has to be equal to or less than 15 characters.'))),
+      addressCountry: z.optional(z.string().check(z.maxLength(100, 'Country has to be equal to or less than 100 characters.'))),
     });
 
     const client = makeClient(context.auth);

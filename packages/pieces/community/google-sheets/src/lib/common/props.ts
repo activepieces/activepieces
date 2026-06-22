@@ -1,5 +1,6 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import { google, drive_v3 } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import {
 	columnToLabel,
 	createGoogleClient,
@@ -8,7 +9,7 @@ import {
 	GoogleSheetsAuthValue,
 	googleSheetsCommon,
 } from './common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const createEmptyOptionList = (message: string) => {
 	return {
@@ -42,7 +43,7 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 
 			const authClient = await createGoogleClient(authValue);
 
-			const drive = google.drive({ version: 'v3', auth: authClient });
+			const drive = googleDrive({ version: 'v3', auth: authClient });
 
 			const q = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed = false'];
 
@@ -102,7 +103,7 @@ export const sheetIdProp = (displayName: string, description: string, required =
 
 			const authClient = await createGoogleClient(authValue);
 
-			const sheets = google.sheets({ version: 'v4', auth: authClient });
+			const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 			const response = await sheets.spreadsheets.get({
 				spreadsheetId: spreadsheetId as unknown as string,

@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -6,7 +7,6 @@ import {
   flowCanvasUtils as sharedFlowCanvasUtils,
   flowStructureUtil,
   FlowVersion,
-  isNil,
   LoopOnItemsAction,
   RouterAction,
   StepLocationRelativeToParent,

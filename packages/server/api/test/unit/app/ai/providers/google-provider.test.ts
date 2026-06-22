@@ -1,4 +1,5 @@
-import { AIProviderModelType, AIProviderName, ALLOWED_CHAT_MODELS_BY_PROVIDER } from '@activepieces/shared'
+import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderModelType, ALLOWED_CHAT_MODELS_BY_PROVIDER } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockSendRequest } = vi.hoisted(() => ({ mockSendRequest: vi.fn() }))

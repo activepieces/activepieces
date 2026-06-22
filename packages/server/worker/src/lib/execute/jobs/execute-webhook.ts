@@ -1,17 +1,5 @@
-import {
-    EngineOperationType,
-    EngineResponseStatus,
-    ExecuteTriggerResponse,
-    FlowVersion,
-    isNil,
-    parseToJsonIfPossible,
-    PieceTrigger,
-    StreamStepProgress,
-    TriggerHookType,
-    tryCatch,
-    WebhookJobData,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
+import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { flowCache } from '../../cache/flow/flow-cache'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
@@ -42,7 +30,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
         if (isNil(flowVersion)) {
-            ctx.log.info({ flowVersionId: data.flowVersionIdToRun }, 'Flow version not found for webhook, skipping')
+            ctx.log.info({ flowVersion: { id: data.flowVersionIdToRun } }, 'Flow version not found for webhook, skipping')
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
@@ -126,7 +114,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         if (error) {
             await ctx.sandboxManager.invalidate(ctx.log)
             if (isSandboxTimeout(error)) {
-                ctx.log.warn({ flowVersionId: data.flowVersionIdToRun }, 'Webhook execution timed out in sandbox')
+                ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
             throw error

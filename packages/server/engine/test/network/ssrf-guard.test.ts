@@ -1,7 +1,7 @@
 import dns from 'node:dns'
 import http from 'node:http'
 import https from 'node:https'
-import { Socket, createServer, Server } from 'node:net'
+import { createServer, Server, Socket } from 'node:net'
 import { SSRFBlockedError } from '@activepieces/shared'
 import { HttpProxyAgent } from 'http-proxy-agent'
 import { HttpsProxyAgent } from 'https-proxy-agent'

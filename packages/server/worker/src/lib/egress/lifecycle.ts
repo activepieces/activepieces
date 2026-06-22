@@ -3,8 +3,9 @@ import dns from 'node:dns/promises'
 import { readFile } from 'node:fs/promises'
 import net from 'node:net'
 import path from 'node:path'
+import { ActivepiecesError, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, ExecutionMode, NetworkMode, tryCatch, WorkerSettingsResponse } from '@activepieces/shared'
+import { ExecutionMode, NetworkMode, WorkerSettingsResponse } from '@activepieces/shared'
 import { workerSettings } from '../config/worker-settings'
 import { isIsolateMode } from '../execute/create-sandbox-for-job'
 import { sandboxCapacity } from '../sandbox/capacity'
@@ -61,7 +62,7 @@ async function maybeApplyIptablesLockdown({ log, proxy, settings }: ApplyLockdow
     const { nameservers: sandboxNameservers, readError: sandboxResolvConfReadError } = await readSandboxResolvConfNameservers()
     if (sandboxResolvConfReadError !== undefined) {
         log.warn(
-            { sandboxResolvConf: SANDBOX_RESOLV_CONF_PATH, err: sandboxResolvConfReadError },
+            { sandboxResolvConf: SANDBOX_RESOLV_CONF_PATH, error: sandboxResolvConfReadError },
             'Could not read sandbox resolv.conf — DNS allowlist will only include host nameservers, which may not match what the sandbox queries. This is the exact condition that caused the 2026-05-06 EAI_AGAIN outage.',
         )
     }

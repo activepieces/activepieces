@@ -1,9 +1,5 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    CreateProjectReleaseRequestBody,
-    ProjectReleaseType,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { CreateProjectReleaseRequestBody, ProjectReleaseType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -16,6 +12,7 @@ import {
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

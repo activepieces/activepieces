@@ -1,5 +1,5 @@
 import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 import { GraphError } from '@microsoft/microsoft-graph-client';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';

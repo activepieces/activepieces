@@ -1,4 +1,5 @@
-import { ApEdition, FlowRun, FlowTriggerType, isFailedState, isFlowRunStateTerminal, isManualPieceTrigger, isNil, RunEnvironment, tryCatch, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { isManualPieceTrigger, isNil, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, FlowRun, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
@@ -46,7 +47,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         }
         const { error } = await tryCatch(() => aiUsageTracker(log).track({ flowRun, flowVersion }))
         if (error) {
-            log.warn({ err: error, flowRunId: flowRun.id }, 'Failed to capture AI usage event')
+            log.warn({ error, flowRun: { id: flowRun.id } }, 'Failed to capture AI usage event')
         }
     },
 })

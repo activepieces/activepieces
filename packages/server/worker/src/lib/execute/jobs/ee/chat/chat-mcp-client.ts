@@ -1,4 +1,5 @@
-import { chatToolPhases, tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils'
+import { chatToolPhases } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -29,7 +30,7 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     }))
 
     if (!client) {
-        log.warn({ err: error }, 'Failed to create MCP client — chat will work without MCP tools')
+        log.warn({ error }, 'Failed to create MCP client — chat will work without MCP tools')
         return { mcpClient: null, mcpToolSet: {} }
     }
 

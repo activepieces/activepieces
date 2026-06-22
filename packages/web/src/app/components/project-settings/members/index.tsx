@@ -1,9 +1,5 @@
-import {
-  InvitationType,
-  Permission,
-  PlatformRole,
-  UserStatus,
-} from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import { InvitationType, PlatformRole, UserStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Users } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';

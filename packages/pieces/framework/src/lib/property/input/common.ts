@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 import { ApFile } from "./file-property";
 import { PropertyType } from "./property-type";
 
@@ -6,19 +6,15 @@ import { PropertyType } from "./property-type";
 
 export const BasePropertySchema = z.object({
     displayName: z.string(),
-    description: z.string().optional()
+    description: z.optional(z.string())
 })
 
 export type BasePropertySchema = z.infer<typeof BasePropertySchema>
 
-export const TPropertyValue = <T extends z.ZodType, U extends PropertyType>(_T: T, propertyType: U): z.ZodObject<{
-    type: z.ZodLiteral<U>,
-    required: z.ZodBoolean,
-    defaultValue: z.ZodOptional<z.ZodAny>,
-}> => z.object({
+export const TPropertyValue = <T extends z.ZodMiniType, U extends PropertyType>(_T: T, propertyType: U) => z.object({
     type: z.literal(propertyType),
     required: z.boolean(),
-    defaultValue: z.any().optional(),
+    defaultValue: z.optional(z.any()),
 })
 
 export type TPropertyValue<

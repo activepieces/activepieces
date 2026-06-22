@@ -16,9 +16,9 @@ Flow Failure Alerts allow users to subscribe to email notifications when a flow 
 - `packages/server/api/src/app/project/project-service.ts` — plumbs `postCreateContext` through to hooks
 - `packages/server/api/src/app/ee/projects/platform-project-controller.ts` — accepts `alertReceiverEmail` on the create-project request
 - `packages/server/api/src/app/ee/projects/platform-project-service.ts` — forwards `alertReceiverEmail` into `callProjectPostCreateHooks`
-- `packages/shared/src/lib/ee/alerts/alerts-dto.ts` — `Alert` type and `AlertChannel` enum
-- `packages/shared/src/lib/ee/alerts/alerts-requests.ts` — `ListAlertsParams` and `CreateAlertParams` Zod schemas
-- `packages/shared/src/lib/management/project/project-requests.ts` — `CreatePlatformProjectRequest.alertReceiverEmail`
+- `packages/core/shared/src/lib/ee/alerts/alerts-dto.ts` — `Alert` type and `AlertChannel` enum
+- `packages/core/shared/src/lib/ee/alerts/alerts-requests.ts` — `ListAlertsParams` and `CreateAlertParams` Zod schemas
+- `packages/core/shared/src/lib/management/project/project-requests.ts` — `CreatePlatformProjectRequest.alertReceiverEmail`
 - `packages/web/src/features/alerts/api/alerts-api.ts` — frontend API client
 - `packages/web/src/features/alerts/hooks/alert-hooks.ts` — React Query hooks: `useAlertsEmailList`, `useCreateAlert`, `useDeleteAlert`, `useBulkSubscribeAlerts`, `useBulkUnsubscribeAlerts`
 - `packages/web/src/app/components/project-settings/alerts/index.tsx` — routes between personal/team UI based on `currentProject.type`

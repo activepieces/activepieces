@@ -1,5 +1,6 @@
+import { formulaEvaluator } from '@activepieces/core-formula'
 import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
-import { FlowActionType, FlowTriggerType, formulaEvaluator, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
+import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
@@ -272,7 +273,7 @@ describe('Props resolver', () => {
 
     test('error channel exposes the failure message via bracket path', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{step_4['error']['message']}}",
+            unresolvedInput: '{{step_4[\'error\'][\'message\']}}',
             executionState: await buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual('Custom Runtime Error')
@@ -325,7 +326,7 @@ describe('Props resolver', () => {
             iteration: 0,
         }))
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{step_8['error']['message']}}",
+            unresolvedInput: '{{step_8[\'error\'][\'message\']}}',
             executionState: stateWithLoopFailure,
         })
         expect(resolvedInput).toEqual('inner failure')
@@ -346,7 +347,7 @@ describe('Props resolver', () => {
             iteration: 0,
         }))
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{step_3['output']['item']['a']}}",
+            unresolvedInput: '{{step_3[\'output\'][\'item\'][\'a\']}}',
             executionState: stateInsideLoop,
         })
         expect(resolvedInput).toEqual(42)
@@ -360,7 +361,7 @@ describe('Props resolver', () => {
             output: null,
         }))
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{step_1['output']}}",
+            unresolvedInput: '{{step_1[\'output\']}}',
             executionState: stateWithNullOutput,
         })
         expect(resolvedInput).toEqual('')
@@ -374,7 +375,7 @@ describe('Props resolver', () => {
             output: 42,
         }))
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{step_1['output']}}",
+            unresolvedInput: '{{step_1[\'output\']}}',
             executionState: stateWithPrimitive,
         })
         expect(resolvedInput).toEqual(42)
@@ -388,7 +389,7 @@ describe('Props resolver', () => {
             output: ['a', 'b', 'c'],
         }))
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{step_1['output'][0]}}",
+            unresolvedInput: '{{step_1[\'output\'][0]}}',
             executionState: stateWithArray,
         })
         expect(resolvedInput).toEqual('a')
