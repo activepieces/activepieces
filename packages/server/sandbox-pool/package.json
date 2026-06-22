@@ -21,6 +21,6 @@
   "devDependencies": {
     "@types/write-file-atomic": "4.0.3",
     "@types/node": "24.11.0",
-    "vitest": "3.0.8"
+    "vitest": "3.2.6"
   }
 }
