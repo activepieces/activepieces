@@ -9,8 +9,6 @@ import { SandboxPoolSettings } from '../../types'
 import { cacheUtils } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
 
-export const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
-
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
@@ -302,8 +300,13 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
     if (!readyExists) {
         return false
     }
+    // 'ready' is the primary completion signal; this is a defensive check that the extracted
+    // content is still present. A bundle's entry may live at the root or under src/ (per its
+    // package.json "main"), but every bundle tarball ships package.json — so check that. Keying
+    // on a fixed entry filename would never match src/-entry bundles, deleting 'ready' and
+    // forcing a full re-extract (and re-`bun install`) on every sandbox provision.
     const entryMarker = piece.packageType === PackageType.ARCHIVE
-        ? join(pieceFolder, PIECE_BUNDLE_FILENAME)
+        ? join(pieceFolder, 'package.json')
         : join(pieceFolder, 'node_modules')
     if (!await fileSystemUtils.fileExists(entryMarker)) {
         await rm(join(pieceFolder, 'ready'), { force: true })

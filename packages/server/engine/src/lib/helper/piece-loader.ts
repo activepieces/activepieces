@@ -219,6 +219,20 @@ async function resolveInstalledPieceEntry(pieceFolder: string, trimmedName: stri
     if (await utils.folderExists(packageDir)) {
         return resolveEntryFromPackageDir(packageDir)
     }
+    // Some published bundles place the entry under src/ and point package.json "main" at it
+    // (rather than index.bundle.js at the root). The extracted archive lands directly at the
+    // install-folder root with no node_modules, so honor its main entry here too — this keeps
+    // a bundle loadable whether its entry sits at the root or under src/.
+    // Only return an entry that actually exists: a half-installed registry folder also has a
+    // stub package.json (no "main") at this point, for which resolveEntryFromPackageDir would
+    // otherwise return a non-existent src/index.js — fall through to a clean PieceNotFoundError.
+    const rootManifest = path.join(pieceFolder, 'package.json')
+    if (await utils.folderExists(rootManifest)) {
+        const rootEntry = await resolveEntryFromPackageDir(pieceFolder)
+        if (await utils.folderExists(rootEntry)) {
+            return rootEntry
+        }
+    }
     return null
 }
 
