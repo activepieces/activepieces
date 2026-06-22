@@ -217,10 +217,10 @@ export function createSandbox(
                                 frame,
                                 workerHandlers,
                                 appendStdout: (m) => {
-                                    stdOut += m 
+                                    stdOut += m
                                 },
                                 appendStderr: (m) => {
-                                    stdError += m 
+                                    stdError += m
                                 },
                                 onResult: (response) => {
                                     settled = true
@@ -303,6 +303,10 @@ function handleEngineEvent(params: EngineEventParams): void {
             const handler = workerHandlers[event.method as keyof WorkerContract]
             // Fire-and-forget: the engine doesn't await these (they stream one-way), so a
             // handler failure must not break stream parsing — just log it.
+            if (typeof handler !== 'function') {
+                log.warn({ sandbox: { id: sandboxId }, method: event.method }, '[Sandbox] Unknown RPC method received from engine, ignoring')
+                break
+            }
             void Promise.resolve(handler(event.payload as never)).catch((error: unknown) => {
                 log.error({ sandbox: { id: sandboxId }, method: event.method, error: String(error) }, '[Sandbox] Worker RPC handler failed')
             })
