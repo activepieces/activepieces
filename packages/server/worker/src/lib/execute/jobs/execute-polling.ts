@@ -13,8 +13,8 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
         const p = await execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
 
         if (p.kind === 'flow-not-found') {
-            // Preserve semantics of the old assertNotNullOrUndefined(flowVersion, 'flowVersion') call.
-            throw new Error('flowVersion')
+            ctx.log.error({ flow: { id: data.flowId, version: data.flowVersionId }, project: { id: data.projectId } }, 'Polling trigger skipped: flow version not found during provision')
+            throw new Error(`Flow version not found during polling provision (flowVersionId=${data.flowVersionId})`)
         }
 
         if (p.kind === 'disabled') {
