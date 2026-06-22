@@ -147,12 +147,13 @@ export const pieceHelper = {
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
 
-        if (isNil(piece.auth) || piece.auth.type !== PropertyType.CUSTOM_AUTH || isNil(piece.auth.refresh)) {
-            console.log('[custom-auth-refresh] piece has no refresh callback — skipping', { pieceName: piecePackage.pieceName })
+        if (params.auth.type !== AppConnectionType.CUSTOM_AUTH) {
             return { skipped: true }
         }
 
-        if (params.auth.type !== AppConnectionType.CUSTOM_AUTH) {
+        const pieceAuth = getAuthPropertyForValue({ authValueType: params.auth.type, pieceAuth: piece.auth })
+
+        if (isNil(pieceAuth) || pieceAuth.type !== PropertyType.CUSTOM_AUTH || isNil(pieceAuth.refresh)) {
             return { skipped: true }
         }
 
@@ -161,15 +162,13 @@ export const pieceHelper = {
             publicUrl: params.publicApiUrl,
         }
 
-        console.log('[custom-auth-refresh] calling refresh.generate for piece', { pieceName: piecePackage.pieceName })
         const DEFAULT_EXPIRES_IN_SECONDS = 3300
-        const result = await piece.auth.refresh.generate({
+        const result = await pieceAuth.refresh.generate({
             auth: params.auth.props,
             server,
         })
 
-        const expiresIn = result.expires_in ?? piece.auth.refresh.defaultExpiresIn ?? DEFAULT_EXPIRES_IN_SECONDS
-        console.log('[custom-auth-refresh] refresh.generate succeeded', { pieceName: piecePackage.pieceName, expiresIn })
+        const expiresIn = result.expires_in ?? pieceAuth.refresh.defaultExpiresIn ?? DEFAULT_EXPIRES_IN_SECONDS
 
         return {
             skipped: false,

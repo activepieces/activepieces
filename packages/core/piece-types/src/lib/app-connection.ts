@@ -45,6 +45,10 @@ export type BaseOAuth2ConnectionValue = {
 export type CustomAuthConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {
     type: AppConnectionType.CUSTOM_AUTH
     props: T
+    access_token?: string
+    token_expires_at?: number
+    has_refresh_callback?: boolean
+    refresh_recovery_attempted?: boolean
 }
 
 export type OIDCConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {

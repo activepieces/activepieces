@@ -114,10 +114,8 @@ export async function getAuthHeaders(
   // Use the server-cached token when available (set by the refresh callback).
   // Falls back to a fresh login only on the very first call before the cache warms up.
   if (auth.access_token) {
-    console.log('[umami] using cached access_token (no login request)');
     return { Authorization: `Bearer ${auth.access_token}` };
   }
-  console.log('[umami] no cached token — falling back to login request');
   const baseUrl = auth.props.baseUrl.replace(/\/+$/, '');
   const loginResponse = await httpClient.sendRequest<{ token: string }>({
     method: HttpMethod.POST,

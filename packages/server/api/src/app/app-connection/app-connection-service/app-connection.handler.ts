@@ -88,7 +88,13 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 const refreshResult = engineResponse.response
                 if (refreshResult.skipped) {
                     log.info({ pieceName: connection.pieceName }, '[custom-auth-refresh] piece has no refresh callback — skipping future refreshes')
-                    connection.value = { ...connection.value, has_refresh_callback: false }
+                    // If has_refresh_callback was already false (recovery attempt), mark
+                    // refresh_recovery_attempted to prevent retrying indefinitely.
+                    connection.value = {
+                        ...connection.value,
+                        has_refresh_callback: false,
+                        refresh_recovery_attempted: connection.value.has_refresh_callback === false ? true : undefined,
+                    }
                 }
                 else {
                     log.info({ pieceName: connection.pieceName, expiresIn: refreshResult.expires_in }, '[custom-auth-refresh] token refreshed successfully')
@@ -203,9 +209,15 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
 
-export function isCustomAuthTokenStale(value: { has_refresh_callback?: boolean, access_token?: string, token_expires_at?: number }): boolean {
+export function isCustomAuthTokenStale(value: { has_refresh_callback?: boolean, access_token?: string, token_expires_at?: number, refresh_recovery_attempted?: boolean }): boolean {
     if (value.has_refresh_callback === false) {
-        return false
+        // Only trust this flag if we have an access_token (piece worked before) or
+        // recovery was already attempted. If neither is true, the flag may have been
+        // written incorrectly — allow one recovery attempt.
+        if (!isNil(value.access_token) || value.refresh_recovery_attempted) {
+            return false
+        }
+        return true
     }
     if (isNil(value.access_token)) {
         return true
