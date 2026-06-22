@@ -1,11 +1,10 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, isNil, RuntimeKind, WorkerToApiContract } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, RuntimeKind, tryCatch, WorkerToApiContract } from '@activepieces/shared'
 import { localCacheInstall } from '../provision/piece-install-strategy'
 import {
     CreateExecutionParams,
     DisposeParams,
     InitParams,
-    ProvisionParams,
     RunParams,
     Runtime,
     RuntimeExecution,
@@ -51,20 +50,24 @@ export function createWorkerPoolRuntime({ concurrency, proxyPort }: CreateWorker
 
 function createWorkerPoolExecution({ manager, log, apiClient }: CreateWorkerPoolExecutionParams): RuntimeExecution {
     let sandbox: Sandbox | null = null
-    let mountContext: InitParams | null = null
+    let mountContext: MountContext | null = null
 
     return {
-        init(params: InitParams): Promise<void> {
+        async init({ flowVersionId, platformId, pieces, codeSteps }: InitParams): Promise<void> {
             // Acquire the lane's (possibly reused) sandbox object but do NOT start the process yet —
-            // the spawn happens in run(), after provision() has populated the mounted cache.
+            // the spawn happens in run(), after the host-side install below populates the cache the
+            // sandbox bind-mounts (the locked engine sandbox never runs bun itself).
             sandbox = manager.acquire({ log, apiClient })
-            mountContext = params
-            return Promise.resolve()
-        },
-        provision({ pieces, codeSteps }: ProvisionParams): Promise<void> {
-            // Host-side install into the local cache that the sandbox bind-mounts. The locked engine
-            // sandbox never runs bun itself.
-            return localCacheInstall({ log, apiClient }).install({ pieces, codeSteps })
+            mountContext = { flowVersionId, platformId }
+            // Keep init atomic: if the install fails, release the lane we just took so callers
+            // (which only guard run()) never leak the slot.
+            const { error } = await tryCatch(() => localCacheInstall({ log, apiClient }).install({ pieces, codeSteps }))
+            if (error) {
+                await manager.invalidate(log)
+                sandbox = null
+                mountContext = null
+                throw error
+            }
         },
         async run({ operationType, operation, timeoutInSeconds }: RunParams): Promise<RuntimeExecutionResult> {
             if (isNil(sandbox) || isNil(mountContext)) {
@@ -95,4 +98,9 @@ type CreateWorkerPoolExecutionParams = {
     manager: SandboxManager
     log: ApLogger
     apiClient: WorkerToApiContract
+}
+
+type MountContext = {
+    flowVersionId: string | undefined
+    platformId: string
 }

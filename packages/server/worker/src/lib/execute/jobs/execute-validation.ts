@@ -16,10 +16,9 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.init({ flowVersionId: undefined, platformId: data.platformId })
+        await execution.init({ flowVersionId: undefined, platformId: data.platformId, pieces: [data.piece], codeSteps: [] })
 
         try {
-            await execution.provision({ pieces: [data.piece], codeSteps: [] })
             const result = await execution.run({
                 operationType: EngineOperationType.EXECUTE_VALIDATE_AUTH,
                 operation: {

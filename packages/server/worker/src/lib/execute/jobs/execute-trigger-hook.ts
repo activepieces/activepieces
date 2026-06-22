@@ -9,7 +9,7 @@ import {
 import { workerSettings } from '../../config/worker-settings'
 import { flowCache } from '../../runtime/worker-pool/cache/flow/flow-cache'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
-import { provisionFlowPieces } from '../utils/flow-helpers'
+import { resolveFlowArtifacts } from '../utils/flow-helpers'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
@@ -24,14 +24,14 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId })
-
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient, execution })
-        if (!provisioned) {
+        const artifacts = await resolveFlowArtifacts({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        if (artifacts.disabled) {
             ctx.log.info({ flow: { id: data.flowId } }, 'Failed to provision pieces for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
+
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId, pieces: artifacts.pieces, codeSteps: artifacts.codeSteps })
 
         const { data: result, error } = await tryCatch(async () => {
             return execution.run({

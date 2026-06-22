@@ -28,7 +28,7 @@ vi.mock('../../../../src/lib/config/worker-settings', () => ({
 }))
 
 vi.mock('../../../../src/lib/execute/utils/flow-helpers', () => ({
-    provisionFlowPieces: vi.fn().mockResolvedValue(true),
+    resolveFlowArtifacts: vi.fn().mockResolvedValue({ disabled: false, pieces: [], codeSteps: [] }),
 }))
 
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
@@ -102,7 +102,6 @@ function makeResumeJobData(overrides?: Partial<ExecuteFlowJobData>): ExecuteFlow
 function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
     const mockExecution = {
         init: vi.fn(),
-        provision: vi.fn(),
         run: vi.fn().mockResolvedValue({ status: 'OK' }),
         dispose: vi.fn(),
     }

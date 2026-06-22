@@ -21,7 +21,7 @@ import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { flowCache } from '../../runtime/worker-pool/cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { provisionFlowPieces } from '../utils/flow-helpers'
+import { resolveFlowArtifacts } from '../utils/flow-helpers'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -35,29 +35,28 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId })
-
-        const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient, execution }))
-        if (provisionError) {
-            await execution.dispose({ invalidate: true })
-            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, provisionError))
-            throw provisionError
+        const { data: artifacts, error: resolveError } = await tryCatch(() => resolveFlowArtifacts({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
+        if (resolveError) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, resolveError))
+            throw resolveError
         }
-        if (!provisioned) {
-            await execution.dispose({ invalidate: true })
+        if (artifacts.disabled) {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
         if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
-            throw new ActivepiecesError({
+            const error = new ActivepiecesError({
                 code: ErrorCode.RESUME_LOGS_FILE_MISSING,
                 params: { runId: data.runId },
             }, 'logsFileId is missing for RESUME operation')
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, error))
+            throw error
         }
 
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
         try {
+            await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId, pieces: artifacts.pieces, codeSteps: artifacts.codeSteps })
             const operation = buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
             const result = await execution.run({
                 operationType: EngineOperationType.EXECUTE_FLOW,

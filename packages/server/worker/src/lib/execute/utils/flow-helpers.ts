@@ -1,23 +1,20 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
-import { CodeArtifact, RuntimeExecution } from '../../runtime/types'
+import { CodeArtifact } from '../../runtime/types'
 import { pieceCache, PieceNotFoundError } from '../../runtime/worker-pool/cache/pieces/piece-cache'
 
-export async function provisionFlowPieces(params: {
+// Resolve the pieces/code a flow needs into the artifacts that init() installs. A missing piece is
+// not an error: the flow is disabled and `disabled: true` is returned so the caller skips the run.
+export async function resolveFlowArtifacts(params: {
     flowVersion: FlowVersion
     platformId: string
     flowId: string
     projectId: string
     log: ApLogger
     apiClient: WorkerToApiContract
-    execution: RuntimeExecution
-}): Promise<boolean> {
-    const { flowVersion, platformId, flowId, projectId, log, apiClient, execution } = params
-    const { error } = await tryCatch(async () => {
-        const pieces = await extractPiecePackages(flowVersion, platformId, log, apiClient)
-        const codeSteps = extractCodeArtifacts(flowVersion)
-        await execution.provision({ pieces, codeSteps })
-    })
+}): Promise<FlowArtifacts> {
+    const { flowVersion, platformId, flowId, projectId, log, apiClient } = params
+    const { data: pieces, error } = await tryCatch(() => extractPiecePackages(flowVersion, platformId, log, apiClient))
     if (error) {
         if (!(error instanceof PieceNotFoundError)) {
             throw error
@@ -29,9 +26,9 @@ export async function provisionFlowPieces(params: {
         if (disableError) {
             log.error({ error: String(disableError), flow: { id: flowId } }, 'Failed to disable flow after missing piece')
         }
-        return false
+        return { disabled: true }
     }
-    return true
+    return { disabled: false, pieces, codeSteps: extractCodeArtifacts(flowVersion) }
 }
 
 export async function extractPiecePackages(flowVersion: FlowVersion, platformId: string, log: ApLogger, apiClient: WorkerToApiContract): Promise<PiecePackage[]> {
@@ -59,3 +56,7 @@ export function extractCodeArtifacts(flowVersion: FlowVersion): CodeArtifact[] {
             flowVersionState: flowVersion.state,
         }))
 }
+
+export type FlowArtifacts =
+    | { disabled: true }
+    | { disabled: false, pieces: PiecePackage[], codeSteps: CodeArtifact[] }
