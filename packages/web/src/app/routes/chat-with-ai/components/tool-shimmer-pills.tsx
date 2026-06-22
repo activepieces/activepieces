@@ -12,6 +12,8 @@ import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 
+import { SearchAppsAnimation } from './search-apps-animation';
+
 export function ToolShimmerPills({
   toolSteps,
   lastThinkingStatus,
@@ -36,6 +38,10 @@ export function ToolShimmerPills({
 
   const description = lastThinkingStatus ?? lastStep?.description;
 
+  const isResearchPieces =
+    lastStep != null &&
+    chatPartUtils.getToolPartName(lastStep.part) === 'ap_research_pieces';
+
   return (
     <AnimatePresence mode="wait">
       {lastStep && (
@@ -52,7 +58,11 @@ export function ToolShimmerPills({
               {description}
             </p>
           )}
-          <ShimmerPill part={lastStep.part} pieceSummaries={pieceSummaries} />
+          {isResearchPieces ? (
+            <SearchAppsAnimation />
+          ) : (
+            <ShimmerPill part={lastStep.part} pieceSummaries={pieceSummaries} />
+          )}
         </motion.div>
       )}
     </AnimatePresence>
