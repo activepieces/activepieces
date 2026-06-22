@@ -1,10 +1,6 @@
 import { readdir, rm } from 'fs/promises'
 import path from 'path'
-import { logger } from '../config/logger'
-
-export const LATEST_CACHE_VERSION = 'v12'
-
-export const GLOBAL_CACHE_ALL_VERSIONS_PATH = path.resolve('cache')
+import { logger } from '../../../config/logger'
 
 export function getGlobalCachePathLatestVersion(): string {
     return path.resolve('cache', LATEST_CACHE_VERSION)
@@ -30,11 +26,6 @@ export function getEnginePath(): string {
     return path.join(getGlobalCacheCommonPath(), 'main.js')
 }
 
-export enum CacheState {
-    READY = 'READY',
-    PENDING = 'PENDING',
-}
-
 export async function deleteStaleCache(): Promise<void> {
     try {
         const cacheDir = path.resolve(GLOBAL_CACHE_ALL_VERSIONS_PATH)
@@ -49,4 +40,13 @@ export async function deleteStaleCache(): Promise<void> {
     catch (error) {
         logger.error({ error }, 'Failed to delete stale cache')
     }
+}
+
+export const LATEST_CACHE_VERSION = 'v12'
+
+export const GLOBAL_CACHE_ALL_VERSIONS_PATH = path.resolve('cache')
+
+export enum CacheState {
+    READY = 'READY',
+    PENDING = 'PENDING',
 }

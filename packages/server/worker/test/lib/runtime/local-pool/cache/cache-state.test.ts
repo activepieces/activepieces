@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { describe, it, expect, afterEach } from 'vitest'
-import { cacheState } from '../../../src/lib/cache/cache-state'
+import { cacheState } from '../../../../../src/lib/runtime/local-pool/cache/cache-state'
 
 const folders: string[] = []
 
