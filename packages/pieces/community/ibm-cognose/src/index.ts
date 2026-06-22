@@ -8,7 +8,7 @@ import {
   httpClient,
   createCustomApiCallAction
 } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { CognosClient } from './lib/common/cognos-client';
 import { createDataSourceAction } from './lib/actions/create-data-source';
 import { updateDataSourceAction } from './lib/actions/update-data-source';

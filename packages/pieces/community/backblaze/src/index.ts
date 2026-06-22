@@ -3,7 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { readBackBlazeFileAction } from './lib/actions/read-file';
 import { backBlazes3UploadFileAction } from './lib/actions/upload-file';
 import { createBackBlazeS3 } from './lib/common';

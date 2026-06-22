@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { descriptAgentEditAction } from './lib/actions/agent-edit';
 import { descriptGetJobStatusAction } from './lib/actions/get-job-status';
 import { descriptGetProjectAction } from './lib/actions/get-project';

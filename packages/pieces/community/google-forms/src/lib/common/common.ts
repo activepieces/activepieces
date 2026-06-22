@@ -4,9 +4,8 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { AppConnectionType } from '@activepieces/pieces-framework';
+import { JWT, OAuth2Client } from 'google-auth-library';
 
 export const googleFormsScopes = [
   'https://www.googleapis.com/auth/forms.responses.readonly',
@@ -57,7 +56,7 @@ export type GoogleFormsAuthValue = AppConnectionValueForAuthProperty<typeof goog
 export async function createGoogleClient(auth: GoogleFormsAuthValue): Promise<OAuth2Client> {
   if (auth.type === AppConnectionType.CUSTOM_AUTH) {
     const serviceAccount = JSON.parse(auth.props.serviceAccount);
-    return new google.auth.JWT({
+    return new JWT({
       email: serviceAccount.client_email,
       key: serviceAccount.private_key,
       scopes: googleFormsScopes,

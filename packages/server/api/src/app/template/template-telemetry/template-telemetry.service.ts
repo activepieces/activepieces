@@ -1,4 +1,5 @@
-import { ApEdition, isNil, TemplateTelemetryEvent, TemplateTelemetryEventType, tryCatch } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, TemplateTelemetryEvent, TemplateTelemetryEventType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'

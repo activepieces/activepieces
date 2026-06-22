@@ -10,7 +10,7 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField, GetDealResponse } from '../common/types';
 import dayjs from 'dayjs';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const updateDealAction = createAction({
 	auth: pipedriveAuth,

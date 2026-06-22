@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { SoftrAuth } from '../common/auth';
 import { makeRequest, transformRecordFields } from '../common/client';
 import { databaseIdDropdown, recordIdField, tableFields, tableIdDropdown } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { TableField } from '../common/types';
 
 export const updateDatabaseRecord = createAction({

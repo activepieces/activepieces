@@ -7,8 +7,8 @@ Folders provide a lightweight organizational layer for flows within a project. E
 - `packages/server/api/src/app/flows/folder/folder.module.ts` — Fastify plugin (module + controller combined)
 - `packages/server/api/src/app/flows/folder/folder.service.ts` — CRUD service (`flowFolderService`)
 - `packages/server/api/src/app/flows/folder/folder.entity.ts` — TypeORM entity
-- `packages/shared/src/lib/automation/flows/folders/folder.ts` — `Folder`, `FolderDto`, `FolderId`, `UncategorizedFolderId`
-- `packages/shared/src/lib/automation/flows/folders/folder-requests.ts` — `CreateFolderRequest`, `UpdateFolderRequest`, `DeleteFolderRequest`, `ListFolderRequest`
+- `packages/core/shared/src/lib/automation/flows/folders/folder.ts` — `Folder`, `FolderDto`, `FolderId`, `UncategorizedFolderId`
+- `packages/core/shared/src/lib/automation/flows/folders/folder-requests.ts` — `CreateFolderRequest`, `UpdateFolderRequest`, `DeleteFolderRequest`, `ListFolderRequest`
 - `packages/web/src/features/folders/components/rename-folder-dialog.tsx` — rename dialog
 - `packages/web/src/features/folders/api/` — frontend API client
 - `packages/web/src/features/folders/hooks/` — TanStack Query hooks

@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const getGeneratedVideo = createAction({
@@ -31,7 +31,7 @@ export const getGeneratedVideo = createAction({
     const { project_id } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      project_id: z.string().min(1, 'Project ID cannot be empty'),
+      project_id: z.string().check(z.minLength(1, 'Project ID cannot be empty')),
     });
 
     const response = await httpClient.sendRequest({

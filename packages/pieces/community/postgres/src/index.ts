@@ -3,7 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { runQuery } from './lib/actions/run-query';
 import { newRow } from './lib/triggers/new-row';
 import { pgClient } from './lib/common';

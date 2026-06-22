@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createInbox } from './lib/actions/create-inbox';
 import { getInbox } from './lib/actions/get-inbox';
 import { deleteInbox } from './lib/actions/delete-inbox';

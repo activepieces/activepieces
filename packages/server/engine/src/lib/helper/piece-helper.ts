@@ -1,4 +1,5 @@
 import path from 'path'
+import { isNil } from '@activepieces/core-utils'
 import {
     DropdownProperty,
     DynamicProperties,
@@ -11,16 +12,7 @@ import {
     pieceTranslation,
     PropertyType,
     StaticPropsValue } from '@activepieces/pieces-framework'
-import {
-    AppConnectionType,
-    AppConnectionValue,
-    EngineGenericError,
-    ExecuteExtractPieceMetadata,
-    ExecutePropsOptions,
-    ExecuteValidateAuthOperation,
-    ExecuteValidateAuthResponse,
-    isNil,
-} from '@activepieces/shared'
+import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../piece-context/flows'

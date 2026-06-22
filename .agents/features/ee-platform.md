@@ -6,8 +6,8 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 ## Key Files
 - `packages/server/api/src/app/ee/platform/` — backend service and controller
 - `packages/server/api/src/app/ee/billing/` — Stripe webhook, checkout, billing controller
-- `packages/shared/src/lib/ee/billing/index.ts` — shared plan constants, Zod schemas, `STANDARD_CLOUD_PLAN`, `OPEN_SOURCE_PLAN`
-- `packages/shared/src/lib/management/platform/` — `PlatformPlan` type and all feature-flag fields
+- `packages/core/shared/src/lib/ee/billing/index.ts` — shared plan constants, Zod schemas, `STANDARD_CLOUD_PLAN`, `OPEN_SOURCE_PLAN`
+- `packages/core/shared/src/lib/management/platform/` — `PlatformPlan` type and all feature-flag fields
 - `packages/web/src/features/billing/api/billing-plans-api.ts` — `platformBillingApi` (portal, checkout, AI credits, auto top-up)
 - `packages/web/src/features/billing/hooks/billing-hooks.ts` — `billingQueries`, `billingMutations`
 - `packages/web/src/features/billing/components/` — `SubscriptionInfo`, `ActiveFlowAddon`, `AICreditUsage`, `LicenseKey`, `PurchaseAICreditsDialog`, `AutoTopUpConfigDialog`

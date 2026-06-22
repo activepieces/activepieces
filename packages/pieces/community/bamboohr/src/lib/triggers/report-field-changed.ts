@@ -10,7 +10,7 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { bambooHrAuth } from '../common/auth';
-import { isEmpty, isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@activepieces/pieces-framework';
 
 async function getReportById(
   companyDomain: string,

@@ -8,7 +8,7 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { AssociationSpecAssociationCategoryEnum } from '../common/types';
-import { chunk } from '@activepieces/shared';
+import { chunk } from '@activepieces/pieces-framework';
 
 export const removeAssociationsAction = createAction({
     auth: hubspotAuth,

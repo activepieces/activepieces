@@ -2,10 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
 
 export const telegramRequestApprovalMessageAction = createAction({
   auth: telegramBotAuth,

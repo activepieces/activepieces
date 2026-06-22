@@ -6,7 +6,7 @@ import {
 import { TwitterApi } from 'twitter-api-v2';
 import { twitterAuth } from '../..';
 import { twitterCommon } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const createReply = createAction({
@@ -30,7 +30,7 @@ export const createReply = createAction({
     },
     async run(context) {
       await propsValidation.validateZod(context.propsValue, {
-        text: z.string().min(1),
+        text: z.string().check(z.minLength(1)),
       });
 
       const { consumerKey, consumerSecret, accessToken, accessTokenSecret } =

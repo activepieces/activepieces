@@ -2,7 +2,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const generatePassword = createAction({
@@ -31,7 +31,7 @@ export const generatePassword = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      length: z.number().max(256),
+      length: z.number().check(z.maximum(256)),
     });
 
     const charset = context.propsValue.characterSet === 'alphanumeric'

@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { notionAuth } from './lib/auth';
 import { getNotionToken, NotionAuthValue } from './lib/common';
 import { appendToPage } from './lib/actions/append-to-page';

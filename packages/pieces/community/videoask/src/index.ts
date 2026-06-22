@@ -4,7 +4,7 @@ import { createContact } from "./lib/actions/create-contact";
 import { videoaskAuth } from "./lib/common/auth";
 import { createCustomApiCallAction, HttpMethod } from "@activepieces/pieces-common";
 import { makeRequest } from "./lib/common/client";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { formContactMessage } from "./lib/triggers/form-contact-message";
 import { formTranscribed } from "./lib/triggers/form-transcribed";
 import { newFormResponse } from "./lib/triggers/new-form-response";

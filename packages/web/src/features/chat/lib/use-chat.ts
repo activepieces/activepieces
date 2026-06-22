@@ -1,17 +1,14 @@
+import { apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
-  apId,
   ChatAllowedMimeType,
   ChatConversationStatus,
   ChatHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
-  ErrorCode,
-  isNil,
   PersistedChatMessage,
   ToolProgressEvent,
-  tryCatch,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -352,6 +349,11 @@ export function useAgentChat({
     sendStatusRef.current.type === 'submitting' ||
     isPollingForAgentReply;
 
+  const isAwaitingResponse =
+    streamPhase === 'awaiting-stream' ||
+    streamPhase === 'streaming' ||
+    sendStatus.type === 'submitting';
+
   const messages: ChatUIMessage[] = useMemo(() => {
     const base = [...persistedMessages];
     if (optimisticUserMessage) base.push(optimisticUserMessage);
@@ -674,6 +676,7 @@ export function useAgentChat({
     modelName,
     messages,
     isStreaming,
+    isAwaitingResponse,
     wasCancelled,
     isLoadingHistory,
     error,

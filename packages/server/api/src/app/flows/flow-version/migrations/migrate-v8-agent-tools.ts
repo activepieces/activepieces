@@ -1,10 +1,5 @@
-import {
-    AgentPieceProps,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-    isNil,
-} from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { AgentPieceProps, FlowActionType, flowStructureUtil, FlowVersion } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const cleanUpAgentTools: Migration = {

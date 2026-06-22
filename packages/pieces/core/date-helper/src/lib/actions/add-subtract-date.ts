@@ -10,7 +10,7 @@ import {
   timeParts,
   timeZoneOptions,
 } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const addSubtractDateAction = createAction({
@@ -90,7 +90,7 @@ export const addSubtractDateAction = createAction({
 
     if (setTime && setTime.trim() !== '') {
       await propsValidation.validateZod({ time: setTime }, {
-        time: z.string().regex(/^\d\d:\d\d$/),
+        time: z.string().check(z.regex(/^\d\d:\d\d$/)),
       });
     }
 

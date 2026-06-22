@@ -1,6 +1,6 @@
 import { createHash, createPrivateKey, createPublicKey, generateKeyPair, JsonWebKey } from 'crypto'
 import { promisify } from 'util'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { Mutex } from 'async-mutex'
 import { RedisType } from '../../../database/redis/types'
 import { redisConnections } from '../../../database/redis-connections'

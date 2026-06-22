@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { opnformNewSubmission } from './lib/triggers/new-submission';
 import { API_URL_DEFAULT } from './lib/common';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';

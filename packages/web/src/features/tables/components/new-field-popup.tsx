@@ -1,4 +1,5 @@
-import { FieldType, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { FieldType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { nanoid } from 'nanoid';
 import { useState } from 'react';

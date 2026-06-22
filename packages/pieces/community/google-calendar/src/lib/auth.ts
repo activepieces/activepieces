@@ -1,7 +1,6 @@
 import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { AppConnectionType } from '@activepieces/pieces-framework';
+import { JWT, OAuth2Client } from 'google-auth-library';
 
 export const googleCalendarScopes = [
   'https://www.googleapis.com/auth/calendar.events',
@@ -55,7 +54,7 @@ export type GoogleCalendarAuthValue = AppConnectionValueForAuthProperty<typeof g
 export async function createGoogleClient(auth: GoogleCalendarAuthValue): Promise<OAuth2Client> {
   if (auth.type === AppConnectionType.CUSTOM_AUTH) {
     const serviceAccount = JSON.parse(auth.props.serviceAccount);
-    return new google.auth.JWT({
+    return new JWT({
       email: serviceAccount.client_email,
       key: serviceAccount.private_key,
       scopes: googleCalendarScopes,

@@ -2,9 +2,9 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { ExecutionType } from '@activepieces/shared';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { markdownDescription } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 enum TimeUnit {
@@ -54,7 +54,7 @@ export const delayForAction = createAction({
   },
   async run(ctx) {
     await propsValidation.validateZod(ctx.propsValue, {
-      delayFor: z.number().min(0),
+      delayFor: z.number().check(z.minimum(0)),
     });
 
     const unit = ctx.propsValue.unit ?? TimeUnit.SECONDS;

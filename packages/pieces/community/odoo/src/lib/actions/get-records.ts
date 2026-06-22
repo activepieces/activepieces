@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
 import { odooAuth } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export default createAction({
@@ -43,7 +43,7 @@ export default createAction({
     },
     async run(context) {
         await propsValidation.validateZod(context.propsValue, {
-            limit: z.number().min(1).optional(),
+            limit: z.optional(z.number().check(z.minimum(1))),
         });
 
         const odoo = new Odoo({

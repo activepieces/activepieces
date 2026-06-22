@@ -1,7 +1,5 @@
-import {
-    ALL_PRINCIPAL_TYPES,
-    ApId,
-} from '@activepieces/shared'
+import { ApId } from '@activepieces/core-utils'
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'

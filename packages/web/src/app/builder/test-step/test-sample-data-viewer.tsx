@@ -1,10 +1,5 @@
-import {
-  AgentResult,
-  AgentTaskStatus,
-  FlowAction,
-  isNil,
-  tryParseFriendlyPieceError,
-} from '@activepieces/shared';
+import { isNil, tryParseFriendlyPieceError } from '@activepieces/core-utils';
+import { AgentResult, AgentTaskStatus, FlowAction } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2, Play } from 'lucide-react';
 import React, { useState } from 'react';

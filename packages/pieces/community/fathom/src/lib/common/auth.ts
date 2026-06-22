@@ -1,5 +1,5 @@
 import { PieceAuth, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { Fathom } from 'fathom-typescript';
 
 const fathomOAuth2Auth = PieceAuth.OAuth2({

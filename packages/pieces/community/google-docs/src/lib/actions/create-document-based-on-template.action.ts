@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { docs as googleDocs } from '@googleapis/docs';
 
 const PLACEHOLDER_FORMATS: Record<string, string> = {
   'curly_braces': '{{KEY}}',
@@ -66,7 +66,7 @@ export const createDocumentBasedOnTemplate = createAction({
     const placeholder_format = PLACEHOLDER_FORMATS[placeholderType] || '[[KEY]]';
 
     const authClient = await createGoogleClient(context.auth);
-    const docs = google.docs('v1');
+    const docs = googleDocs('v1');
 
     const requests = [];
 

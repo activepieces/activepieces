@@ -1,7 +1,7 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export const shortIoAuth = PieceAuth.CustomAuth({
   description: 'Enter your Short.io API Key',

@@ -9,8 +9,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/server/api/src/app/mcp/mcp-entity.ts` — McpServer entity
 - `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
-- `packages/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
-- `packages/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
+- `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
+- `packages/core/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
 - `packages/web/src/app/components/project-settings/mcp-server/index.tsx` — project settings panel for MCP
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-credentials.tsx` — token display and rotate UI
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-flows.tsx` — list of flows exposed as tools

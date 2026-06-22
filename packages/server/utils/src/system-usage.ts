@@ -1,6 +1,7 @@
 import fs from 'fs'
 import os from 'os'
-import { MachineInformation, tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils';
+import { MachineInformation } from '@activepieces/shared';
 import checkDiskSpace from 'check-disk-space'
 import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'

@@ -1,5 +1,5 @@
+import { isNil } from '@activepieces/core-utils';
 import type { OutputSchema } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
 
 import { piecesHooks } from './pieces-hooks';
 

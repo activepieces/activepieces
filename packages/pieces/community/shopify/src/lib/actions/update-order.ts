@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateOrder } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const updateOrderAction = createAction({
@@ -40,7 +40,7 @@ export const updateOrderAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email().optional(),
+      email: z.optional(z.string().check(z.email())),
     });
 
     const { id, email, phoneNumber, tags, note } = propsValue;

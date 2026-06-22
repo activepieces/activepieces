@@ -1,8 +1,5 @@
-import {
-  apId,
-  AppConnectionWithoutSensitiveData,
-  isNil,
-} from '@activepieces/shared';
+import { apId, isNil } from '@activepieces/core-utils';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   ActivepiecesClientConnectionNameIsInvalid,
   ActivepiecesClientConnectionPieceNotFound,

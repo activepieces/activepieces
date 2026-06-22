@@ -8,7 +8,7 @@ import {
     pipedriveTransformV1CustomFields,
 } from '../common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 interface PipedriveLeadV2 {
 	id: string;

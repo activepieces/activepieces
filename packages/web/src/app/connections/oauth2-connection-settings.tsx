@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   OAuth2Property,
   OAuth2Props,
@@ -11,7 +12,6 @@ import {
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
   UpsertPlatformOAuth2Request,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';

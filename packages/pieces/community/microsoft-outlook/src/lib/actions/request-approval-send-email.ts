@@ -2,10 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType } from '@microsoft/microsoft-graph-types';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { microsoftOutlookAuth } from '../common/auth';
 
 export const requestApprovalInMail = createAction({

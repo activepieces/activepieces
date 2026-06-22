@@ -5,7 +5,7 @@ import {
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { endpoint, kizeoFormsCommon } from '../common';
 import { kizeoFormsAuth } from '../..';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const getAllListItems = createAction({
@@ -45,7 +45,7 @@ export const getAllListItems = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      limit: z.number().min(1).optional(),
+      limit: z.optional(z.number().check(z.minimum(1))),
     });
     const { listId, search, offset, limit, sort, direction } =
       context.propsValue;

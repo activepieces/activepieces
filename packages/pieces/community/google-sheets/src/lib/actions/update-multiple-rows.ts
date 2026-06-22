@@ -13,9 +13,10 @@ import {
   objectToArray,
   ValueInputOption,
 } from '../common/common';
-import { isString, MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { isString } from '@activepieces/pieces-framework';
 import { getWorkSheetName } from '../triggers/helpers';
-import { google, sheets_v4 } from 'googleapis';
+import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
 import { commonProps } from '../common/props';
 
 export const updateMultipleRowsAction = createAction({
@@ -136,7 +137,7 @@ export const updateMultipleRowsAction = createAction({
       : ValueInputOption.USER_ENTERED;
 
     const authClient = await createGoogleClient(context.auth);
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    const sheets = googleSheets({ version: 'v4', auth: authClient });
 
     const values: sheets_v4.Schema$ValueRange[] = [];
 
