@@ -481,6 +481,69 @@ export const customerGroupDropdown = makeSearchableDropdown({
   labelFn: attrLabel('name'),
 });
 
+// --- Business Units -----------------------------------------------------------
+
+export const businessUnitDropdown = makeSearchableDropdown({
+  displayName: 'Business Unit',
+  description: 'Search business units.',
+  resourceUri: '/businessunits',
+  fieldsParam: 'id,name',
+  searchExpr: (q) => `name ~ "${q}"`,
+  labelFn: attrLabel('name'),
+});
+
+export const businessUnitRequiredDropdown = makeSearchableDropdown({
+  displayName: 'Owner (Business Unit)',
+  description: 'The business unit that owns this record.',
+  required: true,
+  resourceUri: '/businessunits',
+  fieldsParam: 'id,name',
+  searchExpr: (q) => `name ~ "${q}"`,
+  labelFn: attrLabel('name'),
+});
+
+// --- User Roles (admin) -------------------------------------------------------
+
+export const userRoleDropdown = makeSearchableDropdown({
+  displayName: 'User Role',
+  description: 'Back-office user role. Search by label.',
+  resourceUri: '/userroles',
+  fieldsParam: 'id,label,role',
+  searchExpr: (q) => `label ~ "${q}"`,
+  labelFn: attrLabel('label', 'role'),
+});
+
+// --- User Groups --------------------------------------------------------------
+
+export const userGroupDropdown = makeSearchableDropdown({
+  displayName: 'User Group',
+  description: 'Back-office user group. Search by name.',
+  resourceUri: '/usergroups',
+  fieldsParam: 'id,name',
+  searchExpr: (q) => `name ~ "${q}"`,
+  labelFn: attrLabel('name'),
+});
+
+// --- Organizations (multi) ----------------------------------------------------
+
+export const organizationsDropdown = makeSearchableDropdown({
+  displayName: 'Organizations',
+  description: 'Organizations the user has access to. Search by name.',
+  resourceUri: '/organizations',
+  fieldsParam: 'id,name',
+  searchExpr: (q) => `name ~ "${q}"`,
+  labelFn: attrLabel('name'),
+});
+
+// --- User Auth Statuses -------------------------------------------------------
+
+export const userAuthStatusDropdown = makeEnumDropdown({
+  displayName: 'Auth Status',
+  description: 'Authentication status of the user (e.g. active, reset, locked).',
+  resourceUri: '/userauthstatuses',
+  labelFn: attrLabel('name', 'id'),
+});
+
 // --- Customer Tax Codes -------------------------------------------------------
 
 export const customerTaxCodeDropdown = makeSearchableDropdown({
