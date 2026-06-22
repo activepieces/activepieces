@@ -221,20 +221,15 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async getFlowBundle(input) {
-            const file = await fileService(log).getFile({
+            const result = await fileService(log).getDataOrUndefined({
                 fileId: input.flowVersionId,
                 projectId: input.projectId,
                 type: FileType.FLOW_BUNDLE,
             })
-            if (isNil(file)) {
+            if (isNil(result)) {
                 return null
             }
-            const { data } = await fileService(log).getDataOrThrow({
-                fileId: input.flowVersionId,
-                projectId: input.projectId,
-                type: FileType.FLOW_BUNDLE,
-            })
-            return data
+            return result.data
         },
 
         async uploadFlowBundle(input) {

@@ -44,7 +44,10 @@ export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, 
     },
 
     async publishBundle({ flowVersion, pieces, projectId, platformId }: PublishBundleParams): Promise<void> {
-        await tryCatch(() => flowBundleStore(log, apiClient, basePath).publish({ flowVersion, pieces, projectId, platformId }))
+        const { error } = await tryCatch(() => flowBundleStore(log, apiClient, basePath).publish({ flowVersion, pieces, projectId, platformId }))
+        if (error) {
+            log.warn({ error: String(error), flowVersion: { id: flowVersion.id } }, 'Failed to publish flow bundle')
+        }
     },
 })
 
