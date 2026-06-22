@@ -202,7 +202,19 @@ export async function createAIModel({
             })
             return provider.chatModel(modelId)
         }
-        case AIProviderName.ACTIVEPIECES:
+        case AIProviderName.ACTIVEPIECES: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const openRouterProvider = createOpenRouter({
+                apiKey,
+                headers: {
+                    'x-ap-project-id': projectId,
+                    'x-ap-platform-id': platformId,
+                    'x-ap-flow-id': flowId,
+                    'x-ap-run-id': runId,
+                },
+            })
+            return openRouterProvider.chat(modelId) as LanguageModel
+        }
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             const openRouterProvider = createOpenRouter({ apiKey })

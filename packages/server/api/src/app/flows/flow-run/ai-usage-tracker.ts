@@ -38,10 +38,14 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
             source: CreditUsageSource.AI,
             idempotencyKey: `${flowRun.id}:ai`,
             properties: {
+                platformId: project.platformId,
                 projectId: flowRun.projectId,
                 flowId: flowRun.flowId,
                 flowRunId: flowRun.id,
                 environment: flowRun.environment,
+                messages: usage.messages,
+                toolCalls: usage.toolCalls,
+                breakdown: usage.breakdown,
             },
         })
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)

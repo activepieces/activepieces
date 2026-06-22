@@ -10,11 +10,12 @@ import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { LanguageModel, ModelMessage, SystemModelMessage } from 'ai'
 
-function createChatModel({ provider, auth, config, modelId }: {
+function createChatModel({ provider, auth, config, modelId, metadata }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
+    metadata?: ChatModelMetadata
 }): LanguageModel {
     switch (provider) {
         case AIProviderName.OPENAI: {
@@ -62,7 +63,17 @@ function createChatModel({ provider, auth, config, modelId }: {
             }).chatModel(modelId)
         }
         case AIProviderName.MISTRAL:
-        case AIProviderName.ACTIVEPIECES:
+        case AIProviderName.ACTIVEPIECES: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenRouter({
+                apiKey,
+                ...spreadIfDefined('headers', metadata ? {
+                    'x-ap-platform-id': metadata.platformId,
+                    'x-ap-conversation-id': metadata.conversationId,
+                    'x-ap-run-id': metadata.runId,
+                } : undefined),
+            }).chat(modelId) as LanguageModel
+        }
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             return createOpenRouter({ apiKey }).chat(modelId) as LanguageModel
@@ -275,3 +286,11 @@ export const chatAiUtils = {
 }
 
 export type { ContentPartLike }
+
+type ChatModelMetadata = {
+    platformId: string
+    conversationId: string
+    runId: string
+}
+
+export type { ChatModelMetadata }

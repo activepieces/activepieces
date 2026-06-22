@@ -30,6 +30,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         const provider = config.provider as AIProviderName
         const model = chatAiUtils.createChatModel({
             provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
+            metadata: { platformId, conversationId, runId },
         })
 
         const eventEmitter = chatWorkerTools.createEventEmitter({

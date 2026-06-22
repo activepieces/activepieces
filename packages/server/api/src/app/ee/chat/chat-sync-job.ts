@@ -278,13 +278,24 @@ async function emitMessageBillingEvent({ conversation, log }: {
     const toolsUsed = countToolCallsInLatestTurn(messages)
     const turnIndex = messages.filter((message) => message.role === PersistedChatRole.USER).length
 
+    const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
+    const model = resolveModelId({ tierId: conversation.modelName ?? null, provider })
+
     await billingProvider.get(log).trackCredits({
         platformId: conversation.platformId,
         value: 1 + toolsUsed,
         source: CreditUsageSource.CHAT,
         idempotencyKey: `${conversation.id}:chat:${turnIndex}`,
         properties: {
+            platformId: conversation.platformId,
+            projectId: conversation.projectId,
+            userId: conversation.userId,
             conversationId: conversation.id,
+            turnIndex,
+            messages: 1,
+            toolCalls: toolsUsed,
+            provider,
+            model,
         },
     })
 
@@ -293,9 +304,6 @@ async function emitMessageBillingEvent({ conversation, log }: {
     if (isNil(licenseKey)) {
         return
     }
-
-    const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
-    const model = resolveModelId({ tierId: conversation.modelName ?? null, provider })
 
     captureBillingEvent({
         licenseKey,

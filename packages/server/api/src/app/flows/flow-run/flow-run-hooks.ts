@@ -71,9 +71,11 @@ async function trackProductionRunCredit(log: FastifyBaseLogger, flowRun: FlowRun
         source: CreditUsageSource.FLOW_RUN,
         idempotencyKey: `${flowRun.id}:run`,
         properties: {
+            platformId: project.platformId,
             projectId: flowRun.projectId,
             flowId: flowRun.flowId,
             flowRunId: flowRun.id,
+            environment: flowRun.environment,
         },
     })
 }
