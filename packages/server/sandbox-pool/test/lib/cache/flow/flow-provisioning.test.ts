@@ -66,7 +66,7 @@ describe('flowProvisioning.resolve', () => {
         const getFlowVersion = vi.fn()
         const getPiece = vi.fn()
         const apiClient = {
-            async getFlowBundle() { return Buffer.from(JSON.stringify(manifest), 'utf8') },
+            async getFlowBundle() { return { kind: 'inline', data: Buffer.from(JSON.stringify(manifest), 'utf8') } },
             getFlowVersion, getPiece,
         } as unknown as WorkerToApiContract
 
@@ -80,6 +80,20 @@ describe('flowProvisioning.resolve', () => {
         }
         expect(getFlowVersion).not.toHaveBeenCalled()
         expect(getPiece).not.toHaveBeenCalled()
+    })
+
+    it('bundle fetch error → falls back to resolve (never fails the run)', async () => {
+        const getFlowVersion = vi.fn(async () => flowWithPiece())
+        const apiClient = {
+            async getFlowBundle() { throw new Error('rpc/s3 down') },
+            getFlowVersion,
+            async getPiece() { return httpPiece },
+        } as unknown as WorkerToApiContract
+
+        const resolved = await flowProvisioning(fakeLog, apiClient, uniqueBasePath(), getSettings).resolve({ flow, platformId: 'plat1' })
+
+        expect(resolved.kind).toBe('ready')
+        expect(getFlowVersion).toHaveBeenCalled()
     })
 
     it('miss + flow not found → flow-not-found', async () => {

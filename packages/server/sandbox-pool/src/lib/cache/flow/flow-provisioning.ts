@@ -8,10 +8,14 @@ import { flowCache } from './flow-cache'
 
 export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
     async resolve({ flow, platformId }: ResolveParams): Promise<ResolvedFlow> {
-        const bundle = await flowBundleStore(log, apiClient, basePath).tryFetch({
+        // A bundle is an optimization: never let a fetch error fail the run — fall through to resolve.
+        const { data: bundle, error: bundleError } = await tryCatch(() => flowBundleStore(log, apiClient, basePath).tryFetch({
             flowVersionId: flow.versionId,
             projectId: flow.projectId,
-        })
+        }))
+        if (bundleError) {
+            log.warn({ error: String(bundleError), flow: { id: flow.id } }, 'Flow bundle fetch failed, falling back to resolve')
+        }
         if (!isNil(bundle)) {
             return { kind: 'ready', flowVersion: bundle.flowVersion, pieces: bundle.pieces, codeSteps: [], needsPublish: false }
         }

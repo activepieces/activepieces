@@ -36,6 +36,21 @@ export type GetFlowBundleRequest = {
     projectId: string
 }
 
+export type GetFlowBundleResponse =
+    | { kind: 'inline', data: Buffer }
+    | { kind: 'url', url: string }
+
+export type PrepareFlowBundleUploadRequest = {
+    flowVersionId: string
+    projectId: string
+    platformId: string
+    size: number
+}
+
+export type PrepareFlowBundleUploadResponse =
+    | { kind: 'url', url: string }
+    | { kind: 'inline' }
+
 export type UploadFlowBundleRequest = {
     flowVersionId: string
     projectId: string
@@ -55,7 +70,8 @@ export type WorkerToApiContract = {
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
-    getFlowBundle(input: GetFlowBundleRequest): Promise<Buffer | null>
+    getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
+    prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>

@@ -66,7 +66,7 @@ Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`
 | `PROJECT_RELEASE` | Always DB | No | Project release snapshot |
 | `FLOW_VERSION_BACKUP` | Always DB | No | Flow version backup |
 | `KNOWLEDGE_BASE` | Always DB | No | File uploaded for AI knowledge base |
-| `FLOW_BUNDLE` | Configurable | No | Prebuilt per-locked-flow-version artifact (flow definition + piece manifest + compiled code steps), addressed by flowVersionId |
+| `FLOW_BUNDLE` | Configurable | No | Prebuilt per-locked-flow-version artifact (flow definition + piece manifest + compiled code steps), addressed by flowVersionId. When S3-backed with `S3_USE_SIGNED_URLS`, workers fetch/upload it directly via signed URLs (see Workers feature) rather than streaming through the app over the socket RPC |
 
 ## Endpoints
 

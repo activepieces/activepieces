@@ -13,6 +13,7 @@
     "@activepieces/core-utils": "workspace:*",
     "@activepieces/server-utils": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "axios": "1.15.2",
     "nanoid": "3.3.8",
     "socket.io": "4.7.5",
     "tree-kill": "1.2.2",
