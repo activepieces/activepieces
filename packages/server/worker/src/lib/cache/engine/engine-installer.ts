@@ -16,11 +16,10 @@ const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 export const engineInstaller = (_log: ApLogger) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerSettings.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
-        // Track the SAME boot-stable signal that sets AP_EGRESS_PROXY_URL in the sandbox env
-        // (the armed egress proxy, not the drift-prone NETWORK_MODE setting): when the proxy is
-        // armed, sandbox fetch() must route through it, so the engine needs the undici dispatcher
-        // (main.js). Otherwise use the slimmer main-noproxy.js. Dev only builds main.js.
-        const useProxyBundle = isDev || workerSettings.isEgressProxyEnabled()
+        // The egress proxy was removed, so the proxy/no-proxy engine bundles now build
+        // identical output. Prod uses main-noproxy.js; dev uses main.js. The two-bundle
+        // build is kept intentionally rather than collapsed.
+        const useProxyBundle = isDev
         const source = useProxyBundle ? engineExecutablePath : engineNoProxyExecutablePath
         const cache = cacheState(path)
         const { cacheHit } = await cache.getOrSetCache({
