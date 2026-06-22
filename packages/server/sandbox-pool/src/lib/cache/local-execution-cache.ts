@@ -1,6 +1,6 @@
 import { tryCatch, unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
-import { PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { ApEnvironment, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxPoolSettings } from '../types'
 import { cacheUtils } from './cache-paths'
 import { codeBuilder } from './code/code-builder'
@@ -47,7 +47,8 @@ export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContrac
                     fn: async () => {
                         const engineDestPath = path.resolve(commonPath, 'main.js')
                         const existingEngineFile = await fileSystemUtils.fileExists(engineDestPath)
-                        if (existingEngineFile) return
+                        const isDev = getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
+                        if (existingEngineFile && !isDev) return
 
                         await atomicCopy(engineSourcePath, `${commonPath}/main.js`)
                         await atomicCopy(`${engineSourcePath}.map`, path.resolve(commonPath, 'main.js.map'))
