@@ -8,6 +8,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { exceptionHandler } from '../../helper/exception-handler'
+import { PropertyType } from '@activepieces/pieces-framework'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -199,7 +200,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     platformId: connection.platformId,
                 })
                 const auth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth[0] : pieceMetadata.auth
-                return !isNil(auth?.refresh)
+                return auth?.type === PropertyType.CUSTOM_AUTH && !isNil(auth.refresh)
             }
             default:
                 return false
