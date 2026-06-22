@@ -2,6 +2,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import {
     apId,
     DefaultProjectRole,
+    FlowTriggerType,
     PieceType,
     PrincipalType,
     PackageType,
@@ -14,6 +15,8 @@ import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
+    createMockFlow,
+    createMockFlowVersion,
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
@@ -401,6 +404,132 @@ describe('Piece Metadata CE API', () => {
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
             const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
             expect(remaining).not.toBeNull()
+        })
+
+        it('should reject deleting a custom piece that is still used by a flow', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/in-use-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            const mockFlow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', mockFlow)
+            const mockFlowVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                displayName: 'My Webhook Flow',
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    name: 'trigger',
+                    settings: {
+                        pieceName: mockPiece.name,
+                        pieceVersion: mockPiece.version,
+                        input: {},
+                        propertySettings: {},
+                        triggerName: 'sample_trigger',
+                    },
+                    valid: true,
+                    displayName: 'Trigger',
+                },
+            })
+            await db.save('flow_version', mockFlowVersion)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response?.json().params.message).toContain('My Webhook Flow')
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).not.toBeNull()
+        })
+
+        it('should allow deleting a custom piece that is only referenced by a stale flow version', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/stale-version-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            const mockFlow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', mockFlow)
+            const staleVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                created: '2020-01-01T00:00:00.000Z',
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    name: 'trigger',
+                    settings: {
+                        pieceName: mockPiece.name,
+                        pieceVersion: mockPiece.version,
+                        input: {},
+                        propertySettings: {},
+                        triggerName: 'sample_trigger',
+                    },
+                    valid: true,
+                    displayName: 'Trigger',
+                },
+            })
+            const latestVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                created: '2024-01-01T00:00:00.000Z',
+            })
+            await db.save('flow_version', [staleVersion, latestVersion])
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).toBeNull()
+        })
+
+        it('should allow deleting a custom piece used only by a flow in another platform', async () => {
+            const ctx = await createTestContext(app!)
+            const otherCtx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/cross-platform-usage-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            const otherFlow = createMockFlow({ projectId: otherCtx.project.id })
+            await db.save('flow', otherFlow)
+            const otherFlowVersion = createMockFlowVersion({
+                flowId: otherFlow.id,
+                updatedBy: otherCtx.user.id,
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    name: 'trigger',
+                    settings: {
+                        pieceName: mockPiece.name,
+                        pieceVersion: mockPiece.version,
+                        input: {},
+                        propertySettings: {},
+                        triggerName: 'sample_trigger',
+                    },
+                    valid: true,
+                    displayName: 'Trigger',
+                },
+            })
+            await db.save('flow_version', otherFlowVersion)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).toBeNull()
         })
     })
 

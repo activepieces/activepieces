@@ -3,6 +3,8 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  ApErrorParams,
+  ErrorCode,
   isNil,
   OAuth2GrantType,
   PieceScope,
@@ -42,6 +44,7 @@ import {
   piecesHooks,
 } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -164,7 +167,16 @@ const PlatformPiecesPage = () => {
                       await piecesApi.delete(row.original.id!);
                       await refetchPieces();
                     }}
-                    onError={() => toast.error(t('Failed to delete piece'))}
+                    onError={(error) => {
+                      if (api.isError(error)) {
+                        const apError = error.response?.data as ApErrorParams;
+                        if (apError?.code === ErrorCode.VALIDATION) {
+                          toast.error(apError.params.message);
+                          return;
+                        }
+                      }
+                      toast.error(t('Failed to delete piece'));
+                    }}
                   >
                     <Button variant="ghost" size={'sm'} disabled={!isEnabled}>
                       <Trash className="size-4 text-destructive" />
