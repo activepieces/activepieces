@@ -1,9 +1,7 @@
-import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, WorkerJobType } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
-import { flowCache } from '../../runtime/local-pool/cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { resolveFlowArtifacts } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResult> = {
@@ -11,16 +9,24 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
     async execute(ctx: JobContext, data: PollingJobData): Promise<FireAndForgetJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
-        assertNotNullOrUndefined(flowVersion, 'flowVersion')
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        const p = await execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
 
-        const artifacts = await resolveFlowArtifacts({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
-        if (artifacts.disabled) {
+        if (p.kind === 'flow-not-found') {
+            // Preserve semantics of the old assertNotNullOrUndefined(flowVersion, 'flowVersion') call.
+            throw new Error('flowVersion')
+        }
+
+        if (p.kind === 'disabled') {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId, pieces: artifacts.pieces, codeSteps: artifacts.codeSteps })
+        // p.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to provision
+        if (isNil(p.flowVersion)) {
+            await execution.dispose({ invalidate: true })
+            throw new Error('flowVersion missing after provision')
+        }
+        const flowVersion: FlowVersion = p.flowVersion
 
         try {
             const result = await execution.run({

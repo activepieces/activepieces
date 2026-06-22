@@ -1,9 +1,7 @@
 import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
-import { flowCache } from '../../runtime/local-pool/cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { resolveFlowArtifacts } from '../utils/flow-helpers'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
 
@@ -28,21 +26,26 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
 
-        const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
-        if (isNil(flowVersion)) {
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        const p = await execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionIdToRun, projectId: data.projectId } })
+
+        if (p.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionIdToRun } }, 'Flow version not found for webhook, skipping')
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
-
-        const artifacts = await resolveFlowArtifacts({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
-        if (artifacts.disabled) {
+        if (p.kind === 'disabled') {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId, pieces: artifacts.pieces, codeSteps: artifacts.codeSteps })
+        // p.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to provision
+        if (isNil(p.flowVersion)) {
+            await execution.dispose({ invalidate: true })
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
+        }
+        const flowVersion: FlowVersion = p.flowVersion
+
+        const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
         const { data: execResult, error } = await tryCatch(async () => {
             if (data.saveSampleData) {

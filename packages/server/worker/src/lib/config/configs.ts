@@ -50,6 +50,7 @@ export enum WorkerSystemProp {
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
     RUNTIME = 'AP_RUNTIME',
+    CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
@@ -58,7 +59,8 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
     [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
-    [WorkerSystemProp.RUNTIME]: RuntimeKind.LOCAL_POOL,
+    [WorkerSystemProp.RUNTIME]: RuntimeKind.LOCAL,
+    [WorkerSystemProp.CACHE_BASE_PATH]: 'cache',
 }
 
 export const system = {
