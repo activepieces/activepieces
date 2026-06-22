@@ -51,12 +51,11 @@ export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
             .flatMap((piece) => explodePiece(piece, embedder.modelVersion))
             .filter((record) => scopeMatches(record, scope))
 
-        // Upsert the desired rows by unique key. A new row lands with embedding=NULL; an existing row
-        // keeps its embedding unless the retrieval text (→ hash) changed, in which case it is nulled to
-        // force a re-embed. Rows whose content is unchanged are not touched at all (idempotent).
-        for (const record of desired) {
-            await upsertRow(record, embedder.modelVersion)
-        }
+        // Upsert the desired rows by unique key, batched into chunked multi-row statements rather than
+        // one round-trip per row (~6k on a cold-start backfill). A new row lands with embedding=NULL; an
+        // existing row keeps its embedding unless the retrieval text (→ hash) changed, in which case it
+        // is nulled to force a re-embed. Rows whose content is unchanged are not touched at all (idempotent).
+        await upsertDesired(desired, embedder.modelVersion)
 
         // Remove rows whose object key is no longer in the desired catalog (deleted pieces, removed
         // actions, superseded old versions). Done before embedding so a row that is both pending and
@@ -130,7 +129,7 @@ export function rawWriteRowCount(result: unknown): number {
  * must degrade gracefully (keyword floor) rather than throw "relation does not exist".
  */
 export async function toolSearchTableExists(): Promise<boolean> {
-    const result = await databaseConnection().query(`SELECT to_regclass('tool_search_index') AS reg`)
+    const result = await databaseConnection().query('SELECT to_regclass(\'tool_search_index\') AS reg')
     return !isNil(result?.[0]?.reg)
 }
 
@@ -226,22 +225,76 @@ function buildRecord(params: BuildRecordParams): DesiredRecord {
     }
 }
 
-async function upsertRow(record: DesiredRecord, modelVersion: string): Promise<void> {
-    // A new row is inserted WITHOUT an embedding (embedPendingRows fills it); an existing row's
-    // embedding survives a pure version bump (hash unchanged) but is nulled the moment its retrieval
-    // text changes, forcing a re-embed. The DO UPDATE is skipped entirely when nothing changed so a
-    // re-run is a true no-op. Match the partial unique index for this row's tenancy: shared catalog
-    // rows (platformId IS NULL) arbitrate on uq_tsi_object_shared, tenant rows on uq_tsi_object_tenant
-    // — the ON CONFLICT predicate must equal the index predicate (PG14 has no NULLS NOT DISTINCT).
-    const conflictTarget = isNil(record.platformId)
-        ? '("pieceName", "objectKind", "objectName", "modelVersion") WHERE "platformId" IS NULL'
-        : '("pieceName", "objectKind", "objectName", "platformId", "modelVersion") WHERE "platformId" IS NOT NULL'
+// ~50 rows per multi-row upsert (the codebase's bulk-write convention, e.g. record.service.ts). At 13
+// bound params per row that is ~650 params/statement — far under Postgres' 65 535 bound-param ceiling.
+const UPSERT_CHUNK_SIZE = 50
+// `categories` is the only array column (text[]), so its per-row placeholder needs a `::varchar[]` cast
+// for node-postgres to bind a JS array rather than coerce it to text. Index into the column tuple below.
+const CATEGORIES_PLACEHOLDER_INDEX = 9
+
+/**
+ * Upsert the desired rows in chunked multi-row statements instead of one round-trip per row (~6k on a
+ * cold-start backfill, and re-paid on every global reconcile even when most rows are no-ops). Shared
+ * (platformId IS NULL) and tenant (platformId IS NOT NULL) rows are upserted in separate statements
+ * because they arbitrate on different partial unique indexes — the ON CONFLICT target must equal the
+ * index predicate (PG14 has no NULLS NOT DISTINCT). The desired set has a unique conflict key per row
+ * (latest version per piece × unique object name, plus platformId for tenant rows), so no chunk can hit
+ * the same key twice — the "cannot affect row a second time" trap never fires.
+ */
+async function upsertDesired(desired: DesiredRecord[], modelVersion: string): Promise<void> {
+    const sharedRows = desired.filter((record) => isNil(record.platformId))
+    const tenantRows = desired.filter((record) => !isNil(record.platformId))
+    for (const batch of chunk(sharedRows, UPSERT_CHUNK_SIZE)) {
+        await upsertBatch(batch, modelVersion, SHARED_CONFLICT_TARGET)
+    }
+    for (const batch of chunk(tenantRows, UPSERT_CHUNK_SIZE)) {
+        await upsertBatch(batch, modelVersion, TENANT_CONFLICT_TARGET)
+    }
+}
+
+const SHARED_CONFLICT_TARGET = '("pieceName", "objectKind", "objectName", "modelVersion") WHERE "platformId" IS NULL'
+const TENANT_CONFLICT_TARGET = '("pieceName", "objectKind", "objectName", "platformId", "modelVersion") WHERE "platformId" IS NOT NULL'
+
+/**
+ * Upsert one chunk of same-tenancy rows in a single statement. Per-row behaviour is identical to a
+ * single-row upsert: a new row is inserted WITHOUT an embedding (embedPendingRows fills it); an existing
+ * row's embedding survives a pure version bump (hash unchanged) but is nulled the moment its retrieval
+ * text changes; and the DO UPDATE is skipped for a row whose content is unchanged so a re-run is a
+ * true no-op. `conflictTarget` must match the partial unique index for this batch's tenancy.
+ */
+async function upsertBatch(records: DesiredRecord[], modelVersion: string, conflictTarget: string): Promise<void> {
+    if (records.length === 0) {
+        return
+    }
+    const params: unknown[] = []
+    const valueTuples = records.map((record) => {
+        const columns = [
+            apId(),
+            record.objectKind,
+            record.pieceName,
+            record.pieceVersion,
+            record.objectName,
+            record.displayName,
+            record.retrievalDoc,
+            record.audience,
+            record.requiresConnection,
+            record.categories,
+            modelVersion,
+            record.embeddingInputHash,
+            record.platformId,
+        ]
+        const placeholders = columns.map((value, columnIndex) => {
+            params.push(value)
+            return columnIndex === CATEGORIES_PLACEHOLDER_INDEX ? `$${params.length}::varchar[]` : `$${params.length}`
+        })
+        return `(${placeholders.join(', ')})`
+    })
     await databaseConnection().query(
         `INSERT INTO "tool_search_index" AS tsi (
             "id", "objectKind", "pieceName", "pieceVersion", "objectName", "displayName",
             "retrievalDoc", "audience", "requiresConnection", "categories", "modelVersion",
             "embeddingInputHash", "platformId"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::varchar[], $11, $12, $13)
+        ) VALUES ${valueTuples.join(', ')}
         ON CONFLICT ${conflictTarget}
         DO UPDATE SET
             "pieceVersion" = EXCLUDED."pieceVersion",
@@ -261,21 +314,7 @@ async function upsertRow(record: DesiredRecord, modelVersion: string): Promise<v
            OR tsi."requiresConnection" IS DISTINCT FROM EXCLUDED."requiresConnection"
            OR tsi."categories" IS DISTINCT FROM EXCLUDED."categories"
            OR tsi."embeddingInputHash" IS DISTINCT FROM EXCLUDED."embeddingInputHash"`,
-        [
-            apId(),
-            record.objectKind,
-            record.pieceName,
-            record.pieceVersion,
-            record.objectName,
-            record.displayName,
-            record.retrievalDoc,
-            record.audience,
-            record.requiresConnection,
-            record.categories,
-            modelVersion,
-            record.embeddingInputHash,
-            record.platformId,
-        ],
+        params,
     )
 }
 

@@ -1,5 +1,5 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
-import { apId, PackageType, PieceType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
+import { apId, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
@@ -391,6 +391,53 @@ describe('Tool Search Engine (Phase 3 — incremental catalog sync)', () => {
         expect(second.objectsEmbedded).toBe(0)
         expect(second.objectsDeleted).toBe(0)
         expect(await indexRowCount()).toBe(4)
+    })
+})
+
+describe('Tool Search Engine (bulk upsert — crosses the chunk boundary)', () => {
+    // Every other test seeds ≤5 objects, so the chunked multi-row upsert path (≤50 rows per INSERT)
+    // is never crossed. Seed a single piece exploded into far more than one chunk's worth of objects
+    // so a placeholder-indexing or per-row array-cast bug in the batched INSERT surfaces, and confirm
+    // a re-run is still a true no-op (the per-row ON CONFLICT guard must survive batching).
+    const OBJECT_COUNT = 120
+
+    async function seedBulkCatalog(): Promise<void> {
+        const actions: Record<string, ActionBase> = {}
+        for (let i = 0; i < OBJECT_COUNT; i++) {
+            actions[`bulk_action_${i}`] = action({
+                name: `bulk_action_${i}`,
+                displayName: `Bulk Action ${i}`,
+                description: `Send bulk message number ${i}`,
+            })
+        }
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-bulk',
+            displayName: 'Bulk',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            // A non-empty categories array exercises the per-row `::varchar[]` cast inside the
+            // multi-row VALUES list, not just the scalar columns.
+            categories: [PieceCategory.COMMUNICATION],
+            actions,
+            triggers: {},
+        }))
+    }
+
+    it('indexes a catalog spanning multiple upsert chunks and a re-run stays a no-op', async () => {
+        await seedBulkCatalog()
+
+        const first = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        expect(first.status).toBe('done')
+        expect(first.objectsIndexed).toBe(OBJECT_COUNT)
+        expect(first.objectsEmbedded).toBe(OBJECT_COUNT)
+        expect(await indexRowCount()).toBe(OBJECT_COUNT)
+
+        const second = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        expect(second.objectsIndexed).toBe(OBJECT_COUNT)
+        expect(second.objectsEmbedded).toBe(0)
+        expect(second.objectsDeleted).toBe(0)
+        expect(await indexRowCount()).toBe(OBJECT_COUNT)
     })
 })
 
