@@ -16,16 +16,6 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
-    PROVISION = 'PROVISION',
-}
-
-// Selects HOW the engine makes pieces/code available before executing. LOCAL_CACHE is the
-// original worker behavior (bun install npm packages into a persistent local cache).
-// BUNDLED_TGZ installs the flow's pieces from pre-built .tgz bundles in parallel
-// (Promise.all of bun install) with no local cache (serverless).
-export enum PieceInstallStrategyKind {
-    LOCAL_CACHE = 'LOCAL_CACHE',
-    BUNDLED_TGZ = 'BUNDLED_TGZ',
 }
 
 export enum TriggerHookType {
@@ -44,7 +34,6 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
-    | ProvisionOperation
 
 
 export const EngineStdout = z.object({
@@ -72,17 +61,6 @@ export type BaseEngineOperation = {
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
     auth: AppConnectionValue
-}
-
-// Run by the engine before EXECUTE_FLOW to make the flow's pieces/code available. The engine
-// fetches piece archives directly from the API (engineToken + internalApiUrl) and installs via
-// the selected strategy. `flowVersion` is the source for CODE step artifacts. There is no cache
-// dir in the contract: the on-disk cache is a worker-pool concern (host-side, configured in
-// cache-paths.ts), and serverless BUNDLED_TGZ is stateless.
-export type ProvisionOperation = BaseEngineOperation & {
-    installStrategy: PieceInstallStrategyKind
-    pieces: PiecePackage[]
-    flowVersion?: FlowVersion
 }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }

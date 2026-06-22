@@ -17,9 +17,9 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
 
         const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
         await execution.init({ flowVersionId: undefined, platformId: data.platformId })
-        await execution.provision({ pieces: [data.piece], codeSteps: [] })
 
         try {
+            await execution.provision({ pieces: [data.piece], codeSteps: [] })
             const result = await execution.run({
                 operationType: EngineOperationType.EXECUTE_VALIDATE_AUTH,
                 operation: {

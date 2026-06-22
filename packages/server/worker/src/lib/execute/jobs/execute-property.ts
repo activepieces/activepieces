@@ -16,9 +16,9 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
 
         const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
         await execution.init({ flowVersionId: undefined, platformId: data.platformId })
-        await execution.provision({ pieces: [data.piece], codeSteps: [] })
 
         const { data: result, error } = await tryCatch(async () => {
+            await execution.provision({ pieces: [data.piece], codeSteps: [] })
             return execution.run({
                 operationType: EngineOperationType.EXECUTE_PROPERTY,
                 operation: {
