@@ -31,6 +31,8 @@ export enum PersistedChatPartType {
     THINKING_STATUS = 'thinking-status',
     BATCH_PROGRESS = 'batch-progress',
     ACTION_RECEIPT = 'action-receipt',
+    SOURCE_URL = 'source-url',
+    SOURCE_DOCUMENT = 'source-document',
 }
 
 export enum PersistedToolCallStatus {
@@ -87,6 +89,21 @@ const PersistedActionReceiptPartSchema = z.object({
     timestamp: z.string(),
 })
 
+const PersistedSourceUrlPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.SOURCE_URL),
+    sourceId: z.string(),
+    url: z.string(),
+    title: z.string().optional(),
+})
+
+const PersistedSourceDocumentPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.SOURCE_DOCUMENT),
+    sourceId: z.string(),
+    mediaType: z.string(),
+    title: z.string(),
+    filename: z.string().optional(),
+})
+
 const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedTextPartSchema,
     PersistedReasoningPartSchema,
@@ -94,6 +111,8 @@ const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedThinkingStatusPartSchema,
     PersistedBatchProgressPartSchema,
     PersistedActionReceiptPartSchema,
+    PersistedSourceUrlPartSchema,
+    PersistedSourceDocumentPartSchema,
 ])
 
 export const PersistedChatMessageSchema = z.object({
@@ -107,6 +126,8 @@ export type PersistedReasoningPart = z.infer<typeof PersistedReasoningPartSchema
 export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
 export type PersistedThinkingStatusPart = z.infer<typeof PersistedThinkingStatusPartSchema>
 export type PersistedActionReceiptPart = z.infer<typeof PersistedActionReceiptPartSchema>
+export type PersistedSourceUrlPart = z.infer<typeof PersistedSourceUrlPartSchema>
+export type PersistedSourceDocumentPart = z.infer<typeof PersistedSourceDocumentPartSchema>
 export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
 export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
 

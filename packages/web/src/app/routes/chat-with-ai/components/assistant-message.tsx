@@ -10,6 +10,7 @@ import {
   MessageAction,
   MessageActions,
 } from '@/components/prompt-kit/message';
+import { Source } from '@/components/prompt-kit/source';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
   AnyToolPart,
@@ -62,6 +63,7 @@ export const AssistantMessage = memo(function AssistantMessage({
     hasContent,
     lastDisplayIdx: _,
     lastTextIdx,
+    sources,
   } = useMemo(() => {
     const result: MessageBlock[] = [];
     let currentThinking: {
@@ -70,6 +72,14 @@ export const AssistantMessage = memo(function AssistantMessage({
     } | null = null;
     let hasText = false;
     let pendingDescription: string | null = null;
+    const sources: SourceItem[] = [];
+    const seenSourceKeys = new Set<string>();
+    function addSource(source: SourceItem) {
+      const dedupeKey = source.href ?? source.key;
+      if (seenSourceKeys.has(dedupeKey)) return;
+      seenSourceKeys.add(dedupeKey);
+      sources.push(source);
+    }
 
     function flushPendingDescription() {
       if (pendingDescription) {
@@ -112,6 +122,14 @@ export const AssistantMessage = memo(function AssistantMessage({
       const p = message.parts[i];
 
       if (p.type === 'step-start') {
+        continue;
+      }
+      if (p.type === 'source-url') {
+        addSource({ key: p.sourceId || p.url, href: p.url, title: p.title });
+        continue;
+      }
+      if (p.type === 'source-document') {
+        addSource({ key: p.sourceId, title: p.title || p.filename });
         continue;
       }
       if (p.type === 'text' && p.text.length > 0) {
@@ -245,6 +263,7 @@ export const AssistantMessage = memo(function AssistantMessage({
       hasContent: hasText,
       lastDisplayIdx,
       lastTextIdx,
+      sources,
     };
   }, [message.parts, isStreaming, toolCallMeta]);
 
@@ -398,6 +417,39 @@ export const AssistantMessage = memo(function AssistantMessage({
                 return null;
             }
           })}
+
+          {!isStreaming && sources.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-2">
+              <motion.span
+                className="text-xs text-muted-foreground"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {t('Sources')}
+              </motion.span>
+              {sources.map((source, i) => {
+                if (!source.href && !source.title) return null;
+                return (
+                  <motion.span
+                    key={source.key}
+                    className="inline-flex"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: 0.1 + i * 0.06 }}
+                  >
+                    {source.href ? (
+                      <Source href={source.href} title={source.title} />
+                    ) : (
+                      <span className="inline-flex items-center rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-foreground/80">
+                        {source.title}
+                      </span>
+                    )}
+                  </motion.span>
+                );
+              })}
+            </div>
+          )}
 
           {!isStreaming && !hasContent && hasRenderedContent && (
             <motion.div
@@ -586,3 +638,5 @@ type MessageBlock =
   | { kind: 'display-tool'; part: AnyToolPart }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | { kind: 'action-receipt'; toolCallId: string };
+
+type SourceItem = { key: string; href?: string; title?: string };
