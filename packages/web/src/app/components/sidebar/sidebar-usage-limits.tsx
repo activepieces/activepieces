@@ -1,4 +1,5 @@
-import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { ApEdition, ApFlagId, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronRight, Info } from 'lucide-react';
 import React from 'react';

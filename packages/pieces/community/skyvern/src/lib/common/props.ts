@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { skyvernApiCall } from './client';
 import { skyvernAuth } from './auth';
 

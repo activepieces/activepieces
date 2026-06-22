@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   getAuthPropertyForValue,
   PieceAuthProperty,
@@ -11,7 +12,6 @@ import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';

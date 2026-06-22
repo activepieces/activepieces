@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { tenzoApiCall } from './client';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 const TENZO_SCOPES = [
   'tenzo/area:read',

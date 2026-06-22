@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const createAvatarVideo = createAction({
@@ -223,9 +223,9 @@ export const createAvatarVideo = createAction({
     } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      audio_url: z.string().url('Audio URL must be a valid URL').optional(),
-      script: z.string().min(1, 'Script cannot be empty').optional(),
-      video_name: z.string().min(1, 'Video name cannot be empty').optional(),
+      audio_url: z.optional(z.string().check(z.url('Audio URL must be a valid URL'))),
+      script: z.optional(z.string().check(z.minLength(1, 'Script cannot be empty'))),
+      video_name: z.optional(z.string().check(z.minLength(1, 'Video name cannot be empty'))),
     });
 
     const hasScript = !!script;

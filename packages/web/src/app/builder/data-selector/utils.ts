@@ -1,7 +1,6 @@
+import { isNil, isObject } from '@activepieces/core-utils';
 import {
   flowCanvasUtils,
-  isNil,
-  isObject,
   FlowAction,
   FlowActionType,
   FlowTrigger,

@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createChatCompletion } from "./lib/actions/create-chat-completion";
 import { createEmbeddings } from "./lib/actions/create-embeddings";
 import { uploadFile } from "./lib/actions/upload-file";

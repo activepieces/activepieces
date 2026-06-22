@@ -1,34 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-    ActivepiecesError,
-    ErrorCode,
-    ExecutionType,
-    FlowActionType,
-    FlowRunStatus,
-    FlowTriggerType,
-    FlowVersionState,
-    StreamStepProgress,
-    RunEnvironment,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils';
+import { ExecutionType, FlowActionType, FlowRunStatus, FlowTriggerType, FlowVersionState, StreamStepProgress, RunEnvironment, WorkerJobType } from '@activepieces/shared';
 import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
-
-const mockGetVersion = vi.fn()
-
-vi.mock('../../../../src/lib/cache/flow/flow-cache', () => ({
-    flowCache: () => ({
-        getVersion: mockGetVersion,
-    }),
-}))
 
 vi.mock('../../../../src/lib/config/worker-settings', () => ({
     workerSettings: {
         getSettings: vi.fn().mockReturnValue({ FLOW_TIMEOUT_SECONDS: 600 }),
     },
-}))
-
-vi.mock('../../../../src/lib/execute/utils/flow-helpers', () => ({
-    provisionFlowPieces: vi.fn().mockResolvedValue(true),
 }))
 
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
@@ -99,10 +77,13 @@ function makeResumeJobData(overrides?: Partial<ExecuteFlowJobData>): ExecuteFlow
     }
 }
 
-function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
-    const mockSandbox = {
-        start: vi.fn(),
-        execute: vi.fn().mockResolvedValue({ status: 'OK' }),
+// The flow handler now drives a single execution.provision(...) that resolves the flow + pieces
+// internally and returns { kind, flowVersion }, so the test mocks the execution handle directly.
+function makeMockContext(opts?: { provisionResult?: unknown, apiOverrides?: Record<string, vi.Mock> }) {
+    const mockExecution = {
+        provision: vi.fn().mockResolvedValue(opts?.provisionResult ?? { kind: 'ready', flowVersion: makeFlowVersion() }),
+        run: vi.fn().mockResolvedValue({ status: 'OK' }),
+        dispose: vi.fn(),
     }
     return {
         log: {
@@ -113,23 +94,22 @@ function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
         },
         apiClient: {
             uploadRunLog: vi.fn(),
-            ...apiOverrides,
+            ...opts?.apiOverrides,
         },
-        sandboxManager: {
-            acquire: vi.fn().mockReturnValue(mockSandbox),
-            release: vi.fn(),
-            invalidate: vi.fn(),
+        runtime: {
+            createExecution: vi.fn().mockReturnValue(mockExecution),
         },
+        workerIndex: 0,
         engineToken: 'test-token',
         internalApiUrl: 'http://localhost:3000',
         publicApiUrl: 'http://localhost:4200',
-        mockSandbox,
+        mockExecution,
     } as any
 }
 
 describe('executeFlowJob', () => {
     beforeEach(() => {
-        mockGetVersion.mockResolvedValue(makeFlowVersion())
+        vi.clearAllMocks()
     })
 
     describe('payload pass-through (no worker-side fetch)', () => {
@@ -142,7 +122,7 @@ describe('executeFlowJob', () => {
 
             await executeFlowJob.execute(ctx, data)
 
-            const operation = ctx.mockSandbox.execute.mock.calls[0][1]
+            const operation = ctx.mockExecution.run.mock.calls[0][0].operation
             expect(operation.executionType).toBe(ExecutionType.BEGIN)
             expect(operation.triggerPayload).toEqual({ type: 'ref', fileId: 'huge-file-1' })
             expect(operation.executionState).toBeUndefined()
@@ -157,7 +137,7 @@ describe('executeFlowJob', () => {
 
             await executeFlowJob.execute(ctx, data)
 
-            const operation = ctx.mockSandbox.execute.mock.calls[0][1]
+            const operation = ctx.mockExecution.run.mock.calls[0][0].operation
             expect(operation.executionType).toBe(ExecutionType.RESUME)
             expect(operation.resumePayload).toEqual({ type: 'ref', fileId: 'resume-payload-1' })
             expect(operation.logsFileId).toBe('logs-file-1')
@@ -186,10 +166,8 @@ describe('executeFlowJob', () => {
     })
 
     describe('missing piece handling', () => {
-        it('marks run as FAILED and skips sandbox when flow version is not found', async () => {
-            mockGetVersion.mockResolvedValue(null)
-
-            const ctx = makeMockContext()
+        it('marks run as FAILED and never runs the engine when the flow version is not found', async () => {
+            const ctx = makeMockContext({ provisionResult: { kind: 'flow-not-found' } })
             const data = makeResumeJobData({ executionType: ExecutionType.BEGIN })
 
             const result = await executeFlowJob.execute(ctx, data)
@@ -200,7 +178,8 @@ describe('executeFlowJob', () => {
                 expect.objectContaining({ status: FlowRunStatus.FAILED }),
             )
 
-            expect(ctx.sandboxManager.acquire).not.toHaveBeenCalled()
+            // No sandbox work happens for a missing flow: provision returns early, run is never called.
+            expect(ctx.mockExecution.run).not.toHaveBeenCalled()
         })
     })
 })

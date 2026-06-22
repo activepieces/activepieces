@@ -1,4 +1,5 @@
-import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
+import { AlertChannel, ApEdition, BADGES, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { domainHelper } from '../../../helper/domain-helper'
@@ -19,8 +20,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendInvitation] sending invitation email',
             email: userInvitation.email,
-            platformId: userInvitation.platformId,
-            projectId: userInvitation.projectId,
+            platform: { id: userInvitation.platformId },
+            project: { id: userInvitation.projectId },
             type: userInvitation.type,
             projectRole: userInvitation.projectRole,
             platformRole: userInvitation.platformRole,
@@ -44,8 +45,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendProjectMemberAdded] sending project member added email',
             email: userInvitation.email,
-            platformId: userInvitation.platformId,
-            projectId: userInvitation.projectId,
+            platform: { id: userInvitation.platformId },
+            project: { id: userInvitation.projectId },
             type: userInvitation.type,
             projectRole: userInvitation.projectRole,
             platformRole: userInvitation.platformRole,
@@ -78,7 +79,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendScimUserWelcome] sending welcome email',
             email,
-            platformId,
+            platform: { id: platformId },
         })
 
         const loginLink = await domainHelper.getPublicUrl({
@@ -114,7 +115,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         log.info({
             name: '[emailService#sendIssueCreatedNotification]',
-            projectId,
+            project: { id: projectId },
             flowName,
             createdAt,
         })
@@ -195,7 +196,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const user = await userService(log).getMetaInformation({ id: userId })
 
         if (isNil(user) || !isValidEmail(user.email)) {
-            log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
+            log.info({ user: { id: userId }, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
             return
         }
         const badge = BADGES[badgeName as keyof typeof BADGES]

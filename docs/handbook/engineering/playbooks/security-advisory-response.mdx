@@ -86,7 +86,7 @@ Always a patch bump (e.g. `0.71.0` → `0.71.1`). Never bundle with feature comm
   </Step>
 
   <Step title="Bump versions">
-    Patch-bump root [package.json](https://github.com/activepieces/activepieces/blob/main/package.json). Bump `packages/shared` if touched. If the fix has a migration, set `release = '<patched-version>'` per [Database Migrations](/handbook/engineering/playbooks/database-migration).
+    Patch-bump root [package.json](https://github.com/activepieces/activepieces/blob/main/package.json). Bump `packages/core/shared` if touched. If the fix has a migration, set `release = '<patched-version>'` per [Database Migrations](/handbook/engineering/playbooks/database-migration).
   </Step>
 
   <Step title="Verify on canary">

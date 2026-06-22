@@ -1,12 +1,11 @@
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
   UpdateProjectPlatformRequest,
-  isNil,
   ProjectType,
   ProjectWithLimits,
   ProjectWithLimitsWithPlatform,
-  SeekPage,
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import {

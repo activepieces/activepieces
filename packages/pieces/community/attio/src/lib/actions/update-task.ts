@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { linkedRecordDropdown, objectTypeIdDropdown, taskIdDropdown } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const updateTaskAction = createAction({
 	auth: attioAuth,

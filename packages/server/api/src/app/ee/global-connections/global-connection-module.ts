@@ -1,16 +1,6 @@
+import { ApId, apId, SeekPage } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { ApId,
-    apId,
-    AppConnectionScope,
-    AppConnectionWithoutSensitiveData,
-    ApplicationEventName,
-    ListGlobalConnectionsRequestQuery,
-    PrincipalType,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateGlobalConnectionValueRequestBody,
-    UpsertGlobalConnectionRequestBody,
-} from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionWithoutSensitiveData, ApplicationEventName, ListGlobalConnectionsRequestQuery, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateGlobalConnectionValueRequestBody, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'

@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowOperationType,
   PopulatedFlow,
   Table,
-  isNil,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

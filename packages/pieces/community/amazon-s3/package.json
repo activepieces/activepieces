@@ -6,7 +6,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
     "@aws-sdk/client-s3": "3.974.0",
     "@aws-sdk/client-sts": "3.974.0",
     "@aws-sdk/client-secrets-manager": "^3.0.0",
@@ -14,13 +13,16 @@
     "dayjs": "1.11.9",
     "mime-types": "2.1.35",
     "openpgp": "^6.3.0",
-    "tslib": "2.6.2"
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/mime-types": "2.1.1"
+    "@types/mime-types": "2.1.1",
+    "tslib": "2.6.2"
   }
 }

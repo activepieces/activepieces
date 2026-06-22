@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { onChatSubmission } from './lib/triggers/chat-trigger';
 import { onFormSubmission } from './lib/triggers/form-trigger';
 import { returnResponse } from './lib/actions/return-response';

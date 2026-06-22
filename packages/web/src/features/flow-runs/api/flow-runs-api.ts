@@ -1,3 +1,4 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   CountFlowRunsByStatusRequest,
   CountFlowRunsByStatusResponse,
@@ -9,7 +10,6 @@ import {
   WebsocketServerEvent,
   WebsocketClientEvent,
   CreateStepRunRequestBody,
-  SeekPage,
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
   BulkCancelFlowRequestBody,

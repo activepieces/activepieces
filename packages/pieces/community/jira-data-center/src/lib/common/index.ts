@@ -7,7 +7,7 @@ import {
 	httpClient,
 } from '@activepieces/pieces-common';
 import { JiraDataCenterAuth } from '../../auth';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraDataCenterAuth }) {
 	return httpClient.sendRequest({

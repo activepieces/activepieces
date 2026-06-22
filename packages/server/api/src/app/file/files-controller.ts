@@ -1,4 +1,5 @@
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ApId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, FileCompression, FileTransportQueryParams, FileType, isNil, Principal, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ALL_PRINCIPAL_TYPES, EnginePrincipal, FileCompression, FileTransportQueryParams, FileType, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'

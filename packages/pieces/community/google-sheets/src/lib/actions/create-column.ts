@@ -7,7 +7,7 @@ import {
 	getHeaderRow,
 	ValueInputOption,
 } from '../common/common';
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import { getWorkSheetName } from '../triggers/helpers';
 import { commonProps } from '../common/props';
 
@@ -43,7 +43,7 @@ export const createColumnAction = createAction({
 		}
 
 		const authClient = await createGoogleClient(context.auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		let columnLabel;
 

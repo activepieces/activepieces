@@ -1,4 +1,4 @@
-import { tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
@@ -15,7 +15,7 @@ async function getMcpCredentials({ platformId, userId, log }: {
         mcpOAuthTokenService.issueInternalAccessToken({ userId, platformId, projectId: null }),
     )
     if (error) {
-        log.warn({ err: error, platformId }, 'Failed to get MCP credentials — chat will work without MCP tools')
+        log.warn({ error, platform: { id: platformId } }, 'Failed to get MCP credentials — chat will work without MCP tools')
         return { mcpServerUrl: null, mcpToken: null }
     }
     const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)

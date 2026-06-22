@@ -1,16 +1,5 @@
-import {
-    ActionPreviewEvent,
-    ActionReceiptEvent,
-    BatchItemResult,
-    ChatAgentEventType,
-    ChatPhase,
-    chatToolClassification,
-    chunk,
-    isObject,
-    SendChatEventRequest,
-    ToolProgressEvent,
-    tryCatch,
-} from '@activepieces/shared'
+import { chunk, isObject, tryCatch } from '@activepieces/core-utils'
+import { ActionPreviewEvent, ActionReceiptEvent, BatchItemResult, ChatAgentEventType, ChatPhase, chatToolClassification, SendChatEventRequest, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
@@ -125,7 +114,7 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
             const { error } = await tryCatch(() => sendEvent({ userId, conversationId, event }))
             if (!error) return
             if (attempt === maxAttempts) {
-                log?.warn({ err: error, attempt, eventType: event.type }, 'Event delivery failed after retries')
+                log?.warn({ error, attempt, eventType: event.type }, 'Event delivery failed after retries')
                 return
             }
             const delayMs = attempt === 1 ? 200 : 1_000
@@ -278,9 +267,9 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
         }),
 
         ap_show_quick_replies: tool({
-            description: 'Display quick reply suggestion buttons below your message.',
+            description: 'Offer 1-3 short, relevant follow-up suggestions above the chat input. Only use when concrete next steps genuinely exist; skip it otherwise.',
             inputSchema: z.object({
-                replies: z.array(z.string().max(80)).min(1).max(5).describe('Short suggestion texts'),
+                replies: z.array(z.string().max(80)).min(1).max(3).describe('Short suggestion texts'),
             }),
             execute: async () => {
                 return { displayed: true }
@@ -618,7 +607,7 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
             if (flowId && gateId) {
                 const { data: check, error } = await tryCatch(() => checkFlowWrites(flowId))
                 if (error) {
-                    log?.warn({ err: error, flowId }, 'ap_test_flow write-check failed, running test without confirmation gate')
+                    log?.warn({ error, flow: { id: flowId } }, 'ap_test_flow write-check failed, running test without confirmation gate')
                 }
                 else if (isObject(check) && check['hasWrites'] === true) {
                     const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []

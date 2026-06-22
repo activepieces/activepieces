@@ -4,7 +4,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createChannelAction } from './lib/actions/create-channel';
 import { createChatAndSendMessageAction } from './lib/actions/create-chat-and-send-message';
 import { createPrivateChannelAction } from './lib/actions/create-private-channel';

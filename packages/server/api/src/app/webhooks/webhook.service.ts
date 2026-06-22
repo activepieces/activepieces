@@ -1,5 +1,6 @@
+import { apId, assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { apId, assertNotNullOrUndefined, EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
+import { EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, LATEST_JOB_DATA_SCHEMA_VERSION, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowExecutionCache } from '../flows/flow/flow-execution-cache'
@@ -57,9 +58,9 @@ export const webhookService = {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
         wideEvent.set({
+            flow: { id: flowId },
             webhook: {
                 requestId: webhookRequestId,
-                flowId,
                 async,
                 saveSampleData,
                 execute,
@@ -84,7 +85,7 @@ export const webhookService = {
         }
         const { flow } = flowExecutionResult
         if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
-            pinoLogger.warn({ flowId }, 'Webhook received for disabled flow')
+            pinoLogger.warn({ flow: { id: flowId } }, 'Webhook received for disabled flow')
             wideEvent.set({ webhook: { flowFound: false } })
             return {
                 status: StatusCodes.NOT_FOUND,
@@ -98,12 +99,12 @@ export const webhookService = {
         wideEvent.set({
             webhook: {
                 flowFound: true,
-                projectId: flow.projectId,
-                platformId: flowExecutionResult.platformId,
             },
+            project: { id: flow.projectId },
+            platform: { id: flowExecutionResult.platformId },
         })
         const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
-        wideEvent.set({ webhook: { flowVersionId: flowVersionIdToRun } })
+        wideEvent.set({ flowVersion: { id: flowVersionIdToRun } })
 
         const response = await webhookHandshake.handleHandshakeRequest({
             payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
@@ -115,8 +116,8 @@ export const webhookService = {
         })
         if (!isNil(response)) {
             logger.info({
-                flowId: flow.id,
-                flowVersionId: flowVersionIdToRun,
+                flow: { id: flow.id },
+                flowVersion: { id: flowVersionIdToRun },
                 webhookRequestId,
             }, 'Handshake request completed')
             wideEvent.set({ webhook: { handshake: true } })
@@ -273,7 +274,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         failParentOnFailure,
     })
 
-    wideEvent.set({ webhook: { runId: createdRun.id } })
+    wideEvent.set({ flowRun: { id: createdRun.id } })
     params.onRunCreated?.(createdRun)
 
     const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {

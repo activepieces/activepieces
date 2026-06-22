@@ -3,9 +3,9 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { AppConnectionType } from '@activepieces/pieces-framework';
+import { oauth2 as googleOauth2 } from '@googleapis/oauth2';
+import { JWT, OAuth2Client } from 'google-auth-library';
 
 const gmailServiceAccountScopes = [
   'https://www.googleapis.com/auth/gmail.send',
@@ -75,7 +75,7 @@ export async function createGoogleClient(
         'Invalid Service Account JSON Key. Please provide a valid JSON string.'
       );
     }
-    return new google.auth.JWT({
+    return new JWT({
       email: serviceAccount.client_email,
       key: serviceAccount.private_key,
       scopes: gmailServiceAccountScopes,
@@ -110,7 +110,7 @@ export async function getUserEmail(
     return auth.props.userEmail?.trim();
   }
   return (
-    (await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get())
+    (await googleOauth2({ version: 'v2', auth: authClient }).userinfo.get())
       .data.email ?? undefined
   );
 }

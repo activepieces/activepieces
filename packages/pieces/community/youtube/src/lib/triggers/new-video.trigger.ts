@@ -14,11 +14,10 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { channelIdentifier } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { load as cheerioLoad } from 'cheerio';
 import FeedParser from 'feedparser';
-import axios from 'axios';
 
 export const youtubeNewVideoTrigger = createTrigger({
   name: 'new-video',
@@ -361,38 +360,37 @@ async function getChannelId(urlOrId: string) {
   throw new Error('Invalid YouTube channel URL');
 }
 
-function getRssItems(channelId: string): Promise<any[]> {
+async function getRssItems(channelId: string): Promise<any[]> {
   const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+  const response = await httpClient.sendRequest<Buffer>({
+    method: HttpMethod.GET,
+    url,
+    responseType: 'arraybuffer',
+  });
+
   return new Promise((resolve, reject) => {
-    axios
-      .get(url, {
-        responseType: 'stream',
-      })
-      .then((response) => {
-        const feedparser = new FeedParser({
-          addmeta: true,
-        });
-        response.data.pipe(feedparser);
-        const items: any[] = [];
+    const feedparser = new FeedParser({
+      addmeta: true,
+    });
+    const items: any[] = [];
 
-        feedparser.on('readable', () => {
-          let item = feedparser.read();
-          while (item) {
-            items.push(item);
-            item = feedparser.read();
-          }
-        });
+    feedparser.on('readable', () => {
+      let item = feedparser.read();
+      while (item) {
+        items.push(item);
+        item = feedparser.read();
+      }
+    });
 
-        feedparser.on('end', () => {
-          resolve(items);
-        });
+    feedparser.on('end', () => {
+      resolve(items);
+    });
 
-        feedparser.on('error', (error: any) => {
-          reject(error);
-        });
-      })
-      .catch((error) => {
-        reject(error);
-      });
+    feedparser.on('error', (error: any) => {
+      reject(error);
+    });
+
+    feedparser.write(response.body);
+    feedparser.end();
   });
 }

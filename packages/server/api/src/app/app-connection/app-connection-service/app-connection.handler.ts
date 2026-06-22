@@ -1,4 +1,5 @@
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionId, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
+import { assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId, UserId } from '@activepieces/core-utils'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, In } from 'typeorm'

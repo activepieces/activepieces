@@ -1,5 +1,6 @@
-import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, tryCatch, WorkerJobType } from '@activepieces/shared'
+import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -187,7 +188,7 @@ async function detectUnknownInputProps({ pieceName, pieceVersion, componentName,
         return { unknownKeys, message: unknownMessage }
     }
     catch (err) {
-        log.warn({ err, pieceName, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
         return { unknownKeys: [], message: '' }
     }
 }
@@ -233,6 +234,39 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
             }
             return summary
         })
+}
+
+function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
+    return fields.flatMap((field) => {
+        const path = prefix ? `${prefix}.${field.key}` : field.key
+        if (field.children && field.children.length > 0) {
+            return flattenOutputSchemaFields(field.children, path)
+        }
+        if (field.listItems && field.listItems.length > 0) {
+            return flattenOutputSchemaFields(field.listItems, `${path}[]`)
+        }
+        const typeHint = field.format ? ` (${field.format})` : ''
+        const dynamicNote = field.dynamicKey ? ' (dynamic key)' : ''
+        return [`${path}${typeHint}${dynamicNote}`]
+    })
+}
+
+function deriveFieldPathsFromSample(value: unknown, prefix = ''): string[] {
+    if (Array.isArray(value)) {
+        return value.length > 0
+            ? deriveFieldPathsFromSample(value[0], `${prefix}[]`)
+            : (prefix ? [`${prefix}[]`] : [])
+    }
+    if (value !== null && typeof value === 'object') {
+        const entries = Object.entries(value)
+        return entries.length > 0
+            ? entries.flatMap(([key, val]) => deriveFieldPathsFromSample(val, prefix ? `${prefix}.${key}` : key))
+            : (prefix ? [`${prefix} (object)`] : [])
+    }
+    if (!prefix) {
+        return []
+    }
+    return [`${prefix} (${value === null ? 'null' : typeof value})`]
 }
 
 function normalizePieceName(pieceName: string | undefined): string | undefined {
@@ -391,7 +425,7 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
         settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
     }
     catch (err) {
-        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
+        log.warn({ error: err, piece: { name: pieceName }, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
     }
 }
 
@@ -538,6 +572,8 @@ export const mcpUtils = {
     detectUnknownInputProps,
     rejectUnknownInputProps,
     buildPropSummaries,
+    flattenOutputSchemaFields,
+    deriveFieldPathsFromSample,
     normalizePieceName,
     lookupPieceComponent,
     findResolvableProps,
@@ -619,7 +655,7 @@ type LookupPieceComponentParams = {
 }
 
 type LookupPieceComponentResult =
-    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
+    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never }
     | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveRouterStepResult =

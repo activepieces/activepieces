@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailReplyToEmailAction } from './lib/actions/reply-to-email-action';
 import { gmailCreateDraftReplyAction } from './lib/actions/create-draft-reply-action';

@@ -1,6 +1,6 @@
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { projectId, taskId, workspaceId } from '../common/props';

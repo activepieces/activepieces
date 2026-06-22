@@ -1,5 +1,6 @@
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatPhase, PersistedChatPartType, tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils';
+import { ChatPhase, PersistedChatPartType } from '@activepieces/shared';
 import { hasToolCall, isLoopFinished, ModelMessage, ToolSet } from 'ai'
 import { ChatEvalFixture } from './fixture'
 import { llmJudge } from './llm-judge'

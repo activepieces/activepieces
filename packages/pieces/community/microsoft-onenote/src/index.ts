@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { appendNote } from './lib/actions/append-note';
 import { createImageNote } from './lib/actions/create-image-note';
 import { createNoteInSection } from './lib/actions/create-note-in-section';

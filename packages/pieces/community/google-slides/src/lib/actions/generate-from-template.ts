@@ -1,8 +1,8 @@
 import { googleSlidesAuth } from '../auth';
 import { createAction, DynamicPropsValue, Property } from "@activepieces/pieces-framework";
 import { getSlide, PageElement, batchUpdate, TableCell, TextElement } from '../commons/common';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { drive as googleDrive } from '@googleapis/drive';
+import { OAuth2Client } from 'google-auth-library';
 
 function extractPlaceholders(content: string, fields: Record<string, any>, placeholder_format: string) {
     const regex = placeholder_format === '[[]]' 
@@ -114,7 +114,7 @@ export const generateFromTemplate = createAction({
             const authClient = new OAuth2Client();
             authClient.setCredentials({ access_token: access_token });
             
-            const drive = google.drive({ version: 'v3', auth: authClient });
+            const drive = googleDrive({ version: 'v3', auth: authClient });
                 
             const copyResponse = await drive.files.copy({
                 fileId: template_presentation_id as string,

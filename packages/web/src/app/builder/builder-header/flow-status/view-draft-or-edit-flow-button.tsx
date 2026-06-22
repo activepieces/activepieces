@@ -1,4 +1,5 @@
-import { FlowVersionState, Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import { FlowVersionState } from '@activepieces/shared';
 import { t } from 'i18next';
 import { EyeIcon, PencilIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

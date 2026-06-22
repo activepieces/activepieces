@@ -1,6 +1,6 @@
 import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { tarventAuth } from '../auth';
 import { makeClient } from '../common';
 
@@ -29,8 +29,8 @@ export const createSuppressionFilter = createAction({
     const { email, reason } = context.propsValue;
 
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().min(1).max(100, 'Email has no more than 100 characters.'),
-      reason: z.string().min(0).max(255, 'Suppression reason has no more than 255 characters.'),
+      email: z.string().check(z.minLength(1), z.maxLength(100, 'Email has no more than 100 characters.')),
+      reason: z.string().check(z.minLength(0), z.maxLength(255, 'Suppression reason has no more than 255 characters.')),
     });
 
     const client = makeClient(context.auth);

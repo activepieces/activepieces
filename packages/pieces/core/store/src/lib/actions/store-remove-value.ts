@@ -7,7 +7,7 @@ import {
   StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { common, getScopeAndKey, PieceStoreScope } from './common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 async function executeStorageRemoveValue(context: ActionContext<PieceAuthProperty | undefined, {
@@ -15,7 +15,7 @@ async function executeStorageRemoveValue(context: ActionContext<PieceAuthPropert
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
 }>, isTestMode = false) {
   await propsValidation.validateZod(context.propsValue, {
-    key: z.string().max(128),
+    key: z.string().check(z.maxLength(128)),
   });
 
   const { key, scope } = getScopeAndKey({

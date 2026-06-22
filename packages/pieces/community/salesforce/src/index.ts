@@ -4,7 +4,7 @@ import {
 	createPiece,
 	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 import { addContactToCampaign } from './lib/action/add-contact-to-campaign';
