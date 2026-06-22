@@ -76,14 +76,13 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
 
 // Run by the engine before EXECUTE_FLOW to make the flow's pieces/code available. The engine
 // fetches piece archives directly from the API (engineToken + internalApiUrl) and installs via
-// the selected strategy. `flowVersion` is the source for CODE step artifacts; `cacheDir` is the
-// install target for LOCAL_CACHE (ignored by BUNDLED_TGZ, which is stateless and installs each
-// piece's bundled .tgz in parallel).
+// the selected strategy. `flowVersion` is the source for CODE step artifacts. There is no cache
+// dir in the contract: the on-disk cache is a worker-pool concern (host-side, configured in
+// cache-paths.ts), and serverless BUNDLED_TGZ is stateless.
 export type ProvisionOperation = BaseEngineOperation & {
     installStrategy: PieceInstallStrategyKind
     pieces: PiecePackage[]
     flowVersion?: FlowVersion
-    cacheDir?: string
 }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
