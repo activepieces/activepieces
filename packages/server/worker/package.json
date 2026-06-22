@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/sandbox-pool": "workspace:*",
     "@activepieces/server-utils": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@ai-sdk/amazon-bedrock": "3.0.97",

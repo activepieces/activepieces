@@ -11,11 +11,12 @@ export enum ExecutionMode {
     SANDBOX_CODE_AND_PROCESS = 'SANDBOX_CODE_AND_PROCESS',
 }
 
-// Selects WHERE flow execution happens. LOCAL_POOL is the original long-lived worker
-// that spawns the engine as a local sandboxed process. GCP_CLOUD_FUNCTION runs the engine
-// on a serverless function platform; ExecutionMode (isolate vs fork) is a LOCAL_POOL-internal
-// sub-choice and does not apply to it.
+// Names the two deployment modes of the SAME execution path (the sandbox pool). LOCAL embeds the
+// pool in the long-lived worker at concurrency N. GCP_CLOUD_RUN embeds the same pool at concurrency 1
+// in a Docker image behind an HTTP server. The execution logic does not diverge between them — only
+// the injected base cache path and the concurrency differ. ExecutionMode (isolate vs fork) is an
+// internal sub-choice of the pool and is unaffected.
 export enum RuntimeKind {
-    LOCAL_POOL = 'LOCAL_POOL',
-    GCP_CLOUD_FUNCTION = 'GCP_CLOUD_FUNCTION',
+    LOCAL = 'LOCAL',
+    GCP_CLOUD_RUN = 'GCP_CLOUD_RUN',
 }

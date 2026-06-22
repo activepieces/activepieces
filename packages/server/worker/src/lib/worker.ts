@@ -1,6 +1,7 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { Runtime, warmupPieces } from '@activepieces/sandbox-pool'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
@@ -11,9 +12,8 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
-import { pieceInstaller } from './runtime/local-pool/cache/pieces/piece-installer'
 import { selectRuntime } from './runtime/runtime-factory'
-import { Runtime } from './runtime/types'
+import { sandboxConfig } from './runtime/sandbox-config'
 
 
 const AP_VERSION = apVersionUtil.getCurrentRelease()
@@ -348,7 +348,13 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
     }
     logger.info({ count: pieces.length }, 'Starting piece cache warmup')
     const { error: installError } = await tryCatch(() =>
-        pieceInstaller(logger, apiClient).install({ pieces, includeFilters: false }),
+        warmupPieces({
+            pieces,
+            basePath: sandboxConfig.getCacheBasePath(),
+            getSettings: () => sandboxConfig.getSandboxPoolSettings(),
+            log: logger,
+            apiClient,
+        }),
     )
     if (installError) {
         logger.error({ error: installError }, 'Failed to install pieces during startup warmup')

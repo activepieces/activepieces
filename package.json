@@ -381,6 +381,7 @@
     "packages/web",
     "packages/server/api",
     "packages/server/utils",
+    "packages/server/sandbox-pool",
     "packages/server/worker",
     "packages/ee/embed-sdk",
     "packages/tests-e2e",
