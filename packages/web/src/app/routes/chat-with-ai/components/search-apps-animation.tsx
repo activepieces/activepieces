@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Search } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
+import { TextShimmer } from '@/components/ui/text-shimmer';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +31,9 @@ export const SearchAppsAnimation = memo(function SearchAppsAnimation() {
   return (
     <div className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-1.5">
       <Search className="size-4 shrink-0 text-muted-foreground" />
-      <span className="text-sm text-muted-foreground">{t('Search apps')}</span>
+      <TextShimmer as="span" className="text-sm" duration={2}>
+        {t('Search apps')}
+      </TextShimmer>
       {pool.length > 0 && (
         <div className="flex items-center gap-0.5">
           <Slot pool={pool} direction="down" />
