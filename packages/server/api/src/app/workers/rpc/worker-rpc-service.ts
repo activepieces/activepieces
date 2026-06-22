@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ApEdition, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowOperationType, FlowStatus, isFlowRunStateTerminal, logSerializer, PiecePackage, RunInternalError, RunInternalErrorSource, StreamStepProgress, truncateFailedStepMessage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowOperationType, FlowStatus, isFlowRunStateTerminal, logSerializer, PiecePackage, RunEnvironment, RunInternalError, RunInternalErrorSource, StreamStepProgress, truncateFailedStepMessage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
@@ -16,6 +16,7 @@ import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { billingProvider } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -145,23 +146,35 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             const platformId = await projectService(log).getPlatformId(projectId)
             const filterPayloads = await dedupeService.filterUniquePayloads(flowVersionId, payloads)
 
+            const creditsExhausted = environment === RunEnvironment.PRODUCTION
+                && await billingProvider.get(log).shouldBlockOnCredits(platformId)
+
             const flowRuns = await Promise.all(
                 filterPayloads.map((payload) =>
-                    flowRunService(log).start({
-                        flowId: flowVersion.flowId,
-                        environment,
-                        flowVersionId,
-                        payload,
-                        projectId,
-                        platformId,
-                        httpRequestId,
-                        workerHandlerId: undefined,
-                        executionType: ExecutionType.BEGIN,
-                        streamStepProgress,
-                        executeTrigger: false,
-                        parentRunId,
-                        failParentOnFailure,
-                    }),
+                    creditsExhausted
+                        ? flowRunService(log).createQuotaExceededRun({
+                            flowVersion,
+                            payload,
+                            projectId,
+                            environment,
+                            parentRunId,
+                            failParentOnFailure,
+                        })
+                        : flowRunService(log).start({
+                            flowId: flowVersion.flowId,
+                            environment,
+                            flowVersionId,
+                            payload,
+                            projectId,
+                            platformId,
+                            httpRequestId,
+                            workerHandlerId: undefined,
+                            executionType: ExecutionType.BEGIN,
+                            streamStepProgress,
+                            executeTrigger: false,
+                            parentRunId,
+                            failParentOnFailure,
+                        }),
                 ),
             )
             return flowRuns

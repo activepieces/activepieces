@@ -1,5 +1,5 @@
 import { isManualPieceTrigger, isNil, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, FlowRun, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ApEdition, FlowRun, FlowRunStatus, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
@@ -51,7 +51,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         if (error) {
             log.warn({ error, flowRun: { id: flowRun.id } }, 'Failed to capture AI usage event')
         }
-        if (flowRun.environment === RunEnvironment.PRODUCTION) {
+        if (flowRun.environment === RunEnvironment.PRODUCTION && flowRun.status !== FlowRunStatus.QUOTA_EXCEEDED) {
             const { error: creditError } = await tryCatch(() => trackProductionRunCredit(log, flowRun))
             if (creditError) {
                 log.warn({ error: creditError, flowRun: { id: flowRun.id } }, 'Failed to track production run credit')

@@ -7,7 +7,7 @@ import { BillingProvider, TrackCreditsParams } from '../../../../platform/billin
 import { platformPlanService } from '../platform-plan.service'
 import { refreshEntitlements } from './autumn-entitlements'
 import { resolveAutumnClientForPlatform } from './autumn-platform-client'
-import { writeCreditsBalance } from './credits-cache'
+import { readCreditsBalance, writeCreditsBalance } from './credits-cache'
 
 const CREDIT_DEDUP_TTL_SECONDS = 86400
 
@@ -44,5 +44,16 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     shouldBlock: async (platformId: string) => {
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         return platformPlan.billingEnforced === true
+    },
+    shouldBlockOnCredits: async (platformId: string) => {
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (platformPlan.billingEnforced !== true) {
+            return false
+        }
+        const balance = await readCreditsBalance(platformId)
+        if (isNil(balance) || balance.unlimited) {
+            return false
+        }
+        return balance.remaining <= 0
     },
 })
