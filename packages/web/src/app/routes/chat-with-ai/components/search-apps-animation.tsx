@@ -53,7 +53,7 @@ function Slot({
     <div className="size-5 overflow-hidden rounded">
       <div
         className={cn(
-          'flex flex-col',
+          'flex flex-col motion-reduce:animate-none',
           direction === 'up'
             ? 'animate-[slot-spin_linear_infinite]'
             : 'animate-[slot-spin_linear_infinite_reverse]',
