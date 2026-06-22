@@ -86,7 +86,7 @@
     "p-limit": "2.3.0",
     "pg": "8.11.3",
     "request-filtering-agent": "3.2.0",
-    "qs": "6.14.2",
+    "qs": "6.15.2",
     "redis-memory-server": "0.15.0",
     "redlock": "5.0.0-beta.2",
     "samlify": "2.10.0",
