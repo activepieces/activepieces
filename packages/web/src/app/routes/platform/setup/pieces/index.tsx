@@ -1,10 +1,9 @@
-import { PieceType } from '@activepieces/core-piece-types';
 import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { OAuth2GrantType, PieceScope } from '@activepieces/shared';
+import { OAuth2GrantType, PieceScope, PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
