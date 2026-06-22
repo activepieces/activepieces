@@ -31,7 +31,7 @@ export const engineApiClient = {
         await postAsEngine({ engineToken, apiUrl, path: 'v1/engine/run-progress', body: request, errorName: 'ProgressUpdateError' })
     },
     async uploadRunLog({ engineToken, apiUrl, request }: EngineRequest<UploadRunLogsRequest>): Promise<void> {
-        await postAsEngine({ engineToken, apiUrl, path: 'v1/engine/run-logs', body: request, errorName: 'ProgressUpdateError' })
+        await postAsEngine({ engineToken, apiUrl, path: 'v1/engine/run-logs', body: request, errorName: 'UploadRunLogError' })
     },
     async sendFlowResponse({ engineToken, apiUrl, request }: EngineRequest<SendFlowResponseRequest>): Promise<void> {
         await postAsEngine({ engineToken, apiUrl, path: 'v1/engine/flow-response', body: request, errorName: 'FlowResponseError' })
