@@ -1,5 +1,6 @@
-import { isNil } from '@activepieces/core-utils'
-import { PlanName, PlatformPlanLimits } from '@activepieces/shared'
+import { isEmpty, isNil } from '@activepieces/core-utils'
+import { safeHttp } from '@activepieces/server-utils'
+import { PlatformPlanLimits } from '@activepieces/shared'
 import {
     type AttachParams,
     Autumn,
@@ -16,12 +17,18 @@ import {
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { getCreditsBalanceKey, getCreditTrackedKey } from '../../../database/redis/keys'
-import { distributedStore } from '../../../database/redis-connections'
+import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { BillingProvider, TrackCreditsParams } from '../../../platform/billing-provider'
 import { platformPlanService } from './platform-plan.service'
 
 const CREDIT_DEDUP_TTL_SECONDS = 86400
 const CREDITS_CACHE_TTL_SECONDS = 180
+const CONSOLE_REQUEST_TIMEOUT_MS = 30000
+
+const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
+// Assumed FREE plan id — NOT yet verified against the Autumn dashboard. Single source of truth for the free
+// plan id (used by both subscribeFreeOnConsole and autumnPlanIdToPlanName); update here once confirmed.
+const AUTUMN_FREE_PLAN_ID = 'free'
 
 const AUTUMN_FEATURE = {
     CREDITS: 'credits',
@@ -54,6 +61,7 @@ const AUTUMN_FLAG_FEATURES = [
 ] as const satisfies readonly (keyof PlatformPlanLimits)[]
 
 export const autumnUtils = {
+    consoleUrl: AUTUMN_CONSOLE_URL,
     client({ secretKey, customerId, serverURL }: AutumnClientParams) {
         const client = new Autumn({ secretKey, serverURL, failOpen: true })
         return {
@@ -96,14 +104,36 @@ export const autumnUtils = {
         }
         return autumnUtils.client({ secretKey: autumnApiKey, customerId: autumnCustomerId })
     },
+    async ensureEnrolled(log: FastifyBaseLogger, platformId: string): Promise<void> {
+        const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
+        if (!isNil(autumnCustomerId)) {
+            return
+        }
+        await distributedLock(log).runExclusive({
+            key: `autumn_enroll_${platformId}`,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
+                if (!isNil(autumnCustomerId)) {
+                    return
+                }
+                const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+                const credentials = isNil(platformPlan.licenseKey) || isEmpty(platformPlan.licenseKey)
+                    ? await subscribeFreeOnConsole({ platformId })
+                    : await migrateOnConsole({ licenseKey: platformPlan.licenseKey, platformId })
+                await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
+                await autumnUtils.refreshEntitlements(log, platformId)
+            },
+        })
+    },
     async refreshEntitlements(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
             return
         }
         const customer = await client.getCustomer()
-        const limits = autumnUtils.mapEntitlementsToPlanLimits(toAutumnEntitlements(customer))
-        await platformPlanService(log).update({ platformId, ...limits })
+        const entitlements = toAutumnEntitlements(customer)
+        await platformPlanService(log).update({ platformId, ...autumnUtils.mapEntitlementsToPlanLimits(entitlements) })
     },
     mapEntitlementsToPlanLimits(entitlements: AutumnEntitlements): Partial<PlatformPlanLimits> {
         const flags: Partial<PlatformPlanLimits> = {}
@@ -114,7 +144,7 @@ export const autumnUtils = {
         const credits = entitlements.balances[AUTUMN_FEATURE.CREDITS]
         return {
             ...flags,
-            plan: autumnPlanIdToPlanName(entitlements.planId),
+            plan: autumnPlanIdToStoredPlan(entitlements.planId),
             projectsLimit: isNil(projects) || projects.unlimited ? null : projects.granted,
             includedAiCredits: credits?.granted ?? 0,
             activeFlowsLimit: undefined,
@@ -164,6 +194,9 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             throw error
         }
     },
+    ensureEnrolled: async (platformId: string) => {
+        await autumnUtils.ensureEnrolled(log, platformId)
+    },
     refreshEntitlements: async (platformId: string) => {
         await autumnUtils.refreshEntitlements(log, platformId)
     },
@@ -184,11 +217,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
 })
 
-function autumnPlanIdToPlanName(planId: string | null): PlanName | null {
-    if (isNil(planId) || planId === 'free') {
+function autumnPlanIdToStoredPlan(planId: string | null): string | null {
+    if (isNil(planId) || planId === AUTUMN_FREE_PLAN_ID) {
         return null
     }
-    return Object.values(PlanName).find((name) => name === planId) ?? null
+    return planId
 }
 
 function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements {
@@ -213,6 +246,28 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
         balances,
     }
 }
+
+async function subscribeFreeOnConsole({ platformId }: { platformId: string }): Promise<AutumnEnrollmentCredentials> {
+    const response = await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/subscribe`,
+        { planId: AUTUMN_FREE_PLAN_ID, platformId },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+    )
+    return response.data.data
+}
+
+async function migrateOnConsole({ licenseKey, platformId }: { licenseKey: string, platformId: string }): Promise<AutumnEnrollmentCredentials> {
+    const response = await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/migrate`,
+        { platformId },
+        {
+            timeout: CONSOLE_REQUEST_TIMEOUT_MS,
+            headers: { Authorization: `Bearer ${licenseKey}` },
+        },
+    )
+    return response.data.data
+}
+
 
 type WithoutCustomerId<T> = Omit<T, 'customerId'>
 
@@ -247,4 +302,20 @@ type CreditsBalanceCache = {
     unlimited: boolean
     nextResetAt: number | null
     syncedAt: number
+}
+
+type AutumnEnrollmentCredentials = {
+    autumnCustomerId: string
+    autumnApiKey: string
+}
+
+type ConsoleBillingCredentials = {
+    autumnCustomerId: string
+    autumnApiKey: string
+    paymentUrl: string | null
+}
+
+type ConsoleBillingEnvelope = {
+    success: boolean
+    data: ConsoleBillingCredentials
 }

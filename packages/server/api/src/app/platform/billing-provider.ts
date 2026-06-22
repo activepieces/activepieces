@@ -4,6 +4,9 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     trackCredits: async () => {
         return
     },
+    ensureEnrolled: async () => {
+        return
+    },
     refreshEntitlements: async () => {
         return
     },
@@ -31,6 +34,7 @@ export type TrackCreditsParams = {
 
 export type BillingProvider = {
     trackCredits(params: TrackCreditsParams): Promise<void>
+    ensureEnrolled(platformId: string): Promise<void>
     refreshEntitlements(platformId: string): Promise<void>
     shouldBlock(platformId: string): Promise<boolean>
     shouldBlockOnCredits(platformId: string): Promise<boolean>

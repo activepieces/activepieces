@@ -1,13 +1,16 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, chunk, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, ApEdition, ApEnvironment, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { getEnrollAttemptKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
+import { exceptionHandler } from '../../../helper/exception-handler'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
+import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
 import { platformAiCreditsService } from './platform-ai-credits.service'
@@ -21,26 +24,72 @@ type UpdatePlatformBillingParams = {
 } & Partial<PlatformPlanLimits>
 
 const edition = system.getEdition()
+const environment = system.get(AppSystemProp.ENVIRONMENT)
 const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
+const ENROLL_ATTEMPT_TTL_SECONDS = 300
+const AUTUMN_REFRESH_BATCH_SIZE = 200
+const AUTUMN_REFRESH_CONCURRENCY = 10
+// Assumed AppSumo lifetime-deal Autumn plan ids — NOT yet verified against the Autumn dashboard. Lifetime
+// deals never expire, so they're skipped by the nightly refresh (same as free); update once confirmed.
+const AUTUMN_APPSUMO_PLAN_IDS = [
+    'appsumo_activepieces_tier1',
+    'appsumo_activepieces_tier2',
+    'appsumo_activepieces_tier3',
+    'appsumo_activepieces_tier4',
+    'appsumo_activepieces_tier5',
+    'appsumo_activepieces_tier6',
+]
 
 export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
 
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
-        const platformPlan = await platformPlanRepo().findOneBy({ platformId })
-        if (!isNil(platformPlan)) return platformPlan
+        const existingPlatformPlan = await platformPlanRepo().findOneBy({ platformId })
+        if (!isNil(existingPlatformPlan)) {
+            triggerLazyAutumnEnrollment({ platformId, autumnCustomerId: existingPlatformPlan.autumnCustomerId }, log)
+            return existingPlatformPlan
+        }
 
-        return distributedLock(log).runExclusive({
+        const platformPlan = await distributedLock(log).runExclusive({
             key: `platform_plan_${platformId}`,
             timeoutInSeconds: 60,
             fn: async () => {
                 const platformPlan = await platformPlanRepo().findOneBy({ platformId })
                 if (!isNil(platformPlan)) return platformPlan
-
                 return createInitialBilling(platformId, log)
             },
         })
+        triggerLazyAutumnEnrollment({ platformId, autumnCustomerId: null }, log)
+        return platformPlan
+    },
+
+    onPlatformCreated(platformId: string): void {
+        triggerLazyAutumnEnrollment({ platformId, autumnCustomerId: null }, log)
+    },
+
+    async refreshEnrolledPlatforms(): Promise<void> {
+        let cursor: string | undefined = undefined
+        let batchSize: number
+        do {
+            const builder = platformPlanRepo().createQueryBuilder('platformPlan')
+                .where('platformPlan.autumnCustomerId IS NOT NULL')
+                .andWhere('platformPlan.plan IS NOT NULL')
+                .andWhere('platformPlan.plan NOT IN (:...appsumoPlanIds)', { appsumoPlanIds: AUTUMN_APPSUMO_PLAN_IDS })
+                .orderBy('platformPlan.id', 'ASC')
+                .take(AUTUMN_REFRESH_BATCH_SIZE)
+            if (!isNil(cursor)) {
+                builder.andWhere('platformPlan.id > :cursor', { cursor })
+            }
+            const batch = await builder.getMany()
+            batchSize = batch.length
+            for (const group of chunk(batch, AUTUMN_REFRESH_CONCURRENCY)) {
+                await Promise.all(group.map((platformPlan) => refreshEnrolledPlatform(platformPlan.platformId, log)))
+            }
+            if (batch.length > 0) {
+                cursor = batch[batch.length - 1].id
+            }
+        } while (batchSize === AUTUMN_REFRESH_BATCH_SIZE)
     },
 
     async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {
@@ -137,6 +186,30 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     },
 })
 
+function triggerLazyAutumnEnrollment({ platformId, autumnCustomerId }: TriggerLazyAutumnEnrollmentParams, log: FastifyBaseLogger): void {
+    if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING || !isNil(autumnCustomerId)) {
+        return
+    }
+    rejectedPromiseHandler(throttledAutumnEnrollment(platformId, log), log)
+}
+
+async function throttledAutumnEnrollment(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    const reserved = await distributedStore.putIfAbsent(getEnrollAttemptKey(platformId), '1', ENROLL_ATTEMPT_TTL_SECONDS)
+    if (!reserved) {
+        return
+    }
+    await billingProvider.get(log).ensureEnrolled(platformId)
+}
+
+async function refreshEnrolledPlatform(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    try {
+        await billingProvider.get(log).refreshEntitlements(platformId)
+    }
+    catch (error) {
+        exceptionHandler.handle(error, log)
+    }
+}
+
 function getPriceIdFor(price: PRICE_NAMES): string {
     const isDev = stripeSecretKey?.startsWith('sk_test')
     const env = isDev ? 'dev' : 'prod'
@@ -206,6 +279,11 @@ type GetBillingAmountParams = {
 type AutumnCredentials = {
     autumnCustomerId: string | null
     autumnApiKey: string | null
+}
+
+type TriggerLazyAutumnEnrollmentParams = {
+    platformId: string
+    autumnCustomerId: string | null | undefined
 }
 
 type SetAutumnCredentialsParams = {
