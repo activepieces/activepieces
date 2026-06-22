@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outdir = path.resolve(__dirname, '../../../dist/packages/engine');
 const proxyOutfile = path.join(outdir, 'main.js');
-const noProxyOutfile = path.join(outdir, 'main-noproxy.js');
 
 const watch = process.argv.includes('--watch');
 
@@ -55,10 +54,7 @@ function rebuildLogger(outfile) {
   };
 }
 
-// `includeProxyDispatcher` drives the __AP_PROXY_DISPATCHER__ define in proxy-dispatcher.ts:
-// true keeps the undici proxy dispatcher (~291KB), false dead-code-eliminates it. The worker
-// installs main.js for STRICT network mode and the slimmer main-noproxy.js otherwise.
-function buildOptions({ outfile, includeProxyDispatcher }) {
+function buildOptions({ outfile }) {
   return {
     entryPoints: [path.resolve(__dirname, 'src/main.ts')],
     bundle: true,
@@ -70,7 +66,6 @@ function buildOptions({ outfile, includeProxyDispatcher }) {
     minify: !watch,
     metafile: true,
     treeShaking: true,
-    define: { __AP_PROXY_DISPATCHER__: String(includeProxyDispatcher) },
     alias: {
         '@activepieces/shared': path.resolve(__dirname, '../../core/shared/src'),
         '@activepieces/pieces-framework': path.resolve(__dirname, '../../pieces/framework/src'),
@@ -86,19 +81,13 @@ function buildOptions({ outfile, includeProxyDispatcher }) {
 }
 
 if (watch) {
-  // Dev only needs the full bundle; STRICT-mode sandboxing isn't exercised under --watch.
   const ctx = await esbuild.context(
-    buildOptions({ outfile: proxyOutfile, includeProxyDispatcher: true })
+    buildOptions({ outfile: proxyOutfile })
   );
   await ctx.rebuild();
   await ctx.watch();
 } else {
-  await Promise.all([
-    esbuild.build(
-      buildOptions({ outfile: proxyOutfile, includeProxyDispatcher: true })
-    ),
-    esbuild.build(
-      buildOptions({ outfile: noProxyOutfile, includeProxyDispatcher: false })
-    ),
-  ]);
+  esbuild.build(
+    buildOptions({ outfile: proxyOutfile })
+  )
 }

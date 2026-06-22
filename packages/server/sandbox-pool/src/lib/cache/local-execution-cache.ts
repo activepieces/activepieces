@@ -4,8 +4,13 @@ import { PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxPoolSettings } from '../types'
 import { cacheUtils } from './cache-paths'
 import { codeBuilder } from './code/code-builder'
-import { engineInstaller } from './engine/engine-installer'
 import { pieceInstaller } from './pieces/piece-installer'
+import { dirname, join } from 'node:path'
+import { copyFile, rename } from 'node:fs/promises'
+import { nanoid } from 'nanoid'
+import { PathLike } from 'node:fs'
+
+const engineSourcePath = 'dist/packages/engine/main.js'
 
 export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
     async provision({
@@ -39,10 +44,9 @@ export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContrac
                 await wideEvent.timed({
                     name: 'installEngine',
                     fn: async () => {
-                        const { cacheHit } = await engineInstaller(log, getSettings).install({
-                            path: commonPath,
-                        })
-                        log.info({ path: commonPath, cacheHit }, 'Installed engine in sandbox')
+                        await atomicCopy(engineSourcePath, `${commonPath}/main.js`)
+                        await atomicCopy(`${engineSourcePath}.map`, `${commonPath}/main.js.map`)
+                        log.info({ path: commonPath }, 'Installed engine in sandbox')
                     },
                 })
 
@@ -68,6 +72,14 @@ export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContrac
         })
     },
 })
+
+async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
+    const destDir = dirname(dest.toString())
+    const tempPath = join(destDir, `main.temp.${nanoid()}.js`)
+    await fileSystemUtils.threadSafeMkdir(destDir)
+    await copyFile(src, tempPath)
+    await rename(tempPath, dest)
+}
 
 type ProvisionParams = {
     pieces: PiecePackage[]
