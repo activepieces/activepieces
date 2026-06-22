@@ -1,10 +1,16 @@
 import { ActivepiecesError, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
 import { ListTemplatesRequestQuery, Template } from '@activepieces/shared'
+import { curatedN8nWorkflowTemplateService } from './curated-n8n-workflow-templates'
 
 const TEMPLATES_SOURCE_URL = 'https://cloud.activepieces.com/api/v1/templates'
 
 export const communityTemplates = {
     getOrThrow: async (id: string): Promise<Template> => {
+        const curatedTemplate = curatedN8nWorkflowTemplateService.get({ id })
+        if (curatedTemplate !== undefined) {
+            return curatedTemplate
+        }
+
         const url = `${TEMPLATES_SOURCE_URL}/${id}`
         const response = await fetch(url, {
             method: 'GET',
@@ -34,9 +40,13 @@ export const communityTemplates = {
             },
         })
         const categories = await response.json()
-        return categories
+        return Array.from(
+            new Set([...categories, ...curatedN8nWorkflowTemplateService.categories]),
+        ).sort()
     },
-    list: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
+    list: async (
+        request: ListTemplatesRequestQuery,
+    ): Promise<SeekPage<Template>> => {
         const queryString = convertToQueryString(request)
         const url = `${TEMPLATES_SOURCE_URL}?${queryString}`
         const response = await fetch(url, {
@@ -46,10 +56,15 @@ export const communityTemplates = {
             },
         })
         const templates = await response.json()
-        return templates
+        return {
+            ...templates,
+            data: [
+                ...templates.data,
+                ...curatedN8nWorkflowTemplateService.list(request),
+            ],
+        }
     },
 }
-
 
 function convertToQueryString(params: ListTemplatesRequestQuery): string {
     const searchParams = new URLSearchParams()
@@ -58,7 +73,10 @@ function convertToQueryString(params: ListTemplatesRequestQuery): string {
         if (Array.isArray(value)) {
             value.forEach((val) => {
                 if (!isNil(val)) {
-                    searchParams.append(key, typeof val === 'string' ? val : JSON.stringify(val))
+                    searchParams.append(
+                        key,
+                        typeof val === 'string' ? val : JSON.stringify(val),
+                    )
                 }
             })
         }
