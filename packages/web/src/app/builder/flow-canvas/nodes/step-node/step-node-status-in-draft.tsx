@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowTriggerType,
   FlowVersionState,
   StepOutputStatus,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';

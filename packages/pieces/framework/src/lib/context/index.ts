@@ -3,15 +3,16 @@ import {
   AppConnectionType,
   AppConnectionValue,
   ExecutionType,
-  FlowRunId,
-  PopulatedFlow,
-  ProjectId,
   RespondResponse,
   ResumePayload,
-  SeekPage,
   TriggerPayload,
   TriggerStrategy,
-} from '@activepieces/shared';
+  DelayPauseMetadata,
+  PauseMetadata,
+  WebhookPauseMetadata,
+} from '@activepieces/core-piece-types';
+import type { SeekPage } from '@activepieces/core-utils';
+import type { FlowRunId, ProjectId } from '@activepieces/core-utils';
 import { LanguageModel, Tool } from 'ai'
 
 import {
@@ -24,7 +25,7 @@ import {
   StaticPropsValue,
 } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
-import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
+import type { PopulatedFlowSummary } from '@activepieces/core-piece-types';
 
 export type BaseContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
@@ -140,7 +141,7 @@ export type PauseHook = (params: {
 }) => void;
 
 export type FlowsContext = {
-  list(params?: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>>
+  list(params?: ListFlowsContextParams): Promise<SeekPage<PopulatedFlowSummary>>
   current: {
     id: string;
     version: {

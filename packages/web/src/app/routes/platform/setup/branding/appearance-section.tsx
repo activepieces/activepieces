@@ -1,4 +1,5 @@
-import { HEX_COLOR_PATTERN, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { HEX_COLOR_PATTERN } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';

@@ -1,5 +1,5 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { ExecutionType, MarkdownVariant } from '@activepieces/shared';
+import { ExecutionType, MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const waitForApprovalLink = createAction({
   audience: 'human',

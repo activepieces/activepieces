@@ -1,10 +1,5 @@
-import {
-  ApFlagId,
-  isNil,
-  Permission,
-  PlatformRole,
-  ProjectType,
-} from '@activepieces/shared';
+import { isNil, Permission } from '@activepieces/core-utils';
+import { ApFlagId, PlatformRole, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';

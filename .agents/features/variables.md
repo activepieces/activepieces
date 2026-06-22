@@ -12,8 +12,8 @@ Variables are project-scoped, encrypted secret values (API keys, tokens, opaque 
 - `packages/server/api/src/app/database/migration/postgres/1793000000000-AddVariableTable.ts` — schema migration.
 - `packages/server/engine/src/lib/piece-context/variable-resolver.ts` — engine-side resolver, mirrors `connection-resolver.ts`.
 - `packages/server/engine/src/lib/variables/props-resolver.ts` — adds the `variables` branch to `resolveSingleToken`.
-- `packages/shared/src/lib/automation/variable/variable.ts` — `Variable`, `VariableWithoutSensitiveData`, `VARIABLE_NAME_REGEX`.
-- `packages/shared/src/lib/automation/variable/dto/{upsert,read}-variable-request.ts` — request schemas.
+- `packages/core/shared/src/lib/automation/variable/variable.ts` — `Variable`, `VariableWithoutSensitiveData`, `VARIABLE_NAME_REGEX`.
+- `packages/core/shared/src/lib/automation/variable/dto/{upsert,read}-variable-request.ts` — request schemas.
 - `packages/web/src/features/variables/{api/variables.ts,hooks/variables-hooks.ts}` — frontend client + TanStack Query hooks.
 - `packages/web/src/app/routes/variables/index.tsx` — `/variables` list page.
 - `packages/web/src/app/variables/variable-dialog.tsx` — create / rotate dialog (reused by the page and the data-selector tab).

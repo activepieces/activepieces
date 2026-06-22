@@ -1,0 +1,68 @@
+// Repoint imports of core-utils / core-formula symbols from '@activepieces/shared'
+// to the core packages directly, across server/web/ee. Splits mixed imports;
+// the remaining (genuinely-shared) symbols stay on '@activepieces/shared'.
+
+import fs from 'node:fs'
+import path from 'node:path'
+
+const ROOTS = ['packages/server', 'packages/web', 'packages/ee', 'packages/core/shared']
+const CORE_UTILS = new Set(JSON.parse(fs.readFileSync('/tmp/core-utils-syms.json', 'utf8')))
+const CORE_FORMULA = new Set(JSON.parse(fs.readFileSync('/tmp/core-formula-syms.json', 'utf8')))
+
+const IMPORT_RE = /import\s+(type\s+)?\{([^}]+)\}\s+from\s+['"]@activepieces\/shared['"];?/g
+
+function baseName(token) {
+    return token.replace(/^type\s+/, '').trim().split(/\s+as\s+/)[0].trim()
+}
+function buildImport(typeMod, tokens, module) {
+    return `import ${typeMod ? 'type ' : ''}{ ${tokens.join(', ')} } from '${module}';`
+}
+
+function rewrite(content) {
+    let changed = false
+    const out = content.replace(IMPORT_RE, (match, typeMod, body) => {
+        const tokens = body.split(',').map((t) => t.trim()).filter(Boolean)
+        const utils = [], formula = [], rest = []
+        for (const tok of tokens) {
+            const n = baseName(tok)
+            if (CORE_UTILS.has(n)) utils.push(tok)
+            else if (CORE_FORMULA.has(n)) formula.push(tok)
+            else rest.push(tok)
+        }
+        if (utils.length === 0 && formula.length === 0) return match
+        changed = true
+        const lines = []
+        if (utils.length) lines.push(buildImport(typeMod, utils, '@activepieces/core-utils'))
+        if (formula.length) lines.push(buildImport(typeMod, formula, '@activepieces/core-formula'))
+        if (rest.length) lines.push(buildImport(typeMod, rest, '@activepieces/shared'))
+        return lines.join('\n')
+    })
+    return { out, changed }
+}
+
+function walk(dir) {
+    let r = []
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const f = path.join(dir, e.name)
+        if (e.isDirectory()) {
+            if (e.name === 'node_modules' || e.name === 'dist' || e.name === '.turbo') continue
+            r = r.concat(walk(f))
+        } else if (/\.tsx?$/.test(f)) r.push(f)
+    }
+    return r
+}
+
+let filesChanged = 0
+for (const root of ROOTS) {
+    if (!fs.existsSync(root)) continue
+    for (const file of walk(root)) {
+        const content = fs.readFileSync(file, 'utf8')
+        if (!content.includes('@activepieces/shared')) continue
+        const { out, changed } = rewrite(content)
+        if (changed) {
+            fs.writeFileSync(file, out)
+            filesChanged++
+        }
+    }
+}
+console.log(`files repointed to core packages: ${filesChanged}`)

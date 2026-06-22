@@ -1,23 +1,15 @@
-import { rm, writeFile } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
+import { groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
-import {
-    ExecutionMode,
-    getPieceNameFromAlias,
-    groupBy,
-    isEmpty,
-    isNil,
-    PackageType,
-    PiecePackage,
-    PieceType,
-    PrivatePiecePackage,
-    tryCatch,
-    WorkerToApiContract,
-} from '@activepieces/shared'
+import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, PrivatePiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import decompress from 'decompress'
 import writeFileAtomic from 'write-file-atomic'
 import { workerSettings } from '../../../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
+
+export const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
@@ -75,59 +67,108 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
             }, '[pieceInstaller] acquired lock and starting to install pieces')
 
-            await createRootPackageJson({
-                path: rootWorkspace,
-            })
+            const archivePieces = piecesToInstall.filter((piece): piece is PrivatePiecePackage => piece.packageType === PackageType.ARCHIVE)
+            const registryPieces = piecesToInstall.filter(piece => piece.packageType === PackageType.REGISTRY)
 
-            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
-
-            await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
-                rootWorkspace,
-                piecePackage: piece,
-            })))
+            await savePackageArchivesToDiskIfNotCached(rootWorkspace, archivePieces, apiClient)
 
             await wideEvent.timed({
-                name: 'bunInstall',
+                name: 'extractBundles',
                 fn: async () => {
-                    const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
-                        path: rootWorkspace,
-                        filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
-                    }))
-
-                    if (isNil(batchError)) {
-                        await markPiecesAsUsed(rootWorkspace, piecesToInstall)
-                        log.info({
-                            rootWorkspace,
-                            piecesCount: piecesToInstall.length,
-                        }, '[pieceInstaller] Installed registry pieces using bun')
-                        return
-                    }
-
-                    if (piecesToInstall.length === 1) {
-                        log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
-                        await rollbackInstallation(rootWorkspace, piecesToInstall)
-                        throw batchError
-                    }
-
-                    log.warn({
-                        rootWorkspace,
-                        pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-                        error: batchError,
-                    }, '[pieceInstaller] Batch install failed, retrying pieces individually')
-
-                    const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, piecesToInstall, log)
-
-                    if (failedPieces.length > 0) {
-                        const names = failedPieces.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
-                        throw new Error(`[pieceInstaller] Failed to install: ${names}`)
-                    }
-
-                    log.info({
-                        rootWorkspace,
-                        piecesCount: piecesToInstall.length,
-                    }, '[pieceInstaller] Installed registry pieces using bun (individual fallback)')
+                    await Promise.all(archivePieces.map(piece => extractPieceBundle({ rootWorkspace, piecePackage: piece, log })))
+                    await markPiecesAsUsed(rootWorkspace, archivePieces)
                 },
             })
+
+            if (!isEmpty(registryPieces)) {
+                await installRegistryPieces({ rootWorkspace, registryPieces, includeFilters, log })
+            }
+        },
+    })
+}
+
+async function extractPieceBundle({ rootWorkspace, piecePackage, log }: {
+    rootWorkspace: string
+    piecePackage: PrivatePiecePackage
+    log: ApLogger
+}): Promise<void> {
+    const folder = piecePath(rootWorkspace, piecePackage)
+    const archivePath = getPackageArchivePathForPiece(rootWorkspace, piecePackage)
+    await fileSystemUtils.threadSafeMkdir(folder)
+    // The published artifact is a single self-contained bundle. npm tarballs nest
+    // everything under `package/`; strip it so the bundle lands at the folder root.
+    await decompress(archivePath, folder, { strip: 1 })
+    await installExternalDependenciesIfAny({ folder, log })
+}
+
+// Third-party deps are external by default, so a bundle ships a package.json listing its
+// external closure — install it. A piece that opts into inlining (bundleDeps) ships no
+// dependencies and skips the install entirely. Workspace code is always in the bundle.
+async function installExternalDependenciesIfAny({ folder, log }: { folder: string, log: ApLogger }): Promise<void> {
+    const { data: raw } = await tryCatch(async () => readFile(join(folder, 'package.json'), 'utf8'))
+    if (isNil(raw)) {
+        return
+    }
+    const externalDeps = JSON.parse(raw).dependencies ?? {}
+    if (isEmpty(Object.keys(externalDeps))) {
+        return
+    }
+    await bunRunner(log).install({ path: folder, filtersPath: [] })
+}
+
+async function installRegistryPieces({ rootWorkspace, registryPieces, includeFilters, log }: {
+    rootWorkspace: string
+    registryPieces: PiecePackage[]
+    includeFilters: boolean
+    log: ApLogger
+}): Promise<void> {
+    await createRootPackageJson({ path: rootWorkspace })
+
+    await Promise.all(registryPieces.map(piece => createPiecePackageJson({
+        rootWorkspace,
+        piecePackage: piece,
+    })))
+
+    await wideEvent.timed({
+        name: 'bunInstall',
+        fn: async () => {
+            const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
+                path: rootWorkspace,
+                filtersPath: includeFilters ? registryPieces.map(relativePiecePath) : [],
+            }))
+
+            if (isNil(batchError)) {
+                await markPiecesAsUsed(rootWorkspace, registryPieces)
+                log.info({
+                    rootWorkspace,
+                    piecesCount: registryPieces.length,
+                }, '[pieceInstaller] Installed registry pieces using bun')
+                return
+            }
+
+            if (registryPieces.length === 1) {
+                log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
+                await rollbackInstallation(rootWorkspace, registryPieces)
+                throw batchError
+            }
+
+            log.warn({
+                rootWorkspace,
+                pieces: registryPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                error: batchError,
+            }, '[pieceInstaller] Batch install failed, retrying pieces individually')
+
+            const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, registryPieces, log)
+
+            if (failedPieces.length > 0) {
+                const names = failedPieces.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
+                throw new Error(`[pieceInstaller] Failed to install: ${names}`)
+            }
+
+            log.info({
+                rootWorkspace,
+                piecesCount: registryPieces.length,
+            }, '[pieceInstaller] Installed registry pieces using bun (individual fallback)')
         },
     })
 }
@@ -257,8 +298,10 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
     if (!readyExists) {
         return false
     }
-    const nodeModulesExist = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules'))
-    if (!nodeModulesExist) {
+    const entryMarker = piece.packageType === PackageType.ARCHIVE
+        ? join(pieceFolder, PIECE_BUNDLE_FILENAME)
+        : join(pieceFolder, 'node_modules')
+    if (!await fileSystemUtils.fileExists(entryMarker)) {
         await rm(join(pieceFolder, 'ready'), { force: true })
         return false
     }

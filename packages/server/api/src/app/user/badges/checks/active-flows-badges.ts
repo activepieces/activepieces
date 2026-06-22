@@ -1,4 +1,5 @@
-import { ApplicationEvent, ApplicationEventName, BADGES, FlowOperationType, FlowStatus, FlowUpdatedEvent, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApplicationEvent, ApplicationEventName, BADGES, FlowOperationType, FlowStatus, FlowUpdatedEvent } from '@activepieces/shared'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 

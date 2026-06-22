@@ -1,4 +1,3 @@
-import http from 'node:http'
 import { inspect } from 'node:util'
 import {
     createNotifyClient,
@@ -7,7 +6,6 @@ import {
     EngineContract,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
-    NetworkMode,
     WorkerContract,
     WorkerNotifyContract,
 } from '@activepieces/shared'
@@ -143,11 +141,6 @@ function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketO
         // unauthorized — looping just turns the engine into a zombie. Self-exit on
         // disconnect (above) handles teardown.
         reconnection: false,
-    }
-    // In STRICT mode ssrf-guard rebinds http.globalAgent to HttpProxyAgent; a
-    // plain http.Agent here keeps the loopback worker RPC handshake off the proxy.
-    if (process.env['AP_NETWORK_MODE'] === NetworkMode.STRICT) {
-        Object.assign(base, { agent: new http.Agent() })
     }
     return base
 }

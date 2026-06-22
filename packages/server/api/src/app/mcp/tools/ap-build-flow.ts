@@ -1,16 +1,5 @@
-import {
-    FlowActionType,
-    FlowCreatorType,
-    FlowOperationType,
-    flowStructureUtil,
-    FlowTriggerType,
-    McpToolContext,
-    McpToolDefinition,
-    Permission,
-    PieceTrigger,
-    StepLocationRelativeToParent,
-    UpdateActionRequest,
-} from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'

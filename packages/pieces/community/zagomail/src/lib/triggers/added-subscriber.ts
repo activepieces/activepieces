@@ -2,7 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { zagomailAuth } from '../auth';
 import { zagoMailApiService, } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';

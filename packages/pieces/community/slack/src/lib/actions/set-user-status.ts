@@ -1,7 +1,7 @@
 import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
@@ -31,7 +31,7 @@ export const setUserStatusAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      text: z.string().max(100),
+      text: z.string().check(z.maxLength(100)),
     });
 
     const client = new WebClient(requireUserToken(auth as SlackAuthValue));

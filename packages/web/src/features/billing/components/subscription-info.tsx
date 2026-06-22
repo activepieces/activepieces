@@ -1,4 +1,5 @@
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { PlatformBillingInformation } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { CalendarDays } from 'lucide-react';

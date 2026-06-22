@@ -4,7 +4,7 @@ import {
     Property,
     createAction,
   } from '@activepieces/pieces-framework';
-  import { ExecutionType, StopResponse } from '@activepieces/shared';
+  import { ExecutionType, StopResponse } from '@activepieces/pieces-framework';
   import { StatusCodes } from 'http-status-codes';
   
   enum ResponseType {

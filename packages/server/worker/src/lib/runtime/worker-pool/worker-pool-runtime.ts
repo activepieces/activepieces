@@ -1,5 +1,6 @@
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, isNil, RuntimeKind, tryCatch, WorkerToApiContract } from '@activepieces/shared'
+import { RuntimeKind, WorkerToApiContract } from '@activepieces/shared'
 import {
     CreateExecutionParams,
     DisposeParams,
@@ -14,9 +15,9 @@ import { localExecutionCache } from './cache/local-execution-cache'
 import { Sandbox } from './sandbox/types'
 import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './sandbox-manager'
 
-export function createWorkerPoolRuntime({ concurrency, proxyPort }: CreateWorkerPoolRuntimeParams): Runtime {
+export function createWorkerPoolRuntime({ concurrency }: CreateWorkerPoolRuntimeParams): Runtime {
     const managers: SandboxManager[] = Array.from({ length: concurrency }, (_, index) =>
-        createSandboxManager({ boxId: index + 1, proxyPort }),
+        createSandboxManager({ boxId: index + 1 }),
     )
 
     return {
@@ -95,7 +96,6 @@ function createWorkerPoolExecution({ manager, log, apiClient }: CreateWorkerPool
 
 type CreateWorkerPoolRuntimeParams = {
     concurrency: number
-    proxyPort: number | null
 }
 
 type CreateWorkerPoolExecutionParams = {

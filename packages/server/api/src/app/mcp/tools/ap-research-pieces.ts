@@ -1,11 +1,5 @@
-import {
-    isNil,
-    LocalesEnum,
-    McpToolDefinition,
-    PieceCategory,
-    ProjectScopedMcpServer,
-    SuggestionType,
-} from '@activepieces/shared'
+import { isNil, LocalesEnum } from '@activepieces/core-utils'
+import { McpToolDefinition, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'

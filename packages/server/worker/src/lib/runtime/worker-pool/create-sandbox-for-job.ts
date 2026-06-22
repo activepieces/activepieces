@@ -14,9 +14,8 @@ export function createSandboxForJob(params: {
     apiClient: WorkerToApiContract
     boxId: number
     reusable: boolean
-    proxyPort: number | null
 }): Sandbox {
-    const { log, apiClient, boxId, reusable, proxyPort } = params
+    const { log, apiClient, boxId, reusable } = params
     const settings = workerSettings.getSettings()
     const sandboxId = nanoid()
 
@@ -40,7 +39,7 @@ export function createSandboxForJob(params: {
         log,
         sandboxId,
         {
-            env: buildSandboxEnv({ settings, proxyPort }),
+            env: buildSandboxEnv({ settings }),
             memoryLimitMb,
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
@@ -76,25 +75,17 @@ function parseMemoryLimit(memoryLimitKb: string): number {
     return Math.floor(kb / 1024)
 }
 
-function buildSandboxEnv({ settings, proxyPort }: {
+function buildSandboxEnv({ settings }: {
     settings: WorkerSettings
-    proxyPort: number | null
 }): Record<string, string> {
-    // `proxyPort` reflects what the egress stack actually started at worker boot:
-    // non-null means the proxy is listening AND the iptables UID-owner REJECT chain is
-    // armed. `settings.NETWORK_MODE` is refreshed on every socket reconnect, so reading
-    // it here can drift away from the firewall the worker already armed. If the
-    // platform flips STRICT → UNRESTRICTED at reconnect, reading the live setting would
-    // drop AP_EGRESS_PROXY_URL from the sandbox env while iptables stays in place —
-    // user fetches then fall back to direct connect, hit the REJECT chain, and surface
-    // EHOSTUNREACH / "fetch failed". Keying the entire network env off proxyPort keeps
-    // the env var, the engine's ssrfGuard, and the kernel firewall on the same axis.
-    const networkMode = proxyPort === null ? NetworkMode.UNRESTRICTED : NetworkMode.STRICT
+    // STRICT enables the engine's in-process ssrfGuard (best-effort dns + socket
+    // guards only — there is no longer an egress proxy or kernel firewall). The hard
+    // egress boundary now lives in infrastructure (e.g. the Cloud VPC firewall).
+    const networkMode = settings.NETWORK_MODE
     return {
         ...baseEnv({ settings, networkMode }),
         ...ssrfEnv(settings),
-        ...propagatedEnv({ settings, networkMode }),
-        ...proxyEnv({ proxyPort }),
+        ...propagatedEnv(settings),
     }
 }
 
@@ -120,35 +111,14 @@ function ssrfEnv(settings: WorkerSettings): Record<string, string> {
     return env
 }
 
-function proxyEnv({ proxyPort }: { proxyPort: number | null }): Record<string, string> {
-    if (proxyPort === null) {
-        return {}
-    }
-    // Never export standard HTTP_PROXY / HTTPS_PROXY env vars: axios's built-in
-    // proxy-from-env path sends `GET https://…` absolute-URL requests to an HTTP
-    // proxy instead of issuing CONNECT, which proxy-chain rejects with 400
-    // "Only HTTP protocol is supported". AP_EGRESS_PROXY_URL is a private signal
-    // read by the engine to install http/https globalAgent + undici ProxyAgent.
-    return {
-        AP_EGRESS_PROXY_URL: `http://127.0.0.1:${proxyPort}`,
-    }
-}
-
-function propagatedEnv({ settings, networkMode }: { settings: WorkerSettings, networkMode: NetworkMode }): Record<string, string> {
+function propagatedEnv(settings: WorkerSettings): Record<string, string> {
     const env: Record<string, string> = {}
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
-        if (STRICT_MODE_BLOCKED_PROPAGATED_KEYS.has(key) && networkMode === NetworkMode.STRICT) {
-            continue
-        }
         if (process.env[key]) {
             env[key] = process.env[key]!
         }
     }
     return env
 }
-
-const STRICT_MODE_BLOCKED_PROPAGATED_KEYS = new Set([
-    'HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'NO_PROXY', 'no_proxy',
-])
 
 type WorkerSettings = ReturnType<typeof workerSettings.getSettings>

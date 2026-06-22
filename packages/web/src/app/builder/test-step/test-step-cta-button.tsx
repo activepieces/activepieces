@@ -1,10 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowTrigger,
   FlowTriggerType,
   Step,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Play } from 'lucide-react';

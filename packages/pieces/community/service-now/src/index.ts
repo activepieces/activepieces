@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { servicenowAuth } from './lib/common/props';
 import { createRecordAction } from './lib/actions/create-record';
 import { updateRecordAction } from './lib/actions/update-record';

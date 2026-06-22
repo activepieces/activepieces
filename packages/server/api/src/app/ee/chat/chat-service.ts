@@ -1,16 +1,5 @@
-import {
-    ActivepiecesError,
-    apId,
-    ChatConversation,
-    ChatConversationStatus,
-    ChatHistoryMessage,
-    CreateChatConversationRequest,
-    ErrorCode,
-    PersistedChatMessage,
-    SeekPage,
-    spreadIfDefined,
-    UpdateChatConversationRequest,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ChatConversation, ChatConversationStatus, ChatHistoryMessage, CreateChatConversationRequest, PersistedChatMessage, UpdateChatConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'

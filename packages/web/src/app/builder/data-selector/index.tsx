@@ -1,12 +1,11 @@
+import { LocalesEnum, isNil } from '@activepieces/core-utils';
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import {
   FlowAction,
   FlowActionType,
   FlowTrigger,
   FlowTriggerType,
-  LocalesEnum,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';

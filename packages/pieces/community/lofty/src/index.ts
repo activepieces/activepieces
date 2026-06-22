@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { loftyAuth } from './lib/common/auth';
 import { createLead } from './lib/actions/create-lead';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createTransaction } from './lib/actions/create-transaction';
 import { updateLead } from './lib/actions/update-lead';
 import { updateTransaction } from './lib/actions/update-transaction';

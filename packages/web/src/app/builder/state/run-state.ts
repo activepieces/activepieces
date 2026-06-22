@@ -1,3 +1,4 @@
+import { isNil, stringifyNullOrUndefined } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -6,11 +7,9 @@ import {
   flowOperations,
   flowStructureUtil,
   FlowVersion,
-  isNil,
   LoopStepOutput,
   SampleDataFileType,
   StepRunResponse,
-  stringifyNullOrUndefined,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { Socket } from 'socket.io-client';

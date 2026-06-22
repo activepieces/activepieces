@@ -3,7 +3,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { calltidycalapi } from './lib/common';
 import { tidycalbookingcancelled } from './lib/trigger/cancelled-booking';
 import { tidycalnewbooking } from './lib/trigger/new-booking';

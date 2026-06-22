@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { askQuestion } from './lib/actions/ask-question';
 import { addPage } from './lib/actions/add-page';
 import { addTag } from './lib/actions/add-tag';

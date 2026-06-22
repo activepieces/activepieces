@@ -1,4 +1,5 @@
-import { isNil, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'

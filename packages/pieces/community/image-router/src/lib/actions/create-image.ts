@@ -4,7 +4,7 @@ import { imageRouterAuth } from '../common/auth';
 import { imageRouterApiCall } from '../common/client';
 import { modelDropdown } from '../common/props';
 import { randomBytes } from 'node:crypto';
-import { kebabCase } from '@activepieces/shared';
+import { kebabCase } from '@activepieces/pieces-framework';
 
 export const createImage = createAction({
   audience: 'human',

@@ -2,7 +2,7 @@ import {
     createAction,
     Property,
   } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 import { invoiceninjaAuth } from '../..';
@@ -151,10 +151,10 @@ export const createRecurringInvoice = createAction({
   
     async run(context) {
       await propsValidation.validateZod(context.propsValue, {
-        nocycles: z.number().min(0).max(999).optional(),
-        auto_frequency: z.number().min(1).max(12).optional(),
-        due_date: z.string().datetime(),
-        last_date: z.string().datetime().optional(),
+        nocycles: z.optional(z.number().check(z.minimum(0), z.maximum(999))),
+        auto_frequency: z.optional(z.number().check(z.minimum(1), z.maximum(12))),
+        due_date: z.string().check(z.iso.datetime()),
+        last_date: z.optional(z.string().check(z.iso.datetime())),
       });
 
       const INapiToken = context.auth.props.access_token;

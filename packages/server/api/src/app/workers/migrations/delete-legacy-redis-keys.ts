@@ -1,5 +1,5 @@
 
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { redisHelper } from '../../database/redis'
 import { redisConnections } from '../../database/redis-connections'

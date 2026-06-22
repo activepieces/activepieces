@@ -1,11 +1,12 @@
+import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { ApEnvironment, ExecutionMode, isNil, WorkerToApiContract } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode, WorkerToApiContract } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { createSandboxForJob } from './create-sandbox-for-job'
 import { Sandbox } from './sandbox/types'
 
-export function createSandboxManager({ boxId, proxyPort }: { boxId: number, proxyPort: number | null }): SandboxManager {
+export function createSandboxManager({ boxId }: { boxId: number }): SandboxManager {
     let currentSandbox: Sandbox | null = null
 
     return {
@@ -19,7 +20,7 @@ export function createSandboxManager({ boxId, proxyPort }: { boxId: number, prox
                     params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
             }
-            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
+            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox() })
             return currentSandbox
         },
         async invalidate(log: ApLogger): Promise<void> {

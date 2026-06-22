@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsCommon } from '../common';
 import { createGraphClient } from '../common/graph';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { Chat } from '@microsoft/microsoft-graph-types';
 
 export const createChatAndSendMessageAction = createAction({

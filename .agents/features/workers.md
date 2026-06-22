@@ -12,7 +12,7 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 - `packages/server/worker/src/lib/config/configs.ts` — worker env vars incl. `AP_RUNTIME` (`WorkerSystemProp.RUNTIME`, default `WORKER_POOL`)
 - `packages/server/worker/src/lib/config/worker-settings.ts` — caches the `WorkerSettingsResponse` fetched on connect
 - `packages/server/utils/src/ap-version.ts` — `apVersionUtil.getCurrentRelease()`; both sides read the deploy-root `package.json` version
-- `packages/shared/src/lib/automation/workers/index.ts` — `WorkerProps`, `MachineInformation`, `WorkerSettingsResponse`, `WorkerToApiContract` contracts
+- `packages/core/shared/src/lib/automation/workers/index.ts` — `WorkerProps`, `MachineInformation`, `WorkerSettingsResponse`, `WorkerToApiContract` contracts
 
 ## Edition Availability
 - Community / Enterprise / Cloud: all editions run workers; topology differs (embedded `WORKER_AND_APP` for self-host single-container vs dedicated worker fleets on Cloud).

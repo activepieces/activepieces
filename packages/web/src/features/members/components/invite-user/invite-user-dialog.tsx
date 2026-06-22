@@ -1,8 +1,8 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   InvitationStatus,
   InvitationType,
-  Permission,
   PlatformRole,
   ProjectType,
   UserInvitationWithLink,

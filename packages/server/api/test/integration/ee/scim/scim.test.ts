@@ -1,4 +1,5 @@
-import { apId, PrincipalType, ProjectType } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

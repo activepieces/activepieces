@@ -1,5 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { makeClient } from './common';
 
 export const PredictLeadsAuth = PieceAuth.CustomAuth({

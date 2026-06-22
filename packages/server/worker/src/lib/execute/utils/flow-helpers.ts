@@ -1,5 +1,6 @@
+import { tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, tryCatch, WorkerToApiContract } from '@activepieces/shared'
+import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact } from '../../runtime/types'
 import { pieceCache, PieceNotFoundError } from '../../runtime/worker-pool/cache/pieces/piece-cache'
 

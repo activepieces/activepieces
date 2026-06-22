@@ -26,7 +26,9 @@
     "check-disk-space": "3.4.0",
     "dayjs": "1.11.9",
     "request-filtering-agent": "3.2.0",
-    "systeminformation": "5.31.6"
+    "systeminformation": "5.31.6",
+    "@activepieces/core-utils": "workspace:*",
+    "@activepieces/core-formula": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "24.11.0",

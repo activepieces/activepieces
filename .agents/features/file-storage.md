@@ -10,7 +10,7 @@ The File Storage Service is the central infrastructure for persisting binary fil
 - `packages/server/api/src/app/file/s3-helper.ts` — S3 client wrapper (upload, download, delete, signed URLs)
 - `packages/server/api/src/app/file/file-compressor.ts` — Zstd compress/decompress utilities
 - `packages/server/api/src/app/file/files-controller.ts` — primary file upload/download (`/v1/files`) and legacy `signedStepFileController` redirect for `/v1/step-files/signed`
-- `packages/shared/src/lib/core/file/index.ts` — `File`, `FileType`, `FileCompression`, `FileLocation`, `FileId`
+- `packages/core/shared/src/lib/core/file/index.ts` — `File`, `FileType`, `FileCompression`, `FileLocation`, `FileId`
 
 ## Edition Availability
 - **Community (CE)**: Fully available — used internally by the execution engine.

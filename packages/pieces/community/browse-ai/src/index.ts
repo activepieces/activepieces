@@ -6,7 +6,7 @@ import { listRobotsAction } from './lib/actions/list-robots';
 import { runRobotAction } from './lib/actions/run-robot';
 import { taskFinishedWithErrorTrigger } from './lib/triggers/task-finished-with-error';
 import { taskFinishedSuccessfullyTrigger } from './lib/triggers/task-finished-successfully';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const browseAi = createPiece({
   displayName: 'Browse AI',

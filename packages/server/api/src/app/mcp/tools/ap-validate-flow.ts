@@ -1,14 +1,5 @@
-import {
-    BranchExecutionType,
-    FlowActionType,
-    flowStructureUtil,
-    FlowTriggerType,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    ProjectScopedMcpServer,
-    Step,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { BranchExecutionType, FlowActionType, flowStructureUtil, FlowTriggerType, McpToolDefinition, ProjectScopedMcpServer, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'

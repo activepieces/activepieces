@@ -1,5 +1,6 @@
+import { tryCatch, unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
-import { PiecePackage, tryCatch, unique, WorkerToApiContract } from '@activepieces/shared'
+import { PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact } from '../../types'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from './cache-paths'
 import { codeBuilder } from './code/code-builder'

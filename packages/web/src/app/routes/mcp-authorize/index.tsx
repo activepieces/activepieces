@@ -1,4 +1,5 @@
-import { ProjectType, ProjectWithLimits, SeekPage } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';

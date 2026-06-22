@@ -5,7 +5,7 @@ import { createFinetune } from "./lib/actions/create-finetune";
 import { deleteFinetune } from "./lib/actions/delete-finetune";
 import { newLead } from "./lib/triggers/new-lead";
 import { SiteSpeakAuth } from "./lib/common/auth";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const sitespeakai = createPiece({
   displayName: "SiteSpeakAI",

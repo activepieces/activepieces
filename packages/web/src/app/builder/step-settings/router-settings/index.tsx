@@ -1,10 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowActionType,
   FlowOperationRequest,
   FlowOperationType,
   flowStructureUtil,
   FlowVersion,
-  isNil,
   RouterAction,
   RouterExecutionType,
 } from '@activepieces/shared';

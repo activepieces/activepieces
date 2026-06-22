@@ -1,16 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-    ActivepiecesError,
-    ErrorCode,
-    ExecutionType,
-    FlowActionType,
-    FlowRunStatus,
-    FlowTriggerType,
-    FlowVersionState,
-    StreamStepProgress,
-    RunEnvironment,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils';
+import { ExecutionType, FlowActionType, FlowRunStatus, FlowTriggerType, FlowVersionState, StreamStepProgress, RunEnvironment, WorkerJobType } from '@activepieces/shared';
 import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
 
 const mockGetVersion = vi.fn()
