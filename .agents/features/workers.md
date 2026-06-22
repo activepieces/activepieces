@@ -1,12 +1,13 @@
 # Workers Module
 
 ## Summary
-Workers are separate Node processes that poll the app for jobs and execute flows/triggers in sandboxes. They connect to the app over a Socket.IO channel: on connect a worker fetches its runtime settings (`WorkerSettingsResponse`) and the app registers an RPC server (`WorkerToApiContract`) for that socket. Jobs are pulled by the worker via `poll()` rather than pushed. A worker advertises liveness and config through `MachineInformation` (heartbeat), whose `workerProps` carry its identity including `version`. In the default Docker image both `activepieces-app` and `activepieces-worker` run under PM2 from `WORKDIR /usr/src/app`; `AP_CONTAINER_TYPE` (`APP` / `WORKER` / `WORKER_AND_APP`) selects which start.
+Workers are separate Node processes that poll the app for jobs and execute flows/triggers in sandboxes. The engine process inside each sandbox now reports run-progress, logs, step-progress, and flow-response events directly to the API over HTTP (as the ENGINE principal) rather than relaying them through the worker socket. They connect to the app over a Socket.IO channel: on connect a worker fetches its runtime settings (`WorkerSettingsResponse`) and the app registers an RPC server (`WorkerToApiContract`) for that socket. Jobs are pulled by the worker via `poll()` rather than pushed. A worker advertises liveness and config through `MachineInformation` (heartbeat), whose `workerProps` carry its identity including `version`. In the default Docker image both `activepieces-app` and `activepieces-worker` run under PM2 from `WORKDIR /usr/src/app`; `AP_CONTAINER_TYPE` (`APP` / `WORKER` / `WORKER_AND_APP`) selects which start.
 
 ## Key Files
 - `packages/server/api/src/app/workers/machine/machine-controller.ts` — Socket.IO listeners (`FETCH_WORKER_SETTINGS`, `DISCONNECT`); registers the RPC server per connection
 - `packages/server/api/src/app/workers/machine/machine-service.ts` — `onConnection` / `onDisconnect`, `buildSettingsResponse` (emits `APP_VERSION`), worker listing
 - `packages/server/api/src/app/workers/rpc/worker-rpc-service.ts` — `createHandlers()`: `poll` (with version gate), `completeJob`, `extendLock`, progress/log RPCs
+- `packages/server/api/src/app/workers/engine-controller.ts` — ENGINE-principal HTTP endpoints (`/run-progress`, `/run-logs`, `/flow-response`, `/step-progress`) that receive execution telemetry directly from the engine, mirroring the handlers in `worker-rpc-service.ts`
 - `packages/server/worker/src/lib/worker.ts` — worker lifecycle (`worker.start/stop`), `pollAndExecute` loop (with version gate), `getWorkerProps`
 - `packages/server/worker/src/lib/config/worker-settings.ts` — caches the `WorkerSettingsResponse` fetched on connect
 - `packages/server/utils/src/ap-version.ts` — `apVersionUtil.getCurrentRelease()`; both sides read the deploy-root `package.json` version
