@@ -8,7 +8,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { exceptionHandler } from '../../helper/exception-handler'
-import { getPiecePackageWithoutArchive } from '../../pieces/metadata/piece-metadata-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { AppConnectionSchema } from '../app-connection.entity'
@@ -87,13 +87,13 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 }
                 const refreshResult = engineResponse.response
                 if (refreshResult.skipped) {
-                    log.info({ pieceName: connection.pieceName }, '[custom-auth-refresh] piece has no refresh callback — skipping future refreshes')
-                    // If has_refresh_callback was already false (recovery attempt), mark
-                    // refresh_recovery_attempted to prevent retrying indefinitely.
+                    // Piece no longer has onRefreshToken (e.g. piece was updated) — clear
+                    // the token so the next needRefresh call re-checks piece metadata.
+                    log.info({ pieceName: connection.pieceName }, '[custom-auth-refresh] piece has no refresh callback — clearing stale token')
                     connection.value = {
                         ...connection.value,
-                        has_refresh_callback: false,
-                        refresh_recovery_attempted: connection.value.has_refresh_callback === false ? true : undefined,
+                        access_token: undefined,
+                        token_expires_at: undefined,
                     }
                 }
                 else {
@@ -101,11 +101,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     connection.value = {
                         ...connection.value,
                         access_token: refreshResult.access_token,
-                        // expires_in <= 0 means no expiry — leave token_expires_at nil so
-                        // isCustomAuthTokenStale returns false until the next re-save.
                         token_expires_at: refreshResult.expires_in > 0 ? dayjs().unix() + refreshResult.expires_in : undefined,
-                        has_refresh_callback: true,
-                        refresh_recovery_attempted: undefined,
                     }
                 }
                 break
@@ -145,7 +141,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                         return encryptedAppConnection
                     }
                     appConnection = await this.decryptConnection(encryptedAppConnection)
-                    if (!this.needRefresh(appConnection, log)) {
+                    if (!await this.needRefresh(appConnection, log)) {
                         return appConnection
                     }
                     const refreshedAppConnection = await this.refresh(appConnection, projectId, log)
@@ -182,7 +178,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         }
         return connection
     },
-    needRefresh(connection: AppConnection, log: FastifyBaseLogger): boolean {
+    async needRefresh(connection: AppConnection, log: FastifyBaseLogger): Promise<boolean> {
         if (connection.status === AppConnectionStatus.ERROR) {
             return false
         }
@@ -192,16 +188,18 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
             case AppConnectionType.OAUTH2:
                 return oauth2Util(log).isExpired(connection.value)
             case AppConnectionType.CUSTOM_AUTH: {
-                const stale = isCustomAuthTokenStale(connection.value)
-                log.debug({
-                    pieceName: connection.pieceName,
-                    externalId: connection.externalId,
-                    hasRefreshCallback: connection.value.has_refresh_callback,
-                    hasAccessToken: !!connection.value.access_token,
-                    tokenExpiresAt: connection.value.token_expires_at,
-                    stale,
-                }, '[custom-auth-refresh] needRefresh check')
-                return stale
+                // Once a token exists, check expiry without a metadata lookup.
+                if (!isNil(connection.value.access_token)) {
+                    return isCustomAuthTokenStale(connection.value)
+                }
+                // No token yet — only dispatch a refresh job if the piece implements onRefreshToken.
+                const pieceMetadata = await pieceMetadataService(log).getOrThrow({
+                    name: connection.pieceName,
+                    version: connection.pieceVersion,
+                    platformId: connection.platformId,
+                })
+                const auth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth[0] : pieceMetadata.auth
+                return !isNil(auth?.refresh)
             }
             default:
                 return false
@@ -212,19 +210,9 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
 
-export function isCustomAuthTokenStale(value: { has_refresh_callback?: boolean, access_token?: string, token_expires_at?: number, refresh_recovery_attempted?: boolean }): boolean {
-    if (value.has_refresh_callback === false) {
-        // Only trust this flag if we have an access_token (piece worked before) or
-        // recovery was already attempted. If neither is true, the flag may have been
-        // written incorrectly — allow one recovery attempt.
-        return isNil(value.access_token) && !value.refresh_recovery_attempted
-    }
-    if (isNil(value.access_token)) {
-        return true
-    }
-    if (isNil(value.token_expires_at)) {
-        return false
-    }
+export function isCustomAuthTokenStale(value: { access_token?: string, token_expires_at?: number }): boolean {
+    if (isNil(value.access_token)) return true
+    if (isNil(value.token_expires_at)) return false
     return dayjs().unix() + TOKEN_REFRESH_BUFFER_SECONDS >= value.token_expires_at
 }
 

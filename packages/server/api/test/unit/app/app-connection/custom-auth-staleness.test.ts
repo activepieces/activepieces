@@ -6,32 +6,17 @@ const BUFFER_SECONDS = 15 * 60
 const NOW = dayjs().unix()
 
 describe('isCustomAuthTokenStale', () => {
-    describe('when has_refresh_callback is false', () => {
-        it('returns false when access_token is present (refresh is confirmed to skip)', () => {
-            expect(isCustomAuthTokenStale({ has_refresh_callback: false, access_token: 'tok' })).toBe(false)
-            expect(isCustomAuthTokenStale({ has_refresh_callback: false, access_token: 'tok', token_expires_at: NOW - 1 })).toBe(false)
-        })
-
-        it('returns false when recovery was already attempted', () => {
-            expect(isCustomAuthTokenStale({ has_refresh_callback: false, refresh_recovery_attempted: true })).toBe(false)
-        })
-
-        it('returns true when no access_token and no recovery yet (allows one recovery attempt)', () => {
-            expect(isCustomAuthTokenStale({ has_refresh_callback: false })).toBe(true)
-            expect(isCustomAuthTokenStale({ has_refresh_callback: false, access_token: undefined })).toBe(true)
+    describe('when access_token is missing', () => {
+        it('returns true (piece never refreshed yet)', () => {
+            expect(isCustomAuthTokenStale({})).toBe(true)
+            expect(isCustomAuthTokenStale({ access_token: undefined })).toBe(true)
         })
     })
 
-    describe('when has_refresh_callback is true or undefined (first call)', () => {
-        it('returns true when access_token is missing (first call, optimistic)', () => {
-            expect(isCustomAuthTokenStale({ has_refresh_callback: undefined })).toBe(true)
-            expect(isCustomAuthTokenStale({ has_refresh_callback: true, access_token: undefined })).toBe(true)
-            expect(isCustomAuthTokenStale({})).toBe(true)
-        })
-
-        it('returns false when access_token is present but token_expires_at is missing (no expiry)', () => {
+    describe('when access_token is present', () => {
+        it('returns false when token_expires_at is missing (no expiry)', () => {
+            expect(isCustomAuthTokenStale({ access_token: 'tok' })).toBe(false)
             expect(isCustomAuthTokenStale({ access_token: 'tok', token_expires_at: undefined })).toBe(false)
-            expect(isCustomAuthTokenStale({ has_refresh_callback: true, access_token: 'tok' })).toBe(false)
         })
 
         it('returns true when token expires within the 15-minute buffer', () => {
