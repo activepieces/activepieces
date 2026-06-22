@@ -1,5 +1,5 @@
+import { isNil } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../../database/redis-connections'
 import { getWorkerGroupQueueName, QueueName } from '../../../workers/job'

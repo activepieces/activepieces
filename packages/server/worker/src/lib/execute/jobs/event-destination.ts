@@ -1,10 +1,6 @@
+import { tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import {
-    EngineResponseStatus,
-    EventDestinationJobData,
-    tryCatch,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { EngineResponseStatus, EventDestinationJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 

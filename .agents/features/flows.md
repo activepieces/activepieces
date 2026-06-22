@@ -9,12 +9,12 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/server/api/src/app/flows/folder/` — folder CRUD
 - `packages/server/api/src/app/flows/step-run/` — sample data capture and test-step execution
 - `packages/server/api/src/app/flows/flow/human-input/` — form and chat public endpoints
-- `packages/shared/src/lib/automation/flows/flow.ts` — `Flow`, `PopulatedFlow` types
-- `packages/shared/src/lib/automation/flows/flow-version.ts` — `FlowVersion`, `FlowVersionState`
-- `packages/shared/src/lib/automation/flows/operations/` — `FlowOperationRequest` union and all 26 op types
-- `packages/shared/src/lib/automation/flows/actions/action.ts` — `FlowAction` discriminated union
-- `packages/shared/src/lib/automation/flows/triggers/trigger.ts` — `FlowTrigger` discriminated union
-- `packages/shared/src/lib/automation/flows/util/expression-rewriter.ts` — AST-based rewriter that inserts `['output']` into step-reference expressions during schema migration
+- `packages/core/shared/src/lib/automation/flows/flow.ts` — `Flow`, `PopulatedFlow` types
+- `packages/core/shared/src/lib/automation/flows/flow-version.ts` — `FlowVersion`, `FlowVersionState`
+- `packages/core/shared/src/lib/automation/flows/operations/` — `FlowOperationRequest` union and all 26 op types
+- `packages/core/shared/src/lib/automation/flows/actions/action.ts` — `FlowAction` discriminated union
+- `packages/core/shared/src/lib/automation/flows/triggers/trigger.ts` — `FlowTrigger` discriminated union
+- `packages/core/shared/src/lib/automation/flows/util/expression-rewriter.ts` — AST-based rewriter that inserts `['output']` into step-reference expressions during schema migration
 - `packages/server/api/src/app/flows/flow-version/migrations/migrate-v21-step-output-nesting.ts` — schema v21→v22 migration that wraps step references in the new output/error shape
 - `packages/web/src/features/flows/api/flows-api.tsx` — `flowsApi` (list, create, update, get, versions, delete, count)
 - `packages/web/src/features/flows/hooks/flow-hooks.tsx` — `flowHooks` (status change, export, import, test, version management)

@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { publicationId } from '../common/props';
 import { beehiivApiCall } from '../common/client';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 type SubscriptionListResponse = {
 	data: Record<string, unknown>[];

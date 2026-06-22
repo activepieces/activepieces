@@ -6,7 +6,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { generateVideoSchema } from '../schemas';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const generateVideo = createAction({
   auth: vadooAiAuth,

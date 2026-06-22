@@ -8,7 +8,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getEmployeeSystemId } from './lib/actions/get-employee-system-id';
 import { getEmployeeInfo } from './lib/actions/get-employee-info';
 import { getEmployeeOrganizationalChart } from './lib/actions/get-employee-organizational-chart';

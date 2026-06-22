@@ -5,7 +5,7 @@ The Analytics module provides platform-level reporting on automation usage: dail
 
 ## Key Files
 - `packages/server/api/src/app/analytics/` — backend module (controller, two services, entity)
-- `packages/shared/src/lib/management/analytics/index.ts` — all shared Zod schemas and enums (`AnalyticsTimePeriod`, `PlatformAnalyticsReport`, `ProjectLeaderboardItem`, `UserLeaderboardItem`, etc.)
+- `packages/core/shared/src/lib/management/analytics/index.ts` — all shared Zod schemas and enums (`AnalyticsTimePeriod`, `PlatformAnalyticsReport`, `ProjectLeaderboardItem`, `UserLeaderboardItem`, etc.)
 - `packages/web/src/features/platform-admin/api/analytics-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/analytics-hooks.ts` — TanStack Query hooks (`platformAnalyticsHooks`)
 - `packages/web/src/app/routes/impact/index.tsx` — Impact page root

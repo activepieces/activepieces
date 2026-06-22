@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { saveContent } from '../api';
 import { cmsAuth } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveVideoAction = createAction({
@@ -28,7 +28,7 @@ export const saveVideoAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      video: z.string().url(),
+      video: z.string().check(z.url()),
     });
 
     const slug = context.propsValue.slug;

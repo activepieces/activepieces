@@ -1,7 +1,8 @@
 import fs from 'fs/promises'
 import path from 'path'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { ActivepiecesError, EngineGenericError, ErrorCode, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, PieceNotFoundError, trimVersionFromAlias } from '@activepieces/shared'
+import { EngineGenericError, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, PieceNotFoundError, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
 
 export const pieceLoader = {
@@ -180,11 +181,12 @@ async function findDistPackageJsonFiles(dirPath: string): Promise<string[]> {
 
 
 async function traverseAllParentFoldersToFindPiece(packageName: string): Promise<string | null> {
+    const trimmedName = trimVersionFromAlias(packageName)
     const customPaths = (process.env.AP_CUSTOM_PIECES_PATHS ?? '').split(':').filter(Boolean)
     for (const customPath of customPaths) {
-        const piecePath = path.resolve(customPath, 'pieces', packageName, 'node_modules', trimVersionFromAlias(packageName))
-        if (await utils.folderExists(piecePath)) {
-            return path.join(piecePath, 'src', 'index.js')
+        const entry = await resolveInstalledPieceEntry(path.resolve(customPath, 'pieces', packageName), trimmedName)
+        if (!isNil(entry)) {
+            return entry
         }
     }
 
@@ -192,10 +194,9 @@ async function traverseAllParentFoldersToFindPiece(packageName: string): Promise
     let currentDir = __dirname
     const maxIterations = currentDir.split(path.sep).length
     for (let i = 0; i < maxIterations; i++) {
-        const piecePath = path.resolve(currentDir, 'pieces', packageName, 'node_modules', trimVersionFromAlias(packageName))
-
-        if (await utils.folderExists(piecePath)) {
-            return path.join(piecePath, 'src', 'index.js')
+        const entry = await resolveInstalledPieceEntry(path.resolve(currentDir, 'pieces', packageName), trimmedName)
+        if (!isNil(entry)) {
+            return entry
         }
 
         const parentDir = path.dirname(currentDir)
@@ -206,6 +207,38 @@ async function traverseAllParentFoldersToFindPiece(packageName: string): Promise
     }
     return null
 }
+
+// Bundled pieces are a single self-contained file at the install-folder root.
+// Registry/dev installs keep the package nested in node_modules; honor its main entry.
+async function resolveInstalledPieceEntry(pieceFolder: string, trimmedName: string): Promise<string | null> {
+    const bundlePath = path.join(pieceFolder, PIECE_BUNDLE_FILENAME)
+    if (await utils.folderExists(bundlePath)) {
+        return bundlePath
+    }
+    const packageDir = path.join(pieceFolder, 'node_modules', trimmedName)
+    if (await utils.folderExists(packageDir)) {
+        return resolveEntryFromPackageDir(packageDir)
+    }
+    return null
+}
+
+async function resolveEntryFromPackageDir(packageDir: string): Promise<string> {
+    const nestedBundle = path.join(packageDir, PIECE_BUNDLE_FILENAME)
+    if (await utils.folderExists(nestedBundle)) {
+        return nestedBundle
+    }
+    const { data: mainEntry } = await utils.tryCatchAndThrowOnEngineError(async () => {
+        const packageJson = JSON.parse(await fs.readFile(path.join(packageDir, 'package.json'), 'utf-8'))
+        if (isNil(packageJson.main)) {
+            return null
+        }
+        const resolved = path.join(packageDir, packageJson.main)
+        return await utils.folderExists(resolved) ? resolved : null
+    })
+    return mainEntry ?? path.join(packageDir, 'src', 'index.js')
+}
+
+const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
 
 type GetPiecePathParams = {
     packageName: string

@@ -1,5 +1,6 @@
+import { parseToJsonIfPossible } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { MachineInformation, parseToJsonIfPossible } from '@activepieces/shared'
+import { MachineInformation } from '@activepieces/shared'
 import { redisConnections } from '../../database/redis-connections'
 
 export type WorkerMachine = {

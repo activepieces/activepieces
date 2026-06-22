@@ -9,7 +9,7 @@ import {
 import { pipedriveAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedriveDealV2 {

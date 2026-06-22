@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/shared'
+import { AIProviderName } from '@activepieces/core-utils';
 import { ModelMessage } from 'ai'
 
 export type ChatEvalAssertion =

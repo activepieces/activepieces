@@ -1,10 +1,10 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
   ConnectionOption,
   CreateChatConversationRequest,
-  SeekPage,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
 

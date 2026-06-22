@@ -1,5 +1,5 @@
+import { isNil } from '@activepieces/core-utils';
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
 
 import { StepPropertySnapshot } from './explanation-prompt';
 

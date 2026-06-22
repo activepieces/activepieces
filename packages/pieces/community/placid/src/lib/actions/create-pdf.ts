@@ -8,7 +8,7 @@ import {
 	passthroughProperty,
 	templateLayersProperty,
 } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { PlacidCreatePdfRequest } from '../common';
 
 export const createPdf = createAction({

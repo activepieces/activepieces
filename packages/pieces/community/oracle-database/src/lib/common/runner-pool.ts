@@ -6,7 +6,7 @@ import type {
   RunnerRequestPayload,
   RunnerResponse,
 } from './runner-protocol';
-import { apId } from '@activepieces/shared';
+import { apId } from '@activepieces/pieces-framework';
 
 class OracleRunnerError extends Error {
   public readonly logs?: string[];

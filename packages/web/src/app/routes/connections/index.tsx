@@ -1,8 +1,8 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
-  Permission,
   PlatformRole,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';

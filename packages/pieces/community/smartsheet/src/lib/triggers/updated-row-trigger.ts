@@ -8,7 +8,7 @@ import {
 	verifyWebhookSignature,
 	unsubscribeWebhook,
 } from '../common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'smartsheet_updated_row_trigger';
 

@@ -1,4 +1,5 @@
-import { FlowAction, FlowRunStatus, tryParseFriendlyPieceError } from '@activepieces/shared'
+import { tryParseFriendlyPieceError } from '@activepieces/core-utils'
+import { FlowAction, FlowRunStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { pieceExecutor } from '../../src/lib/handler/piece-executor'

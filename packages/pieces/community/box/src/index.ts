@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { common } from './lib/common';
 import { newComment } from './lib/triggers/new-comment';
 import { newFile } from './lib/triggers/new-file';

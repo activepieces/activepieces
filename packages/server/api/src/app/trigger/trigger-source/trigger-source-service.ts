@@ -1,4 +1,5 @@
-import { ActivepiecesError, apId, ErrorCode, FlowId, FlowVersion, isNil, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowId, isNil } from '@activepieces/core-utils'
+import { FlowVersion, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'

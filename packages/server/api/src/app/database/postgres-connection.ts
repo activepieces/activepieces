@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { isNil, spreadIfDefined } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'

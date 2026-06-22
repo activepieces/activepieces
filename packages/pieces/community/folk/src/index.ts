@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { folkAuth } from './lib/common/auth';
 import { companyAdded } from './lib/triggers/company-added';
 import { companyRemoved } from './lib/triggers/company-removed';

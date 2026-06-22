@@ -3,8 +3,7 @@ import { helpScoutApiRequest } from '../common/api';
 import { helpScoutAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { customerIdDropdown, customerProperties } from '../common/props';
-import { isNil } from '@activepieces/shared';
-import { HttpStatusCode } from 'axios';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const updateCustomerProperties = createAction({
   auth: helpScoutAuth,
@@ -41,7 +40,7 @@ export const updateCustomerProperties = createAction({
     });
 
     return {
-      success: response.status === HttpStatusCode.NoContent ? true : false,
+      success: response.status === 204 ? true : false,
     };
   },
 });

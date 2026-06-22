@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { chatnodeAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { askChatbotAction } from './lib/actions/ask-chatbot';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/constants';

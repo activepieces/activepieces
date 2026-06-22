@@ -1,7 +1,7 @@
 import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { emailOctopusProps } from '../common/props';
 import { emailOctopusAuth } from '../common/auth';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 interface EmailOctopusEvent {
   type: string;

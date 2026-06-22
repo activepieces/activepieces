@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { chartlyAuth } from "./lib/common/auth";
 import { createChartAction } from "./lib/actions/create-chart";
 import { getChartAction } from "./lib/actions/get-chart";

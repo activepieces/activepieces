@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export enum PastePrivacy {
   PUBLIC = '0',
@@ -51,13 +51,16 @@ export class PastebinClient {
     Object.keys(body)
       .filter((k) => body[k] !== undefined && body[k] !== null)
       .forEach((k) => req.append('api_' + k, body[k]));
-    const res = await axios.post('https://pastebin.com/api/' + script, req, {
-      method: 'POST',
+    const res = await httpClient.sendRequest<string>({
+      method: HttpMethod.POST,
+      url: 'https://pastebin.com/api/' + script,
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
       },
+      body: req,
+      responseType: 'text',
     });
-    return res.data;
+    return res.body;
   }
 
   async login(username: string, password: string): Promise<string> {
@@ -77,7 +80,13 @@ export class PastebinClient {
         paste_key: id,
       });
     } else {
-      return (await axios.get('https://pastebin.com/raw/' + id)).data;
+      return (
+        await httpClient.sendRequest<string>({
+          method: HttpMethod.GET,
+          url: 'https://pastebin.com/raw/' + id,
+          responseType: 'text',
+        })
+      ).body;
     }
   }
 }

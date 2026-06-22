@@ -6,7 +6,7 @@ import {
   httpClient,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 import { baseUrlv1 } from '../common/common';
 
@@ -110,8 +110,8 @@ export const promptCompletion = createAction({
   async run({ auth, propsValue }) {
     // Validate URLs length and displayTranscripts requirements
     await propsValidation.validateZod(propsValue, {
-      fileUrls: z.array(z.string()).max(4, 'Maximum 4 file URLs allowed'),
-      youtubeUrls: z.array(z.string()).max(4, 'Maximum 4 YouTube URLs allowed'),
+      fileUrls: z.array(z.string()).check(z.maxLength(4, 'Maximum 4 file URLs allowed')),
+      youtubeUrls: z.array(z.string()).check(z.maxLength(4, 'Maximum 4 YouTube URLs allowed')),
     });
     
     // Validate that displayTranscripts is only true when fileUrls or youtubeUrls are provided

@@ -1,21 +1,25 @@
 # Workers Module
 
 ## Summary
-Workers are separate Node processes that poll the app for jobs and execute flows/triggers in sandboxes. They connect to the app over a Socket.IO channel: on connect a worker fetches its runtime settings (`WorkerSettingsResponse`) and the app registers an RPC server (`WorkerToApiContract`) for that socket. Jobs are pulled by the worker via `poll()` rather than pushed. A worker advertises liveness and config through `MachineInformation` (heartbeat), whose `workerProps` carry its identity including `version`. In the default Docker image both `activepieces-app` and `activepieces-worker` run under PM2 from `WORKDIR /usr/src/app`; `AP_CONTAINER_TYPE` (`APP` / `WORKER` / `WORKER_AND_APP`) selects which start.
+Workers are separate Node processes that poll the app for jobs and execute flows/triggers. *Where* each job's engine step runs is behind a pluggable **Runtime** seam (`AP_RUNTIME`, default `LOCAL_POOL` — the original long-lived worker + sandbox model; `GCP_CLOUD_FUNCTION` is a stub). They connect to the app over a Socket.IO channel: on connect a worker fetches its runtime settings (`WorkerSettingsResponse`) and the app registers an RPC server (`WorkerToApiContract`) for that socket. Jobs are pulled by the worker via `poll()` rather than pushed. A worker advertises liveness and config through `MachineInformation` (heartbeat), whose `workerProps` carry its identity including `version`. In the default Docker image both `activepieces-app` and `activepieces-worker` run under PM2 from `WORKDIR /usr/src/app`; `AP_CONTAINER_TYPE` (`APP` / `WORKER` / `WORKER_AND_APP`) selects which start.
 
 ## Key Files
 - `packages/server/api/src/app/workers/machine/machine-controller.ts` — Socket.IO listeners (`FETCH_WORKER_SETTINGS`, `DISCONNECT`); registers the RPC server per connection
 - `packages/server/api/src/app/workers/machine/machine-service.ts` — `onConnection` / `onDisconnect`, `buildSettingsResponse` (emits `APP_VERSION`), worker listing
 - `packages/server/api/src/app/workers/rpc/worker-rpc-service.ts` — `createHandlers()`: `poll` (with version gate), `completeJob`, `extendLock`, progress/log RPCs
-- `packages/server/worker/src/lib/worker.ts` — worker lifecycle (`worker.start/stop`), `pollAndExecute` loop (with version gate), `getWorkerProps`
+- `packages/server/worker/src/lib/worker.ts` — worker lifecycle (`worker.start/stop`), `pollAndExecute` loop (with version gate), `getWorkerProps`; holds the selected `Runtime` and drives the per-job lifecycle through it
+- `packages/server/worker/src/lib/runtime/` — the pluggable Runtime seam: `types.ts` (the `Runtime` / `RuntimeExecution` contract + `CodeArtifact`), `runtime-factory.ts` (picks the impl from `AP_RUNTIME`), `local-pool/` (original sandbox model + the on-disk `cache/`), `serverless/` (GCP Cloud Function stub)
+- `packages/server/worker/src/lib/config/configs.ts` — worker env vars incl. `AP_RUNTIME` (`WorkerSystemProp.RUNTIME`, default `LOCAL_POOL`)
 - `packages/server/worker/src/lib/config/worker-settings.ts` — caches the `WorkerSettingsResponse` fetched on connect
 - `packages/server/utils/src/ap-version.ts` — `apVersionUtil.getCurrentRelease()`; both sides read the deploy-root `package.json` version
-- `packages/shared/src/lib/automation/workers/index.ts` — `WorkerProps`, `MachineInformation`, `WorkerSettingsResponse`, `WorkerToApiContract` contracts
+- `packages/core/shared/src/lib/automation/workers/index.ts` — `WorkerProps`, `MachineInformation`, `WorkerSettingsResponse`, `WorkerToApiContract` contracts
 
 ## Edition Availability
 - Community / Enterprise / Cloud: all editions run workers; topology differs (embedded `WORKER_AND_APP` for self-host single-container vs dedicated worker fleets on Cloud).
 
 ## Domain Terms
+- **`Runtime` / `RuntimeKind`** — the seam deciding *where* a job's engine step executes. `RuntimeKind` is `LOCAL_POOL` (default) or `GCP_CLOUD_FUNCTION` (NOT_IMPLEMENTED stub), selected via `AP_RUNTIME` and resolved by `runtime-factory`. `Runtime` exposes `createExecution` / `getActiveExecutors` / `shutdown`.
+- **`RuntimeExecution`** — the per-job lifecycle the worker drives: **`init → run → dispose`**. `init(params)` reserves the execution slot **and** makes the flow's pieces/code available where `run` reads them — in local-pool it acquires the sandbox lane and installs host-side into the bind-mounted cache, **atomically**: if the install fails it releases the lane before throwing, so callers only ever guard `run`. `run` executes one engine operation (local-pool spawns the sandbox child process, which mounts the now-populated cache). `dispose({ invalidate })` releases the lane for reuse (`false`) or discards it (`true`). Resolving the flow's `PiecePackage[]`/code steps (and the missing-piece→`disableFlow` skip) is worker-side via `resolveFlowArtifacts`, called *before* the execution is created so no slot is held during resolution.
 - **`WorkerProps`** — typed worker identity sent in every heartbeat (`EXECUTION_MODE`, `WORKER_CONCURRENCY`, `SANDBOX_MEMORY_LIMIT`, `REUSE_SANDBOX`, `version`). Previously a free-form `Record<string,string>`.
 - **`WorkerSettingsResponse`** — runtime config the app hands a worker on connect; now includes `APP_VERSION` (the app's release).
 - **`connectionGeneration`** — worker-side counter bumped on every disconnect; in-flight poll loops exit when their captured generation goes stale, so a reconnect starts fresh loops.

@@ -1,8 +1,5 @@
-import {
-    assertNotNullOrUndefined,
-    PrincipalType,
-    ProjectWithLimitsWithPlatform,
-} from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { PrincipalType, ProjectWithLimitsWithPlatform } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'

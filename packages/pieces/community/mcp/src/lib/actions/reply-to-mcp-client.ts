@@ -4,7 +4,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { StopResponse } from '@activepieces/shared';
+import { StopResponse } from '@activepieces/pieces-framework';
 import { StatusCodes } from 'http-status-codes';
 
 

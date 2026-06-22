@@ -5,7 +5,7 @@ import { Message, FileAttachment } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 import { mailFolderIdDropdown } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 async function enrichAttachments(
 	client: Client,

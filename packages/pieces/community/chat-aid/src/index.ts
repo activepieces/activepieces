@@ -3,7 +3,7 @@ import { ChatAidAuth } from './lib/common/auth';
 import { addCustomSources } from './lib/actions/add-custom-sources';
 import { askQuestions } from './lib/actions/ask-questions';
 import { getCustomSourceById } from './lib/actions/get-custom-source-by-id';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
 

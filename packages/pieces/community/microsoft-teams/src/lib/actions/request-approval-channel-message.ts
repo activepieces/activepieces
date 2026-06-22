@@ -2,10 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../auth';
 import { microsoftTeamsCommon } from '../common';
 import { createGraphClient } from '../common/graph';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 
 export const requestApprovalInChannel = createAction({

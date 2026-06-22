@@ -4,7 +4,7 @@ import { airtopAuth } from '../common/auth';
 import { airtopApiCall, extractApiData, AirtopSession } from '../common/client';
 import { fileId } from '../common/props';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const uploadFileToSessionAction = createAction({
 	auth: airtopAuth,
@@ -81,7 +81,7 @@ export const uploadFileToSessionAction = createAction({
 
 		if (sessionIds && sessionIds.length > 0) {
 			await propsValidation.validateZod({ sessionIds }, {
-				sessionIds: z.array(z.string().min(1, 'Session ID cannot be empty')).min(1, 'At least one session ID is required when providing session IDs'),
+				sessionIds: z.array(z.string().check(z.minLength(1, 'Session ID cannot be empty'))).check(z.minLength(1, 'At least one session ID is required when providing session IDs')),
 			});
 		}
 

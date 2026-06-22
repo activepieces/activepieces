@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId } from '../common/props';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const createNewBrowserWindowAction = createAction({
 	name: 'create-browser-window',
@@ -73,9 +73,9 @@ export const createNewBrowserWindowAction = createAction({
 		} = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			url: z.string().url().optional(),
-			customResolution: z.string().regex(/^\d+x\d+$/, 'Must be in format "widthxheight" (e.g., "1920x1080")').optional(),
-			waitUntilTimeoutSeconds: z.number().positive().optional(),
+			url: z.optional(z.string().check(z.url())),
+			customResolution: z.optional(z.string().check(z.regex(/^\d+x\d+$/, 'Must be in format "widthxheight" (e.g., "1920x1080")'))),
+			waitUntilTimeoutSeconds: z.optional(z.number().check(z.positive())),
 		});
 
 		const body: Record<string, any> = {};

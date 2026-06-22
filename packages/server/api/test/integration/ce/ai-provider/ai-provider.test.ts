@@ -1,4 +1,5 @@
-import { AIProviderName, apId, PrincipalType } from '@activepieces/shared'
+import { AIProviderName, apId } from '@activepieces/core-utils'
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
@@ -163,7 +164,7 @@ describe('AI Providers API', () => {
                     apiKeyHeader: 'Authorization',
                     models: [],
                     defaultHeaders: { 'X-Test': 'test' },
-                }
+                },
             })
 
             const response = await ctx.get('/v1/ai-providers')

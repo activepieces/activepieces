@@ -1,6 +1,6 @@
 import http from 'node:http'
 import https from 'node:https'
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils';
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
 import axiosRetry from 'axios-retry'
 import { RequestFilteringHttpAgent, RequestFilteringHttpsAgent } from 'request-filtering-agent'

@@ -1,7 +1,7 @@
 import { googleSheetsAuth } from '../common/common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
-import { isNil } from '@activepieces/shared';
+import { sheets as googleSheets } from '@googleapis/sheets';
+import { isNil } from '@activepieces/pieces-framework';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { createGoogleClient } from '../common/common';
 
@@ -22,7 +22,7 @@ export const newWorksheetTrigger = createTrigger({
 	async onEnable(context) {
 		const ids: number[] = [];
 		const authClient = await createGoogleClient(context.auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId as string,
 		});
@@ -42,7 +42,7 @@ export const newWorksheetTrigger = createTrigger({
 	async test(context) {
 		const worksheets = [];
 		const authClient = await createGoogleClient(context.auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId as string,
 		});
@@ -60,7 +60,7 @@ export const newWorksheetTrigger = createTrigger({
 
 		const authClient = await createGoogleClient(context.auth);
 
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId as string,

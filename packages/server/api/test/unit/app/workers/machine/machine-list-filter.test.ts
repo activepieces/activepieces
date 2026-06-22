@@ -1,6 +1,6 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { MachineInformation, WorkerMachineStatus, WorkerMachineType } from '@activepieces/shared'
-import { workerMachineCache, WorkerMachine } from '../../../../../src/app/workers/machine/machine-cache'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { WorkerMachine, workerMachineCache } from '../../../../../src/app/workers/machine/machine-cache'
 import { machineService } from '../../../../../src/app/workers/machine/machine-service'
 
 let inMemoryStore: Map<string, WorkerMachine>

@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newActivity } from './lib/trigger/new-activity';
 import { newDeal } from './lib/trigger/new-deal';
 import { newPerson } from './lib/trigger/new-person';

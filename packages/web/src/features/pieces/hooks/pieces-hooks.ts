@@ -1,3 +1,4 @@
+import { LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -9,7 +10,6 @@ import {
   ApEdition,
   FlowActionType,
   flowPieceUtil,
-  LocalesEnum,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
   FlowTriggerType,

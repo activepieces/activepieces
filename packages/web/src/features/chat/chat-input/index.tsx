@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
 import { ArrowUpIcon, Paperclip } from 'lucide-react';
 import * as React from 'react';
 import { useRef, useState } from 'react';

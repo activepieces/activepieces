@@ -1,4 +1,5 @@
-import { Field, FieldType, McpToolResult, PopulatedRecord, tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils'
+import { Field, FieldType, McpToolResult, PopulatedRecord } from '@activepieces/shared'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
