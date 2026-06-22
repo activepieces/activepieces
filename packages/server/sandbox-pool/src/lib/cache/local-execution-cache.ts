@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path'
 import { copyFile, rename } from 'node:fs/promises'
 import { nanoid } from 'nanoid'
 import { PathLike } from 'node:fs'
+import path from 'path'
 
 const engineSourcePath = 'dist/packages/engine/main.js'
 
@@ -44,8 +45,12 @@ export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContrac
                 await wideEvent.timed({
                     name: 'installEngine',
                     fn: async () => {
+                        const engineDestPath = path.resolve(commonPath, 'main.js')
+                        const existingEngineFile = await fileSystemUtils.fileExists(engineDestPath)
+                        if (existingEngineFile) return
+
                         await atomicCopy(engineSourcePath, `${commonPath}/main.js`)
-                        await atomicCopy(`${engineSourcePath}.map`, `${commonPath}/main.js.map`)
+                        await atomicCopy(`${engineSourcePath}.map`, path.resolve(commonPath, 'main.js.map'))
                         log.info({ path: commonPath }, 'Installed engine in sandbox')
                     },
                 })
