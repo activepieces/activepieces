@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Search, X } from 'lucide-react';
 import * as React from 'react';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Input, inputClass } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -12,10 +13,11 @@ export type SearchInputProps = Omit<
   'onChange'
 > & {
   onChange: (value: string) => void;
+  loading?: boolean;
 };
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ type, placeholder = t('Search'), ...props }, ref) => {
+  ({ type, placeholder = t('Search'), loading = false, ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     React.useImperativeHandle(ref, () => inputRef.current!);
@@ -36,6 +38,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           placeholder={placeholder}
           onChange={(e) => props.onChange(e.target.value)}
         />
+        {loading && <LoadingSpinner className="size-4 shrink-0" />}
         {props.value !== '' && (
           <SelectUtilButton
             tooltipText={t('Clear')}

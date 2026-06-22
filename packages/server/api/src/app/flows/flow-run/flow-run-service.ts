@@ -1,9 +1,9 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
 import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
-import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
+import { ArrayContains, Brackets, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -22,6 +22,13 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
+
+// The general search bar also matches step/trigger output, which lives in zstd-compressed
+// log files (often on S3) — not queryable via SQL. We decompress-and-scan the most recent
+// runs as a bounded best-effort layer. The hard cap keeps this O(constant): the cost does
+// NOT grow with the number of runs in the project, so it never degrades on large datasets.
+const LOG_CONTENT_SEARCH_RUN_LIMIT = 200
+const LOG_CONTENT_SEARCH_CONCURRENCY = 10
 
 
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -51,58 +58,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
 
-        const whereClause: Record<string, unknown> = {
-            projectId: params.projectId,
-        }
-        if (!isNil(params.environment)) {
-            whereClause.environment = params.environment
-        }
-        let query = queryBuilderForFlowRun(flowRunRepo()).where(whereClause)
+        let query = applyBaseFlowRunFilters(queryBuilderForFlowRun(flowRunRepo()), params)
 
-        if (!params.includeArchived) {
-            query = query.andWhere({
-                archivedAt: IsNull(),
-            })
-        }
-
-        if (params.flowId) {
-            query = query.andWhere({
-                flowId: In(params.flowId),
-            })
-        }
-        if (params.status) {
-            query = query.andWhere({
-                status: In(params.status),
-            })
-        }
-        if (params.createdAfter) {
-            query = query.andWhere('flow_run.created >= :createdAfter', {
-                createdAfter: params.createdAfter,
-            })
-        }
-        if (params.createdBefore) {
-            query = query.andWhere('flow_run.created <= :createdBefore', {
-                createdBefore: params.createdBefore,
-            })
-        }
-        if (params.tags) {
-            query = query.andWhere({ tags: ArrayContains(params.tags) })
-        }
-
-        if (!isNil(params.failedStepName)) {
-            query = query.andWhere('flow_run."failedStep"->>\'name\' = :failedStepName', {
-                failedStepName: params.failedStepName,
-            })
-        }
-        if (!isNil(params.failedStepMessage)) {
-            query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
-                failedStepMessage: `%${params.failedStepMessage}%`,
-            })
-        }
-        if (params.flowRunIds) {
-            query = query.andWhere({
-                id: In(params.flowRunIds),
-            })
+        const search = params.search?.trim()
+        if (!isNil(search) && search.length > 0) {
+            query = await applySearchFilter({ query, search, params, log })
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
@@ -615,6 +575,96 @@ function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<F
         .addSelect(['"flowVersion"."displayName"'])
 }
 
+function applyBaseFlowRunFilters(query: SelectQueryBuilder<FlowRun>, params: BaseFlowRunFilters): SelectQueryBuilder<FlowRun> {
+    const whereClause: Record<string, unknown> = {
+        projectId: params.projectId,
+    }
+    if (!isNil(params.environment)) {
+        whereClause.environment = params.environment
+    }
+    let result = query.where(whereClause)
+    if (!params.includeArchived) {
+        result = result.andWhere({ archivedAt: IsNull() })
+    }
+    if (params.flowId) {
+        result = result.andWhere({ flowId: In(params.flowId) })
+    }
+    if (params.status) {
+        result = result.andWhere({ status: In(params.status) })
+    }
+    if (params.createdAfter) {
+        result = result.andWhere('flow_run.created >= :createdAfter', { createdAfter: params.createdAfter })
+    }
+    if (params.createdBefore) {
+        result = result.andWhere('flow_run.created <= :createdBefore', { createdBefore: params.createdBefore })
+    }
+    if (params.tags) {
+        result = result.andWhere({ tags: ArrayContains(params.tags) })
+    }
+    if (!isNil(params.failedStepName)) {
+        result = result.andWhere('flow_run."failedStep"->>\'name\' = :failedStepName', { failedStepName: params.failedStepName })
+    }
+    if (!isNil(params.failedStepMessage)) {
+        result = result.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', { failedStepMessage: `%${params.failedStepMessage}%` })
+    }
+    if (params.flowRunIds) {
+        result = result.andWhere({ id: In(params.flowRunIds) })
+    }
+    return result
+}
+
+// Broad, parameterized (injection-safe) search across every field stored on the run row:
+// flow name, the failed step (message/display name/name), run id, and tags. Step/trigger
+// output is not on the row, so we additionally OR-in run ids found by the bounded log scan.
+async function applySearchFilter({ query, search, params, log }: ApplySearchFilterParams): Promise<SelectQueryBuilder<FlowRun>> {
+    const { data: scannedIds } = await tryCatch(() => findRunIdsMatchingLogContent({ search, params, log }))
+    const contentMatchedRunIds = scannedIds ?? []
+    const searchLike = `%${search}%`
+    return query.andWhere(new Brackets((qb) => {
+        qb.where('"flowVersion"."displayName" ILIKE :searchLike', { searchLike })
+            .orWhere('flow_run."failedStep"->>\'message\' ILIKE :searchLike', { searchLike })
+            .orWhere('flow_run."failedStep"->>\'displayName\' ILIKE :searchLike', { searchLike })
+            .orWhere('flow_run."failedStep"->>\'name\' ILIKE :searchLike', { searchLike })
+            .orWhere('flow_run.id ILIKE :searchLike', { searchLike })
+            .orWhere('array_to_string(flow_run.tags, \' \') ILIKE :searchLike', { searchLike })
+        if (contentMatchedRunIds.length > 0) {
+            qb.orWhere('flow_run.id IN (:...contentMatchedRunIds)', { contentMatchedRunIds })
+        }
+    }))
+}
+
+async function findRunIdsMatchingLogContent({ search, params, log }: FindLogContentMatchesParams): Promise<FlowRunId[]> {
+    const candidateQuery = applyBaseFlowRunFilters(flowRunRepo().createQueryBuilder('flow_run'), params)
+        .andWhere('flow_run."logsFileId" IS NOT NULL')
+        .select(['flow_run.id', 'flow_run.logsFileId', 'flow_run.projectId'])
+        .orderBy('flow_run.created', 'DESC')
+        .limit(LOG_CONTENT_SEARCH_RUN_LIMIT)
+
+    const candidates = await candidateQuery.getMany()
+    const lowerSearch = search.toLowerCase()
+    const limit = pLimit(LOG_CONTENT_SEARCH_CONCURRENCY)
+    const matches = await Promise.all(candidates.map((run) => limit(async () => {
+        if (isNil(run.logsFileId)) {
+            return null
+        }
+        const matched = await logFileContainsText({ logsFileId: run.logsFileId, projectId: run.projectId, lowerSearch, log })
+        return matched ? run.id : null
+    })))
+    return matches.filter((id): id is FlowRunId => !isNil(id))
+}
+
+async function logFileContainsText({ logsFileId, projectId, lowerSearch, log }: LogFileContainsTextParams): Promise<boolean> {
+    const file = await fileService(log).getDataOrUndefined({
+        projectId,
+        fileId: logsFileId,
+        type: FileType.FLOW_RUN_LOG,
+    })
+    if (isNil(file)) {
+        return false
+    }
+    return file.data.toString('utf-8').toLowerCase().includes(lowerSearch)
+}
+
 async function resolveStepOutput({ step, flowRun, log }: ResolveStepOutputParams): Promise<unknown> {
     if (isNil(step)) {
         return undefined
@@ -707,9 +757,32 @@ type ListParams = {
     createdBefore?: string
     failedStepName?: string
     failedStepMessage?: string
+    search?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
+}
+
+type BaseFlowRunFilters = Omit<ListParams, 'cursor' | 'limit' | 'search'>
+
+type ApplySearchFilterParams = {
+    query: SelectQueryBuilder<FlowRun>
+    search: string
+    params: BaseFlowRunFilters
+    log: FastifyBaseLogger
+}
+
+type FindLogContentMatchesParams = {
+    search: string
+    params: BaseFlowRunFilters
+    log: FastifyBaseLogger
+}
+
+type LogFileContainsTextParams = {
+    logsFileId: string
+    projectId: ProjectId
+    lowerSearch: string
+    log: FastifyBaseLogger
 }
 
 type GetOneParams = {

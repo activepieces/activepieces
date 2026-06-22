@@ -14,6 +14,7 @@ export const ListFlowRunsRequestQuery = z.object({
     projectId: ApId,
     failedStepName: z.string().optional(),
     failedStepMessage: z.string().optional(),
+    search: z.string().optional(),
     flowRunIds: OptionalArrayFromQuery(ApId),
     includeArchived: OptionalBooleanFromQuery,
 })

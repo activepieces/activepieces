@@ -22,6 +22,7 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             status: request.query.status,
             failedStepName: request.query.failedStepName,
             failedStepMessage: request.query.failedStepMessage,
+            search: request.query.search,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
             createdAfter: request.query.createdAfter,

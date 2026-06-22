@@ -75,6 +75,7 @@ interface DataTableProps<
   ) => void;
   isLoading: boolean;
   filters?: DataTableFilters<Keys>[];
+  searchBar?: React.ReactNode;
   customFilters?: React.ReactNode[];
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
@@ -120,6 +121,7 @@ export function DataTable<
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
+  searchBar,
   customFilters,
   selectColumn = false,
   initialSorting = [],
@@ -322,12 +324,14 @@ export function DataTable<
         virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
       )}
     >
-      {((filters && filters.length > 0) ||
+      {(searchBar ||
+        (filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
         <DataTableToolbar>
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
+              {searchBar}
               {filters &&
                 filters.map((filter) => (
                   <DataTableFilter

@@ -62,6 +62,7 @@ import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
 } from './retried-runs-snackbar';
+import { RunsSearchInput, SEARCH_QUERY_PARAM } from './runs-search-input';
 import { RunsStatusChart } from './runs-status-chart';
 
 type SelectedRow = {
@@ -102,7 +103,7 @@ export const RunsTable = () => {
     setHasSeededDefaultRange(true);
   }, [hasSeededDefaultRange, setSearchParams]);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     enabled: hasSeededDefaultRange,
     staleTime: 0,
@@ -116,6 +117,7 @@ export const RunsTable = () => {
       const failedStepName = searchParams.get('failedStepName') || undefined;
       const failedStepMessage =
         searchParams.get('failedStepMessage') || undefined;
+      const search = searchParams.get(SEARCH_QUERY_PARAM) || undefined;
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
@@ -135,6 +137,7 @@ export const RunsTable = () => {
         createdBefore: createdBefore ?? undefined,
         failedStepName,
         failedStepMessage,
+        search,
         flowRunIds,
       });
     },
@@ -580,6 +583,8 @@ export const RunsTable = () => {
         ]
       : [];
 
+  const isViewingRetriedRuns = retriedRunsInQueryParams.length > 0;
+
   return (
     <div className="relative">
       <DataTable
@@ -592,6 +597,11 @@ export const RunsTable = () => {
         page={data}
         isLoading={isLoading || isFetchingFlows}
         filters={customFilters.length > 0 ? [] : filters}
+        searchBar={
+          isViewingRetriedRuns ? undefined : (
+            <RunsSearchInput isFetching={isFetching} />
+          )
+        }
         bulkActions={bulkActions}
         onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
         customFilters={customFilters}
