@@ -15,13 +15,13 @@ import { localExecutionCache } from './cache/local-execution-cache'
 import { Sandbox } from './sandbox/types'
 import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './sandbox-manager'
 
-export function createWorkerPoolRuntime({ concurrency }: CreateWorkerPoolRuntimeParams): Runtime {
+export function createLocalPoolRuntime({ concurrency }: CreateLocalPoolRuntimeParams): Runtime {
     const managers: SandboxManager[] = Array.from({ length: concurrency }, (_, index) =>
         createSandboxManager({ boxId: index + 1 }),
     )
 
     return {
-        kind: RuntimeKind.WORKER_POOL,
+        kind: RuntimeKind.LOCAL_POOL,
         createExecution({ workerIndex, log, apiClient }: CreateExecutionParams): RuntimeExecution {
             const manager = managers[workerIndex]
             if (isNil(manager)) {
@@ -30,7 +30,7 @@ export function createWorkerPoolRuntime({ concurrency }: CreateWorkerPoolRuntime
                     params: { message: `No sandbox manager for worker index ${workerIndex} (concurrency=${concurrency})` },
                 })
             }
-            return createWorkerPoolExecution({ manager, log, apiClient })
+            return createLocalPoolExecution({ manager, log, apiClient })
         },
         getActiveExecutors(): RuntimeExecutorInfo[] {
             return managers
@@ -49,7 +49,7 @@ export function createWorkerPoolRuntime({ concurrency }: CreateWorkerPoolRuntime
     }
 }
 
-function createWorkerPoolExecution({ manager, log, apiClient }: CreateWorkerPoolExecutionParams): RuntimeExecution {
+function createLocalPoolExecution({ manager, log, apiClient }: CreateLocalPoolExecutionParams): RuntimeExecution {
     let sandbox: Sandbox | null = null
     let mountContext: MountContext | null = null
 
@@ -94,11 +94,11 @@ function createWorkerPoolExecution({ manager, log, apiClient }: CreateWorkerPool
     }
 }
 
-type CreateWorkerPoolRuntimeParams = {
+type CreateLocalPoolRuntimeParams = {
     concurrency: number
 }
 
-type CreateWorkerPoolExecutionParams = {
+type CreateLocalPoolExecutionParams = {
     manager: SandboxManager
     log: ApLogger
     apiClient: WorkerToApiContract

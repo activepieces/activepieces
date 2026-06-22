@@ -8,12 +8,12 @@ import {
 } from '@activepieces/shared'
 import type { FlowVersion } from '@activepieces/shared'
 import { extractPiecePackages, extractCodeArtifacts, resolveFlowArtifacts } from '../../../../src/lib/execute/utils/flow-helpers'
-import { PieceNotFoundError } from '../../../../src/lib/runtime/worker-pool/cache/pieces/piece-cache'
+import { PieceNotFoundError } from '../../../../src/lib/runtime/local-pool/cache/pieces/piece-cache'
 
 const mockGetPiece = vi.fn()
 
-vi.mock('../../../../src/lib/runtime/worker-pool/cache/pieces/piece-cache', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../../../src/lib/runtime/worker-pool/cache/pieces/piece-cache')>()
+vi.mock('../../../../src/lib/runtime/local-pool/cache/pieces/piece-cache', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../src/lib/runtime/local-pool/cache/pieces/piece-cache')>()
     return {
         ...actual,
         pieceCache: () => ({

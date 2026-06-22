@@ -4,8 +4,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { EngineResponseStatus, WorkerContract } from '@activepieces/shared'
-import { createSandbox } from '../../../../../src/lib/runtime/worker-pool/sandbox/sandbox'
-import { Sandbox, SandboxLogger, SandboxMount, SandboxProcessMaker } from '../../../../../src/lib/runtime/worker-pool/sandbox/types'
+import { createSandbox } from '../../../../../src/lib/runtime/local-pool/sandbox/sandbox'
+import { Sandbox, SandboxLogger, SandboxMount, SandboxProcessMaker } from '../../../../../src/lib/runtime/local-pool/sandbox/types'
 
 const { treeKillMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
@@ -15,7 +15,7 @@ vi.mock('tree-kill', () => ({
     default: treeKillMock,
 }))
 
-vi.mock('../../../../../src/lib/runtime/worker-pool/cache/cache-paths', () => ({
+vi.mock('../../../../../src/lib/runtime/local-pool/cache/cache-paths', () => ({
     getGlobalCachePathLatestVersion: vi.fn(() => '/tmp/test-cache'),
     getGlobalCodeCachePath: vi.fn(() => '/tmp/test-cache/codes'),
 }))

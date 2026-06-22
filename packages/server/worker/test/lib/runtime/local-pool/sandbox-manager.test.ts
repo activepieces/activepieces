@@ -9,7 +9,7 @@ vi.mock('../../../../src/lib/config/worker-settings', () => ({
     },
 }))
 
-vi.mock('../../../../src/lib/runtime/worker-pool/create-sandbox-for-job', () => ({
+vi.mock('../../../../src/lib/runtime/local-pool/create-sandbox-for-job', () => ({
     createSandboxForJob: vi.fn().mockReturnValue({
         isReady: () => true,
         shutdown: vi.fn().mockResolvedValue(undefined),
@@ -31,7 +31,7 @@ vi.mock('../../../../src/lib/config/logger', () => ({
     },
 }))
 
-import { createSandboxManager } from '../../../../src/lib/runtime/worker-pool/sandbox-manager'
+import { createSandboxManager } from '../../../../src/lib/runtime/local-pool/sandbox-manager'
 import { logger } from '../../../../src/lib/config/logger'
 
 function buildSettings({ executionMode, environment }: { executionMode: string, environment: string }) {
@@ -81,7 +81,7 @@ describe('sandbox-manager canReuseSandbox', () => {
 
         // After release with non-reusable mode, acquiring again should create a fresh sandbox
         // We verify by checking that invalidate was called (sandbox set to null)
-        const { createSandboxForJob } = await import('../../../../src/lib/runtime/worker-pool/create-sandbox-for-job')
+        const { createSandboxForJob } = await import('../../../../src/lib/runtime/local-pool/create-sandbox-for-job')
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
 
         // Acquire again — should create new sandbox since previous was invalidated
@@ -100,7 +100,7 @@ describe('sandbox-manager canReuseSandbox', () => {
         manager.acquire({ log, apiClient: mockApiClient })
         await manager.release(log)
 
-        const { createSandboxForJob } = await import('../../../../src/lib/runtime/worker-pool/create-sandbox-for-job')
+        const { createSandboxForJob } = await import('../../../../src/lib/runtime/local-pool/create-sandbox-for-job')
         manager.acquire({ log, apiClient: mockApiClient })
         expect(createSandboxForJob).toHaveBeenCalledTimes(2)
     })
@@ -116,7 +116,7 @@ describe('sandbox-manager canReuseSandbox', () => {
         manager.acquire({ log, apiClient: mockApiClient })
         await manager.release(log)
 
-        const { createSandboxForJob } = await import('../../../../src/lib/runtime/worker-pool/create-sandbox-for-job')
+        const { createSandboxForJob } = await import('../../../../src/lib/runtime/local-pool/create-sandbox-for-job')
         // Acquire again — should reuse (not create new)
         manager.acquire({ log, apiClient: mockApiClient })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
@@ -133,7 +133,7 @@ describe('sandbox-manager canReuseSandbox', () => {
         manager.acquire({ log, apiClient: mockApiClient })
         await manager.release(log)
 
-        const { createSandboxForJob } = await import('../../../../src/lib/runtime/worker-pool/create-sandbox-for-job')
+        const { createSandboxForJob } = await import('../../../../src/lib/runtime/local-pool/create-sandbox-for-job')
         manager.acquire({ log, apiClient: mockApiClient })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
     })
@@ -149,7 +149,7 @@ describe('sandbox-manager canReuseSandbox', () => {
         manager.acquire({ log, apiClient: mockApiClient })
         await manager.release(log)
 
-        const { createSandboxForJob } = await import('../../../../src/lib/runtime/worker-pool/create-sandbox-for-job')
+        const { createSandboxForJob } = await import('../../../../src/lib/runtime/local-pool/create-sandbox-for-job')
         manager.acquire({ log, apiClient: mockApiClient })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
     })

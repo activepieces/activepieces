@@ -17,25 +17,25 @@ vi.mock('../../../../src/lib/config/worker-settings', () => ({
     },
 }))
 
-vi.mock('../../../../src/lib/runtime/worker-pool/sandbox/sandbox', () => ({
+vi.mock('../../../../src/lib/runtime/local-pool/sandbox/sandbox', () => ({
     createSandbox: createSandboxMock,
 }))
 
-vi.mock('../../../../src/lib/runtime/worker-pool/sandbox/isolate', () => ({
+vi.mock('../../../../src/lib/runtime/local-pool/sandbox/isolate', () => ({
     isolateProcess: isolateProcessMock,
 }))
 
-vi.mock('../../../../src/lib/runtime/worker-pool/sandbox/fork', () => ({
+vi.mock('../../../../src/lib/runtime/local-pool/sandbox/fork', () => ({
     simpleProcess: simpleProcessMock,
 }))
 
-vi.mock('../../../../src/lib/runtime/worker-pool/cache/cache-paths', () => ({
+vi.mock('../../../../src/lib/runtime/local-pool/cache/cache-paths', () => ({
     getGlobalCacheCommonPath: getGlobalCacheCommonPathMock,
     getGlobalCodeCachePath: getGlobalCodeCachePathMock,
     getEnginePath: getEnginePathMock,
 }))
 
-import { createSandboxForJob } from '../../../../src/lib/runtime/worker-pool/create-sandbox-for-job'
+import { createSandboxForJob } from '../../../../src/lib/runtime/local-pool/create-sandbox-for-job'
 
 type Settings = {
     PUBLIC_URL: string

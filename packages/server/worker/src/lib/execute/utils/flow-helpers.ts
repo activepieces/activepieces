@@ -1,8 +1,8 @@
 import { tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { pieceCache, PieceNotFoundError } from '../../runtime/local-pool/cache/pieces/piece-cache'
 import { CodeArtifact } from '../../runtime/types'
-import { pieceCache, PieceNotFoundError } from '../../runtime/worker-pool/cache/pieces/piece-cache'
 
 // Resolve the pieces/code a flow needs into the artifacts that init() installs. A missing piece is
 // not an error: the flow is disabled and `disabled: true` is returned so the caller skips the run.

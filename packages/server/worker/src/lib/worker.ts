@@ -11,9 +11,9 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
+import { pieceInstaller } from './runtime/local-pool/cache/pieces/piece-installer'
 import { selectRuntime } from './runtime/runtime-factory'
 import { Runtime } from './runtime/types'
-import { pieceInstaller } from './runtime/worker-pool/cache/pieces/piece-installer'
 
 
 const AP_VERSION = apVersionUtil.getCurrentRelease()

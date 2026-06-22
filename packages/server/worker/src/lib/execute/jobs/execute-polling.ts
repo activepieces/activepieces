@@ -1,7 +1,7 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
-import { flowCache } from '../../runtime/worker-pool/cache/flow/flow-cache'
+import { flowCache } from '../../runtime/local-pool/cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { resolveFlowArtifacts } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'

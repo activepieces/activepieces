@@ -5,7 +5,7 @@ import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
 
 const mockGetVersion = vi.fn()
 
-vi.mock('../../../../src/lib/runtime/worker-pool/cache/flow/flow-cache', () => ({
+vi.mock('../../../../src/lib/runtime/local-pool/cache/flow/flow-cache', () => ({
     flowCache: () => ({
         getVersion: mockGetVersion,
     }),

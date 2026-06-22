@@ -4,7 +4,7 @@ import { EngineOperation, EngineOperationType, EngineResponse, FlowVersionState,
 // A Runtime is the pluggable seam that decides WHERE each step of a job runs. The worker always
 // drives the lifecycle (createExecution -> init -> run -> dispose); the runtime impl decides
 // whether each step happens in the worker or in the engine/function:
-//   - worker-pool: init/dispose run in the worker (host-side install into a mounted cache); only
+//   - local-pool: init/dispose run in the worker (host-side install into a mounted cache); only
 //     `run` executes the operation in the engine sandbox child process.
 //   - serverless: init (bundle install) and run both execute in the function; the worker only
 //     orchestrates and ships the bundle.
@@ -63,7 +63,7 @@ export type RuntimeExecutorInfo = {
 }
 
 // A code step to provision. Part of the generic init contract (InitParams.codeSteps), so it lives
-// here rather than in the worker-pool code-builder that consumes it.
+// here rather than in the local-pool code-builder that consumes it.
 export type CodeArtifact = {
     name: string
     sourceCode: SourceCode

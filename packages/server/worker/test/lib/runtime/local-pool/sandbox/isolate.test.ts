@@ -20,8 +20,8 @@ vi.mock('../../../../../src/lib/utils/exec', () => ({
     execPromise: execPromiseMock,
 }))
 
-import { isolateProcess, getIsolateExecutableName } from '../../../../../src/lib/runtime/worker-pool/sandbox/isolate'
-import { SandboxLogger, SandboxMount } from '../../../../../src/lib/runtime/worker-pool/sandbox/types'
+import { isolateProcess, getIsolateExecutableName } from '../../../../../src/lib/runtime/local-pool/sandbox/isolate'
+import { SandboxLogger, SandboxMount } from '../../../../../src/lib/runtime/local-pool/sandbox/types'
 
 function createMockLogger(): SandboxLogger {
     return {
