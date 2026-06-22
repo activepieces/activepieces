@@ -1,11 +1,7 @@
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { TriggerStrategy } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    ApEnvironment,
-    EngineResponseStatus,
-    ErrorCode,
-} from '@activepieces/shared'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ApEnvironment, EngineResponseStatus } from '@activepieces/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockSubmitAndWaitForResponse = vi.fn()
 const mockGetPlatformId = vi.fn().mockResolvedValue('platform-1')

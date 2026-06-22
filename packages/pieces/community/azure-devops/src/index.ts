@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createWorkItemAction } from './lib/actions/create-work-item';
 import { getWorkItemAction } from './lib/actions/get-work-item';
 import { updateWorkItemAction } from './lib/actions/update-work-item';

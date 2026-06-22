@@ -17,7 +17,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/api';
 import { updateCustomerProperties } from './lib/actions/update-customer-properties';
 import { tagsUpdated } from './lib/triggers/tags-updated';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const helpScout = createPiece({
   displayName: 'Help Scout',

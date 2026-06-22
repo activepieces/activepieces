@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { csvToJsonAction } from './lib/actions/convert-csv-to-json';
 import { jsonToCsvAction } from './lib/actions/convert-json-to-csv';
 import { excelToCsvAction } from './lib/actions/convert-excel-to-csv';

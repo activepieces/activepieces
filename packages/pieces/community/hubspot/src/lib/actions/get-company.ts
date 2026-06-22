@@ -6,7 +6,7 @@ import {
 } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const getCompanyAction = createAction({
 	auth: hubspotAuth,

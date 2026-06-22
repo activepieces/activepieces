@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { ToolSet } from 'ai';
 import { ProviderOptions } from '@ai-sdk/provider-utils';
-import { spreadIfDefined, AIProviderName, getEffectiveProviderAndModel } from '@activepieces/shared';
+import { spreadIfDefined, AIProviderName, getEffectiveProviderAndModel } from '@activepieces/pieces-framework';
 import { anthropicSearchTool, openaiSearchTool, googleSearchTool } from './ai-sdk';
 
 function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSources?: boolean }): InputPropertyMap {

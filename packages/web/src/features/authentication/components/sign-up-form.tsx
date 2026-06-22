@@ -1,9 +1,8 @@
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   OtpType,
   ApEdition,
   ApFlagId,
-  ErrorCode,
-  isNil,
   TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';

@@ -1,6 +1,6 @@
 
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { ML_ACTIONS } from './lib/actions';
 import { API_CALLS_ACTIONS } from './lib/actions/api-calls';
 import { API_TOKENS_ACTIONS } from './lib/actions/api-tokens';

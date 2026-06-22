@@ -18,7 +18,8 @@ import {
 	standardObjectPropertiesDropdown,
 } from '../common/props';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
-import { isNil, MarkdownVariant } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 

@@ -8,7 +8,7 @@ import { moveCandidate } from "./lib/actions/move-candidate";
 import { rateCandidate } from "./lib/actions/rate-candidate";
 import { newCandidate } from "./lib/triggers/new-candidate";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { workableAuth } from './lib/auth';
 
  

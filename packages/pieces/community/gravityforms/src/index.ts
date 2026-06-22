@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { gravityFormsNewSubmission } from './lib/triggers/new-submission';
 
 export const gravityforms = createPiece({

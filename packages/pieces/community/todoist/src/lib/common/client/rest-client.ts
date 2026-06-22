@@ -4,7 +4,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { isNotUndefined, pickBy } from '@activepieces/shared';
+import { isNotUndefined, pickBy } from '@activepieces/pieces-framework';
 import {
   TodoistCompletedTask,
   TodoistCreateTaskRequest,

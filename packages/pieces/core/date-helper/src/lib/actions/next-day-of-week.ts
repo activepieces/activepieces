@@ -10,7 +10,7 @@ import {
   getCorrectedFormat,
   apDayjs,
 } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const nextDayofWeek = createAction({
@@ -78,7 +78,7 @@ export const nextDayofWeek = createAction({
   },
   async run(context) {    
     await propsValidation.validateZod(context.propsValue, {
-      time: z.string().regex(/^\d\d:\d\d$/),
+      time: z.string().check(z.regex(/^\d\d:\d\d$/)),
     });
 
     const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);

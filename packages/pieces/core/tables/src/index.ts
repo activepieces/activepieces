@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { createRecords } from "./lib/actions/create-records";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from "@activepieces/pieces-framework";
 import { deleteRecord } from "./lib/actions/delete-record";
 import { updateRecord } from "./lib/actions/update-record";
 import { getRecord } from "./lib/actions/get-record";

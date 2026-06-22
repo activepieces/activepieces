@@ -1,10 +1,9 @@
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   OtpType,
   ApEdition,
   ApFlagId,
   AuthenticationResponse,
-  ErrorCode,
-  isNil,
   SignInRequest,
   TelemetryEventName,
 } from '@activepieces/shared';

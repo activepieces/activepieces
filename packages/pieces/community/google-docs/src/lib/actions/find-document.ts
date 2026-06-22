@@ -4,7 +4,8 @@ import {
 	DynamicPropsValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
+import { docs as googleDocs } from '@googleapis/docs';
 import { folderIdProp } from '../common/props';
 
 export const findDocumentAction = createAction({
@@ -57,8 +58,8 @@ export const findDocumentAction = createAction({
 
 		const authClient = await createGoogleClient(context.auth);
 
-		const drive = google.drive({ version: 'v3', auth: authClient });
-		const docs = google.docs({ version: 'v1', auth: authClient });
+		const drive = googleDrive({ version: 'v3', auth: authClient });
+		const docs = googleDocs({ version: 'v1', auth: authClient });
 
 		// Search for the document in Google Drive
 		const query: string[] = [

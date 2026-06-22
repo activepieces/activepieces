@@ -1,4 +1,9 @@
 import {
+  deepMergeAndCast,
+  isNil,
+  isManualPieceTrigger,
+} from '@activepieces/core-utils';
+import {
   PieceAuthProperty,
   PiecePropertyMap,
   piecePropertiesUtils,
@@ -11,10 +16,8 @@ import {
   PieceAction,
   PieceTrigger,
   FlowTrigger,
-  deepMergeAndCast,
   BranchExecutionType,
   RouterExecutionType,
-  isNil,
   flowStructureUtil,
   StepSettings,
   RouterActionSettingsWithValidation,
@@ -23,7 +26,6 @@ import {
   DEFAULT_SAMPLE_DATA_SETTINGS,
   FlowVersion,
   FlowOperationType,
-  isManualPieceTrigger,
   AUTHENTICATION_PROPERTY_NAME,
 } from '@activepieces/shared';
 import { useRef } from 'react';

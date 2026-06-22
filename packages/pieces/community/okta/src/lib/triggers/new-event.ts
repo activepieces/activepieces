@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { oktaAuth, makeOktaRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 export const newEventTrigger = createTrigger({
   auth: oktaAuth,

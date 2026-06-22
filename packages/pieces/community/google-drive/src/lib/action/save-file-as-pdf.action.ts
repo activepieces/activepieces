@@ -2,7 +2,7 @@
 
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { Stream } from 'stream';
 import { common } from '../common';
 
@@ -38,7 +38,7 @@ export const saveFileAsPdf = createAction({
     const folderId = context.propsValue.folderId;
     const nameForNewFile = context.propsValue.name;
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const result = await drive.files.export(
       {

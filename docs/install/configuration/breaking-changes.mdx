@@ -12,8 +12,12 @@ icon: "hammer"
 #### Log fields are now grouped by entity
 Log fields are now grouped under the entity they belong to, so each thing has one name. A flow run id is `flowRun.id` (it used to appear as `runId`, `flowRunId`, or a bare `id`), and other ids follow the same shape (`flow.id`, `project.id`, `job.id`, …). Errors are logged under `error`. This only changes how logs look — nothing about the API, database, or flows changes.
 
+#### Pieces are now self-contained bundles
+Each piece is now built into a single self-contained bundle — its own code, the Activepieces framework, and its third-party dependencies are inlined into one artifact, so the engine provisions a piece by downloading one file instead of installing a dependency tree at runtime. As part of this, the shared libraries (`@activepieces/shared`, `@activepieces/pieces-framework`, `@activepieces/pieces-common`, `@activepieces/core-*`) are no longer published to npm, and pieces import only from `@activepieces/pieces-framework` (which re-exports the foundation symbols that used to come from `@activepieces/shared`). Built-in pieces are unaffected — this only matters for custom pieces.
+
 ### Do you need to take action?
 - Only if you build dashboards or alerts on Activepieces logs. Update them to the new grouped names, e.g. `runId` → `flowRun.id` and `err` → `error`.
+- Only if you maintain **custom pieces** (in a fork or built outside the repo). Migrate each one to the bundle model — run `npm run cli -- pieces migrate <piece-name>` (or `--all`), or follow the [migration guide](/build-pieces/misc/migrate-pieces-to-bundles). Pieces that still import `@activepieces/shared` or depend on the now-unpublished libraries will fail to build.
 
 ## 0.85.4
 ### What has changed?

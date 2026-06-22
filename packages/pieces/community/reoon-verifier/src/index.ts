@@ -3,7 +3,7 @@ import { verifyEmail } from './lib/actions/verify-email';
 import { verifySingleEmail } from './lib/common/send-util';
 import { HttpError } from '@activepieces/pieces-common';
 import { bulkEmailVerification } from './lib/actions/bulk-email-verification';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { bulkVerificationResult } from './lib/actions/bulk-email-verification-status';
 
 const description = `

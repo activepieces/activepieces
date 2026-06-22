@@ -8,7 +8,7 @@ import { addASpaceMember } from './lib/actions/add-a-space-member';
 import { getMessageDetails } from './lib/actions/get-message';
 import { searchMessages } from './lib/actions/search-messages';
 import { findMember } from './lib/actions/find-member';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const googlechat = createPiece({
   displayName: 'Google Chat',

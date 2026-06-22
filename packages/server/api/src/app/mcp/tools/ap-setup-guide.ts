@@ -1,5 +1,6 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AIProviderName, isNil, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'

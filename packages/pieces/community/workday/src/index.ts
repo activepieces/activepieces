@@ -2,7 +2,7 @@ import {
 	OAuth2PropertyValue,
 	createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 import { workdayAuth } from './lib/auth';

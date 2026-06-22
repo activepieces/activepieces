@@ -1,4 +1,5 @@
-import { FlowOperationType, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { FlowOperationType } from '@activepieces/shared';
 import { useTranslation } from 'react-i18next';
 
 import { CardListItemSkeleton } from '@/components/custom/card-list';

@@ -3,7 +3,6 @@ import {
     ExecuteExtractPieceMetadataJobData,
     WorkerJobType,
 } from '@activepieces/shared'
-import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
@@ -12,28 +11,19 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData,
     async execute(ctx: JobContext, data: ExecuteExtractPieceMetadataJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        await provisioner(ctx.log, ctx.apiClient).provision({
-            pieces: [data.piece],
-            codeSteps: [],
-        })
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
-            await sandbox.start({
-                flowVersionId: undefined,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
-            const result = await sandbox.execute(
-                EngineOperationType.EXTRACT_PIECE_METADATA,
-                {
+            const result = await execution.run({
+                operationType: EngineOperationType.EXTRACT_PIECE_METADATA,
+                operation: {
                     ...data.piece,
                     platformId: data.platformId,
                     timeoutInSeconds,
                 },
-                { timeoutInSeconds },
-            )
+                timeoutInSeconds,
+            })
 
             return {
                 kind: JobResultKind.SYNCHRONOUS,
@@ -44,11 +34,11 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData,
             }
         }
         catch (e) {
-            await ctx.sandboxManager.invalidate(ctx.log)
+            await execution.dispose({ invalidate: true })
             throw e
         }
         finally {
-            await ctx.sandboxManager.release(ctx.log)
+            await execution.dispose({ invalidate: false })
         }
     },
 }

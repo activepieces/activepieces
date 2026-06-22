@@ -1,4 +1,5 @@
-import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, FlowState, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, mapsAreSame, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, mapsAreSame } from '@activepieces/core-utils'
+import { DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, FlowState, flowStructureUtil, FlowTriggerType, FlowVersion, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
 import deepEqual from 'deep-equal'
 import semver from 'semver'
 

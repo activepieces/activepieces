@@ -1,3 +1,4 @@
+import { Permission, isNil } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -6,11 +7,9 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
-  Permission,
   PieceAction,
   PieceTrigger,
   PropertyExecutionType,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {

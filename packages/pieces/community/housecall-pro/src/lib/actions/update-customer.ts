@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { housecallProAuth, makeHousecallProRequest } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
-import { z } from "zod";
+import * as z from 'zod/mini'
 import { propsValidation } from "@activepieces/pieces-common";
 
 export const updateCustomer = createAction({
@@ -75,10 +75,10 @@ export const updateCustomer = createAction({
 
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email().optional(),
-      mobile_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      home_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      work_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
+      email: z.optional(z.string().check(z.email())),
+      mobile_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
+      home_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
+      work_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
     });
 
     const { customer_id, ...updateData } = propsValue;

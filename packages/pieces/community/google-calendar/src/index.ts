@@ -2,7 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createEvent } from './lib/actions/create-event';
 import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
 import { deleteEventAction } from './lib/actions/delete-event.action';

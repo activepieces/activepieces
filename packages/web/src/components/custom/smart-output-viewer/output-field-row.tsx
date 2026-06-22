@@ -1,4 +1,4 @@
-import { isNil, isObject } from '@activepieces/shared';
+import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { useState } from 'react';

@@ -1,10 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   executionJournal,
   FlowActionType,
   FlowRun,
   FlowRunStatus,
   isFailedState,
-  isNil,
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';

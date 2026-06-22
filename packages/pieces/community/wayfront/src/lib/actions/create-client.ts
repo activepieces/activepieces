@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { wayfrontAuth } from '../auth';
 import { flattenUser, wayfrontApiClient, WayfrontAuthType, WayfrontUser } from '../common';
 

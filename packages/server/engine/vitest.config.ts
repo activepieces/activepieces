@@ -11,6 +11,11 @@ process.env.AP_TEST_MODE = 'true'
 process.env.AP_DEV_PIECES = 'http,data-mapper,approval,webhook,delay'
 
 export default defineConfig({
+  // esbuild injects this at bundle time; vitest runs the source directly, so define it here too.
+  // Tests exercise the proxy-included path (the no-proxy bundle's behaviour is the build-flag flip).
+  define: {
+    __AP_PROXY_DISPATCHER__: 'true',
+  },
   test: {
     globals: true,
     environment: 'node',
@@ -19,9 +24,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@activepieces/shared': path.resolve(__dirname, '../../../packages/shared/src/index.ts'),
+      '@activepieces/shared': path.resolve(__dirname, '../../../packages/core/shared/src/index.ts'),
       '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/framework/src/index.ts'),
       '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/common/src/index.ts'),
+      '@activepieces/core-formula': path.resolve(__dirname, '../../../packages/core/formula/src/index.ts'),
     },
   },
 })

@@ -1,6 +1,6 @@
 
 import { createPiece} from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getCallAction } from "./lib/actions/get-call";
 import { newCallCreatedTrigger } from "./lib/triggers/new-call-created";
 import { leexiAuth } from "./lib/common/auth";

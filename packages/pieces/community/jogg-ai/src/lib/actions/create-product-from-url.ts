@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const createProductFromUrl = createAction({
@@ -30,7 +30,7 @@ export const createProductFromUrl = createAction({
     const { url } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      url: z.string().url('Product URL must be a valid URL'),
+      url: z.string().check(z.url('Product URL must be a valid URL')),
     });
 
     const response = await httpClient.sendRequest({

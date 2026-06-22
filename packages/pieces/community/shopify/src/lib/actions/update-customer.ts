@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateCustomer } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const updateCustomerAction = createAction({
@@ -67,7 +67,7 @@ export const updateCustomerAction = createAction({
     } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email().optional(),
+      email: z.optional(z.string().check(z.email())),
     });
 
     return await updateCustomer(

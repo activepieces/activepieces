@@ -1,13 +1,5 @@
-import {
-    GetCurrentProjectMemberRoleQuery,
-    ListProjectMembersRequestQuery,
-    Permission,
-    PrincipalType,
-
-    ProjectMemberWithUser,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateProjectMemberRoleRequestBody } from '@activepieces/shared'
+import { Permission, SeekPage } from '@activepieces/core-utils'
+import { GetCurrentProjectMemberRoleQuery, ListProjectMembersRequestQuery, PrincipalType, ProjectMemberWithUser, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectMemberRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'

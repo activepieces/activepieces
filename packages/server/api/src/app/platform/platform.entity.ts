@@ -96,6 +96,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             array: true,
             nullable: false,
         },
+        pieceSelectorConfig: {
+            type: 'jsonb',
+            nullable: true,
+        },
     },
     indices: [
         {

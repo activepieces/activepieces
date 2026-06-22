@@ -5,7 +5,7 @@ import { createTextToSpeech } from "./lib/actions/create-text-to-speech";
 import { createTranslation } from "./lib/actions/create-translation";
 import { createTranscription } from "./lib/actions/create-transcription";
 import { API_BASE_URL } from "./lib/common";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { cambaiAuth } from './lib/auth';
 
 export const cambAi = createPiece({
