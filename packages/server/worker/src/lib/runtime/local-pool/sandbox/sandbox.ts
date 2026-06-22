@@ -63,8 +63,8 @@ export function createSandbox(
     workerHandlers: WorkerContract,
 ): Sandbox {
     let childProcess: ChildProcess | null = null
-    let enginePort: number | null = null
-    let engineToken: string | null = null
+    let engineHttpPort: number | null = null
+    let engineHttpToken: string | null = null
     let connected = false
     let busy = false
     let killedByShutdown = false
@@ -85,10 +85,10 @@ export function createSandbox(
                 platform: { id: platformId },
             }, 'Starting sandbox')
 
-            engineToken = randomBytes(32).toString('hex')
+            engineHttpToken = randomBytes(32).toString('hex')
             // The engine hosts the HTTP server; in isolate mode it must bind the fixed,
             // iptables-allowed port, otherwise grab a free loopback port for it to listen on.
-            enginePort = options.wsRpcPort ?? await allocateFreePort()
+            engineHttpPort = options.wsRpcPort ?? await allocateFreePort()
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable })
             const customPieceMounts: SandboxMount[] = []
@@ -118,8 +118,8 @@ export function createSandbox(
                 mounts: allMounts,
                 env: {
                     ...options.env,
-                    AP_SANDBOX_WS_PORT: String(enginePort),
-                    AP_SANDBOX_WS_TOKEN: engineToken,
+                    AP_SANDBOX_WS_PORT: String(engineHttpPort),
+                    AP_SANDBOX_WS_TOKEN: engineHttpToken,
                     ...(customPieceMounts.length > 0
                         ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }
                         : {}),
@@ -137,7 +137,7 @@ export function createSandbox(
                 })
             })
 
-            await Promise.race([waitForEngineReady(enginePort), exitPromise])
+            await Promise.race([waitForEngineReady(engineHttpPort), exitPromise])
             childProcess!.removeAllListeners('exit')
             connected = true
 
@@ -152,8 +152,8 @@ export function createSandbox(
             let killedByTimeout = false
             let timeout: NodeJS.Timeout | null = null
             const executeProcess = childProcess
-            const port = enginePort
-            const token = engineToken
+            const port = engineHttpPort
+            const token = engineHttpToken
             const operationPromise = new Promise<SandboxResult>((resolve, reject) => {
                 assertNotNullOrUndefined(executeProcess, 'Sandbox process should not be null')
                 assertNotNullOrUndefined(port, 'Engine port should not be null')
@@ -277,8 +277,8 @@ export function createSandbox(
                 await killProcess(childProcess, log)
                 childProcess = null
             }
-            enginePort = null
-            engineToken = null
+            engineHttpPort = null
+            engineHttpToken = null
         },
     }
 }
