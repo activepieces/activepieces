@@ -1,11 +1,15 @@
 import { chunk, isObject, tryCatch } from '@activepieces/core-utils'
+import { safeHttp } from '@activepieces/server-utils'
 import { ActionPreviewEvent, ActionReceiptEvent, BatchItemResult, ChatAgentEventType, ChatPhase, chatToolClassification, SendChatEventRequest, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
 
 const MAX_BATCH_SIZE = 100
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 const MAX_RESULT_SIZE_BYTES = 100 * 1024
+const FETCH_URL_TIMEOUT_MS = 30 * 1_000
+const MAX_FETCH_URL_BYTES = 5 * 1024 * 1024
 
 async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
     fn: (signal: AbortSignal) => Promise<T>
@@ -459,6 +463,46 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
     }
 }
 
+function createWebTools(): ToolSet {
+    return {
+        ap_fetch_url: tool({
+            description: 'Fetch the readable text of a public web page or API URL over HTTPS (read-only GET). Use it to read a specific page in full — e.g. the API docs you found via web search before building an http_fallback step, or a link the user shared. HTML is stripped to text; JSON/plain text is returned as-is.',
+            inputSchema: z.object({
+                title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "Read Stripe API docs"'),
+                url: z.string().describe('Absolute http(s) URL to fetch'),
+            }),
+            execute: async (toolInput) => {
+                if (!/^https?:\/\//i.test(toolInput.url)) {
+                    return { content: [{ type: 'text', text: `"${toolInput.url}" is not a valid http(s) URL.` }] }
+                }
+                return withToolTimeout({
+                    fn: async (signal) => {
+                        const { data: response, error } = await tryCatch(() => safeHttp.retryingAxios.get<string>(toolInput.url, {
+                            signal,
+                            timeout: FETCH_URL_TIMEOUT_MS,
+                            maxContentLength: MAX_FETCH_URL_BYTES,
+                            maxBodyLength: MAX_FETCH_URL_BYTES,
+                            responseType: 'text',
+                            headers: {
+                                'User-Agent': 'Activepieces-Chat',
+                                Accept: 'text/html,application/xhtml+xml,application/json,text/plain;q=0.9,*/*;q=0.8',
+                            },
+                        }))
+                        if (error) {
+                            return { content: [{ type: 'text', text: `Failed to fetch ${toolInput.url}: ${error instanceof Error ? error.message : String(error)}` }] }
+                        }
+                        const contentType = String(response.headers['content-type'] ?? '')
+                        const text = /html/i.test(contentType) ? stripHtml(response.data).result : response.data
+                        return truncateLargeResult({ url: toolInput.url, content: text })
+                    },
+                    timeoutMs: FETCH_URL_TIMEOUT_MS + 5_000,
+                    toolName: 'ap_fetch_url',
+                })
+            },
+        }),
+    }
+}
+
 async function executeBatchAction({ executeWithTimeout, eventEmitter, toolCallId, pieceName, actionName, items, description }: {
     executeWithTimeout: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
@@ -686,6 +730,7 @@ export const chatWorkerTools = {
     createDisplayTools,
     createLocalTools,
     createCrossProjectTools,
+    createWebTools,
     wrapTestFlowGate,
     createThinkingTools,
     createPhaseTools,

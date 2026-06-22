@@ -8,18 +8,61 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
-import { LanguageModel, ModelMessage, SystemModelMessage } from 'ai'
+import { LanguageModel, ModelMessage, SystemModelMessage, ToolSet } from 'ai'
 
-function createChatModel({ provider, auth, config, modelId }: {
+const MAX_WEB_SEARCH_RESULTS = 5
+
+const WEB_SEARCH_PROVIDERS = new Set<AIProviderName>([
+    AIProviderName.ANTHROPIC,
+    AIProviderName.OPENAI,
+    AIProviderName.GOOGLE,
+    AIProviderName.ACTIVEPIECES,
+    AIProviderName.OPENROUTER,
+])
+
+function supportsWebSearch(provider: AIProviderName): boolean {
+    return WEB_SEARCH_PROVIDERS.has(provider)
+}
+
+/**
+ * Provider-native web search tools live in the toolset (Anthropic/OpenAI/Google).
+ * OpenRouter exposes web search through its `web` plugin instead (wired at model
+ * creation), so it returns nothing here. Unsupported providers also return nothing.
+ */
+function buildWebSearchTools({ provider, auth }: {
+    provider: AIProviderName
+    auth: Record<string, unknown>
+}): ToolSet {
+    switch (provider) {
+        case AIProviderName.ANTHROPIC: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return { web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }
+        }
+        case AIProviderName.OPENAI: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return { web_search: createOpenAI({ apiKey }).tools.webSearch({}) }
+        }
+        case AIProviderName.GOOGLE: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return { google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }
+        }
+        default:
+            return {}
+    }
+}
+
+function createChatModel({ provider, auth, config, modelId, webSearchEnabled = false }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
+    webSearchEnabled?: boolean
 }): LanguageModel {
     switch (provider) {
         case AIProviderName.OPENAI: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenAI({ apiKey }).chat(modelId)
+            const openai = createOpenAI({ apiKey })
+            return webSearchEnabled ? openai.responses(modelId) : openai.chat(modelId)
         }
         case AIProviderName.ANTHROPIC: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -65,7 +108,10 @@ function createChatModel({ provider, auth, config, modelId }: {
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenRouter({ apiKey }).chat(modelId) as LanguageModel
+            const settings = webSearchEnabled
+                ? { plugins: [{ id: 'web' as const, max_results: MAX_WEB_SEARCH_RESULTS }] }
+                : undefined
+            return createOpenRouter({ apiKey }).chat(modelId, settings) as LanguageModel
         }
         default: {
             const exhaustiveCheck: never = provider
@@ -181,6 +227,12 @@ type ContentPartLike = {
     input?: unknown
     args?: unknown
     output?: unknown
+    sourceType?: string
+    id?: string
+    url?: string
+    title?: string
+    mediaType?: string
+    filename?: string
 }
 
 function buildStepParts({ content }: {
@@ -201,6 +253,25 @@ function buildStepParts({ content }: {
                 break
             case 'text':
                 if (part.text) parts.push({ type: PersistedChatPartType.TEXT, text: part.text })
+                break
+            case 'source':
+                if (part.sourceType === 'url' && part.url) {
+                    parts.push({
+                        type: PersistedChatPartType.SOURCE_URL,
+                        sourceId: part.id ?? '',
+                        url: part.url,
+                        ...spreadIfDefined('title', part.title),
+                    })
+                }
+                else if (part.sourceType === 'document') {
+                    parts.push({
+                        type: PersistedChatPartType.SOURCE_DOCUMENT,
+                        sourceId: part.id ?? '',
+                        mediaType: part.mediaType ?? '',
+                        title: part.title ?? '',
+                        ...spreadIfDefined('filename', part.filename),
+                    })
+                }
                 break
             case 'tool-call': {
                 const toolName = part.toolName ?? ''
@@ -266,6 +337,8 @@ function buildStepParts({ content }: {
 
 export const chatAiUtils = {
     createChatModel,
+    supportsWebSearch,
+    buildWebSearchTools,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
