@@ -3,7 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { invoiceninjaAuth } from '../..';
 
 export const getClient = createAction({
@@ -24,7 +24,7 @@ export const getClient = createAction({
 
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
+      email: z.string().check(z.email()),
     });
 
     const INapiToken = context.auth.props.access_token;

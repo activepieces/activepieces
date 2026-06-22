@@ -7,7 +7,7 @@
     import { newCapturedForm } from "./lib/triggers/new-captured-form";
     import { newConversation } from "./lib/triggers/new-conversation";
     import { newContact } from "./lib/triggers/new-contact";
-    import { PieceCategory } from "@activepieces/shared";
+    import { PieceCategory } from '@activepieces/pieces-framework';
 
     export const insightoAuth = PieceAuth.SecretText({
       displayName: "API Key",

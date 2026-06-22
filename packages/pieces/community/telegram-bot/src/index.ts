@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { telegramAnswerCallbackQueryAction } from './lib/action/answer-callback-query.action';
 import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
 import { telegramDeleteMessageAction } from './lib/action/delete-message.action';

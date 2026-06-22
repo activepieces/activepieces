@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
@@ -39,7 +39,7 @@ export const clearRowsAction = createAction({
 
 		const sheetName = await getWorkSheetName(auth, spreadsheetId as string, sheetId as number);
 		const authClient = await createGoogleClient(auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const response = await sheets.spreadsheets.values.clear({
 			spreadsheetId: spreadsheetId as string,

@@ -6,7 +6,7 @@ import {
 	HttpRequest,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 function normalizeDomain(domain: string): string {
 	return domain.replace(/\/+$/, '');

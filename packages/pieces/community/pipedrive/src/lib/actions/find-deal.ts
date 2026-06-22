@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { GetField } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { searchFieldProp, searchFieldValueProp } from '../common/props';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 

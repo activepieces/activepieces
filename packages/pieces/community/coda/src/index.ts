@@ -4,7 +4,7 @@ import { createRowAction } from './lib/actions/create-row';
 import { upsertRowAction } from './lib/actions/upsert-row';
 import { updateRowAction } from './lib/actions/update-row';
 import { newRowCreatedTrigger } from './lib/triggers/new-row-created';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getRowAction } from './lib/actions/get-row';
 import { listTablesAction } from './lib/actions/list-tables';
 import { getTableAction } from './lib/actions/get-table';

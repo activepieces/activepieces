@@ -10,7 +10,7 @@ import {
   MondayWebhookEventType,
 } from '../common/constants';
 import { WebhookInformation } from '../common/models';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const specificColumnValueUpdatedTrigger = createTrigger({
   auth: mondayAuth,
   name: 'monday_specific_column_updated',

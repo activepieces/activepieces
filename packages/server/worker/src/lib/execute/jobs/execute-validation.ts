@@ -1,13 +1,5 @@
-import {
-    ActivepiecesError,
-    AppConnectionValue,
-    EngineOperationType,
-    EngineResponseStatus,
-    ErrorCode,
-    ExecuteValidateAuthJobData,
-    WorkerJobType,
-} from '@activepieces/shared'
-import { provisioner } from '../../cache/provisioner'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { AppConnectionValue, EngineOperationType, EngineResponseStatus, ExecuteValidateAuthJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
@@ -16,22 +8,13 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
     async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        await provisioner(ctx.log, ctx.apiClient).provision({
-            pieces: [data.piece],
-            codeSteps: [],
-        })
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        await execution.init({ flowVersionId: undefined, platformId: data.platformId, pieces: [data.piece], codeSteps: [] })
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
-            await sandbox.start({
-                flowVersionId: undefined,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
-            const result = await sandbox.execute(
-                EngineOperationType.EXECUTE_VALIDATE_AUTH,
-                {
+            const result = await execution.run({
+                operationType: EngineOperationType.EXECUTE_VALIDATE_AUTH,
+                operation: {
                     piece: data.piece,
                     auth: data.connectionValue as AppConnectionValue,
                     platformId: data.platformId,
@@ -40,8 +23,8 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
                     publicApiUrl: ctx.publicApiUrl,
                     timeoutInSeconds,
                 },
-                { timeoutInSeconds },
-            )
+                timeoutInSeconds,
+            })
 
             return {
                 kind: JobResultKind.SYNCHRONOUS,
@@ -52,7 +35,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
             }
         }
         catch (e) {
-            await ctx.sandboxManager.invalidate(ctx.log)
+            await execution.dispose({ invalidate: true })
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                 return {
                     kind: JobResultKind.SYNCHRONOUS,
@@ -63,7 +46,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
             throw e
         }
         finally {
-            await ctx.sandboxManager.release(ctx.log)
+            await execution.dispose({ invalidate: false })
         }
     },
 }

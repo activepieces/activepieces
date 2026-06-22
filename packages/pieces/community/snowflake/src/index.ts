@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { runMultipleQueries } from './lib/actions/run-multiple-queries';
 import { runQuery } from './lib/actions/run-query';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { insertRowAction } from './lib/actions/insert-row';
 import { updateRowAction } from './lib/actions/update-row';
 import { deleteRowAction } from './lib/actions/delete-row';

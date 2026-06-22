@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { getGraphBaseUrl } from './microsoft-cloud';
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { oneDriveAuth } from '../auth';
 

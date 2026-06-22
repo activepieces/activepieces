@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { getCredits } from './api';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export type ClearoutAuthType = { apiKey: string };
@@ -33,7 +33,7 @@ export const clearoutAuth = PieceAuth.CustomAuth({
 
 const validateAuth = async (auth: ClearoutAuthType) => {
   await propsValidation.validateZod(auth, {
-    apiKey: z.string().min(1),
+    apiKey: z.string().check(z.minLength(1)),
   });
 
   const response = await getCredits(auth);

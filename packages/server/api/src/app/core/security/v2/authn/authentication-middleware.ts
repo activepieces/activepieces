@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import { FastifyRequest } from 'fastify'
 import { RouteKind } from '../../authorization/common'
 import { authenticateOrThrow } from './authenticate'

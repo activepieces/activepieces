@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { captureScreenshot } from './lib/actions/capture-screenshot';
 import { convertToPdf } from './lib/actions/convert-pdf';
 import { generateEinvoice } from './lib/actions/generate-einvoice';

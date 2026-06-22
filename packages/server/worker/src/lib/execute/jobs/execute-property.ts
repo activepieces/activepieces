@@ -1,11 +1,5 @@
-import {
-    EngineOperationType,
-    EngineResponseStatus,
-    ExecutePropertyJobData,
-    tryCatch,
-    WorkerJobType,
-} from '@activepieces/shared'
-import { provisioner } from '../../cache/provisioner'
+import { tryCatch } from '@activepieces/core-utils'
+import { EngineOperationType, EngineResponseStatus, ExecutePropertyJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
@@ -15,22 +9,13 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
     async execute(ctx: JobContext, data: ExecutePropertyJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        await provisioner(ctx.log, ctx.apiClient).provision({
-            pieces: [data.piece],
-            codeSteps: [],
-        })
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        await execution.init({ flowVersionId: undefined, platformId: data.platformId, pieces: [data.piece], codeSteps: [] })
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         const { data: result, error } = await tryCatch(async () => {
-            await sandbox.start({
-                flowVersionId: undefined,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
-            return sandbox.execute(
-                EngineOperationType.EXECUTE_PROPERTY,
-                {
+            return execution.run({
+                operationType: EngineOperationType.EXECUTE_PROPERTY,
+                operation: {
                     piece: data.piece,
                     propertyName: data.propertyName,
                     actionOrTriggerName: data.actionOrTriggerName,
@@ -45,13 +30,13 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
                     publicApiUrl: ctx.publicApiUrl,
                     timeoutInSeconds,
                 },
-                { timeoutInSeconds },
-            )
+                timeoutInSeconds,
+            })
         })
-        await ctx.sandboxManager.release(ctx.log)
+        await execution.dispose({ invalidate: false })
 
         if (error) {
-            await ctx.sandboxManager.invalidate(ctx.log)
+            await execution.dispose({ invalidate: true })
             if (isSandboxTimeout(error)) {
                 return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.TIMEOUT, response: {} }
             }

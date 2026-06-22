@@ -7,7 +7,8 @@ import {
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';

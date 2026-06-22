@@ -1,9 +1,5 @@
-import {
-  FolderDto,
-  PopulatedFlow,
-  SeekPage,
-  Table,
-} from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 
 export type TreeItemType = 'folder' | 'flow' | 'table' | 'load-more-folder';
 

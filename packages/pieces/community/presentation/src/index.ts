@@ -2,7 +2,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { generatePresentations } from './lib/actions/generate-presentations';
 
 import { presentonAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newPresentation } from './lib/triggers/new-presentation';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 

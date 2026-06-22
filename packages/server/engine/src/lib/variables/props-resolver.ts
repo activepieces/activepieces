@@ -1,5 +1,7 @@
+import { formulaEvaluator } from '@activepieces/core-formula'
+import { applyFunctionToValues, extractMustacheTokens, isNil, isString } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, extractMustacheTokens, FormulaEvaluationError, formulaEvaluator, isNil, isString } from '@activepieces/shared'
+import { FormulaEvaluationError } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'

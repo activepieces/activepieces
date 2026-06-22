@@ -1,6 +1,6 @@
 import { normalizeAgentToolAuth } from '../../src/lib/tools'
 
-const CONNECTION_REF = "{{connections['my-notion']}}"
+const CONNECTION_REF = '{{connections[\'my-notion\']}}'
 
 describe('normalizeAgentToolAuth', () => {
     it('passes a bare connection reference string through unchanged', () => {

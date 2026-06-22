@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addFileAttachment } from './lib/actions/add-file-attachment';
 import { cancelPurchaseOrder } from './lib/actions/cancel-purchase-order';
 import { closePurchaseOrder } from './lib/actions/close-purchase-order';

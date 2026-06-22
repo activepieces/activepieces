@@ -9,7 +9,7 @@ import {
   HttpRequest,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { saasticCommon } from '../common';
 import { saasticAuth } from '../..';
 
@@ -51,8 +51,8 @@ export const createCustomer = createAction({
 
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
-      signed_up_at: z.string().datetime().optional(),
+      email: z.string().check(z.email()),
+      signed_up_at: z.optional(z.string().check(z.iso.datetime())),
     });
 
     const request: HttpRequest = {

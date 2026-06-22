@@ -1,12 +1,6 @@
+import { ActivepiecesError, ErrorCode, isNil, ProjectId } from '@activepieces/core-utils'
 import { TriggerBase } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    ErrorCode,
-    FlowTriggerType,
-    FlowVersion,
-    isNil,
-    ProjectId,
-} from '@activepieces/shared'
+import { FlowTriggerType, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'

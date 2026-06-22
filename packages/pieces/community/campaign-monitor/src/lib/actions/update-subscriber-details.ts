@@ -3,7 +3,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, customFields, listId } from '../common/props';
-import { HttpStatusCode } from 'axios';
 
 export const updateSubscriberDetailsAction = createAction({
   auth: campaignMonitorAuth,
@@ -98,7 +97,7 @@ export const updateSubscriberDetailsAction = createAction({
       payload
     );
 
-    if (response.status === HttpStatusCode.Ok) {
+    if (response.status === 200) {
       return {
         success: true,
       };

@@ -1,27 +1,12 @@
 import { inspect } from 'node:util'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { onCallService } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    BeginExecuteFlowOperation,
-    EngineOperationType,
-    EngineResponseStatus,
-    ErrorCode,
-    ExecuteFlowJobData,
-    ExecutionType,
-    FlowRunStatus,
-    FlowVersion,
-    isNil,
-    ResumeExecuteFlowOperation,
-    RunInternalError,
-    RunInternalErrorSource,
-    tryCatch,
-    WorkerJobType,
-} from '@activepieces/shared'
-import { flowCache } from '../../cache/flow/flow-cache'
+import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
+import { flowCache } from '../../runtime/local-pool/cache/flow/flow-cache'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { provisionFlowPieces } from '../utils/flow-helpers'
+import { resolveFlowArtifacts } from '../utils/flow-helpers'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -35,37 +20,34 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
-        if (provisionError) {
-            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, provisionError))
-            throw provisionError
+        const { data: artifacts, error: resolveError } = await tryCatch(() => resolveFlowArtifacts({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
+        if (resolveError) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, resolveError))
+            throw resolveError
         }
-        if (!provisioned) {
+        if (artifacts.disabled) {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
         if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
-            throw new ActivepiecesError({
+            const error = new ActivepiecesError({
                 code: ErrorCode.RESUME_LOGS_FILE_MISSING,
                 params: { runId: data.runId },
             }, 'logsFileId is missing for RESUME operation')
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, error))
+            throw error
         }
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
         try {
-            await sandbox.start({
-                flowVersionId: flowVersion.id,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
+            await execution.init({ flowVersionId: flowVersion.id, platformId: data.platformId, pieces: artifacts.pieces, codeSteps: artifacts.codeSteps })
             const operation = buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
-            const result = await sandbox.execute(
-                EngineOperationType.EXECUTE_FLOW,
+            const result = await execution.run({
+                operationType: EngineOperationType.EXECUTE_FLOW,
                 operation,
-                { timeoutInSeconds },
-            )
+                timeoutInSeconds,
+            })
 
             if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
@@ -84,7 +66,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
-            await ctx.sandboxManager.invalidate(ctx.log)
+            await execution.dispose({ invalidate: true })
             if (e instanceof ActivepiecesError) {
                 if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.TIMEOUT)
@@ -103,7 +85,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             throw e
         }
         finally {
-            await ctx.sandboxManager.release(ctx.log)
+            await execution.dispose({ invalidate: false })
         }
     },
 }

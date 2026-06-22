@@ -14,7 +14,7 @@ import { documentStateChanged } from './lib/triggers/document-state-changed';
 import { documentUpdated } from './lib/triggers/document-updated';
 
 import { pandadocAuth } from './lib/common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const pandadoc = createPiece({
   displayName: 'PandaDoc',

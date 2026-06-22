@@ -7,7 +7,7 @@ import { subscribeCustomer } from './lib/actions/subscribe-customer';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { searchCustomersSubscription } from './lib/actions/search-customers-subscription';
 import { BASE_URL } from './lib/common/client';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const paywhirl = createPiece({
   displayName: 'Paywhirl',

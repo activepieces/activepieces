@@ -63,6 +63,11 @@
       "outputs": ["../../../dist/packages/ee/embed-sdk/**"],
       "cache": false
     },
+    "bundle": {
+      "dependsOn": ["build", "@activepieces/cli#build"],
+      "inputs": ["src/**", "package.json"],
+      "outputs": ["dist/index.bundle.js", "dist/package.json"]
+    },
     "@activepieces/engine#test": {
       "dependsOn": [
         "build",

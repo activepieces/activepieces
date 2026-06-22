@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { raindropAuth } from './lib/auth';
 import { createRaindropAction } from './lib/actions/create-raindrop';
 import { getRaindropAction } from './lib/actions/get-raindrop';

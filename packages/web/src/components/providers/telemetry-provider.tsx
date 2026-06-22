@@ -1,4 +1,5 @@
-import { ApFlagId, isNil, TelemetryEvent } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { ApFlagId, TelemetryEvent } from '@activepieces/shared';
 import posthog from 'posthog-js';
 import React, { useEffect, useRef } from 'react';
 import { useDeepCompareEffect } from 'react-use';

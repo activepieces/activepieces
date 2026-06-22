@@ -23,9 +23,9 @@ describe('svgPathUtils.transposePath', () => {
     expect(
       normalize(svgPathUtils.transposePath('a15,15 0 0,0 -15,15')),
     ).toEqual('a15,15 0 0,1 15,-15');
-    expect(normalize(svgPathUtils.transposePath('a12,12 0 0,1 12,-12'))).toEqual(
-      'a12,12 0 0,0 -12,12',
-    );
+    expect(
+      normalize(svgPathUtils.transposePath('a12,12 0 0,1 12,-12')),
+    ).toEqual('a12,12 0 0,0 -12,12');
   });
 
   it('handles negative radii the same way the svg spec does (absolute value)', () => {

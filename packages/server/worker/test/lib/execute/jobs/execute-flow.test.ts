@@ -1,21 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-    ActivepiecesError,
-    ErrorCode,
-    ExecutionType,
-    FlowActionType,
-    FlowRunStatus,
-    FlowTriggerType,
-    FlowVersionState,
-    StreamStepProgress,
-    RunEnvironment,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils';
+import { ExecutionType, FlowActionType, FlowRunStatus, FlowTriggerType, FlowVersionState, StreamStepProgress, RunEnvironment, WorkerJobType } from '@activepieces/shared';
 import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
 
 const mockGetVersion = vi.fn()
 
-vi.mock('../../../../src/lib/cache/flow/flow-cache', () => ({
+vi.mock('../../../../src/lib/runtime/local-pool/cache/flow/flow-cache', () => ({
     flowCache: () => ({
         getVersion: mockGetVersion,
     }),
@@ -28,7 +18,7 @@ vi.mock('../../../../src/lib/config/worker-settings', () => ({
 }))
 
 vi.mock('../../../../src/lib/execute/utils/flow-helpers', () => ({
-    provisionFlowPieces: vi.fn().mockResolvedValue(true),
+    resolveFlowArtifacts: vi.fn().mockResolvedValue({ disabled: false, pieces: [], codeSteps: [] }),
 }))
 
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
@@ -100,9 +90,10 @@ function makeResumeJobData(overrides?: Partial<ExecuteFlowJobData>): ExecuteFlow
 }
 
 function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
-    const mockSandbox = {
-        start: vi.fn(),
-        execute: vi.fn().mockResolvedValue({ status: 'OK' }),
+    const mockExecution = {
+        init: vi.fn(),
+        run: vi.fn().mockResolvedValue({ status: 'OK' }),
+        dispose: vi.fn(),
     }
     return {
         log: {
@@ -115,15 +106,14 @@ function makeMockContext(apiOverrides?: Record<string, vi.Mock>) {
             uploadRunLog: vi.fn(),
             ...apiOverrides,
         },
-        sandboxManager: {
-            acquire: vi.fn().mockReturnValue(mockSandbox),
-            release: vi.fn(),
-            invalidate: vi.fn(),
+        runtime: {
+            createExecution: vi.fn().mockReturnValue(mockExecution),
         },
+        workerIndex: 0,
         engineToken: 'test-token',
         internalApiUrl: 'http://localhost:3000',
         publicApiUrl: 'http://localhost:4200',
-        mockSandbox,
+        mockExecution,
     } as any
 }
 
@@ -142,7 +132,7 @@ describe('executeFlowJob', () => {
 
             await executeFlowJob.execute(ctx, data)
 
-            const operation = ctx.mockSandbox.execute.mock.calls[0][1]
+            const operation = ctx.mockExecution.run.mock.calls[0][0].operation
             expect(operation.executionType).toBe(ExecutionType.BEGIN)
             expect(operation.triggerPayload).toEqual({ type: 'ref', fileId: 'huge-file-1' })
             expect(operation.executionState).toBeUndefined()
@@ -157,7 +147,7 @@ describe('executeFlowJob', () => {
 
             await executeFlowJob.execute(ctx, data)
 
-            const operation = ctx.mockSandbox.execute.mock.calls[0][1]
+            const operation = ctx.mockExecution.run.mock.calls[0][0].operation
             expect(operation.executionType).toBe(ExecutionType.RESUME)
             expect(operation.resumePayload).toEqual({ type: 'ref', fileId: 'resume-payload-1' })
             expect(operation.logsFileId).toBe('logs-file-1')
@@ -200,7 +190,7 @@ describe('executeFlowJob', () => {
                 expect.objectContaining({ status: FlowRunStatus.FAILED }),
             )
 
-            expect(ctx.sandboxManager.acquire).not.toHaveBeenCalled()
+            expect(ctx.runtime.createExecution).not.toHaveBeenCalled()
         })
     })
 })

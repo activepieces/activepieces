@@ -9,7 +9,7 @@ import { gmailGetListOfAgents } from './lib/actions/gmail-get-list-of-agents';
 import { createPhoneCall } from './lib/actions/create-phone-call';
 import { getCallDetails } from './lib/actions/get-call-details';
 import { scheduleCallAgent } from './lib/actions/schedule-call-agent';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getCallTranscript } from './lib/actions/get-call-transcript';
 import { aiAnswerAuth } from './lib/auth';
 

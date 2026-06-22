@@ -1,11 +1,5 @@
-import {
-    ListPlatformAppConnectionsRequestQuery,
-    PlatformAppConnectionOwnersResponse,
-    PlatformAppConnectionsListItem,
-    PrincipalType,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-} from '@activepieces/shared'
+import { SeekPage } from '@activepieces/core-utils'
+import { ListPlatformAppConnectionsRequestQuery, PlatformAppConnectionOwnersResponse, PlatformAppConnectionsListItem, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'

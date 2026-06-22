@@ -23,6 +23,24 @@ Embeddable MCP fixes that. Your user clicks one **Authorize** button inside your
 It's normal OAuth. The only Activepieces-specific part is one SDK call (`authorizeMcp`) that shows the Authorize popup inside your app.
 </Info>
 
+## Quick token (no OAuth)
+
+If you don't need the full OAuth flow — you just want a token to point an AI at the embedded user's project — call `generateMcpToken()` from the frontend. It uses the embed session you already configured, so there's no app registration, no PKCE, and no popup.
+
+```ts
+const { mcpServerUrl, mcpToken } = await activepieces.generateMcpToken();
+
+// Point your MCP client at mcpServerUrl with Authorization: Bearer <mcpToken>
+```
+
+This is the same kind of credential the built-in chat assistant uses internally. The token:
+- is scoped to **that user's project** (the `externalProjectId` in their embed JWT),
+- works for **15 minutes** — call `generateMcpToken()` again to get a fresh one.
+
+<Note>
+Use this when your app holds the MCP client and the embedded user is already signed in through the SDK. Use the **OAuth flow below** when a separate third-party app needs long-lived, revocable access on the user's behalf (it returns a refresh token).
+</Note>
+
 ## Before you start
 
 Embedding should already work for you:

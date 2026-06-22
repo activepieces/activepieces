@@ -5,10 +5,10 @@ Event Destinations streams platform and project activity events to webhook URLs 
 
 ## Key Files
 - `packages/server/api/src/app/event-destinations/` — controller, service, entity
-- `packages/shared/src/lib/ee/event-destinations/dto.ts` — request/response Zod schemas (test endpoint accepts optional `event`)
-- `packages/shared/src/lib/ee/event-destinations/index.ts` — barrel export
-- `packages/shared/src/lib/ee/audit-events/` — `ApplicationEventName` enum (27 event types)
-- `packages/shared/src/lib/ee/audit-events/mock-event-builder.ts` — `buildMockEvent()` shared helper that returns a typed `ApplicationEvent` mock for any event name
+- `packages/core/shared/src/lib/ee/event-destinations/dto.ts` — request/response Zod schemas (test endpoint accepts optional `event`)
+- `packages/core/shared/src/lib/ee/event-destinations/index.ts` — barrel export
+- `packages/core/shared/src/lib/ee/audit-events/` — `ApplicationEventName` enum (27 event types)
+- `packages/core/shared/src/lib/ee/audit-events/mock-event-builder.ts` — `buildMockEvent()` shared helper that returns a typed `ApplicationEvent` mock for any event name
 - `packages/web/src/app/routes/platform/infra/event-destinations/index.tsx` — `EventDestinationsPage`
 - `packages/web/src/app/routes/platform/infra/event-destinations/lib/event-destinations-collection.ts` — TanStack DB live collection + mutations (incl. `useImportHandlerFlow`)
 - `packages/web/src/app/routes/platform/infra/event-destinations/lib/handler-flow-builder.ts` — generates a `Template` for a one-click webhook-triggered handler flow with per-event router branches

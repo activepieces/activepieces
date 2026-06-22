@@ -2,7 +2,7 @@ import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-
 import { propsValidation } from '@activepieces/pieces-common';
 import { runwayAuth } from '../common';
 import RunwayML from '@runwayml/sdk';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const generateVideoFromImage = createAction({
 	auth: runwayAuth,
@@ -198,9 +198,9 @@ export const generateVideoFromImage = createAction({
 	async run({ auth, propsValue, files }) {
 		// Zod validation
 		await propsValidation.validateZod(propsValue, {
-			promptText: z.string().max(1000, 'Prompt text must be 1000 characters or fewer').optional(),
-			seed: z.number().min(0, 'Seed must be at least 0').max(4294967295, 'Seed must be at most 4294967295').optional(),
-			promptImageUrl: z.string().url('Prompt image URL must be a valid HTTPS URL').optional(),
+			promptText: z.optional(z.string().check(z.maxLength(1000, 'Prompt text must be 1000 characters or fewer'))),
+			seed: z.optional(z.number().check(z.minimum(0, 'Seed must be at least 0'), z.maximum(4294967295, 'Seed must be at most 4294967295'))),
+			promptImageUrl: z.optional(z.string().check(z.url('Prompt image URL must be a valid HTTPS URL'))),
 		});
 
 		// Input validation

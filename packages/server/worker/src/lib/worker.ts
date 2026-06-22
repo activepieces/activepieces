@@ -1,34 +1,19 @@
 import { createServer } from 'http'
 import os from 'os'
+import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    ConsumeJobRequest,
-    createRpcClient,
-    EngineResponseStatus,
-    ExecutionMode,
-    isNil,
-    JobData,
-    SandboxInformation,
-    spreadIfDefined,
-    tryCatch,
-    WebsocketServerEvent,
-    WorkerMachineHealthcheckRequest,
-    WorkerProps,
-    WorkerSettingsResponse,
-    WorkerToApiContract,
-} from '@activepieces/shared'
+import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
-import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
-import { EgressStack, startEgressStack } from './egress/lifecycle'
 import { getHandler } from './execute/job-registry'
-import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
+import { pieceInstaller } from './runtime/local-pool/cache/pieces/piece-installer'
+import { selectRuntime } from './runtime/runtime-factory'
+import { Runtime } from './runtime/types'
 
 
 const AP_VERSION = apVersionUtil.getCurrentRelease()
@@ -61,9 +46,7 @@ const workerHostname = os.hostname()
 
 let healthServerInstance: ReturnType<typeof createServer> | null = null
 
-let egressStack: EgressStack | null = null
-
-let sandboxManagers: SandboxManager[] = []
+let runtime: Runtime | null = null
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
@@ -80,17 +63,6 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
-            if (!egressStack) {
-                const { data, error } = await tryCatch(() => startEgressStack({ log: logger, apiUrl }))
-                if (error) {
-                    // Kill switch: if SSRF hardening can't be applied, refuse to accept any job.
-                    // Running without egress protection in a configured-hardened worker is
-                    // more dangerous than crash-looping — the orchestrator will restart us.
-                    logger.fatal({ error }, 'Egress stack failed to start; aborting worker to avoid running unprotected')
-                    process.exit(1)
-                }
-                egressStack = data
-            }
             void warmupPiecesOnStartup(apiClient)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -115,16 +87,14 @@ export const worker = {
 
     async stop(): Promise<void> {
         polling = false
-        await Promise.all(sandboxManagers.map((sm) => sm.shutdown(logger)))
-        sandboxManagers = []
+        if (runtime) {
+            await runtime.shutdown(logger)
+            runtime = null
+        }
         socket?.disconnect()
         socket = null
         healthServerInstance?.close()
         healthServerInstance = null
-        if (egressStack) {
-            await egressStack.shutdown()
-            egressStack = null
-        }
         logger.info('Worker stopped')
     },
 }
@@ -135,10 +105,10 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
 
     const generation = connectionGeneration
 
-    if (sandboxManagers.length > 0) {
-        logger.info({ count: sandboxManagers.length }, 'Shutting down old sandbox managers before creating new ones')
-        await Promise.all(sandboxManagers.map((sm) => sm.shutdown(logger)))
-        sandboxManagers = []
+    if (runtime) {
+        logger.info('Shutting down old runtime before creating a new one')
+        await runtime.shutdown(logger)
+        runtime = null
     }
 
     const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
@@ -146,18 +116,18 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    const proxyPort = egressStack?.proxyPort ?? null
-    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, proxyPort }))
+    runtime = selectRuntime({ concurrency, log: logger })
 
     logger.info({ concurrency }, 'Starting polling workers')
 
-    const workers = sandboxManagers.map((sbManager, index) =>
-        pollAndExecute(apiClient, sbManager, index, generation),
+    const activeRuntime = runtime
+    const workers = Array.from({ length: concurrency }, (_, workerIndex) =>
+        pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
     )
     await Promise.all(workers)
 }
 
-async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: SandboxManager, workerIndex: number, generation: number): Promise<void> {
+async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, workerIndex: number, generation: number): Promise<void> {
     const workerLog = logger.child({ workerIndex })
     workerLog.info('Polling worker started')
 
@@ -208,7 +178,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         }, 30_000)
 
         const { data: result, error: execError } = await tryCatch(() =>
-            executeJob(apiClient, job, sbManager),
+            executeJob(apiClient, job, runtime, workerIndex),
         )
 
 
@@ -234,7 +204,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
     }
 }
 
-async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, sbManager: SandboxManager): Promise<JobResult> {
+async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
     const rawData = job.jobData
     const jobData = JobData.parse(rawData)
     const jobLogger = createLogger({
@@ -256,7 +226,8 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
             const ctx: JobContext = {
                 apiClient,
-                sandboxManager: sbManager,
+                runtime,
+                workerIndex,
                 jobId: job.jobId,
                 engineToken: job.engineToken,
                 internalApiUrl: apiUrl,
@@ -355,15 +326,13 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
 }
 
 async function buildSandboxInfo(): Promise<SandboxInformation[]> {
-    const activeSandboxes = sandboxManagers
-        .map((sandboxManager) => sandboxManager.getActiveSandbox())
-        .filter((sandbox): sandbox is ActiveSandboxInfo => !isNil(sandbox))
+    const activeExecutors = runtime?.getActiveExecutors() ?? []
 
-    return Promise.all(activeSandboxes.map(async (sandbox) => ({
-        sandboxId: sandbox.sandboxId,
-        boxId: sandbox.boxId,
-        busy: sandbox.busy,
-        memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(sandbox.pid),
+    return Promise.all(activeExecutors.map(async (executor) => ({
+        sandboxId: executor.sandboxId,
+        boxId: executor.boxId,
+        busy: executor.busy,
+        memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(executor.pid),
     })))
 }
 

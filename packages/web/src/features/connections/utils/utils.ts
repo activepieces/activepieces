@@ -1,4 +1,9 @@
 import {
+  assertNotNullOrUndefined,
+  isNil,
+  apId,
+} from '@activepieces/core-utils';
+import {
   CustomAuthProps,
   OIDCAuthProps,
   OAuth2Props,
@@ -11,9 +16,6 @@ import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   UpsertAppConnectionRequestBody,
-  assertNotNullOrUndefined,
-  isNil,
-  apId,
   AppConnectionStatus,
   OAuth2GrantType,
 } from '@activepieces/shared';
