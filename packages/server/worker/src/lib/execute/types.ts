@@ -1,6 +1,6 @@
 import { type ApLogger } from '@activepieces/server-utils'
 import { EngineResponseStatus, JobData, WorkerJobType, WorkerToApiContract } from '@activepieces/shared'
-import { SandboxManager } from './sandbox-manager'
+import { Runtime } from '../runtime/types'
 
 export enum JobResultKind {
     FIRE_AND_FORGET = 'FIRE_AND_FORGET',
@@ -9,7 +9,8 @@ export enum JobResultKind {
 
 export type JobContext = {
     apiClient: WorkerToApiContract
-    sandboxManager: SandboxManager
+    runtime: Runtime
+    workerIndex: number
     jobId: string
     engineToken: string
     internalApiUrl: string
