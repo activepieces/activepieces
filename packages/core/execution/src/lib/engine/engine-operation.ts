@@ -64,10 +64,7 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
     auth: AppConnectionValue
 }
 
-export type ExecuteRefreshTokenAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
-    piece: PiecePackage
-    auth: AppConnectionValue
-}
+export type ExecuteRefreshTokenAuthOperation = ExecuteValidateAuthOperation
 
 export type ExecuteRefreshTokenAuthResponse =
     | { skipped: true }

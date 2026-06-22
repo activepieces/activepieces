@@ -6,7 +6,7 @@ import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
-import { PiecePackage } from '@activepieces/core-piece-types'
+import { AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
 
@@ -184,7 +184,7 @@ export const ExecuteTokenRefreshJobData = z.object({
     platformId: z.string(),
     piece: PiecePackage,
     schemaVersion: z.number(),
-    connectionValue: z.unknown(),
+    connectionValue: z.custom<AppConnectionValue>(),
     requestId: z.string(),
     webserverId: z.string(),
 })

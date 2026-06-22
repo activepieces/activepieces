@@ -83,7 +83,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     jobType: WorkerJobType.EXECUTE_TOKEN_REFRESH,
                 }, log)
                 if (engineResponse.status !== EngineResponseStatus.OK) {
-                    throw new Error(`Custom auth token refresh failed: ${engineResponse.error}`)
+                    throw new CustomAuthRefreshError(`Custom auth token refresh failed: ${engineResponse.error ?? 'unknown engine error'}`)
                 }
                 const refreshResult = engineResponse.response
                 if (refreshResult.skipped) {
@@ -101,8 +101,11 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     connection.value = {
                         ...connection.value,
                         access_token: refreshResult.access_token,
-                        token_expires_at: dayjs().unix() + refreshResult.expires_in,
+                        // expires_in <= 0 means no expiry — leave token_expires_at nil so
+                        // isCustomAuthTokenStale returns false until the next re-save.
+                        token_expires_at: refreshResult.expires_in > 0 ? dayjs().unix() + refreshResult.expires_in : undefined,
                         has_refresh_callback: true,
+                        refresh_recovery_attempted: undefined,
                     }
                 }
                 break
@@ -156,7 +159,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 catch (e) {
                     exceptionHandler.handle(e, log)
                     const isOAuth2Error = oauth2Util(log).isUserError(e)
-                    const isCustomAuthError = !isNil(appConnection) && appConnection.value.type === AppConnectionType.CUSTOM_AUTH
+                    const isCustomAuthError = e instanceof CustomAuthRefreshError
                     if (!isNil(appConnection) && (isOAuth2Error || isCustomAuthError)) {
                         appConnection.status = AppConnectionStatus.ERROR
                         await appConnectionsRepo().update(appConnection.id, {
@@ -190,7 +193,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 return oauth2Util(log).isExpired(connection.value)
             case AppConnectionType.CUSTOM_AUTH: {
                 const stale = isCustomAuthTokenStale(connection.value)
-                log.info({
+                log.debug({
                     pieceName: connection.pieceName,
                     externalId: connection.externalId,
                     hasRefreshCallback: connection.value.has_refresh_callback,
@@ -214,10 +217,7 @@ export function isCustomAuthTokenStale(value: { has_refresh_callback?: boolean, 
         // Only trust this flag if we have an access_token (piece worked before) or
         // recovery was already attempted. If neither is true, the flag may have been
         // written incorrectly — allow one recovery attempt.
-        if (!isNil(value.access_token) || value.refresh_recovery_attempted) {
-            return false
-        }
-        return true
+        return isNil(value.access_token) && !value.refresh_recovery_attempted
     }
     if (isNil(value.access_token)) {
         return true
@@ -226,6 +226,13 @@ export function isCustomAuthTokenStale(value: { has_refresh_callback?: boolean, 
         return false
     }
     return dayjs().unix() + TOKEN_REFRESH_BUFFER_SECONDS >= value.token_expires_at
+}
+
+class CustomAuthRefreshError extends Error {
+    constructor(message: string) {
+        super(message)
+        this.name = 'CustomAuthRefreshError'
+    }
 }
 
 async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {

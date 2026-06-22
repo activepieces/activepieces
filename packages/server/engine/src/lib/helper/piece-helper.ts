@@ -14,6 +14,8 @@ import {
     StaticPropsValue } from '@activepieces/pieces-framework'
 import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
+
+const DEFAULT_REFRESH_EXPIRES_IN_SECONDS = 3300
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../piece-context/flows'
 import { utils } from '../utils'
@@ -128,10 +130,7 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
-        const server = {
-            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
-            publicUrl: params.publicApiUrl,
-        }
+        const server = buildServerContext(params)
         return  validateAuth({
             authValue: params.auth,
             pieceAuth: piece.auth,
@@ -157,18 +156,13 @@ export const pieceHelper = {
             return { skipped: true }
         }
 
-        const server = {
-            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
-            publicUrl: params.publicApiUrl,
-        }
-
-        const DEFAULT_EXPIRES_IN_SECONDS = 3300
+        const server = buildServerContext(params)
         const result = await pieceAuth.refresh.generate({
             auth: params.auth.props,
             server,
         })
 
-        const expiresIn = result.expires_in ?? pieceAuth.refresh.defaultExpiresIn ?? DEFAULT_EXPIRES_IN_SECONDS
+        const expiresIn = result.expires_in ?? pieceAuth.refresh.defaultExpiresIn ?? DEFAULT_REFRESH_EXPIRES_IN_SECONDS
 
         return {
             skipped: false,
@@ -292,4 +286,11 @@ type ValidateAuthParams = {
     }
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
+}
+
+function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: string, publicApiUrl: string }) {
+    return {
+        apiUrl: internalApiUrl.endsWith('/') ? internalApiUrl : internalApiUrl + '/',
+        publicUrl: publicApiUrl,
+    }
 }

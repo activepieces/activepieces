@@ -7,10 +7,18 @@ const NOW = dayjs().unix()
 
 describe('isCustomAuthTokenStale', () => {
     describe('when has_refresh_callback is false', () => {
-        it('returns false regardless of token state', () => {
-            expect(isCustomAuthTokenStale({ has_refresh_callback: false })).toBe(false)
-            expect(isCustomAuthTokenStale({ has_refresh_callback: false, access_token: undefined })).toBe(false)
+        it('returns false when access_token is present (refresh is confirmed to skip)', () => {
+            expect(isCustomAuthTokenStale({ has_refresh_callback: false, access_token: 'tok' })).toBe(false)
             expect(isCustomAuthTokenStale({ has_refresh_callback: false, access_token: 'tok', token_expires_at: NOW - 1 })).toBe(false)
+        })
+
+        it('returns false when recovery was already attempted', () => {
+            expect(isCustomAuthTokenStale({ has_refresh_callback: false, refresh_recovery_attempted: true })).toBe(false)
+        })
+
+        it('returns true when no access_token and no recovery yet (allows one recovery attempt)', () => {
+            expect(isCustomAuthTokenStale({ has_refresh_callback: false })).toBe(true)
+            expect(isCustomAuthTokenStale({ has_refresh_callback: false, access_token: undefined })).toBe(true)
         })
     })
 

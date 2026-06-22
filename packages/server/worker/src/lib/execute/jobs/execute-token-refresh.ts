@@ -1,15 +1,13 @@
 import {
-    ActivepiecesError,
-    AppConnectionValue,
     EngineOperationType,
     EngineResponseStatus,
-    ErrorCode,
     ExecuteTokenRefreshJobData,
     WorkerJobType,
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
+import { isSandboxTimeout } from '../utils/sandbox-helpers'
 
 export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_TOKEN_REFRESH,
@@ -33,7 +31,7 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
                 EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH,
                 {
                     piece: data.piece,
-                    auth: data.connectionValue as AppConnectionValue,
+                    auth: data.connectionValue,
                     platformId: data.platformId,
                     engineToken: ctx.engineToken,
                     internalApiUrl: ctx.internalApiUrl,
@@ -53,7 +51,7 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
         }
         catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
-            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
+            if (isSandboxTimeout(e)) {
                 return {
                     kind: JobResultKind.SYNCHRONOUS,
                     status: EngineResponseStatus.TIMEOUT,
