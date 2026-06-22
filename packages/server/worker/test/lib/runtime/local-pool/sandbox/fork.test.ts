@@ -1,9 +1,9 @@
 import { ChildProcess } from 'child_process'
 import path from 'path'
 import { describe, it, expect, afterEach } from 'vitest'
-import { simpleProcess } from '../../../src/lib/sandbox/fork'
+import { simpleProcess } from '../../../../../src/lib/runtime/local-pool/sandbox/fork'
 
-const fixturePath = path.resolve(__dirname, '../../fixtures/echo-env.js')
+const fixturePath = path.resolve(__dirname, '../../../../fixtures/echo-env.js')
 const children: ChildProcess[] = []
 
 afterEach(() => {

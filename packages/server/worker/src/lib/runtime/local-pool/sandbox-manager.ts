@@ -1,10 +1,10 @@
 import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ApEnvironment, ExecutionMode, WorkerToApiContract } from '@activepieces/shared'
-import { system, WorkerSystemProp } from '../config/configs'
-import { workerSettings } from '../config/worker-settings'
-import { Sandbox } from '../sandbox/types'
+import { system, WorkerSystemProp } from '../../config/configs'
+import { workerSettings } from '../../config/worker-settings'
 import { createSandboxForJob } from './create-sandbox-for-job'
+import { Sandbox } from './sandbox/types'
 
 export function createSandboxManager({ boxId }: { boxId: number }): SandboxManager {
     let currentSandbox: Sandbox | null = null
