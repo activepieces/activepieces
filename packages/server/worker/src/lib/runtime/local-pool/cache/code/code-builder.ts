@@ -2,8 +2,9 @@ import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
-import { ExecutionMode, FlowVersionState, SourceCode } from '@activepieces/shared'
-import { workerSettings } from '../../config/worker-settings'
+import { ExecutionMode } from '@activepieces/shared'
+import { workerSettings } from '../../../../config/worker-settings'
+import { CodeArtifact } from '../../../types'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 import { bunRunner } from './bun-runner'
 
@@ -182,13 +183,6 @@ async function handleCompilationError({ codePath, error }: HandleCompilationErro
 type ProcessCodeStepParams = {
     artifact: CodeArtifact
     codesFolderPath: string
-}
-
-export type CodeArtifact = {
-    name: string
-    sourceCode: SourceCode
-    flowVersionId: string
-    flowVersionState: FlowVersionState
 }
 
 type InstallDependenciesParams = {

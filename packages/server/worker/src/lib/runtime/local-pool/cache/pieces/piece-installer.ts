@@ -5,7 +5,7 @@ import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepi
 import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, PrivatePiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import decompress from 'decompress'
 import writeFileAtomic from 'write-file-atomic'
-import { workerSettings } from '../../config/worker-settings'
+import { workerSettings } from '../../../../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
 

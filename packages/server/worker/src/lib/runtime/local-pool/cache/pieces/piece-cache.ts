@@ -1,7 +1,7 @@
 import path from 'path'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
-import { workerSettings } from '../../config/worker-settings'
+import { workerSettings } from '../../../../config/worker-settings'
 import { getGlobalCachePiecesPath } from '../cache-paths'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 

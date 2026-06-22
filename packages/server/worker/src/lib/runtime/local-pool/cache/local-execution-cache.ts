@@ -1,12 +1,13 @@
 import { tryCatch, unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { CodeArtifact } from '../../types'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from './cache-paths'
-import { CodeArtifact, codeBuilder } from './code/code-builder'
+import { codeBuilder } from './code/code-builder'
 import { engineInstaller } from './engine/engine-installer'
 import { pieceInstaller } from './pieces/piece-installer'
 
-export const provisioner = (log: ApLogger, apiClient: WorkerToApiContract) => ({
+export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContract) => ({
     async provision({
         pieces,
         codeSteps,

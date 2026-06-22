@@ -7,14 +7,13 @@ import {
     PieceType,
 } from '@activepieces/shared'
 import type { FlowVersion } from '@activepieces/shared'
-import { extractPiecePackages, extractCodeArtifacts, provisionFlowPieces } from '../../../../src/lib/execute/utils/flow-helpers'
-import { PieceNotFoundError } from '../../../../src/lib/cache/pieces/piece-cache'
+import { extractPiecePackages, extractCodeArtifacts, resolveFlowArtifacts } from '../../../../src/lib/execute/utils/flow-helpers'
+import { PieceNotFoundError } from '../../../../src/lib/runtime/local-pool/cache/pieces/piece-cache'
 
 const mockGetPiece = vi.fn()
-const mockProvision = vi.fn()
 
-vi.mock('../../../../src/lib/cache/pieces/piece-cache', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../../../src/lib/cache/pieces/piece-cache')>()
+vi.mock('../../../../src/lib/runtime/local-pool/cache/pieces/piece-cache', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../src/lib/runtime/local-pool/cache/pieces/piece-cache')>()
     return {
         ...actual,
         pieceCache: () => ({
@@ -22,12 +21,6 @@ vi.mock('../../../../src/lib/cache/pieces/piece-cache', async (importOriginal) =
         }),
     }
 })
-
-vi.mock('../../../../src/lib/cache/provisioner', () => ({
-    provisioner: () => ({
-        provision: mockProvision,
-    }),
-}))
 
 function makeFlowVersion(trigger: FlowVersion['trigger']): FlowVersion {
     return {
@@ -190,7 +183,7 @@ describe('extractCodeArtifacts', () => {
     })
 })
 
-describe('provisionFlowPieces', () => {
+describe('resolveFlowArtifacts', () => {
     const mockDisableFlow = vi.fn()
     const mockWarn = vi.fn()
     const logWithWarn = { warn: mockWarn } as any
@@ -198,7 +191,6 @@ describe('provisionFlowPieces', () => {
 
     beforeEach(() => {
         mockGetPiece.mockReset()
-        mockProvision.mockReset()
         mockDisableFlow.mockReset()
         mockWarn.mockReset()
         mockGetPiece.mockImplementation(({ pieceName, pieceVersion }: { pieceName: string, pieceVersion: string }) => ({
@@ -207,15 +199,14 @@ describe('provisionFlowPieces', () => {
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
         }))
-        mockProvision.mockResolvedValue(undefined)
     })
 
-    it('returns true when provisioning succeeds', async () => {
+    it('returns resolved artifacts when resolution succeeds', async () => {
         const fv = makeFlowVersion({
             ...pieceTrigger,
             nextAction: { ...pieceAction },
         })
-        const result = await provisionFlowPieces({
+        const result = await resolveFlowArtifacts({
             flowVersion: fv,
             platformId: mockPlatformId,
             flowId: 'flow-1',
@@ -223,17 +214,21 @@ describe('provisionFlowPieces', () => {
             log: logWithWarn,
             apiClient: apiClientWithDisable,
         })
-        expect(result).toBe(true)
+        expect(result.disabled).toBe(false)
+        if (!result.disabled) {
+            expect(result.pieces).toHaveLength(2)
+            expect(result.codeSteps).toEqual([])
+        }
         expect(mockDisableFlow).not.toHaveBeenCalled()
     })
 
-    it('returns false and calls disableFlow when piece metadata is not found', async () => {
+    it('returns disabled and calls disableFlow when piece metadata is not found', async () => {
         mockGetPiece.mockRejectedValue(new PieceNotFoundError('@activepieces/piece-agent', '0.3.7'))
         const fv = makeFlowVersion({
             ...pieceTrigger,
             nextAction: { ...pieceAction },
         })
-        const result = await provisionFlowPieces({
+        const result = await resolveFlowArtifacts({
             flowVersion: fv,
             platformId: mockPlatformId,
             flowId: 'flow-1',
@@ -241,31 +236,31 @@ describe('provisionFlowPieces', () => {
             log: logWithWarn,
             apiClient: apiClientWithDisable,
         })
-        expect(result).toBe(false)
+        expect(result.disabled).toBe(true)
         expect(mockDisableFlow).toHaveBeenCalledWith({
             flowId: 'flow-1',
             projectId: 'project-1',
         })
     })
 
-    it('throws on transient provisioner errors without disabling the flow', async () => {
-        mockProvision.mockRejectedValue(new Error('Failed to provision piece'))
+    it('throws on transient resolution errors without disabling the flow', async () => {
+        mockGetPiece.mockRejectedValue(new Error('Failed to resolve piece'))
         const fv = makeFlowVersion({
             ...pieceTrigger,
             nextAction: { ...pieceAction },
         })
-        await expect(provisionFlowPieces({
+        await expect(resolveFlowArtifacts({
             flowVersion: fv,
             platformId: mockPlatformId,
             flowId: 'flow-1',
             projectId: 'project-1',
             log: logWithWarn,
             apiClient: apiClientWithDisable,
-        })).rejects.toThrow('Failed to provision piece')
+        })).rejects.toThrow('Failed to resolve piece')
         expect(mockDisableFlow).not.toHaveBeenCalled()
     })
 
-    it('returns false even if disableFlow fails', async () => {
+    it('returns disabled even if disableFlow fails', async () => {
         mockGetPiece.mockRejectedValue(new PieceNotFoundError('@activepieces/piece-agent', '0.3.7'))
         mockDisableFlow.mockRejectedValue(new Error('Network error'))
         const mockError = vi.fn()
@@ -274,7 +269,7 @@ describe('provisionFlowPieces', () => {
             ...pieceTrigger,
             nextAction: { ...pieceAction },
         })
-        const result = await provisionFlowPieces({
+        const result = await resolveFlowArtifacts({
             flowVersion: fv,
             platformId: mockPlatformId,
             flowId: 'flow-1',
@@ -282,7 +277,7 @@ describe('provisionFlowPieces', () => {
             log: logWithError,
             apiClient: apiClientWithDisable,
         })
-        expect(result).toBe(false)
+        expect(result.disabled).toBe(true)
         expect(mockError).toHaveBeenCalled()
     })
 })
