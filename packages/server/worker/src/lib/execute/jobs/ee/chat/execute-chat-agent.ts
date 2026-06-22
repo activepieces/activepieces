@@ -25,6 +25,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         const config = await ctx.apiClient.getChatConfig({
             conversationId, runId, platformId, userId, userMessage, modelName, files,
             ...spreadIfDefined('promptOverride', promptOverride),
+            ...spreadIfDefined('dryRun', dryRun),
         })
 
         const provider = config.provider as AIProviderName

@@ -7,45 +7,44 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { createOpenRouter } from '@openrouter/ai-sdk-provider'
+import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { LanguageModel, ModelMessage, SystemModelMessage, ToolSet } from 'ai'
 
 const MAX_WEB_SEARCH_RESULTS = 5
 
-const WEB_SEARCH_PROVIDERS = new Set<AIProviderName>([
-    AIProviderName.ANTHROPIC,
-    AIProviderName.GOOGLE,
-    AIProviderName.ACTIVEPIECES,
-    AIProviderName.OPENROUTER,
-])
-
-function supportsWebSearch(provider: AIProviderName): boolean {
-    return WEB_SEARCH_PROVIDERS.has(provider)
+type WebSearchSupport = {
+    nativeTools?: (auth: BaseAIProviderAuthConfig) => ToolSet
+    plugin?: boolean
 }
 
-/**
- * Provider-native web search tools live in the toolset (Anthropic/Google).
- * OpenRouter exposes web search through its `web` plugin instead (wired at model
- * creation), so it returns nothing here. Unsupported providers also return nothing.
- * OpenAI is intentionally excluded: its web search requires the Responses API,
- * which breaks legacy BYOK models (gpt-4, gpt-3.5-turbo) — it degrades to no search.
- */
+// OpenAI is absent on purpose: its web search needs the Responses API, which breaks legacy BYOK models.
+const WEB_SEARCH_BY_PROVIDER: Partial<Record<AIProviderName, WebSearchSupport>> = {
+    [AIProviderName.ANTHROPIC]: {
+        nativeTools: ({ apiKey }) => ({ web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }),
+    },
+    [AIProviderName.GOOGLE]: {
+        nativeTools: ({ apiKey }) => ({ google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }),
+    },
+    [AIProviderName.OPENROUTER]: { plugin: true },
+    [AIProviderName.ACTIVEPIECES]: { plugin: true },
+}
+
+function supportsWebSearch(provider: AIProviderName): boolean {
+    return WEB_SEARCH_BY_PROVIDER[provider] !== undefined
+}
+
 function buildWebSearchTools({ provider, auth }: {
     provider: AIProviderName
     auth: Record<string, unknown>
 }): ToolSet {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            return { web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }
-        }
-        case AIProviderName.GOOGLE: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            return { google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }
-        }
-        default:
-            return {}
+    return WEB_SEARCH_BY_PROVIDER[provider]?.nativeTools?.(auth as BaseAIProviderAuthConfig) ?? {}
+}
+
+function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
+    if (!webSearchEnabled || !WEB_SEARCH_BY_PROVIDER[provider]?.plugin) {
+        return undefined
     }
+    return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
 }
 
 function createChatModel({ provider, auth, config, modelId, webSearchEnabled = false }: {
@@ -104,10 +103,7 @@ function createChatModel({ provider, auth, config, modelId, webSearchEnabled = f
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const settings = webSearchEnabled
-                ? { plugins: [{ id: 'web' as const, max_results: MAX_WEB_SEARCH_RESULTS }] }
-                : undefined
-            return createOpenRouter({ apiKey }).chat(modelId, settings) as LanguageModel
+            return createOpenRouter({ apiKey }).chat(modelId, openRouterModelSettings(provider, webSearchEnabled)) as LanguageModel
         }
         default: {
             const exhaustiveCheck: never = provider

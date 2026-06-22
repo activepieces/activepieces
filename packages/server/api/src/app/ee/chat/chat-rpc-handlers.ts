@@ -18,16 +18,19 @@ import { executeCrossProjectTool } from './tools/chat-tools'
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 
-function buildWebAccessNote({ searchAvailable }: { searchAvailable: boolean }): string {
+function buildWebAccessNote({ searchAvailable, fetchAvailable }: { searchAvailable: boolean, fetchAvailable: boolean }): string {
     if (searchAvailable) {
         return '\n\n## Web access (current session)\nBoth web search and `ap_fetch_url` are available right now. Follow the "Web access" guidance above.'
     }
-    return '\n\n## Web access (current session)\nWeb search is NOT available with the current model — do not claim to have searched the web. You can still read a specific URL with `ap_fetch_url`.'
+    if (fetchAvailable) {
+        return '\n\n## Web access (current session)\nWeb search is NOT available with the current model — do not claim to have searched the web. You can still read a specific URL with `ap_fetch_url`.'
+    }
+    return '\n\n## Web access (current session)\nYou have no web access right now — do not claim to search the web or fetch URLs.'
 }
 
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
 
         const [conversation, providerConfig, userProjects, userContent, mcpCredentials] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
@@ -37,7 +40,8 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             chatMcp.getCredentials({ platformId, userId, log }),
         ])
 
-        const webSearchAvailable = chatAiUtils.supportsWebSearch(providerConfig.provider)
+        const fetchAvailable = !dryRun
+        const webSearchAvailable = fetchAvailable && chatAiUtils.supportsWebSearch(providerConfig.provider)
 
         const lockResult = await chatHelpers.conversationRepo()
             .createQueryBuilder()
@@ -66,7 +70,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             currentProjectId: selectedProjectId,
             frontendUrl,
             templates: promptOverride,
-        }) + buildWebAccessNote({ searchAvailable: webSearchAvailable })
+        }) + buildWebAccessNote({ searchAvailable: webSearchAvailable, fetchAvailable })
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides

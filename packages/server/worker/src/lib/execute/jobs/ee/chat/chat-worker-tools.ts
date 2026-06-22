@@ -1,4 +1,4 @@
-import { chunk, isObject, tryCatch } from '@activepieces/core-utils'
+import { chunk, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
 import { ActionPreviewEvent, ActionReceiptEvent, BatchItemResult, ChatAgentEventType, ChatPhase, chatToolClassification, SendChatEventRequest, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
@@ -10,6 +10,7 @@ const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 const MAX_RESULT_SIZE_BYTES = 100 * 1024
 const FETCH_URL_TIMEOUT_MS = 30 * 1_000
 const MAX_FETCH_URL_BYTES = 5 * 1024 * 1024
+const READABLE_TEXT_CONTENT_TYPE = /^(text\/|application\/(json|xml|javascript|x-ndjson|[^;]*\+json|[^;]*\+xml))/i
 
 async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
     fn: (signal: AbortSignal) => Promise<T>
@@ -492,7 +493,13 @@ function createWebTools(): ToolSet {
                             return { content: [{ type: 'text', text: `Failed to fetch ${toolInput.url}: ${error instanceof Error ? error.message : String(error)}` }] }
                         }
                         const contentType = String(response.headers['content-type'] ?? '')
-                        const text = /html/i.test(contentType) ? stripHtml(response.data).result : response.data
+                        if (!isReadableTextContentType(contentType)) {
+                            return { content: [{ type: 'text', text: `${toolInput.url} returned ${contentType || 'unknown'} content, which can't be read as text.` }] }
+                        }
+                        const { data: text, error: parseError } = tryCatchSync(() => /html/i.test(contentType) ? stripHtml(response.data).result : response.data)
+                        if (parseError) {
+                            return { content: [{ type: 'text', text: `Failed to parse the content of ${toolInput.url}.` }] }
+                        }
                         return truncateLargeResult({ url: toolInput.url, content: text })
                     },
                     timeoutMs: FETCH_URL_TIMEOUT_MS + 5_000,
@@ -625,6 +632,10 @@ function extractResultText(result: unknown): string {
             .join('\n')
     }
     return JSON.stringify(result)
+}
+
+function isReadableTextContentType(contentType: string): boolean {
+    return contentType === '' || READABLE_TEXT_CONTENT_TYPE.test(contentType)
 }
 
 function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, unknown> & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
