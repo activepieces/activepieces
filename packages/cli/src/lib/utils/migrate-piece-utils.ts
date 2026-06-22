@@ -95,7 +95,7 @@ function migrateEslintConfig({ piecePath, dryRun }: MigratePieceParams): boolean
         overrides.push(tsOverride)
     }
     tsOverride.rules = tsOverride.rules ?? {}
-    tsOverride.rules['no-restricted-imports'] = ['error', { patterns: [...IMPORT_BOUNDARY_PATTERNS] }]
+    tsOverride.rules['no-restricted-imports'] = mergeImportBoundaryRule(tsOverride.rules['no-restricted-imports'])
     config.overrides = overrides
 
     const next = JSON.stringify(config, null, 2) + '\n'
@@ -117,6 +117,54 @@ function defaultEslintConfig(): Record<string, unknown> {
             { files: ['*.js', '*.jsx'], rules: {} },
         ],
     }
+}
+
+// Merge the required import-boundary patterns into any pre-existing no-restricted-imports rule
+// instead of overwriting it, so a fork's own bans (patterns or paths) survive migration while the
+// standard set is still guaranteed. String patterns are deduplicated; severity is set to 'error'.
+function mergeImportBoundaryRule(existing: unknown): [string, RestrictedImportsOptions] {
+    const { patterns, paths } = readRestrictedImports(existing)
+    const seen = new Set(patterns.filter((pattern): pattern is string => typeof pattern === 'string'))
+    const mergedPatterns = [...patterns]
+    for (const pattern of IMPORT_BOUNDARY_PATTERNS) {
+        if (!seen.has(pattern)) {
+            mergedPatterns.push(pattern)
+            seen.add(pattern)
+        }
+    }
+    const options: RestrictedImportsOptions = { patterns: mergedPatterns }
+    if (paths.length > 0) {
+        options.paths = paths
+    }
+    return ['error', options]
+}
+
+function readRestrictedImports(rule: unknown): { patterns: unknown[], paths: unknown[] } {
+    const patterns: unknown[] = []
+    const paths: unknown[] = []
+    if (!Array.isArray(rule)) {
+        return { patterns, paths }
+    }
+    for (const entry of rule.slice(1)) {
+        if (typeof entry === 'string') {
+            paths.push(entry)
+        }
+        else if (isRecord(entry)) {
+            const entryPatterns = entry['patterns']
+            const entryPaths = entry['paths']
+            if (Array.isArray(entryPatterns)) {
+                patterns.push(...entryPatterns)
+            }
+            if (Array.isArray(entryPaths)) {
+                paths.push(...entryPaths)
+            }
+        }
+    }
+    return { patterns, paths }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null
 }
 
 const FRAMEWORK = '@activepieces/pieces-framework'
@@ -158,4 +206,8 @@ export type MigrateReport = {
 type EslintOverride = {
     files: string[]
     rules?: Record<string, unknown>
+}
+type RestrictedImportsOptions = {
+    patterns: unknown[]
+    paths?: unknown[]
 }
