@@ -2,6 +2,7 @@ import { spawn } from 'child_process'
 import { mkdir } from 'fs/promises'
 import path from 'path'
 import { arch } from 'process'
+import { ENGINE_COMPILE_CACHE_DIRNAME } from '../cache/cache-paths'
 import { execPromise } from '../exec'
 import { CreateSandboxProcessParams, SandboxLogger, SandboxMount, SandboxProcessMaker } from './types'
 
@@ -69,6 +70,11 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 ...env,
                 AP_BASE_CODE_DIRECTORY: '/root/codes',
                 SANDBOX_ID: sandboxId,
+                // /root/common is the bind-mounted engine common dir, so the build-time-prewarmed
+                // compile cache rides along at this in-sandbox path. The blob is keyed by the engine's
+                // absolute path (engineSandboxPath), which is why the prewarm also compiles main.js at
+                // exactly /root/common/main.js.
+                NODE_COMPILE_CACHE: path.join('/root/common', ENGINE_COMPILE_CACHE_DIRNAME),
             }
             assertSandboxEnv(sandboxEnv)
 

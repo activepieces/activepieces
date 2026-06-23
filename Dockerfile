@@ -130,6 +130,11 @@ COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --production
 
+# Prewarm the engine's V8 compile cache into the image so cold-boot engine forks load cached
+# bytecode instead of re-parsing the bundle (works on ephemeral Cloud Run instances too).
+COPY tools/prewarm-engine-compile-cache.mjs ./tools/prewarm-engine-compile-cache.mjs
+RUN node tools/prewarm-engine-compile-cache.mjs
+
 # Copy frontend files
 COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 

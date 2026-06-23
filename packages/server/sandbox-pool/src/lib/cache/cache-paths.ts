@@ -27,6 +27,10 @@ export const cacheUtils = (basePath: string) => ({
         return path.join(this.getGlobalCacheCommonPath(), 'main.js')
     },
 
+    getEngineCompileCachePath(): string {
+        return path.join(this.getGlobalCacheCommonPath(), ENGINE_COMPILE_CACHE_DIRNAME)
+    },
+
     async deleteStaleCache(log: ApLogger): Promise<void> {
         try {
             const cacheDir = path.resolve(basePath)
@@ -45,6 +49,12 @@ export const cacheUtils = (basePath: string) => ({
 })
 
 export const LATEST_CACHE_VERSION = 'v12'
+
+// Subdir under the engine's common cache holding V8 bytecode for the engine bundle. Prewarmed
+// at Docker build time (tools/prewarm-engine-compile-cache.mjs) and consumed at runtime via
+// NODE_COMPILE_CACHE so cold-boot forks skip re-parsing main.js. Keep this name in sync with
+// the build-time prewarm script and the isolate in-sandbox path in isolate.ts.
+export const ENGINE_COMPILE_CACHE_DIRNAME = 'v8-compile-cache'
 
 export enum CacheState {
     READY = 'READY',
