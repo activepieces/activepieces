@@ -1,9 +1,11 @@
-# Cloud Run execution image: the sandbox pool at concurrency 1 behind an HTTP server.
-# A warm pull-based dispatcher on the API side pushes one job per request to this service.
+# Cloud Run execution image: the @activepieces/job-executor package (sandbox pool behind an HTTP server).
+# The worker polls the API and dispatches one job per request to this service (held open for the run).
 # See packages/server/worker/docs/adr/0001-gcp-cloud-run-is-the-pool-at-concurrency-1.md.
 #
-# This image runs the engine in a fork-based sandbox (the Cloud Run instance is itself the
-# tenant-isolation boundary at concurrency 1), so it needs neither isolate nor iptables.
+# Execution mode is SANDBOX_CODE_ONLY: the engine runs as a plain fork (no isolate binary, no iptables,
+# no privileged caps — so it works under Cloud Run's gVisor) while user code is isolated in-engine via
+# isolated-vm. Per-instance concurrency is 1 (the instance is the tenant boundary); Cloud Run scales
+# horizontally. This ships ONLY the job-executor package tree (no web, no API).
 
 FROM node:24.14.0-bullseye-slim AS base
 
@@ -52,6 +54,12 @@ RUN --mount=type=cache,target=/root/.npm \
     typescript@4.9.4 \
     esbuild@0.25.0
 
+# isolated-vm powers SANDBOX_CODE_ONLY (v8 code isolation). The forked engine require()s it at runtime,
+# resolved via NODE_PATH=/usr/src/node_modules (set on the sandbox child env). Install it globally here;
+# the base stage carries python3/g++/build-essential/node-gyp to compile the native addon.
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd /usr/src && bun install isolated-vm@6.0.2
+
 ### STAGE 1: Build ###
 FROM base AS build
 
@@ -65,8 +73,8 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 
 COPY . .
 
-# Only the engine and worker are needed on Cloud Run (no web, no API).
-RUN npx turbo run build --filter=@activepieces/engine --filter=worker
+# Only the engine and job-executor are needed on Cloud Run (no web, no API, no worker poller).
+RUN npx turbo run build --filter=@activepieces/engine --filter=@activepieces/job-executor
 
 # Pieces are installed into the runtime cache per job, so none are needed baked in.
 # Trim them and regenerate the lockfile to match the slimmed workspace.
@@ -101,12 +109,14 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 
 ENV AP_RUNTIME=GCP_CLOUD_RUN \
     AP_CONTAINER_TYPE=WORKER \
-    AP_EXECUTION_MODE=UNSANDBOXED \
+    AP_EXECUTION_MODE=SANDBOX_CODE_ONLY \
+    AP_REUSE_SANDBOX=true \
     AP_CACHE_BASE_PATH=/tmp/cache \
+    NODE_PATH=/usr/src/node_modules \
     PORT=8080
 
-LABEL service=activepieces-cloud-run
+LABEL service=activepieces-job-executor
 
 EXPOSE 8080
 
-ENTRYPOINT ["node", "packages/server/worker/dist/src/bootstrap.js"]
+ENTRYPOINT ["node", "packages/server/job-executor/dist/src/bootstrap.js"]
