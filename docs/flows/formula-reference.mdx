@@ -45,6 +45,11 @@ Functions that work with strings of text.
 | `ends_with` | `ends_with(text; value)` | Checks if the text ends with a specific value. | `ends_with(report.pdf; .pdf)` → `TRUE` |
 | `remove_spaces` | `remove_spaces(text)` | Removes all extra spaces and line breaks inside the text. | `remove_spaces(hello   world)` → `hello world` |
 | `word_count` | `word_count(text)` | Counts how many words are in the text. | `word_count(The quick brown fox)` → `4` |
+| `pad_left` | `pad_left(text; length; char)` | Pads text on the left with a character so it reaches a set length. | `pad_left(42; 5; "0")` → `00042` |
+| `pad_right` | `pad_right(text; length; char)` | Pads text on the right with a character so it reaches a set length. | `pad_right(42; 5; "0")` → `42000` |
+| `repeat` | `repeat(text; count)` | Repeats text a given number of times. | `repeat(ab; 3)` → `ababab` |
+| `reverse` | `reverse(text)` | Reverses the order of characters in the text. | `reverse(hello)` → `olleh` |
+| `slug` | `slug(text)` | Turns text into a URL-friendly slug (lowercase, dashes between words). | `slug(Hello World!)` → `hello-world` |
 
 ## Number
 
@@ -67,6 +72,13 @@ Functions for arithmetic and formatting numeric values.
 | `min` | `min(num1; num2)` | Returns the smaller of two numbers. | `min(87; 100)` → `87` |
 | `max` | `max(num1; num2)` | Returns the larger of two numbers. | `max(-5; 0)` → `0` |
 | `to_number` | `to_number(text)` | Converts a text value into a number you can calculate with. | `to_number(1990)` → `1990` |
+| `random` | `random()` | Returns a random decimal number between 0 (included) and 1 (excluded). | `random()` → `0.4827` |
+| `random_int` | `random_int(min; max)` | Returns a random whole number between two values (both included). | `random_int(1; 100)` → `57` |
+| `power` | `power(base; exponent)` | Raises a number to the power of another number. | `power(2; 10)` → `1024` |
+| `sqrt` | `sqrt(number)` | Returns the square root of a number. | `sqrt(144)` → `12` |
+| `modulo` | `modulo(num1; num2)` | Returns the remainder left over after dividing one number by another. | `modulo(10; 3)` → `1` |
+| `clamp` | `clamp(number; min; max)` | Keeps a number between a minimum and a maximum. | `clamp(150; 0; 100)` → `100` |
+| `sign` | `sign(number)` | Returns -1 if the number is negative, 1 if positive, and 0 if zero. | `sign(-42)` → `-1` |
 
 ## Date
 
@@ -92,6 +104,13 @@ Functions for working with dates and times.
 | `now` | `now()` | Returns the current date and time at the moment the flow runs. | `now()` → `2025-01-15T14:30:00Z` |
 | `today` | `today()` | Returns today's date with no time attached. | `today()` → `2025-01-15` |
 | `to_date` | `to_date(text)` | Turns a text value into a proper date the flow can work with. | `to_date(January 15, 2025)` → `2025-01-15T00:00:00Z` |
+| `add_minutes` | `add_minutes(date; n)` | Adds a number of minutes to a date and time. | `add_minutes(2025-01-15T14:30:00Z; 15)` → `2025-01-15T14:45:00Z` |
+| `hours_between` | `hours_between(date1; date2)` | Counts how many hours are between two dates. | `hours_between(2025-01-15T09:00:00Z; 2025-01-15T17:30:00Z)` → `9` |
+| `start_of_day` | `start_of_day(date)` | Returns the date at midnight (the start of that day). | `start_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T00:00:00Z` |
+| `end_of_day` | `end_of_day(date)` | Returns the date at one moment before midnight (the end of that day). | `end_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T23:59:59Z` |
+| `is_before` | `is_before(date1; date2)` | Checks if the first date is before the second date. | `is_before(2025-01-01; 2025-02-01)` → `TRUE` |
+| `is_after` | `is_after(date1; date2)` | Checks if the first date is after the second date. | `is_after(2025-02-01; 2025-01-01)` → `TRUE` |
+| `is_same_day` | `is_same_day(date1; date2)` | Checks if two dates land on the same calendar day, ignoring the time. | `is_same_day(2025-01-15T09:00:00Z; 2025-01-15T21:00:00Z)` → `TRUE` |
 
 ## List
 
@@ -114,6 +133,8 @@ Functions for working with collections (arrays of items).
 | `deduplicate` | `deduplicate(list; field)` | Removes items that have the same value in a field. | `deduplicate(leads; email)` → `[7 of 10 items]` |
 | `flatten` | `flatten(list)` | Turns a list of lists into one flat list. | `flatten([[a;b];[c;d]])` → `[a,b,c,d]` |
 | `split_text_to_list` | `split_text_to_list(text; separator)` | Turns a comma-separated text into a list of items. | `split_text_to_list(bug,urgent,backend; ",")` → `[bug,urgent,backend]` |
+| `reverse_list` | `reverse_list(list)` | Reverses the order of items in a list. | `reverse_list([a;b;c])` → `[c,b,a]` |
+| `contains_item` | `contains_item(list; value)` | Checks if a list contains a specific value. | `contains_item([bug;urgent;backend]; urgent)` → `TRUE` |
 
 ## Logic
 
@@ -132,6 +153,8 @@ Functions for conditionals, comparisons, and fallbacks.
 | `or` | `or(condition1; condition2)` | Returns true if at least one of the conditions is true. | `or(standard = vip; 600 > 500)` → `TRUE` |
 | `not` | `not(condition)` | Flips a true to false, or a false to true. | `not(is_empty(john@acme.com))` → `TRUE` |
 | `coalesce` | `coalesce(value1; value2; value3; ...)` | Returns the first field that has a value, skipping any empty ones. | `coalesce(""; John; User)` → `John` |
+| `is_number` | `is_number(value)` | Checks if the value is a number (text that looks numeric returns false). | `is_number(42)` → `TRUE` |
+| `is_list` | `is_list(value)` | Checks if the value is a list. | `is_list([a;b;c])` → `TRUE` |
 
 ## Deprecated functions
 
