@@ -56,14 +56,22 @@ export const communityTemplates = {
             },
         })
         const templates = await response.json()
+        const curatedTemplates = isFirstTemplatePage({ request })
+            ? curatedN8nWorkflowTemplateService.list(request)
+            : []
         return {
             ...templates,
             data: [
+                ...curatedTemplates,
                 ...templates.data,
-                ...curatedN8nWorkflowTemplateService.list(request),
             ],
         }
     },
+}
+
+function isFirstTemplatePage({ request }: IsFirstTemplatePageParams): boolean {
+    return !Object.prototype.hasOwnProperty.call(request, 'cursor')
+        && !Object.prototype.hasOwnProperty.call(request, 'offset')
 }
 
 function convertToQueryString(params: ListTemplatesRequestQuery): string {
@@ -86,4 +94,8 @@ function convertToQueryString(params: ListTemplatesRequestQuery): string {
     })
 
     return searchParams.toString()
+}
+
+type IsFirstTemplatePageParams = {
+    request: ListTemplatesRequestQuery
 }

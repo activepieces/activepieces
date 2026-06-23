@@ -8,7 +8,8 @@ The Templates feature provides a library of reusable flow (and table) blueprints
 - `packages/server/api/src/app/template/template.service.ts` — core CRUD, list filtering, flow validation
 - `packages/server/api/src/app/template/template.entity.ts` — TypeORM entity
 - `packages/server/api/src/app/template/template-validator.ts` — validates flows and extracts piece names
-- `packages/server/api/src/app/template/community-templates.service.ts` — proxies official templates from cloud for non-cloud editions
+- `packages/server/api/src/app/template/community-templates.service.ts` — proxies official templates from cloud for non-cloud editions and injects curated n8n workflow templates on first listing page
+- `packages/server/api/src/app/template/curated-n8n-workflow-templates.ts` — static curated n8n-inspired workflow templates injected into community listing
 - `packages/server/api/src/app/ee/template/platform-template.service.ts` — EE: creates/updates CUSTOM templates for a platform
 - `packages/core/shared/src/lib/management/template/template.ts` — `Template`, `TemplateType`, `TemplateStatus`, `FlowVersionTemplate`, `TableTemplate`, `TemplateTag`
 - `packages/core/shared/src/lib/management/template/template.requests.ts` — `CreateTemplateRequestBody`, `UpdateTemplateRequestBody`, `ListTemplatesRequestQuery`
@@ -32,6 +33,7 @@ The Templates feature provides a library of reusable flow (and table) blueprints
 - **pieces**: Denormalized array of piece names extracted from all steps in the template flows; indexed for fast filtering.
 - **categories**: Array of string category names; indexed for fast filtering.
 - **communityTemplates**: Service that proxies GET requests to `https://cloud.activepieces.com/api/v1/templates` for official templates in non-cloud editions.
+- **curatedN8nWorkflowTemplateService**: Static service exposing hand-crafted Activepieces templates inspired by n8n community workflows; injected into first-page community template listing in non-cloud editions.
 
 ## Entity
 
@@ -85,9 +87,9 @@ Query params for list: `type`, `pieces[]`, `tags[]`, `search`, `category`.
 - `delete({ id })` — hard delete
 
 **communityTemplates** (CE/EE only)
-- `list(query)` — proxies to Cloud API with query string forwarding
-- `getOrThrow(id)` — proxies single-template fetch to Cloud API
-- `getCategories()` — proxies categories endpoint to Cloud API
+- `list(query)` — proxies to Cloud API with query string forwarding; prepends matching curated n8n templates only on first page
+- `getOrThrow(id)` — checks curated n8n templates first; falls back to single-template fetch to Cloud API
+- `getCategories()` — proxies categories endpoint to Cloud API and merges curated n8n template categories
 
 ## Business Logic Notes
 

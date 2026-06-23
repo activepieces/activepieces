@@ -30,6 +30,32 @@ describe('curatedN8nWorkflowTemplateService', () => {
         expect(template?.pieces).toContain('@activepieces/piece-stripe')
     })
 
+    it('connects RSS digest templates to Telegram notifications', () => {
+        const template = curatedN8nWorkflowTemplateService.get({
+            id: 'n8n-rss-telegram-digest',
+        })
+
+        const telegramAction = template?.flows?.[0]?.trigger.nextAction?.nextAction
+
+        expect(telegramAction?.displayName).toBe('Send Telegram Digest')
+        expect(telegramAction?.settings.pieceName).toBe('@activepieces/piece-telegram-bot')
+        expect(telegramAction?.settings.actionName).toBe('send_text_message')
+    })
+
+    it('connects calendar agenda templates to Slack notifications', () => {
+        const template = curatedN8nWorkflowTemplateService.get({
+            id: 'n8n-google-calendar-slack-agenda',
+        })
+
+        const calendarAction = template?.flows?.[0]?.trigger.nextAction
+        const slackAction = calendarAction?.nextAction
+
+        expect(calendarAction?.settings.actionName).toBe('google_calendar_get_events')
+        expect(slackAction?.displayName).toBe('Send Slack Agenda')
+        expect(slackAction?.settings.pieceName).toBe('@activepieces/piece-slack')
+        expect(slackAction?.settings.actionName).toBe('send_channel_message')
+    })
+
     it('filters curated templates by search text', () => {
         const templates = curatedN8nWorkflowTemplateService.list({
             search: 'zendesk',
