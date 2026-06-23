@@ -2,7 +2,6 @@ import { createHash, createPrivateKey, createPublicKey, generateKeyPair, JsonWeb
 import { promisify } from 'util'
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { Mutex } from 'async-mutex'
-import dayjs from 'dayjs'
 import { FlagEntity } from '../../../flags/flag.entity'
 import { EncryptedObject, encryptUtils } from '../../../helper/encryption'
 import { system } from '../../../helper/system/system'
@@ -74,7 +73,7 @@ async function getOrGenerateStoredPrivateKey(): Promise<string> {
         publicKeyEncoding: { type: 'spki', format: 'pem' },
     })
     const encrypted = await encryptUtils.encryptString(privateKey)
-    const now = dayjs().toISOString()
+    const now = new Date().toISOString()
     await flagRepo()
         .createQueryBuilder()
         .insert()
@@ -82,7 +81,13 @@ async function getOrGenerateStoredPrivateKey(): Promise<string> {
         .orIgnore()
         .execute()
     const stored = await loadStoredPrivateKey()
-    return stored ?? privateKey
+    if (isNil(stored)) {
+        throw new ActivepiecesError(
+            { code: ErrorCode.SYSTEM_PROP_INVALID, params: { prop: AppSystemProp.OIDC_RSA_PRIVATE_KEY } },
+            `System property AP_${AppSystemProp.OIDC_RSA_PRIVATE_KEY} could not be persisted to or read back from the flag store`,
+        )
+    }
+    return stored
 }
 
 async function loadStoredPrivateKey(): Promise<string | null> {

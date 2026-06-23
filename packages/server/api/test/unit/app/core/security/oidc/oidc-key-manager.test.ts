@@ -115,13 +115,19 @@ describe('oidcKeyManager', () => {
             expect(mockOrIgnore).toHaveBeenCalledOnce()
         })
 
-        it('should converge on the persisted key when another node wins the generation race', async () => {
+        it('should converge on the winner key when another node wins the race between the two reads', async () => {
             const { privateKey: winnerKey } = generateKeyPairSync('rsa', {
                 modulusLength: 2048,
                 privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
                 publicKeyEncoding: { type: 'spki', format: 'pem' },
             })
-            storedFlag.value = { iv: 'test-iv', data: winnerKey }
+            // First read finds no key, so this node generates one; a competing node then
+            // persists the winner before this node's INSERT runs, so the INSERT is a no-op
+            // (ON CONFLICT DO NOTHING) and the second read returns the winner.
+            mockFindOneBy.mockImplementationOnce(async () => {
+                storedFlag.value = { iv: 'test-iv', data: winnerKey }
+                return null
+            })
 
             vi.doMock('../../../../../../src/app/helper/system/system', () => ({
                 system: { get: vi.fn().mockReturnValue(undefined) },
@@ -130,7 +136,22 @@ describe('oidcKeyManager', () => {
             const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
             const result = await oidcKeyManager.getPrivateKeyPem()
 
+            expect(mockExecute).toHaveBeenCalledOnce()
             expect(result).toBe(winnerKey)
+        })
+
+        it('should throw rather than sign with an unpersisted key if the post-insert read returns nothing', async () => {
+            // both the pre-generate read and the post-insert read return null (DB inconsistency)
+            mockFindOneBy.mockImplementationOnce(async () => null).mockImplementationOnce(async () => null)
+
+            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
+                system: { get: vi.fn().mockReturnValue(undefined) },
+            }))
+
+            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
+            await expect(oidcKeyManager.getPrivateKeyPem()).rejects.toMatchObject({
+                error: { code: 'SYSTEM_PROP_INVALID' },
+            })
         })
     })
 
