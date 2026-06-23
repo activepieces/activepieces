@@ -1,5 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
+import { t } from 'i18next';
+import { ChevronsDown } from 'lucide-react';
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -77,12 +79,22 @@ const StepDataPanelHost = ({
     <div
       ref={drawerRef}
       className={cn(
-        'h-full w-full bg-background flex flex-col overflow-hidden border border-border',
+        'group relative h-full w-full bg-background flex flex-col overflow-hidden border border-border',
         mode === 'drawer' && 'rounded-t-xl shadow-lg border-b-0 border-x-0',
         mode === 'split' && 'rounded-t-xl border-b-0',
       )}
       role={mode === 'drawer' ? 'dialog' : undefined}
     >
+      {mode === 'drawer' && (
+        <button
+          type="button"
+          aria-label={t('Close')}
+          onClick={() => setStepDataPanelOpen(false)}
+          className="absolute top-1 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center h-5 w-10 rounded-full bg-muted text-muted-foreground opacity-0 transition-opacity hover:bg-muted/80 hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100"
+        >
+          <ChevronsDown className="size-4" />
+        </button>
+      )}
       {showGenerateSampleData && projectId && (
         <TestStepContainer
           type={stepType}

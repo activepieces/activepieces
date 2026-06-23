@@ -69,6 +69,12 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 ...env,
                 AP_BASE_CODE_DIRECTORY: '/root/codes',
                 SANDBOX_ID: sandboxId,
+                // /tmp is not mounted in the isolate sandbox (--no-default-dirs), so Node's
+                // os.tmpdir() default of /tmp fails with EACCES for pieces that write temp
+                // files. /box is the per-box writable scratch mount, so point TMPDIR there.
+                TMPDIR: '/box',
+                TMP: '/box',
+                TEMP: '/box',
             }
             assertSandboxEnv(sandboxEnv)
 

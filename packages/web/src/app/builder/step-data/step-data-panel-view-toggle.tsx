@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Columns2, Rows2 } from 'lucide-react';
+import { PanelBottom, PanelRight } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
@@ -19,8 +19,8 @@ const StepDataPanelViewToggle = ({
   );
 
   const isSplit = stepDataPanelView === 'split';
-  const ToggleIcon = isSplit ? Rows2 : Columns2;
-  const toggleLabel = isSplit ? t('Collapse') : t('Split View');
+  const ToggleIcon = isSplit ? PanelBottom : PanelRight;
+  const toggleLabel = isSplit ? t('Bottom Panel') : t('Side by Side');
 
   return (
     <Button

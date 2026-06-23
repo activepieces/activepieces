@@ -10702,14 +10702,12 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.35",
+      "version": "0.1.36",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "dayjs": "1.11.9",
-        "http-status-codes": "2.2.0",
       },
       "devDependencies": {
         "tslib": "2.6.2",
@@ -10986,6 +10984,7 @@
         "proxy-chain": "2.7.1",
         "socket.io": "4.7.5",
         "socket.io-client": "4.8.1",
+        "string-strip-html": "8.5.0",
         "tree-kill": "1.2.2",
         "tslib": "2.6.2",
         "write-file-atomic": "5.0.1",
