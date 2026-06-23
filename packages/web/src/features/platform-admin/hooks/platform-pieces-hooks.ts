@@ -53,6 +53,46 @@ export const platformPiecesMutations = {
       },
     });
   },
+  useBulkHidePieces: ({
+    platformId,
+    filteredPieceNames,
+    refetch,
+  }: {
+    platformId: string;
+    filteredPieceNames: string[];
+    refetch: () => Promise<void>;
+  }) => {
+    return useMutation({
+      mutationFn: async (pieceNames: string[]) => {
+        const next = [...new Set([...filteredPieceNames, ...pieceNames])];
+        await platformApi.update({ filteredPieceNames: next }, platformId);
+        await refetch();
+      },
+      onSuccess: () => {
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+    });
+  },
+  useBulkShowPieces: ({
+    platformId,
+    filteredPieceNames,
+    refetch,
+  }: {
+    platformId: string;
+    filteredPieceNames: string[];
+    refetch: () => Promise<void>;
+  }) => {
+    return useMutation({
+      mutationFn: async (pieceNames: string[]) => {
+        const next = filteredPieceNames.filter((n) => !pieceNames.includes(n));
+        await platformApi.update({ filteredPieceNames: next }, platformId);
+        await refetch();
+      },
+      onSuccess: () => {
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+    });
+  },
   useSyncPieces: () => {
     return useMutation({
       mutationFn: async () => {
