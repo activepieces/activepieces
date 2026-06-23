@@ -15,6 +15,7 @@ import { stepPropertiesSnapshotUtils } from '../../data-display/build-step-prope
 import { ErrorExplanationContext } from '../../data-display/explanation-prompt';
 import { StepDataPanelHeader } from '../../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../../step-data/step-data-panel-view-toggle';
+import { JsonTreeSkeleton } from '../json-tree-skeleton';
 import { useTriggerTestRunner } from '../test-runner-context';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 
@@ -157,44 +158,59 @@ const TestTriggerSection = React.memo(
       }
     };
 
+    const isFirstTimeTesting = isPollingTesting || isTestingDialogOpen;
+
     return (
       <div className="flex flex-col h-full">
-        {showFirstTimeTestingSection && !errorMessage && (
+        {showFirstTimeTestingSection && !errorMessage && isFirstTimeTesting && (
           <div className="flex flex-col h-full">
-            <StepDataPanelHeader status="idle" />
+            <StepDataPanelHeader status="testing" />
             <div className="flex justify-end px-3 py-2 shrink-0">
               <StepDataPanelViewToggle />
             </div>
-            <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-              <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
-                <Zap className="size-6" />
-              </div>
-              <div className="flex flex-col gap-1.5 max-w-[280px]">
-                <span className="text-sm font-medium text-foreground">
-                  {t('No sample data yet')}
-                </span>
-                <span className="text-xs text-muted-foreground leading-relaxed">
-                  {t(
-                    'Test the trigger to capture sample data. You can then use the result in the following steps.',
-                  )}
-                </span>
-              </div>
-              <FirstTimeTestingSection
-                isValid={isValid}
-                testType={testType}
-                isTesting={
-                  isPollingTesting || isSimulating || isTestingDialogOpen
-                }
-                mockData={mockData}
-                isSaving={isSaving || isSavingMockdata}
-                onSimulateTrigger={fireTest}
-                onPollTrigger={fireTest}
-                onMcpToolTesting={fireTest}
-                onSaveMockAsSampleData={saveMockAsSampleData}
-              />
+            <div className="flex-1 min-h-0 px-3 pb-3 overflow-auto">
+              <JsonTreeSkeleton />
             </div>
           </div>
         )}
+        {showFirstTimeTestingSection &&
+          !errorMessage &&
+          !isFirstTimeTesting && (
+            <div className="flex flex-col h-full">
+              <StepDataPanelHeader status="idle" />
+              <div className="flex justify-end px-3 py-2 shrink-0">
+                <StepDataPanelViewToggle />
+              </div>
+              <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
+                <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
+                  <Zap className="size-6" />
+                </div>
+                <div className="flex flex-col gap-1.5 max-w-[280px]">
+                  <span className="text-sm font-medium text-foreground">
+                    {t('No sample data yet')}
+                  </span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">
+                    {t(
+                      'Test the trigger to capture sample data. You can then use the result in the following steps.',
+                    )}
+                  </span>
+                </div>
+                <FirstTimeTestingSection
+                  isValid={isValid}
+                  testType={testType}
+                  isTesting={
+                    isPollingTesting || isSimulating || isTestingDialogOpen
+                  }
+                  mockData={mockData}
+                  isSaving={isSaving || isSavingMockdata}
+                  onSimulateTrigger={fireTest}
+                  onPollTrigger={fireTest}
+                  onMcpToolTesting={fireTest}
+                  onSaveMockAsSampleData={saveMockAsSampleData}
+                />
+              </div>
+            </div>
+          )}
         {(!showFirstTimeTestingSection || errorMessage) && (
           <>
             {showSampleDataViewer && (
