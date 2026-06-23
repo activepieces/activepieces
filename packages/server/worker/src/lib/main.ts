@@ -1,21 +1,18 @@
-import { getApiUrl, getSocketUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
+import { selectRunner } from './runtime/runner-factory'
 import { workerSystemSnapshot } from './utils/system-snapshot'
-import { worker } from './worker'
-
-const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
 
 async function main(): Promise<void> {
     workerSystemSnapshot.start()
-    const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
-    await worker.start({ apiUrl: getApiUrl(), socketUrl: getSocketUrl(), workerToken, withHealthServer: containerType === 'WORKER' })
+    const runner = selectRunner()
+    await runner.start()
 
-    const shutdown = async () => {
+    const shutdown = async (): Promise<void> => {
         const timeout = setTimeout(() => {
             logger.warn('Graceful shutdown timed out, forcing exit')
             process.exit(1)
         }, 30_000)
-        await worker.stop()
+        await runner.stop()
         clearTimeout(timeout)
         process.exit(0)
     }
@@ -27,4 +24,3 @@ main().catch((err) => {
     logger.error({ error: err }, 'Worker crashed')
     process.exit(1)
 })
-
