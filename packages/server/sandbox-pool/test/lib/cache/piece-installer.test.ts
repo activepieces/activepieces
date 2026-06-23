@@ -10,17 +10,8 @@ import type { ApLogger } from '@activepieces/server-utils'
 // Module-level variable updated per test so the vi.mock factory can reference it
 let testWorkspace = ''
 
-const mockGet = vi.fn()
 const mockGetPieceBundleUrl = vi.fn()
 const mockInstall = vi.fn()
-
-vi.mock('@activepieces/server-utils', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('@activepieces/server-utils')>()
-    return {
-        ...actual,
-        safeHttp: { retryingAxios: { get: mockGet } },
-    }
-})
 
 vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
     bunRunner: () => ({ install: mockInstall }),
@@ -100,7 +91,6 @@ beforeEach(async () => {
     testWorkspace = join(tmpdir(), `piece-installer-test-${randomUUID()}`)
     await mkdir(testWorkspace, { recursive: true })
     vi.clearAllMocks()
-    mockGet.mockResolvedValue({ data: new ArrayBuffer(8) })
     mockGetPieceBundleUrl.mockResolvedValue(null)
     mockInstall.mockResolvedValue({ output: '' })
 })
@@ -111,43 +101,41 @@ afterEach(async () => {
 })
 
 describe('pieceInstaller (registry pieces)', () => {
-    it('downloads the tarball from npm then bun-installs it when no signed url', async () => {
+    it('uses the npm tarball url as the dependency when there is no signed url', async () => {
         const piece = makePiece('@activepieces/piece-a')
         const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await installer.install({ pieces: [piece], includeFilters: true })
 
-        expect(mockGet.mock.calls[0]?.[0]).toBe('https://registry.npmjs.org/@activepieces/piece-a/-/piece-a-1.0.0.tgz')
-        expect(await pathExists(join(pieceDirPath(piece), 'package.tgz'))).toBe(true)
+        const manifest = JSON.parse(await readFile(join(pieceDirPath(piece), 'package.json'), 'utf8'))
+        expect(manifest.dependencies['@activepieces/piece-a']).toBe('https://registry.npmjs.org/@activepieces/piece-a/-/piece-a-1.0.0.tgz')
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('downloads the tarball from the signed url the API returns', async () => {
+    it('uses the signed url the API returns as the dependency', async () => {
         const piece = makePiece('@activepieces/piece-b')
-        mockGetPieceBundleUrl.mockResolvedValueOnce('https://s3.example.com/pieces/@activepieces-piece-b-1.0.0.tgz?sig=abc')
+        const signedUrl = 'https://s3.example.com/pieces/@activepieces-piece-b-1.0.0.tgz?sig=abc'
+        mockGetPieceBundleUrl.mockResolvedValueOnce(signedUrl)
         const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await installer.install({ pieces: [piece], includeFilters: true })
 
-        expect(mockGet.mock.calls[0]?.[0]).toBe('https://s3.example.com/pieces/@activepieces-piece-b-1.0.0.tgz?sig=abc')
+        const manifest = JSON.parse(await readFile(join(pieceDirPath(piece), 'package.json'), 'utf8'))
+        expect(manifest.dependencies['@activepieces/piece-b']).toBe(signedUrl)
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('falls back to npm when the signed url download fails', async () => {
+    it('falls back to the npm url when the bundle-url lookup fails', async () => {
         const piece = makePiece('@activepieces/piece-c')
-        mockGetPieceBundleUrl.mockResolvedValueOnce('https://s3.example.com/pieces/@activepieces-piece-c-1.0.0.tgz?sig=abc')
-        mockGet
-            .mockReset()
-            .mockRejectedValueOnce(new Error('403 expired'))
-            .mockResolvedValueOnce({ data: new ArrayBuffer(8) })
+        mockGetPieceBundleUrl.mockReset().mockRejectedValue(new Error('api down'))
         const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await installer.install({ pieces: [piece], includeFilters: true })
 
-        expect(mockGet).toHaveBeenCalledTimes(2)
-        expect(mockGet.mock.calls[1]?.[0]).toBe('https://registry.npmjs.org/@activepieces/piece-c/-/piece-c-1.0.0.tgz')
+        const manifest = JSON.parse(await readFile(join(pieceDirPath(piece), 'package.json'), 'utf8'))
+        expect(manifest.dependencies['@activepieces/piece-c']).toBe('https://registry.npmjs.org/@activepieces/piece-c/-/piece-c-1.0.0.tgz')
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 

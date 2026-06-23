@@ -1,7 +1,7 @@
 import { Readable } from 'stream'
-import { apId, isNil, ProjectId } from '@activepieces/core-utils'
+import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { FileType } from '@activepieces/shared'
-import { DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, ListObjectsV2CommandOutput, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, ListObjectsV2CommandOutput, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import contentDisposition from 'content-disposition'
@@ -76,6 +76,13 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             continuationToken = response.NextContinuationToken
         } while (!isNil(continuationToken))
         return keys
+    },
+    async objectExists(s3Key: string): Promise<boolean> {
+        const { error } = await tryCatch(() => getS3Client().send(new HeadObjectCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+        })))
+        return isNil(error)
     },
     async getFile(s3Key: string): Promise<Buffer> {
         const response = await getS3Client().getObject({

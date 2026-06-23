@@ -9,6 +9,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
+import { resolvePieceBundleUrl } from '../piece-bundle-uploader'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
 
@@ -98,6 +99,15 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         },
     )
 
+    app.get('/bundle', GetPieceBundleRequest, async (req, reply) => {
+        const { name, version } = req.query
+        const url = await resolvePieceBundleUrl({ name, version, log: req.log })
+        return reply
+            .status(StatusCodes.TEMPORARY_REDIRECT)
+            .header('Location', url)
+            .send()
+    })
+
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
@@ -106,7 +116,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         return pieces
     })
 
-    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
+    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync())
 
     app.delete('/:id', DeletePieceRequest, async (req, reply) => {
         await pieceMetadataService(req.log).delete({
@@ -156,6 +166,18 @@ const RegistryPiecesRequest = {
     },
     schema: {
         querystring: RegistryPiecesRequestQuery,
+    },
+}
+
+const GetPieceBundleRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        querystring: z.object({
+            name: z.string(),
+            version: z.string(),
+        }),
     },
 }
 

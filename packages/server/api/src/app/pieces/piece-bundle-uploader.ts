@@ -4,6 +4,8 @@ import { FileType, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { s3Helper } from '../file/s3-helper'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { pieceRepos } from './metadata/piece-metadata-service'
 
 export const pieceBundleUploader = (log: FastifyBaseLogger) => ({
@@ -80,6 +82,16 @@ async function fetchBundleData(source: BundleSource, log: FastifyBaseLogger): Pr
         responseType: 'arraybuffer',
     })
     return Buffer.from(response.data)
+}
+
+export async function resolvePieceBundleUrl({ name, version, log }: { name: string, version: string, log: FastifyBaseLogger }): Promise<string> {
+    if (!isNil(system.get(AppSystemProp.S3_BUCKET))) {
+        const key = pieceBundleS3Key({ name, version })
+        if (await s3Helper(log).objectExists(key)) {
+            return s3Helper(log).getS3SignedUrl(key, `${name.replace('/', '-')}-${version}.tgz`)
+        }
+    }
+    return npmTarballUrl({ name, version })
 }
 
 export function pieceBundleS3Key(piece: PieceToUpload): string {
