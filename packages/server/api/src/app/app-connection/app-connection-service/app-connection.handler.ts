@@ -2,6 +2,7 @@ import { assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId, 
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { lru, LRU } from 'tiny-lru'
 import { ArrayContains, In } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
@@ -83,6 +84,10 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     connectionValue: connection.value,
                     jobType: WorkerJobType.EXECUTE_TOKEN_REFRESH,
                 }, log)
+                if (engineResponse.status === EngineResponseStatus.TIMEOUT) {
+                    log.warn({ pieceName: connection.pieceName }, '[custom-auth-refresh] token refresh timed out — using existing credentials')
+                    return connection
+                }
                 if (engineResponse.status !== EngineResponseStatus.OK) {
                     throw new CustomAuthRefreshError(`Custom auth token refresh failed: ${engineResponse.error ?? 'unknown engine error'}`)
                 }
@@ -91,6 +96,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     // Piece no longer has onRefreshToken (e.g. piece was updated) — clear
                     // the token so the next needRefresh call re-checks piece metadata.
                     log.info({ pieceName: connection.pieceName }, '[custom-auth-refresh] piece has no refresh callback — clearing stale token')
+                    pieceRefreshSupportCache.set(`${connection.pieceName}@${connection.pieceVersion}`, false)
                     connection.value = {
                         ...connection.value,
                         access_token: undefined,
@@ -194,13 +200,21 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     return isCustomAuthTokenStale(connection.value)
                 }
                 // No token yet — only dispatch a refresh job if the piece implements onRefreshToken.
+                // Cache the result per piece version to avoid a metadata round-trip on every execution.
+                const cacheKey = `${connection.pieceName}@${connection.pieceVersion}`
+                const cached = pieceRefreshSupportCache.get(cacheKey)
+                if (!isNil(cached)) {
+                    return cached
+                }
                 const pieceMetadata = await pieceMetadataService(log).getOrThrow({
                     name: connection.pieceName,
                     version: connection.pieceVersion,
                     platformId: connection.platformId,
                 })
                 const auth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth[0] : pieceMetadata.auth
-                return auth?.type === PropertyType.CUSTOM_AUTH && !isNil(auth.refresh)
+                const hasRefresh = auth?.type === PropertyType.CUSTOM_AUTH && !isNil(auth.refresh)
+                pieceRefreshSupportCache.set(cacheKey, hasRefresh)
+                return hasRefresh
             }
             default:
                 return false
@@ -210,6 +224,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
+const pieceRefreshSupportCache: LRU<boolean> = lru(500, 5 * 60 * 1000)
 
 export function isCustomAuthTokenStale(value: { access_token?: string, token_expires_at?: number }): boolean {
     if (isNil(value.access_token)) return true

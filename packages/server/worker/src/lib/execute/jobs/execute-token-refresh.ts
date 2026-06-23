@@ -1,10 +1,10 @@
+import { tryCatch } from '@activepieces/core-utils'
 import {
     EngineOperationType,
     EngineResponseStatus,
     ExecuteTokenRefreshJobData,
     WorkerJobType,
 } from '@activepieces/shared'
-import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
@@ -14,22 +14,13 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
     async execute(ctx: JobContext, data: ExecuteTokenRefreshJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        await provisioner(ctx.log, ctx.apiClient).provision({
-            pieces: [data.piece],
-            codeSteps: [],
-        })
+        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
+        await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
 
-        const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
-        try {
-            await sandbox.start({
-                flowVersionId: undefined,
-                platformId: data.platformId,
-                mounts: [],
-            })
-
-            const result = await sandbox.execute(
-                EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH,
-                {
+        const { data: result, error } = await tryCatch(async () =>
+            execution.run({
+                operationType: EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH,
+                operation: {
                     piece: data.piece,
                     auth: data.connectionValue,
                     platformId: data.platformId,
@@ -38,30 +29,29 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
                     publicApiUrl: ctx.publicApiUrl,
                     timeoutInSeconds,
                 },
-                { timeoutInSeconds },
-            )
+                timeoutInSeconds,
+            }),
+        )
+        await execution.dispose({ invalidate: false })
 
-            return {
-                kind: JobResultKind.SYNCHRONOUS,
-                status: result.status,
-                response: result.response,
-                errorMessage: result.error,
-                logs: result.logs,
-            }
-        }
-        catch (e) {
-            await ctx.sandboxManager.invalidate(ctx.log)
-            if (isSandboxTimeout(e)) {
+        if (error) {
+            await execution.dispose({ invalidate: true })
+            if (isSandboxTimeout(error)) {
                 return {
                     kind: JobResultKind.SYNCHRONOUS,
                     status: EngineResponseStatus.TIMEOUT,
                     response: { skipped: true },
                 }
             }
-            throw e
+            throw error
         }
-        finally {
-            await ctx.sandboxManager.release(ctx.log)
+
+        return {
+            kind: JobResultKind.SYNCHRONOUS,
+            status: result.status,
+            response: result.response,
+            errorMessage: result.error,
+            logs: result.logs,
         }
     },
 }
