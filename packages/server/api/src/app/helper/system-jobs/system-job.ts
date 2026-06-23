@@ -88,6 +88,19 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
     },
 
+    async removeJob({ jobId }): Promise<void> {
+        const existingJob = await systemJobsQueue.getJob(jobId)
+        if (isNil(existingJob)) {
+            return
+        }
+        log.info({ jobId }, '[systemJob#removeJob] Removing job from queue')
+        if (!isNil(existingJob.opts.repeat) && !isNil(existingJob.name)) {
+            await systemJobsQueue.removeRepeatable(existingJob.name, existingJob.opts.repeat)
+            return
+        }
+        await existingJob.remove()
+    },
+
     async getJob<T extends SystemJobName>(jobId: string) {
         return await systemJobsQueue.getJob(jobId) as Job<SystemJobData<T>> | undefined
     },
