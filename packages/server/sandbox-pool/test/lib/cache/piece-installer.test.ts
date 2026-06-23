@@ -12,6 +12,7 @@ let testWorkspace = ''
 
 const mockGet = vi.fn()
 const mockGetPieceBundleUrl = vi.fn()
+const mockBunInstall = vi.fn()
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@activepieces/server-utils')>()
@@ -22,21 +23,13 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => {
 })
 
 vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
-    bunRunner: () => ({ install: vi.fn() }),
+    bunRunner: () => ({ install: mockBunInstall }),
 }))
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
     cacheUtils: () => ({
         getGlobalCacheCommonPath: () => testWorkspace,
         getGlobalCachePathLatestVersion: () => testWorkspace,
-    }),
-}))
-
-// decompress writes the bundle entry file so the "already installed" marker check passes
-vi.mock('decompress', () => ({
-    default: vi.fn(async (_input: unknown, folder: string) => {
-        await mkdir(folder, { recursive: true })
-        await writeFile(join(folder, 'index.bundle.js'), '// bundle')
     }),
 }))
 
@@ -98,6 +91,7 @@ beforeEach(async () => {
     vi.clearAllMocks()
     mockGet.mockResolvedValue({ data: new ArrayBuffer(8) })
     mockGetPieceBundleUrl.mockResolvedValue(null)
+    mockBunInstall.mockResolvedValue({ output: '' })
 })
 
 afterEach(async () => {
@@ -106,26 +100,27 @@ afterEach(async () => {
 })
 
 describe('pieceInstaller (registry pieces)', () => {
-    it('downloads from npm when the API returns no bundle url', async () => {
+    it('downloads the tarball from npm then bun-installs it when no signed url', async () => {
         const piece = makePiece('@activepieces/piece-a')
         const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await installer.install({ pieces: [piece], includeFilters: true })
 
-        expect(mockGet).toHaveBeenCalledOnce()
         expect(mockGet.mock.calls[0]?.[0]).toBe('https://registry.npmjs.org/@activepieces/piece-a/-/piece-a-1.0.0.tgz')
+        expect(await pathExists(join(pieceDirPath(piece), 'package.tgz'))).toBe(true)
+        expect(mockBunInstall).toHaveBeenCalledOnce()
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('downloads from the signed url the API returns', async () => {
+    it('downloads the tarball from the signed url the API returns', async () => {
         const piece = makePiece('@activepieces/piece-b')
         mockGetPieceBundleUrl.mockResolvedValueOnce('https://s3.example.com/pieces/@activepieces-piece-b-1.0.0.tgz?sig=abc')
         const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await installer.install({ pieces: [piece], includeFilters: true })
 
-        expect(mockGet).toHaveBeenCalledOnce()
         expect(mockGet.mock.calls[0]?.[0]).toBe('https://s3.example.com/pieces/@activepieces-piece-b-1.0.0.tgz?sig=abc')
+        expect(mockBunInstall).toHaveBeenCalledOnce()
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
@@ -141,30 +136,29 @@ describe('pieceInstaller (registry pieces)', () => {
         await installer.install({ pieces: [piece], includeFilters: true })
 
         expect(mockGet).toHaveBeenCalledTimes(2)
-        expect(mockGet.mock.calls[0]?.[0]).toContain('s3.example.com')
         expect(mockGet.mock.calls[1]?.[0]).toBe('https://registry.npmjs.org/@activepieces/piece-c/-/piece-c-1.0.0.tgz')
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('rolls back and throws when both signed url and npm fail', async () => {
+    it('rolls back and throws when bun install fails for a single piece', async () => {
         const piece = makePiece('@activepieces/piece-d')
-        mockGet.mockReset().mockRejectedValue(new Error('network down'))
+        mockBunInstall.mockReset().mockRejectedValue(new Error('bun resolve error'))
         const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
-        await expect(installer.install({ pieces: [piece], includeFilters: true })).rejects.toThrow('@activepieces/piece-d@1.0.0')
+        await expect(installer.install({ pieces: [piece], includeFilters: true })).rejects.toThrow('bun resolve error')
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
     })
 
-    it('skips pieces that are already installed', async () => {
+    it('skips pieces that are already installed (node_modules present)', async () => {
         const piece = makePiece('@activepieces/piece-cached')
         const pieceDir = pieceDirPath(piece)
-        await mkdir(pieceDir, { recursive: true })
-        await writeFile(join(pieceDir, 'index.bundle.js'), '// bundle')
+        await mkdir(join(pieceDir, 'node_modules'), { recursive: true })
         await writeFile(join(pieceDir, 'ready'), 'true')
 
         const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
         await installer.install({ pieces: [piece], includeFilters: true })
 
         expect(mockGet).not.toHaveBeenCalled()
+        expect(mockBunInstall).not.toHaveBeenCalled()
     })
 })
