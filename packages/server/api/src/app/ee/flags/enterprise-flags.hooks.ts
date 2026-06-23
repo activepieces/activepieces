@@ -46,7 +46,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             log: request.log,
         })
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_BILLING_PAGE] = flags[ApFlagId.SHOW_BILLING_PAGE]
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
         modifiedFlags[ApFlagId.SHOW_BADGES] = !platformWithPlan.plan.embeddingEnabled
         modifiedFlags[ApFlagId.SHOW_PROJECT_MEMBERS] = platformWithPlan.plan.projectRolesEnabled
