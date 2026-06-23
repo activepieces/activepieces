@@ -1,8 +1,4 @@
-import {
-  ProjectType,
-  ProjectWithLimits,
-  TeamProjectsLimit,
-} from '@activepieces/shared';
+import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Trash } from 'lucide-react';
@@ -42,7 +38,7 @@ export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
+  const isEnabled = platform.plan.teamProjectsLimit !== 0;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
 

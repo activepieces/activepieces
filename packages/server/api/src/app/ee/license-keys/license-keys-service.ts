@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ApEdition, CreateTrialLicenseKeyRequestBody, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
+import { ApEdition, CreateTrialLicenseKeyRequestBody, LicenseKeyEntity, PlanName, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -131,7 +131,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
-        const teamProjectsLimit = key.manageProjectsEnabled ? TeamProjectsLimit.UNLIMITED : system.getEdition() === ApEdition.CLOUD ? TeamProjectsLimit.ONE : TeamProjectsLimit.NONE
+        const teamProjectsLimit = key.manageProjectsEnabled ? null : system.getEdition() === ApEdition.CLOUD ? 1 : 0
         await platformService(log).update({
             id: platformId,
             plan: {
@@ -159,7 +159,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 analyticsEnabled: key.analyticsEnabled,
                 eventStreamingEnabled: key.eventStreamingEnabled,
                 secretManagersEnabled: key.secretManagersEnabled,
-                agentsEnabled: key.agentsEnabled,
                 aiProvidersEnabled: key.aiProvidersEnabled ?? true,
                 chatEnabled: key.chatEnabled ?? false,
                 dataManipulationEnabled: key.dataManipulationEnabled ?? false,
@@ -186,7 +185,6 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     projectRolesEnabled: false,
     eventStreamingEnabled: false,
     secretManagersEnabled: false,
-    agentsEnabled: false,
     aiProvidersEnabled: false,
     chatEnabled: false,
     dataManipulationEnabled: false,

@@ -69,9 +69,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         embeddingEnabled: {
             type: Boolean,
         },
-        agentsEnabled: {
-            type: Boolean,
-        },
         aiProvidersEnabled: {
             type: Boolean,
             default: false,
@@ -92,7 +89,12 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
         },
         teamProjectsLimit: {
-            type: String,
+            type: Number,
+            nullable: true,
+        },
+        usersLimit: {
+            type: Number,
+            nullable: true,
         },
         projectRolesEnabled: {
             type: Boolean,

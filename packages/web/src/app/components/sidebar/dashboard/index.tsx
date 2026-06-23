@@ -3,7 +3,6 @@ import {
   PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
-  TeamProjectsLimit,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -78,21 +77,21 @@ export function ProjectDashboardSidebar({
   }, [searchOpen]);
 
   const shouldShowNewProjectButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+    if (platform.plan.teamProjectsLimit === 0) {
       return false;
     }
     return currentUser?.platformRole === PlatformRole.ADMIN;
   }, [platform.plan.teamProjectsLimit]);
 
   const shouldShowSearchButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+    if (platform.plan.teamProjectsLimit === 0) {
       return false;
     }
     return true;
   }, [platform.plan.teamProjectsLimit]);
 
   const shouldShowInlineAddButton =
-    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+    platform.plan.teamProjectsLimit !== 0 &&
     currentUser?.platformRole === PlatformRole.ADMIN &&
     projects.filter((project) => project.type === ProjectType.TEAM).length ===
       0;

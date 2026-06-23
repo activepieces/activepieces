@@ -5,6 +5,8 @@ import {
 import { t } from 'i18next';
 import { Check, Lock } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+
 const LICENSE_PROPS_MAP = {
   environmentsEnabled: {
     label: 'Team Collaboration via Git',
@@ -57,9 +59,6 @@ const LICENSE_PROPS_MAP = {
   secretManagersEnabled: {
     label: 'Secret Managers',
   },
-  agentsEnabled: {
-    label: 'AI & Agents',
-  },
   aiProvidersEnabled: {
     label: 'AI Providers',
   },
@@ -92,9 +91,9 @@ export const FeatureStatus = ({
                 <Lock className="size-4 text-muted-foreground shrink-0" />
               )}
               <span
-                className={`text-sm ${
-                  featureEnabled ? '' : 'text-muted-foreground'
-                }`}
+                className={cn('text-sm', {
+                  'text-muted-foreground': !featureEnabled,
+                })}
               >
                 {t(value.label)}
               </span>

@@ -42,11 +42,12 @@ async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId:
         return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
     }
     const platformPlanName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
-    if (!isNil(platformPlanName)) {
-        const limit = PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName]
-        if (!isNil(limit)) return limit
-    }
-    return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
+    // Free cloud platforms have no stored plan name (plan = null); treat them as the standard tier rather
+    // than falling through to DEFAULT, preserving the pre-Autumn free concurrency (free was effectively standard).
+    const limit = isNil(platformPlanName)
+        ? PLAN_CONCURRENT_JOBS_LIMITS[PlanName.STANDARD]
+        : PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName]
+    return limit ?? system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
 }
 
 async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: string | null, platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {

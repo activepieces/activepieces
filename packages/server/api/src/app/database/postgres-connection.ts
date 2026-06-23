@@ -385,6 +385,7 @@ import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migrati
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 import { AddAutumnBillingColumnsToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddAutumnBillingColumnsToPlatformPlan'
+import { MigrateTeamProjectsLimitToNumberAndAddUsersLimit1798000000000 } from './migration/postgres/1798000000000-MigrateTeamProjectsLimitToNumberAndAddUsersLimit'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -785,6 +786,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
         AddAutumnBillingColumnsToPlatformPlan1797000000000,
+        MigrateTeamProjectsLimitToNumberAndAddUsersLimit1798000000000,
     ]
     return migrations
 }

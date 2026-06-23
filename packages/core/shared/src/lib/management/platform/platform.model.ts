@@ -14,6 +14,10 @@ export const PlatformUsage = z.object({
     aiCreditsRemaining: z.number(),
     aiCreditsLimit: z.number(),
     activeFlows: z.number(),
+    appSumoAiCredits: Nullable(z.object({
+        usage: z.number(),
+        limit: z.number(),
+    })),
 })
 
 export type PlatformUsage = z.infer<typeof PlatformUsage>
@@ -27,12 +31,6 @@ export enum PlanName {
     APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
     APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
     APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
-}
-
-export enum TeamProjectsLimit {
-    NONE = 'NONE',
-    ONE = 'ONE',
-    UNLIMITED = 'UNLIMITED',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -60,14 +58,14 @@ export const PlatformPlan = z.object({
     showPoweredBy: z.boolean(),
     auditLogEnabled: z.boolean(),
     embeddingEnabled: z.boolean(),
-    agentsEnabled: z.boolean(),
     aiProvidersEnabled: z.boolean(),
     chatEnabled: z.boolean(),
     dataManipulationEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),
-    teamProjectsLimit: z.nativeEnum(TeamProjectsLimit),
+    teamProjectsLimit: Nullable(z.number()),
+    usersLimit: Nullable(z.number()),
     projectRolesEnabled: z.boolean(),
     globalConnectionsEnabled: z.boolean(),
     customRolesEnabled: z.boolean(),

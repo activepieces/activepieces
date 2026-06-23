@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, TeamProjectsLimit, UpdateProjectPlatformRequest } from '@activepieces/shared'
+import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
@@ -180,7 +180,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             }
             if (!isNil(request.plan)) {
                 const platform = await platformService(log).getOneWithPlanOrThrow(project.platformId)
-                if (platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE) {
+                if (isNil(platform.plan.teamProjectsLimit) || platform.plan.teamProjectsLimit > 0) {
                     await projectLimitsService(log).upsert(
                         {
                             ...spreadIfDefined('pieces', request.plan.pieces),

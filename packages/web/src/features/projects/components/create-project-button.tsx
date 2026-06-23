@@ -1,8 +1,4 @@
-import {
-  ProjectType,
-  TeamProjectsLimit,
-  ProjectWithLimits,
-} from '@activepieces/shared';
+import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
@@ -25,7 +21,7 @@ function useIsCreateProjectDisabled({
   projects: Pick<ProjectWithLimits, 'type'>[];
 }) {
   const { platform } = platformHooks.useCurrentPlatform();
-  if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
+  if (platform.plan.teamProjectsLimit === 1) {
     const teamProjects = projects.filter(
       (project) => project.type === ProjectType.TEAM,
     );

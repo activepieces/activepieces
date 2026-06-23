@@ -1,4 +1,4 @@
-import { ApId, Permission, PlatformUsageMetric, SeekPage } from '@activepieces/core-utils'
+import { ApId, Permission, SeekPage } from '@activepieces/core-utils'
 import { ApplicationEventName, CountFlowsRequest, CreateFlowRequest, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -87,10 +87,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
         const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
         if (turnOnFlow || publishDisabledFlow) {
-            await platformPlanService(request.log).checkActiveFlowsExceededLimit(
-                request.principal.platform.id,
-                PlatformUsageMetric.ACTIVE_FLOWS,
-            )
+            await platformPlanService(request.log).checkActiveFlowsExceededLimit(request.principal.platform.id)
         }
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,

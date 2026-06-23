@@ -10,6 +10,7 @@ import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
+import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
@@ -33,6 +34,9 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
                 break
         }
         const platformId = request.principal.platform.id
+        if (type === InvitationType.PLATFORM) {
+            await platformPlanService(request.log).checkUsersExceededLimit(platformId)
+        }
         const status = await shouldAutoAcceptInvitation(request.principal, request.body, platformId, request.log) ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
         const projectRole = await getProjectRoleAndAssertIfFound(platformId, request.body)
 

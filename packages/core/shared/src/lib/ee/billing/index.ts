@@ -1,6 +1,6 @@
 import { isNil, Nullable, PlatformUsageMetric } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits, TeamProjectsLimit } from '../../management/platform'
+import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits } from '../../management/platform'
 import { PiecesFilterType } from '../../management/project'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
@@ -79,7 +79,6 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 1,
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     embeddingEnabled: false,
-    agentsEnabled: true,
     aiProvidersEnabled: false,
     chatEnabled: false,
     dataManipulationEnabled: false,
@@ -92,7 +91,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    teamProjectsLimit: TeamProjectsLimit.ONE,
+    teamProjectsLimit: 1,
     projectRolesEnabled: false,
     apiKeysEnabled: false,
     ssoEnabled: false,
@@ -114,7 +113,6 @@ export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     embeddingEnabled: false,
-    agentsEnabled: true,
     aiProvidersEnabled: true,
     chatEnabled: false,
     dataManipulationEnabled: false,
@@ -129,7 +127,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    teamProjectsLimit: TeamProjectsLimit.ONE,
+    teamProjectsLimit: 1,
     projectRolesEnabled: false,
     apiKeysEnabled: false,
     ssoEnabled: false,

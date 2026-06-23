@@ -1,4 +1,4 @@
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -121,7 +121,7 @@ export function PlatformSidebar() {
           to: '/platform/projects',
           label: t('Projects'),
           icon: LayoutGridIcon,
-          locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
+          locked: platform.plan.teamProjectsLimit === 0,
         },
         {
           to: '/platform/users',
