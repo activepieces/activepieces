@@ -13,8 +13,10 @@ let testWorkspace = ''
 const mockGetPieceBundleUrl = vi.fn()
 const mockInstall = vi.fn()
 
-vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
-    bunRunner: () => ({ install: mockInstall }),
+vi.mock('../../../src/lib/utils/bun-runner', () => ({
+    bunRunner: () => ({
+        install: mockInstall,
+    }),
 }))
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({

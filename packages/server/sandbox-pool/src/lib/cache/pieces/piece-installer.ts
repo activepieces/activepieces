@@ -5,8 +5,8 @@ import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepi
 import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, PrivatePiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
 import { SandboxPoolSettings } from '../../types'
+import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
-import { bunRunner } from '../code/bun-runner'
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const VALID_SCOPED_NAME_REGEX = /^@[^/]+\/[^/]+$/

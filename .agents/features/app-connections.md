@@ -22,7 +22,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - `packages/web/src/features/connections/components/edit-global-connection-dialog.tsx` — edit global connection dialog
 - `packages/web/src/features/connections/components/rename-connection-dialog.tsx` — rename connection dialog
 - `packages/web/src/app/connections/oidc-connection-settings.tsx` — OIDC connection form component
-- `packages/server/api/src/app/core/security/oidc/oidc-key-manager.ts` — RSA key lifecycle: mutex-protected caching, auto-generation (CE), RFC 7638 kid fingerprint
+- `packages/server/api/src/app/core/security/oidc/oidc-key-manager.ts` — RSA key lifecycle: mutex-protected caching, auto-generation persisted (encrypted) to the shared `flag` table, RFC 7638 kid fingerprint
 - `packages/server/api/src/app/core/security/oidc/oidc.module.ts` — module wrapper that registers the OIDC token controller under `/v1/worker`
 - `packages/server/api/src/app/core/security/oidc/oidc-token.controller.ts` — engine-only endpoint that issues RS256 JWTs (`POST /api/v1/worker/oidc-token`)
 - `packages/server/api/src/app/core/security/oidc/oidc-discovery.controller.ts` — public OIDC discovery endpoints (`GET /.well-known/openid-configuration`, `GET /.well-known/jwks.json`)
@@ -90,8 +90,8 @@ const { token } = await response.json()
 - `GET /.well-known/jwks.json` — RSA public key set; `kid` is an RFC 7638 SHA-256 thumbprint
 
 **Key management** (`oidcKeyManager`):
-- Production: key provided via `AP_OIDC_RSA_PRIVATE_KEY` env var (base64-encoded PEM)
-- CE / dev: key auto-generated and persisted to local file store on first use
+- The signing key is read from the shared `flag` table (encrypted with the platform encryption key)
+- If absent it is generated on first use and persisted there via `INSERT ... ON CONFLICT DO NOTHING` + re-read, giving first-writer-wins convergence across all nodes (single- and multi-node alike — no env var or manual provisioning required)
 - Concurrent access is safe: `privateKeyMutex` and `publicKeyMutex` guard caching independently to avoid deadlocks
 
 ## Scope

@@ -7,7 +7,7 @@ import { ApEnvironment, PiecePackage, WorkerToApiContract } from '@activepieces/
 import { nanoid } from 'nanoid'
 import { CodeArtifact, SandboxPoolSettings } from '../types'
 import { cacheUtils } from './cache-paths'
-import { codeBuilder } from './code/code-builder'
+import { codeBuilder } from './flow/code/code-builder'
 import { pieceInstaller } from './pieces/piece-installer'
 
 const engineSourcePath = 'dist/packages/engine/main.js'

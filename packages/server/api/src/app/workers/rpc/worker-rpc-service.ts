@@ -1,12 +1,14 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ApEdition, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowOperationType, FlowStatus, isFlowRunStateTerminal, logSerializer, PiecePackage, RunInternalError, RunInternalErrorSource, StreamStepProgress, truncateFailedStepMessage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ExecutionType, ExecutioOutputFile, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, isFlowRunStateTerminal, logSerializer, PiecePackage, RunInternalError, RunInternalErrorSource, StreamStepProgress, truncateFailedStepMessage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileCompressor } from '../../file/file-compressor'
-import { fileService } from '../../file/file.service'
+import { fileService, getLocationForFile } from '../../file/file.service'
+import { s3Helper } from '../../file/s3-helper'
+import { signedFileTransport } from '../../file/signed-file-transport'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
@@ -227,6 +229,73 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             }
             const base = await domainHelper.getApiUrlForWorker({ path: 'v1/pieces/bundle' })
             return `${base}?name=${encodeURIComponent(input.pieceName)}&version=${encodeURIComponent(input.pieceVersion)}`
+        },
+
+        async getFlowBundle(input) {
+            // Two intentional lookups (not the redundant double-read): the metadata
+            // read decides the transport, so S3-backed bundles never load their bytes
+            // into app memory — the worker pulls them straight from S3 via a signed URL.
+            const file = await fileService(log).getFile({
+                fileId: input.flowVersionId,
+                projectId: input.projectId,
+                type: FileType.FLOW_BUNDLE,
+            })
+            if (isNil(file)) {
+                return null
+            }
+            if (signedFileTransport.isEnabled(file)) {
+                assertNotNullOrUndefined(file.s3Key, 's3Key')
+                const url = await s3Helper(log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)
+                return { kind: 'url', url }
+            }
+            const { data } = await fileService(log).getDataOrThrow({
+                fileId: input.flowVersionId,
+                projectId: input.projectId,
+                type: FileType.FLOW_BUNDLE,
+            })
+            return { kind: 'inline', data }
+        },
+
+        async prepareFlowBundleUpload(input) {
+            // Bundles are only worth persisting on S3-backed storage. On DB storage the
+            // bundle would just bloat the database (and a null-data pre-save would throw),
+            // so tell the worker to skip publishing and always build inline.
+            if (getLocationForFile(FileType.FLOW_BUNDLE) !== FileLocation.S3) {
+                return { kind: 'skip' }
+            }
+            // S3 without signed URLs: the worker streams the bytes back via uploadFlowBundle.
+            if (!signedFileTransport.shouldRedirectForType(FileType.FLOW_BUNDLE)) {
+                return { kind: 'inline' }
+            }
+            // Signed-PUT path: persist the row (data null) so the s3Key exists, then
+            // hand back a signed PUT URL for a direct-to-S3 upload.
+            const file = await fileService(log).save({
+                fileId: input.flowVersionId,
+                projectId: input.projectId,
+                platformId: input.platformId,
+                type: FileType.FLOW_BUNDLE,
+                data: null,
+                size: input.size,
+                compression: FileCompression.NONE,
+            })
+            assertNotNullOrUndefined(file.s3Key, 's3Key')
+            const url = await s3Helper(log).putS3SignedUrl({
+                s3Key: file.s3Key,
+                contentLength: input.size,
+            })
+            return { kind: 'url', url }
+        },
+
+        async uploadFlowBundle(input) {
+            await fileService(log).save({
+                fileId: input.flowVersionId,
+                projectId: input.projectId,
+                platformId: input.platformId,
+                type: FileType.FLOW_BUNDLE,
+                data: input.data,
+                size: input.data.length,
+                compression: FileCompression.NONE,
+            })
         },
 
         async getUsedPieces() {
