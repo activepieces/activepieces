@@ -186,6 +186,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                 <Button
                                   variant="ghost"
                                   size="icon-xs"
+                                  aria-label={t('Reconnect')}
                                   loading={isLoadingPiece}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -226,7 +227,11 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                 connection.externalId ===
                                 removeBrackets(field.value),
                             )?.scope === AppConnectionScope.PLATFORM && (
-                              <Globe size={16} className="shrink-0" />
+                              <Globe
+                                size={16}
+                                className="shrink-0"
+                                aria-hidden="true"
+                              />
                             )}
                             {
                               connections?.data?.find(
@@ -278,7 +283,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                             },
                           )}
                         >
-                          <Plus size={16} />
+                          <Plus size={16} aria-hidden="true" />
                           {t('Create Connection')}
                         </span>
                       </SelectAction>
@@ -294,11 +299,19 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                           >
                             <div className="flex items-center gap-2">
                               {connection.usingSecretManager && (
-                                <Key size={16} className="shrink-0" />
+                                <Key
+                                  size={16}
+                                  className="shrink-0"
+                                  aria-hidden="true"
+                                />
                               )}
                               {connection.scope ===
                                 AppConnectionScope.PLATFORM && (
-                                <Globe size={16} className="shrink-0" />
+                                <Globe
+                                  size={16}
+                                  className="shrink-0"
+                                  aria-hidden="true"
+                                />
                               )}
                               {connection.displayName}
                             </div>

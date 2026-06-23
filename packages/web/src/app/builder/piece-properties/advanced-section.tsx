@@ -69,7 +69,10 @@ function AdvancedSection({
           'focus-visible:ring-primary/35 focus-visible:ring-offset-2',
         )}
       >
-        <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+        <SlidersHorizontal
+          className="h-3.5 w-3.5 text-muted-foreground"
+          aria-hidden="true"
+        />
         <span className="text-[13px] font-semibold tracking-[-0.005em] text-foreground">
           {t('Advanced')}
         </span>
@@ -79,6 +82,7 @@ function AdvancedSection({
             : t('{count, plural, =1 {1 option} other {# options}}', { count })}
         </span>
         <ChevronDown
+          aria-hidden="true"
           className={cn(
             'h-4 w-4 text-muted-foreground transition-transform duration-200',
             !open && '-rotate-90',

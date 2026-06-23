@@ -1,6 +1,6 @@
 import { AP_FUNCTIONS, ApFunction } from '@activepieces/core-formula';
 import { ExternalLink } from 'lucide-react';
-import { RefObject, useEffect, useRef, useState } from 'react';
+import { RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -78,15 +78,29 @@ export function FunctionSearchPopover({
     return () => window.removeEventListener('keydown', handler, true);
   }, [filtered, activeIdx, onSelect, onClose]);
 
-  const editorRect = editorRef.current?.getBoundingClientRect();
-  const popoverTop = editorRect ? editorRect.bottom + 4 : position.top;
-  const popoverLeft = editorRect
-    ? Math.min(
-        Math.max(editorRect.left + window.scrollX, SCREEN_MARGIN),
-        window.innerWidth - editorRect.width - SCREEN_MARGIN,
-      )
-    : position.left;
-  const popoverWidth = editorRect ? editorRect.width : 360;
+  const [geometry, setGeometry] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setGeometry({
+      top: rect.bottom + 4,
+      left: Math.min(
+        Math.max(rect.left + window.scrollX, SCREEN_MARGIN),
+        window.innerWidth - rect.width - SCREEN_MARGIN,
+      ),
+      width: rect.width,
+    });
+  }, [editorRef, query]);
+
+  const popoverTop = geometry?.top ?? position.top;
+  const popoverLeft = geometry?.left ?? position.left;
+  const popoverWidth = geometry?.width ?? 360;
 
   const tooltipOnRight = popoverLeft < 340;
 
@@ -116,7 +130,7 @@ export function FunctionSearchPopover({
           onMouseDown={(e) => e.preventDefault()}
         >
           {t('See All')}
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink className="w-3 h-3" aria-hidden="true" />
         </a>
       )}
     </div>

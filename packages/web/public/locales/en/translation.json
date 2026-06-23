@@ -602,6 +602,7 @@
   "New Table": "New Table",
   "Response stopped": "Response stopped",
   "Retry": "Retry",
+  "Refresh page": "Refresh page",
   "Ask, build, or run a task...": "Ask, build, or run a task...",
   "{actionDisplayName} · {count} items": "{actionDisplayName} · {count} items",
   "Using: {connectionLabel}": "Using: {connectionLabel}",

@@ -17,11 +17,15 @@ const DynamicPropertiesErrorBoundary = ({
       key={key}
       fallback={
         !triedRerenderingRef.current ? (
-          <div className="text-sm text-destructive italic flex justify-between items-center">
+          <div
+            role="alert"
+            className="text-sm text-destructive italic flex justify-between items-center"
+          >
             {t('Unexpected error, please retry')}
             <Button
               size="icon"
               variant="outline"
+              aria-label={t('Retry')}
               onClick={() => {
                 setKey(Date.now());
                 triedRerenderingRef.current = true;
@@ -31,11 +35,15 @@ const DynamicPropertiesErrorBoundary = ({
             </Button>
           </div>
         ) : (
-          <div className="text-sm text-destructive italic flex justify-between items-center">
+          <div
+            role="alert"
+            className="text-sm text-destructive italic flex justify-between items-center"
+          >
             {t('Unexpected error, please refresh the page or contact support')}
             <Button
               size="icon"
               variant="outline"
+              aria-label={t('Refresh page')}
               onClick={() => {
                 window.location.reload();
               }}

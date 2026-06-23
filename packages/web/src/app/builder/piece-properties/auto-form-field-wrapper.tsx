@@ -275,13 +275,24 @@ function PropertyTypeTooltip({ property }: { property: PieceProperty }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {property.type === PropertyType.FILE ? (
-          <File className="w-4 h-4 stroke-foreground/55"></File>
-        ) : (
-          property.type === PropertyType.DATE_TIME && (
-            <Calendar className="w-4 h-4 stroke-foreground/55"></Calendar>
-          )
-        )}
+        <button
+          type="button"
+          aria-label={
+            property.type === PropertyType.FILE
+              ? t('File Input i.e a url or file passed from a previous step')
+              : t('Date Input must comply with ISO 8601 format')
+          }
+          className="inline-flex items-center bg-transparent border-0 p-0 cursor-help"
+        >
+          {property.type === PropertyType.FILE ? (
+            <File aria-hidden="true" className="w-4 h-4 stroke-foreground/55" />
+          ) : (
+            <Calendar
+              aria-hidden="true"
+              className="w-4 h-4 stroke-foreground/55"
+            />
+          )}
+        </button>
       </TooltipTrigger>
       <TooltipContent side="bottom">
         <>
