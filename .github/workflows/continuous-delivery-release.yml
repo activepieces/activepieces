@@ -27,11 +27,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build shared package
-        run: bun run --cwd packages/core/shared build
-
-      - name: Build server-utils package
-        run: bun run --cwd packages/server/utils build
+      - name: Build shared and server-utils packages
+        run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
 
       - name: Set version from package.json
         id: version

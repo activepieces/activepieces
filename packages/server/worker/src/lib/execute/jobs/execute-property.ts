@@ -10,7 +10,7 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.init({ flowVersionId: undefined, platformId: data.platformId, pieces: [data.piece], codeSteps: [] })
+        await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
 
         const { data: result, error } = await tryCatch(async () => {
             return execution.run({

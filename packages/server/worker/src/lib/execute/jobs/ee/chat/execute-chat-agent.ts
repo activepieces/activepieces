@@ -1,7 +1,7 @@
 import { AIProviderName, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
-import { createUIMessageStream, generateText, ModelMessage, streamText } from 'ai'
+import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools } from './chat-worker-tools'
@@ -25,11 +25,14 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         const config = await ctx.apiClient.getChatConfig({
             conversationId, runId, platformId, userId, userMessage, modelName, files,
             ...spreadIfDefined('promptOverride', promptOverride),
+            ...spreadIfDefined('dryRun', dryRun),
         })
 
         const provider = config.provider as AIProviderName
+        const webSearchActive = !dryRun && chatAiUtils.supportsWebSearch(provider)
         const model = chatAiUtils.createChatModel({
             provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
+            webSearchEnabled: webSearchActive,
         })
 
         const eventEmitter = chatWorkerTools.createEventEmitter({
@@ -68,8 +71,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         try {
             const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
 
+            const webTools: ToolSet = dryRun ? {} : {
+                ...chatWorkerTools.createWebTools(),
+                ...(webSearchActive ? chatAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
+            }
+
             const allTools = buildToolSet({
-                ctx, eventEmitter, log, phaseState, mcpToolSet,
+                ctx, eventEmitter, log, phaseState, mcpToolSet, webTools,
                 projects: config.projects, conversationId, runId, platformId, userId,
                 guides: config.guides, dryRun: dryRun ?? false,
             })
@@ -223,12 +231,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects, conversationId, runId, platformId, userId, guides, dryRun }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, conversationId, runId, platformId, userId, guides, dryRun }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: ChatPhase }
     mcpToolSet: Record<string, unknown>
+    webTools: ToolSet
     projects: Array<{ id: string, displayName: string, type: string }>
     conversationId: string
     runId?: string
@@ -331,7 +340,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, projects
         log,
     })
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...thinkingTools, ...phaseTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log }: {
@@ -361,7 +370,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
 
     const uiStream = createUIMessageStream({
         execute: ({ writer: streamWriter }) => {
-            streamWriter.merge(result.toUIMessageStream())
+            streamWriter.merge(result.toUIMessageStream({ sendSources: true }))
         },
     })
 
