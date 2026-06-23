@@ -15,11 +15,11 @@ export function selectRuntime({ concurrency, log }: SelectRuntimeParams): Runtim
         case RuntimeKind.LOCAL:
             return createLocalRuntime({ concurrency, log })
         case RuntimeKind.GCP_CLOUD_RUN:
-            return createCloudRunRuntime()
+            return createCloudRunRuntime({ log })
     }
 }
 
-function resolveRuntimeKind(): RuntimeKind {
+export function resolveRuntimeKind(): RuntimeKind {
     const raw = system.get(WorkerSystemProp.RUNTIME) ?? RuntimeKind.LOCAL
     const match = Object.values(RuntimeKind).find((kind) => kind === raw)
     if (match === undefined) {
