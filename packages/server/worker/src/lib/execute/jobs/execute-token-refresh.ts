@@ -1,4 +1,3 @@
-import { tryCatch } from '@activepieces/core-utils'
 import {
     EngineOperationType,
     EngineResponseStatus,
@@ -17,8 +16,8 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
         const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
         await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
 
-        const { data: result, error } = await tryCatch(async () =>
-            execution.run({
+        try {
+            const result = await execution.run({
                 operationType: EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH,
                 operation: {
                     piece: data.piece,
@@ -30,11 +29,17 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
                     timeoutInSeconds,
                 },
                 timeoutInSeconds,
-            }),
-        )
-        await execution.dispose({ invalidate: false })
+            })
 
-        if (error) {
+            return {
+                kind: JobResultKind.SYNCHRONOUS,
+                status: result.status,
+                response: result.response,
+                errorMessage: result.error,
+                logs: result.logs,
+            }
+        }
+        catch (error) {
             await execution.dispose({ invalidate: true })
             if (isSandboxTimeout(error)) {
                 return {
@@ -45,13 +50,8 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
             }
             throw error
         }
-
-        return {
-            kind: JobResultKind.SYNCHRONOUS,
-            status: result.status,
-            response: result.response,
-            errorMessage: result.error,
-            logs: result.logs,
+        finally {
+            await execution.dispose({ invalidate: false })
         }
     },
 }
