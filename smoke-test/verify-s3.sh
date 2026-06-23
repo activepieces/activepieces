@@ -81,8 +81,26 @@ if [ -z "$RUN_ID" ]; then
   FAIL=$((FAIL + 1))
 else
   echo "Latest run: $RUN_ID"
-  RUN=$(curl -s --fail-with-body "$API_URL/flow-runs/$RUN_ID" -H "$AUTH")
-  RUN_STATUS=$(echo "$RUN" | jq -r '.status // empty')
+
+  # The webhook sync response is sent at the Return Response step, while the run
+  # is finalized to SUCCEEDED asynchronously — poll until it reaches a terminal
+  # status so the read-back assertion is not racy.
+  RUN=""
+  RUN_STATUS=""
+  for i in $(seq 1 30); do
+    RUN=$(curl -s --fail-with-body "$API_URL/flow-runs/$RUN_ID" -H "$AUTH")
+    RUN_STATUS=$(echo "$RUN" | jq -r '.status // empty')
+    if [ "$RUN_STATUS" = "SUCCEEDED" ]; then
+      break
+    fi
+    case "$RUN_STATUS" in
+      FAILED|INTERNAL_ERROR|TIMEOUT|STOPPED)
+        break
+        ;;
+    esac
+    sleep 1
+  done
+
   HAS_STEPS=$(echo "$RUN" | jq -e '(.steps | type == "object") and (.steps | length > 0)' > /dev/null 2>&1 && echo "true" || echo "false")
 
   if [ "$RUN_STATUS" = "SUCCEEDED" ]; then
