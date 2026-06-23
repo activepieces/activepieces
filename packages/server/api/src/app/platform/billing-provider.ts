@@ -1,6 +1,16 @@
+import { PurchasablePlan } from '@activepieces/shared'
 import { hooksFactory } from '../helper/hooks-factory'
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
+    listPlans: async () => {
+        return []
+    },
+    createCheckoutSession: async () => {
+        return { checkoutUrl: null }
+    },
+    getBillingPortalUrl: async () => {
+        return { url: '' }
+    },
     trackCredits: async () => {
         return
     },
@@ -62,7 +72,21 @@ export type AppSumoAiCreditsUsage = {
     limit: number
 }
 
+export type CreateCheckoutSessionParams = {
+    platformId: string
+    planId: string
+    successUrl?: string
+}
+
+export type BillingPortalParams = {
+    platformId: string
+    returnUrl?: string
+}
+
 export type BillingProvider = {
+    listPlans(platformId: string): Promise<PurchasablePlan[]>
+    createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{ checkoutUrl: string | null }>
+    getBillingPortalUrl(params: BillingPortalParams): Promise<{ url: string }>
     trackCredits(params: TrackCreditsParams): Promise<void>
     trackAppSumoAiUsage(params: TrackAppSumoAiUsageParams): Promise<void>
     ensureEnrolled(platformId: string): Promise<void>

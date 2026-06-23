@@ -41,6 +41,26 @@ export const CreateAICreditCheckoutSessionParamsSchema = z.object({
 })
 export type CreateAICreditCheckoutSessionParamsSchema = z.infer<typeof CreateAICreditCheckoutSessionParamsSchema>
 
+export const CheckoutPlanParamsSchema = z.object({
+    planId: z.string(),
+})
+export type CheckoutPlanParams = z.infer<typeof CheckoutPlanParamsSchema>
+
+export const CheckoutSessionResponse = z.object({
+    checkoutUrl: Nullable(z.string()),
+})
+export type CheckoutSessionResponse = z.infer<typeof CheckoutSessionResponse>
+
+export const PurchasablePlan = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: Nullable(z.string()),
+    price: Nullable(z.number()),
+    interval: Nullable(z.string()),
+    priceDisplay: Nullable(z.string()),
+})
+export type PurchasablePlan = z.infer<typeof PurchasablePlan>
+
 export const UpdateAICreditsAutoTopUpParamsSchema = z.union([
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.ENABLED),

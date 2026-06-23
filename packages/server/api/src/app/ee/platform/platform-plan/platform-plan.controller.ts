@@ -1,9 +1,10 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, PlatformBillingInformation, PrincipalType, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { CheckoutPlanParamsSchema, CheckoutSessionResponse, CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, PlatformBillingInformation, PrincipalType, PurchasablePlan, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { platformPlanService } from './platform-plan.service'
@@ -33,12 +34,24 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return response
     })
 
+    fastify.get('/plans', ListPlansRequest, async (request) => {
+        return billingProvider.get(request.log).listPlans(request.principal.platform.id)
+    })
+
+    fastify.post('/checkout', CheckoutRequest, async (request) => {
+        return billingProvider.get(request.log).createCheckoutSession({
+            platformId: request.principal.platform.id,
+            planId: request.body.planId,
+        })
+    })
+
     fastify.post('/portal', {
         config: {
             security: securityAccess.platformAdminOnly([PrincipalType.USER]),
         },
     }, async (request) => {
-        return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
+        const { url } = await billingProvider.get(request.log).getBillingPortalUrl({ platformId: request.principal.platform.id })
+        return url
     })
 
     fastify.post('/create-checkout-session', CreateCheckoutSessionRequest, async (request) => {
@@ -109,6 +122,29 @@ const UpdateActiveFlowsAddonRequest = {
 const CreateCheckoutSessionRequest = {
     schema: {
         body: CreateCheckoutSessionParamsSchema,
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const ListPlansRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: z.array(PurchasablePlan),
+        },
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const CheckoutRequest = {
+    schema: {
+        body: CheckoutPlanParamsSchema,
+        response: {
+            [StatusCodes.OK]: CheckoutSessionResponse,
+        },
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),

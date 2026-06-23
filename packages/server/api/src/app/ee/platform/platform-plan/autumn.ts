@@ -35,6 +35,11 @@ const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
 // plan id (used by both subscribeFreeOnConsole and autumnPlanIdToPlanName); update here once confirmed.
 const AUTUMN_FREE_PLAN_ID = 'free'
 
+// Self-serve-purchasable Autumn plan ids. `listPlans` only surfaces these (intersected with what's live and
+// not archived in Autumn), so a checkout can never target enterprise (sales-led) or appsumo (comped) plans.
+// MUST match the Autumn dashboard plan ids.
+const SUPPORTED_PLAN_IDS: readonly string[] = ['standard']
+
 const AUTUMN_FEATURE = {
     CREDITS: 'apCredits',
     APPSUMO_AI_CREDITS: 'appSumoAiCredits',
@@ -181,6 +186,44 @@ export const autumnUtils = {
 }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
+    listPlans: async (platformId: string) => {
+        await autumnUtils.ensureEnrolled(log, platformId)
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return []
+        }
+        const { list } = await client.listPlans()
+        return list
+            .filter((plan) => !plan.archived && !plan.addOn && SUPPORTED_PLAN_IDS.includes(plan.id))
+            .map((plan) => ({
+                id: plan.id,
+                name: plan.name,
+                description: plan.description ?? null,
+                price: plan.price?.amount ?? null,
+                interval: plan.price?.interval ?? null,
+                priceDisplay: plan.price?.display?.primaryText ?? null,
+            }))
+    },
+    createCheckoutSession: async ({ platformId, planId, successUrl }) => {
+        // Enroll first so a customer-scoped client exists (mints a FREE Autumn customer via the console for
+        // a brand-new platform), then attach the paid plan. PAY-FIRST: never enablePlanImmediately — the plan
+        // activates only once payment completes; the frontend polls refreshEntitlements after redirect.
+        await autumnUtils.ensureEnrolled(log, platformId)
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { checkoutUrl: null }
+        }
+        const result = await client.attach({ planId, successUrl })
+        return { checkoutUrl: result.paymentUrl }
+    },
+    getBillingPortalUrl: async ({ platformId, returnUrl }) => {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { url: '' }
+        }
+        const result = await client.openCustomerPortal({ returnUrl })
+        return { url: result.url }
+    },
     trackCredits: async (params: TrackCreditsParams) => {
         const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
         if (isNil(client)) {
