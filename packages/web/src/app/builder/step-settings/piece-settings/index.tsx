@@ -98,16 +98,12 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
       ? (hideContinueOnFailure ? 0 : 1) + (hideRetryOnFailure ? 0 : 1)
       : 0;
 
-  const actionAdvancedCount =
-    Object.keys(actionSplit.advanced).length + errorHandlingItemsCount;
+  const actionAdvancedCount = Object.keys(actionSplit.advanced).length;
   const triggerAdvancedCount = Object.keys(triggerSplit.advanced).length;
 
-  const actionAdvancedWatchPaths = [
-    ...Object.keys(actionSplit.advanced).map(
-      (name) => `settings.input.${name}`,
-    ),
-    ...(selectedAction !== undefined ? ['settings.errorHandlingOptions'] : []),
-  ];
+  const actionAdvancedWatchPaths = Object.keys(actionSplit.advanced).map(
+    (name) => `settings.input.${name}`,
+  );
   const triggerAdvancedWatchPaths = Object.keys(triggerSplit.advanced).map(
     (name) => `settings.input.${name}`,
   );
@@ -178,14 +174,14 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
                     updatePropertySettingsSchema,
                   }}
                 ></GenericPropertiesForm>
-                {errorHandlingItemsCount > 0 && (
-                  <ActionErrorHandlingForm
-                    hideContinueOnFailure={hideContinueOnFailure}
-                    hideRetryOnFailure={hideRetryOnFailure}
-                    disabled={props.readonly}
-                  />
-                )}
               </AdvancedSection>
+              {errorHandlingItemsCount > 0 && (
+                <ActionErrorHandlingForm
+                  hideContinueOnFailure={hideContinueOnFailure}
+                  hideRetryOnFailure={hideRetryOnFailure}
+                  disabled={props.readonly}
+                />
+              )}
             </>
           )}
           {selectedTrigger && (
