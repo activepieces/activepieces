@@ -590,7 +590,9 @@ describe('Execute Flow E2E', () => {
             url: '/api/v1/pieces',
             body: formData,
         })
-        expect(installResponse.statusCode).toBe(StatusCodes.CREATED)
+        // Surface the response body in the failure message so a regressed archive
+        // upload is diagnosable from the CI log without re-running locally.
+        expect(installResponse.statusCode, installResponse.body).toBe(StatusCodes.CREATED)
 
         const webhookPiece = createMockPieceMetadata({
             name: '@activepieces/piece-webhook',
