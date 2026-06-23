@@ -34,7 +34,10 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
                 break
         }
         const platformId = request.principal.platform.id
-        if (type === InvitationType.PLATFORM) {
+        // Fail at invitation time (not later at accept/user-creation) when the invite would add a NEW platform
+        // user. Applies to BOTH platform and project invites — a project invite to a new email also creates a
+        // user on accept. Adding an existing platform member to a project consumes no seat, so it's not gated.
+        if (await invitationWouldAddNewUser({ email, platformId, log: request.log })) {
             await platformPlanService(request.log).checkUsersExceededLimit(platformId)
         }
         const status = await shouldAutoAcceptInvitation(request.principal, request.body, platformId, request.log) ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
@@ -101,6 +104,15 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
+
+async function invitationWouldAddNewUser({ email, platformId, log }: { email: string, platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    const identity = await userIdentityService(log).getIdentityByEmail(email)
+    if (isNil(identity)) {
+        return true
+    }
+    const existingUser = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId })
+    return isNil(existingUser)
+}
 
 const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendUserInvitationRequest): Promise<ProjectRole | null> => {
     const { type } = request
