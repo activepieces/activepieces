@@ -1,14 +1,17 @@
 export { createSandboxPool } from './lib/local-pool-runtime'
+export { createResolver } from './lib/resolver'
 export { warmupPieces } from './lib/warmup'
 
 export type {
     Runtime,
-    RuntimeExecution,
+    Resolver,
+    ResolveInput,
+    ResolveResult,
+    ExecuteParams,
+    ProvisionInput,
+    FetchArchive,
     RuntimeExecutionResult,
     RuntimeExecutorInfo,
-    CreateExecutionParams,
-    ProvisionInput,
-    ProvisionResult,
     SandboxPoolSettings,
     SandboxPoolDeps,
     CodeArtifact,

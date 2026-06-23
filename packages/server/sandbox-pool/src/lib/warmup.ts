@@ -4,7 +4,8 @@ import { pieceInstaller } from './cache/pieces/piece-installer'
 import { SandboxPoolSettings } from './types'
 
 export async function warmupPieces({ pieces, basePath, getSettings, log, apiClient }: WarmupPiecesParams): Promise<void> {
-    await pieceInstaller(log, apiClient, basePath, getSettings).install({ pieces, includeFilters: true })
+    const fetchArchive = (archiveId: string): Promise<Buffer> => apiClient.getPieceArchive({ archiveId })
+    await pieceInstaller(log, basePath, getSettings).install({ pieces, includeFilters: true, fetchArchive })
 }
 
 type WarmupPiecesParams = {

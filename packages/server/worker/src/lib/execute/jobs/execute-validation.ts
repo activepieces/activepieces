@@ -8,11 +8,15 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
     async execute(ctx: JobContext, data: ExecuteValidateAuthJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, pieces: [data.piece] })
+        if (resolved.kind !== 'ready') {
+            throw new Error(`Unexpected resolve outcome "${resolved.kind}" for piece-only job`)
+        }
 
         try {
-            const result = await execution.run({
+            const result = await ctx.runtime.execute({
+                workerIndex: ctx.workerIndex,
+                log: ctx.log,
                 operationType: EngineOperationType.EXECUTE_VALIDATE_AUTH,
                 operation: {
                     piece: data.piece,
@@ -24,6 +28,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
                     timeoutInSeconds,
                 },
                 timeoutInSeconds,
+                provision: resolved.provision,
             })
 
             return {
@@ -35,7 +40,6 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
             }
         }
         catch (e) {
-            await execution.dispose({ invalidate: true })
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                 return {
                     kind: JobResultKind.SYNCHRONOUS,
@@ -44,9 +48,6 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
                 }
             }
             throw e
-        }
-        finally {
-            await execution.dispose({ invalidate: false })
         }
     },
 }

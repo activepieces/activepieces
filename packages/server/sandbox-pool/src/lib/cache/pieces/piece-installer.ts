@@ -2,9 +2,9 @@ import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
 import { groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
-import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, PrivatePiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, PrivatePiecePackage } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
-import { SandboxPoolSettings } from '../../types'
+import { FetchArchive, SandboxPoolSettings } from '../../types'
 import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
 
@@ -14,11 +14,11 @@ const VALID_UNSCOPED_NAME_REGEX = /^[^/]+$/
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
-export const pieceInstaller = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
-    async install({ pieces, includeFilters }: InstallParams): Promise<void> {
+export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxPoolSettings) => ({
+    async install({ pieces, includeFilters, fetchArchive }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log, apiClient, getSettings)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, fetchArchive, getSettings)
         })
         await Promise.all(installPromises)
     },
@@ -42,7 +42,7 @@ function getCustomPiecesPath(basePath: string, platformId: string, getSettings: 
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, apiClient: WorkerToApiContract, getSettings: () => SandboxPoolSettings): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, fetchArchive: FetchArchive, getSettings: () => SandboxPoolSettings): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { validPieces, invalidPieces } = partitionValidPieceNames(nonDevPieces)
@@ -80,7 +80,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 path: rootWorkspace,
             })
 
-            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
+            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, fetchArchive)
 
             await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
                 rootWorkspace,
@@ -210,7 +210,7 @@ function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getS
 async function savePackageArchivesToDiskIfNotCached(
     rootWorkspace: string,
     pieces: PiecePackage[],
-    apiClient: WorkerToApiContract,
+    fetchArchive: FetchArchive,
 ): Promise<void> {
     const saveToDiskJobs = pieces.map(async (piece) => {
         if (piece.packageType !== PackageType.ARCHIVE) {
@@ -221,7 +221,7 @@ async function savePackageArchivesToDiskIfNotCached(
             return
         }
         await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
-        const archive = await apiClient.getPieceArchive({ archiveId: piece.archiveId })
+        const archive = await fetchArchive(piece.archiveId)
         await writeFile(archivePath, archive)
     })
     await Promise.all(saveToDiskJobs)
@@ -308,6 +308,7 @@ function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: Priv
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
+    fetchArchive: FetchArchive
 }
 
 type PieceInstallationResult = {

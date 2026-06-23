@@ -1,7 +1,7 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { Runtime, warmupPieces } from '@activepieces/sandbox-pool'
+import { createResolver, Runtime, warmupPieces } from '@activepieces/sandbox-pool'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
@@ -227,6 +227,12 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             const ctx: JobContext = {
                 apiClient,
                 runtime,
+                resolver: createResolver({
+                    apiClient,
+                    basePath: sandboxConfig.getCacheBasePath(),
+                    getSettings: () => sandboxConfig.getSandboxPoolSettings(),
+                    log,
+                }),
                 workerIndex,
                 jobId: job.jobId,
                 engineToken: job.engineToken,

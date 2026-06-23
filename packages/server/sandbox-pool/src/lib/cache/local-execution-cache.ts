@@ -1,16 +1,17 @@
-import { tryCatch, unique } from '@activepieces/core-utils'
+import { unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
-import { PiecePackage, WorkerToApiContract } from '@activepieces/shared'
-import { CodeArtifact, SandboxPoolSettings } from '../types'
+import { PiecePackage } from '@activepieces/shared'
+import { CodeArtifact, FetchArchive, SandboxPoolSettings } from '../types'
 import { cacheUtils } from './cache-paths'
 import { engineInstaller } from './engine/engine-installer'
 import { codeBuilder } from './flow/code/code-builder'
 import { pieceInstaller } from './pieces/piece-installer'
 
-export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
+export const localExecutionCache = (log: ApLogger, basePath: string, getSettings: () => SandboxPoolSettings) => ({
     async provision({
         pieces,
         codeSteps,
+        fetchArchive,
     }: ProvisionParams): Promise<void> {
         await wideEvent.timed({
             name: 'provision',
@@ -51,11 +52,11 @@ export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContrac
                     await wideEvent.timed({
                         name: 'installPieces',
                         fn: async () => {
-                            await pieceInstaller(log, apiClient, basePath, getSettings).install({
+                            await pieceInstaller(log, basePath, getSettings).install({
                                 pieces: uniquePieces,
                                 includeFilters: true,
+                                fetchArchive,
                             })
-                            void tryCatch(() => apiClient.markPieceAsUsed({ pieces: uniquePieces }))
                             log.info({
                                 pieces: uniquePieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
                                 path: commonPath,
@@ -72,4 +73,5 @@ export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContrac
 type ProvisionParams = {
     pieces: PiecePackage[]
     codeSteps: CodeArtifact[]
+    fetchArchive: FetchArchive
 }
