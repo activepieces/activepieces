@@ -1,5 +1,5 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { cacheUtils } from './cache/cache-paths'
 import { sandboxCapacity } from './sandbox/capacity'
@@ -11,23 +11,15 @@ import { SandboxPoolSettings } from './types'
 
 export function createSandboxForJob(params: {
     log: ApLogger
-    apiClient: WorkerToApiContract
     boxId: number
     reusable: boolean
     basePath: string
     getSettings: () => SandboxPoolSettings
 }): Sandbox {
-    const { log, apiClient, boxId, reusable, basePath, getSettings } = params
+    const { log, boxId, reusable, basePath, getSettings } = params
     const settings = getSettings()
     const sandboxId = nanoid()
     const paths = cacheUtils(basePath)
-
-    const workerHandlers: WorkerContract = {
-        updateRunProgress: (input) => apiClient.updateRunProgress(input),
-        uploadRunLog: (input) => apiClient.uploadRunLog(input),
-        sendFlowResponse: (input) => apiClient.sendFlowResponse(input),
-        updateStepProgress: (input) => apiClient.updateStepProgress(input),
-    }
 
     const memoryLimitMb = parseMemoryLimit(settings.SANDBOX_MEMORY_LIMIT)
     const processMaker = getProcessMaker(settings.EXECUTION_MODE, log, boxId, paths)
@@ -53,7 +45,6 @@ export function createSandboxForJob(params: {
             wsRpcPort: isIsolateMode(executionMode) ? sandboxCapacity.wsRpcPortForBox(boxId) : undefined,
         },
         processMaker,
-        workerHandlers,
     )
 }
 
