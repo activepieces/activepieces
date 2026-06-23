@@ -117,7 +117,6 @@ export const TestSampleDataViewer = React.memo(
     return (
       <div className="flex flex-col h-full w-full min-h-0">
         <StepDataPanelHeader status={status} lastTestDate={lastTestDate} />
-        {!isTesting && children}
         <div className="flex-1 flex flex-col w-full text-start min-h-0">
           {errorMessage && !isTesting && (
             <div className="px-3 pt-2 text-xs text-muted-foreground shrink-0">
@@ -133,6 +132,7 @@ export const TestSampleDataViewer = React.memo(
               disabled={isTesting}
             />
           )}
+          {!isTesting && !showAgentView && children}
           <div className="flex-1 min-h-0 px-3 pb-3 overflow-auto">
             {isTesting && !showAgentView ? (
               <TestingPreviewContent data={activeData} />
