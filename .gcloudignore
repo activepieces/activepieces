@@ -1,0 +1,26 @@
+# Cloud Build context excludes — keep only source + root config the Dockerfile needs.
+# (When .gcloudignore exists, gcloud ignores .gitignore, so node_modules/dist are listed here too.)
+#
+# node_modules/dist/.nx/.turbo/.pnpm-store are excluded recursively (nested copies in packages too).
+# The rest are LARGE LOCAL-ONLY dirs anchored to the repo root with a leading slash, so we do NOT
+# accidentally strip same-named SOURCE dirs nested in packages (e.g. sandbox-pool/src/lib/cache).
+.git/
+node_modules/
+dist/
+.nx/
+.turbo/
+.pnpm-store/
+/cache/
+/dev/
+/tmp/
+/docs/
+/.claude/
+/.agents/
+/.github/
+/.husky/
+/.evlog/
+**/*.map
+**/*.tsbuildinfo
+**/*.sqlite
+**/*.sqlite-wal
+**/*.sqlite-journal

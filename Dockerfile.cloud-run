@@ -1,0 +1,112 @@
+# Cloud Run execution image: the sandbox pool at concurrency 1 behind an HTTP server.
+# A warm pull-based dispatcher on the API side pushes one job per request to this service.
+# See packages/server/worker/docs/adr/0001-gcp-cloud-run-is-the-pool-at-concurrency-1.md.
+#
+# This image runs the engine in a fork-based sandbox (the Cloud Run instance is itself the
+# tenant-isolation boundary at concurrency 1), so it needs neither isolate nor iptables.
+
+FROM node:24.14.0-bullseye-slim AS base
+
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        openssh-client \
+        python3 \
+        g++ \
+        build-essential \
+        git \
+        poppler-utils \
+        poppler-data \
+        procps \
+        locales \
+        unzip \
+        curl \
+        ca-certificates && \
+    yarn config set python /usr/bin/python3 && \
+    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen en_US.UTF-8
+
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+    fi
+
+RUN unzip bun.zip \
+    && mv bun-*/bun /usr/local/bin/bun \
+    && chmod +x /usr/local/bin/bun \
+    && rm -rf bun.zip bun-*
+
+RUN bun --version
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm install -g --no-fund --no-audit \
+    node-gyp \
+    npm@11.11.0 \
+    typescript@4.9.4 \
+    esbuild@0.25.0
+
+### STAGE 1: Build ###
+FROM base AS build
+
+WORKDIR /usr/src/app
+
+COPY .npmrc package.json bun.lock bunfig.toml ./
+COPY packages/ ./packages/
+
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
+
+COPY . .
+
+# Only the engine and worker are needed on Cloud Run (no web, no API).
+RUN npx turbo run build --filter=@activepieces/engine --filter=worker
+
+# Pieces are installed into the runtime cache per job, so none are needed baked in.
+# Trim them and regenerate the lockfile to match the slimmed workspace.
+RUN rm -rf packages/pieces/core packages/pieces/custom && \
+    find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
+      ! -name slack \
+      ! -name square \
+      ! -name facebook-leads \
+      ! -name intercom \
+      -exec rm -rf {} + && \
+    rm -f bun.lock && bun install
+
+### STAGE 2: Run ###
+FROM base AS run
+
+# WORKDIR must be the repo root: the engine installer resolves the engine bundle at the
+# cwd-relative path dist/packages/engine/main.js.
+WORKDIR /usr/src/app
+
+COPY --from=build /usr/src/app/package.json ./
+COPY --from=build /usr/src/app/.npmrc ./
+COPY --from=build /usr/src/app/bun.lock ./
+COPY --from=build /usr/src/app/bunfig.toml ./
+COPY --from=build /usr/src/app/LICENSE .
+
+COPY --from=build /usr/src/app/packages ./packages
+
+COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
+
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --production
+
+ENV AP_RUNTIME=GCP_CLOUD_RUN \
+    AP_CONTAINER_TYPE=WORKER \
+    AP_EXECUTION_MODE=UNSANDBOXED \
+    AP_CACHE_BASE_PATH=/tmp/cache \
+    PORT=8080
+
+LABEL service=activepieces-cloud-run
+
+EXPOSE 8080
+
+ENTRYPOINT ["node", "packages/server/worker/dist/src/bootstrap.js"]
