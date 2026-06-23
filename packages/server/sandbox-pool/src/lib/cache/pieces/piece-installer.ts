@@ -1,13 +1,20 @@
-import { readFile, rm, writeFile } from 'node:fs/promises'
+import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
 import { isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, safeHttp, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, PrivatePiecePackage, WorkerToApiContract } from '@activepieces/shared'
-import decompress from 'decompress'
 import writeFileAtomic from 'write-file-atomic'
 import { SandboxPoolSettings } from '../../types'
 import { cacheUtils } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
+
+const usedPiecesMemoryCache: Record<string, boolean> = {}
+const VALID_SCOPED_NAME_REGEX = /^@[^/]+\/[^/]+$/
+const VALID_UNSCOPED_NAME_REGEX = /^[^/]+$/
+const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
+const REGISTRY_TARBALL_FILENAME = 'package.tgz'
+const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
+const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
     async install({ pieces, includeFilters }: InstallParams): Promise<void> {
@@ -25,7 +32,15 @@ export const pieceInstaller = (log: ApLogger, apiClient: WorkerToApiContract, ba
 async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, apiClient: WorkerToApiContract, getSettings: () => SandboxPoolSettings): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
-    const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
+    const { validPieces, invalidPieces } = partitionValidPieceNames(nonDevPieces)
+    if (!isEmpty(invalidPieces)) {
+        log.error({
+            rootWorkspace,
+            invalidPieces: invalidPieces.map(piece => `${piece.pieceName}@${piece.pieceVersion}`),
+        }, '[pieceInstaller] Skipping pieces with invalid package names to protect the shared lockfile')
+    }
+    const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, validPieces)
+
     if (isEmpty(piecesToInstall)) {
         log.debug({ rootWorkspace }, '[pieceInstaller] No new pieces to install (already installed)')
         return
@@ -34,7 +49,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
-            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
+            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, validPieces)
             if (isEmpty(piecesToInstall)) {
                 return
             }
@@ -309,10 +324,8 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
     if (!readyExists) {
         return false
     }
-    const entryMarker = piece.packageType === PackageType.ARCHIVE
-        ? join(pieceFolder, PIECE_BUNDLE_FILENAME)
-        : join(pieceFolder, 'node_modules')
-    if (!await fileSystemUtils.fileExists(entryMarker)) {
+    const nodeModulesExist = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules'))
+    if (!nodeModulesExist) {
         await rm(join(pieceFolder, 'ready'), { force: true })
         return false
     }
@@ -329,12 +342,25 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
     }))
 }
 
-function relativePiecePath(piece: PiecePackage): string {
-    return join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
+// A workspace member name (and its dependency key) must be a plain npm package name. A relative
+// path such as `../../../common/pieces/@activepieces/piece-x` — fed in via stale `usedPieces` data
+// from a since-reverted build — makes bun write an unparseable resolution token into the SHARED
+// bun.lock. That lock then fails to parse on the next install and takes down EVERY piece in the
+// workspace (so cache pre-warm and the deploy fail). Worse, because the install joins the name onto
+// `<workspace>/pieces/`, a `..` name escapes a per-platform `custom_pieces/<id>` workspace and lands
+// the poisoned member inside the shared `common` workspace. Such names are skipped at the source.
+export function isValidPackageName(name: string): boolean {
+    if (name.includes('..')) {
+        return false
+    }
+    return VALID_SCOPED_NAME_REGEX.test(name) || VALID_UNSCOPED_NAME_REGEX.test(name)
 }
 
-function piecePath(rootWorkspace: string, piece: PiecePackage): string {
-    return join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
+function partitionValidPieceNames(pieces: PiecePackage[]): { validPieces: PiecePackage[], invalidPieces: PiecePackage[] } {
+    return {
+        validPieces: pieces.filter(piece => isValidPackageName(piece.pieceName)),
+        invalidPieces: pieces.filter(piece => !isValidPackageName(piece.pieceName)),
+    }
 }
 
 function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: PrivatePiecePackage): string {
@@ -352,12 +378,6 @@ function npmTarballUrl(piece: PiecePackage): string {
 function unscopedName(name: string): string {
     return name.startsWith('@') ? name.split('/')[1] : name
 }
-
-const usedPiecesMemoryCache: Record<string, boolean> = {}
-const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
-const REGISTRY_TARBALL_FILENAME = 'package.tgz'
-
-export const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
 
 type InstallParams = {
     pieces: PiecePackage[]

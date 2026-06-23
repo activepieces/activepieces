@@ -19,7 +19,7 @@ There are two independent knobs:
 
 Size replicas for throughput, and concurrency for how much a single replica can chew on. If flows are CPU-bound, lower concurrency and add replicas. If flows are I/O-bound (most automation workloads), raise concurrency before adding replicas.
 
-See [Hardware Requirements](/install/configuration/hardware) for per-replica memory and CPU sizing.
+See [Hardware Requirements](../configuration/hardware) for per-replica memory and CPU sizing.
 
 <Tip>
 In `UNSANDBOXED` and `SANDBOX_CODE_ONLY` modes, sandboxes stay warm across jobs, so steady-state execution is fast. `SANDBOX_PROCESS` spins up a fresh sandbox per run, which trades latency for kernel-level isolation.
@@ -29,11 +29,11 @@ In `UNSANDBOXED` and `SANDBOX_CODE_ONLY` modes, sandboxes stay warm across jobs,
 
 If a worker crashes, is evicted, or loses its Redis lease mid-run, BullMQ requeues the job and another worker picks it up. The engine's durable-execution layer replays already-completed steps from persisted state rather than re-running them, so side effects are not duplicated. This means a worker restart or OOM kill during a flow is survivable — you do not need to drain traffic before rolling workers.
 
-See [Durable Execution](/install/architecture/durable-execution) for exactly what is persisted and how replay works.
+See [Durable Execution](./durable-execution) for exactly what is persisted and how replay works.
 
 ## Sandbox & Network Isolation
 
 How flows are isolated from the worker container and the outside world is two independent choices:
 
-- [**Sandboxing**](/install/architecture/sandboxing) — `AP_EXECUTION_MODE` decides how user code is isolated from the host kernel. This is the most important security decision for multi-tenant deployments.
-- [**Network Security**](/install/architecture/network-security) — `AP_NETWORK_MODE` decides what the sandbox is allowed to reach on the network.
+- [**Sandboxing**](./sandboxing) — `AP_EXECUTION_MODE` decides how user code is isolated from the host kernel. This is the most important security decision for multi-tenant deployments.
+- [**Network Security**](./network-security) — `AP_NETWORK_MODE` decides what the sandbox is allowed to reach on the network.

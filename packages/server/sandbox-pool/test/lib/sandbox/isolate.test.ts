@@ -121,14 +121,23 @@ describe('isolateProcess', () => {
 
     describe('argv', () => {
         it('emits all static --dir flags in the expected order', async () => {
-            await callCreate()
+            const boxId = 7
+            await callCreate({ boxId })
 
             const args: string[] = spawnMock.mock.calls[0][1]
-            expect(args.slice(0, 4)).toEqual([
+            expect(args.slice(0, 12)).toEqual([
+                '--no-default-dirs',
+                '--dir=/bin/',
+                '--dir=/lib/',
+                '--dir=/lib64/:maybe',
                 '--dir=/usr/bin/',
+                '--dir=/usr/lib/',
                 '--dir=/usr/local/',
                 `--dir=/etc/=${etcDir}`,
                 '--dir=/usr/src/node_modules/',
+                '--dir=proc=proc:fs',
+                '--dir=/dev=/dev:dev',
+                `--dir=/box=/var/local/lib/isolate/${boxId}/box:rw`,
             ])
         })
 
@@ -207,6 +216,29 @@ describe('isolateProcess', () => {
             const args: string[] = spawnMock.mock.calls[0][1]
             expect(args).toContain('--env=AP_BASE_CODE_DIRECTORY=/root/codes')
             expect(args).toContain('--env=SANDBOX_ID=sb-xyz')
+        })
+
+        it('points TMPDIR/TMP/TEMP at the writable /box mount so os.tmpdir() works (no EACCES on /tmp)', async () => {
+            await callCreate()
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args).toContain('--env=TMPDIR=/box')
+            expect(args).toContain('--env=TMP=/box')
+            expect(args).toContain('--env=TEMP=/box')
+        })
+
+        it('does not allow caller-supplied env to override the /box temp dir', async () => {
+            await callCreate({
+                env: {
+                    ...BASE_ENV,
+                    TMPDIR: '/tmp',
+                    TMP: '/tmp',
+                    TEMP: '/tmp',
+                },
+            })
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args.filter((a) => a.startsWith('--env=TMPDIR='))).toEqual(['--env=TMPDIR=/box'])
+            expect(args.filter((a) => a.startsWith('--env=TMP='))).toEqual(['--env=TMP=/box'])
+            expect(args.filter((a) => a.startsWith('--env=TEMP='))).toEqual(['--env=TEMP=/box'])
         })
 
         it('forwards every caller-provided env entry as --env=K=V', async () => {
