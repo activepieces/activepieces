@@ -1,12 +1,12 @@
 import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ApEdition, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowOperationType, FlowStatus, isFlowRunStateTerminal, logSerializer, PiecePackage, RunInternalError, RunInternalErrorSource, StreamStepProgress, truncateFailedStepMessage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ExecutionType, ExecutioOutputFile, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, isFlowRunStateTerminal, logSerializer, PiecePackage, RunInternalError, RunInternalErrorSource, StreamStepProgress, truncateFailedStepMessage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileCompressor } from '../../file/file-compressor'
-import { fileService } from '../../file/file.service'
+import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
 import { flowService } from '../../flows/flow/flow.service'
@@ -248,8 +248,18 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async prepareFlowBundleUpload(input) {
-            // Mirrors the engine signed-PUT flow: persist the row (data null) so the
-            // s3Key exists, then hand back a signed PUT URL for a direct-to-S3 upload.
+            // Bundles are only worth persisting on S3-backed storage. On DB storage the
+            // bundle would just bloat the database (and a null-data pre-save would throw),
+            // so tell the worker to skip publishing and always build inline.
+            if (getLocationForFile(FileType.FLOW_BUNDLE) !== FileLocation.S3) {
+                return { kind: 'skip' }
+            }
+            // S3 without signed URLs: the worker streams the bytes back via uploadFlowBundle.
+            if (!signedFileTransport.shouldRedirectForType(FileType.FLOW_BUNDLE)) {
+                return { kind: 'inline' }
+            }
+            // Signed-PUT path: persist the row (data null) so the s3Key exists, then
+            // hand back a signed PUT URL for a direct-to-S3 upload.
             const file = await fileService(log).save({
                 fileId: input.flowVersionId,
                 projectId: input.projectId,
@@ -259,15 +269,12 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 size: input.size,
                 compression: FileCompression.NONE,
             })
-            if (signedFileTransport.isEnabled(file)) {
-                assertNotNullOrUndefined(file.s3Key, 's3Key')
-                const url = await s3Helper(log).putS3SignedUrl({
-                    s3Key: file.s3Key,
-                    contentLength: input.size,
-                })
-                return { kind: 'url', url }
-            }
-            return { kind: 'inline' }
+            assertNotNullOrUndefined(file.s3Key, 's3Key')
+            const url = await s3Helper(log).putS3SignedUrl({
+                s3Key: file.s3Key,
+                contentLength: input.size,
+            })
+            return { kind: 'url', url }
         },
 
         async uploadFlowBundle(input) {

@@ -63,6 +63,9 @@ export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, b
             platformId,
             size: data.length,
         })
+        if (prepared.kind === 'skip') {
+            return
+        }
         if (prepared.kind === 'url') {
             await bundleHttp.put(prepared.url, data)
             return

@@ -50,6 +50,7 @@ export type PrepareFlowBundleUploadRequest = {
 export type PrepareFlowBundleUploadResponse =
     | { kind: 'url', url: string }
     | { kind: 'inline' }
+    | { kind: 'skip' }
 
 export type UploadFlowBundleRequest = {
     flowVersionId: string

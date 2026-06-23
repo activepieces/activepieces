@@ -153,6 +153,22 @@ describe('flowBundleStore', () => {
         expect(put.mock.calls[0][0]).toBe('https://s3/put')
     })
 
+    it('publish does nothing (no inline RPC, no PUT) when prepare returns skip', async () => {
+        const basePath = uniqueBasePath()
+        const put = vi.mocked(bundleHttp.put).mockResolvedValue(undefined)
+        const apiClient = {
+            async prepareFlowBundleUpload() { return { kind: 'skip' } },
+            async uploadFlowBundle() { throw new Error('inline upload must not be called') },
+        } as unknown as WorkerToApiContract
+        const flowVersion = buildFlowVersion()
+        const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
+        await codes.writeCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1', compiledJs: 'exports.code = () => 1' })
+
+        await flowBundleStore(fakeLog, apiClient, basePath).publish({ flowVersion, pieces: [piece], projectId: 'p1', platformId: 'plat1' })
+
+        expect(put).not.toHaveBeenCalled()
+    })
+
     it('tryFetch downloads from a signed URL and materializes compiled code', async () => {
         const basePath = uniqueBasePath()
         const flowVersion = buildFlowVersion()
