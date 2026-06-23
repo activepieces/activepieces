@@ -111,6 +111,36 @@ describe('word_count', () => {
     it('empty string is 0', () => expect(result('word_count("")')).toBe(0))
 })
 
+describe('pad_left', () => {
+    it('pads with zeros', () => expect(result('pad_left("42";5;"0")')).toBe('00042'))
+    it('defaults to space padding', () => expect(result('pad_left("hi";4)')).toBe('  hi'))
+    it('no-op when string is already long enough', () =>
+        expect(result('pad_left("hello";3;"0")')).toBe('hello'))
+})
+
+describe('pad_right', () => {
+    it('pads with zeros on the right', () => expect(result('pad_right("42";5;"0")')).toBe('42000'))
+    it('defaults to space padding', () => expect(result('pad_right("hi";4)')).toBe('hi  '))
+})
+
+describe('repeat', () => {
+    it('repeats N times', () => expect(result('repeat("ab";3)')).toBe('ababab'))
+    it('zero count returns empty', () => expect(result('repeat("ab";0)')).toBe(''))
+    it('negative count returns empty', () => expect(result('repeat("ab";-2)')).toBe(''))
+})
+
+describe('reverse', () => {
+    it('reverses a string', () => expect(result('reverse("hello")')).toBe('olleh'))
+    it('empty string stays empty', () => expect(result('reverse("")')).toBe(''))
+    it('handles unicode surrogate pairs', () => expect(result('reverse("ab😀")')).toBe('😀ba'))
+})
+
+describe('slug', () => {
+    it('lowercases and dasherises', () => expect(result('slug("Hello World!")')).toBe('hello-world'))
+    it('strips diacritics', () => expect(result('slug("Café crème")')).toBe('cafe-creme'))
+    it('collapses runs of separators', () => expect(result('slug("  a   ---  b  ")')).toBe('a-b'))
+})
+
 // ---------------------------------------------------------------------------
 // Number functions
 // ---------------------------------------------------------------------------
@@ -165,6 +195,67 @@ describe('min / max', () => {
 describe('to_number', () => {
     it('converts string to number', () => expect(result('to_number("42")')).toBe(42))
     it('passes through number', () => expect(result('to_number(42)')).toBe(42))
+})
+
+describe('random', () => {
+    it('returns a float in [0, 1)', () => {
+        for (let i = 0; i < 100; i++) {
+            const r = result('random()') as number
+            expect(r).toBeGreaterThanOrEqual(0)
+            expect(r).toBeLessThan(1)
+        }
+    })
+})
+
+describe('random_int', () => {
+    it('stays within inclusive bounds', () => {
+        for (let i = 0; i < 200; i++) {
+            const r = result('random_int(1;10)') as number
+            expect(Number.isInteger(r)).toBe(true)
+            expect(r).toBeGreaterThanOrEqual(1)
+            expect(r).toBeLessThanOrEqual(10)
+        }
+    })
+    it('returns the value when min equals max', () =>
+        expect(result('random_int(7;7)')).toBe(7))
+    it('forgives swapped min and max', () => {
+        for (let i = 0; i < 50; i++) {
+            const r = result('random_int(10;1)') as number
+            expect(r).toBeGreaterThanOrEqual(1)
+            expect(r).toBeLessThanOrEqual(10)
+        }
+    })
+})
+
+describe('power', () => {
+    it('raises to a positive power', () => expect(result('power(2;10)')).toBe(1024))
+    it('raises to zero is one', () => expect(result('power(7;0)')).toBe(1))
+    it('handles negative exponent', () => expect(result('power(2;-1)')).toBe(0.5))
+})
+
+describe('sqrt', () => {
+    it('positive root', () => expect(result('sqrt(144)')).toBe(12))
+    it('zero', () => expect(result('sqrt(0)')).toBe(0))
+    it('negative returns NaN', () =>
+        expect(Number.isNaN(result('sqrt(-1)') as number)).toBe(true))
+})
+
+describe('modulo', () => {
+    it('returns remainder', () => expect(result('modulo(10;3)')).toBe(1))
+    it('zero divisor returns NaN', () =>
+        expect(Number.isNaN(result('modulo(5;0)') as number)).toBe(true))
+})
+
+describe('clamp', () => {
+    it('clamps above max', () => expect(result('clamp(150;0;100)')).toBe(100))
+    it('clamps below min', () => expect(result('clamp(-5;0;100)')).toBe(0))
+    it('passes through in-range value', () => expect(result('clamp(42;0;100)')).toBe(42))
+})
+
+describe('sign', () => {
+    it('negative is -1', () => expect(result('sign(-42)')).toBe(-1))
+    it('positive is 1', () => expect(result('sign(0.0001)')).toBe(1))
+    it('zero is 0', () => expect(result('sign(0)')).toBe(0))
 })
 
 // ---------------------------------------------------------------------------
@@ -265,6 +356,49 @@ describe('to_date', () => {
     })
     it('returns empty for invalid input', () =>
         expect(result('to_date("not-a-date")')).toBe(''))
+})
+
+describe('add_minutes', () => {
+    it('adds minutes to datetime', () => {
+        const r = result('format_time(add_minutes("2024-01-01T10:00:00";45))') as string
+        expect(r).toBe('10:45')
+    })
+})
+
+describe('hours_between', () => {
+    it('calculates absolute hour difference', () =>
+        expect(result('hours_between("2024-01-01T00:00:00Z";"2024-01-01T08:00:00Z")')).toBe(8))
+    it('is absolute regardless of order', () =>
+        expect(result('hours_between("2024-01-01T08:00:00Z";"2024-01-01T00:00:00Z")')).toBe(8))
+})
+
+describe('start_of_day / end_of_day', () => {
+    it('start_of_day is 00:00', () => {
+        const r = result('format_time(start_of_day("2024-03-15T14:30:00"))') as string
+        expect(r).toBe('00:00')
+    })
+    it('end_of_day is 23:59', () => {
+        const r = result('format_time(end_of_day("2024-03-15T14:30:00"))') as string
+        expect(r).toBe('23:59')
+    })
+})
+
+describe('is_before / is_after', () => {
+    it('is_before earlier vs later → true', () =>
+        expect(result('is_before("2024-01-01";"2024-02-01")')).toBe(true))
+    it('is_before later vs earlier → false', () =>
+        expect(result('is_before("2024-02-01";"2024-01-01")')).toBe(false))
+    it('is_after later vs earlier → true', () =>
+        expect(result('is_after("2024-02-01";"2024-01-01")')).toBe(true))
+    it('is_after equal dates → false', () =>
+        expect(result('is_after("2024-01-01";"2024-01-01")')).toBe(false))
+})
+
+describe('is_same_day', () => {
+    it('different times same day → true', () =>
+        expect(result('is_same_day("2024-01-15T09:00:00Z";"2024-01-15T21:00:00Z")')).toBe(true))
+    it('different days → false', () =>
+        expect(result('is_same_day("2024-01-15";"2024-01-16")')).toBe(false))
 })
 
 // ---------------------------------------------------------------------------
@@ -374,6 +508,27 @@ describe('split_text_to_list', () => {
         expect(result('split_text_to_list("a , b , c";",")')).toEqual(['a', 'b', 'c']))
 })
 
+describe('reverse_list', () => {
+    it('reverses order', () =>
+        expect(result('reverse_list({{xs}})', { xs: [1, 2, 3] })).toEqual([3, 2, 1]))
+    it('does not mutate input', () => {
+        const xs = [1, 2, 3]
+        result('reverse_list({{xs}})', { xs })
+        expect(xs).toEqual([1, 2, 3])
+    })
+    it('empty list stays empty', () =>
+        expect(result('reverse_list({{xs}})', { xs: [] })).toEqual([]))
+})
+
+describe('contains_item', () => {
+    it('returns true when value present', () =>
+        expect(result('contains_item({{tags}};"urgent")', { tags: ['bug', 'urgent'] })).toBe(true))
+    it('returns false when absent', () =>
+        expect(result('contains_item({{tags}};"vip")', { tags: ['bug', 'urgent'] })).toBe(false))
+    it('uses loose equality for cross-type match', () =>
+        expect(result('contains_item({{nums}};"2")', { nums: [1, 2, 3] })).toBe(true))
+})
+
 // ---------------------------------------------------------------------------
 // Logic functions
 // ---------------------------------------------------------------------------
@@ -448,6 +603,18 @@ describe('coalesce', () => {
         expect(result('coalesce({{a}};{{b}};"fallback")', { a: null, b: '' })).toBe('fallback'))
     it('returns first value when defined', () =>
         expect(result('coalesce("first";"second")')).toBe('first'))
+})
+
+describe('is_number', () => {
+    it('true for number', () => expect(result('is_number({{x}})', { x: 42 })).toBe(true))
+    it('false for numeric string', () => expect(result('is_number({{x}})', { x: '42' })).toBe(false))
+    it('false for null', () => expect(result('is_number({{x}})', { x: null })).toBe(false))
+})
+
+describe('is_list', () => {
+    it('true for array', () => expect(result('is_list({{x}})', { x: [1, 2] })).toBe(true))
+    it('false for string', () => expect(result('is_list({{x}})', { x: 'a,b' })).toBe(false))
+    it('false for object', () => expect(result('is_list({{x}})', { x: { a: 1 } })).toBe(false))
 })
 
 // ---------------------------------------------------------------------------

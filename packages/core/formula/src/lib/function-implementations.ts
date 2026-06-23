@@ -88,6 +88,27 @@ parser.functions.remove_spaces = (s: unknown) =>
     String(s ?? '').replace(/\s+/g, ' ').trim()
 parser.functions.word_count = (s: unknown) =>
     String(s ?? '').trim().split(/\s+/).filter(Boolean).length
+parser.functions.pad_left = (s: unknown, len: unknown, char: unknown = ' ') => {
+    const padChar = String(char ?? ' ')
+    return String(s ?? '').padStart(Number(len), padChar.length === 0 ? ' ' : padChar)
+}
+parser.functions.pad_right = (s: unknown, len: unknown, char: unknown = ' ') => {
+    const padChar = String(char ?? ' ')
+    return String(s ?? '').padEnd(Number(len), padChar.length === 0 ? ' ' : padChar)
+}
+parser.functions.repeat = (s: unknown, count: unknown) => {
+    const n = Math.floor(Number(count))
+    if (!Number.isFinite(n) || n < 0) return ''
+    return String(s ?? '').repeat(n)
+}
+parser.functions.reverse = (s: unknown) => [...String(s ?? '')].reverse().join('')
+parser.functions.slug = (s: unknown) =>
+    String(s ?? '')
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
 
 parser.functions.add = (a: unknown, b: unknown) => Number(a) + Number(b)
 parser.functions.subtract = (a: unknown, b: unknown) => Number(a) - Number(b)
@@ -123,6 +144,23 @@ parser.functions.cents_to_dollars = (n: unknown) =>
 parser.functions.min = (a: unknown, b: unknown) => Math.min(Number(a), Number(b))
 parser.functions.max = (a: unknown, b: unknown) => Math.max(Number(a), Number(b))
 parser.functions.to_number = (s: unknown) => Number(s)
+parser.functions.random = () => Math.random()
+parser.functions.random_int = (min: unknown, max: unknown) => {
+    let lo = Number(min)
+    let hi = Number(max)
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return NaN
+    if (lo > hi) [lo, hi] = [hi, lo]
+    return Math.floor(Math.random() * (Math.floor(hi) - Math.ceil(lo) + 1)) + Math.ceil(lo)
+}
+parser.functions.power = (base: unknown, exp: unknown) => Math.pow(Number(base), Number(exp))
+parser.functions.sqrt = (n: unknown) => Math.sqrt(Number(n))
+parser.functions.modulo = (a: unknown, b: unknown) => Number(a) % Number(b)
+parser.functions.clamp = (v: unknown, lo: unknown, hi: unknown) =>
+    Math.min(Math.max(Number(v), Number(lo)), Number(hi))
+parser.functions.sign = (n: unknown) => {
+    const s = Math.sign(Number(n))
+    return Object.is(s, -0) ? 0 : s
+}
 
 parser.functions.format_date = (d: unknown, pattern: unknown = 'YYYY-MM-DD') => {
     const parsed = dayjs(String(d ?? ''))
@@ -195,6 +233,42 @@ parser.functions.today = () => dayjs().format('YYYY-MM-DD')
 parser.functions.to_date = (d: unknown) => {
     const parsed = dayjs(String(d ?? ''))
     return parsed.isValid() ? parsed.toISOString() : ''
+}
+parser.functions.add_minutes = (d: unknown, n: unknown) => {
+    const parsed = dayjs(String(d ?? ''))
+    return parsed.isValid() ? parsed.add(Number(n), 'minute').toISOString() : ''
+}
+parser.functions.hours_between = (a: unknown, b: unknown) => {
+    const da = dayjs(String(a ?? ''))
+    const db = dayjs(String(b ?? ''))
+    if (!da.isValid() || !db.isValid()) return ''
+    return Math.round(Math.abs(db.diff(da, 'hour', true)))
+}
+parser.functions.start_of_day = (d: unknown) => {
+    const parsed = dayjs(String(d ?? ''))
+    return parsed.isValid() ? parsed.startOf('day').toISOString() : ''
+}
+parser.functions.end_of_day = (d: unknown) => {
+    const parsed = dayjs(String(d ?? ''))
+    return parsed.isValid() ? parsed.endOf('day').toISOString() : ''
+}
+parser.functions.is_before = (a: unknown, b: unknown) => {
+    const da = dayjs(String(a ?? ''))
+    const db = dayjs(String(b ?? ''))
+    if (!da.isValid() || !db.isValid()) return false
+    return da.isBefore(db)
+}
+parser.functions.is_after = (a: unknown, b: unknown) => {
+    const da = dayjs(String(a ?? ''))
+    const db = dayjs(String(b ?? ''))
+    if (!da.isValid() || !db.isValid()) return false
+    return da.isAfter(db)
+}
+parser.functions.is_same_day = (a: unknown, b: unknown) => {
+    const da = dayjs(String(a ?? ''))
+    const db = dayjs(String(b ?? ''))
+    if (!da.isValid() || !db.isValid()) return false
+    return da.isSame(db, 'day')
 }
 
 parser.functions.filter_list = (list: unknown, field: unknown, value: unknown) =>
@@ -282,6 +356,11 @@ parser.functions.deduplicate = (list: unknown, field: unknown) => {
 parser.functions.flatten = (list: unknown) => toArray(list).flat()
 parser.functions.split_text_to_list = (s: unknown, sep: unknown = ',') =>
     String(s ?? '').split(String(sep)).map((x) => x.trim())
+parser.functions.reverse_list = (list: unknown) => [...toArray(list)].reverse()
+parser.functions.contains_item = (list: unknown, value: unknown) =>
+    // Loose equality consistent with filter_list — formula args arrive as strings
+    // while list items may be typed.
+    toArray(list).some((item) => item == value)
 
 // `if` intentionally NOT registered as a JS function. Eager arg evaluation
 // would break short-circuit semantics (e.g. `if(is_empty(x); "safe"; divide(x; 0))`
@@ -308,6 +387,8 @@ parser.functions.ap_or = (a: unknown, b: unknown) => Boolean(a) || Boolean(b)
 parser.functions.ap_not = (a: unknown) => !a
 parser.functions.coalesce = (...args: unknown[]) =>
     args.find((a) => a !== '' && a != null) ?? ''
+parser.functions.is_number = (v: unknown) => typeof v === 'number' && !Number.isNaN(v)
+parser.functions.is_list = (v: unknown) => Array.isArray(v)
 
 // After every impl is registered above, wrap any function whose registry entry
 // declares `argCompatibility.defaultArgs` so older saved flows that were saved
