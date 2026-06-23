@@ -9,7 +9,7 @@ import {
     EngineResponseStatus,
     WebsocketServerEvent,
 } from '@activepieces/shared'
-import { JobResultKind } from '../../src/lib/execute/types'
+import { JobResultKind } from '../../../job-executor/src/lib/execute/types'
 import type {
     WorkerToApiContract,
     ExecuteExtractPieceMetadataJobData,
@@ -18,19 +18,25 @@ import type {
 
 const mockGetHandler = vi.fn()
 
-vi.mock('../../src/lib/execute/job-registry', () => ({
+vi.mock('../../../job-executor/src/lib/execute/job-registry', () => ({
     getHandler: (...args: unknown[]) => mockGetHandler(...args),
 }))
 
-vi.mock('../../src/lib/config/worker-settings', () => ({
-    workerSettings: {
-        set: vi.fn(),
-        waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000' }),
-        getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000' }),
-    },
-}))
+// APP_VERSION must match the running release so the worker's version gate (added in PR #13518) lets the
+// poll loop proceed; without it the gate fails closed and every poll pauses, hanging these tests.
+vi.mock('../../../job-executor/src/lib/config/worker-settings', async () => {
+    const { apVersionUtil } = await import('@activepieces/server-utils')
+    const settings = { PUBLIC_URL: 'http://localhost:3000', APP_VERSION: apVersionUtil.getCurrentRelease() }
+    return {
+        workerSettings: {
+            set: vi.fn(),
+            waitForSettings: vi.fn().mockResolvedValue(settings),
+            getSettings: vi.fn().mockReturnValue(settings),
+        },
+    }
+})
 
-vi.mock('../../src/lib/config/logger', () => ({
+vi.mock('../../../job-executor/src/lib/config/logger', () => ({
     logger: {
         info: vi.fn(),
         warn: vi.fn(),
@@ -93,10 +99,14 @@ describe('worker integration', () => {
         })
         process.env.AP_FRONTEND_URL = `http://127.0.0.1:${port}`
         process.env.AP_CONTAINER_TYPE = 'WORKER'
+        // These assertions expect completion order to equal poll order, which only holds with a single
+        // poll loop. The default concurrency (5) races several pollers against the shared poll counter.
+        process.env.AP_WORKER_CONCURRENCY = '1'
     })
 
     afterEach(async () => {
         await worker.stop()
+        delete process.env.AP_WORKER_CONCURRENCY
         mockGetHandler.mockReset()
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())

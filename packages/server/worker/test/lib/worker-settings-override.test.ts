@@ -11,7 +11,7 @@ import type { WorkerToApiContract, WorkerSettingsResponse } from '@activepieces/
 
 const mockWorkerSettingsSet = vi.fn()
 
-vi.mock('../../src/lib/config/worker-settings', () => ({
+vi.mock('../../../job-executor/src/lib/config/worker-settings', () => ({
     workerSettings: {
         set: (...args: unknown[]) => mockWorkerSettingsSet(...args),
         waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000' }),
@@ -19,7 +19,7 @@ vi.mock('../../src/lib/config/worker-settings', () => ({
     },
 }))
 
-vi.mock('../../src/lib/config/logger', () => ({
+vi.mock('../../../job-executor/src/lib/config/logger', () => ({
     logger: {
         info: vi.fn(),
         warn: vi.fn(),
@@ -34,7 +34,7 @@ vi.mock('../../src/lib/config/logger', () => ({
     },
 }))
 
-vi.mock('../../src/lib/execute/job-registry', () => ({
+vi.mock('../../../job-executor/src/lib/execute/job-registry', () => ({
     getHandler: vi.fn(),
 }))
 
