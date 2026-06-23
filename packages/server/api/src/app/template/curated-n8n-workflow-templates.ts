@@ -163,10 +163,20 @@ function matchesPieces({ template, pieces }: MatchesPiecesParams): boolean {
     return pieces.every((piece) => template.pieces.includes(piece))
 }
 
+function matchesTags({ template, tags }: MatchesTagsParams): boolean {
+    if (!tags || tags.length === 0) {
+        return true
+    }
+
+    const templateTags = template.tags?.map((tag) => tag.title) ?? []
+    return tags.every((tag) => templateTags.includes(tag))
+}
+
 function filterCuratedN8nWorkflowTemplates({
     search,
     categories,
     pieces,
+    tags,
 }: FilterCuratedN8nWorkflowTemplatesParams): Template[] {
     return curatedN8nWorkflowTemplates.filter(
         (template) =>
@@ -181,6 +191,10 @@ function filterCuratedN8nWorkflowTemplates({
       matchesPieces({
           template,
           pieces,
+      }) &&
+      matchesTags({
+          template,
+          tags,
       }),
     )
 }
@@ -617,10 +631,16 @@ type MatchesPiecesParams = {
     pieces?: string[]
 }
 
+type MatchesTagsParams = {
+    template: Template
+    tags?: string[]
+}
+
 type FilterCuratedN8nWorkflowTemplatesParams = {
     search?: string
     categories?: string[]
     pieces?: string[]
+    tags?: string[]
 }
 
 type TemplateAction = {
