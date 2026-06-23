@@ -1,12 +1,11 @@
-import { ActivepiecesError, apId, chunk, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, ApEdition, ApEnvironment, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getEnrollAttemptKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { getBillingEnforcedKey, getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
-import { exceptionHandler } from '../../../helper/exception-handler'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
@@ -27,18 +26,8 @@ const edition = system.getEdition()
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
 const ENROLL_ATTEMPT_TTL_SECONDS = 300
-const AUTUMN_REFRESH_BATCH_SIZE = 200
-const AUTUMN_REFRESH_CONCURRENCY = 10
-// Assumed AppSumo lifetime-deal Autumn plan ids — NOT yet verified against the Autumn dashboard. Lifetime
-// deals never expire, so they're skipped by the nightly refresh (same as free); update once confirmed.
-const AUTUMN_APPSUMO_PLAN_IDS = [
-    'appsumo_activepieces_tier1',
-    'appsumo_activepieces_tier2',
-    'appsumo_activepieces_tier3',
-    'appsumo_activepieces_tier4',
-    'appsumo_activepieces_tier5',
-    'appsumo_activepieces_tier6',
-]
+const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
+const REFRESH_CLAIM_TTL_SECONDS = 60
 
 export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
 
@@ -47,7 +36,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const existingPlatformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(existingPlatformPlan)) {
-            triggerLazyAutumnEnrollment({ platformId, autumnCustomerId: existingPlatformPlan.autumnCustomerId }, log)
+            triggerLazyAutumnSync({ platformId, autumnCustomerId: existingPlatformPlan.autumnCustomerId }, log)
             return existingPlatformPlan
         }
 
@@ -60,36 +49,12 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
                 return createInitialBilling(platformId, log)
             },
         })
-        triggerLazyAutumnEnrollment({ platformId, autumnCustomerId: null }, log)
+        triggerLazyAutumnSync({ platformId, autumnCustomerId: null }, log)
         return platformPlan
     },
 
     onPlatformCreated(platformId: string): void {
-        triggerLazyAutumnEnrollment({ platformId, autumnCustomerId: null }, log)
-    },
-
-    async refreshEnrolledPlatforms(): Promise<void> {
-        let cursor: string | undefined = undefined
-        let batchSize: number
-        do {
-            const builder = platformPlanRepo().createQueryBuilder('platformPlan')
-                .where('platformPlan.autumnCustomerId IS NOT NULL')
-                .andWhere('platformPlan.plan IS NOT NULL')
-                .andWhere('platformPlan.plan NOT IN (:...appsumoPlanIds)', { appsumoPlanIds: AUTUMN_APPSUMO_PLAN_IDS })
-                .orderBy('platformPlan.id', 'ASC')
-                .take(AUTUMN_REFRESH_BATCH_SIZE)
-            if (!isNil(cursor)) {
-                builder.andWhere('platformPlan.id > :cursor', { cursor })
-            }
-            const batch = await builder.getMany()
-            batchSize = batch.length
-            for (const group of chunk(batch, AUTUMN_REFRESH_CONCURRENCY)) {
-                await Promise.all(group.map((platformPlan) => refreshEnrolledPlatform(platformPlan.platformId, log)))
-            }
-            if (batch.length > 0) {
-                cursor = batch[batch.length - 1].id
-            }
-        } while (batchSize === AUTUMN_REFRESH_BATCH_SIZE)
+        triggerLazyAutumnSync({ platformId, autumnCustomerId: null }, log)
     },
 
     async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {
@@ -117,6 +82,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (!isNil(updatedPlatformPlan.plan)) {
             await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan)
         }
+        else {
+            await distributedStore.delete(getPlatformPlanNameKey(platformId))
+        }
+        await distributedStore.put(getBillingEnforcedKey(platformId), updatedPlatformPlan.billingEnforced === true)
         return updatedPlatformPlan
     },
     async getNextBillingAmount(params: GetBillingAmountParams): Promise<number> {
@@ -149,15 +118,17 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
             .getCount()
         const aiCreditsUsage = await platformAiCreditsService(log).getUsage(platformId)
+        const appSumoAiCredits = await billingProvider.get(log).getAppSumoAiCreditsUsage(platformId)
         return {
             activeFlows: activeFlowsCount,
             aiCreditsLimit: aiCreditsUsage.limit,
             aiCreditsRemaining: aiCreditsUsage.usageRemaining,
             totalAiCreditsUsed: aiCreditsUsage.usage,
             totalAiCreditsUsedThisMonth: aiCreditsUsage.usageMonthly,
+            appSumoAiCredits,
         }
     },
-    checkActiveFlowsExceededLimit: async (platformId: string, metric: PlatformUsageMetric): Promise<void> => {
+    checkActiveFlowsExceededLimit: async (platformId: string): Promise<void> => {
         if (ApEdition.COMMUNITY === edition) {
             return
         }
@@ -167,7 +138,28 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
                 params: {
-                    metric,
+                    metric: PlatformUsageMetric.ACTIVE_FLOWS,
+                },
+            })
+        }
+    },
+    checkUsersExceededLimit: async (platformId: string): Promise<void> => {
+        if (ApEdition.COMMUNITY === edition) {
+            return
+        }
+        if (!await billingProvider.get(log).shouldBlock(platformId)) {
+            return
+        }
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (isNil(platformPlan.usersLimit)) {
+            return
+        }
+        const usersCount = await userService(log).countByPlatformId(platformId)
+        if (usersCount >= platformPlan.usersLimit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: PlatformUsageMetric.USERS,
                 },
             })
         }
@@ -186,11 +178,15 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function triggerLazyAutumnEnrollment({ platformId, autumnCustomerId }: TriggerLazyAutumnEnrollmentParams, log: FastifyBaseLogger): void {
-    if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING || !isNil(autumnCustomerId)) {
+function triggerLazyAutumnSync({ platformId, autumnCustomerId }: TriggerLazyAutumnSyncParams, log: FastifyBaseLogger): void {
+    if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
         return
     }
-    rejectedPromiseHandler(throttledAutumnEnrollment(platformId, log), log)
+    if (isNil(autumnCustomerId)) {
+        rejectedPromiseHandler(throttledAutumnEnrollment(platformId, log), log)
+        return
+    }
+    rejectedPromiseHandler(throttledAutumnRefresh(platformId, log), log)
 }
 
 async function throttledAutumnEnrollment(platformId: string, log: FastifyBaseLogger): Promise<void> {
@@ -201,13 +197,16 @@ async function throttledAutumnEnrollment(platformId: string, log: FastifyBaseLog
     await billingProvider.get(log).ensureEnrolled(platformId)
 }
 
-async function refreshEnrolledPlatform(platformId: string, log: FastifyBaseLogger): Promise<void> {
-    try {
-        await billingProvider.get(log).refreshEntitlements(platformId)
+// Claim the refresh window with a short marker first; only extend it to the full window AFTER a successful
+// refresh, so a transient Autumn failure (the extend never runs) frees the claim in ~1 min for a retry,
+// while a success suppresses re-refresh for the whole window. Fail-open: the projection keeps its last value.
+async function throttledAutumnRefresh(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    const claimed = await distributedStore.putIfAbsent(getEntitlementsRefreshKey(platformId), '1', REFRESH_CLAIM_TTL_SECONDS)
+    if (!claimed) {
+        return
     }
-    catch (error) {
-        exceptionHandler.handle(error, log)
-    }
+    await billingProvider.get(log).refreshEntitlements(platformId)
+    await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
 }
 
 function getPriceIdFor(price: PRICE_NAMES): string {
@@ -281,7 +280,7 @@ type AutumnCredentials = {
     autumnApiKey: string | null
 }
 
-type TriggerLazyAutumnEnrollmentParams = {
+type TriggerLazyAutumnSyncParams = {
     platformId: string
     autumnCustomerId: string | null | undefined
 }

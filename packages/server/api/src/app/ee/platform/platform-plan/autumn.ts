@@ -4,6 +4,7 @@ import { PlatformPlanLimits } from '@activepieces/shared'
 import {
     type AttachParams,
     Autumn,
+    AutumnError,
     type Balance,
     type CheckParams,
     type CreateEntityParams,
@@ -16,14 +17,18 @@ import {
     type TrackParams,
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { getCreditsBalanceKey, getCreditTrackedKey } from '../../../database/redis/keys'
+import { lru, LRU } from 'tiny-lru'
+import { getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getCreditsBalanceKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
-import { BillingProvider, TrackCreditsParams } from '../../../platform/billing-provider'
+import { BillingProvider, CreditsGateState, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../platform/billing-provider'
 import { platformPlanService } from './platform-plan.service'
 
-const CREDIT_DEDUP_TTL_SECONDS = 86400
 const CREDITS_CACHE_TTL_SECONDS = 180
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
+const CREDENTIALS_CACHE_TTL_MS = 5 * 60 * 1000
+const CREDENTIALS_CACHE_MAX_ENTRIES = 10000
+
+const credentialsCache: LRU<ResolvedAutumnCredentials> = lru(CREDENTIALS_CACHE_MAX_ENTRIES, CREDENTIALS_CACHE_TTL_MS)
 
 const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
 // Assumed FREE plan id — NOT yet verified against the Autumn dashboard. Single source of truth for the free
@@ -31,9 +36,12 @@ const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
 const AUTUMN_FREE_PLAN_ID = 'free'
 
 const AUTUMN_FEATURE = {
-    CREDITS: 'credits',
-    PROJECTS: 'projects',
-    BILLING_ENFORCED: 'billing_enforced',
+    CREDITS: 'apCredits',
+    APPSUMO_AI_CREDITS: 'appSumoAiCredits',
+    TEAM_PROJECTS_LIMIT: 'teamProjectsLimit',
+    USERS_LIMIT: 'usersLimit',
+    ACTIVE_FLOWS_LIMIT: 'activeFlowsLimit',
+    BILLING_ENFORCED: 'billingEnforced',
 } as const
 
 const AUTUMN_FLAG_FEATURES = [
@@ -44,7 +52,6 @@ const AUTUMN_FLAG_FEATURES = [
     'showPoweredBy',
     'auditLogEnabled',
     'embeddingEnabled',
-    'agentsEnabled',
     'aiProvidersEnabled',
     'chatEnabled',
     'dataManipulationEnabled',
@@ -98,10 +105,15 @@ export const autumnUtils = {
         }
     },
     async resolveClientForPlatform(log: FastifyBaseLogger, platformId: string) {
+        const cached = credentialsCache.get(platformId)
+        if (!isNil(cached)) {
+            return autumnUtils.client({ secretKey: cached.autumnApiKey, customerId: cached.autumnCustomerId })
+        }
         const { autumnCustomerId, autumnApiKey } = await platformPlanService(log).getAutumnCredentials(platformId)
         if (isNil(autumnCustomerId) || isNil(autumnApiKey)) {
             return null
         }
+        credentialsCache.set(platformId, { autumnCustomerId, autumnApiKey })
         return autumnUtils.client({ secretKey: autumnApiKey, customerId: autumnCustomerId })
     },
     async ensureEnrolled(log: FastifyBaseLogger, platformId: string): Promise<void> {
@@ -140,14 +152,17 @@ export const autumnUtils = {
         for (const feature of AUTUMN_FLAG_FEATURES) {
             flags[feature] = entitlements.flags[feature] ?? false
         }
-        const projects = entitlements.balances[AUTUMN_FEATURE.PROJECTS]
+        const teamProjects = entitlements.balances[AUTUMN_FEATURE.TEAM_PROJECTS_LIMIT]
+        const users = entitlements.balances[AUTUMN_FEATURE.USERS_LIMIT]
+        const activeFlows = entitlements.balances[AUTUMN_FEATURE.ACTIVE_FLOWS_LIMIT]
         const credits = entitlements.balances[AUTUMN_FEATURE.CREDITS]
         return {
             ...flags,
             plan: autumnPlanIdToStoredPlan(entitlements.planId),
-            projectsLimit: isNil(projects) || projects.unlimited ? null : projects.granted,
+            teamProjectsLimit: toProjectedLimit(teamProjects, 0),
+            usersLimit: toProjectedLimit(users, null),
+            activeFlowsLimit: toProjectedLimit(activeFlows, null),
             includedAiCredits: credits?.granted ?? 0,
-            activeFlowsLimit: undefined,
             billingEnforced: entitlements.flags[AUTUMN_FEATURE.BILLING_ENFORCED] ?? false,
         }
     },
@@ -155,30 +170,23 @@ export const autumnUtils = {
         return distributedStore.get<CreditsBalanceCache>(getCreditsBalanceKey(platformId))
     },
     async writeCreditsBalance(platformId: string, balance: Balance): Promise<void> {
-        const cached: CreditsBalanceCache = {
-            granted: balance.granted,
-            usage: balance.usage,
-            remaining: balance.remaining,
-            unlimited: balance.unlimited,
-            nextResetAt: balance.nextResetAt,
-            syncedAt: Date.now(),
-        }
-        await distributedStore.put(getCreditsBalanceKey(platformId), cached, CREDITS_CACHE_TTL_SECONDS)
+        await distributedStore.put(getCreditsBalanceKey(platformId), toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
+    },
+    async readAppSumoAiCreditsBalance(platformId: string): Promise<CreditsBalanceCache | null> {
+        return distributedStore.get<CreditsBalanceCache>(getAppSumoAiCreditsBalanceKey(platformId))
+    },
+    async writeAppSumoAiCreditsBalance(platformId: string, balance: Balance): Promise<void> {
+        await distributedStore.put(getAppSumoAiCreditsBalanceKey(platformId), toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
     },
 }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     trackCredits: async (params: TrackCreditsParams) => {
-        const dedupKey = getCreditTrackedKey(params.idempotencyKey)
-        const reserved = await distributedStore.putIfAbsent(dedupKey, '1', CREDIT_DEDUP_TTL_SECONDS)
-        if (!reserved) {
+        const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
+        if (isNil(client)) {
             return
         }
         try {
-            const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
-            if (isNil(client)) {
-                return
-            }
             const response = await client.track({
                 featureId: AUTUMN_FEATURE.CREDITS,
                 value: params.value,
@@ -190,7 +198,32 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             }
         }
         catch (error) {
-            await distributedStore.delete(dedupKey)
+            if (isDuplicateTrack(error)) {
+                return
+            }
+            throw error
+        }
+    },
+    trackAppSumoAiUsage: async (params: TrackAppSumoAiUsageParams) => {
+        const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
+        if (isNil(client)) {
+            return
+        }
+        try {
+            const response = await client.track({
+                featureId: AUTUMN_FEATURE.APPSUMO_AI_CREDITS,
+                value: params.value,
+                idempotencyKey: params.idempotencyKey,
+                properties: { ...params.properties },
+            })
+            if (!isNil(response.balance)) {
+                await autumnUtils.writeAppSumoAiCreditsBalance(params.platformId, response.balance)
+            }
+        }
+        catch (error) {
+            if (isDuplicateTrack(error)) {
+                return
+            }
             throw error
         }
     },
@@ -201,21 +234,80 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         await autumnUtils.refreshEntitlements(log, platformId)
     },
     shouldBlock: async (platformId: string) => {
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        return platformPlan.billingEnforced === true
+        return readBillingEnforced(platformId)
     },
     shouldBlockOnCredits: async (platformId: string) => {
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (platformPlan.billingEnforced !== true) {
-            return false
-        }
-        const balance = await autumnUtils.readCreditsBalance(platformId)
+        return (await computeCreditsState(platformId)).blocked
+    },
+    getCreditsState: async (platformId: string) => {
+        return computeCreditsState(platformId)
+    },
+    getAppSumoAiCreditsState: async (platformId: string) => {
+        const balance = await autumnUtils.readAppSumoAiCreditsBalance(platformId)
         if (isNil(balance) || balance.unlimited) {
-            return false
+            return { blocked: false, usage: balance?.usage ?? 0, limit: balance?.granted ?? 0 }
         }
-        return balance.remaining <= 0
+        return { blocked: balance.remaining <= 0, usage: balance.usage, limit: balance.granted }
+    },
+    getAppSumoAiCreditsUsage: async (platformId: string) => {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return null
+        }
+        const customer = await client.getCustomer()
+        const balance = customer.balances[AUTUMN_FEATURE.APPSUMO_AI_CREDITS]
+        if (isNil(balance) || balance.unlimited || isNil(balance.granted) || balance.granted <= 0) {
+            return null
+        }
+        return { usage: balance.usage, limit: balance.granted }
     },
 })
+
+// Projects a numeric non-consumable limit from an Autumn balance: `null` = unlimited; an absent feature
+// falls back to `whenAbsent` (0 = none for team projects, null = unlimited for users/active flows).
+function toProjectedLimit(balance: AutumnFeatureBalance | undefined, whenAbsent: number | null): number | null {
+    if (isNil(balance)) {
+        return whenAbsent
+    }
+    if (balance.unlimited) {
+        return null
+    }
+    return balance.granted ?? whenAbsent
+}
+
+// Autumn dedupes a repeated Idempotency-Key with a 409 within its 24h window; the usage is already
+// recorded, so a duplicate track is a successful no-op rather than an error to retry.
+function isDuplicateTrack(error: unknown): boolean {
+    return error instanceof AutumnError && error.statusCode === 409
+}
+
+async function readBillingEnforced(platformId: string): Promise<boolean> {
+    return (await distributedStore.get<boolean>(getBillingEnforcedKey(platformId))) === true
+}
+
+async function computeCreditsState(platformId: string): Promise<CreditsGateState> {
+    const [billingEnforced, balance] = await Promise.all([
+        readBillingEnforced(platformId),
+        autumnUtils.readCreditsBalance(platformId),
+    ])
+    const exhausted = !isNil(balance) && !balance.unlimited && balance.remaining <= 0
+    return {
+        blocked: billingEnforced && exhausted,
+        usage: balance?.usage ?? 0,
+        limit: balance?.granted ?? 0,
+    }
+}
+
+function toBalanceCache(balance: Balance): CreditsBalanceCache {
+    return {
+        granted: balance.granted,
+        usage: balance.usage,
+        remaining: balance.remaining,
+        unlimited: balance.unlimited,
+        nextResetAt: balance.nextResetAt,
+        syncedAt: Date.now(),
+    }
+}
 
 function autumnPlanIdToStoredPlan(planId: string | null): string | null {
     if (isNil(planId) || planId === AUTUMN_FREE_PLAN_ID) {
@@ -270,6 +362,11 @@ async function migrateOnConsole({ licenseKey, platformId }: { licenseKey: string
 
 
 type WithoutCustomerId<T> = Omit<T, 'customerId'>
+
+type ResolvedAutumnCredentials = {
+    autumnCustomerId: string
+    autumnApiKey: string
+}
 
 type AutumnClientParams = {
     secretKey: string
