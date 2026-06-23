@@ -126,6 +126,7 @@ export type GetChatConfigRequest = {
     modelName: string | null
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: ChatPromptOverride
+    dryRun?: boolean
 }
 
 export type ChatConfigResponse = {

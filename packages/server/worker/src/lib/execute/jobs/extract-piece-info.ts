@@ -12,7 +12,7 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData,
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.init({ flowVersionId: undefined, platformId: data.platformId, pieces: [data.piece], codeSteps: [] })
+        await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
 
         try {
             const result = await execution.run({
