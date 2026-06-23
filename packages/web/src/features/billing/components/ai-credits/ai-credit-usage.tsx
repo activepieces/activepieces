@@ -86,6 +86,31 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
         )}
       </Item>
 
+      {usage.appSumoAiCredits && (
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <Sparkles />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>{t('AppSumo AI Credits')}</ItemTitle>
+            <ItemDescription>
+              {Math.round(
+                Math.max(
+                  0,
+                  usage.appSumoAiCredits.limit - usage.appSumoAiCredits.usage,
+                ),
+              ).toLocaleString()}{' '}
+              {t('credits available')}
+              <span className="ml-2 text-xs">
+                ({t('Total used')}:{' '}
+                {Math.round(usage.appSumoAiCredits.usage).toLocaleString()} /{' '}
+                {Math.round(usage.appSumoAiCredits.limit).toLocaleString()})
+              </span>
+            </ItemDescription>
+          </ItemContent>
+        </Item>
+      )}
+
       {canBuyCredits && (
         <Item variant="outline">
           <ItemMedia variant="icon">

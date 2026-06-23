@@ -17,6 +17,12 @@ const CREDIT_PER_DOLLAR = 1000
 const USAGE_CACHE_TTL_SECONDS = 180
 
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
+    // @deprecated Remove with the Autumn billing migration (S4-B/S7). This job (AI_CREDIT_UPDATE_CHECK)
+    // derives the per-platform OpenRouter key `limit` from `includedAiCredits` + Stripe top-ups and resets
+    // it each cycle. Once credit accounting moves to Autumn (apCredits/appSumoAiCredits) and the managed
+    // OpenRouter key uses a flat hard-backstop limit (MANAGED_OPENROUTER_KEY_LIMIT_USD), this reset/top-up
+    // logic MUST be retired — otherwise it overwrites the flat limit (and any manual support bump) on the
+    // next run. Until then it coexists with the Autumn metering.
     async init(): Promise<void> {
         systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_UPDATE_CHECK, async ({ apiKeyHash, platformId }) => {
             log.info('(platformAiCreditsService) AI credit update check')

@@ -299,6 +299,20 @@ async function emitMessageBillingEvent({ conversation, log }: {
         },
     })
 
+    if (provider === AIProviderName.ACTIVEPIECES) {
+        await billingProvider.get(log).trackAppSumoAiUsage({
+            platformId: conversation.platformId,
+            value: 1 + toolsUsed,
+            idempotencyKey: `${conversation.id}:appSumoAi:${turnIndex}`,
+            properties: {
+                platformId: conversation.platformId,
+                projectId: conversation.projectId,
+                conversationId: conversation.id,
+                turnIndex,
+            },
+        })
+    }
+
     const licenseKeyByPlatform = await resolveLicenseKeysByPlatform({ platformIds: [conversation.platformId] })
     const licenseKey = licenseKeyByPlatform.get(conversation.platformId)
     if (isNil(licenseKey)) {

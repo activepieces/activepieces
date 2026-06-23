@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { FileType, FlowRun, FlowVersion, LogSliceRef } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
@@ -48,6 +48,23 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
                 breakdown: usage.breakdown,
             },
         })
+        const appSumoAiValue = usage.breakdown
+            .filter((entry) => entry.provider === AIProviderName.ACTIVEPIECES)
+            .reduce((sum, entry) => sum + entry.messages + entry.toolCalls, 0)
+        if (appSumoAiValue > 0) {
+            await billingProvider.get(log).trackAppSumoAiUsage({
+                platformId: project.platformId,
+                value: appSumoAiValue,
+                idempotencyKey: `${flowRun.id}:appSumoAi`,
+                properties: {
+                    platformId: project.platformId,
+                    projectId: flowRun.projectId,
+                    flowId: flowRun.flowId,
+                    flowRunId: flowRun.id,
+                    environment: flowRun.environment,
+                },
+            })
+        }
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const licenseKey = platformPlan.licenseKey
         if (isNil(licenseKey) || licenseKey.length === 0) {
