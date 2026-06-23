@@ -49,7 +49,6 @@ import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
 import { autumnBillingProvider } from './ee/platform/platform-plan/autumn'
-import { platformAiCreditsService } from './ee/platform/platform-plan/platform-ai-credits.service'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
@@ -280,7 +279,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
-            await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
@@ -313,7 +311,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
-            await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)

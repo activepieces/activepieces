@@ -1,14 +1,10 @@
 import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
-import { AiCreditsAutoTopUpState, CreateAICreditCheckoutSessionParamsSchema, PlatformPlan, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { AiCreditsAutoTopUpState, CreateAICreditCheckoutSessionParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
-import { distributedLock, distributedStore } from '../../../database/redis-connections'
+import { distributedStore } from '../../../database/redis-connections'
 import { flagService } from '../../../flags/flag.service'
 import { exceptionHandler } from '../../../helper/exception-handler'
-import { sleep } from '../../../helper/sleep'
-import { SystemJobName } from '../../../helper/system-jobs/common'
-import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
 import { platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
@@ -17,38 +13,6 @@ const CREDIT_PER_DOLLAR = 1000
 const USAGE_CACHE_TTL_SECONDS = 180
 
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
-    // @deprecated Remove with the Autumn billing migration (S4-B/S7). This job (AI_CREDIT_UPDATE_CHECK)
-    // derives the per-platform OpenRouter key `limit` from `includedAiCredits` + Stripe top-ups and resets
-    // it each cycle. Once credit accounting moves to Autumn (apCredits/appSumoAiCredits) and the managed
-    // OpenRouter key uses a flat hard-backstop limit (MANAGED_OPENROUTER_KEY_LIMIT_USD), this reset/top-up
-    // logic MUST be retired — otherwise it overwrites the flat limit (and any manual support bump) on the
-    // next run. Until then it coexists with the Autumn metering.
-    async init(): Promise<void> {
-        systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_UPDATE_CHECK, async ({ apiKeyHash, platformId }) => {
-            log.info('(platformAiCreditsService) AI credit update check')
-            try {
-                await distributedLock(log).runExclusive({
-                    key: `ai_credits_update_${platformId}`,
-                    timeoutInSeconds: 100,
-                    fn: async () => {
-                        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-
-                        await tryResetPlanIncludedCredits(plan, apiKeyHash, log)
-                        const autoToppedUp = await tryAutoTopUpPlan(plan, apiKeyHash, log)
-
-                        if (autoToppedUp) {
-                            await sleep(30000) // 30 seconds to wait for stripe to complete
-                        }
-                    },
-                })
-            }
-            catch (e) {
-                log.error(e, '(platformAiCreditsService) AI credit update check failed')
-                throw e
-            }
-        })
-    },
-
     isEnabled(): boolean {
         return flagService(log).aiCreditsEnabled()
     },
@@ -192,76 +156,6 @@ async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogg
     }
     await distributedStore.put(cacheKey, value, USAGE_CACHE_TTL_SECONDS)
     return value
-}
-
-async function tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<void> {
-    if (dayjs().diff(plan.lastFreeAiCreditsRenewalDate, 'month') < 1) {
-        return
-    }
-
-    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
-
-    const amount = plan.includedAiCredits / CREDIT_PER_DOLLAR
-
-    await openRouterApi.updateKey({
-        hash: apiKeyHash,
-        limit: key.limit! + amount,
-    })
-
-    await platformPlanService(log).update({
-        platformId: plan.platformId,
-        lastFreeAiCreditsRenewalDate: new Date().toISOString(),
-    })
-}
-
-async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<boolean> {
-    if (plan.aiCreditsAutoTopUpState !== AiCreditsAutoTopUpState.ENABLED) {
-        return false
-    }
-
-    assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
-    assertNotNullOrUndefined(plan.aiCreditsAutoTopUpCreditsToAdd, 'Auto Topup Credits To add is not set')
-    assertNotNullOrUndefined(plan.aiCreditsAutoTopUpThreshold, 'Auto Topup Threashold is not set')
-
-    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
-
-    const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
-    if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold) {
-        return false
-    }
-
-
-    if (!isNil(plan.maxAutoTopUpCreditsMonthly) && plan.maxAutoTopUpCreditsMonthly > 0) {
-        const totalAmountThisMonth = await stripeHelper(log).getAutoTopUpInvoicesTotalThisMonth(plan.stripeCustomerId, plan.platformId)
-        const totalCreditsThisMonth = totalAmountThisMonth * CREDIT_PER_DOLLAR
-
-        const autoTopUpCreditsThisMonthAfterThisTopUp = totalCreditsThisMonth + plan.aiCreditsAutoTopUpCreditsToAdd
-
-        if (autoTopUpCreditsThisMonthAfterThisTopUp > plan.maxAutoTopUpCreditsMonthly) {
-            log.info({
-                platform: { id: plan.platformId },
-                totalCreditsThisMonth,
-                creditsToAdd: plan.aiCreditsAutoTopUpCreditsToAdd,
-                maxMonthlyLimit: plan.maxAutoTopUpCreditsMonthly,
-            }, '(tryAutoTopUpPlan) AI credit auto top-up limit reached this month')
-            return false
-        }
-    }
-
-    const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
-
-    assertNotNullOrUndefined(paymentMethod, 'Auto Topup Stripe payment method is not set')
-
-    const amountInUsd = plan.aiCreditsAutoTopUpCreditsToAdd / CREDIT_PER_DOLLAR
-
-    await stripeHelper(log).createNewAICreditAutoTopUpInvoice({
-        amountInUsd,
-        customerId: plan.stripeCustomerId,
-        paymentMethod,
-        platformId: plan.platformId,
-    })
-
-    return true
 }
 
 type APIKeyUsage = {
