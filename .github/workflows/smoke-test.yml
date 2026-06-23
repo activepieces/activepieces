@@ -85,18 +85,86 @@ jobs:
           chmod +x smoke-test/verify-isolation.sh
           smoke-test/verify-isolation.sh "${{ steps.setup-isolation.outputs.flow_id }}"
 
+      - name: Restart stack in S3 mode (MinIO, no signed URLs)
+        run: |
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
+          AP_EXECUTION_MODE=SANDBOX_CODE_ONLY \
+          AP_FILE_STORAGE_LOCATION=S3 \
+          AP_S3_BUCKET=activepieces \
+          AP_S3_ACCESS_KEY_ID=minioadmin \
+          AP_S3_SECRET_ACCESS_KEY=minioadmin \
+          AP_S3_ENDPOINT=http://minio:9000 \
+          AP_S3_REGION=us-east-1 \
+          AP_S3_USE_SIGNED_URLS=false \
+          APP_REPLICAS=1 \
+          WORKER_REPLICAS=1 \
+            docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml up -d
+          echo "Waiting for containers to start..."
+          sleep 5
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml ps
+
+      - name: Setup S3 flow (no signed URLs)
+        id: setup-s3
+        run: |
+          chmod +x benchmark/setup.sh
+          FLOW_ID=$(benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Flow ID: $FLOW_ID"
+
+      - name: Run S3 smoke test (no signed URLs)
+        run: |
+          chmod +x smoke-test/verify.sh smoke-test/verify-s3.sh
+          smoke-test/verify.sh "${{ steps.setup-s3.outputs.flow_id }}"
+          smoke-test/verify-s3.sh "${{ steps.setup-s3.outputs.flow_id }}"
+
+      - name: Restart stack in S3 mode (MinIO, signed URLs)
+        run: |
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
+          AP_EXECUTION_MODE=SANDBOX_CODE_ONLY \
+          AP_FILE_STORAGE_LOCATION=S3 \
+          AP_S3_BUCKET=activepieces \
+          AP_S3_ACCESS_KEY_ID=minioadmin \
+          AP_S3_SECRET_ACCESS_KEY=minioadmin \
+          AP_S3_ENDPOINT=http://minio:9000 \
+          AP_S3_REGION=us-east-1 \
+          AP_S3_USE_SIGNED_URLS=true \
+          APP_REPLICAS=1 \
+          WORKER_REPLICAS=1 \
+            docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml up -d
+          echo "Waiting for containers to start..."
+          sleep 5
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml ps
+
+      - name: Setup S3 flow (signed URLs)
+        id: setup-s3-signed
+        run: |
+          chmod +x benchmark/setup.sh
+          FLOW_ID=$(benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Flow ID: $FLOW_ID"
+
+      - name: Run S3 smoke test (signed URLs)
+        run: |
+          chmod +x smoke-test/verify.sh smoke-test/verify-s3.sh
+          smoke-test/verify.sh "${{ steps.setup-s3-signed.outputs.flow_id }}"
+          smoke-test/verify-s3.sh "${{ steps.setup-s3-signed.outputs.flow_id }}"
+
       - name: Show app logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 app
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 app
 
       - name: Show worker logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 worker
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 worker
 
       - name: Show nginx logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 nginx
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 nginx
+
+      - name: Show minio logs on failure
+        if: failure()
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 minio minio-init || true
 
       - name: Teardown
         if: always()
-        run: docker compose -f benchmark/docker-compose.yml down -v
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
