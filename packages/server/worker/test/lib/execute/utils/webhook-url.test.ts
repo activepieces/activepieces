@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { getWebhookUrl, getAppWebhookUrl } from '../../../../src/lib/execute/utils/webhook-url'
-import { ensurePublicApiUrl } from '../../../../src/lib/worker'
+import { ensurePublicApiUrl } from '../../../../src/lib/execute/job-runner'
 
 describe('getWebhookUrl', () => {
     const flowId = 'flow-123'

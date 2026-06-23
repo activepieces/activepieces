@@ -51,6 +51,7 @@ export enum WorkerSystemProp {
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
     RUNTIME = 'AP_RUNTIME',
     CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
+    CLOUD_RUN_URL = 'AP_CLOUD_RUN_URL',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
