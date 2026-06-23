@@ -88,17 +88,27 @@ parser.functions.remove_spaces = (s: unknown) =>
     String(s ?? '').replace(/\s+/g, ' ').trim()
 parser.functions.word_count = (s: unknown) =>
     String(s ?? '').trim().split(/\s+/).filter(Boolean).length
+// Cap pad/repeat outputs so formulas can't OOM or hit V8's string-length
+// ceiling (~2^29) by passing huge counts/lengths. 10k characters is plenty
+// for every realistic use case; over that, behave like a no-op rather than
+// throw a RangeError that would crash the flow step.
+const MAX_PAD_OR_REPEAT_LENGTH = 10_000
 parser.functions.pad_left = (s: unknown, len: unknown, char: unknown = ' ') => {
     const padChar = String(char ?? ' ')
-    return String(s ?? '').padStart(Number(len), padChar.length === 0 ? ' ' : padChar)
+    const target = Number(len)
+    if (!Number.isFinite(target) || target > MAX_PAD_OR_REPEAT_LENGTH) return String(s ?? '')
+    return String(s ?? '').padStart(target, padChar.length === 0 ? ' ' : padChar)
 }
 parser.functions.pad_right = (s: unknown, len: unknown, char: unknown = ' ') => {
     const padChar = String(char ?? ' ')
-    return String(s ?? '').padEnd(Number(len), padChar.length === 0 ? ' ' : padChar)
+    const target = Number(len)
+    if (!Number.isFinite(target) || target > MAX_PAD_OR_REPEAT_LENGTH) return String(s ?? '')
+    return String(s ?? '').padEnd(target, padChar.length === 0 ? ' ' : padChar)
 }
 parser.functions.repeat = (s: unknown, count: unknown) => {
     const n = Math.floor(Number(count))
     if (!Number.isFinite(n) || n < 0) return ''
+    if (n > MAX_PAD_OR_REPEAT_LENGTH) return ''
     return String(s ?? '').repeat(n)
 }
 parser.functions.reverse = (s: unknown) => [...String(s ?? '')].reverse().join('')
@@ -106,7 +116,7 @@ parser.functions.slug = (s: unknown) =>
     String(s ?? '')
         .toLowerCase()
         .normalize('NFKD')
-        .replace(/[̀-ͯ]/g, '')
+        .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
 
@@ -242,14 +252,20 @@ parser.functions.hours_between = (a: unknown, b: unknown) => {
     const da = dayjs(String(a ?? ''))
     const db = dayjs(String(b ?? ''))
     if (!da.isValid() || !db.isValid()) return ''
-    return Math.round(Math.abs(db.diff(da, 'hour', true)))
+    // floor (not round): 8h 30min is "8 complete hours between", not 9.
+    return Math.floor(Math.abs(db.diff(da, 'hour', true)))
 }
+// start_of_day / end_of_day / is_same_day snap to / compare against day
+// boundaries, so they must use UTC parsing to be deterministic across server
+// timezones. Without `.utc()`, a UTC+8 server would shift a Z-suffixed
+// timestamp into local time first, then snap to local midnight, which both
+// disagrees with the doc examples and makes flow output depend on host TZ.
 parser.functions.start_of_day = (d: unknown) => {
-    const parsed = dayjs(String(d ?? ''))
+    const parsed = dayjs.utc(String(d ?? ''))
     return parsed.isValid() ? parsed.startOf('day').toISOString() : ''
 }
 parser.functions.end_of_day = (d: unknown) => {
-    const parsed = dayjs(String(d ?? ''))
+    const parsed = dayjs.utc(String(d ?? ''))
     return parsed.isValid() ? parsed.endOf('day').toISOString() : ''
 }
 parser.functions.is_before = (a: unknown, b: unknown) => {
@@ -265,8 +281,8 @@ parser.functions.is_after = (a: unknown, b: unknown) => {
     return da.isAfter(db)
 }
 parser.functions.is_same_day = (a: unknown, b: unknown) => {
-    const da = dayjs(String(a ?? ''))
-    const db = dayjs(String(b ?? ''))
+    const da = dayjs.utc(String(a ?? ''))
+    const db = dayjs.utc(String(b ?? ''))
     if (!da.isValid() || !db.isValid()) return false
     return da.isSame(db, 'day')
 }

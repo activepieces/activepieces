@@ -116,17 +116,23 @@ describe('pad_left', () => {
     it('defaults to space padding', () => expect(result('pad_left("hi";4)')).toBe('  hi'))
     it('no-op when string is already long enough', () =>
         expect(result('pad_left("hello";3;"0")')).toBe('hello'))
+    it('huge target length returns input unchanged (no RangeError)', () =>
+        expect(result('pad_left("hi";1000000000000;"0")')).toBe('hi'))
 })
 
 describe('pad_right', () => {
     it('pads with zeros on the right', () => expect(result('pad_right("42";5;"0")')).toBe('42000'))
     it('defaults to space padding', () => expect(result('pad_right("hi";4)')).toBe('hi  '))
+    it('huge target length returns input unchanged (no RangeError)', () =>
+        expect(result('pad_right("hi";1000000000000;"0")')).toBe('hi'))
 })
 
 describe('repeat', () => {
     it('repeats N times', () => expect(result('repeat("ab";3)')).toBe('ababab'))
     it('zero count returns empty', () => expect(result('repeat("ab";0)')).toBe(''))
     it('negative count returns empty', () => expect(result('repeat("ab";-2)')).toBe(''))
+    it('huge count returns empty (no RangeError)', () =>
+        expect(result('repeat("ab";1000000000)')).toBe(''))
 })
 
 describe('reverse', () => {
@@ -370,16 +376,20 @@ describe('hours_between', () => {
         expect(result('hours_between("2024-01-01T00:00:00Z";"2024-01-01T08:00:00Z")')).toBe(8))
     it('is absolute regardless of order', () =>
         expect(result('hours_between("2024-01-01T08:00:00Z";"2024-01-01T00:00:00Z")')).toBe(8))
+    it('floors fractional hours', () =>
+        expect(result('hours_between("2024-01-01T09:00:00Z";"2024-01-01T17:30:00Z")')).toBe(8))
 })
 
 describe('start_of_day / end_of_day', () => {
-    it('start_of_day is 00:00', () => {
-        const r = result('format_time(start_of_day("2024-03-15T14:30:00"))') as string
-        expect(r).toBe('00:00')
+    it('start_of_day snaps to UTC midnight', () => {
+        const r = result('start_of_day("2024-03-15T14:30:00Z")') as string
+        expect(r.startsWith('2024-03-15T00:00:00')).toBe(true)
+        expect(r.endsWith('Z')).toBe(true)
     })
-    it('end_of_day is 23:59', () => {
-        const r = result('format_time(end_of_day("2024-03-15T14:30:00"))') as string
-        expect(r).toBe('23:59')
+    it('end_of_day snaps to UTC end of day', () => {
+        const r = result('end_of_day("2024-03-15T14:30:00Z")') as string
+        expect(r.startsWith('2024-03-15T23:59:59')).toBe(true)
+        expect(r.endsWith('Z')).toBe(true)
     })
 })
 
