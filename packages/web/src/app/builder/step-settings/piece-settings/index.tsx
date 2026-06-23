@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import {
   PieceProperty,
   PiecePropertyMap,
+  PropertyGroup,
 } from '@activepieces/pieces-framework';
 import {
   ApFlagId,
@@ -72,8 +73,21 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const showAuthForTrigger =
     !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
 
-  const actionSplit = splitProps(actionPropsWithoutAuth);
-  const triggerSplit = splitProps(triggerPropsWithoutAuth);
+  const actionGroupedPropNames = collectGroupedPropNames(
+    selectedAction?.propertyGroups,
+  );
+  const triggerGroupedPropNames = collectGroupedPropNames(
+    selectedTrigger?.propertyGroups,
+  );
+
+  const actionSplit = splitProps({
+    props: actionPropsWithoutAuth,
+    groupedPropNames: actionGroupedPropNames,
+  });
+  const triggerSplit = splitProps({
+    props: triggerPropsWithoutAuth,
+    groupedPropNames: triggerGroupedPropNames,
+  });
 
   const hideContinueOnFailure =
     selectedAction?.errorHandlingOptions?.continueOnFailure?.hide ?? false;
@@ -129,6 +143,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
                 key={`${selectedAction.name}-essential`}
                 prefixValue={'settings.input'}
                 props={actionSplit.essential}
+                propertyGroups={selectedAction.propertyGroups}
                 propertySettings={selectedStep.settings.propertySettings}
                 disabled={props.readonly}
                 useMentionTextInput={true}
@@ -179,6 +194,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
                 key={`${selectedTrigger.name}-essential`}
                 prefixValue={'settings.input'}
                 props={triggerSplit.essential}
+                propertyGroups={selectedTrigger.propertyGroups}
                 useMentionTextInput={false}
                 propertySettings={selectedStep.settings.propertySettings}
                 disabled={props.readonly}
@@ -239,14 +255,30 @@ function isAdvancedProp(property: PieceProperty): boolean {
   return !property.required;
 }
 
-function splitProps(props: PiecePropertyMap): {
+function collectGroupedPropNames(
+  propertyGroups: PropertyGroup[] | undefined,
+): Set<string> {
+  const names = new Set<string>();
+  (propertyGroups ?? [])
+    .filter((group) => group.display === 'tabs')
+    .forEach((group) => group.props.forEach((name) => names.add(name)));
+  return names;
+}
+
+function splitProps({
+  props,
+  groupedPropNames,
+}: {
+  props: PiecePropertyMap;
+  groupedPropNames: Set<string>;
+}): {
   essential: PiecePropertyMap;
   advanced: PiecePropertyMap;
 } {
   const essential: Record<string, PieceProperty> = {};
   const advanced: Record<string, PieceProperty> = {};
   for (const [name, property] of Object.entries(props)) {
-    if (isAdvancedProp(property)) {
+    if (!groupedPropNames.has(name) && isAdvancedProp(property)) {
       advanced[name] = property;
     } else {
       essential[name] = property;
