@@ -41,6 +41,9 @@ vi.mock('../../../../../../src/app/helper/encryption', () => ({
     },
 }))
 
+const importKeyManager = (): Promise<typeof import('../../../../../../src/app/core/security/oidc/oidc-key-manager')> =>
+    import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
+
 describe('oidcKeyManager', () => {
     beforeEach(() => {
         vi.resetModules()
@@ -53,37 +56,7 @@ describe('oidcKeyManager', () => {
     })
 
     describe('getPrivateKeyPem', () => {
-        it('should load private key from env variable when set', async () => {
-            const { privateKey } = generateKeyPairSync('rsa', {
-                modulusLength: 2048,
-                privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
-                publicKeyEncoding: { type: 'spki', format: 'pem' },
-            })
-            const base64Key = Buffer.from(privateKey).toString('base64')
-
-            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
-                system: { get: vi.fn().mockReturnValue(base64Key) },
-            }))
-
-            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
-            const result = await oidcKeyManager.getPrivateKeyPem()
-
-            expect(result).toBe(privateKey)
-            expect(mockExecute).not.toHaveBeenCalled()
-        })
-
-        it('should throw when env var is set but not a valid RSA private key', async () => {
-            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
-                system: { get: vi.fn().mockReturnValue(Buffer.from('not-a-key').toString('base64')) },
-            }))
-
-            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
-            await expect(oidcKeyManager.getPrivateKeyPem()).rejects.toMatchObject({
-                error: { code: 'SYSTEM_PROP_INVALID' },
-            })
-        })
-
-        it('should load persisted key from the flag store when env var is not set', async () => {
+        it('should load the persisted key from the flag store when one already exists', async () => {
             const { privateKey } = generateKeyPairSync('rsa', {
                 modulusLength: 2048,
                 privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
@@ -91,11 +64,7 @@ describe('oidcKeyManager', () => {
             })
             storedFlag.value = { iv: 'test-iv', data: privateKey }
 
-            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
-                system: { get: vi.fn().mockReturnValue(undefined) },
-            }))
-
-            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
+            const { oidcKeyManager } = await importKeyManager()
             const result = await oidcKeyManager.getPrivateKeyPem()
 
             expect(result).toBe(privateKey)
@@ -103,11 +72,7 @@ describe('oidcKeyManager', () => {
         })
 
         it('should generate a new RSA key pair and persist it when no key exists', async () => {
-            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
-                system: { get: vi.fn().mockReturnValue(undefined) },
-            }))
-
-            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
+            const { oidcKeyManager } = await importKeyManager()
             const result = await oidcKeyManager.getPrivateKeyPem()
 
             expect(result).toContain('-----BEGIN PRIVATE KEY-----')
@@ -129,11 +94,7 @@ describe('oidcKeyManager', () => {
                 return null
             })
 
-            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
-                system: { get: vi.fn().mockReturnValue(undefined) },
-            }))
-
-            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
+            const { oidcKeyManager } = await importKeyManager()
             const result = await oidcKeyManager.getPrivateKeyPem()
 
             expect(mockExecute).toHaveBeenCalledOnce()
@@ -144,24 +105,16 @@ describe('oidcKeyManager', () => {
             // both the pre-generate read and the post-insert read return null (DB inconsistency)
             mockFindOneBy.mockImplementationOnce(async () => null).mockImplementationOnce(async () => null)
 
-            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
-                system: { get: vi.fn().mockReturnValue(undefined) },
-            }))
-
-            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
+            const { oidcKeyManager } = await importKeyManager()
             await expect(oidcKeyManager.getPrivateKeyPem()).rejects.toMatchObject({
-                error: { code: 'SYSTEM_PROP_INVALID' },
+                error: { code: 'GENERIC_ERROR' },
             })
         })
     })
 
     describe('getPublicKeyJwk', () => {
         it('should return a JWK with required OIDC metadata fields', async () => {
-            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
-                system: { get: vi.fn().mockReturnValue(undefined) },
-            }))
-
-            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
+            const { oidcKeyManager } = await importKeyManager()
             const jwk = await oidcKeyManager.getPublicKeyJwk()
 
             expect(jwk.kty).toBe('RSA')
@@ -173,11 +126,7 @@ describe('oidcKeyManager', () => {
         })
 
         it('should not include private key material in the JWK', async () => {
-            vi.doMock('../../../../../../src/app/helper/system/system', () => ({
-                system: { get: vi.fn().mockReturnValue(undefined) },
-            }))
-
-            const { oidcKeyManager } = await import('../../../../../../src/app/core/security/oidc/oidc-key-manager')
+            const { oidcKeyManager } = await importKeyManager()
             const jwk = await oidcKeyManager.getPublicKeyJwk()
 
             expect(jwk.d).toBeUndefined()

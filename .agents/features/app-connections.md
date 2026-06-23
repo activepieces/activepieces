@@ -89,10 +89,9 @@ const { token } = await response.json()
 - `GET /.well-known/openid-configuration` — issuer metadata pointing to the JWKS URI
 - `GET /.well-known/jwks.json` — RSA public key set; `kid` is an RFC 7638 SHA-256 thumbprint
 
-**Key management** (`oidcKeyManager`), in precedence order:
-- `AP_OIDC_RSA_PRIVATE_KEY` env var (base64-encoded PEM) — optional override for externally-managed keys
-- Otherwise the key is read from the shared `flag` table (encrypted with the platform encryption key)
-- If absent it is generated on first use and persisted there via `INSERT ... ON CONFLICT DO NOTHING` + re-read, giving first-writer-wins convergence across all nodes (single- and multi-node alike, no env var required)
+**Key management** (`oidcKeyManager`):
+- The signing key is read from the shared `flag` table (encrypted with the platform encryption key)
+- If absent it is generated on first use and persisted there via `INSERT ... ON CONFLICT DO NOTHING` + re-read, giving first-writer-wins convergence across all nodes (single- and multi-node alike — no env var or manual provisioning required)
 - Concurrent access is safe: `privateKeyMutex` and `publicKeyMutex` guard caching independently to avoid deadlocks
 
 ## Scope

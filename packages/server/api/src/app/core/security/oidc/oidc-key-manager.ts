@@ -1,15 +1,13 @@
-import { createHash, createPrivateKey, createPublicKey, generateKeyPair, JsonWebKey } from 'crypto'
+import { createHash, createPublicKey, generateKeyPair, JsonWebKey } from 'crypto'
 import { promisify } from 'util'
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { Mutex } from 'async-mutex'
 import { FlagEntity } from '../../../flags/flag.entity'
 import { EncryptedObject, encryptUtils } from '../../../helper/encryption'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
 import { repoFactory } from '../../db/repo-factory'
 
-const generateKeyPairAsync = promisify(generateKeyPair)
 const flagRepo = repoFactory(FlagEntity)
+const generateKeyPairAsync = promisify(generateKeyPair)
 const OIDC_PRIVATE_KEY_FLAG_ID = 'OIDC_RSA_PRIVATE_KEY'
 
 const privateKeyMutex = new Mutex()
@@ -17,49 +15,30 @@ const publicKeyMutex = new Mutex()
 let cachedPrivateKeyPem: string | undefined
 let cachedPublicKeyJwk: OidcJwk | undefined
 
-async function getPrivateKeyPem(): Promise<string> {
-    if (cachedPrivateKeyPem !== undefined) return cachedPrivateKeyPem
-    return privateKeyMutex.runExclusive(async () => {
+export const oidcKeyManager = {
+    async getPrivateKeyPem(): Promise<string> {
         if (cachedPrivateKeyPem !== undefined) return cachedPrivateKeyPem
-        const envKey = system.get(AppSystemProp.OIDC_RSA_PRIVATE_KEY)
-        if (envKey) {
-            cachedPrivateKeyPem = parseEnvPrivateKey(envKey)
+        return privateKeyMutex.runExclusive(async () => {
+            if (cachedPrivateKeyPem !== undefined) return cachedPrivateKeyPem
+            cachedPrivateKeyPem = await getOrGenerateStoredPrivateKey()
             return cachedPrivateKeyPem
-        }
-        cachedPrivateKeyPem = await getOrGenerateStoredPrivateKey()
-        return cachedPrivateKeyPem
-    })
-}
-
-async function getPublicKeyJwk(): Promise<OidcJwk> {
-    if (cachedPublicKeyJwk !== undefined) return cachedPublicKeyJwk
-    return publicKeyMutex.runExclusive(async () => {
+        })
+    },
+    async getPublicKeyJwk(): Promise<OidcJwk> {
         if (cachedPublicKeyJwk !== undefined) return cachedPublicKeyJwk
-        const privateKeyPem = await getPrivateKeyPem()
-        const publicKey = createPublicKey(privateKeyPem)
-        const jwk = publicKey.export({ format: 'jwk' })
-        const kid = computeKidFromJwk(jwk)
-        cachedPublicKeyJwk = { ...jwk, use: 'sig', alg: 'RS256', kid }
-        return cachedPublicKeyJwk
-    })
-}
-
-async function getKid(): Promise<string> {
-    return (await getPublicKeyJwk()).kid
-}
-
-function parseEnvPrivateKey(envKey: string): string {
-    const pem = Buffer.from(envKey, 'base64').toString('utf8')
-    try {
-        createPrivateKey(pem)
-    }
-    catch {
-        throw new ActivepiecesError(
-            { code: ErrorCode.SYSTEM_PROP_INVALID, params: { prop: AppSystemProp.OIDC_RSA_PRIVATE_KEY } },
-            `System property AP_${AppSystemProp.OIDC_RSA_PRIVATE_KEY} is not a valid RSA private key PEM`,
-        )
-    }
-    return pem
+        return publicKeyMutex.runExclusive(async () => {
+            if (cachedPublicKeyJwk !== undefined) return cachedPublicKeyJwk
+            const privateKeyPem = await oidcKeyManager.getPrivateKeyPem()
+            const publicKey = createPublicKey(privateKeyPem)
+            const jwk = publicKey.export({ format: 'jwk' })
+            const kid = computeKidFromJwk(jwk)
+            cachedPublicKeyJwk = { ...jwk, use: 'sig', alg: 'RS256', kid }
+            return cachedPublicKeyJwk
+        })
+    },
+    async getKid(): Promise<string> {
+        return (await oidcKeyManager.getPublicKeyJwk()).kid
+    },
 }
 
 async function getOrGenerateStoredPrivateKey(): Promise<string> {
@@ -82,10 +61,10 @@ async function getOrGenerateStoredPrivateKey(): Promise<string> {
         .execute()
     const stored = await loadStoredPrivateKey()
     if (isNil(stored)) {
-        throw new ActivepiecesError(
-            { code: ErrorCode.SYSTEM_PROP_INVALID, params: { prop: AppSystemProp.OIDC_RSA_PRIVATE_KEY } },
-            `System property AP_${AppSystemProp.OIDC_RSA_PRIVATE_KEY} could not be persisted to or read back from the flag store`,
-        )
+        throw new ActivepiecesError({
+            code: ErrorCode.GENERIC_ERROR,
+            params: { message: 'OIDC signing key could not be persisted to or read back from the flag store' },
+        })
     }
     return stored
 }
@@ -106,9 +85,3 @@ function computeKidFromJwk(jwk: JsonWebKey): string {
 }
 
 type OidcJwk = JsonWebKey & { use: string, alg: string, kid: string }
-
-export const oidcKeyManager = {
-    getPrivateKeyPem,
-    getPublicKeyJwk,
-    getKid,
-}
