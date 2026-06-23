@@ -1,10 +1,11 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxPoolSettings } from '../../types'
 import { pieceCache, PieceNotFoundError } from '../pieces/piece-cache'
 import { flowBundleStore } from './flow-bundle-store'
 import { flowCache } from './flow-cache'
+import { flowSteps } from './flow-steps'
 
 export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
     async resolve({ flow, platformId }: ResolveParams): Promise<ResolvedFlow> {
@@ -17,7 +18,8 @@ export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, 
             log.warn({ error: String(bundleError), flow: { id: flow.id } }, 'Flow bundle fetch failed, falling back to resolve')
         }
         if (!isNil(bundle)) {
-            return { kind: 'ready', flowVersion: bundle.flowVersion, pieces: bundle.pieces, codeSteps: [], needsPublish: false }
+            // tryFetch already wrote the compiled code to the Code Cache; nothing to compile or republish.
+            return { kind: 'ready', flowVersion: bundle.flowVersion, pieces: bundle.pieces, code: { kind: 'materialized' }, publishBundle: null }
         }
 
         const flowVersion = await flowCache(log, apiClient, basePath).getVersion({ flowVersionId: flow.versionId })
@@ -38,28 +40,29 @@ export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, 
             return { kind: 'disabled' }
         }
 
+        const shouldPublish = flowVersion.state === FlowVersionState.LOCKED && flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION
         return {
             kind: 'ready',
             flowVersion,
             pieces,
-            codeSteps: extractCodeArtifacts(flowVersion),
-            needsPublish: flowVersion.state === FlowVersionState.LOCKED && flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION,
-        }
-    },
-
-    async publishBundle({ flowVersion, pieces, projectId, platformId }: PublishBundleParams): Promise<void> {
-        const { error } = await tryCatch(() => flowBundleStore(log, apiClient, basePath).publish({ flowVersion, pieces, projectId, platformId }))
-        if (error) {
-            log.warn({ error: String(error), flowVersion: { id: flowVersion.id } }, 'Failed to publish flow bundle')
+            code: { kind: 'source', steps: extractCodeArtifacts(flowVersion) },
+            // The compiled code only exists on disk after install, so the caller invokes this afterwards.
+            publishBundle: shouldPublish ? buildPublishBundle({ log, apiClient, basePath, flowVersion, pieces, projectId: flow.projectId, platformId }) : null,
         }
     },
 })
 
-async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath, getSettings }: ResolvePiecesParams): Promise<PiecePackage[]> {
-    const pieceSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-        .filter((step) => step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE)
+function buildPublishBundle({ log, apiClient, basePath, flowVersion, pieces, projectId, platformId }: BuildPublishBundleParams): PublishBundle {
+    return async () => {
+        const { error } = await tryCatch(() => flowBundleStore(log, apiClient, basePath).publish({ flowVersion, pieces, projectId, platformId }))
+        if (error) {
+            log.warn({ error: String(error), flowVersion: { id: flowVersion.id } }, 'Failed to publish flow bundle')
+        }
+    }
+}
 
-    return Promise.all(pieceSteps.map((step) =>
+async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath, getSettings }: ResolvePiecesParams): Promise<PiecePackage[]> {
+    return Promise.all(flowSteps.piece(flowVersion).map((step) =>
         pieceCache(log, apiClient, basePath, getSettings).getPiece({
             pieceName: step.settings.pieceName,
             pieceVersion: step.settings.pieceVersion,
@@ -69,25 +72,16 @@ async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath
 }
 
 function extractCodeArtifacts(flowVersion: FlowVersion): CodeArtifact[] {
-    return flowStructureUtil.getAllSteps(flowVersion.trigger)
-        .filter((step) => step.type === FlowActionType.CODE)
-        .map((step) => ({
-            name: step.name,
-            sourceCode: step.settings.sourceCode,
-            flowVersionId: flowVersion.id,
-            flowVersionState: flowVersion.state,
-        }))
+    return flowSteps.code(flowVersion).map((step) => ({
+        name: step.name,
+        sourceCode: step.settings.sourceCode,
+        flowVersionId: flowVersion.id,
+        flowVersionState: flowVersion.state,
+    }))
 }
 
 type ResolveParams = {
     flow: { id: string, versionId: string, projectId: string }
-    platformId: string
-}
-
-type PublishBundleParams = {
-    flowVersion: FlowVersion
-    pieces: PiecePackage[]
-    projectId: string
     platformId: string
 }
 
@@ -100,7 +94,23 @@ type ResolvePiecesParams = {
     getSettings: () => SandboxPoolSettings
 }
 
+type BuildPublishBundleParams = {
+    log: ApLogger
+    apiClient: WorkerToApiContract
+    basePath: string
+    flowVersion: FlowVersion
+    pieces: PiecePackage[]
+    projectId: string
+    platformId: string
+}
+
+export type PublishBundle = () => Promise<void>
+
+export type ProvisionedCode =
+    | { kind: 'materialized' }
+    | { kind: 'source', steps: CodeArtifact[] }
+
 export type ResolvedFlow =
     | { kind: 'flow-not-found' }
     | { kind: 'disabled' }
-    | { kind: 'ready', flowVersion: FlowVersion, pieces: PiecePackage[], codeSteps: CodeArtifact[], needsPublish: boolean }
+    | { kind: 'ready', flowVersion: FlowVersion, pieces: PiecePackage[], code: ProvisionedCode, publishBundle: PublishBundle | null }

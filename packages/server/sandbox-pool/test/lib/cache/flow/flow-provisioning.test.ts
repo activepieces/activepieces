@@ -74,8 +74,8 @@ describe('flowProvisioning.resolve', () => {
 
         expect(resolved.kind).toBe('ready')
         if (resolved.kind === 'ready') {
-            expect(resolved.codeSteps).toEqual([])
-            expect(resolved.needsPublish).toBe(false)
+            expect(resolved.code).toEqual({ kind: 'materialized' })
+            expect(resolved.publishBundle).toBeNull()
             expect(resolved.pieces).toEqual([httpPiece])
         }
         expect(getFlowVersion).not.toHaveBeenCalled()
@@ -117,13 +117,14 @@ describe('flowProvisioning.resolve', () => {
 
         expect(resolved.kind).toBe('ready')
         if (resolved.kind === 'ready') {
-            expect(resolved.needsPublish).toBe(true)
+            expect(resolved.publishBundle).not.toBeNull()
+            expect(resolved.code.kind).toBe('source')
             expect(resolved.pieces).toHaveLength(1)
             expect(resolved.pieces[0].pieceVersion).toBe('1.0.5')
         }
     })
 
-    it('miss + DRAFT flow → ready but needsPublish=false', async () => {
+    it('miss + DRAFT flow → ready but no publish handle', async () => {
         const apiClient = {
             async getFlowBundle() { return null },
             async getFlowVersion() { return flowWithPiece({ state: FlowVersionState.DRAFT }) },
@@ -131,7 +132,7 @@ describe('flowProvisioning.resolve', () => {
         } as unknown as WorkerToApiContract
 
         const resolved = await flowProvisioning(fakeLog, apiClient, uniqueBasePath(), getSettings).resolve({ flow, platformId: 'plat1' })
-        expect(resolved.kind === 'ready' && resolved.needsPublish).toBe(false)
+        expect(resolved.kind === 'ready' && resolved.publishBundle === null).toBe(true)
     })
 
     it('miss + missing piece → disabled and the flow is disabled via apiClient', async () => {

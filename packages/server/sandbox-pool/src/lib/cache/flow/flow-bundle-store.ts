@@ -1,11 +1,12 @@
 import path from 'node:path'
 import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { FlowActionType, flowStructureUtil, FlowVersion, GetFlowBundleResponse, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { FlowVersion, GetFlowBundleResponse, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { bundleHttp } from '../../utils/bundle-http'
 import { cacheUtils } from '../cache-paths'
 import { cacheState } from '../cache-state'
 import { codeCache } from './code/code-cache'
+import { flowSteps } from './flow-steps'
 
 const MISS = ''
 
@@ -50,7 +51,7 @@ export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, b
 
     async publish({ flowVersion, pieces, projectId, platformId }: PublishParams): Promise<void> {
         const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-        const compiledSteps = await Promise.all(codeStepNames(flowVersion).map(async (stepName) => ({
+        const compiledSteps = await Promise.all(flowSteps.code(flowVersion).map(async ({ name: stepName }) => ({
             stepName,
             compiledJs: await codes.readCompiledStep({ flowVersionId: flowVersion.id, stepName }),
         })))
@@ -98,12 +99,6 @@ function parseManifest(value: string | null): FlowBundleManifest | null {
         return null
     }
     return manifest
-}
-
-function codeStepNames(flowVersion: FlowVersion): string[] {
-    return flowStructureUtil.getAllSteps(flowVersion.trigger)
-        .filter((step) => step.type === FlowActionType.CODE)
-        .map((step) => step.name)
 }
 
 type TryFetchParams = {

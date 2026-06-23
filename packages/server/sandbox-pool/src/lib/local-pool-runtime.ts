@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { FlowVersion, PiecePackage, RuntimeKind, WorkerToApiContract } from '@activepieces/shared'
-import { flowProvisioning } from './cache/flow/flow-provisioning'
+import { FlowVersion, RuntimeKind, WorkerToApiContract } from '@activepieces/shared'
+import { flowProvisioning, PublishBundle } from './cache/flow/flow-provisioning'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { Sandbox } from './sandbox/types'
 import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './sandbox-manager'
@@ -61,7 +61,7 @@ function createLocalPoolExecution({ manager, log, apiClient, basePath, getSettin
             let pieces = input.pieces ?? []
             let codes = input.codes ?? []
             let flowVersion: FlowVersion | undefined
-            let pendingPublish: { flowVersion: FlowVersion, pieces: PiecePackage[] } | null = null
+            let publishBundle: PublishBundle | null = null
 
             if (!isNil(input.flow)) {
                 // Resolve FIRST, acquire LATER — no sandbox slot consumed for a missing/disabled flow.
@@ -75,10 +75,10 @@ function createLocalPoolExecution({ manager, log, apiClient, basePath, getSettin
                 }
                 flowVersion = resolved.flowVersion
                 pieces = [...pieces, ...resolved.pieces]
-                codes = [...codes, ...resolved.codeSteps]
-                if (resolved.needsPublish) {
-                    pendingPublish = { flowVersion: resolved.flowVersion, pieces: resolved.pieces }
+                if (resolved.code.kind === 'source') {
+                    codes = [...codes, ...resolved.code.steps]
                 }
+                publishBundle = resolved.publishBundle
             }
 
             sandbox = manager.acquire({ log, apiClient })
@@ -93,14 +93,9 @@ function createLocalPoolExecution({ manager, log, apiClient, basePath, getSettin
                 throw error
             }
 
-            if (!isNil(pendingPublish) && !isNil(input.flow)) {
+            if (!isNil(publishBundle)) {
                 // Best-effort: build once, share via the store. A failed upload never fails the run.
-                void flowProvisioning(log, apiClient, basePath, getSettings).publishBundle({
-                    flowVersion: pendingPublish.flowVersion,
-                    pieces: pendingPublish.pieces,
-                    projectId: input.flow.projectId,
-                    platformId: input.platformId,
-                })
+                void publishBundle()
             }
             return { kind: 'ready', flowVersion }
         },
