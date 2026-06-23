@@ -1,4 +1,4 @@
-import { apId, EngineResponseStatus, FlowStatus, PrincipalType, TriggerStrategy, WebhookHandshakeStrategy } from '@activepieces/shared'
+import { apId, EngineResponseStatus, FlowStatus, PieceType, PrincipalType, TriggerStrategy, WebhookHandshakeStrategy } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
@@ -395,6 +395,7 @@ describe('Webhook Service', () => {
 
         const mockPiece = createMockPieceMetadata({
             platformId: mockPlatform.id,
+            pieceType: PieceType.CUSTOM,
             name: pieceName,
             version: pieceVersion,
             triggers: {
@@ -465,6 +466,7 @@ describe('Webhook Service', () => {
 
         const mockPiece = createMockPieceMetadata({
             platformId: mockPlatform.id,
+            pieceType: PieceType.CUSTOM,
             name: pieceName,
             version: pieceVersion,
             triggers: {
