@@ -9,6 +9,8 @@ import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
+const VALID_SCOPED_NAME_REGEX = /^@[^/]+\/[^/]+$/
+const VALID_UNSCOPED_NAME_REGEX = /^[^/]+$/
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
@@ -43,7 +45,14 @@ function getCustomPiecesPath(basePath: string, platformId: string, getSettings: 
 async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, apiClient: WorkerToApiContract, getSettings: () => SandboxPoolSettings): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
-    const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
+    const { validPieces, invalidPieces } = partitionValidPieceNames(nonDevPieces)
+    if (!isEmpty(invalidPieces)) {
+        log.error({
+            rootWorkspace,
+            invalidPieces: invalidPieces.map(piece => `${piece.pieceName}@${piece.pieceVersion}`),
+        }, '[pieceInstaller] Skipping pieces with invalid package names to protect the shared lockfile')
+    }
+    const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, validPieces)
 
     if (isEmpty(piecesToInstall)) {
         log.debug({ rootWorkspace }, '[pieceInstaller] No new pieces to install (already installed)')
@@ -57,7 +66,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
-            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, pieces)
+            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, validPieces)
             if (isEmpty(piecesToInstall)) {
                 log.info({ rootWorkspace }, '[pieceInstaller] No new pieces to install in lock (already installed)')
                 return
@@ -122,6 +131,27 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
             })
         },
     })
+}
+
+// A workspace member name (and its dependency key) must be a plain npm package name. A relative
+// path such as `../../../common/pieces/@activepieces/piece-x` — fed in via stale `usedPieces` data
+// from a since-reverted build — makes bun write an unparseable resolution token into the SHARED
+// bun.lock. That lock then fails to parse on the next install and takes down EVERY piece in the
+// workspace (so cache pre-warm and the deploy fail). Worse, because the install joins the name onto
+// `<workspace>/pieces/`, a `..` name escapes a per-platform `custom_pieces/<id>` workspace and lands
+// the poisoned member inside the shared `common` workspace. Such names are skipped at the source.
+export function isValidPackageName(name: string): boolean {
+    if (name.includes('..')) {
+        return false
+    }
+    return VALID_SCOPED_NAME_REGEX.test(name) || VALID_UNSCOPED_NAME_REGEX.test(name)
+}
+
+function partitionValidPieceNames(pieces: PiecePackage[]): { validPieces: PiecePackage[], invalidPieces: PiecePackage[] } {
+    return {
+        validPieces: pieces.filter(piece => isValidPackageName(piece.pieceName)),
+        invalidPieces: pieces.filter(piece => !isValidPackageName(piece.pieceName)),
+    }
 }
 
 async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {

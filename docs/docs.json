@@ -526,6 +526,7 @@
                   "icon": "code",
                   "pages": [
                      "handbook/engineering/playbooks/run-ee",
+                     "handbook/engineering/playbooks/building-for-self-hosting",
                      "handbook/engineering/playbooks/setup-betterstack",
                      "handbook/engineering/playbooks/releases",
                      "handbook/engineering/playbooks/canary-deployment",
