@@ -74,7 +74,7 @@ External services verify webhook ownership before sending events:
 - **HEADER_PRESENT**: Check for specific header
 - **QUERY_PRESENT**: Check for query parameter
 - **BODY_PARAM_PRESENT**: Check for body field
-- Submits HANDSHAKE hook job to worker → piece validates signature → returns verification response
+- Submits HANDSHAKE hook job to worker → piece validates signature → returns verification response. The check runs **before** the disabled-flow guard so that handshake pings are processed both during the publish window (flow still DISABLED) and for third-party re-verification pings on ENABLED flows.
 
 ## Payload Size Limit
 
@@ -84,4 +84,4 @@ External services verify webhook ownership before sending events:
 
 - Uses `flowExecutionCache` for fast lookup
 - LOCKED_FALL_BACK_TO_LATEST: uses `publishedVersionId` if exists, else latest
-- Returns 410 GONE if flow not found, 404 if disabled
+- Returns 410 GONE if flow not found; 404 if disabled (unless the request matches the flow's `handshakeConfiguration`, in which case the handshake is processed and the disabled check is skipped)
