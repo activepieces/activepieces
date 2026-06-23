@@ -95,12 +95,10 @@ export const webhookService = {
         const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
         wideEvent.set({ flowVersion: { id: flowVersionIdToRun } })
 
-        // Handshake pings arrive during the publish window: the trigger source is created and
-        // onEnable fires (registering the webhook with the third party), but flow.status is
-        // still DISABLED until the publish transaction completes. Checking here — before the
-        // status guard — lets the ping succeed. The DISABLED guard means enabled flows paying
-        // no cost on every payload webhook.
-        if (flow.status === FlowStatus.DISABLED && !isNil(flowExecutionResult.handshakeConfiguration)) {
+        // Handshake pings can arrive both during the publish window (when flow.status is still
+        // DISABLED before the transaction completes) and after the flow is ENABLED (third-party
+        // re-verification). Checking before the DISABLED guard handles both cases.
+        if (!isNil(flowExecutionResult.handshakeConfiguration)) {
             const response = await webhookHandshake.handleHandshakeRequest({
                 payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
                 handshakeConfiguration: flowExecutionResult.handshakeConfiguration,

@@ -456,6 +456,76 @@ describe('Webhook Service', () => {
         interactionSpy.mockRestore()
     })
 
+    it('should process handshake for ENABLED flow on re-verification ping', async () => {
+        const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+
+        const triggerName = 'new_webhook'
+        const pieceName = 'test-handshake-piece-enabled'
+        const pieceVersion = '1.0.0'
+
+        const mockPiece = createMockPieceMetadata({
+            platformId: mockPlatform.id,
+            name: pieceName,
+            version: pieceVersion,
+            triggers: {
+                [triggerName]: {
+                    handshakeConfiguration: {
+                        strategy: WebhookHandshakeStrategy.QUERY_PRESENT,
+                        paramName: 'hub_challenge',
+                    },
+                },
+            },
+        })
+        await db.save('piece_metadata', [mockPiece])
+
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+            status: FlowStatus.ENABLED,
+        })
+        await db.save('flow', [mockFlow])
+
+        const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
+        await db.save('flow_version', [mockFlowVersion])
+        await db.update('flow', mockFlow.id, { publishedVersionId: mockFlowVersion.id })
+
+        await db.save('trigger_source', [{
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            flowId: mockFlow.id,
+            flowVersionId: mockFlowVersion.id,
+            projectId: mockProject.id,
+            pieceName,
+            pieceVersion,
+            triggerName,
+            type: TriggerStrategy.WEBHOOK,
+            simulate: false,
+            schedule: null,
+            deleted: null,
+        }])
+
+        const interactionSpy = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
+            status: EngineResponseStatus.OK,
+            response: {
+                response: {
+                    status: StatusCodes.OK,
+                    body: { challenge: 'test-challenge' },
+                },
+            },
+            error: undefined,
+        })
+
+        const response = await app?.inject({
+            method: 'GET',
+            url: `/api/v1/webhooks/${mockFlow.id}?hub_challenge=test-challenge`,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(interactionSpy).toHaveBeenCalled()
+
+        interactionSpy.mockRestore()
+    })
+
     it('should accept webhook on test endpoint without execution', async () => {
         const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
         const mockFlow = createMockFlow({
