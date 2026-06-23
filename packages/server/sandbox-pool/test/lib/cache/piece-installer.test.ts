@@ -12,7 +12,7 @@ let testWorkspace = ''
 
 const mockInstall = vi.fn()
 
-vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
+vi.mock('../../../src/lib/utils/bun-runner', () => ({
     bunRunner: () => ({
         install: mockInstall,
     }),
