@@ -7,7 +7,7 @@ Formulas let users transform input values inside any text input in the flow buil
 
 ### Shared formula library (`packages/core/shared/src/lib/formula/`)
 - `formula-evaluator.ts` — wrapper format, tokenizer, `evaluate`, `containsWrapper`, `wrap`, `unwrap`; preprocess pipeline (`preprocessExpression` at line 78): `replaceJsonArrays` → `preResolveVarsToPlaceholders` → `wrapStringArgs` → `rewriteLazyIf` → `normalizeExpression`.
-- `function-registry.ts` — 81-entry array `AP_FUNCTIONS` and the `ApFunction` type (with optional `deprecated`, `argCompatibility` extension points).
+- `function-registry.ts` — 104-entry array `AP_FUNCTIONS` and the `ApFunction` type (with optional `deprecated`, `argCompatibility` extension points).
 - `function-implementations.ts` — wires each registry entry to `parser.functions.<name>` on a module-private `Parser` instance.
 - `function-type-checker.ts` — `typeCheckTiptapDoc()` runs against the editor doc; reports arg-count and type-mismatch errors keyed by function-start node id. Expression-operator args (e.g. `3 == 9`) are skipped (line 219) so runtime-evaluated values don't get false-positive type errors.
 
@@ -33,7 +33,7 @@ Formulas let users transform input values inside any text input in the flow buil
 - `packages/core/shared/src/lib/ee/billing/index.ts` — default `false` in both `FREEMIUM_PLAN` (line 85) and `OPEN_SOURCE_PLAN` (line 112).
 
 ### Tests (`packages/core/shared/test/formula/`)
-- `function-evaluator.test.ts` — 161 tests, one+ per function plus pipeline cases (lazy if, var dedup, wrapper detection, embedded formulas in strings).
+- `function-evaluator.test.ts` — 220 tests, one+ per function plus pipeline cases (lazy if, var dedup, wrapper detection, embedded formulas in strings).
 - `type-checker.test.ts` — 13 tests for arg-count, type-mismatch, expression-arg skip.
 - `serializer-roundtrip.test.ts` — 22 tests for TipTap doc ⇄ wrapped-string round-trips.
 
