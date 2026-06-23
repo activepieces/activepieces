@@ -1,12 +1,11 @@
-import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { CheckoutPlanParamsSchema, CheckoutSessionResponse, CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, PlatformBillingInformation, PrincipalType, PurchasablePlan, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
+import { AiCreditsAutoTopUpState, CheckoutPlanParamsSchema, CheckoutSessionResponse, CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, CreditType, PlatformBillingInformation, PrincipalType, PurchasablePlan, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
-import { platformAiCreditsService } from './platform-ai-credits.service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
@@ -92,12 +91,28 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         })
     })
 
-    // AI Credits
+    // Consumable top-ups (apCredits today; appSumoAiCredits + future users/activeFlows/projects via creditType).
     fastify.post('/ai-credits/create-checkout-session', CreateAICreditCheckoutSessionRequest, async (request) => {
-        return platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(request.principal.platform.id, request.body)
+        const { credits, creditType } = request.body
+        const { checkoutUrl } = await billingProvider.get(request.log).topUpFeature({
+            platformId: request.principal.platform.id,
+            featureId: creditType ?? CreditType.enum.apCredits,
+            quantity: credits,
+        })
+        return { stripeCheckoutUrl: checkoutUrl }
     })
     fastify.post('/ai-credits/auto-topup', UpdateAICreditsAutoTopUpRequest, async (request) => {
-        return platformAiCreditsService(request.log).updateAutoTopUp(request.principal.platform.id, request.body)
+        const body = request.body
+        const enabled = body.state === AiCreditsAutoTopUpState.ENABLED
+        const { setupPaymentUrl } = await billingProvider.get(request.log).configureAutoTopUp({
+            platformId: request.principal.platform.id,
+            featureId: body.creditType ?? CreditType.enum.apCredits,
+            enabled,
+            threshold: enabled ? body.minThreshold : 0,
+            quantity: enabled ? body.creditsToAdd : 0,
+            maxMonthlyTopUps: enabled && !isNil(body.maxMonthlyLimit) ? Math.floor(body.maxMonthlyLimit / body.creditsToAdd) : null,
+        })
+        return { stripeCheckoutUrl: setupPaymentUrl }
     })
 }
 
@@ -156,7 +171,7 @@ const CreateAICreditCheckoutSessionRequest = {
         body: CreateAICreditCheckoutSessionParamsSchema,
         response: {
             [StatusCodes.OK]: z.object({
-                stripeCheckoutUrl: z.string(),
+                stripeCheckoutUrl: z.string().nullable(),
             }),
         },
     },

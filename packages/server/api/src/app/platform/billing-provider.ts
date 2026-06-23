@@ -11,6 +11,12 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     getBillingPortalUrl: async () => {
         return { url: '' }
     },
+    topUpFeature: async () => {
+        return { checkoutUrl: null }
+    },
+    configureAutoTopUp: async () => {
+        return {}
+    },
     trackCredits: async () => {
         return
     },
@@ -83,10 +89,29 @@ export type BillingPortalParams = {
     returnUrl?: string
 }
 
+export type TopUpFeatureParams = {
+    platformId: string
+    featureId: string
+    quantity: number
+    successUrl?: string
+}
+
+export type ConfigureAutoTopUpParams = {
+    platformId: string
+    featureId: string
+    enabled: boolean
+    threshold: number
+    quantity: number
+    maxMonthlyTopUps?: number | null
+    returnUrl?: string
+}
+
 export type BillingProvider = {
     listPlans(platformId: string): Promise<PurchasablePlan[]>
     createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{ checkoutUrl: string | null }>
     getBillingPortalUrl(params: BillingPortalParams): Promise<{ url: string }>
+    topUpFeature(params: TopUpFeatureParams): Promise<{ checkoutUrl: string | null }>
+    configureAutoTopUp(params: ConfigureAutoTopUpParams): Promise<{ setupPaymentUrl?: string }>
     trackCredits(params: TrackCreditsParams): Promise<void>
     trackAppSumoAiUsage(params: TrackAppSumoAiUsageParams): Promise<void>
     ensureEnrolled(platformId: string): Promise<void>

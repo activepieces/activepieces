@@ -36,8 +36,14 @@ export const CreateCheckoutSessionParamsSchema = z.object({
 })
 export type CreateSubscriptionParams = z.infer<typeof CreateCheckoutSessionParamsSchema>
 
+// Values MUST equal the Autumn consumable feature ids — the request `creditType` is forwarded verbatim as
+// the Autumn `featureId` for both manual top-up (attach featureQuantities) and native auto-top-up.
+export const CreditType = z.enum(['apCredits', 'appSumoAiCredits'])
+export type CreditType = z.infer<typeof CreditType>
+
 export const CreateAICreditCheckoutSessionParamsSchema = z.object({
-    aiCredits: z.number(),
+    credits: z.number(),
+    creditType: CreditType.optional(),
 })
 export type CreateAICreditCheckoutSessionParamsSchema = z.infer<typeof CreateAICreditCheckoutSessionParamsSchema>
 
@@ -67,9 +73,11 @@ export const UpdateAICreditsAutoTopUpParamsSchema = z.union([
         minThreshold: z.number(),
         creditsToAdd: z.number(),
         maxMonthlyLimit: Nullable(z.number()),
+        creditType: CreditType.optional(),
     }),
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.DISABLED),
+        creditType: CreditType.optional(),
     }),
 ])
 export type UpdateAICreditsAutoTopUpParamsSchema = z.infer<typeof UpdateAICreditsAutoTopUpParamsSchema>

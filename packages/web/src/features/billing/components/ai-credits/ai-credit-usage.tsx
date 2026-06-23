@@ -1,7 +1,6 @@
 import {
   AiCreditsAutoTopUpState,
-  ApEdition,
-  ApFlagId,
+  isNil,
   PlatformBillingInformation,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,7 +18,6 @@ import {
 } from '@/components/custom/item';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { isRunningCloudInDevMode } from '@/lib/api';
 
 import { billingMutations } from '../../hooks/billing-hooks';
@@ -44,9 +42,9 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const autoTopUpState =
     plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED;
 
-  const canBuyCredits = flagsHooks.useFlag<ApEdition>(
-    ApFlagId.CAN_BUY_AI_CREDITS,
-  );
+  // Top-ups (manual + auto) are paid-plan-only — a free plan has `plan` null. Mirrors the backend gate so
+  // free users don't see controls that would only fail on submit. (This component is already cloud-only.)
+  const canBuyCredits = !isNil(plan.plan);
   const isAutoTopUpEnabled = autoTopUpState === AiCreditsAutoTopUpState.ENABLED;
 
   const { mutate: updateAutoTopUp, isPending: isDisablingAutoTopUp } =
@@ -111,7 +109,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
         </Item>
       )}
 
-      {canBuyCredits && (
+      {(canBuyCredits || isAutoTopUpEnabled) && (
         <Item variant="outline">
           <ItemMedia variant="icon">
             <Settings />
@@ -125,7 +123,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             </ItemDescription>
           </ItemContent>
           <ItemActions>
-            {isAutoTopUpEnabled && (
+            {isAutoTopUpEnabled && canBuyCredits && (
               <Button
                 variant="ghost"
                 size="icon"

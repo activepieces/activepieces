@@ -35,7 +35,7 @@ export function PurchaseAICreditsDialog({
   const totalCost = (creditsToAdd / 1000) * COST_PER_1000_CREDITS;
 
   const handlePurchase = () => {
-    createCheckoutSession({ aiCredits: creditsToAdd });
+    createCheckoutSession({ credits: creditsToAdd });
   };
 
   return (

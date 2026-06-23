@@ -1,4 +1,4 @@
-import { isEmpty, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
 import { PlatformPlanLimits } from '@activepieces/shared'
 import {
@@ -15,6 +15,7 @@ import {
     type OpenCustomerPortalParams,
     type SetupPaymentParams,
     type TrackParams,
+    type UpdateCustomerParams,
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
@@ -48,6 +49,7 @@ const AUTUMN_FEATURE = {
     ACTIVE_FLOWS_LIMIT: 'activeFlowsLimit',
     BILLING_ENFORCED: 'billingEnforced',
 } as const
+
 
 const AUTUMN_FLAG_FEATURES = [
     'tablesEnabled',
@@ -88,6 +90,9 @@ export const autumnUtils = {
             },
             getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
                 return client.customers.get({ customerId, expand: params?.expand })
+            },
+            updateCustomer(params: WithoutCustomerId<UpdateCustomerParams>) {
+                return client.customers.update({ customerId, ...params })
             },
             attach(params: WithoutCustomerId<AttachParams>) {
                 return client.billing.attach({ customerId, ...params })
@@ -224,6 +229,56 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const result = await client.openCustomerPortal({ returnUrl })
         return { url: result.url }
     },
+    topUpFeature: async ({ platformId, featureId, quantity, successUrl }) => {
+        await autumnUtils.ensureEnrolled(log, platformId)
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { checkoutUrl: null }
+        }
+        // The prepaid one-off item lives ON the customer's plan (alongside the included allotment), so a
+        // manual purchase re-attaches that same plan with the prepaid featureQuantity — no separate top-up
+        // product. Feature-generic: any prepaid item on the plan (credits today; users/flows/projects later).
+        const customer = await client.getCustomer()
+        const basePlanId = customer.subscriptions.find((subscription) => !subscription.addOn)?.planId
+        assertPlanAllowsTopUp(basePlanId)
+        const result = await client.attach({
+            planId: basePlanId,
+            featureQuantities: [{ featureId, quantity }],
+            successUrl,
+        })
+        return { checkoutUrl: result.paymentUrl }
+    },
+    configureAutoTopUp: async ({ platformId, featureId, enabled, threshold, quantity, maxMonthlyTopUps, returnUrl }) => {
+        await autumnUtils.ensureEnrolled(log, platformId)
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return {}
+        }
+        // Enabling is paid-plan-only; disabling is always allowed. Only fetch the customer when enabling
+        // (needed for both the plan gate and the saved-card check).
+        const customer = enabled ? await client.getCustomer() : null
+        if (!isNil(customer)) {
+            assertPlanAllowsTopUp(customer.subscriptions.find((subscription) => !subscription.addOn)?.planId)
+        }
+        await client.updateCustomer({
+            billingControls: {
+                autoTopups: [{
+                    featureId,
+                    enabled,
+                    threshold,
+                    quantity,
+                    ...(isNil(maxMonthlyTopUps) ? {} : { purchaseLimit: { interval: 'month', limit: maxMonthlyTopUps } }),
+                }],
+            },
+        })
+        // Native auto-top-up requires a saved card; redirect the user to add one only when enabling and
+        // none is on file.
+        if (!enabled || !isNil(customer?.paymentMethod)) {
+            return {}
+        }
+        const setup = await client.setupPayment({ successUrl: returnUrl })
+        return { setupPaymentUrl: setup.url }
+    },
     trackCredits: async (params: TrackCreditsParams) => {
         const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
         if (isNil(client)) {
@@ -305,6 +360,17 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return { usage: balance.usage, limit: balance.granted }
     },
 })
+
+// Top-ups (manual + auto) are paid-plan-only: a free (or unenrolled) platform must upgrade first, so it
+// can't buy prepaid credits. Narrows basePlanId to a usable string for the subsequent attach.
+function assertPlanAllowsTopUp(basePlanId: string | undefined): asserts basePlanId is string {
+    if (isNil(basePlanId) || basePlanId === AUTUMN_FREE_PLAN_ID) {
+        throw new ActivepiecesError({
+            code: ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS,
+            params: { message: 'Top-up is only available on paid plans' },
+        })
+    }
+}
 
 // Projects a numeric non-consumable limit from an Autumn balance: `null` = unlimited; an absent feature
 // falls back to `whenAbsent` (0 = none for team projects, null = unlimited for users/active flows).
