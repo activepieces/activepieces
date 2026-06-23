@@ -35,7 +35,7 @@ async function listSyncableBundles(officialPieces: PieceToUpload[]): Promise<Pie
     const officialBundles: PieceBundle[] = officialPieces.map(piece => ({
         name: piece.name,
         version: piece.version,
-        key: bundleS3Key(piece),
+        key: pieceBundleS3Key(piece),
         source: { type: 'npm', name: piece.name, version: piece.version },
     }))
 
@@ -46,7 +46,7 @@ async function listSyncableBundles(officialPieces: PieceToUpload[]): Promise<Pie
     const customBundles: PieceBundle[] = customPieces.map(piece => ({
         name: piece.name,
         version: piece.version,
-        key: bundleS3Key(piece),
+        key: pieceBundleS3Key(piece),
         source: piece.packageType === PackageType.ARCHIVE && !isNil(piece.archiveId)
             ? { type: 'archive', archiveId: piece.archiveId }
             : { type: 'npm', name: piece.name, version: piece.version },
@@ -82,7 +82,7 @@ async function fetchBundleData(source: BundleSource, log: FastifyBaseLogger): Pr
     return Buffer.from(response.data)
 }
 
-function bundleS3Key(piece: PieceToUpload): string {
+export function pieceBundleS3Key(piece: PieceToUpload): string {
     return `${S3_PIECES_PREFIX}${piece.name.replace('/', '-')}-${piece.version}.tgz`
 }
 

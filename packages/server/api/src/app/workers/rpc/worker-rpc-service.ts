@@ -7,6 +7,7 @@ import { distributedStore } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileCompressor } from '../../file/file-compressor'
 import { fileService } from '../../file/file.service'
+import { s3Helper } from '../../file/s3-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
@@ -16,6 +17,7 @@ import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { pieceBundleS3Key } from '../../pieces/piece-bundle-uploader'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -218,6 +220,15 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 type: FileType.PACKAGE_ARCHIVE,
             })
             return data
+        },
+
+        async getPieceBundleUrl(input) {
+            if (isNil(system.get(AppSystemProp.S3_BUCKET))) {
+                return null
+            }
+            const key = pieceBundleS3Key({ name: input.pieceName, version: input.pieceVersion })
+            const { data: url } = await tryCatch(() => s3Helper(log).getS3SignedUrl(key, key))
+            return url ?? null
         },
 
         async getUsedPieces() {

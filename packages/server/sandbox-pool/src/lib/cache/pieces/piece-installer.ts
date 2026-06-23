@@ -59,7 +59,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], log:
                 await wideEvent.timed({
                     name: 'installRegistryPieces',
                     fn: async () => {
-                        await Promise.all(registryPieces.map(piece => installRegistryPiece({ rootWorkspace, piece, log, getSettings })))
+                        await Promise.all(registryPieces.map(piece => installRegistryPiece({ rootWorkspace, piece, log, apiClient })))
                         await markPiecesAsUsed(rootWorkspace, registryPieces)
                     },
                 })
@@ -69,18 +69,21 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], log:
 }
 
 // Registry pieces are self-contained published bundles. Download the tarball directly —
-// from the public bundle store (S3/CDN) when configured, otherwise from npm — and decompress
-// it in place. This replaces the previous bun workspace-resolution install.
-async function installRegistryPiece({ rootWorkspace, piece, log, getSettings }: {
+// from the bundle store via a presigned URL the API hands out (when S3 is configured),
+// otherwise from npm — and decompress it in place. This replaces the previous bun
+// workspace-resolution install.
+async function installRegistryPiece({ rootWorkspace, piece, log, apiClient }: {
     rootWorkspace: string
     piece: PiecePackage
     log: ApLogger
-    getSettings: () => SandboxPoolSettings
+    apiClient: WorkerToApiContract
 }): Promise<void> {
     const folder = piecePath(rootWorkspace, piece)
     const { error } = await tryCatch(async () => {
-        const bundle = await downloadBundle(piece, log, getSettings)
+        const bundle = await downloadBundle(piece, log, apiClient)
         await fileSystemUtils.threadSafeMkdir(folder)
+        log.debug({ folder }, '[pieceInstaller] folder')
+
         // npm tarballs nest everything under `package/`; strip it so the bundle lands at the folder root.
         await decompress(bundle, folder, { strip: 1 })
         await installExternalDependenciesIfAny({ folder, log })
@@ -92,14 +95,19 @@ async function installRegistryPiece({ rootWorkspace, piece, log, getSettings }: 
     }
 }
 
-async function downloadBundle(piece: PiecePackage, log: ApLogger, getSettings: () => SandboxPoolSettings): Promise<Buffer> {
-    const baseUrl = getSettings().PIECES_BUNDLE_BASE_URL
-    if (!isNil(baseUrl)) {
-        const fromStore = await tryCatch(() => downloadFromUrl(bundleStoreUrl(baseUrl, piece)))
+async function downloadBundle(piece: PiecePackage, log: ApLogger, apiClient: WorkerToApiContract): Promise<Buffer> {
+    const { data: signedUrl } = await tryCatch(() => apiClient.getPieceBundleUrl({
+        pieceName: piece.pieceName,
+        pieceVersion: piece.pieceVersion,
+    }))
+    log.debug({ signedUrl }, '[pieceInstaller] signedUrl')
+
+    if (!isNil(signedUrl)) {
+        const fromStore = await tryCatch(() => downloadFromUrl(signedUrl))
         if (isNil(fromStore.error) && !isNil(fromStore.data)) {
             return fromStore.data
         }
-        log.info({ piece: { name: piece.pieceName, version: piece.pieceVersion } }, '[pieceInstaller] Bundle not found in store, falling back to npm')
+        log.info({ piece: { name: piece.pieceName, version: piece.pieceVersion } }, '[pieceInstaller] Bundle store download failed, falling back to npm')
     }
     return downloadFromUrl(npmTarballUrl(piece))
 }
@@ -239,11 +247,6 @@ function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: Priv
     return join(piecePath(rootWorkspace, piecePackage), `${piecePackage.archiveId}.tgz`)
 }
 
-function bundleStoreUrl(baseUrl: string, piece: PiecePackage): string {
-    const normalizedBase = baseUrl.replace(/\/+$/, '')
-    return `${normalizedBase}/${S3_PIECES_PREFIX}${piece.pieceName.replace('/', '-')}-${piece.pieceVersion}.tgz`
-}
-
 function npmTarballUrl(piece: PiecePackage): string {
     return `${NPM_REGISTRY_URL}/${piece.pieceName}/-/${unscopedName(piece.pieceName)}-${piece.pieceVersion}.tgz`
 }
@@ -254,7 +257,6 @@ function unscopedName(name: string): string {
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
-const S3_PIECES_PREFIX = 'pieces/'
 
 export const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
 

@@ -93,7 +93,6 @@ export type SandboxPoolSettings = {
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]
     SSRF_ALLOW_LIST: string[]
-    PIECES_BUNDLE_BASE_URL: string | undefined
 }
 
 export type SandboxPoolDeps = {

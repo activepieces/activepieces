@@ -43,6 +43,7 @@ export type WorkerToApiContract = {
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
+    getPieceBundleUrl(input: { pieceName: string, pieceVersion: string }): Promise<string | null>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>

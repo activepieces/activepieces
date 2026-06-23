@@ -1,7 +1,7 @@
 import { Readable } from 'stream'
 import { apId, isNil, ProjectId } from '@activepieces/core-utils'
 import { FileType } from '@activepieces/shared'
-import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, ListObjectsV2CommandOutput, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import contentDisposition from 'content-disposition'
@@ -63,11 +63,11 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         const keys = new Set<string>()
         let continuationToken: string | undefined = undefined
         do {
-            const response = await client.listObjectsV2({
+            const response: ListObjectsV2CommandOutput = await client.send(new ListObjectsV2Command({
                 Bucket: bucket,
                 Prefix: prefix,
                 ContinuationToken: continuationToken,
-            })
+            }))
             for (const object of response.Contents ?? []) {
                 if (!isNil(object.Key)) {
                     keys.add(object.Key)

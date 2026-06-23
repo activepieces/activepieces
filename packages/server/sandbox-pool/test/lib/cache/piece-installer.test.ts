@@ -11,7 +11,7 @@ import type { ApLogger } from '@activepieces/server-utils'
 let testWorkspace = ''
 
 const mockGet = vi.fn()
-const mockBunInstall = vi.fn()
+const mockGetPieceBundleUrl = vi.fn()
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@activepieces/server-utils')>()
@@ -22,7 +22,7 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => {
 })
 
 vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
-    bunRunner: () => ({ install: mockBunInstall }),
+    bunRunner: () => ({ install: vi.fn() }),
 }))
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
@@ -76,30 +76,28 @@ const fakeLog = {
     child: vi.fn().mockReturnThis(),
 } as unknown as ApLogger
 
-const fakeApiClient = {} as never
+const fakeApiClient = { getPieceBundleUrl: mockGetPieceBundleUrl } as never
 
-function settingsWith(bundleBaseUrl: string | undefined) {
-    return () => ({
-        EXECUTION_MODE: 'UNSANDBOXED',
-        DEV_PIECES: [] as string[],
-        ENVIRONMENT: 'production',
-        REUSE_SANDBOX: undefined,
-        FLOW_TIMEOUT_SECONDS: 600,
-        MAX_FILE_SIZE_MB: 10,
-        MAX_FLOW_RUN_LOG_SIZE_MB: 10,
-        NETWORK_MODE: 'UNRESTRICTED' as never,
-        SANDBOX_MEMORY_LIMIT: '1048576',
-        SANDBOX_PROPAGATED_ENV_VARS: [] as string[],
-        SSRF_ALLOW_LIST: [] as string[],
-        PIECES_BUNDLE_BASE_URL: bundleBaseUrl,
-    })
-}
+const fakeGetSettings = () => ({
+    EXECUTION_MODE: 'UNSANDBOXED',
+    DEV_PIECES: [] as string[],
+    ENVIRONMENT: 'production',
+    REUSE_SANDBOX: undefined,
+    FLOW_TIMEOUT_SECONDS: 600,
+    MAX_FILE_SIZE_MB: 10,
+    MAX_FLOW_RUN_LOG_SIZE_MB: 10,
+    NETWORK_MODE: 'UNRESTRICTED' as never,
+    SANDBOX_MEMORY_LIMIT: '1048576',
+    SANDBOX_PROPAGATED_ENV_VARS: [] as string[],
+    SSRF_ALLOW_LIST: [] as string[],
+})
 
 beforeEach(async () => {
     testWorkspace = join(tmpdir(), `piece-installer-test-${randomUUID()}`)
     await mkdir(testWorkspace, { recursive: true })
     vi.clearAllMocks()
     mockGet.mockResolvedValue({ data: new ArrayBuffer(8) })
+    mockGetPieceBundleUrl.mockResolvedValue(null)
 })
 
 afterEach(async () => {
@@ -108,9 +106,9 @@ afterEach(async () => {
 })
 
 describe('pieceInstaller (registry pieces)', () => {
-    it('downloads from npm when no bundle base url is configured', async () => {
+    it('downloads from npm when the API returns no bundle url', async () => {
         const piece = makePiece('@activepieces/piece-a')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith(undefined))
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await installer.install({ pieces: [piece], includeFilters: true })
 
@@ -119,39 +117,39 @@ describe('pieceInstaller (registry pieces)', () => {
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('downloads from the bundle store when base url is set', async () => {
+    it('downloads from the signed url the API returns', async () => {
         const piece = makePiece('@activepieces/piece-b')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith('https://cdn.example.com/'))
+        mockGetPieceBundleUrl.mockResolvedValueOnce('https://s3.example.com/pieces/@activepieces-piece-b-1.0.0.tgz?sig=abc')
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await installer.install({ pieces: [piece], includeFilters: true })
 
         expect(mockGet).toHaveBeenCalledOnce()
-        expect(mockGet.mock.calls[0]?.[0]).toBe('https://cdn.example.com/pieces/@activepieces-piece-b-1.0.0.tgz')
+        expect(mockGet.mock.calls[0]?.[0]).toBe('https://s3.example.com/pieces/@activepieces-piece-b-1.0.0.tgz?sig=abc')
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('falls back to npm when the bundle store download fails', async () => {
+    it('falls back to npm when the signed url download fails', async () => {
         const piece = makePiece('@activepieces/piece-c')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith('https://cdn.example.com'))
-
+        mockGetPieceBundleUrl.mockResolvedValueOnce('https://s3.example.com/pieces/@activepieces-piece-c-1.0.0.tgz?sig=abc')
         mockGet
             .mockReset()
-            .mockRejectedValueOnce(new Error('404 not found'))
+            .mockRejectedValueOnce(new Error('403 expired'))
             .mockResolvedValueOnce({ data: new ArrayBuffer(8) })
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await installer.install({ pieces: [piece], includeFilters: true })
 
         expect(mockGet).toHaveBeenCalledTimes(2)
-        expect(mockGet.mock.calls[0]?.[0]).toBe('https://cdn.example.com/pieces/@activepieces-piece-c-1.0.0.tgz')
+        expect(mockGet.mock.calls[0]?.[0]).toContain('s3.example.com')
         expect(mockGet.mock.calls[1]?.[0]).toBe('https://registry.npmjs.org/@activepieces/piece-c/-/piece-c-1.0.0.tgz')
         expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 
-    it('rolls back and throws when both store and npm fail', async () => {
+    it('rolls back and throws when both signed url and npm fail', async () => {
         const piece = makePiece('@activepieces/piece-d')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith(undefined))
-
         mockGet.mockReset().mockRejectedValue(new Error('network down'))
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
 
         await expect(installer.install({ pieces: [piece], includeFilters: true })).rejects.toThrow('@activepieces/piece-d@1.0.0')
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
@@ -164,7 +162,7 @@ describe('pieceInstaller (registry pieces)', () => {
         await writeFile(join(pieceDir, 'index.bundle.js'), '// bundle')
         await writeFile(join(pieceDir, 'ready'), 'true')
 
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, settingsWith(undefined))
+        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
         await installer.install({ pieces: [piece], includeFilters: true })
 
         expect(mockGet).not.toHaveBeenCalled()

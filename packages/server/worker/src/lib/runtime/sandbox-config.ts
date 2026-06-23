@@ -13,7 +13,6 @@ export const sandboxConfig = {
         return {
             ...workerSettings.getSettings(),
             REUSE_SANDBOX: system.get(WorkerSystemProp.REUSE_SANDBOX),
-            PIECES_BUNDLE_BASE_URL: system.get(WorkerSystemProp.PIECES_BUNDLE_BASE_URL),
         }
     },
 }
