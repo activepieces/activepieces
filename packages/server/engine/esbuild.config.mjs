@@ -87,7 +87,7 @@ if (watch) {
   await ctx.rebuild();
   await ctx.watch();
 } else {
-  esbuild.build(
+  await esbuild.build(
     buildOptions({ outfile: proxyOutfile })
   )
 }
