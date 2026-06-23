@@ -157,9 +157,7 @@ const StepSettingsContainer = () => {
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
-    [FlowActionType.CODE, FlowActionType.PIECE].includes(
-      modifiedStep.type as FlowActionType,
-    ) && !isNil(stepMetadata);
+    modifiedStep.type === FlowActionType.CODE && !isNil(stepMetadata);
 
   const runAgentStep =
     modifiedStep.settings.pieceName === '@activepieces/piece-ai' &&

@@ -9,7 +9,7 @@ import {
   PropertyExecutionType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Calendar, SquareFunction, File } from 'lucide-react';
+import { Calendar, File } from 'lucide-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
@@ -240,17 +240,26 @@ function DynamicValueToggle({
               )
             }
             disabled={disabled}
-            size="sm"
+            aria-label={t('Use dynamic value')}
+            className={cn(
+              'h-[22px] w-[26px] min-w-0 px-0 rounded-[5px] border border-border bg-background',
+              'hover:bg-background hover:border-input hover:text-foreground',
+              'data-[state=on]:bg-primary/10 data-[state=on]:border-primary/40',
+              'data-[state=on]:text-primary',
+            )}
           >
-            <SquareFunction
-              className={cn('size-5', {
-                'text-foreground': isToggled,
-                'text-muted-foreground': !isToggled,
-              })}
-            />
+            <span
+              className={cn(
+                'inline-flex items-baseline font-mono text-[11px] font-semibold tracking-[-0.02em]',
+                isToggled ? 'text-primary' : 'text-muted-foreground',
+              )}
+            >
+              <i className="italic">f</i>
+              <span className="text-[9px] align-super leading-none">x</span>
+            </span>
           </Toggle>
         </TooltipTrigger>
-        <TooltipContent side="top">{t('Dynamic value')}</TooltipContent>
+        <TooltipContent side="top">{t('Use dynamic value')}</TooltipContent>
       </Tooltip>
     </div>
   );

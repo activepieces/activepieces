@@ -46,7 +46,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="continueOnFailure"
-                  className="flex items-center gap-1 h-7.5 max-h-7.5"
+                  className="flex items-center gap-2.5 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -75,7 +75,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="retryOnFailure"
-                  className="flex items-center gap-1 h-7.5 max-h-7.5"
+                  className="flex items-center gap-2.5 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -85,7 +85,7 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">{t('Retry on Failure')}</span>
+                  <span>{t('Retry on Failure')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t('Retries up to 4 times before failing the step.')}
