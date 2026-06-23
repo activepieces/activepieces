@@ -16,19 +16,29 @@ export const gmailSendEmailAction = createAction({
     idempotent: false,
   },
   displayName: 'Send Email',
+  propertyGroups: [
+    {
+      key: 'recipients',
+      display: 'tabs',
+      label: 'Recipients',
+      description:
+        'Who receives this email. Use Cc and Bcc for additional recipients.',
+      props: ['receiver', 'cc', 'bcc'],
+    },
+  ],
   props: {
     receiver: Property.Array({
-      displayName: 'Receiver Email (To)',
+      displayName: 'To',
       description: undefined,
       required: true,
     }),
     cc: Property.Array({
-      displayName: 'CC Email',
+      displayName: 'Cc',
       description: undefined,
       required: false,
     }),
     bcc: Property.Array({
-      displayName: 'BCC Email',
+      displayName: 'Bcc',
       description: undefined,
       required: false,
     }),

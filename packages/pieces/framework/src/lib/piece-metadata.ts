@@ -56,11 +56,24 @@ export const AiMetadata = z.object({
 })
 export type AiMetadata = z.infer<typeof AiMetadata>
 
+export const PropertyGroupDisplay = z.enum(['tabs'])
+export type PropertyGroupDisplay = z.infer<typeof PropertyGroupDisplay>
+
+export const PropertyGroup = z.object({
+  key: z.string(),
+  display: PropertyGroupDisplay,
+  label: z.optional(z.string()),
+  description: z.optional(z.string()),
+  props: z.array(z.string()),
+})
+export type PropertyGroup = z.infer<typeof PropertyGroup>
+
 export const ActionBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
   props: PiecePropertyMap,
+  propertyGroups: z.optional(z.array(PropertyGroup)),
   requireAuth: z.boolean(),
   errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
   outputSchema: z.optional(z.custom<OutputSchema>()),
@@ -73,6 +86,7 @@ export type ActionBase = {
   displayName: string,
   description: string,
   props: PiecePropertyMap,
+  propertyGroups?: PropertyGroup[];
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
   outputSchema?: OutputSchema;
@@ -85,6 +99,7 @@ export const TriggerBase = z.object({
   displayName: z.string(),
   description: z.string(),
   props: PiecePropertyMap,
+  propertyGroups: z.optional(z.array(PropertyGroup)),
   errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
   type: z.enum(TriggerStrategy),
   sampleData: z.unknown(),

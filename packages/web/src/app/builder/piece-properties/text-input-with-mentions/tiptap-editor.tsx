@@ -55,11 +55,13 @@ import { textMentionUtils } from './text-input-utils';
 
 type TiptapEditorProps = {
   className?: string;
+  wrapperClassName?: string;
   initialValue?: unknown;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   enableMarkdown?: boolean;
+  autoFocus?: boolean;
 };
 
 const INITIAL_SLASH_STATE: SlashCommandState = {
@@ -118,11 +120,13 @@ function getExtensions({
 
 export const TiptapEditor = ({
   className,
+  wrapperClassName,
   initialValue,
   onChange,
   disabled,
   placeholder,
   enableMarkdown,
+  autoFocus,
 }: TiptapEditorProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { embedState } = useEmbedding();
@@ -205,6 +209,7 @@ export const TiptapEditor = ({
 
   const editor = useEditor({
     editable: !disabled,
+    autofocus: autoFocus ? 'end' : false,
     extensions: getExtensions({ placeholder, enableMarkdown, formulaEnabled }),
     content: {
       type: 'doc',
@@ -456,7 +461,10 @@ export const TiptapEditor = ({
   const showPreview = formulaEnabled && isFocused && hasFunctions;
 
   return (
-    <div className="relative w-full" ref={editorWrapperRef}>
+    <div
+      className={cn('relative w-full', wrapperClassName)}
+      ref={editorWrapperRef}
+    >
       <EditorContent editor={editor} />
 
       {showPreview && (

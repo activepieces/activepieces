@@ -108,6 +108,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               key={selectedAction.name}
               prefixValue={'settings.input'}
               props={actionPropsWithoutAuth}
+              propertyGroups={selectedAction.propertyGroups}
               propertySettings={selectedStep.settings.propertySettings}
               disabled={props.readonly}
               useMentionTextInput={true}
@@ -135,6 +136,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               key={selectedTrigger.name}
               prefixValue={'settings.input'}
               props={triggerPropsWithoutAuth}
+              propertyGroups={selectedTrigger.propertyGroups}
               useMentionTextInput={true}
               propertySettings={selectedStep.settings.propertySettings}
               disabled={props.readonly}
