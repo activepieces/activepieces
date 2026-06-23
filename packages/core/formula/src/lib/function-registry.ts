@@ -821,7 +821,7 @@ export const AP_FUNCTIONS: ApFunction[] = [
         description: 'Counts how many hours are between two dates.',
         syntax: 'hours_between(date1; date2)',
         example: 'hours_between( 2025-01-15T09:00:00Z ; 2025-01-15T17:30:00Z )',
-        exampleResult: '9',
+        exampleResult: '8',
         minArgs: 2,
         maxArgs: 2,
         argTypes: ['date', 'date'],

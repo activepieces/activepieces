@@ -105,7 +105,7 @@ Functions for working with dates and times.
 | `today` | `today()` | Returns today's date with no time attached. | `today()` → `2025-01-15` |
 | `to_date` | `to_date(text)` | Turns a text value into a proper date the flow can work with. | `to_date(January 15, 2025)` → `2025-01-15T00:00:00Z` |
 | `add_minutes` | `add_minutes(date; n)` | Adds a number of minutes to a date and time. | `add_minutes(2025-01-15T14:30:00Z; 15)` → `2025-01-15T14:45:00Z` |
-| `hours_between` | `hours_between(date1; date2)` | Counts how many hours are between two dates. | `hours_between(2025-01-15T09:00:00Z; 2025-01-15T17:30:00Z)` → `9` |
+| `hours_between` | `hours_between(date1; date2)` | Counts how many hours are between two dates. | `hours_between(2025-01-15T09:00:00Z; 2025-01-15T17:30:00Z)` → `8` |
 | `start_of_day` | `start_of_day(date)` | Returns the date at midnight (the start of that day). | `start_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T00:00:00Z` |
 | `end_of_day` | `end_of_day(date)` | Returns the date at one moment before midnight (the end of that day). | `end_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T23:59:59Z` |
 | `is_before` | `is_before(date1; date2)` | Checks if the first date is before the second date. | `is_before(2025-01-01; 2025-02-01)` → `TRUE` |
