@@ -14,5 +14,10 @@ services:
       AP_RUNTIME: GCP_CLOUD_RUN
       AP_GCP_REGION: europe-west1
       GOOGLE_APPLICATION_CREDENTIALS: /gcp-key.json
+      AP_WORKER_CONCURRENCY: ${AP_WORKER_CONCURRENCY:-100}
+      AP_POOL_CPU: ${AP_POOL_CPU:-1}
+      AP_POOL_MEMORY: ${AP_POOL_MEMORY:-1Gi}
+      AP_POOL_CONCURRENCY: ${AP_POOL_CONCURRENCY:-1}
+      AP_POOL_MAX_INSTANCES: ${AP_POOL_MAX_INSTANCES:-100}
     volumes:
       - /Users/abuaboud/gcp-deployer-key.json:/gcp-key.json:ro

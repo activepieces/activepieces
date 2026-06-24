@@ -22,6 +22,11 @@ export function createCloudRunRuntime(): Runtime {
     // Escape hatch: point at an already-running Pool Server (self-hosted pool / local debugging) to
     // skip auto-provisioning entirely.
     const poolServerUrlOverride = process.env['AP_POOL_SERVER_URL']
+    // Sizing knobs: one instance runs `concurrency` flows, sized so each gets cpu/(concurrency) cores.
+    const cpu = Number(process.env['AP_POOL_CPU'] ?? 1)
+    const memory = process.env['AP_POOL_MEMORY'] ?? '1Gi'
+    const concurrency = Number(process.env['AP_POOL_CONCURRENCY'] ?? 1)
+    const maxInstances = Number(process.env['AP_POOL_MAX_INSTANCES'] ?? 100)
     let executeUrlPromise: Promise<string> | undefined
 
     function ensureExecuteUrl(log: ApLogger): Promise<string> {
@@ -35,11 +40,17 @@ export function createCloudRunRuntime(): Runtime {
                     token: POOL_SERVER_TOKEN,
                     cacheBasePath: '/tmp/cache',
                     timeoutSeconds: sandboxConfig.getSandboxPoolSettings().FLOW_TIMEOUT_SECONDS + 30,
+                    cpu,
+                    memory,
+                    concurrency,
+                    maxInstances,
                     log,
                 })
             executeUrlPromise = baseUrlPromise.then((baseUrl) => `${ensureTrailingSlash(baseUrl)}execute`)
             // A failed provision must not be cached, or every later execute reuses the rejection.
-            executeUrlPromise.catch(() => { executeUrlPromise = undefined })
+            executeUrlPromise.catch(() => {
+                executeUrlPromise = undefined 
+            })
         }
         return executeUrlPromise
     }

@@ -1,0 +1,27 @@
+# Max-throughput rig: every tier scaled + even load-balancing (nginx-lb.conf) + a local pool tier the
+# worker reaches through the nginx pool LB (nginx:8081) so requests spread evenly across pool replicas.
+# Callbacks (engine -> internalApiUrl=http://nginx:80) also fan out across app replicas. Combine with
+# the base + minio overlays; scale with --scale app=N --scale worker=M --scale poolserver=P.
+services:
+  nginx:
+    volumes:
+      - ./nginx-lb.conf:/etc/nginx/nginx.conf:ro
+
+  poolserver:
+    image: ap-poolserver:local
+    environment:
+      AP_POOL_SERVER_TOKEN: ap-pool-server-4f1c9a7e2b6d4f0a8c3e5d7b9a1f3c2e
+      AP_CACHE_BASE_PATH: /tmp/cache
+      AP_POOL_CONCURRENCY: ${AP_POOL_CONCURRENCY:-8}
+      AP_LOG_LEVEL: error
+      PORT: 8080
+    networks:
+      - bench
+
+  worker:
+    environment:
+      AP_RUNTIME: GCP_CLOUD_RUN
+      AP_POOL_SERVER_URL: http://nginx:8081
+      AP_WORKER_CONCURRENCY: ${AP_WORKER_CONCURRENCY:-100}
+    depends_on:
+      - poolserver

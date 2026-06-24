@@ -1,0 +1,22 @@
+# Debug harness: one local pool container at concurrency 8, callbacks stay on the docker network
+# (app FRONTEND_URL=nginx from base). Used to validate that concurrent executes no longer race on the
+# shared cache (the provision serialization fix). Worker concurrency is capped to the pool's slot count.
+services:
+  poolserver:
+    image: ap-poolserver:local
+    environment:
+      AP_POOL_SERVER_TOKEN: ap-pool-server-4f1c9a7e2b6d4f0a8c3e5d7b9a1f3c2e
+      AP_CACHE_BASE_PATH: /tmp/cache
+      AP_POOL_CONCURRENCY: ${AP_POOL_CONCURRENCY:-8}
+      AP_LOG_LEVEL: error
+      PORT: 8080
+    networks:
+      - bench
+
+  worker:
+    environment:
+      AP_RUNTIME: GCP_CLOUD_RUN
+      AP_POOL_SERVER_URL: http://poolserver:8080
+      AP_WORKER_CONCURRENCY: ${AP_WORKER_CONCURRENCY:-8}
+    depends_on:
+      - poolserver

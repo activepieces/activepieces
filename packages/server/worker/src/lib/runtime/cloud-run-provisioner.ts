@@ -16,20 +16,23 @@ async function resolveAuth(): Promise<{ accessToken: string, projectId: string }
     return { accessToken, projectId }
 }
 
-function buildServiceSpec({ image, token, cacheBasePath, timeoutSeconds }: BuildSpecParams): Record<string, unknown> {
+function buildServiceSpec({ image, token, cacheBasePath, timeoutSeconds, cpu, memory, concurrency, maxInstances }: BuildSpecParams): Record<string, unknown> {
     return {
         template: {
             executionEnvironment: 'EXECUTION_ENVIRONMENT_GEN2',
-            maxInstanceRequestConcurrency: 1,
+            // One instance runs `concurrency` flows in parallel (one sandbox slot each); pair with
+            // cpu/memory so each flow gets its slice (e.g. 4 CPU / 4Gi @ concurrency 4 = 1 CPU/flow).
+            maxInstanceRequestConcurrency: concurrency,
             timeout: `${timeoutSeconds}s`,
-            scaling: { maxInstanceCount: 4 },
+            scaling: { maxInstanceCount: maxInstances },
             containers: [{
                 image,
                 ports: [{ containerPort: 8080 }],
-                resources: { limits: { cpu: '1', memory: '1Gi' }, cpuIdle: true },
+                resources: { limits: { cpu: String(cpu), memory }, cpuIdle: true },
                 env: [
                     { name: 'AP_POOL_SERVER_TOKEN', value: token },
                     { name: 'AP_CACHE_BASE_PATH', value: cacheBasePath },
+                    { name: 'AP_POOL_CONCURRENCY', value: String(concurrency) },
                 ],
             }],
         },
@@ -58,7 +61,7 @@ async function allowUnauthenticated({ serviceUrl, authHeader }: { serviceUrl: st
     await safeHttp.axios.post(`${serviceUrl}:setIamPolicy`, policy, { headers: authHeader })
 }
 
-async function ensureService({ region, serviceName, image, token, cacheBasePath, timeoutSeconds, log }: EnsureServiceParams): Promise<string> {
+async function ensureService({ region, serviceName, image, token, cacheBasePath, timeoutSeconds, cpu, memory, concurrency, maxInstances, log }: EnsureServiceParams): Promise<string> {
     const { accessToken, projectId } = await resolveAuth()
     const authHeader = { Authorization: `Bearer ${accessToken}` }
     const serviceUrl = `${RUN_API}/projects/${projectId}/locations/${region}/services/${serviceName}`
@@ -68,8 +71,8 @@ async function ensureService({ region, serviceName, image, token, cacheBasePath,
     const alreadyDeployed = !isNil(existing?.uri) && deployedImage === image
 
     if (!alreadyDeployed) {
-        log.info({ serviceName, image }, 'Provisioning Cloud Run pool server')
-        const spec = buildServiceSpec({ image, token, cacheBasePath, timeoutSeconds })
+        log.info({ serviceName, image, cpu, memory, concurrency, maxInstances }, 'Provisioning Cloud Run pool server')
+        const spec = buildServiceSpec({ image, token, cacheBasePath, timeoutSeconds, cpu, memory, concurrency, maxInstances })
         const { data: operation } = await safeHttp.axios.patch<RunOperation>(`${serviceUrl}?allowMissing=true`, spec, { headers: authHeader })
         if (!isNil(operation.name)) {
             await pollOperation({ operationName: operation.name, authHeader, log })
@@ -94,6 +97,10 @@ type BuildSpecParams = {
     token: string
     cacheBasePath: string
     timeoutSeconds: number
+    cpu: number
+    memory: string
+    concurrency: number
+    maxInstances: number
 }
 
 type PollParams = {
@@ -109,6 +116,10 @@ type EnsureServiceParams = {
     token: string
     cacheBasePath: string
     timeoutSeconds: number
+    cpu: number
+    memory: string
+    concurrency: number
+    maxInstances: number
     log: ApLogger
 }
 
