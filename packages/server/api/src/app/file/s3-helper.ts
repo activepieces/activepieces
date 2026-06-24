@@ -1,5 +1,5 @@
 import { Readable } from 'stream'
-import { apId, isNil, ProjectId } from '@activepieces/core-utils'
+import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { FileType } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
@@ -58,16 +58,18 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
     },
 
     async objectExists(s3Key: string): Promise<boolean> {
-        try {
-            await getS3Client().send(new HeadObjectCommand({
-                Bucket: getS3BucketName(),
-                Key: s3Key,
-            }))
-            return true
+        const { error } = await tryCatch(() => getS3Client().send(new HeadObjectCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+        })))
+        // A genuine miss (404) is the common case; anything else (403, expired creds, network)
+        // means S3 is misconfigured — surface it so operators get a signal instead of a silent
+        // npm fallback that never caches.
+        const isMissing = error instanceof Error && (error.name === 'NotFound' || error.name === 'NoSuchKey')
+        if (!isNil(error) && !isMissing) {
+            log.warn({ s3Key, error: String(error) }, 'objectExists check failed unexpectedly, treating object as missing')
         }
-        catch {
-            return false
-        }
+        return isNil(error)
     },
     async getFile(s3Key: string): Promise<Buffer> {
         const response = await getS3Client().getObject({

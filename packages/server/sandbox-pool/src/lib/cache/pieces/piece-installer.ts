@@ -264,7 +264,8 @@ async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: Piece
 }
 
 function pieceBundleEndpointUrl(publicApiUrl: string, piece: PiecePackage): string {
-    const base = `${publicApiUrl}v1/engine/pieces/bundle`
+    const root = publicApiUrl.endsWith('/') ? publicApiUrl : `${publicApiUrl}/`
+    const base = `${root}v1/engine/pieces/bundle`
     if (piece.packageType === PackageType.ARCHIVE) {
         return `${base}?archiveId=${encodeURIComponent(piece.archiveId)}`
     }
