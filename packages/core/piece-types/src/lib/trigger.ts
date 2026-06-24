@@ -12,6 +12,7 @@ export enum WebhookHandshakeStrategy {
     HEADER_PRESENT = 'HEADER_PRESENT',
     QUERY_PRESENT = 'QUERY_PRESENT',
     BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT',
+    HEAD_REQUEST = 'HEAD_REQUEST',
 }
 
 export const WebhookHandshakeConfiguration = z.object({
