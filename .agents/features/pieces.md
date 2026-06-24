@@ -19,7 +19,7 @@ The pieces feature manages the metadata catalog of automation integrations (call
 - `packages/pieces/framework/src/lib/output-schema.ts` — `OutputSchema` / `OutputSchemaField` / `FieldFormat` plain TypeScript types (embedded into the piece metadata via `z.custom`)
 
 ## Edition Availability
-All editions. Piece filtering by allowed/blocked list and EE-specific filtering are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level.
+All editions. Piece filtering by allowed/blocked list and EE-specific filtering (including per-piece action/trigger visibility) are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level.
 
 ## Domain Terms
 - **Piece** — a named integration (e.g. `@activepieces/piece-gmail`) providing actions and triggers
@@ -75,11 +75,17 @@ Unique index on `(name, version, platformId)`.
 ## Service Methods
 
 ### `pieceMetadataService`
-- `list(params)` — returns filtered + sorted `PieceMetadataModelSummary[]` from cache; applies platform piece filters and EE filtering
+- `list(params)` — returns filtered + sorted `PieceMetadataModelSummary[]` from cache; applies platform/project piece filters, then calls `enterpriseFilteringUtils.filterComponents` to strip hidden actions/triggers from `suggestedActions`/`suggestedTriggers` in the summaries (EE/Cloud only)
 - `getOrThrow({ platformId, name, version, locale? })` — returns full `PieceMetadataModel` for exact piece; prefers platform-specific over official; applies i18n translation
 - `listVersions({ name, platformId, projectId })` — returns all available semver versions from registry cache
 - `create({ pieceMetadata, packageType, platformId, pieceType, archiveId? })` — inserts metadata record and invalidates cache
 - `registry({ release? })` — returns lightweight name+version list for all pieces
+
+### `enterpriseFilteringUtils` (EE/Cloud only — `src/app/ee/pieces/filters/piece-filtering-utils.ts`)
+- `filter({ platformId, projectId, pieces, includeHidden })` — removes entire pieces from the list based on platform `filteredPieceNames`/`filteredPieceBehavior` and project plan allowlists
+- `filterComponents({ platformId, summaries })` — strips entries from `suggestedActions` and `suggestedTriggers` in each `PieceMetadataModelSummary` whose names appear in `platform.filteredActionNames[pieceName]` or `platform.filteredTriggerNames[pieceName]`; no-ops on CE or when `platformId` is nil
+- `filterPieceModel({ platformId, piece })` — removes hidden action/trigger keys from the `actions` and `triggers` maps of a full `PieceMetadataSchema`; called from `pieceMetadataService.get` after piece-level filtering
+- `isFiltered({ piece, projectId, platformId })` — convenience wrapper around `filter` that returns a boolean
 
 ### `pieceInstallService`
 - `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`

@@ -1,7 +1,7 @@
 # CE Platform Configuration
 
 ## Summary
-A Platform is the top-level tenant namespace in Activepieces. Every installation has at least one platform. It owns branding (logo, colors, favicon), authentication settings (email auth toggle, allowed auth domains, federated SSO providers), piece filtering rules, and a `PlatformPlan` that governs feature flags and resource limits. On Cloud a user can own multiple platforms; on CE/EE there is typically one. Platform admins can update branding, auth settings, and piece pinning. Platform deletion is Cloud-only and triggers async cleanup.
+A Platform is the top-level tenant namespace in Activepieces. Every installation has at least one platform. It owns branding (logo, colors, favicon), authentication settings (email auth toggle, allowed auth domains, federated SSO providers), piece filtering rules (including per-piece action and trigger visibility), and a `PlatformPlan` that governs feature flags and resource limits. On Cloud a user can own multiple platforms; on CE/EE there is typically one. Platform admins can update branding, auth settings, piece pinning, and per-action/trigger visibility. Platform deletion is Cloud-only and triggers async cleanup.
 
 ## Key Files
 - `packages/server/api/src/app/platform/platform.controller.ts` — POST `/:id` (update), GET `/:id` (read), DELETE `/:id` (Cloud only), GET `/assets/:id` (logo/favicon download)
@@ -24,6 +24,8 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 - **federatedAuthProviders** — JSONB column storing OAuth2 / SAML config; sensitive fields (secrets, certs) are stripped before returning `PlatformWithoutSensitiveData`
 - **pinnedPieces** — ordered list of piece names shown at the top of the piece selector
 - **cloudAuthEnabled** — whether platform-managed OAuth (Activepieces-hosted app credentials) is active
+- **filteredActionNames** — JSONB blocklist keyed by piece name; each value is a list of action names hidden from that piece's metadata response (EE/Cloud only, applied by `enterpriseFilteringUtils`)
+- **filteredTriggerNames** — same structure as `filteredActionNames` but for trigger names
 
 ## Entity
 
@@ -46,6 +48,8 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 | emailAuthEnabled | boolean | |
 | federatedAuthProviders | jsonb | OAuth2 + SAML config |
 | pinnedPieces | string[] | ordered piece name list |
+| filteredActionNames | jsonb | `Record<pieceName, actionName[]>` — actions hidden per piece (EE/Cloud only) |
+| filteredTriggerNames | jsonb | `Record<pieceName, triggerName[]>` — triggers hidden per piece (EE/Cloud only) |
 
 ## Endpoints
 
