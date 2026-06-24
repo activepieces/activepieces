@@ -96,7 +96,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     // Piece no longer has onRefreshToken (e.g. piece was updated) — clear
                     // the token so the next needRefresh call re-checks piece metadata.
                     log.info({ pieceName: connection.pieceName }, '[custom-auth-refresh] piece has no refresh callback — clearing stale token')
-                    pieceRefreshSupportCache.set(`${connection.pieceName}@${connection.pieceVersion}`, false)
+                    pieceRefreshSupportCache.set(pieceRefreshSupportCacheKey(connection), false)
                     connection.value = {
                         ...connection.value,
                         access_token: undefined,
@@ -201,7 +201,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 }
                 // No token yet — only dispatch a refresh job if the piece implements onRefreshToken.
                 // Cache the result per piece version to avoid a metadata round-trip on every execution.
-                const cacheKey = `${connection.pieceName}@${connection.pieceVersion}`
+                const cacheKey = pieceRefreshSupportCacheKey(connection)
                 const cached = pieceRefreshSupportCache.get(cacheKey)
                 if (!isNil(cached)) {
                     return cached
@@ -224,7 +224,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
-const pieceRefreshSupportCache: LRU<boolean> = lru(500, 5 * 60 * 1000)
+const pieceRefreshSupportCache: LRU<boolean> = lru(1000, 0)
 
 export function isCustomAuthTokenStale(value: { access_token?: string, token_refresh_at?: number }): boolean {
     if (isNil(value.access_token)) return true
@@ -243,6 +243,10 @@ export function computeTokenRefreshAt(expiresIn: number): number | undefined {
     }
     const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresIn / 2))
     return dayjs().unix() + expiresIn - buffer
+}
+
+function pieceRefreshSupportCacheKey(connection: Pick<AppConnection, 'platformId' | 'pieceName' | 'pieceVersion'>): string {
+    return `${connection.platformId}:${connection.pieceName}@${connection.pieceVersion}`
 }
 
 class CustomAuthRefreshError extends Error {
