@@ -75,6 +75,13 @@ export enum FileType {
      * Files uploaded for knowledge base ingestion.
      */
     KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
+    /**
+     * Prebuilt per-locked-flow-version run artifact (flow definition + resolved
+     * piece manifest + compiled code steps), addressed by flowVersionId. Lets a
+     * worker provision a flow by download + extract instead of fetch + compile.
+     * Stored at the configured location (S3 when available). Kept indefinitely.
+     */
+    FLOW_BUNDLE = 'FLOW_BUNDLE',
 }
 export enum FileCompression {
     NONE = 'NONE',

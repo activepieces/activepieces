@@ -3,8 +3,8 @@ import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-
 import { PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxPoolSettings } from '../types'
 import { cacheUtils } from './cache-paths'
-import { codeBuilder } from './code/code-builder'
 import { engineInstaller } from './engine/engine-installer'
+import { codeBuilder } from './flow/code/code-builder'
 import { pieceInstaller } from './pieces/piece-installer'
 
 export const localExecutionCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({

@@ -23,6 +23,10 @@ export const cacheUtils = (basePath: string) => ({
         return path.resolve(this.getGlobalCachePathLatestVersion(), 'flows')
     },
 
+    getGlobalCacheBundlesPath(): string {
+        return path.resolve(this.getGlobalCachePathLatestVersion(), 'bundles')
+    },
+
     getEnginePath(): string {
         return path.join(this.getGlobalCacheCommonPath(), 'main.js')
     },
