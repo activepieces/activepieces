@@ -1,5 +1,4 @@
 import { AIProviderName } from '@activepieces/core-utils';
-import dayjs from 'dayjs';
 import { useCallback, useState } from 'react';
 
 import { aiProviderQueries } from '@/features/platform-admin';
@@ -20,17 +19,12 @@ export function useCreditsState() {
     ? null
     : computeCreditsWarning({ platform, providers });
 
-  const daysUntilReset = computeDaysUntilReset(
-    platform.plan.lastFreeAiCreditsRenewalDate,
-  );
-
   const dismissCreditsWarning = useCallback(() => {
     setWarningDismissed(true);
   }, []);
 
   return {
     creditsWarning,
-    daysUntilReset,
     creditsExhausted,
     setCreditsExhausted,
     warningDismissed,
@@ -63,10 +57,4 @@ function computeCreditsWarning({
     return null;
   }
   return { percentage };
-}
-
-function computeDaysUntilReset(lastRenewalDate?: string | null): number | null {
-  if (!lastRenewalDate) return null;
-  const nextReset = dayjs(lastRenewalDate).add(1, 'month');
-  return Math.max(0, nextReset.diff(dayjs(), 'day'));
 }

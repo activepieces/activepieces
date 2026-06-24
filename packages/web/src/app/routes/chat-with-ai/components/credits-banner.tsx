@@ -10,28 +10,17 @@ import { cn } from '@/lib/utils';
 export function CreditsBanner({
   creditsExhausted,
   creditsWarning,
-  daysUntilReset,
   onDismiss,
 }: {
   creditsExhausted?: boolean;
   creditsWarning?: CreditsWarning | null;
-  daysUntilReset?: number | null;
   onDismiss?: () => void;
 }) {
   const isPlatformAdmin = useIsPlatformAdmin();
   const isError = Boolean(creditsExhausted);
 
   const message = isError
-    ? daysUntilReset != null
-      ? t("You've reached your credits limit. Resets in {days} days.", {
-          days: daysUntilReset,
-        })
-      : t("You've reached your credits limit.")
-    : daysUntilReset != null
-    ? t("You've used {percentage}% of your credits. Resets in {days} days.", {
-        percentage: creditsWarning?.percentage ?? 0,
-        days: daysUntilReset,
-      })
+    ? t("You've reached your credits limit.")
     : t("You've used {percentage}% of your credits.", {
         percentage: creditsWarning?.percentage ?? 0,
       });

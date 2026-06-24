@@ -1,10 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  AiCreditsAutoTopUpState,
-  ApEdition,
-  ApFlagId,
-  PlanName,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId, PlanName } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -82,9 +77,7 @@ function BillingPageDetails() {
       <div className="flex flex-col gap-6">
         {hasPaidPlan && <SubscriptionInfo info={platformPlanInfo} />}
 
-        {(hasPaidPlan ||
-          platformPlanInfo?.plan.aiCreditsAutoTopUpState ===
-            AiCreditsAutoTopUpState.ENABLED) && (
+        {hasPaidPlan && (
           <Button
             variant="outline"
             size="sm"

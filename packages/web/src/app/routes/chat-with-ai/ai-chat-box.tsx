@@ -276,7 +276,6 @@ function ChatBoxContent({
               <CreditsBanner
                 creditsExhausted={credits.creditsExhausted}
                 creditsWarning={credits.creditsWarning}
-                daysUntilReset={credits.daysUntilReset}
                 onDismiss={credits.dismissCreditsWarning}
               />
             )}

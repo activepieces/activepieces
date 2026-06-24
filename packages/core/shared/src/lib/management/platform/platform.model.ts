@@ -88,14 +88,9 @@ export const PlatformPlan = z.object({
     plan: Nullable(z.string()),
     platformId: z.string(),
     includedAiCredits: z.number(),
-    lastFreeAiCreditsRenewalDate: Nullable(DateOrString),
 
     tablesEnabled: z.boolean(),
     eventStreamingEnabled: z.boolean(),
-    aiCreditsAutoTopUpState: z.nativeEnum(AiCreditsAutoTopUpState),
-    aiCreditsAutoTopUpThreshold: Nullable(z.number()),
-    aiCreditsAutoTopUpCreditsToAdd: Nullable(z.number()),
-    maxAutoTopUpCreditsMonthly: Nullable(z.number()),
 
     environmentsEnabled: z.boolean(),
     analyticsEnabled: z.boolean(),
