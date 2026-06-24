@@ -1,6 +1,5 @@
 import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-utils'
 import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, FilteredPieceBehavior, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
@@ -160,8 +159,6 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
         includedAiCredits: platformPlan?.includedAiCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
-        stripeCustomerId: undefined,
-        stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         eventStreamingEnabled: platformPlan?.eventStreamingEnabled ?? false,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
@@ -173,7 +170,6 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         manageTemplatesEnabled: platformPlan?.manageTemplatesEnabled ?? false,
         customAppearanceEnabled: platformPlan?.customAppearanceEnabled ?? false,
         apiKeysEnabled: platformPlan?.apiKeysEnabled ?? false,
-        stripeSubscriptionStatus: undefined,
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
@@ -181,8 +177,6 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         dataManipulationEnabled: platformPlan?.dataManipulationEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? 0,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
-        stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
-        stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
