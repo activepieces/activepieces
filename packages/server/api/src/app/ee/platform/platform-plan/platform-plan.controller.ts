@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
 import { platformPlanService } from './platform-plan.service'
@@ -12,6 +13,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
 
     fastify.get('/info', InfoRequest, async (request) => {
         const platform = await platformService(request.log).getOneOrThrow(request.principal.platform.id)
+        rejectedPromiseHandler(platformPlanService(request.log).forceRefreshEntitlements(platform.id), request.log)
         const [platformPlan, usage, { autoTopUps, topUpFeatures }] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
             platformPlanService(request.log).getUsage(platform.id),

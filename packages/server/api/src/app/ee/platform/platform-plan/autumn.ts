@@ -147,6 +147,14 @@ export const autumnUtils = {
         const customer = await client.getCustomer()
         const entitlements = toAutumnEntitlements(customer)
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapEntitlementsToPlanLimits(entitlements) })
+        const creditsBalance = customer.balances[AutumnFeatureId.AP_CREDITS]
+        if (!isNil(creditsBalance)) {
+            await autumnUtils.writeCreditsBalance(platformId, creditsBalance)
+        }
+        const appSumoBalance = customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]
+        if (!isNil(appSumoBalance)) {
+            await autumnUtils.writeAppSumoAiCreditsBalance(platformId, appSumoBalance)
+        }
     },
     mapEntitlementsToPlanLimits(entitlements: AutumnEntitlements): Partial<PlatformPlanLimits> {
         const flags: Partial<PlatformPlanLimits> = {}

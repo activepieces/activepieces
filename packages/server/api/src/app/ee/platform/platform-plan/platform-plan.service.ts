@@ -2,7 +2,7 @@ import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '
 import { ApEdition, ApEnvironment, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getBillingEnforcedKey, getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { getBillingEnforcedKey, getEnrollAttemptKey, getEntitlementsRefreshKey, getForcedEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -24,6 +24,7 @@ const environment = system.get(AppSystemProp.ENVIRONMENT)
 const ENROLL_ATTEMPT_TTL_SECONDS = 300
 const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
 const REFRESH_CLAIM_TTL_SECONDS = 60
+const FORCED_REFRESH_DEBOUNCE_SECONDS = 15
 const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 
@@ -74,6 +75,17 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         }
         await distributedStore.put(getBillingEnforcedKey(platformId), updatedPlatformPlan.billingEnforced === true, BILLING_ENFORCED_TTL_SECONDS)
         return updatedPlatformPlan
+    },
+    async forceRefreshEntitlements(platformId: string): Promise<void> {
+        if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
+            return
+        }
+        const claimed = await distributedStore.putIfAbsent(getForcedEntitlementsRefreshKey(platformId), '1', FORCED_REFRESH_DEBOUNCE_SECONDS)
+        if (!claimed) {
+            return
+        }
+        await billingProvider.get(log).refreshEntitlements(platformId)
+        await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
     },
     async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
         const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
