@@ -22,13 +22,19 @@ vi.mock('../../src/lib/execute/job-registry', () => ({
     getHandler: (...args: unknown[]) => mockGetHandler(...args),
 }))
 
-vi.mock('../../src/lib/config/worker-settings', () => ({
-    workerSettings: {
-        set: vi.fn(),
-        waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000' }),
-        getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000' }),
-    },
-}))
+// APP_VERSION must match the worker's own AP_VERSION (apVersionUtil.getCurrentRelease, read from the
+// same cwd package.json) or the worker↔app version gate fail-closes and pauses polling forever.
+vi.mock('../../src/lib/config/worker-settings', async () => {
+    const { apVersionUtil } = await vi.importActual<typeof import('@activepieces/server-utils')>('@activepieces/server-utils')
+    const appVersion = apVersionUtil.getCurrentRelease()
+    return {
+        workerSettings: {
+            set: vi.fn(),
+            waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000', APP_VERSION: appVersion }),
+            getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000', APP_VERSION: appVersion }),
+        },
+    }
+})
 
 vi.mock('../../src/lib/config/logger', () => ({
     logger: {

@@ -16,6 +16,7 @@ import {
 } from '../lib/message-parsers';
 
 import { ActionPreviewCard } from './action-preview-card';
+import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
@@ -142,6 +143,10 @@ function BlockingDisplayCard({
   const toolName = chatPartUtils.getToolPartName(toolPart);
   const data = toolPart.input as Record<string, unknown>;
 
+  if (toolPart.state === 'input-streaming') {
+    return <ChatCardSkeleton />;
+  }
+
   switch (toolName) {
     case 'ap_show_questions':
       return (
@@ -171,6 +176,7 @@ function BlockingDisplayCard({
         <ProjectPickerCard
           picker={data as unknown as ProjectPickerData}
           onResolve={(payload) => approveGate(toolCallId, payload)}
+          onDismiss={() => rejectGate(toolCallId)}
         />
       );
     default:

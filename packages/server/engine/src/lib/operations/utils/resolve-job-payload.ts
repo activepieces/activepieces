@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { JobPayload } from '@activepieces/shared'
-import { engineFileApi } from '../../engine-file-api'
+import { engineFileApi } from '../../api/engine-file-api'
 
 export async function resolveJobPayload({ payload, apiUrl, engineToken }: ResolveJobPayloadParams): Promise<unknown> {
     if (isNil(payload)) {

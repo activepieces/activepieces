@@ -44,6 +44,7 @@ export type ToolCallMeta = {
 
 export type ChatStoreState = {
   quickReplies: string[];
+  offerRecurringAutomation: boolean;
   toolCallMeta: Record<string, ToolCallMeta>;
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
@@ -70,6 +71,7 @@ function dismissAndCleanup(
 export const createChatStore = () =>
   create<ChatStoreState>((set) => ({
     quickReplies: [],
+    offerRecurringAutomation: false,
     toolCallMeta: {},
     dismissedGateIds: {},
     lastDismissedFormId: null,
@@ -91,6 +93,7 @@ export const createChatStore = () =>
     resetInteractions: () => {
       set({
         quickReplies: [],
+        offerRecurringAutomation: false,
         toolCallMeta: {},
         dismissedGateIds: {},
         lastDismissedFormId: null,
@@ -110,7 +113,7 @@ function selectActiveDisplayTool({
     predicate: (name, p) =>
       chatPartUtils.isDisplayTool(name) &&
       name !== 'ap_show_quick_replies' &&
-      p.state === 'input-available',
+      (p.state === 'input-streaming' || p.state === 'input-available'),
   });
   return isNotDismissed(part, state) ? part : null;
 }

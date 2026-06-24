@@ -10,7 +10,13 @@ import {
 
 import { formatUtils } from '@/lib/format-utils';
 
-import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
+import {
+  AnyToolPart,
+  ChatUIMessage,
+  EMPTY_QUICK_REPLIES_DATA,
+  QuickRepliesData,
+  chatPartUtils,
+} from './chat-types';
 
 function stripPiecePrefix(name: string): string {
   return name.replace(/^@activepieces\/piece-/, '');
@@ -229,6 +235,21 @@ function persistedPartToUIPart(
         errorText: part.errorText ?? 'Tool call failed',
       };
     }
+    case PersistedChatPartType.SOURCE_URL:
+      return {
+        type: 'source-url',
+        sourceId: part.sourceId,
+        url: part.url,
+        title: part.title,
+      };
+    case PersistedChatPartType.SOURCE_DOCUMENT:
+      return {
+        type: 'source-document',
+        sourceId: part.sourceId,
+        mediaType: part.mediaType,
+        title: part.title,
+        filename: part.filename,
+      };
     case PersistedChatPartType.BATCH_PROGRESS:
     case PersistedChatPartType.ACTION_RECEIPT:
       return { type: 'text', text: '' } as ChatUIMessage['parts'][number];
@@ -277,9 +298,13 @@ function mapHistoryToUIMessages(
   return result;
 }
 
-function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
+function extractQuickRepliesFromHistory(
+  messages: ChatUIMessage[],
+): QuickRepliesData {
   const lastMessage = messages[messages.length - 1];
-  if (!lastMessage || lastMessage.role !== 'assistant') return [];
+  if (!lastMessage || lastMessage.role !== 'assistant') {
+    return EMPTY_QUICK_REPLIES_DATA;
+  }
 
   for (let i = lastMessage.parts.length - 1; i >= 0; i--) {
     const p = lastMessage.parts[i];
@@ -287,13 +312,10 @@ function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
       chatPartUtils.isAnyToolPart(p) &&
       chatPartUtils.getToolPartName(p) === 'ap_show_quick_replies'
     ) {
-      const input = p.input as { replies?: string[] } | undefined;
-      if (input?.replies) {
-        return input.replies;
-      }
+      return chatPartUtils.readQuickRepliesInput(p.input);
     }
   }
-  return [];
+  return EMPTY_QUICK_REPLIES_DATA;
 }
 
 function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {

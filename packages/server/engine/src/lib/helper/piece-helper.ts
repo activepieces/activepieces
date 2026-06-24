@@ -1,5 +1,5 @@
 import path from 'path'
-import { isNil } from '@activepieces/core-utils'
+import { ensureTrailingSlash, isNil } from '@activepieces/core-utils'
 import {
     DropdownProperty,
     DynamicProperties,
@@ -129,7 +129,7 @@ export const pieceHelper = {
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
         const server = {
-            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
+            apiUrl: ensureTrailingSlash(params.internalApiUrl),
             publicUrl: params.publicApiUrl,
         }
         return  validateAuth({
