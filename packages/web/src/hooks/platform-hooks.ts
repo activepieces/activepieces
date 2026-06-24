@@ -55,7 +55,7 @@ export const platformHooks = {
     return useMutation({
       mutationFn: async (tempLicenseKey: string) => {
         if (tempLicenseKey.trim() === '') return;
-        await platformApi.verifyLicenseKey(tempLicenseKey.trim());
+        await platformApi.activateLicenseKey(tempLicenseKey.trim());
       },
       onSuccess: () => {
         queryClient.invalidateQueries({

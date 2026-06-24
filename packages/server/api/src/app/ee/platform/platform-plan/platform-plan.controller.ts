@@ -52,7 +52,13 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return url
     })
 
-    // Top-ups (apCredits today; appSumoAiCredits + future users/activeFlows/projects via featureId).
+    fastify.post('/activate', ActivateLicenseRequest, async (request) => {
+        await billingProvider.get(request.log).activateLicense({
+            platformId: request.principal.platform.id,
+            licenseKey: request.body.licenseKey,
+        })
+    })
+
     fastify.post('/consumable-product-topups/checkout', ConsumableProductTopupRequest, async (request) => {
         const { credits, featureId } = request.body
         const { checkoutUrl } = await billingProvider.get(request.log).topUpFeature({
@@ -117,6 +123,17 @@ const ConsumableProductTopupRequest = {
                 paymentUrl: z.string().nullable(),
             }),
         },
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const ActivateLicenseRequest = {
+    schema: {
+        body: z.object({
+            licenseKey: z.string(),
+        }),
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),

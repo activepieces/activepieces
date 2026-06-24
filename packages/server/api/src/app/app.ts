@@ -42,7 +42,6 @@ import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.modul
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { flowRunTrackingModule } from './ee/flow-run-tracking/flow-run-tracking-module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
-import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
@@ -237,7 +236,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
-    await app.register(licenseKeysModule)
     await app.register(flowRunTrackingModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)

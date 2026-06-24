@@ -7,7 +7,6 @@ export enum SystemJobName {
     PIECES_ANALYTICS = 'pieces-analytics',
     PIECES_SYNC = 'pieces-sync',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
-    TRIAL_TRACKER = 'trial-tracker',
     RUN_TELEMETRY = 'run-telemetry',
     DELETE_FLOW = 'delete-flow',
     HARD_DELETE_PROJECT = 'hard-delete-project',
@@ -50,7 +49,6 @@ type SystemJobDataMap = {
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
-    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData

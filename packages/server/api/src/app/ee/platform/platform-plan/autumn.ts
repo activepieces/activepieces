@@ -24,7 +24,7 @@ import { getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getCreditsBalance
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { ApplyAppSumoPlanParams, AppSumoAction, BillingProvider, CreditsGateState, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAction, BillingProvider, CreditsGateState, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../platform/billing-provider'
 import { platformPlanService } from './platform-plan.service'
 
 const CREDITS_CACHE_TTL_SECONDS = 180
@@ -133,7 +133,7 @@ export const autumnUtils = {
                 const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
                 const credentials = isNil(platformPlan.licenseKey) || isEmpty(platformPlan.licenseKey)
                     ? await subscribeFreeOnConsole({ platformId })
-                    : await migrateOnConsole({ licenseKey: platformPlan.licenseKey, platformId })
+                    : await activateOnConsole({ licenseKey: platformPlan.licenseKey, platformId })
                 await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
                 await autumnUtils.refreshEntitlements(log, platformId)
             },
@@ -361,6 +361,12 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         await compAppSumoOnConsole({ platformId, planId, action })
         await autumnUtils.refreshEntitlements(log, platformId)
     },
+    activateLicense: async ({ platformId, licenseKey }: ActivateLicenseParams) => {
+        await platformPlanService(log).update({ platformId, licenseKey })
+        const credentials = await activateOnConsole({ licenseKey, platformId })
+        await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
+        await autumnUtils.refreshEntitlements(log, platformId)
+    },
     shouldBlock: async (platformId: string) => {
         return readBillingEnforced(platformId)
     },
@@ -507,9 +513,9 @@ async function subscribeFreeOnConsole({ platformId }: { platformId: string }): P
     return response.data.data
 }
 
-async function migrateOnConsole({ licenseKey, platformId }: { licenseKey: string, platformId: string }): Promise<AutumnEnrollmentCredentials> {
+async function activateOnConsole({ licenseKey, platformId }: { licenseKey: string, platformId: string }): Promise<AutumnEnrollmentCredentials> {
     const response = await safeHttp.axios.post<ConsoleBillingEnvelope>(
-        `${AUTUMN_CONSOLE_URL}/api/billing/migrate`,
+        `${AUTUMN_CONSOLE_URL}/api/billing/activate`,
         { platformId },
         {
             timeout: CONSOLE_REQUEST_TIMEOUT_MS,

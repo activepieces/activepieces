@@ -163,9 +163,6 @@ const systemPropValidators: {
     [AppSystemProp.CLOUDFLARE_SAAS_FALLBACK_ORIGIN]: stringValidator,
     [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
 
-    // Secret Manager
-    [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
-
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,

@@ -1,13 +1,9 @@
 import { ProjectId } from '@activepieces/core-utils'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, FlowRetryStrategy, FlowRun, IncreaseAICreditsForPlatformRequestBody, PlatformRole } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, FlowRetryStrategy, FlowRun, IncreaseAICreditsForPlatformRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { aiProviderService } from '../../../ai/ai-provider-service'
-import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-service'
-import { platformRepo } from '../../../platform/platform.service'
-import { userRepo } from '../../../user/user-service'
-import { licenseKeysService } from '../../license-keys/license-keys-service'
 import { openRouterApi } from '../platform-plan/openrouter/openrouter-api'
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
@@ -49,30 +45,6 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async applyLicenseKeyByEmail({ email, licenseKey }: ApplyLicenseKeyByEmailRequestBody): Promise<void> {
-        const identity = await userIdentityService(log).getIdentityByEmail(email)
-        if (!identity) {
-            throw new Error('User identity not found for email')
-        }
-        const user = await userRepo().findOneBy({
-            identityId: identity.id,
-            platformRole: PlatformRole.ADMIN,
-        })
-        if (!user) {
-            throw new Error('User not found for identityId')
-        }
-        const platform = await platformRepo().findOneBy({
-            ownerId: user.id,
-        })
-        if (!platform) {
-            throw new Error('Platform not found for owner')
-        }
-        const key = await licenseKeysService(log).verifyKeyOrReturnNull({ platformId: platform.id, license: licenseKey })
-        if (!key) {
-            throw new Error('Invalid or expired license key')
-        }
-        await licenseKeysService(log).applyLimits(platform.id, key)
-    },
     async increaseAiCredits({ amountInUsd, platformId }: IncreaseAICreditsForPlatformRequestBody): Promise<void> {
         const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
         const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })

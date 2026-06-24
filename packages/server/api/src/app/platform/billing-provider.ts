@@ -43,6 +43,9 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     applyAppSumoPlan: async () => {
         return
     },
+    activateLicense: async () => {
+        return
+    },
     shouldBlock: async () => {
         return false
     },
@@ -138,6 +141,11 @@ export type ApplyAppSumoPlanParams = {
     action: AppSumoAction
 }
 
+export type ActivateLicenseParams = {
+    platformId: string
+    licenseKey: string
+}
+
 export type BillingProvider = {
     listPlans(platformId: string): Promise<PurchasablePlan[]>
     getTopUpSettings(platformId: string): Promise<{ autoTopUps: AutoTopUpConfig[], topUpFeatures: ToppableFeature[] }>
@@ -151,6 +159,7 @@ export type BillingProvider = {
     ensureEnrolled(platformId: string): Promise<void>
     refreshEntitlements(platformId: string): Promise<void>
     applyAppSumoPlan(params: ApplyAppSumoPlanParams): Promise<void>
+    activateLicense(params: ActivateLicenseParams): Promise<void>
     shouldBlock(platformId: string): Promise<boolean>
     shouldBlockOnCredits(platformId: string): Promise<boolean>
     getAppSumoAiCreditsState(platformId: string): Promise<CreditsGateState>
