@@ -1,6 +1,6 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowActionType,
-  isNil,
   FlowTriggerType,
   TelemetryEventName,
 } from '@activepieces/shared';

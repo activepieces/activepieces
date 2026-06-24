@@ -1,0 +1,20 @@
+{
+  "name": "@activepieces/core-piece-types",
+  "version": "0.1.1",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/core-utils": "workspace:*",
+    "tslib": "2.6.2",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "24.11.0",
+    "typescript": "5.5.4"
+  },
+  "typings": "./dist/src/index.d.ts"
+}

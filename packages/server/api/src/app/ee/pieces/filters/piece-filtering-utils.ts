@@ -1,4 +1,5 @@
-import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, PlatformWithoutFederatedAuth } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApEdition, FilteredPieceBehavior, PiecesFilterType, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'

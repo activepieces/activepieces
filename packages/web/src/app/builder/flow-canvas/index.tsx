@@ -1,10 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   flowCanvasUtils as sharedFlowCanvasUtils,
   FlowActionType,
   flowStructureUtil,
   FlowTriggerType,
   FlowVersion,
-  isNil,
   Note,
   Step,
 } from '@activepieces/shared';

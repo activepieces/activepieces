@@ -1,4 +1,4 @@
-import { tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'

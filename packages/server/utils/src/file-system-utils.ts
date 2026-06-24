@@ -1,6 +1,6 @@
 import { access, mkdir, realpath, unlink } from 'node:fs/promises'
 import nodePath from 'node:path'
-import { tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils';
 
 export const INFINITE_LOCK_TIMEOUT = 60 * 60 * 1000
 

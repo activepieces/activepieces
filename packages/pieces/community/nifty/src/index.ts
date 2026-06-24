@@ -4,7 +4,7 @@ import {
   OAuth2PropertyValue,
   PieceAuth,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createTask } from './lib/actions/create-task';
 import { niftyAuth } from './lib/auth';
 

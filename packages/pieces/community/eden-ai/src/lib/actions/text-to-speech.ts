@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { edenAiAuth } from '../..';
 
 const TEXT_TO_SPEECH_PROVIDERS = [
@@ -378,17 +378,17 @@ export const textToSpeechAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      text: z.string().min(1, 'Text is required'),
-      language: z.string().nullish(),
-      option: z.string().nullish(),
-      rate: z.number().int().min(-100).max(100).nullish(),
-      pitch: z.number().int().min(-100).max(100).nullish(),
-      volume: z.number().int().min(-100).max(100).nullish(),
-      audio_format: z.string().nullish(),
-      sampling_rate: z.number().int().min(0).max(200000).nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      text: z.string().check(z.minLength(1, 'Text is required')),
+      language: z.nullish(z.string()),
+      option: z.nullish(z.string()),
+      rate: z.nullish(z.number().check(z.int(), z.minimum(-100), z.maximum(100))),
+      pitch: z.nullish(z.number().check(z.int(), z.minimum(-100), z.maximum(100))),
+      volume: z.nullish(z.number().check(z.int(), z.minimum(-100), z.maximum(100))),
+      audio_format: z.nullish(z.string()),
+      sampling_rate: z.nullish(z.number().check(z.int(), z.minimum(0), z.maximum(200000))),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { kebabCase } from '@activepieces/shared';
+import { kebabCase } from '@activepieces/pieces-framework';
 import { randomBytes } from 'node:crypto';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';

@@ -12,7 +12,7 @@ import {
   LeadConnectorOpportunityStatus,
 } from '../common';
 import { leadConnectorAuth } from '../..';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const createOpportunityAction = createAction({
@@ -155,7 +155,7 @@ export const createOpportunityAction = createAction({
 
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      monetaryValue: z.number().optional(),
+      monetaryValue: z.optional(z.number()),
     });
 
     const {

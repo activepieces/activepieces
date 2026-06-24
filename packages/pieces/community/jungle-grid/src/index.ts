@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { cancelJob } from './lib/actions/cancel-job';
 import { estimateJob } from './lib/actions/estimate-job';
 import { getArtifactDownloadUrl } from './lib/actions/get-artifact-download-url';

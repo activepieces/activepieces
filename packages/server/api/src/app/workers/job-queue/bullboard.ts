@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'

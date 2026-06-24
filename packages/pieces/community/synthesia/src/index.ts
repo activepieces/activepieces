@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { synthesiaAuth } from './lib/common/auth';
 import { createAVideoFromATemplate } from './lib/actions/create-a-video-from-a-template';
 import { createVideo } from './lib/actions/create-video';

@@ -10,7 +10,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { onEventChanged } from './lib/triggers/calendar-event';
 import { onChangedData } from './lib/triggers/on-changed-data';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { eventsById } from './lib/actions/get-events-by-id';
 import { weblingAuth } from './lib/auth';
 

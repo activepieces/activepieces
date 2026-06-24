@@ -1,4 +1,5 @@
-import { apId, ApplicationEvent, isNil, PrincipalType } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { ApplicationEvent, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'

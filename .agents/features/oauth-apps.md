@@ -7,7 +7,7 @@ OAuth Apps allow platform owners to register their own OAuth 2.0 application cre
 - `packages/server/api/src/app/ee/oauth-apps/oauth-app.module.ts` — module registration + controller (both in one file)
 - `packages/server/api/src/app/ee/oauth-apps/oauth-app.service.ts` — CRUD service with encryption
 - `packages/server/api/src/app/ee/oauth-apps/oauth-app.entity.ts` — TypeORM entity
-- `packages/shared/src/lib/ee/oauth-apps/oauth-app.ts` — `OAuthApp`, `UpsertOAuth2AppRequest`, `ListOAuth2AppRequest` types
+- `packages/core/shared/src/lib/ee/oauth-apps/oauth-app.ts` — `OAuthApp`, `UpsertOAuth2AppRequest`, `ListOAuth2AppRequest` types
 - `packages/web/src/features/connections/api/oauth-apps.ts` — frontend API client
 - `packages/web/src/features/connections/hooks/oauth-apps-hooks.ts` — React query hooks
 - `packages/web/src/app/routes/platform/setup/pieces/update-oauth2-dialog.tsx` — UI dialog for configuring OAuth app credentials

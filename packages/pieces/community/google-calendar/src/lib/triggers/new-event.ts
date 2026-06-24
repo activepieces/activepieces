@@ -4,7 +4,7 @@ import {
   Property,
   WebhookRenewStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import {
   googleCalendarCommon,
   googleCalendarAuth,

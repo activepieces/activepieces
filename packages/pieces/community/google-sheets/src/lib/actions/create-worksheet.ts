@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { createGoogleClient } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
 
 export const createWorksheetAction = createAction({
   auth: googleSheetsAuth,
@@ -33,7 +33,7 @@ export const createWorksheetAction = createAction({
     const {spreadsheetId,title} = context.propsValue;
     const headers = context.propsValue.headers as string[] ?? [];
 	const client = await createGoogleClient(context.auth);
-    const sheetsApi = google.sheets({ version: 'v4', auth: client });
+    const sheetsApi = googleSheets({ version: 'v4', auth: client });
     const sheet = await sheetsApi.spreadsheets.batchUpdate({
         spreadsheetId:spreadsheetId,
         requestBody:{

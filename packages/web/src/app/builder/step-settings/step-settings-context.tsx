@@ -1,3 +1,4 @@
+import { setAtPath } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PiecePropertyMap,
@@ -5,7 +6,6 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   FlowAction,
-  setAtPath,
   FlowTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';

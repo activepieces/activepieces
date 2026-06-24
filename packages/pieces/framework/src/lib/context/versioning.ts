@@ -1,4 +1,4 @@
-import { PauseType } from '@activepieces/shared';
+import { PauseType } from '@activepieces/core-piece-types';
 import { ActionContext, PauseHook } from ".";
 import { InputPropertyMap, PieceAuthProperty } from "../property";
 

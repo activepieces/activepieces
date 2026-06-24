@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -6,7 +7,6 @@ import {
   FlowTriggerType,
   flowPieceUtil,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import deepEqual from 'deep-equal';
@@ -394,7 +394,11 @@ const StepSettingsLayout = ({
 
   return (
     <div className="relative flex-1 min-h-0 flex flex-col w-full">
-      <div className="flex-1 min-h-0">{settingsForm}</div>
+      <div
+        className={cn('min-h-0', isStepDataPanelOpen ? 'h-[40%]' : 'flex-1')}
+      >
+        {settingsForm}
+      </div>
       {showTestPanel && !isStepDataPanelOpen && (
         <div className="shrink-0">
           <TestStepCTAButton />

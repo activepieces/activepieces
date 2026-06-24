@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils';
 import fs from 'fs'
 import path from 'path'
 import { apLogger } from './ap-logger'

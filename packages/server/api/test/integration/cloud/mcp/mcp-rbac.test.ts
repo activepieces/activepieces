@@ -1,18 +1,13 @@
-import { beforeAll, afterAll, describe, it, expect } from 'vitest'
+import { apId, Permission } from '@activepieces/core-utils'
+import { DefaultProjectRole, McpServerType, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import {
-    apId,
-    DefaultProjectRole,
-    McpServerType,
-    Permission,
-    ProjectScopedMcpServer,
-} from '@activepieces/shared'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { resolvePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apSetupGuideTool } from '../../../../src/app/mcp/tools/ap-setup-guide'
-import { resolvePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger

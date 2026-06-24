@@ -1,4 +1,4 @@
-import { OAuth2GrantType } from '@activepieces/shared';
+import { OAuth2GrantType } from '@activepieces/pieces-framework';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const cloudconvertAuth = PieceAuth.OAuth2({

@@ -1,4 +1,5 @@
-import { ApplicationEvent, ApplicationEventName, BADGES, FlowActionType, FlowOperationType, flowStructureUtil, FlowTriggerType, FlowUpdatedEvent, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApplicationEvent, ApplicationEventName, BADGES, FlowActionType, FlowOperationType, flowStructureUtil, FlowTriggerType, FlowUpdatedEvent } from '@activepieces/shared'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 

@@ -1,5 +1,6 @@
+import { apId, assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { apId, assertNotNullOrUndefined, EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
+import { EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, LATEST_JOB_DATA_SCHEMA_VERSION, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowExecutionCache } from '../flows/flow/flow-execution-cache'
@@ -83,17 +84,6 @@ export const webhookService = {
             }
         }
         const { flow } = flowExecutionResult
-        if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
-            pinoLogger.warn({ flow: { id: flowId } }, 'Webhook received for disabled flow')
-            wideEvent.set({ webhook: { flowFound: false } })
-            return {
-                status: StatusCodes.NOT_FOUND,
-                body: {},
-                headers: {
-                    [webhookHeader]: webhookRequestId,
-                },
-            }
-        }
 
         wideEvent.set({
             webhook: {
@@ -105,25 +95,42 @@ export const webhookService = {
         const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
         wideEvent.set({ flowVersion: { id: flowVersionIdToRun } })
 
-        const response = await webhookHandshake.handleHandshakeRequest({
-            payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-            handshakeConfiguration: flowExecutionResult.handshakeConfiguration ?? null,
-            flowId: flow.id,
-            flowVersionId: flowVersionIdToRun,
-            projectId: flow.projectId,
-            logger: pinoLogger,
-        })
-        if (!isNil(response)) {
-            logger.info({
-                flow: { id: flow.id },
-                flowVersion: { id: flowVersionIdToRun },
-                webhookRequestId,
-            }, 'Handshake request completed')
-            wideEvent.set({ webhook: { handshake: true } })
+        // Handshake pings can arrive both during the publish window (when flow.status is still
+        // DISABLED before the transaction completes) and after the flow is ENABLED (third-party
+        // re-verification). Checking before the DISABLED guard handles both cases.
+        if (!isNil(flowExecutionResult.handshakeConfiguration)) {
+            const response = await webhookHandshake.handleHandshakeRequest({
+                payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
+                handshakeConfiguration: flowExecutionResult.handshakeConfiguration,
+                flowId: flow.id,
+                flowVersionId: flowVersionIdToRun,
+                projectId: flow.projectId,
+                logger: pinoLogger,
+            })
+            if (!isNil(response)) {
+                logger.info({
+                    flow: { id: flow.id },
+                    flowVersion: { id: flowVersionIdToRun },
+                    webhookRequestId,
+                }, 'Handshake request completed')
+                wideEvent.set({ webhook: { handshake: true } })
+                return {
+                    status: response.status,
+                    body: response.body,
+                    headers: response.headers ?? {},
+                }
+            }
+        }
+
+        if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
+            pinoLogger.warn({ flow: { id: flowId } }, 'Webhook received for disabled flow')
+            wideEvent.set({ webhook: { flowFound: false } })
             return {
-                status: response.status,
-                body: response.body,
-                headers: response.headers ?? {},
+                status: StatusCodes.NOT_FOUND,
+                body: {},
+                headers: {
+                    [webhookHeader]: webhookRequestId,
+                },
             }
         }
 

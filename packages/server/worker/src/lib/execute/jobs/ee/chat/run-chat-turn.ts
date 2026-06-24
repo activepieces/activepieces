@@ -1,5 +1,6 @@
+import { AIProviderName, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils, ContentPartLike } from '@activepieces/server-utils'
-import { AIProviderName, ChatPhase, chatToolPhases, PersistedChatPart, tryCatch } from '@activepieces/shared'
+import { ChatPhase, chatToolPhases, PersistedChatPart } from '@activepieces/shared'
 import { generateText, isLoopFinished, LanguageModel, LanguageModelUsage, ModelMessage, StopCondition, streamText, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000

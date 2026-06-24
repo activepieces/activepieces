@@ -1,7 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { scanFile } from './lib/actions/scan-file';
 import { scanText } from './lib/actions/scan-text';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { gptzeroDetectAiAuth } from './lib/common/auth';
 
 export const gptzeroDetectAi = createPiece({

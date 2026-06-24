@@ -1,0 +1,56 @@
+---
+title: 'Bundling Pieces'
+icon: 'cube'
+---
+
+Activepieces builds every piece into a **self-contained bundle**. Instead of shipping a piece that depends on `@activepieces/shared`, `@activepieces/pieces-framework`, `@activepieces/pieces-common`, and the `@activepieces/core-*` packages at install time, the build inlines all of that code into a single artifact.
+
+This is what lets the engine provision a piece by downloading **one artifact** — no `bun install` / `npm install` of a dependency tree at runtime.
+
+### What gets bundled
+
+When a piece is built for publishing, the bundler:
+
+- **Inlines all `@activepieces/*` workspace libraries** (`shared`, `pieces-framework`, `pieces-common`, `core-utils`, `core-piece-types`, …) directly into the bundle. These libraries are **never published to npm** — they only exist as part of each piece's bundle.
+- **Inlines third-party dependencies** (e.g. an SDK the piece imports) into the same bundle.
+- **Keeps a small allow-list of deps external** only when they genuinely cannot be inlined — native addons or packages that use dynamic `require`. These remain in the published `dependencies` so the runtime installer resolves them.
+
+The result is typically **~2–3× smaller** than the raw inputs, and the published `package.json` lists only the few unavoidable external deps (e.g. `tslib`).
+
+### The published manifest
+
+After bundling, the piece's `dist/package.json` is rewritten:
+
+```jsonc
+{
+  "name": "@activepieces/piece-json",
+  "version": "0.1.7",
+  "main": "./src/index.js",      // the self-contained bundle
+  "dependencies": {
+    "tslib": "2.6.2"             // only genuinely-external deps remain
+  },
+  "files": ["src/index.js", "package.json", "src/i18n"]
+}
+```
+
+No `@activepieces/*` dependency appears — installing the piece never requires those packages to exist on the registry.
+
+### Forcing a dependency to stay external
+
+If a dependency must not be inlined (for example a native module), add it to a `bundleDeps` array in the piece's `package.json`. The bundler will keep it external and preserve it in the published `dependencies`.
+
+```jsonc
+{
+  "name": "@activepieces/piece-example",
+  "bundleDeps": ["some-native-addon"]
+}
+```
+
+### Building and publishing
+
+Bundling happens automatically when you build or publish a piece:
+
+- `npm run build-piece <name>` — builds and packs the bundle into a `.tgz` (see [Build Custom Pieces](./build-piece)).
+- `npm run publish-piece-to-api` — bundles and uploads the piece to a platform (see [Publish Custom Pieces](./publish-piece)).
+
+You don't need to configure anything for bundling — it is the default behavior.

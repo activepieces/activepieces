@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { saveGallery } from '../api';
 import { cmsAuth } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveGalleryAction = createAction({
@@ -98,9 +98,9 @@ export const saveGalleryAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      quality: z.number().min(1).max(100),
-      scaleTh: z.number().min(1),
-      scaleSq: z.number().min(1),
+      quality: z.number().check(z.minimum(1), z.maximum(100)),
+      scaleTh: z.number().check(z.minimum(1)),
+      scaleSq: z.number().check(z.minimum(1)),
     });
 
     const slug = context.propsValue.slug;

@@ -1,5 +1,5 @@
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { parseError } from 'evlog'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

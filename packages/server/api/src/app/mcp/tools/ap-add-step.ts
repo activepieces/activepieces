@@ -1,17 +1,5 @@
-import {
-    BranchExecutionType,
-    FlowActionType,
-    FlowOperationRequest,
-    FlowOperationType,
-    flowStructureUtil,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    ProjectScopedMcpServer,
-    RouterExecutionType,
-    StepLocationRelativeToParent,
-    UpdateActionRequest,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { BranchExecutionType, FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolDefinition, ProjectScopedMcpServer, RouterExecutionType, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'

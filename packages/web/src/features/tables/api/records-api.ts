@@ -1,9 +1,9 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   CreateRecordsRequest,
   DeleteRecordsRequest,
   ListRecordsRequest,
   PopulatedRecord,
-  SeekPage,
   UpdateRecordRequest,
 } from '@activepieces/shared';
 

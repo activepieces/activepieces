@@ -4,7 +4,7 @@ import { pipedriveApiCall, pipedriveCommon } from '../common';
 import { pipedriveAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { LeadListResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 interface PipedriveActivityV2 {
 	id: number;
