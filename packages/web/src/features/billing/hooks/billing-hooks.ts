@@ -3,6 +3,7 @@ import {
   CreateSubscriptionParams,
   CreateAICreditCheckoutSessionParamsSchema,
   UpdateAICreditsAutoTopUpParamsSchema,
+  CheckoutPlanParams,
 } from '@activepieces/shared';
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -16,9 +17,30 @@ import { platformBillingApi } from '../api/billing-plans-api';
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
     ['platform-billing-subscription', platformId] as const,
+  plans: (platformId: string) =>
+    ['platform-billing-plans', platformId] as const,
 };
 
 export const billingMutations = {
+  useCheckout: (setIsOpen?: (isOpen: boolean) => void) => {
+    return useMutation({
+      mutationFn: async (params: CheckoutPlanParams) => {
+        const { checkoutUrl } = await platformBillingApi.checkout(params);
+        if (checkoutUrl) {
+          window.open(checkoutUrl, '_blank');
+        }
+      },
+      onSuccess: () => {
+        setIsOpen?.(false);
+      },
+      onError: (error) => {
+        toast.error(t('Starting checkout failed'), {
+          description: t(error.message),
+          duration: 3000,
+        });
+      },
+    });
+  },
   usePortalLink: () => {
     return useMutation({
       mutationFn: async () => {
@@ -110,6 +132,13 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
+    });
+  },
+  useListPlans: (platformId: string, enabled = true) => {
+    return useQuery({
+      queryKey: billingKeys.plans(platformId),
+      queryFn: platformBillingApi.listPlans,
+      enabled,
     });
   },
 };

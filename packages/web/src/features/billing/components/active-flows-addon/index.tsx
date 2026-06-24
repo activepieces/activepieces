@@ -3,7 +3,6 @@ import {
   PRICE_PER_EXTRA_ACTIVE_FLOWS,
   ApEdition,
   ApFlagId,
-  PlanName,
   PlatformBillingInformation,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -41,8 +40,7 @@ export function ActiveFlowAddon({
   const currentActiveFlows = usage.activeFlows || 0;
 
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const canManageActiveFlowsLimit =
-    edition !== ApEdition.COMMUNITY && plan.plan === PlanName.STANDARD;
+  const canManagePlan = edition !== ApEdition.COMMUNITY;
 
   const activeFlowsLimit = plan.activeFlowsLimit;
   const approachingLimit =
@@ -87,10 +85,10 @@ export function ActiveFlowAddon({
           )}
         </ItemDescription>
       </ItemContent>
-      {canManageActiveFlowsLimit && (
+      {canManagePlan && (
         <ItemActions>
           <Button variant="outline" size="sm" onClick={() => openDialog()}>
-            {t('Manage')}
+            {t('Manage Plan')}
           </Button>
         </ItemActions>
       )}

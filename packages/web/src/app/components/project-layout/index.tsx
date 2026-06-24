@@ -9,7 +9,7 @@ import { CompassIcon } from '@/components/icons/compass';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { PurchaseExtraFlowsDialog } from '@/features/billing';
+import { ManagePlanDialog } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
@@ -103,7 +103,7 @@ export function ProjectDashboardLayout({
         >
           {children}
         </ProjectDashboardLayoutInner>
-        {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+        {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
       </GlobalSearchProvider>
     </ProjectChangedRedirector>
   );
