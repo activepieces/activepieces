@@ -383,8 +383,8 @@ import { AddVariableTable1793000000000 } from './migration/postgres/179300000000
 import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
-import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 import { AddFilteredComponentNamesToPlatform1796000000000 } from './migration/postgres/1796000000000-AddFilteredComponentNamesToPlatform'
+import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)

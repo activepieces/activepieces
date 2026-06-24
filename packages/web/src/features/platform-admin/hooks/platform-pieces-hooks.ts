@@ -143,7 +143,7 @@ export const platformPiecesMutations = {
       onSuccess: () => {
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
-    })
+    });
   },
   useBatchHideComponents: ({
     platformId,
@@ -240,7 +240,7 @@ export const platformPiecesMutations = {
       },
       onSuccess: () => {
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
-      }
-    })
+      },
+    });
   },
 };
