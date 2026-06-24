@@ -7,6 +7,8 @@ export type {
     ResolveInput,
     ResolveResult,
     ExecuteParams,
+    ExecuteRequest,
+    ExecuteResponse,
     ProvisionInput,
     RuntimeExecutionResult,
     RuntimeExecutorInfo,

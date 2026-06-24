@@ -51,6 +51,7 @@ export enum WorkerSystemProp {
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
     RUNTIME = 'AP_RUNTIME',
     CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
+    GCP_REGION = 'AP_GCP_REGION',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
@@ -61,6 +62,7 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
     [WorkerSystemProp.RUNTIME]: RuntimeKind.LOCAL,
     [WorkerSystemProp.CACHE_BASE_PATH]: 'cache',
+    [WorkerSystemProp.GCP_REGION]: 'europe-west1',
 }
 
 export const system = {

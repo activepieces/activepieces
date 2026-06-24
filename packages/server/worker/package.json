@@ -30,6 +30,7 @@
     "decompress": "4.2.1",
     "env-var": "7.5.0",
     "evlog": "2.18.1",
+    "google-auth-library": "10.5.0",
     "nanoid": "3.3.8",
     "proxy-chain": "2.7.1",
     "socket.io": "4.7.5",

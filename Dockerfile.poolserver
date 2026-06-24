@@ -1,0 +1,67 @@
+# The Cloud Run Pool Server image (ADR 0003): a minimal container that runs ONLY the sandbox pool
+# behind POST /execute. The server is esbuild-bundled into a single file (like the engine), so the
+# final image carries NO workspace node_modules — just node + bun + isolated-vm + esbuild + two
+# bundles. It runs SANDBOX_CODE_ONLY (node child + isolated-vm); pieces are pulled at runtime over
+# HTTP from publicApiUrl (ADR 0002). Kept tiny on purpose: image size is cold-boot latency on Cloud Run.
+
+### STAGE 1: Build (toolchain lives here only, never in the final image) ###
+FROM node:24.14.0-bullseye-slim AS build
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends python3 g++ build-essential curl ca-certificates unzip git
+
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+    fi && \
+    unzip bun.zip && mv bun-*/bun /usr/local/bin/bun && chmod +x /usr/local/bin/bun && rm -rf bun.zip bun-*
+
+RUN npm install -g --no-fund --no-audit node-gyp typescript@4.9.4 esbuild@0.25.0
+
+WORKDIR /usr/src/app
+COPY .npmrc package.json bun.lock bunfig.toml ./
+COPY packages/ ./packages/
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
+COPY . .
+
+# Build the dependency graph (engine bundle + sandbox-pool dist), then bundle the pool server entry
+# into one self-contained file. isolated-vm / the optional socket.io native addons stay external.
+RUN npx turbo run build --filter=@activepieces/engine --filter=@activepieces/sandbox-pool && \
+    npx esbuild packages/server/sandbox-pool/src/server/main.ts \
+        --bundle --platform=node --format=cjs --target=node20 \
+        --external:isolated-vm --external:bufferutil --external:utf-8-validate \
+        --outfile=/out/pool-server.js
+
+# Prebuilt isolated-vm (the engine child resolves it at runtime via NODE_PATH).
+RUN --mount=type=cache,target=/root/.bun/install/cache cd /usr/src && bun install isolated-vm@6.0.2
+
+### STAGE 2: Run (minimal) ###
+FROM node:24.14.0-bullseye-slim AS run
+
+# ca-certificates: TLS for piece downloads. procps: `ps`, which tree-kill spawns to reap the engine.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates procps && \
+    rm -rf /var/lib/apt/lists/*
+
+# esbuild compiles CODE steps; the code-builder spawns it by name from PATH.
+RUN npm install -g --no-fund --no-audit esbuild@0.25.0 && npm cache clean --force
+
+WORKDIR /app
+
+ENV AP_POOL_SERVER_PORT=8080
+ENV AP_CACHE_BASE_PATH=/tmp/cache
+
+COPY --from=build /usr/local/bin/bun /usr/local/bin/bun
+# isolated-vm at the filesystem-root node_modules so the forked engine resolves it by ancestor walk
+# from /tmp/cache/.../main.js (Node's standard resolution, independent of cwd/NODE_PATH).
+COPY --from=build /usr/src/node_modules/isolated-vm /node_modules/isolated-vm
+COPY --from=build /out/pool-server.js ./pool-server.js
+COPY --from=build /usr/src/app/dist/packages/engine ./dist/packages/engine
+
+LABEL service=activepieces-pool-server
+EXPOSE 8080
+ENTRYPOINT ["node", "pool-server.js"]

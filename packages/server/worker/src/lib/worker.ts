@@ -3,7 +3,7 @@ import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { createResolver, Runtime } from '@activepieces/sandbox-pool'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, RuntimeKind, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -223,6 +223,10 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             const apiUrl = getApiUrl()
             const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
             log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
+            const publicApiUrl = ensurePublicApiUrl(publicUrl)
+            // A remote runtime (e.g. GCP_CLOUD_RUN) runs the engine off-box, so its callback URL must be
+            // publicly reachable; only the in-process LOCAL runtime can use the internal (cluster) apiUrl.
+            const internalApiUrl = runtime.kind === RuntimeKind.LOCAL ? apiUrl : publicApiUrl
             const ctx: JobContext = {
                 apiClient,
                 runtime,
@@ -235,8 +239,8 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 workerIndex,
                 jobId: job.jobId,
                 engineToken: job.engineToken,
-                internalApiUrl: apiUrl,
-                publicApiUrl: ensurePublicApiUrl(publicUrl),
+                internalApiUrl,
+                publicApiUrl,
                 log,
             }
             try {

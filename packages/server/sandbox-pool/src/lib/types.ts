@@ -63,6 +63,23 @@ export type RuntimeExecutionResult = EngineResponse<unknown> & {
     logs: string | undefined
 }
 
+// The /execute wire contract between the worker's cloud-run-runtime client and the Pool Server.
+// The body is self-contained (the remote pool has no app connection): settings travel per request.
+// See ADR 0003.
+export type ExecuteRequest = {
+    operationType: EngineOperationType
+    operation: EngineOperation
+    timeoutInSeconds: number
+    provision: ProvisionInput
+    settings: SandboxPoolSettings
+}
+
+// A thrown ActivepiecesError is round-tripped as { ok: false, errorCode, params } so the worker can
+// reconstruct and re-raise it — handlers branch on the same ErrorCode as for LOCAL.
+export type ExecuteResponse =
+    | { ok: true, result: RuntimeExecutionResult }
+    | { ok: false, errorCode: string, params?: unknown }
+
 export type RuntimeExecutorInfo = {
     sandboxId: string
     boxId: number
