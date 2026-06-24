@@ -445,6 +445,9 @@
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
       ],
+      "@activepieces/piece-smallest-ai": [
+        "packages/pieces/community/smallest-ai/src/index.ts"
+      ],
       "@activepieces/piece-emailoctopus": [
         "packages/pieces/community/emailoctopus/src/index.ts"
       ],
