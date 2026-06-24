@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { phantombusterAuth } from '../common/auth';
 import { agentIdDropdown } from '../common/props';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const newOutput = createTrigger({
   auth: phantombusterAuth,

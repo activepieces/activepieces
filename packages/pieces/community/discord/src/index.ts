@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { discordAddRoleToMember } from './lib/actions/add-role-to-member';
 import { discordFindChannel } from './lib/actions/find-channel';
 import { discordFindGuildMemberByUsername } from './lib/actions/find-guild-member';

@@ -7,7 +7,7 @@ import {
   createKeyForFormInput,
   MarkdownVariant,
   USE_DRAFT_QUERY_PARAM_NAME,
-} from '@activepieces/shared';
+} from '@activepieces/pieces-framework';
 
 
 const markdown = `**Published Form URL:**

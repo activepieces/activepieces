@@ -4,8 +4,10 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { StopResponse } from '@activepieces/shared';
-import { StatusCodes } from 'http-status-codes';
+import { StopResponse } from '@activepieces/pieces-framework';
+
+const HTTP_STATUS_OK = 200;
+const HTTP_STATUS_MOVED_PERMANENTLY = 301;
 
 enum ResponseType {
   JSON = 'json',
@@ -115,7 +117,7 @@ export const returnResponse = createAction({
     
  
     const response: StopResponse = {
-      status: status ?? StatusCodes.OK,
+      status: status ?? HTTP_STATUS_OK,
       headers,
     };
 
@@ -127,7 +129,7 @@ export const returnResponse = createAction({
         response.body = bodyInput;
         break;
       case ResponseType.REDIRECT:
-        response.status = StatusCodes.MOVED_PERMANENTLY;
+        response.status = HTTP_STATUS_MOVED_PERMANENTLY;
         response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) };
         response.body = bodyInput;
         break;

@@ -5,9 +5,9 @@ Formulas let users transform input values inside any text input in the flow buil
 
 ## Key Files
 
-### Shared formula library (`packages/shared/src/lib/formula/`)
+### Shared formula library (`packages/core/shared/src/lib/formula/`)
 - `formula-evaluator.ts` — wrapper format, tokenizer, `evaluate`, `containsWrapper`, `wrap`, `unwrap`; preprocess pipeline (`preprocessExpression` at line 78): `replaceJsonArrays` → `preResolveVarsToPlaceholders` → `wrapStringArgs` → `rewriteLazyIf` → `normalizeExpression`.
-- `function-registry.ts` — 81-entry array `AP_FUNCTIONS` and the `ApFunction` type (with optional `deprecated`, `argCompatibility` extension points).
+- `function-registry.ts` — 104-entry array `AP_FUNCTIONS` and the `ApFunction` type (with optional `deprecated`, `argCompatibility` extension points).
 - `function-implementations.ts` — wires each registry entry to `parser.functions.<name>` on a module-private `Parser` instance.
 - `function-type-checker.ts` — `typeCheckTiptapDoc()` runs against the editor doc; reports arg-count and type-mismatch errors keyed by function-start node id. Expression-operator args (e.g. `3 == 9`) are skipped (line 219) so runtime-evaluated values don't get false-positive type errors.
 
@@ -25,15 +25,15 @@ Formulas let users transform input values inside any text input in the flow buil
 - `preResolveFormulaVars` — extracts unique `{{...}}` tokens, resolves each via `resolveSingleToken` (the same path documented in `variables.md`), batches with `Promise.all`, returns `{ expression, vars }` for the evaluator.
 
 ### Feature flag & licensing
-- `packages/shared/src/lib/management/platform/platform.model.ts` — `dataManipulationEnabled: z.boolean()` on the plan zod schema.
+- `packages/core/shared/src/lib/management/platform/platform.model.ts` — `dataManipulationEnabled: z.boolean()` on the plan zod schema.
 - `packages/server/api/src/app/ee/platform/platform-plan/platform-plan.entity.ts` — `dataManipulationEnabled` column on `platform_plan`.
 - `packages/server/api/src/app/database/migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan.ts` — migration: nullable add → backfill `false` → set `NOT NULL`.
-- `packages/shared/src/lib/core/license-keys/index.ts:37` — `dataManipulationEnabled: z.boolean().optional()` on `LicenseKeyEntity`.
+- `packages/core/shared/src/lib/core/license-keys/index.ts:37` — `dataManipulationEnabled: z.boolean().optional()` on `LicenseKeyEntity`.
 - `packages/server/api/src/app/ee/license-keys/license-keys-service.ts:164` — `applyLimits` writes `key.dataManipulationEnabled ?? false` onto the platform plan; `turnedOffFeatures` resets to `false` on expiry.
-- `packages/shared/src/lib/ee/billing/index.ts` — default `false` in both `FREEMIUM_PLAN` (line 85) and `OPEN_SOURCE_PLAN` (line 112).
+- `packages/core/shared/src/lib/ee/billing/index.ts` — default `false` in both `FREEMIUM_PLAN` (line 85) and `OPEN_SOURCE_PLAN` (line 112).
 
-### Tests (`packages/shared/test/formula/`)
-- `function-evaluator.test.ts` — 161 tests, one+ per function plus pipeline cases (lazy if, var dedup, wrapper detection, embedded formulas in strings).
+### Tests (`packages/core/shared/test/formula/`)
+- `function-evaluator.test.ts` — 220 tests, one+ per function plus pipeline cases (lazy if, var dedup, wrapper detection, embedded formulas in strings).
 - `type-checker.test.ts` — 13 tests for arg-count, type-mismatch, expression-arg skip.
 - `serializer-roundtrip.test.ts` — 22 tests for TipTap doc ⇄ wrapped-string round-trips.
 

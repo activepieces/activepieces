@@ -5,7 +5,7 @@ import { blockKey } from './lib/actions/block-key';
 import { createKey } from './lib/actions/create-key';
 import { newApiEvent } from './lib/triggers/new-api-event';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const cryptolens = createPiece({
   displayName: 'Cryptolens',

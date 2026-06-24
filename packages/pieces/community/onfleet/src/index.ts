@@ -34,7 +34,7 @@ import { updateTeam } from './lib/actions/update-team';
 import { updateWorker } from './lib/actions/update-worker';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { autoDispatchCompleted } from './lib/triggers/auto-dispatch-completed';
 import { smsRecipientOptOut } from './lib/triggers/sms-recipient-opt-out';
 import { smsRecipientResponseMissed } from './lib/triggers/sms-recipient-response-missed';

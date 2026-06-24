@@ -1,8 +1,8 @@
+import { omit } from '@activepieces/core-utils';
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
   BatchProgressData,
-  omit,
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 
@@ -110,7 +110,7 @@ function selectActiveDisplayTool({
     predicate: (name, p) =>
       chatPartUtils.isDisplayTool(name) &&
       name !== 'ap_show_quick_replies' &&
-      p.state === 'input-available',
+      (p.state === 'input-streaming' || p.state === 'input-available'),
   });
   return isNotDismissed(part, state) ? part : null;
 }

@@ -6,7 +6,7 @@ import {
   PaperformProduct,
   PaperformSpace,
 } from './types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { paperformAuth } from './auth';
 
 export const paperformCommonProps = {

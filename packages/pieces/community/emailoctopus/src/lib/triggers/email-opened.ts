@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { emailOctopusAuth } from '../common/auth';
 import { emailOctopusProps } from '../common/props';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const emailOpened = createTrigger({
   auth: emailOctopusAuth,

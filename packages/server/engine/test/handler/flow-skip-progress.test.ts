@@ -4,17 +4,15 @@ import { FlowExecutorContext } from '../../src/lib/handler/context/flow-executio
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 const { updateRunProgressMock } = vi.hoisted(() => ({
-    updateRunProgressMock: vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>().mockResolvedValue(undefined),
+    updateRunProgressMock: vi.fn<(params: { apiUrl: string, engineToken: string, request: UpdateRunProgressRequest }) => Promise<void>>().mockResolvedValue(undefined),
 }))
 
-vi.mock('../../src/lib/worker-socket', () => ({
-    workerSocket: {
-        getWorkerClient: () => ({
-            updateRunProgress: updateRunProgressMock,
-            updateStepProgress: vi.fn(),
-            uploadRunLog: vi.fn(),
-            sendFlowResponse: vi.fn(),
-        }),
+vi.mock('../../src/lib/api/engine-run-api', () => ({
+    engineRunApi: {
+        updateRunProgress: updateRunProgressMock,
+        updateStepProgress: vi.fn(),
+        uploadRunLog: vi.fn(),
+        sendFlowResponse: vi.fn(),
     },
 }))
 
@@ -75,7 +73,7 @@ describe('flowExecutor — progress events with skipped neighbours', () => {
 
 const lastStatusByStep = (): Record<string, StepOutputStatus> => {
     const result: Record<string, StepOutputStatus> = {}
-    for (const [request] of updateRunProgressMock.mock.calls) {
+    for (const [{ request }] of updateRunProgressMock.mock.calls) {
         if (request.step) {
             result[request.step.name] = request.step.output.status
         }

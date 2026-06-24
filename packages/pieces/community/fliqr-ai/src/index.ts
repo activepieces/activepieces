@@ -3,7 +3,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { getFliqrAccountDetails } from './lib/actions/get-account-details';
 import { fliqrConfig } from './lib/common/models';
 import { getFliqrAccountFlows } from './lib/actions/get-account-flows';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { fliqrAuth } from './lib/auth';
 
 export const fliqrAi = createPiece({

@@ -4,7 +4,7 @@ import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { listIdDropdown } from '../common/props';
 import { ListWebhookPayload, WebhookResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'new-list-entry-trigger';
 

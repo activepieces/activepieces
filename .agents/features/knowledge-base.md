@@ -11,7 +11,7 @@ The Knowledge Base feature lets users upload documents (PDF, DOCX, TXT, CSV) int
 - `packages/server/api/src/app/knowledge-base/knowledge-base-schema.ts` — `knowledgeBaseSchema`: `ensure()` (creates the `vector` extension + `knowledge_base_chunk` table when available, never throws) and `isVectorExtensionInstalled()` (cached availability check)
 - `packages/server/api/src/app/knowledge-base/knowledge-base.module.ts` — registers routes + a `preHandler` that returns `FEATURE_DISABLED` when pgvector is unavailable
 - `packages/server/api/src/app/database/seeds/knowledge-base-seed.ts` — runs `knowledgeBaseSchema.ensure()` on every boot
-- `packages/shared/src/lib/automation/knowledge-base/index.ts` — `KnowledgeBaseFile` Zod schema
+- `packages/core/shared/src/lib/automation/knowledge-base/index.ts` — `KnowledgeBaseFile` Zod schema
 - `packages/web/src/features/agents/agent-tools/knowledge-base-dialog/knowledge-base-api.ts` — frontend API client
 - `packages/web/src/features/agents/agent-tools/knowledge-base-dialog/knowledge-base-hooks.ts` — React Query hooks
 - `packages/web/src/features/agents/agent-tools/components/knowledge-base-tool.tsx` — `KnowledgeBaseSection` component rendered in agent tool list

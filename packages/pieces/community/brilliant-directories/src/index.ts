@@ -4,7 +4,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createNewUser } from './lib/actions/create-new-user';
 
 export const brilliantDirectoriesAuth = PieceAuth.CustomAuth({

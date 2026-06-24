@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
 
 import { pathUtils } from '@/lib/path-utils';
 import { stringUtils } from '@/lib/string-utils';

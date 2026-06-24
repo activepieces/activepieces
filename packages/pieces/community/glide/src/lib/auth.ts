@@ -1,5 +1,5 @@
 import { PieceAuth, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 
 import { validateGlideAuth } from './common/client';
 

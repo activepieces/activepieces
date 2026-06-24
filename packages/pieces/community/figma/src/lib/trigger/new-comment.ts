@@ -3,7 +3,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { nanoid } from 'nanoid';
 import { figmaCommon } from '../common';
 import { figmaWebhookPostRequest, figmaDeleteRequest } from '../common/utils';

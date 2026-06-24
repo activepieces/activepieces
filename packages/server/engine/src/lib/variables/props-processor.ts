@@ -1,5 +1,6 @@
+import { isNil, isObject } from '@activepieces/core-utils'
 import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
-import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
+import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, PropertySettings } from '@activepieces/shared'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
 

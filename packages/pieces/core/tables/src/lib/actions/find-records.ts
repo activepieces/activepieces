@@ -1,8 +1,8 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
-import { z } from 'zod';
+import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/pieces-framework';
+import * as z from 'zod/mini'
 import qs from 'qs';
 type FieldInfo = {
   id: string;
@@ -102,24 +102,24 @@ export const findRecords = createAction({
       const value = filter.value;
       const fieldType = filter.field.type;
 
-      let schema: Record<string, z.ZodType>;
+      let schema: Record<string, z.core.$ZodType>;
       switch (fieldType) {
         case FieldType.NUMBER:
           schema = {
-            value: z.union([z.number(), z.string().transform(val => {
+            value: z.union([z.number(), z.pipe(z.string(), z.transform(val => {
               const num = Number(val);
               if (isNaN(num)) throw new Error(`Invalid number for field "${filter.field.name}"`);
               return num;
-            })]),
+            }))]),
           };
           break;
         case FieldType.DATE:
           schema = {
-            value: z.union([z.date(), z.string().transform(val => {
+            value: z.union([z.date(), z.pipe(z.string(), z.transform(val => {
               const date = new Date(val);
               if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${filter.field.name}"`);
               return date;
-            })]),
+            }))]),
           };
           break;
         default:

@@ -34,7 +34,7 @@ import { searchForACompany } from './lib/actions/search-for-a-company';
 import { searchForAnOpportunity } from './lib/actions/search-for-an-opportunity';
 import { searchForAProject } from './lib/actions/search-for-a-project';
 import { newActivity } from './lib/triggers/new-activity';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const copper = createPiece({

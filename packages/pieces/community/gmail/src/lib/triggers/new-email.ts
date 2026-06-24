@@ -11,7 +11,7 @@ import {
   convertAttachment,
   getFirstFiveOrAll,
 } from '../common/data';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 
 export const gmailNewEmailTrigger = createTrigger({
   auth: gmailAuth,
@@ -26,7 +26,7 @@ export const gmailNewEmailTrigger = createTrigger({
     subject: GmailProps.subject,
     from: GmailProps.from,
     to: GmailProps.to,
-    label: GmailProps.label,
+    label: GmailProps.label({ required: false }),
     category: GmailProps.category,
   },
   sampleData: {},
@@ -96,7 +96,7 @@ async function pollRecentMessages({
 > {
   const authClient = await createGoogleClient(auth);
 
-  const gmail = google.gmail({ version: 'v1', auth: authClient });
+  const gmail = googleGmail({ version: 'v1', auth: authClient });
 
   // construct query
   const query = [];

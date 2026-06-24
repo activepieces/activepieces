@@ -8,8 +8,8 @@ The Store Entry feature provides a persistent key-value store that piece steps c
 - `packages/server/api/src/app/store-entry/store-entry.service.ts` — CRUD service
 - `packages/server/api/src/app/store-entry/store-entry-entity.ts` — TypeORM entity
 - `packages/server/api/src/app/store-entry/store-entry.module.ts` — Fastify plugin registration
-- `packages/shared/src/lib/core/store-entry/store-entry.ts` — `StoreEntry` type, `STORE_KEY_MAX_LENGTH`, `STORE_VALUE_MAX_SIZE`
-- `packages/shared/src/lib/core/store-entry/dto/store-entry-request.ts` — `PutStoreEntryRequest`, `GetStoreEntryRequest`, `DeleteStoreEntryRequest`
+- `packages/core/shared/src/lib/core/store-entry/store-entry.ts` — `StoreEntry` type, `STORE_KEY_MAX_LENGTH`, `STORE_VALUE_MAX_SIZE`
+- `packages/core/shared/src/lib/core/store-entry/dto/store-entry-request.ts` — `PutStoreEntryRequest`, `GetStoreEntryRequest`, `DeleteStoreEntryRequest`
 
 ## Edition Availability
 - **Community (CE)**: Fully available — no plan flag required.

@@ -1,8 +1,8 @@
-import { Redis } from 'ioredis'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apId, DefaultProjectRole, PiecesFilterType, PieceType, ProjectRole } from '@activepieces/shared'
+import { apId, ProjectRole } from '@activepieces/core-utils'
+import { DefaultProjectRole, PiecesFilterType, PieceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { Redis } from 'ioredis'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { getProjectConcurrencyPoolKey } from '../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../src/app/database/redis-connections'
@@ -17,6 +17,7 @@ import {
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void> {
     const stream = redis.scanStream({ match: pattern, count: 100 })
@@ -115,8 +116,8 @@ describe('Managed Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
             const generatedProject = await db.findOneBy('project', {
-                    id: responseBody?.projectId,
-                })
+                id: responseBody?.projectId,
+            })
 
             expect(generatedProject?.displayName).toBe(
                 mockExternalTokenPayload.externalProjectId,
@@ -224,9 +225,9 @@ describe('Managed Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
             const generatedProjectMember = await db.findOneBy('project_member', {
-                    projectId: responseBody?.projectId,
-                    userId: responseBody?.id,
-                })
+                projectId: responseBody?.projectId,
+                userId: responseBody?.id,
+            })
 
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
             expect(generatedProjectMember?.userId).toBe(responseBody?.id)

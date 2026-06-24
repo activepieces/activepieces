@@ -22,19 +22,15 @@ const BulkVisibilityActions = ({
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const { filteredPieceNames } = platform;
 
-  const { mutate: bulkHide, isPending: isHidePending } =
-    platformPiecesMutations.useBulkHidePieces({
-      platformId: platform.id,
-      filteredPieceNames,
-      refetch,
-    });
-
-  const { mutate: bulkShow, isPending: isShowPending } =
-    platformPiecesMutations.useBulkShowPieces({
-      platformId: platform.id,
-      filteredPieceNames,
-      refetch,
-    });
+  const {
+    mutate: setVisibility,
+    isPending,
+    variables,
+  } = platformPiecesMutations.useBulkSetPiecesVisibility({
+    platformId: platform.id,
+    filteredPieceNames,
+    refetch,
+  });
 
   const allHidden = selectedPieces.every((p) =>
     filteredPieceNames.includes(p.name),
@@ -50,15 +46,18 @@ const BulkVisibilityActions = ({
       <Button
         variant="ghost"
         size="sm"
-        loading={isShowPending}
+        loading={isPending && variables?.hidden === false}
         disabled={!isEnabled || allVisible}
         onClick={() => {
-          bulkShow(selectedNames, {
-            onSuccess: () => {
-              onComplete();
-              resetSelection();
+          setVisibility(
+            { pieceNames: selectedNames, hidden: false },
+            {
+              onSuccess: () => {
+                onComplete();
+                resetSelection();
+              },
             },
-          });
+          );
         }}
       >
         <Eye className="mr-1 size-4" />
@@ -67,15 +66,18 @@ const BulkVisibilityActions = ({
       <Button
         variant="ghost"
         size="sm"
-        loading={isHidePending}
+        loading={isPending && variables?.hidden === true}
         disabled={!isEnabled || allHidden}
         onClick={() => {
-          bulkHide(selectedNames, {
-            onSuccess: () => {
-              onComplete();
-              resetSelection();
+          setVisibility(
+            { pieceNames: selectedNames, hidden: true },
+            {
+              onSuccess: () => {
+                onComplete();
+                resetSelection();
+              },
             },
-          });
+          );
         }}
       >
         <EyeOff className="mr-1 size-4" />

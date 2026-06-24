@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createEvent } from './lib/actions/create-event';
 import { createSession } from './lib/actions/create-session';
 import { publishEvent } from './lib/actions/publish-event';

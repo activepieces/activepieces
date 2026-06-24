@@ -3,7 +3,7 @@ import { createAction, Property, DynamicPropsValue, InputPropertyMap, PropertyCo
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const takeScreenshotAction = createAction({
 	name: 'take-screenshot',
@@ -188,11 +188,11 @@ export const takeScreenshotAction = createAction({
 		};
 
 		await propsValidation.validateZod(context.propsValue, {
-			maxHeight: z.number().positive().optional(),
-			maxWidth: z.number().positive().optional(),
-			quality: z.number().min(1).max(100).optional(),
-			costThresholdCredits: z.number().min(0).optional(),
-			timeThresholdSeconds: z.number().min(0).optional(),
+			maxHeight: z.optional(z.number().check(z.positive())),
+			maxWidth: z.optional(z.number().check(z.positive())),
+			quality: z.optional(z.number().check(z.minimum(1), z.maximum(100))),
+			costThresholdCredits: z.optional(z.number().check(z.minimum(0))),
+			timeThresholdSeconds: z.optional(z.number().check(z.minimum(0))),
 		});
 
 		const body: Record<string, any> = {};

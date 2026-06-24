@@ -4,7 +4,7 @@ import {
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from './models';
 import { notionAuth } from '../auth';

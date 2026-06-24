@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { barcodeLookupAuth } from './lib/common/auth';
 import { searchByBarcode } from './lib/actions/search-by-barcode';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const barcodeLookup = createPiece({
   displayName: 'Barcode Lookup',

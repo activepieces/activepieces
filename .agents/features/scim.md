@@ -10,7 +10,7 @@ SCIM (System for Cross-domain Identity Management) 2.0 integration allows enterp
 - `packages/server/api/src/app/ee/scim/scim-group-controller.ts` — group CRUD endpoints
 - `packages/server/api/src/app/ee/scim/scim-group-service.ts` — group/project management logic
 - `packages/server/api/src/app/ee/scim/scim-discovery-controller.ts` — discovery endpoints (ServiceProviderConfig, ResourceTypes, Schemas)
-- `packages/shared/src/lib/ee/scim/index.ts` — all SCIM types, schemas, constants, `parseScimFilter`, `ScimError`
+- `packages/core/shared/src/lib/ee/scim/index.ts` — all SCIM types, schemas, constants, `parseScimFilter`, `ScimError`
 
 ## Edition Availability
 Enterprise and Cloud. Gated by `platform.plan.scimEnabled`. Module hook: `platformMustHaveFeatureEnabled((platform) => platform.plan.scimEnabled)`.

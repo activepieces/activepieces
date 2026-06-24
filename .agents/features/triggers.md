@@ -19,8 +19,8 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 - `packages/server/api/src/app/trigger/trigger-run/trigger-run-stats.ts` — per-platform trigger health tracking
 - `packages/server/api/src/app/trigger/trigger-run/trigger-run.controller.ts` — trigger run stats endpoints
 - `packages/server/api/src/app/trigger/trigger.module.ts` — module registration
-- `packages/shared/src/lib/automation/trigger/index.ts` — TriggerSource schema, TriggerStrategy enum, WebhookHandshakeConfiguration, ScheduleOptions
-- `packages/web/src/app/builder/test-step/test-trigger-section/index.tsx` — test panel in the builder sidebar
+- `packages/core/shared/src/lib/automation/trigger/index.ts` — TriggerSource schema, TriggerStrategy enum, WebhookHandshakeConfiguration, ScheduleOptions
+- `packages/web/src/app/builder/test-step/test-trigger-section/index.tsx` — test panel in the builder sidebar; shows a `JsonTreeSkeleton` loader while a polling test or webhook-test dialog is active (`isPollingTesting || isTestingDialogOpen`), otherwise the first-time empty state
 - `packages/web/src/app/builder/test-step/test-trigger-section/first-time-testing-section.tsx` — initial test prompt before any event is captured
 - `packages/web/src/app/builder/test-step/test-trigger-section/simulation-section.tsx` — simulation status UI
 - `packages/web/src/app/builder/test-step/test-trigger-section/trigger-event-select.tsx` — event selector from previously captured events

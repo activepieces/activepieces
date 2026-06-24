@@ -13,7 +13,7 @@ import { XAI_BASE_URL } from '../common/constants';
 import { 
   createModelProperty
 } from '../common/utils';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const generateImage = createAction({
   audience: 'human',
@@ -55,8 +55,8 @@ export const generateImage = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      numberOfImages: z.number().min(1).max(10).optional(),
-      prompt: z.string().min(1).max(4000),
+      numberOfImages: z.optional(z.number().check(z.minimum(1), z.maximum(10))),
+      prompt: z.string().check(z.minLength(1), z.maxLength(4000)),
     });
 
     const {

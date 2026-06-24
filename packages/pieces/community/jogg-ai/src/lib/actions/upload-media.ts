@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const uploadMedia = createAction({
@@ -32,13 +32,7 @@ export const uploadMedia = createAction({
     const { filename } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      filename: z
-        .string()
-        .min(1, 'Filename cannot be empty')
-        .regex(
-          /^[^/\\:*?"<>|]+\.[a-zA-Z0-9]+$/,
-          'Filename must include a file extension and contain no special characters'
-        ),
+      filename: z.string().check(z.minLength(1, 'Filename cannot be empty'), z.regex(/^[^/\\:*?"<>|]+\.[a-zA-Z0-9]+$/, 'Filename must include a file extension and contain no special characters')),
     });
 
     const response = await httpClient.sendRequest({

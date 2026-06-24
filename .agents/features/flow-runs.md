@@ -8,10 +8,10 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - `packages/server/api/src/app/flows/flow-run/ai-usage-extractor.ts` — pure extractor that walks a finished run's step outputs and counts AI-piece usage (messages + agent tool calls) grouped per provider/model
 - `packages/server/api/src/app/flows/flow-run/ai-usage-tracker.ts` — orchestrates extraction and emits the `ai_usage_per_run` PostHog billing event (see Side Effects → AI Usage Billing)
 - `packages/server/api/src/app/helper/telemetry.utils.ts` — `captureBillingEvent` (PostHog capture keyed by license key) + `BillingEvents` enum
-- `packages/shared/src/lib/automation/flow-run/flow-run.ts` — `FlowRun` type
-- `packages/shared/src/lib/automation/flow-run/dto/` — list, retry, bulk request types
-- `packages/shared/src/lib/automation/flow-run/execution/` — `StepOutput`, `FlowExecution`, `ExecutionOutput`
-- `packages/shared/src/lib/automation/flow-run/log-serializer.ts` — zstd compress/decompress helpers
+- `packages/core/shared/src/lib/automation/flow-run/flow-run.ts` — `FlowRun` type
+- `packages/core/shared/src/lib/automation/flow-run/dto/` — list, retry, bulk request types
+- `packages/core/shared/src/lib/automation/flow-run/execution/` — `StepOutput`, `FlowExecution`, `ExecutionOutput`
+- `packages/core/shared/src/lib/automation/flow-run/log-serializer.ts` — zstd compress/decompress helpers
 - `packages/web/src/features/flow-runs/api/flow-runs-api.ts` — `flowRunsApi`
 - `packages/web/src/features/flow-runs/hooks/flow-run-hooks.ts` — `flowRunQueries`, `flowRunMutations`
 - `packages/web/src/features/flow-runs/components/runs-table/` — `RunsTable`, `columns.tsx`, retry/cancel/archive dialogs, `failed-step-dialog.tsx`

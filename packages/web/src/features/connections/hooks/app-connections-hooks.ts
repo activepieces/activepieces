@@ -1,14 +1,12 @@
+import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   getAuthPropertyForValue,
   PieceAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  ApErrorParams,
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
-  ErrorCode,
-  isNil,
   ListAppConnectionsRequestQuery,
   PLACEHOLDER_CONNECTION_TYPE,
   ReplaceAppConnectionsRequestBody,

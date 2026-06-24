@@ -1,17 +1,5 @@
-import {
-    ActivepiecesError,
-    apId,
-    assertNotNullOrUndefined,
-    ErrorCode,
-    File,
-    FileCompression,
-    FileId,
-    FileLocation,
-    FileType,
-    isMultipartFile,
-    isNil,
-    ProjectId,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isMultipartFile, isNil, ProjectId } from '@activepieces/core-utils'
+import { File, FileCompression, FileId, FileLocation, FileType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
@@ -301,7 +289,7 @@ function normalizeTypeFilter(type: FileType | FileType[] | undefined) {
 
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
-    if (isExecutionDataFileThatExpires(type)) {
+    if (type === FileType.FLOW_BUNDLE || isExecutionDataFileThatExpires(type)) {
         return FILE_LOCATION
     }
     return FileLocation.DB

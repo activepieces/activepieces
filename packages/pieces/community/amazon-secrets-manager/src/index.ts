@@ -6,7 +6,7 @@ import { createSecret } from './lib/actions/create-secret';
 import { deleteSecret } from './lib/actions/delete-secret';
 import { findSecret } from './lib/actions/find-secret';
 import { getARandomPassword } from './lib/actions/get-a-random-password';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const amazonSecretsManager = createPiece({
   displayName: 'AWS Secrets Manager',

@@ -5,7 +5,7 @@ import {
 import { status } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const statusAction = createAction({
@@ -33,7 +33,7 @@ export const statusAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
+      email: z.string().check(z.email()),
     });
 
     return await status(context.auth, {

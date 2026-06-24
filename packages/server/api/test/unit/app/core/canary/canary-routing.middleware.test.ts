@@ -1,6 +1,6 @@
+import { EventEmitter } from 'node:events'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
-import { EventEmitter } from 'node:events'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // --- mocks (must be before the import under test) ---

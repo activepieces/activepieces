@@ -1,4 +1,5 @@
 import { environmentMigrations } from '@activepieces/server-utils'
+import { RuntimeKind } from '@activepieces/shared'
 import { from } from 'env-var'
 
 function env() {
@@ -48,6 +49,8 @@ export enum WorkerSystemProp {
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
+    RUNTIME = 'AP_RUNTIME',
+    CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
@@ -56,6 +59,8 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
     [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
+    [WorkerSystemProp.RUNTIME]: RuntimeKind.LOCAL,
+    [WorkerSystemProp.CACHE_BASE_PATH]: 'cache',
 }
 
 export const system = {

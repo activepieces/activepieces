@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { webflowCreateCollectionItemAction } from './lib/actions/create-collection-item';
 import { webflowDeleteCollectionItem } from './lib/actions/delete-collection-item';
 import { webflowFindCollectionItem } from './lib/actions/find-collection-item';

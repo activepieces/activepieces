@@ -1,5 +1,5 @@
+import { isBase64, isNil, isString } from '@activepieces/core-utils'
 import { ApFile } from '@activepieces/pieces-framework'
-import { isBase64, isNil, isString } from '@activepieces/shared'
 import { ProcessorFn } from './types'
 
 export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {

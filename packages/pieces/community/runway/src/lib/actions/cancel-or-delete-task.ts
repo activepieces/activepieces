@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';
 import { runwayAuth } from '../common';
 import RunwayML from '@runwayml/sdk';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const cancelOrDeleteTask = createAction({
 	auth: runwayAuth,
@@ -20,7 +20,7 @@ export const cancelOrDeleteTask = createAction({
 	},
 	async run({ auth, propsValue }) {
 		await propsValidation.validateZod(propsValue, {
-			taskId: z.string().uuid('Task ID must be a valid UUID format'),
+			taskId: z.string().check(z.uuid('Task ID must be a valid UUID format')),
 		});
 
 		const apiKey = auth.secret_text;

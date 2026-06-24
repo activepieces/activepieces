@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from './lib/common/auth';
 import { compressPdfAction } from './lib/actions/compress-pdf';
 import { mergePdfAction } from './lib/actions/merge-pdf';

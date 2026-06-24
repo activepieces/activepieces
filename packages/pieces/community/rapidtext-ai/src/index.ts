@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { generateArticleAction } from './lib/actions/generate-article';
 import { sendPromptAction } from './lib/actions/send-prompt';
 import { rapidTextAiAuth } from './lib/common/auth';

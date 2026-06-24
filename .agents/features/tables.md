@@ -17,12 +17,12 @@ A built-in relational database feature that lets users store structured data dir
 - `packages/server/api/src/app/tables/record/cell.entity.ts` — Cell entity
 - `packages/server/api/src/app/tables/record/record-side-effects.ts` — fires TableWebhook flows on record events
 - `packages/server/api/src/app/tables/tables.module.ts` — module registration
-- `packages/shared/src/lib/automation/tables/table.ts` — Table schema
-- `packages/shared/src/lib/automation/tables/field.ts` — Field schema and FieldType enum
-- `packages/shared/src/lib/automation/tables/record.ts` — Record schema
-- `packages/shared/src/lib/automation/tables/cell.ts` — Cell schema
-- `packages/shared/src/lib/automation/tables/table-webhook.ts` — TableWebhook schema
-- `packages/shared/src/lib/automation/tables/dto/` — request/response DTOs
+- `packages/core/shared/src/lib/automation/tables/table.ts` — Table schema
+- `packages/core/shared/src/lib/automation/tables/field.ts` — Field schema and FieldType enum
+- `packages/core/shared/src/lib/automation/tables/record.ts` — Record schema
+- `packages/core/shared/src/lib/automation/tables/cell.ts` — Cell schema
+- `packages/core/shared/src/lib/automation/tables/table-webhook.ts` — TableWebhook schema
+- `packages/core/shared/src/lib/automation/tables/dto/` — request/response DTOs
 - `packages/web/src/app/routes/tables/id/index.tsx` — the table editor page (react-data-grid based)
 - `packages/web/src/features/tables/components/ap-table-header.tsx` — header bar with table name, actions
 - `packages/web/src/features/tables/components/ap-table-state-provider.tsx` — state context for the table

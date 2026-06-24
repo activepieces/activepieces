@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { voipstudioAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createContact } from './lib/actions/create-contact';
 import { makeACallToLead } from './lib/actions/make-a-call-to-lead';
 import { makeACall } from './lib/actions/make-a-call';

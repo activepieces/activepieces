@@ -1,4 +1,4 @@
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/core-utils';
 import { useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import {

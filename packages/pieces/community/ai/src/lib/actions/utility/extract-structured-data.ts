@@ -4,7 +4,7 @@ import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from '
 import mime from 'mime-types';
 import Ajv from 'ajv';
 import { aiProps } from '../../common/props';
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName } from '@activepieces/pieces-framework';
 
 export const extractStructuredData = createAction({
   audience: 'human',

@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { edenAiAuth } from '../..';
 
 const CHAT_PROVIDERS = [
@@ -127,11 +127,11 @@ export const generateTextAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      prompt: z.string().min(1, 'Prompt is required'),
-      temperature: z.number().min(0).max(2).nullish(),
-      max_completion_tokens: z.number().min(1).nullish(),
-      image_url: z.string().url().nullish()
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      prompt: z.string().check(z.minLength(1, 'Prompt is required')),
+      temperature: z.nullish(z.number().check(z.minimum(0), z.maximum(2))),
+      max_completion_tokens: z.nullish(z.number().check(z.minimum(1))),
+      image_url: z.nullish(z.string().check(z.url()))
     });
 
     const {

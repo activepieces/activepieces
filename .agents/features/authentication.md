@@ -11,7 +11,7 @@ The authentication feature handles user identity creation, sign-in, and JWT sess
 - `packages/server/api/src/app/authentication/lib/password-hasher.ts` — bcrypt helpers
 - `packages/server/api/src/app/authentication/user-identity/user-identity-entity.ts` — `user_identity` table entity
 - `packages/server/api/src/app/authentication/user-identity/user-identity-service.ts` — identity CRUD, password verification, `verify()`, `getIdentityByEmail()`
-- `packages/shared/src/lib/core/authentication/dto/authentication-response.ts` — `AuthenticationResponse` Zod schema
+- `packages/core/shared/src/lib/core/authentication/dto/authentication-response.ts` — `AuthenticationResponse` Zod schema
 - `packages/web/src/features/authentication/hooks/auth-hooks.ts` — React Query mutations: `useSignIn`, `useSignUp`, `useSendOtpEmail`, `useResetPassword`, `useVerifyEmail`
 - `packages/web/src/features/authentication/components/sign-in-form.tsx` — sign-in form component
 - `packages/web/src/features/authentication/components/sign-up-form.tsx` — sign-up form component

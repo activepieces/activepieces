@@ -1,4 +1,5 @@
-import { FlowVersion, FlowVersionState, FlowVersionTemplate, ProjectId } from '@activepieces/shared'
+import { ProjectId } from '@activepieces/core-utils'
+import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'

@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { ApEdition, ApEnvironment, spreadIfDefined } from '@activepieces/shared'
+import { spreadIfDefined } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { types } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite/vector'
 import { DataSource } from 'typeorm'
