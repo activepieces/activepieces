@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { smallestAiAuth } from '../..';
-import { SMALLEST_AI_BASE_URL, getVoices } from '../common';
+import { SMALLEST_AI_BASE_URL, SMALLEST_AI_SOURCE_HEADERS, getVoices } from '../common';
 
 export const textToSpeech = createAction({
   name: 'text-to-speech',
@@ -119,6 +119,7 @@ export const textToSpeech = createAction({
         Authorization: `Bearer ${auth}`,
         'Content-Type': 'application/json',
         Accept: acceptMime,
+        ...SMALLEST_AI_SOURCE_HEADERS,
       },
       body: JSON.stringify(body),
     });

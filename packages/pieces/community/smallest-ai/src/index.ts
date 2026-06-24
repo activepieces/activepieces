@@ -3,7 +3,7 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { textToSpeech } from './lib/actions/text-to-speech';
 import { speechToText } from './lib/actions/speech-to-text';
-import { SMALLEST_AI_BASE_URL } from './lib/common';
+import { SMALLEST_AI_BASE_URL, SMALLEST_AI_SOURCE_HEADERS } from './lib/common';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -21,7 +21,7 @@ export const smallestAiAuth = PieceAuth.SecretText({
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${SMALLEST_AI_BASE_URL}/waves/v1/lightning-v3.1/get_voices`,
-        headers: { Authorization: `Bearer ${auth}` },
+        headers: { Authorization: `Bearer ${auth}`, ...SMALLEST_AI_SOURCE_HEADERS },
       });
       if (response.status === 200) return { valid: true };
       return { valid: false, error: 'Invalid API Key.' };

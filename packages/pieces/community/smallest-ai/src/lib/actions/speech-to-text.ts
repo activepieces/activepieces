@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { smallestAiAuth } from '../..';
-import { SMALLEST_AI_BASE_URL } from '../common';
+import { SMALLEST_AI_BASE_URL, SMALLEST_AI_SOURCE_HEADERS } from '../common';
 
 export const speechToText = createAction({
   name: 'speech-to-text',
@@ -101,6 +101,7 @@ export const speechToText = createAction({
         headers: {
           Authorization: authHeader,
           'Content-Type': 'application/octet-stream',
+          ...SMALLEST_AI_SOURCE_HEADERS,
         },
         body: fileData,
       });
@@ -110,6 +111,7 @@ export const speechToText = createAction({
         headers: {
           Authorization: authHeader,
           'Content-Type': 'application/json',
+          ...SMALLEST_AI_SOURCE_HEADERS,
         },
         body: JSON.stringify({ url: audio_url }),
       });
