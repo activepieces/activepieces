@@ -281,21 +281,22 @@ const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-h
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
+export const AIMLAPI_CHAT_MODELS = [
+    'gpt-5-chat',
+    'openai/gpt-4o-mini',
+    'openai/gpt-4o',
+    'anthropic/claude-sonnet-4.5',
+    'google/gemini-2.5-flash',
+    'google/gemini-3-flash-preview',
+    'deepseek/deepseek-chat',
+    'x-ai/grok-4',
+] as const
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
     [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
-    [AIProviderName.AIMLAPI]: [
-        'gpt-5-chat',
-        'openai/gpt-4o-mini',
-        'openai/gpt-4o',
-        'anthropic/claude-sonnet-4.5',
-        'google/gemini-2.5-flash',
-        'google/gemini-3-flash-preview',
-        'deepseek/deepseek-chat',
-        'x-ai/grok-4',
-    ],
+    [AIProviderName.AIMLAPI]: AIMLAPI_CHAT_MODELS,
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
