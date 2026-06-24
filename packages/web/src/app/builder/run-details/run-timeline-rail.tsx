@@ -131,7 +131,7 @@ const RunTimelineRail = () => {
             <TimelineStepRow
               item={item}
               isSelected={selectedStep === item.step.name}
-              key={`${item.step.name}-${index}`}
+              key={item.step.name}
               onSelectStep={() => selectStepByName(item.step.name)}
               onSelectIteration={(iterationIndex) => {
                 selectStepByName(item.step.name);
