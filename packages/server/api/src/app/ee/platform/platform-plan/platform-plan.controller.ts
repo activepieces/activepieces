@@ -71,7 +71,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
             enabled,
             threshold: enabled ? body.minThreshold : 0,
             quantity: enabled ? body.creditsToAdd : 0,
-            maxMonthlyTopUps: enabled && !isNil(body.maxMonthlyLimit) ? Math.floor(body.maxMonthlyLimit / body.creditsToAdd) : null,
+            maxMonthlyTopUps: enabled && !isNil(body.maxMonthlyLimit) && body.creditsToAdd > 0 ? Math.floor(body.maxMonthlyLimit / body.creditsToAdd) : null,
         })
         return { paymentUrl: setupPaymentUrl }
     })

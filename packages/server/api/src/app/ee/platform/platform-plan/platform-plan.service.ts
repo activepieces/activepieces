@@ -25,6 +25,7 @@ const ENROLL_ATTEMPT_TTL_SECONDS = 300
 const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
 const REFRESH_CLAIM_TTL_SECONDS = 60
 const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
+const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
 
@@ -66,7 +67,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
         const updatedPlatformPlan = await platformPlanRepo().save({ ...platformPlan, ...normalizedUpdate })
         if (!isNil(updatedPlatformPlan.plan)) {
-            await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan)
+            await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan, PLATFORM_PLAN_NAME_TTL_SECONDS)
         }
         else {
             await distributedStore.delete(getPlatformPlanNameKey(platformId))
@@ -197,7 +198,7 @@ async function createInitialBilling(platformId: string): Promise<PlatformPlan> {
     }
     const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
     if (!isNil(savedPlatformPlan.plan)) {
-        await distributedStore.put(getPlatformPlanNameKey(platformId), savedPlatformPlan.plan)
+        await distributedStore.put(getPlatformPlanNameKey(platformId), savedPlatformPlan.plan, PLATFORM_PLAN_NAME_TTL_SECONDS)
     }
 
     return savedPlatformPlan
