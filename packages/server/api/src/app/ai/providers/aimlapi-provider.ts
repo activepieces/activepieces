@@ -18,7 +18,7 @@ export const aimlapiProvider: AIProviderStrategy<AIMLAPIProviderAuthConfig, AIML
     name: 'AI/ML API',
     async validateConnection(authConfig: AIMLAPIProviderAuthConfig, _config: AIMLAPIProviderConfig, _log: FastifyBaseLogger): Promise<void> {
         await httpClient.sendRequest({
-            url: 'https://api.aimlapi.com/v1/models',
+            url: 'https://api.aimlapi.com/v2/billing',
             method: HttpMethod.GET,
             headers: {
                 'Authorization': `Bearer ${authConfig.apiKey}`,
