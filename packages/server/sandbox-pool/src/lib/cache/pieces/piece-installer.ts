@@ -245,13 +245,15 @@ function bundleTgzPath(rootWorkspace: string, piece: PiecePackage): string {
 // the URL to `bun install` — because bun derives a cache directory name from the dependency spec,
 // and a long signed-S3 / engine-token URL overflows the filesystem name limit (ENAMETOOLONG).
 // `fetch` follows the redirect and carries the engine token in the Authorization header.
+// ARCHIVE pieces are fetched by archiveId (they may not be registered in metadata yet, e.g. during
+// EXTRACT_PIECE_METADATA); REGISTRY pieces by name@version.
 async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: PiecePackage[], { publicApiUrl, engineToken }: BundleSource): Promise<void> {
     await Promise.all(pieces.map(async (piece) => {
         const bundlePath = bundleTgzPath(rootWorkspace, piece)
         if (await fileSystemUtils.fileExists(bundlePath)) {
             return
         }
-        const url = `${publicApiUrl}v1/engine/pieces/bundle?name=${encodeURIComponent(piece.pieceName)}&version=${encodeURIComponent(piece.pieceVersion)}`
+        const url = pieceBundleEndpointUrl(publicApiUrl, piece)
         const response = await fetch(url, { headers: { Authorization: `Bearer ${engineToken}` } })
         if (!response.ok) {
             throw new Error(`Failed to fetch piece bundle ${piece.pieceName}@${piece.pieceVersion}: ${response.status} ${response.statusText}`)
@@ -259,6 +261,14 @@ async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: Piece
         await fileSystemUtils.threadSafeMkdir(dirname(bundlePath))
         await writeFile(bundlePath, Buffer.from(await response.arrayBuffer()))
     }))
+}
+
+function pieceBundleEndpointUrl(publicApiUrl: string, piece: PiecePackage): string {
+    const base = `${publicApiUrl}v1/engine/pieces/bundle`
+    if (piece.packageType === PackageType.ARCHIVE) {
+        return `${base}?archiveId=${encodeURIComponent(piece.archiveId)}`
+    }
+    return `${base}?name=${encodeURIComponent(piece.pieceName)}&version=${encodeURIComponent(piece.pieceVersion)}`
 }
 
 async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {

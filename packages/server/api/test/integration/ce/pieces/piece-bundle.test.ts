@@ -92,4 +92,35 @@ describe('Piece Bundle Endpoint', () => {
         const otherPlatformResponse = await app!.inject(bundleRequest('@acme/piece-private', '0.0.1', tokenB))
         expect(otherPlatformResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
+
+    it('streams an archive by archiveId for the owning platform and 404s for others', async () => {
+        const platformA = await mockAndSaveBasicSetup()
+        const platformB = await mockAndSaveBasicSetup()
+
+        const archiveId = apId()
+        await db.save('file', createMockFile({
+            id: archiveId,
+            platformId: platformA.mockPlatform.id,
+            projectId: null,
+            type: FileType.PACKAGE_ARCHIVE,
+            location: FileLocation.DB,
+            compression: FileCompression.NONE,
+            data: Buffer.from('archive-bytes'),
+        }))
+
+        const tokenA = await engineToken(platformA.mockProject.id, platformA.mockPlatform.id)
+        const tokenB = await engineToken(platformB.mockProject.id, platformB.mockPlatform.id)
+        const byArchive = (token: string) => ({
+            method: 'GET' as const,
+            url: `/api/v1/engine/pieces/bundle?archiveId=${archiveId}`,
+            headers: { authorization: `Bearer ${token}` },
+        })
+
+        const ownerResponse = await app!.inject(byArchive(tokenA))
+        expect(ownerResponse.statusCode).toBe(StatusCodes.OK)
+        expect(ownerResponse.rawPayload.toString()).toBe('archive-bytes')
+
+        const otherPlatformResponse = await app!.inject(byArchive(tokenB))
+        expect(otherPlatformResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
 })

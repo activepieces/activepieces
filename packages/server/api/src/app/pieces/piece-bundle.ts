@@ -1,7 +1,8 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, safeHttp } from '@activepieces/server-utils'
-import { PackageType } from '@activepieces/shared'
+import { FileType, PackageType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { fileRepo } from '../file/file.service'
 import { s3Helper } from '../file/s3-helper'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -15,7 +16,17 @@ import { pieceMetadataService } from './metadata/piece-metadata-service'
 // lazy SYSTEM job caches it for next time). Custom (ARCHIVE) pieces are served straight from the file
 // store. Always platform-scoped via the engine token's platformId.
 export const pieceBundle = (log: FastifyBaseLogger) => ({
-    async resolve({ name, version, platformId, projectId }: ResolveParams): Promise<PieceBundleResolution> {
+    async resolve({ name, version, archiveId, platformId, projectId }: ResolveParams): Promise<PieceBundleResolution> {
+        // ARCHIVE pieces are addressed by archiveId — they may not be registered in metadata yet
+        // (e.g. during EXTRACT_PIECE_METADATA of a freshly uploaded .tgz). Scope to the token's
+        // platform so one platform cannot read another's private archive.
+        if (!isNil(archiveId)) {
+            const file = await fileRepo().findOneBy({ id: archiveId, platformId, type: FileType.PACKAGE_ARCHIVE })
+            return isNil(file) ? { type: 'not-found' } : { type: 'stream', archiveId }
+        }
+        if (isNil(name) || isNil(version)) {
+            return { type: 'not-found' }
+        }
         const metadata = await pieceMetadataService(log).get({ name, version, platformId, projectId })
         if (isNil(metadata)) {
             return { type: 'not-found' }
@@ -81,7 +92,10 @@ type EnqueueBundleJobParams = PieceRef & {
     log: FastifyBaseLogger
 }
 
-type ResolveParams = PieceRef & {
+type ResolveParams = {
+    name?: string
+    version?: string
+    archiveId?: string
     platformId: string
     projectId: string
 }

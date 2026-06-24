@@ -48,6 +48,7 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         const resolution = await pieceBundle(request.log).resolve({
             name: request.query.name,
             version: request.query.version,
+            archiveId: request.query.archiveId,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
         })
@@ -129,8 +130,9 @@ const PieceBundleRequest = {
     },
     schema: {
         querystring: z.object({
-            name: z.string(),
-            version: z.string(),
+            name: z.string().optional(),
+            version: z.string().optional(),
+            archiveId: z.string().optional(),
         }),
     },
 }
