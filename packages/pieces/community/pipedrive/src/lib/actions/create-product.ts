@@ -9,7 +9,7 @@ import {
 } from '../common';
 import { GetField, GetProductResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const createProductAction = createAction({
 	auth: pipedriveAuth,

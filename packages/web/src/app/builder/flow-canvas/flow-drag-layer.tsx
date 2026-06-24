@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowOperationType,
   StepLocationRelativeToParent,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import {
   DndContext,

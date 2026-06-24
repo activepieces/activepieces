@@ -1,5 +1,5 @@
+import { isNil } from '@activepieces/core-utils';
 import {
-  isNil,
   PlatformWithoutSensitiveData,
   ProjectWithLimits,
   ProjectType,

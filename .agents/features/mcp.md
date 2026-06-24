@@ -5,12 +5,12 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 
 ## Key Files
 - `packages/server/api/src/app/mcp/mcp-service.ts` — server build logic, tool registration, token auth
-- `packages/server/api/src/app/mcp/mcp-server-controller.ts` — HTTP endpoints (get, update, rotate, protocol handler, agent validator)
+- `packages/server/api/src/app/mcp/mcp-server-controller.ts` — HTTP endpoints (get, update, rotate, issue embed token, protocol handler, agent validator)
 - `packages/server/api/src/app/mcp/mcp-entity.ts` — McpServer entity
 - `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
-- `packages/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
-- `packages/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
+- `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
+- `packages/core/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
 - `packages/web/src/app/components/project-settings/mcp-server/index.tsx` — project settings panel for MCP
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-credentials.tsx` — token display and rotate UI
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-flows.tsx` — list of flows exposed as tools
@@ -19,7 +19,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/web/src/app/routes/mcp-authorize/permission-item.tsx` — shared permission-item component used by the MCP OAuth consent screens
 - `packages/web/src/app/routes/embed/embedded-mcp-authorize-dialog.tsx` — in-embed MCP OAuth consent dialog for managed-auth (embedded) users
 - `packages/web/src/app/routes/embed/embedded-mcp-settings-dialog.tsx` — in-embed MCP settings dialog for managed-auth (embedded) users
-- `packages/ee/embed-sdk/src/index.ts` — embed SDK; adds `authorizeMcp()` (in-embed OAuth consent) and `mcpSettings()` (MCP settings dialog) public methods
+- `packages/ee/embed-sdk/src/index.ts` — embed SDK; adds `authorizeMcp()` (in-embed OAuth consent), `mcpSettings()` (MCP settings dialog), and `generateMcpToken()` (mints `{ mcpServerUrl, mcpToken }` for the embed user's project without the OAuth flow) public methods
 - `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/index.tsx` — dialog to add an external MCP server as an agent tool
 - `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/add-mcp-tool-form.tsx` — form inside the dialog
 - `packages/web/src/features/agents/agent-tools/components/mcp-tool.tsx` — inline display of an MCP tool in agent settings
@@ -87,6 +87,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `GET /v1/mcp/:projectId` — get MCP server config + populated flows
 - `POST /v1/mcp/:projectId` — update disabledTools
 - `POST /v1/mcp/:projectId/rotate` — rotate auth token
+- `POST /v1/projects/:projectId/mcp-server/token` — mint a short-lived (15-min, `scopes: ['mcp']`), project-scoped MCP OAuth access token and return `{ mcpServerUrl, mcpToken }`. Secured with `securityAccess.project([USER], READ_MCP, { PARAM })`; reuses `mcpOAuthTokenService.issueInternalAccessToken` (the same path the chat assistant uses internally). Powers the embed SDK's `generateMcpToken()` — a no-OAuth alternative to the `authorizeMcp()` consent flow for hosts that already have an embed session.
 - `POST /v1/mcp/:projectId/http` — StreamableHTTP MCP protocol endpoint (main protocol handler)
 
 External MCP server validation for the **agent piece** lives under `packages/server/api/src/app/agents/` (endpoint: `POST /v1/projects/:projectId/agent-tools/mcp/validate`), not here — it's a probe for URLs the agent will later connect to, not part of the Activepieces-as-MCP-server feature.

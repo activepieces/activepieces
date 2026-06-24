@@ -1,4 +1,5 @@
-import { ApEdition, isNil, PlatformWithoutSensitiveData } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApEdition, PlatformWithoutSensitiveData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { defaultTheme, generateTheme } from '../../flags/theme'
 import { system } from '../../helper/system/system'

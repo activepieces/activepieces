@@ -1,3 +1,4 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   GetFlowTemplateRequestQuery,
   CreateFlowRequest,
@@ -9,7 +10,6 @@ import {
   ListFlowsRequest,
   PopulatedFlow,
   SharedTemplate,
-  SeekPage,
   CountFlowsRequest,
 } from '@activepieces/shared';
 import { toast } from 'sonner';

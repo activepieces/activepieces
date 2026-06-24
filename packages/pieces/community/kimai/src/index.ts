@@ -7,10 +7,10 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { kimaiCreateTimesheetAction } from './lib/actions/create-timesheet';
 import { makeClient } from './lib/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const kimaiAuth = PieceAuth.CustomAuth({
@@ -41,7 +41,7 @@ export const kimaiAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     if (auth) {
       await propsValidation.validateZod(auth, {
-        base_url: z.string().url(),
+        base_url: z.string().check(z.url()),
       });
     }
 

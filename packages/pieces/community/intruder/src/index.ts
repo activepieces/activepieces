@@ -6,7 +6,7 @@ import { searchForATarget } from './lib/actions/search-for-a-target';
 import { searchForAnIssue } from './lib/actions/search-for-an-issue';
 import { searchForAnIssueOccurrence } from './lib/actions/search-for-an-issue-occurrence';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const intruder = createPiece({
   displayName: 'Intruder',

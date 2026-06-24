@@ -4,7 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { openmicAiAuth } from '../common/auth';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 const webhookConfigDescription = `
 ## Post-call Webhook Configuration

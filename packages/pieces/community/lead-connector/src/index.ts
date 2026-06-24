@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { baseUrl, getContacts, leadConnectorHeaders } from './lib/common';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addContactToCampaignAction } from './lib/actions/add-contact-to-campaign';
 import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflow';
 import { addNoteToContactAction } from './lib/actions/add-note-to-contact';

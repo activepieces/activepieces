@@ -3,7 +3,7 @@ import {
   createPiece,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createMemory } from './lib/actions/create-memory';
 import { retrieveMemories } from './lib/actions/retrieve-memories';
 import { deleteMemory } from './lib/actions/delete-memory';

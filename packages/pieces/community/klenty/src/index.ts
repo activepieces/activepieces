@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { addProspectToCampaignAction } from './lib/actions/add-prospect-to-campaign';
 import { createProspectAction } from './lib/actions/create-prospect';

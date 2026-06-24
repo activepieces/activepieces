@@ -8,7 +8,7 @@ import {
 	templateDropdown,
 	templateVariables,
 } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const createVideoFromTemplateAction = createAction({
 	auth: heygenAuth,

@@ -1,6 +1,6 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   ApFlagId,
-  isNil,
   PieceAction,
   PieceActionSettings,
   PieceTrigger,

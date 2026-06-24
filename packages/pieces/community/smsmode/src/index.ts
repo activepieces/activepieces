@@ -2,7 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { smsmodeAuth } from './lib/common/auth';
 import { sendMessage } from './lib/actions/send-message';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const smsmode = createPiece({
   displayName: 'smsmode',

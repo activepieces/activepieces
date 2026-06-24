@@ -1,5 +1,5 @@
+import { ApErrorParams } from '@activepieces/core-utils';
 import {
-  ApErrorParams,
   ApFlagId,
   PlatformWithoutSensitiveData,
   SsoDomainVerification,

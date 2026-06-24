@@ -1,7 +1,7 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/shared";
-import { z } from 'zod';
+import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/pieces-framework";
+import * as z from 'zod/mini'
 import qs from 'qs';
 
 type FormattedRecord = {
@@ -81,25 +81,25 @@ export const tablesCommon = {
   },
 
   createFieldValidations(tableFields: Field[]) {
-    const fieldValidations: Record<string, z.ZodType> = {};
+    const fieldValidations: Record<string, z.core.$ZodType> = {};
     tableFields.forEach(field => {
       switch (field.type) {
         case FieldType.NUMBER:
-          fieldValidations[field.externalId] = z.union([z.number(), z.string().transform(val => {
+          fieldValidations[field.externalId] = z.optional(z.union([z.number(), z.pipe(z.string(), z.transform(val => {
             const num = Number(val);
             if (isNaN(num)) throw new Error(`Invalid number for field "${field.name}"`);
             return num;
-          })]).optional();
+          }))]));
           break;
         case FieldType.DATE:
-          fieldValidations[field.externalId] = z.union([z.date(), z.string().transform(val => {
+          fieldValidations[field.externalId] = z.optional(z.union([z.date(), z.pipe(z.string(), z.transform(val => {
             const date = new Date(val);
             if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${field.name}"`);
             return date;
-          })]).optional();
+          }))]));
           break;
         default:
-          fieldValidations[field.externalId] = z.string().optional();
+          fieldValidations[field.externalId] = z.optional(z.string());
       }
     });
     return fieldValidations;

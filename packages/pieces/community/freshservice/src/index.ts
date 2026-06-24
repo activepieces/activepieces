@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { Buffer } from 'buffer';
 import { createTicket } from './lib/actions/create-ticket';
 import { addNoteToTicket } from './lib/actions/add-note-to-ticket';

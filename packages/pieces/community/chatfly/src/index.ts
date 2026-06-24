@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { sendMessageAction } from "./lib/actions/send-message";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { chatflyAuth } from './lib/auth';
 
 export const chatfly = createPiece({

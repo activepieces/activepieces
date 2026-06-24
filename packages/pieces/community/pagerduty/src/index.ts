@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { acknowledgeIncident } from './lib/actions/acknowledge-incident';
 import { createIncident } from './lib/actions/create-incident';
 import { getIncident } from './lib/actions/get-incident';

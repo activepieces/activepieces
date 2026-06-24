@@ -19,7 +19,10 @@ vi.mock('@/features/flow-runs', () => ({
   },
 }));
 
-const createCodeAction = (name: string, nextAction?: CodeAction): CodeAction => ({
+const createCodeAction = (
+  name: string,
+  nextAction?: CodeAction,
+): CodeAction => ({
   name,
   valid: true,
   displayName: name,

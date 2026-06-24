@@ -24,7 +24,9 @@
     "socket.io-client": "4.8.1",
     "tslib": "2.6.2",
     "undici": "7.24.6",
-    "zod": "4.3.6"
+    "zod": "4.3.6",
+    "@activepieces/core-utils": "workspace:*",
+    "@activepieces/core-formula": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "24.11.0",

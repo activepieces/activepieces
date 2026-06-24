@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { endpoint, kizeoFormsCommon } from '../common';
-import axios from 'axios';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { kizeoFormsAuth } from '../..';
 
 export const downloadCustomExportInItsOriginalFormat = createAction({
@@ -47,7 +47,9 @@ export const downloadCustomExportInItsOriginalFormat = createAction({
       };
     }
 
-    const response = await axios.get(uri, {
+    const response = await httpClient.sendRequest<Buffer>({
+      method: HttpMethod.GET,
+      url: uri,
       headers: headers,
       responseType: 'arraybuffer',
     });
@@ -55,7 +57,7 @@ export const downloadCustomExportInItsOriginalFormat = createAction({
     if (response.status === 200) {
       return (
         'data:application/octet-stream;base64,' +
-        Buffer.from(response.data).toString('base64')
+        Buffer.from(response.body).toString('base64')
       );
     }
 

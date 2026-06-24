@@ -4,7 +4,7 @@ import {
   HttpMethod,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const getPlayerStats = createAction({
   name: 'get_player_stats',
@@ -26,12 +26,7 @@ export const getPlayerStats = createAction({
   },
   async run({ propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      username: z
-        .string()
-        .trim()
-        .min(3)
-        .max(25)
-        .regex(/^[A-Za-z0-9_-]+$/),
+      username: z.string().check(z.trim(), z.minLength(3), z.maxLength(25), z.regex(/^[A-Za-z0-9_-]+$/)),
     });
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,

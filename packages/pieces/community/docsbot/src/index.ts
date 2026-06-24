@@ -6,7 +6,7 @@ import { findBot } from './lib/actions/find-bot';
 import { uploadSourceFile } from './lib/actions/upload-source-file';
 import { docsbotAuth, docsbotCommon } from './lib/common';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const docsbot = createPiece({
   displayName: 'DocsBot',

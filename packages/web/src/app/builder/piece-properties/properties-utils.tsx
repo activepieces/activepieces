@@ -1,9 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { isNil, PropertySettings } from '@activepieces/shared';
+import { PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ControllerRenderProps, UseFormReturn } from 'react-hook-form';
 

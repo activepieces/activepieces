@@ -1,4 +1,5 @@
-import { FolderOperation, FolderOperationType, FolderState, isNil, ProjectState } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { FolderOperation, FolderOperationType, FolderState, ProjectState } from '@activepieces/shared'
 import deepEqual from 'deep-equal'
 
 export const folderDiffService = {

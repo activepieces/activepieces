@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { getDatasetItems } from './lib/actions/get-dataset-items';
 import { runActor } from './lib/actions/run-actor';

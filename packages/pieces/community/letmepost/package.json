@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-letmepost",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -10,8 +10,9 @@
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "devDependencies": {
     "tslib": "^2.3.0"
   }
 }
