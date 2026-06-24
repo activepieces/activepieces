@@ -32,7 +32,8 @@ export function createSandboxPool({ concurrency, basePath, getSettings, log: _lo
                 localExecutionCache(log, basePath, getSettings).provision({
                     pieces: provision.pieces,
                     codeSteps: provision.codes,
-                    fetchArchive: provision.fetchArchive,
+                    publicApiUrl: provision.publicApiUrl,
+                    engineToken: provision.engineToken,
                 }),
             )
             if (provisionError) {

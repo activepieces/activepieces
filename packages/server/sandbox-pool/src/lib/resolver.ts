@@ -14,8 +14,6 @@ import { CodeArtifact, ProvisionInput, ResolveInput, Resolver, ResolveResult, Sa
 export function createResolver({ apiClient, basePath, getSettings, log }: CreateResolverParams): Resolver {
     return {
         async resolve(input: ResolveInput): Promise<ResolveResult> {
-            const fetchArchive = (archiveId: string): Promise<Buffer> => apiClient.getPieceArchive({ archiveId })
-
             let pieces = input.pieces ?? []
             let codes: CodeArtifact[] = []
             let flowVersion: FlowVersion | undefined
@@ -51,7 +49,8 @@ export function createResolver({ apiClient, basePath, getSettings, log }: Create
                 flowVersionId: flowVersion?.id,
                 pieces: uniquePieces,
                 codes,
-                fetchArchive,
+                publicApiUrl: input.publicApiUrl,
+                engineToken: input.engineToken,
             }
             return { kind: 'ready', provision, flowVersion }
         },

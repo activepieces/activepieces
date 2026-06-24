@@ -1,7 +1,7 @@
 import { unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { PiecePackage } from '@activepieces/shared'
-import { CodeArtifact, FetchArchive, SandboxPoolSettings } from '../types'
+import { CodeArtifact, SandboxPoolSettings } from '../types'
 import { cacheUtils } from './cache-paths'
 import { engineInstaller } from './engine/engine-installer'
 import { codeBuilder } from './flow/code/code-builder'
@@ -11,7 +11,8 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
     async provision({
         pieces,
         codeSteps,
-        fetchArchive,
+        publicApiUrl,
+        engineToken,
     }: ProvisionParams): Promise<void> {
         await wideEvent.timed({
             name: 'provision',
@@ -55,7 +56,8 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                             await pieceInstaller(log, basePath, getSettings).install({
                                 pieces: uniquePieces,
                                 includeFilters: true,
-                                fetchArchive,
+                                publicApiUrl,
+                                engineToken,
                             })
                             log.info({
                                 pieces: uniquePieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
@@ -73,5 +75,6 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
 type ProvisionParams = {
     pieces: PiecePackage[]
     codeSteps: CodeArtifact[]
-    fetchArchive: FetchArchive
+    publicApiUrl: string
+    engineToken: string
 }

@@ -2,9 +2,9 @@ import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
 import { groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
-import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, PrivatePiecePackage } from '@activepieces/shared'
+import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
-import { FetchArchive, SandboxPoolSettings } from '../../types'
+import { SandboxPoolSettings } from '../../types'
 import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
 
@@ -15,10 +15,10 @@ const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxPoolSettings) => ({
-    async install({ pieces, includeFilters, fetchArchive }: InstallParams): Promise<void> {
+    async install({ pieces, includeFilters, publicApiUrl, engineToken }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log, fetchArchive, getSettings)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings)
         })
         await Promise.all(installPromises)
     },
@@ -42,7 +42,7 @@ function getCustomPiecesPath(basePath: string, platformId: string, getSettings: 
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, fetchArchive: FetchArchive, getSettings: () => SandboxPoolSettings): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxPoolSettings): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { validPieces, invalidPieces } = partitionValidPieceNames(nonDevPieces)
@@ -80,7 +80,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 path: rootWorkspace,
             })
 
-            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, fetchArchive)
+            await saveBundlesToDiskIfNotCached(rootWorkspace, piecesToInstall, bundleSource)
 
             await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
                 rootWorkspace,
@@ -207,26 +207,6 @@ function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getS
     })
 }
 
-async function savePackageArchivesToDiskIfNotCached(
-    rootWorkspace: string,
-    pieces: PiecePackage[],
-    fetchArchive: FetchArchive,
-): Promise<void> {
-    const saveToDiskJobs = pieces.map(async (piece) => {
-        if (piece.packageType !== PackageType.ARCHIVE) {
-            return
-        }
-        const archivePath = getPackageArchivePathForPiece(rootWorkspace, piece)
-        if (await fileSystemUtils.fileExists(archivePath)) {
-            return
-        }
-        await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
-        const archive = await fetchArchive(piece.archiveId)
-        await writeFile(archivePath, archive)
-    })
-    await Promise.all(saveToDiskJobs)
-}
-
 async function createRootPackageJson({ path }: { path: string }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
@@ -249,11 +229,36 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
         'name': `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
         'version': `${piecePackage.pieceVersion}`,
         'dependencies': {
-            [piecePackage.pieceName]: piecePackage.packageType === PackageType.REGISTRY ? piecePackage.pieceVersion : getPackageArchivePathForPiece(rootWorkspace, piecePackage),
+            [piecePackage.pieceName]: bundleTgzPath(rootWorkspace, piecePackage),
         },
     }
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
     await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
+}
+
+function bundleTgzPath(rootWorkspace: string, piece: PiecePackage): string {
+    return join(piecePath(rootWorkspace, piece), 'bundle.tgz')
+}
+
+// Downloads each piece tarball from the engine bundle endpoint (which 307-redirects to npm /
+// signed-S3, or streams the custom archive) to a local .tgz. We download here — rather than handing
+// the URL to `bun install` — because bun derives a cache directory name from the dependency spec,
+// and a long signed-S3 / engine-token URL overflows the filesystem name limit (ENAMETOOLONG).
+// `fetch` follows the redirect and carries the engine token in the Authorization header.
+async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: PiecePackage[], { publicApiUrl, engineToken }: BundleSource): Promise<void> {
+    await Promise.all(pieces.map(async (piece) => {
+        const bundlePath = bundleTgzPath(rootWorkspace, piece)
+        if (await fileSystemUtils.fileExists(bundlePath)) {
+            return
+        }
+        const url = `${publicApiUrl}v1/engine/pieces/bundle?name=${encodeURIComponent(piece.pieceName)}&version=${encodeURIComponent(piece.pieceVersion)}`
+        const response = await fetch(url, { headers: { Authorization: `Bearer ${engineToken}` } })
+        if (!response.ok) {
+            throw new Error(`Failed to fetch piece bundle ${piece.pieceName}@${piece.pieceVersion}: ${response.status} ${response.statusText}`)
+        }
+        await fileSystemUtils.threadSafeMkdir(dirname(bundlePath))
+        await writeFile(bundlePath, Buffer.from(await response.arrayBuffer()))
+    }))
 }
 
 async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {
@@ -301,14 +306,16 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
     await Promise.all(writeToDiskJobs)
 }
 
-function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: PrivatePiecePackage): string {
-    return join(piecePath(rootWorkspace, piecePackage), `${piecePackage.archiveId}.tgz`)
-}
-
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
-    fetchArchive: FetchArchive
+    publicApiUrl: string
+    engineToken: string
+}
+
+type BundleSource = {
+    publicApiUrl: string
+    engineToken: string
 }
 
 type PieceInstallationResult = {

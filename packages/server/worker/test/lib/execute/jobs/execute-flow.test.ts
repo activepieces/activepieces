@@ -85,7 +85,7 @@ function makeMockContext(opts?: { resolveResult?: unknown, apiOverrides?: Record
         resolve: vi.fn().mockResolvedValue(
             opts?.resolveResult ?? {
                 kind: 'ready',
-                provision: { platformId: 'plat-1', pieces: [], codes: [], fetchArchive: vi.fn() },
+                provision: { platformId: 'plat-1', pieces: [], codes: [], publicApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' },
                 flowVersion: makeFlowVersion(),
             },
         ),

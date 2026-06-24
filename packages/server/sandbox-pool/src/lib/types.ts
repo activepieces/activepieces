@@ -15,6 +15,8 @@ export type Resolver = {
 
 export type ResolveInput = {
     platformId: string
+    publicApiUrl: string
+    engineToken: string
     flow?: { id: string, versionId: string, projectId: string }
     pieces?: PiecePackage[]
 }
@@ -43,20 +45,19 @@ export type ExecuteParams = {
     provision: ProvisionInput
 }
 
-// The Resolver's output and the pool's input — everything the pool needs to materialize a sandbox
-// WITHOUT an app connection. `fetchArchive` is the narrow, transport-agnostic provision-fetch seam:
-// it pulls a private-piece archive on a disk miss only. LOCAL backs it with apiClient.getPieceArchive
-// (in-process); GCP_CLOUD_RUN backs it with a signed-S3 GET. The pool depends on this function, never
-// on WorkerToApiContract.
+// The Resolver's output and the pool's input. The pool installs each piece straight from a link: it
+// builds `${publicApiUrl}v1/engine/pieces/bundle?name=&version=&token=` per piece and hands that URL
+// to `bun install`, which follows the endpoint's redirect to npm / signed-S3 (or streams the custom
+// archive). No bytes cross the worker socket and the pool never imports WorkerToApiContract; the link
+// is publicApiUrl-based so it is reachable from a remote pool (Cloud Run). See ADR 0002.
 export type ProvisionInput = {
     platformId: string
     flowVersionId?: string
     pieces: PiecePackage[]
     codes: CodeArtifact[]
-    fetchArchive: FetchArchive
+    publicApiUrl: string
+    engineToken: string
 }
-
-export type FetchArchive = (archiveId: string) => Promise<Buffer>
 
 export type RuntimeExecutionResult = EngineResponse<unknown> & {
     logs: string | undefined

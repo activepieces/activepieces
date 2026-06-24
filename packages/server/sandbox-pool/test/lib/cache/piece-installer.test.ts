@@ -72,8 +72,8 @@ const fakeLog = {
     child: vi.fn().mockReturnThis(),
 } as unknown as ApLogger
 
-// REGISTRY pieces never call fetchArchive; ARCHIVE pieces do (asserted in the archive test).
-const fakeFetchArchive = vi.fn().mockResolvedValue(Buffer.from('tgz'))
+// Every piece is installed from its bundle link; the dependency value is the engine bundle endpoint.
+const bundleSource = { publicApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' }
 
 const fakeGetSettings = () => ({
     EXECUTION_MODE: 'UNSANDBOXED',
@@ -93,6 +93,15 @@ beforeEach(async () => {
     testWorkspace = join(tmpdir(), `piece-installer-test-${randomUUID()}`)
     await mkdir(testWorkspace, { recursive: true })
     vi.clearAllMocks()
+    // The installer downloads each piece tarball from the bundle endpoint via fetch.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: async () => new TextEncoder().encode('tgz').buffer,
+    }))
+})
+
+afterEach(() => {
+    vi.unstubAllGlobals()
 })
 
 afterEach(async () => {
@@ -108,7 +117,7 @@ describe('pieceInstaller', () => {
 
         mockInstall.mockResolvedValueOnce({ output: '' })
 
-        await installer.install({ pieces: [piece1, piece2], includeFilters: true, fetchArchive: fakeFetchArchive })
+        await installer.install({ pieces: [piece1, piece2], includeFilters: true, ...bundleSource })
 
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(readyFilePath(piece1))).toBe(true)
@@ -125,7 +134,7 @@ describe('pieceInstaller', () => {
             .mockResolvedValueOnce({ output: '' })                           // good individual
             .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // bad individual
 
-        const error = await installer.install({ pieces: [good, bad], includeFilters: false, fetchArchive: fakeFetchArchive }).catch(e => e as Error)
+        const error = await installer.install({ pieces: [good, bad], includeFilters: false, ...bundleSource }).catch(e => e as Error)
 
         expect(error).toBeInstanceOf(Error)
         expect(error.message).toContain('@activepieces/piece-bad@1.0.0')
@@ -146,7 +155,7 @@ describe('pieceInstaller', () => {
             .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-x individual
             .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-y individual
 
-        const error = await installer.install({ pieces: [piece1, piece2], includeFilters: false, fetchArchive: fakeFetchArchive }).catch(e => e as Error)
+        const error = await installer.install({ pieces: [piece1, piece2], includeFilters: false, ...bundleSource }).catch(e => e as Error)
 
         expect(error).toBeInstanceOf(Error)
         expect(error.message).toContain('@activepieces/piece-x@1.0.0')
@@ -163,7 +172,7 @@ describe('pieceInstaller', () => {
 
         mockInstall.mockRejectedValueOnce(new Error('install failure'))
 
-        await expect(installer.install({ pieces: [piece], includeFilters: true, fetchArchive: fakeFetchArchive })).rejects.toThrow('install failure')
+        await expect(installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })).rejects.toThrow('install failure')
 
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
@@ -177,30 +186,28 @@ describe('pieceInstaller', () => {
         await writeFile(join(pieceDir, 'ready'), 'true')
 
         const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
-        await installer.install({ pieces: [piece], includeFilters: true, fetchArchive: fakeFetchArchive })
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
 
         expect(mockInstall).not.toHaveBeenCalled()
     })
 
-    it('archive piece installs through bun with a unique suffixed workspace name pointing at its tgz', async () => {
+    it('archive piece installs through bun with a unique suffixed workspace name pointing at its bundle link', async () => {
         const piece = makeArchivePiece('@acme/piece-sample', '0.3.3')
         const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
         mockInstall.mockResolvedValueOnce({ output: '' })
 
-        await installer.install({ pieces: [piece], includeFilters: true, fetchArchive: fakeFetchArchive })
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
 
-        // The archive is downloaded once and installed through the shared bun workspace.
-        expect(fakeFetchArchive).toHaveBeenCalledOnce()
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(readyFilePath(piece))).toBe(true)
 
         // The folder's package.json carries the unique `<pieceName>-<pieceVersion>` workspace name
-        // (never the raw piece name) and depends on the saved .tgz — so multiple cached versions of
-        // the same piece can never collide on a bun workspace name.
+        // (never the raw piece name) and depends on the locally downloaded bundle.tgz — so multiple
+        // cached versions of the same piece can never collide on a bun workspace name.
         const manifest = JSON.parse(await readFile(join(pieceDirPath(piece), 'package.json'), 'utf8'))
         expect(manifest.name).toBe('@acme/piece-sample-0.3.3')
-        expect(manifest.dependencies['@acme/piece-sample']).toContain('.tgz')
+        expect(manifest.dependencies['@acme/piece-sample']).toContain('bundle.tgz')
     })
 
     it('skips pieces whose name is a relative path — they never reach the shared bun workspace', async () => {
@@ -213,7 +220,7 @@ describe('pieceInstaller', () => {
 
         mockInstall.mockResolvedValueOnce({ output: '' })
 
-        await installer.install({ pieces: [good, poison], includeFilters: true, fetchArchive: fakeFetchArchive })
+        await installer.install({ pieces: [good, poison], includeFilters: true, ...bundleSource })
 
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(mockInstall.mock.calls[0]?.[0].filtersPath).toEqual([
@@ -226,7 +233,7 @@ describe('pieceInstaller', () => {
         const poison = makePiece('../../../common/pieces/@activepieces/piece-algolia', '0.0.3')
         const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
-        await installer.install({ pieces: [poison], includeFilters: true, fetchArchive: fakeFetchArchive })
+        await installer.install({ pieces: [poison], includeFilters: true, ...bundleSource })
 
         expect(mockInstall).not.toHaveBeenCalled()
     })
@@ -240,7 +247,7 @@ describe('pieceInstaller', () => {
 
         mockInstall.mockResolvedValueOnce({ output: '' })
 
-        await installer.install({ pieces: [goodA, poison1, goodB, poison2], includeFilters: true, fetchArchive: fakeFetchArchive })
+        await installer.install({ pieces: [goodA, poison1, goodB, poison2], includeFilters: true, ...bundleSource })
 
         expect(mockInstall).toHaveBeenCalledOnce()
         const filtersPath = mockInstall.mock.calls[0]?.[0].filtersPath as string[]
@@ -262,7 +269,7 @@ describe('pieceInstaller', () => {
             .mockResolvedValueOnce({ output: '' })
 
         // Use includeFilters: false so the batch call has no filters
-        await installer.install({ pieces: [piece1, piece2], includeFilters: false, fetchArchive: fakeFetchArchive })
+        await installer.install({ pieces: [piece1, piece2], includeFilters: false, ...bundleSource })
 
         expect(mockInstall).toHaveBeenCalledTimes(3)
 

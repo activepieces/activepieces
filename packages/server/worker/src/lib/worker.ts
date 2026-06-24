@@ -1,7 +1,7 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { createResolver, Runtime, warmupPieces } from '@activepieces/sandbox-pool'
+import { createResolver, Runtime } from '@activepieces/sandbox-pool'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
@@ -63,7 +63,6 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
-            void warmupPiecesOnStartup(apiClient)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
             })
@@ -340,35 +339,6 @@ async function buildSandboxInfo(): Promise<SandboxInformation[]> {
         busy: executor.busy,
         memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(executor.pid),
     })))
-}
-
-async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<void> {
-    const { data: pieces, error } = await tryCatch(() => apiClient.getUsedPieces({}))
-    if (error) {
-        logger.error({ error }, 'Failed to fetch used pieces for warmup')
-        return
-    }
-    if (!pieces || pieces.length === 0) {
-        logger.info('No pieces to warm up')
-        return
-    }
-    logger.info({ count: pieces.length }, 'Starting piece cache warmup')
-    const { error: installError } = await tryCatch(() =>
-        warmupPieces({
-            pieces,
-            basePath: sandboxConfig.getCacheBasePath(),
-            getSettings: () => sandboxConfig.getSandboxPoolSettings(),
-            log: logger,
-            apiClient,
-        }),
-    )
-    if (installError) {
-        logger.error({ error: installError }, 'Failed to install pieces during startup warmup')
-    }
-    else {
-        void tryCatch(() => apiClient.markPieceAsUsed({ pieces }))
-    }
-    logger.info({ count: pieces.length }, 'Piece cache warmup complete')
 }
 
 function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {

@@ -1,13 +1,15 @@
 
-import { FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { engineRunCallbackService } from '../flows/flow-run/engine-run-callback-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { pieceBundle } from '../pieces/piece-bundle'
 
 export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
 
@@ -35,6 +37,35 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
             projectId: request.principal.projectId,
         })
         return flowVersion
+    })
+
+    // The pool downloads this with the engine token in the Authorization header (Bearer) and follows
+    // the redirect. The engine token is platform-scoped, which scopes custom-piece resolution.
+    app.get('/pieces/bundle', PieceBundleRequest, async (request, reply) => {
+        if (request.principal.type !== PrincipalType.ENGINE) {
+            return reply.status(StatusCodes.UNAUTHORIZED).send()
+        }
+        const resolution = await pieceBundle(request.log).resolve({
+            name: request.query.name,
+            version: request.query.version,
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+        })
+        if (resolution.type === 'not-found') {
+            return reply.status(StatusCodes.NOT_FOUND).send()
+        }
+        if (resolution.type === 'redirect') {
+            return reply.status(StatusCodes.TEMPORARY_REDIRECT).header('Location', resolution.url).send()
+        }
+        const { data } = await fileService(request.log).getDataOrThrow({
+            fileId: resolution.archiveId,
+            projectId: undefined,
+            type: FileType.PACKAGE_ARCHIVE,
+        })
+        return reply
+            .status(StatusCodes.OK)
+            .header('Content-Type', 'application/octet-stream')
+            .send(data)
     })
 
     app.post('/run-progress', RunProgressRequest, async (request, reply) => {
@@ -89,6 +120,18 @@ const GetLockedVersionRequest = {
         response: {
             [StatusCodes.OK]: FlowVersion,
         },
+    },
+}
+
+const PieceBundleRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        querystring: z.object({
+            name: z.string(),
+            version: z.string(),
+        }),
     },
 }
 
