@@ -24,6 +24,7 @@ const environment = system.get(AppSystemProp.ENVIRONMENT)
 const ENROLL_ATTEMPT_TTL_SECONDS = 300
 const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
 const REFRESH_CLAIM_TTL_SECONDS = 60
+const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
 
@@ -70,7 +71,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         else {
             await distributedStore.delete(getPlatformPlanNameKey(platformId))
         }
-        await distributedStore.put(getBillingEnforcedKey(platformId), updatedPlatformPlan.billingEnforced === true)
+        await distributedStore.put(getBillingEnforcedKey(platformId), updatedPlatformPlan.billingEnforced === true, BILLING_ENFORCED_TTL_SECONDS)
         return updatedPlatformPlan
     },
     async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
