@@ -4,8 +4,8 @@ import sharp from 'sharp';
 import jimp from 'jimp';
 import * as mime from 'mime-types';
 
-export const convertHeif = createAction({
-  name: 'convert_heif',
+export const convertImageFormat = createAction({
+  name: 'convert_image_format',
   displayName: 'Image Conversion Helper',
   description: 'Converts a image to supported formats',
   props: {
@@ -29,8 +29,7 @@ export const convertHeif = createAction({
     }),
     resultFileName: Property.ShortText({
       displayName: 'Result File Name',
-      description:
-        'Specifies the output file name for the result image (without extension).',
+      description: 'Specifies the output file name for the result image (without extension).',
       required: false,
     }),
   },
@@ -41,40 +40,47 @@ export const convertHeif = createAction({
       ? mime.lookup(image.extension) || 'application/octet-stream'
       : mime.lookup(image.filename || '') || 'application/octet-stream';
 
-    const isHeic =
-      sourceMimetype === 'image/heic' || sourceMimetype === 'image/heif';
+    let inputData: Buffer;
 
-    const decodedBuffer: Buffer = isHeic
-      ? Buffer.from(await convert({ buffer: image.data, format: 'JPEG', quality: 1 }))
-      : Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data);
-
-    const extensionMap: Record<string, string> = {
-      JPEG: 'jpg',
-      PNG: 'png',
-      TIFF: 'tiff',
-      BMP: 'bmp',
-      AVIF: 'avif',
-    };
-
-    const jimpMimeMap: Record<string, string> = {
-      JPEG: jimp.MIME_JPEG,
-      PNG: jimp.MIME_PNG,
-      TIFF: jimp.MIME_TIFF,
-      BMP: jimp.MIME_BMP,
-    };
+    switch (sourceMimetype) {
+      case 'image/heic':
+      case 'image/heif':
+        inputData = Buffer.from(await convert({ buffer: image.data, format: 'JPEG', quality: 1 }));
+        break;
+      default:
+        inputData = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data);
+    }
 
     let outputData: Buffer;
+    let outputFileName: string;
 
     switch (outputFormat) {
       case 'AVIF':
-        outputData = await sharp(decodedBuffer).avif().toBuffer();
+        outputData = await sharp(inputData).avif().toBuffer();
+        outputFileName = (resultFileName ?? 'image') + '.avif';
         break;
-      case 'JPEG':
-      case 'PNG':
-      case 'TIFF':
+      case 'JPEG': {
+        const jimpImage = await jimp.read(inputData);
+        outputData = await jimpImage.getBufferAsync(jimp.MIME_JPEG);
+        outputFileName = (resultFileName ?? 'image') + '.jpg';
+        break;
+      }
+      case 'PNG': {
+        const jimpImage = await jimp.read(inputData);
+        outputData = await jimpImage.getBufferAsync(jimp.MIME_PNG);
+        outputFileName = (resultFileName ?? 'image') + '.png';
+        break;
+      }
+      case 'TIFF': {
+        const jimpImage = await jimp.read(inputData);
+        outputData = await jimpImage.getBufferAsync(jimp.MIME_TIFF);
+        outputFileName = (resultFileName ?? 'image') + '.tiff';
+        break;
+      }
       case 'BMP': {
-        const jimpImage = await jimp.read(decodedBuffer);
-        outputData = await jimpImage.getBufferAsync(jimpMimeMap[outputFormat]);
+        const jimpImage = await jimp.read(inputData);
+        outputData = await jimpImage.getBufferAsync(jimp.MIME_BMP);
+        outputFileName = (resultFileName ?? 'image') + '.bmp';
         break;
       }
       default:
@@ -82,7 +88,7 @@ export const convertHeif = createAction({
     }
 
     const file = await context.files.write({
-      fileName: (resultFileName ?? 'image') + '.' + extensionMap[outputFormat],
+      fileName: outputFileName,
       data: outputData,
     });
 
