@@ -1,6 +1,6 @@
 import { isNil, Nullable, PlatformUsageMetric } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits } from '../../management/platform'
+import { AiCreditsAutoTopUpState, AutumnFeatureId, PlanName, PlatformPlanWithOnlyLimits } from '../../management/platform'
 import { PiecesFilterType } from '../../management/project'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
@@ -36,14 +36,20 @@ export const CreateCheckoutSessionParamsSchema = z.object({
 })
 export type CreateSubscriptionParams = z.infer<typeof CreateCheckoutSessionParamsSchema>
 
-// Values MUST equal the Autumn consumable feature ids — the request `creditType` is forwarded verbatim as
-// the Autumn `featureId` for both manual top-up (attach featureQuantities) and native auto-top-up.
-export const CreditType = z.enum(['apCredits', 'appSumoAiCredits'])
-export type CreditType = z.infer<typeof CreditType>
+// The subset of feature ids a customer can purchase as a top-up. apCredits/appSumoAiCredits today; the
+// non-consumable one-time limits (users/projects/active-flows) can join later. A strict subset of
+// AutumnFeatureId by construction; whether a given plan actually offers a top-up for one of these is decided
+// per-plan at runtime.
+export const TOPPABLE_FEATURE_IDS = [
+    AutumnFeatureId.AP_CREDITS,
+    AutumnFeatureId.APP_SUMO_AI_CREDITS,
+] as const
+export const ToppableFeatureId = z.enum(TOPPABLE_FEATURE_IDS)
+export type ToppableFeatureId = z.infer<typeof ToppableFeatureId>
 
 export const CreateAICreditCheckoutSessionParamsSchema = z.object({
     credits: z.number(),
-    creditType: CreditType.optional(),
+    featureId: ToppableFeatureId.optional(),
 })
 export type CreateAICreditCheckoutSessionParamsSchema = z.infer<typeof CreateAICreditCheckoutSessionParamsSchema>
 
@@ -73,11 +79,11 @@ export const UpdateAICreditsAutoTopUpParamsSchema = z.union([
         minThreshold: z.number(),
         creditsToAdd: z.number(),
         maxMonthlyLimit: Nullable(z.number()),
-        creditType: CreditType.optional(),
+        featureId: ToppableFeatureId,
     }),
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.DISABLED),
-        creditType: CreditType.optional(),
+        featureId: ToppableFeatureId,
     }),
 ])
 export type UpdateAICreditsAutoTopUpParamsSchema = z.infer<typeof UpdateAICreditsAutoTopUpParamsSchema>

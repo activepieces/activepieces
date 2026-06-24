@@ -1,6 +1,7 @@
 import {
   UpdateAICreditsAutoTopUpParamsSchema,
   AiCreditsAutoTopUpState,
+  ToppableFeatureId,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -24,6 +25,7 @@ import { billingMutations } from '../../hooks/billing-hooks';
 interface AutoTopUpConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  featureId: ToppableFeatureId;
   currentThreshold?: number | null;
   currentCreditsToAdd?: number | null;
   currentMaxMonthlyLimit?: number | null;
@@ -33,6 +35,7 @@ interface AutoTopUpConfigDialogProps {
 export function AutoTopUpConfigDialog({
   isOpen,
   onOpenChange,
+  featureId,
   currentThreshold,
   currentCreditsToAdd,
   currentMaxMonthlyLimit,
@@ -58,6 +61,7 @@ export function AutoTopUpConfigDialog({
       creditsToAdd: creditsToAdd,
       maxMonthlyLimit: maxMonthlyLimit,
       state: AiCreditsAutoTopUpState.ENABLED,
+      featureId,
     };
 
     const onSuccess = () => {

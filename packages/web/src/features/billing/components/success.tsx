@@ -1,30 +1,64 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, TrendingUp, TrendingDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
+import { platformHooks } from '@/hooks/platform-hooks';
+
+import { platformBillingApi } from '../api/billing-plans-api';
+import { billingKeys } from '../hooks/billing-hooks';
+
+const FINALIZE_POLLS = 3;
+const FINALIZE_INTERVAL_MS = 2500;
+const REDIRECT_DELAY_MS = 5000;
 
 export const Success = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
-  const [countdown, setCountdown] = useState(5);
 
   const action = searchParams.get('action') || '';
 
+  // No webhooks: the Stripe→Autumn sync is async, so let React Query poll the subscription a few times after
+  // the redirect until the new entitlements land. `dataUpdateCount` lives on the query object, so the
+  // stop-after-N condition needs no counter state or effect.
+  const { isPending: finalizing } = useQuery({
+    queryKey: billingKeys.platformSubscription(platform.id),
+    queryFn: platformBillingApi.getSubscriptionInfo,
+    refetchInterval: (query) =>
+      query.state.dataUpdateCount >= FINALIZE_POLLS
+        ? false
+        : FINALIZE_INTERVAL_MS,
+  });
+
+  // The plan/flag caches only need to be fresh when the user leaves this page, so invalidate them in the
+  // navigation handler rather than on a poll timer.
+  const leave = useCallback(
+    (path: string) => {
+      queryClient.invalidateQueries({ queryKey: ['platform'] });
+      queryClient.invalidateQueries({ queryKey: ['flags'] });
+      navigate(path);
+    },
+    [queryClient, navigate],
+  );
+
+  // Auto-redirect is a timer (an external system), the one case the React docs sanction an effect for: once
+  // the confirmed state is shown, a single timeout sends the user to billing.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          navigate('/platform/setup/billing');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [navigate]);
+    if (finalizing) {
+      return;
+    }
+    const timer = setTimeout(
+      () => leave('/platform/setup/billing'),
+      REDIRECT_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [finalizing, leave]);
 
   const getActionConfig = () => {
     switch (action) {
@@ -82,6 +116,23 @@ export const Success = () => {
   const config = getActionConfig();
   const IconComponent = config.icon;
 
+  if (finalizing) {
+    return (
+      <div className="h-full bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <CardContent className="pt-8 pb-6 px-6">
+            <div className="flex flex-col items-center gap-4">
+              <LoadingSpinner />
+              <p className="text-lg text-muted-foreground">
+                {t('Finalizing your payment…')}
+              </p>
+            </div>
+          </CardContent>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -103,12 +154,12 @@ export const Success = () => {
             </div>
 
             <div className="flex flex-col gap-3 pt-2">
-              <Button onClick={() => navigate('/')} className="w-full">
+              <Button onClick={() => leave('/')} className="w-full">
                 {t('Go to Dashboard')}
               </Button>
 
               <Button
-                onClick={() => navigate('/platform/setup/billing')}
+                onClick={() => leave('/platform/setup/billing')}
                 variant="outline"
                 className="w-full"
               >
@@ -117,9 +168,7 @@ export const Success = () => {
             </div>
 
             <p className="text-xs text-muted-foreground">
-              {t('Redirecting to billing in {countdown} seconds...', {
-                countdown,
-              })}
+              {t('Redirecting to billing shortly...')}
             </p>
           </div>
         </CardContent>

@@ -12,6 +12,7 @@ import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-in
 const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 
 const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
+    [PlanName.FREE]: 5,
     [PlanName.STANDARD]: 5,
     [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 5,
     [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 5,
@@ -42,8 +43,9 @@ async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId:
         return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
     }
     const platformPlanName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
-    // Free cloud platforms have no stored plan name (plan = null); treat them as the standard tier rather
-    // than falling through to DEFAULT, preserving the pre-Autumn free concurrency (free was effectively standard).
+    // A platform with no stored plan name yet (not-yet-enrolled) is treated as the standard tier rather than
+    // falling through to DEFAULT, preserving the pre-Autumn free concurrency (free was effectively standard).
+    // Enrolled free platforms store the 'free' plan name, which maps to the same limit via the table above.
     const limit = isNil(platformPlanName)
         ? PLAN_CONCURRENT_JOBS_LIMITS[PlanName.STANDARD]
         : PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName]

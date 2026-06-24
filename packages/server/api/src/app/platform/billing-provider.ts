@@ -1,9 +1,12 @@
-import { PurchasablePlan } from '@activepieces/shared'
+import { AutoTopUpConfig, AutumnFeatureId, PurchasablePlan } from '@activepieces/shared'
 import { hooksFactory } from '../helper/hooks-factory'
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     listPlans: async () => {
         return []
+    },
+    getTopUpSettings: async () => {
+        return { autoTopUps: [], topUpFeatures: [] }
     },
     createCheckoutSession: async () => {
         return { checkoutUrl: null }
@@ -108,6 +111,7 @@ export type ConfigureAutoTopUpParams = {
 
 export type BillingProvider = {
     listPlans(platformId: string): Promise<PurchasablePlan[]>
+    getTopUpSettings(platformId: string): Promise<{ autoTopUps: AutoTopUpConfig[], topUpFeatures: AutumnFeatureId[] }>
     createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{ checkoutUrl: string | null }>
     getBillingPortalUrl(params: BillingPortalParams): Promise<{ url: string }>
     topUpFeature(params: TopUpFeatureParams): Promise<{ checkoutUrl: string | null }>

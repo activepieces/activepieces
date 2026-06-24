@@ -1,11 +1,14 @@
 import {
   AiCreditsAutoTopUpState,
+  AutoTopUpConfig,
+  AutumnFeatureId,
   isNil,
   PlatformBillingInformation,
+  ToppableFeatureId,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Sparkles, Settings } from 'lucide-react';
+import { Settings, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -18,41 +21,33 @@ import {
 } from '@/components/custom/item';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { isRunningCloudInDevMode } from '@/lib/api';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 
 import { AutoTopUpConfigDialog } from './auto-topup-config-dialog';
-import { PurchaseAICreditsDialog } from './purchase-ai-credits-dialog';
 
 interface AiCreditUsageProps {
   platformSubscription: PlatformBillingInformation;
 }
 
 export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
-  const queryClient = useQueryClient();
-  const { plan, usage } = platformSubscription;
-  const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
-  const [isAutoTopUpDialogOpen, setIsAutoTopUpDialogOpen] = useState(false);
-  const [isAutoTopUpEditing, setIsAutoTopUpEditing] = useState(false);
+  const { usage, autoTopUps, topUpFeatures } = platformSubscription;
 
   const totalCreditsUsed = usage.totalAiCreditsUsed;
   const creditsRemaining = usage.aiCreditsRemaining;
-  const isCloud = window.location.hostname.includes('cloud.activepieces.com');
-  const autoTopUpState =
-    plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED;
 
-  // Top-ups (manual + auto) are paid-plan-only — a free plan has `plan` null. Mirrors the backend gate so
-  // free users don't see controls that would only fail on submit. (This component is already cloud-only.)
-  const canBuyCredits = !isNil(plan.plan);
-  const isAutoTopUpEnabled = autoTopUpState === AiCreditsAutoTopUpState.ENABLED;
-
-  const { mutate: updateAutoTopUp, isPending: isDisablingAutoTopUp } =
-    billingMutations.useUpdateAutoTopUp(queryClient);
-
-  if (!isCloud && !isRunningCloudInDevMode) {
-    return null;
-  }
+  // Top-up availability is plan-driven: a row shows only when the current plan offers a top-up for that
+  // feature (i.e. carries a prepaid item for it), surfaced by the backend as `topUpFeatures`.
+  const canManageApCredits = topUpFeatures.includes(AutumnFeatureId.AP_CREDITS);
+  const canManageAppSumoCredits = topUpFeatures.includes(
+    AutumnFeatureId.APP_SUMO_AI_CREDITS,
+  );
+  const apCreditsConfig = autoTopUps.find(
+    (config) => config.featureId === AutumnFeatureId.AP_CREDITS,
+  );
+  const appSumoConfig = autoTopUps.find(
+    (config) => config.featureId === AutumnFeatureId.APP_SUMO_AI_CREDITS,
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -71,18 +66,15 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             </span>
           </ItemDescription>
         </ItemContent>
-        {canBuyCredits && (
-          <ItemActions>
-            <Button
-              variant="basic"
-              size="sm"
-              onClick={() => setIsPurchaseDialogOpen(true)}
-            >
-              {t('Purchase Credits')}
-            </Button>
-          </ItemActions>
-        )}
       </Item>
+
+      {canManageApCredits && (
+        <AutoTopUpRow
+          featureId={AutumnFeatureId.AP_CREDITS}
+          config={apCreditsConfig}
+          title={t('Auto Top-up')}
+        />
+      )}
 
       {usage.appSumoAiCredits && (
         <Item variant="outline">
@@ -109,72 +101,92 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
         </Item>
       )}
 
-      {(canBuyCredits || isAutoTopUpEnabled) && (
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <Settings />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Auto Top-up')}</ItemTitle>
-            <ItemDescription>
-              {isAutoTopUpEnabled
-                ? buildAutoTopUpSummary(plan)
-                : t('Automatically purchase credits when balance is low.')}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            {isAutoTopUpEnabled && canBuyCredits && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => {
-                  setIsAutoTopUpEditing(true);
-                  setIsAutoTopUpDialogOpen(true);
-                }}
-              >
-                <Settings className="size-4" />
-              </Button>
-            )}
-            <Switch
-              checked={isAutoTopUpEnabled}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  setIsAutoTopUpEditing(false);
-                  setIsAutoTopUpDialogOpen(true);
-                } else {
-                  updateAutoTopUp({ state: AiCreditsAutoTopUpState.DISABLED });
-                }
-              }}
-              disabled={isDisablingAutoTopUp}
-            />
-          </ItemActions>
-        </Item>
+      {canManageAppSumoCredits && (
+        <AutoTopUpRow
+          featureId={AutumnFeatureId.APP_SUMO_AI_CREDITS}
+          config={appSumoConfig}
+          title={t('AppSumo Auto Top-up')}
+        />
       )}
-
-      <PurchaseAICreditsDialog
-        isOpen={isPurchaseDialogOpen}
-        onOpenChange={setIsPurchaseDialogOpen}
-      />
-
-      <AutoTopUpConfigDialog
-        isOpen={isAutoTopUpDialogOpen}
-        onOpenChange={setIsAutoTopUpDialogOpen}
-        isEditing={isAutoTopUpEditing}
-        currentThreshold={plan.aiCreditsAutoTopUpThreshold}
-        currentCreditsToAdd={plan.aiCreditsAutoTopUpCreditsToAdd}
-        currentMaxMonthlyLimit={plan.maxAutoTopUpCreditsMonthly}
-      />
     </div>
   );
 }
 
-function buildAutoTopUpSummary(plan: PlatformBillingInformation['plan']) {
-  if (plan.aiCreditsAutoTopUpThreshold && plan.aiCreditsAutoTopUpCreditsToAdd) {
-    return t('Adds {credits} credits when below {threshold}', {
-      credits: plan.aiCreditsAutoTopUpCreditsToAdd.toLocaleString(),
-      threshold: plan.aiCreditsAutoTopUpThreshold.toLocaleString(),
-    });
-  }
-  return t('Enabled');
+interface AutoTopUpRowProps {
+  featureId: ToppableFeatureId;
+  config?: AutoTopUpConfig;
+  title: string;
+}
+
+function AutoTopUpRow({ featureId, config, title }: AutoTopUpRowProps) {
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const { mutate: updateAutoTopUp, isPending } =
+    billingMutations.useUpdateAutoTopUp(queryClient);
+
+  const enabled = config?.enabled ?? false;
+  const maxMonthlyLimit =
+    config && !isNil(config.maxMonthlyTopUps) && config.quantity
+      ? config.maxMonthlyTopUps * config.quantity
+      : null;
+
+  return (
+    <Item variant="outline">
+      <ItemMedia variant="icon">
+        <Settings />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>{title}</ItemTitle>
+        <ItemDescription>
+          {enabled && !isNil(config)
+            ? t('Adds {credits} credits when below {threshold}', {
+                credits: config.quantity.toLocaleString(),
+                threshold: config.threshold.toLocaleString(),
+              })
+            : t('Automatically purchase credits when balance is low.')}
+        </ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        {enabled && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => {
+              setIsEditing(true);
+              setIsDialogOpen(true);
+            }}
+          >
+            <Settings className="size-4" />
+          </Button>
+        )}
+        <Switch
+          checked={enabled}
+          disabled={isPending}
+          onCheckedChange={(checked) => {
+            if (checked) {
+              setIsEditing(false);
+              setIsDialogOpen(true);
+            } else {
+              updateAutoTopUp({
+                state: AiCreditsAutoTopUpState.DISABLED,
+                featureId,
+              });
+            }
+          }}
+        />
+      </ItemActions>
+      <AutoTopUpConfigDialog
+        key={isDialogOpen ? 'open' : 'closed'}
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        featureId={featureId}
+        isEditing={isEditing}
+        currentThreshold={config?.threshold}
+        currentCreditsToAdd={config?.quantity}
+        currentMaxMonthlyLimit={maxMonthlyLimit}
+      />
+    </Item>
+  );
 }

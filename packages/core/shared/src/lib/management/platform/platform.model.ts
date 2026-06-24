@@ -23,6 +23,7 @@ export const PlatformUsage = z.object({
 export type PlatformUsage = z.infer<typeof PlatformUsage>
 
 export enum PlanName {
+    FREE = 'free',
     STANDARD = 'standard',
     ENTERPRISE = 'enterprise',
     APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
@@ -36,6 +37,38 @@ export enum PlanName {
 export enum AiCreditsAutoTopUpState {
     ENABLED = 'enabled',
     DISABLED = 'disabled',
+}
+
+// The canonical Autumn feature ids. Values MUST equal the matching `platform_plan` column names (camelCase):
+// they are projected onto the plan verbatim and forwarded as Autumn `featureId`s. Keep aligned with the
+// Autumn dashboard.
+export enum AutumnFeatureId {
+    AP_CREDITS = 'apCredits',
+    APP_SUMO_AI_CREDITS = 'appSumoAiCredits',
+    TEAM_PROJECTS_LIMIT = 'teamProjectsLimit',
+    USERS_LIMIT = 'usersLimit',
+    ACTIVE_FLOWS_LIMIT = 'activeFlowsLimit',
+    BILLING_ENFORCED = 'billingEnforced',
+    TABLES_ENABLED = 'tablesEnabled',
+    EVENT_STREAMING_ENABLED = 'eventStreamingEnabled',
+    ENVIRONMENTS_ENABLED = 'environmentsEnabled',
+    ANALYTICS_ENABLED = 'analyticsEnabled',
+    SHOW_POWERED_BY = 'showPoweredBy',
+    AUDIT_LOG_ENABLED = 'auditLogEnabled',
+    EMBEDDING_ENABLED = 'embeddingEnabled',
+    AI_PROVIDERS_ENABLED = 'aiProvidersEnabled',
+    CHAT_ENABLED = 'chatEnabled',
+    DATA_MANIPULATION_ENABLED = 'dataManipulationEnabled',
+    MANAGE_PIECES_ENABLED = 'managePiecesEnabled',
+    MANAGE_TEMPLATES_ENABLED = 'manageTemplatesEnabled',
+    CUSTOM_APPEARANCE_ENABLED = 'customAppearanceEnabled',
+    PROJECT_ROLES_ENABLED = 'projectRolesEnabled',
+    GLOBAL_CONNECTIONS_ENABLED = 'globalConnectionsEnabled',
+    CUSTOM_ROLES_ENABLED = 'customRolesEnabled',
+    API_KEYS_ENABLED = 'apiKeysEnabled',
+    SSO_ENABLED = 'ssoEnabled',
+    SECRET_MANAGERS_ENABLED = 'secretManagersEnabled',
+    SCIM_ENABLED = 'scimEnabled',
 }
 
 export const PlatformPlan = z.object({
@@ -218,11 +251,22 @@ export const PlatformWithoutSensitiveData = z.object({
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 
+export const AutoTopUpConfig = z.object({
+    featureId: z.enum(AutumnFeatureId),
+    enabled: z.boolean(),
+    threshold: z.number(),
+    quantity: z.number(),
+    maxMonthlyTopUps: Nullable(z.number()),
+})
+export type AutoTopUpConfig = z.infer<typeof AutoTopUpConfig>
+
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
     nextBillingDate: z.number(),
     nextBillingAmount: z.number(),
     cancelAt: Nullable(z.number()),
+    autoTopUps: z.array(AutoTopUpConfig),
+    topUpFeatures: z.array(z.enum(AutumnFeatureId)),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

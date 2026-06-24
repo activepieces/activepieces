@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core-utils'
-import { safeHttp } from '@activepieces/server-utils'
-import { PlatformPlanLimits } from '@activepieces/shared'
+import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
+import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan } from '@activepieces/shared'
 import {
     type AttachParams,
     Autumn,
@@ -32,26 +32,17 @@ const CREDENTIALS_CACHE_MAX_ENTRIES = 10000
 const credentialsCache: LRU<ResolvedAutumnCredentials> = lru(CREDENTIALS_CACHE_MAX_ENTRIES, CREDENTIALS_CACHE_TTL_MS)
 
 const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
-// Assumed FREE plan id — NOT yet verified against the Autumn dashboard. Single source of truth for the free
-// plan id (used by both subscribeFreeOnConsole and autumnPlanIdToPlanName); update here once confirmed.
+// Assumed FREE plan id — NOT yet verified against the Autumn dashboard. The free plan id auto-enrolled new
+// platforms attach via the console; update here once confirmed.
 const AUTUMN_FREE_PLAN_ID = 'free'
 
-// Self-serve-purchasable Autumn plan ids. `listPlans` only surfaces these (intersected with what's live and
-// not archived in Autumn), so a checkout can never target enterprise (sales-led) or appsumo (comped) plans.
-// MUST match the Autumn dashboard plan ids.
-const SUPPORTED_PLAN_IDS: readonly string[] = ['standard']
+// Autumn plan-item billing method that marks a feature as purchasable as a prepaid top-up (vs 'usage_based').
+const PREPAID_BILLING_METHOD = 'prepaid'
 
-const AUTUMN_FEATURE = {
-    CREDITS: 'apCredits',
-    APPSUMO_AI_CREDITS: 'appSumoAiCredits',
-    TEAM_PROJECTS_LIMIT: 'teamProjectsLimit',
-    USERS_LIMIT: 'usersLimit',
-    ACTIVE_FLOWS_LIMIT: 'activeFlowsLimit',
-    BILLING_ENFORCED: 'billingEnforced',
-} as const
-
-
-const AUTUMN_FLAG_FEATURES = [
+// The boolean-flag feature ids, used when projecting Autumn flags onto platform-plan limits. The `satisfies`
+// pins each entry to a column that is BOTH a PlatformPlanLimits key AND an AutumnFeatureId value, so this
+// list can't drift from the canonical enum.
+const AUTUMN_FLAG_FEATURE_IDS = [
     'tablesEnabled',
     'eventStreamingEnabled',
     'environmentsEnabled',
@@ -72,7 +63,7 @@ const AUTUMN_FLAG_FEATURES = [
     'ssoEnabled',
     'secretManagersEnabled',
     'scimEnabled',
-] as const satisfies readonly (keyof PlatformPlanLimits)[]
+] as const satisfies readonly (keyof PlatformPlanLimits & `${AutumnFeatureId}`)[]
 
 export const autumnUtils = {
     consoleUrl: AUTUMN_CONSOLE_URL,
@@ -159,21 +150,21 @@ export const autumnUtils = {
     },
     mapEntitlementsToPlanLimits(entitlements: AutumnEntitlements): Partial<PlatformPlanLimits> {
         const flags: Partial<PlatformPlanLimits> = {}
-        for (const feature of AUTUMN_FLAG_FEATURES) {
+        for (const feature of AUTUMN_FLAG_FEATURE_IDS) {
             flags[feature] = entitlements.flags[feature] ?? false
         }
-        const teamProjects = entitlements.balances[AUTUMN_FEATURE.TEAM_PROJECTS_LIMIT]
-        const users = entitlements.balances[AUTUMN_FEATURE.USERS_LIMIT]
-        const activeFlows = entitlements.balances[AUTUMN_FEATURE.ACTIVE_FLOWS_LIMIT]
-        const credits = entitlements.balances[AUTUMN_FEATURE.CREDITS]
+        const teamProjects = entitlements.balances[AutumnFeatureId.TEAM_PROJECTS_LIMIT]
+        const users = entitlements.balances[AutumnFeatureId.USERS_LIMIT]
+        const activeFlows = entitlements.balances[AutumnFeatureId.ACTIVE_FLOWS_LIMIT]
+        const credits = entitlements.balances[AutumnFeatureId.AP_CREDITS]
         return {
             ...flags,
-            plan: autumnPlanIdToStoredPlan(entitlements.planId),
+            plan: entitlements.planId,
             teamProjectsLimit: toProjectedLimit(teamProjects, 0),
             usersLimit: toProjectedLimit(users, null),
             activeFlowsLimit: toProjectedLimit(activeFlows, null),
             includedAiCredits: credits?.granted ?? 0,
-            billingEnforced: entitlements.flags[AUTUMN_FEATURE.BILLING_ENFORCED] ?? false,
+            billingEnforced: entitlements.flags[AutumnFeatureId.BILLING_ENFORCED] ?? false,
         }
     },
     async readCreditsBalance(platformId: string): Promise<CreditsBalanceCache | null> {
@@ -192,22 +183,36 @@ export const autumnUtils = {
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
-        await autumnUtils.ensureEnrolled(log, platformId)
+        // The console (master key) owns the catalog + plan-applicability — including which plans a given AP
+        // image version may purchase — so we send the running version and let it return the applicable set.
+        const response = await safeHttp.axios.post<ConsolePlansEnvelope>(
+            `${AUTUMN_CONSOLE_URL}/api/billing/plans`,
+            { version: apVersionUtil.getCurrentRelease(), platformId },
+            { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+        )
+        return response.data.data
+    },
+    getTopUpSettings: async (platformId: string) => {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
-            return []
+            return { autoTopUps: [], topUpFeatures: [] }
         }
-        const { list } = await client.listPlans()
-        return list
-            .filter((plan) => !plan.archived && !plan.addOn && SUPPORTED_PLAN_IDS.includes(plan.id))
-            .map((plan) => ({
-                id: plan.id,
-                name: plan.name,
-                description: plan.description ?? null,
-                price: plan.price?.amount ?? null,
-                interval: plan.price?.interval ?? null,
-                priceDisplay: plan.price?.display?.primaryText ?? null,
-            }))
+        // Expand the subscribed plan so we can read its items: top-up availability is plan-driven (a feature
+        // is toppable iff the plan carries a prepaid item for it), not a blanket paid/free check.
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
+        const autoTopUps: AutoTopUpConfig[] = (customer.billingControls?.autoTopups ?? []).flatMap((autoTopUp) => {
+            if (!isAutumnFeatureId(autoTopUp.featureId)) {
+                return []
+            }
+            return [{
+                featureId: autoTopUp.featureId,
+                enabled: autoTopUp.enabled,
+                threshold: autoTopUp.threshold,
+                quantity: autoTopUp.quantity,
+                maxMonthlyTopUps: autoTopUp.purchaseLimit?.limit ?? null,
+            }]
+        })
+        return { autoTopUps, topUpFeatures: getToppableFeatureIds(customer) }
     },
     createCheckoutSession: async ({ platformId, planId, successUrl }) => {
         // Enroll first so a customer-scoped client exists (mints a FREE Autumn customer via the console for
@@ -238,9 +243,12 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         // The prepaid one-off item lives ON the customer's plan (alongside the included allotment), so a
         // manual purchase re-attaches that same plan with the prepaid featureQuantity — no separate top-up
         // product. Feature-generic: any prepaid item on the plan (credits today; users/flows/projects later).
-        const customer = await client.getCustomer()
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
+        assertFeatureIsToppable({ customer, featureId })
         const basePlanId = customer.subscriptions.find((subscription) => !subscription.addOn)?.planId
-        assertPlanAllowsTopUp(basePlanId)
+        if (isNil(basePlanId)) {
+            return { checkoutUrl: null }
+        }
         const result = await client.attach({
             planId: basePlanId,
             featureQuantities: [{ featureId, quantity }],
@@ -254,11 +262,12 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (isNil(client)) {
             return {}
         }
-        // Enabling is paid-plan-only; disabling is always allowed. Only fetch the customer when enabling
-        // (needed for both the plan gate and the saved-card check).
-        const customer = enabled ? await client.getCustomer() : null
+        // Enabling requires the plan to offer a top-up for this feature; disabling is always allowed. Only
+        // fetch the customer when enabling (needed for both the plan gate and the saved-card check), and
+        // expand the plan so the gate can read its prepaid items.
+        const customer = enabled ? await client.getCustomer({ expand: ['subscriptions.plan'] }) : null
         if (!isNil(customer)) {
-            assertPlanAllowsTopUp(customer.subscriptions.find((subscription) => !subscription.addOn)?.planId)
+            assertFeatureIsToppable({ customer, featureId })
         }
         await client.updateCustomer({
             billingControls: {
@@ -286,7 +295,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         }
         try {
             const response = await client.track({
-                featureId: AUTUMN_FEATURE.CREDITS,
+                featureId: AutumnFeatureId.AP_CREDITS,
                 value: params.value,
                 idempotencyKey: params.idempotencyKey,
                 properties: { source: params.source, ...params.properties },
@@ -309,7 +318,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         }
         try {
             const response = await client.track({
-                featureId: AUTUMN_FEATURE.APPSUMO_AI_CREDITS,
+                featureId: AutumnFeatureId.APP_SUMO_AI_CREDITS,
                 value: params.value,
                 idempotencyKey: params.idempotencyKey,
                 properties: { ...params.properties },
@@ -353,7 +362,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             return null
         }
         const customer = await client.getCustomer()
-        const balance = customer.balances[AUTUMN_FEATURE.APPSUMO_AI_CREDITS]
+        const balance = customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]
         if (isNil(balance) || balance.unlimited || isNil(balance.granted) || balance.granted <= 0) {
             return null
         }
@@ -361,13 +370,29 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
 })
 
-// Top-ups (manual + auto) are paid-plan-only: a free (or unenrolled) platform must upgrade first, so it
-// can't buy prepaid credits. Narrows basePlanId to a usable string for the subsequent attach.
-function assertPlanAllowsTopUp(basePlanId: string | undefined): asserts basePlanId is string {
-    if (isNil(basePlanId) || basePlanId === AUTUMN_FREE_PLAN_ID) {
+function isAutumnFeatureId(value: string): value is AutumnFeatureId {
+    return Object.values(AutumnFeatureId).some((id) => id === value)
+}
+
+// Top-up availability is plan-driven and per-feature: a feature is toppable iff the customer's base plan
+// carries a prepaid item for it (credits today; users/projects/active-flows can be added by configuring a
+// prepaid item on the plan). Requires the customer to be fetched with `expand: ['subscriptions.plan']`.
+function getToppableFeatureIds(customer: GetCustomerResponse): AutumnFeatureId[] {
+    const basePlan = customer.subscriptions.find((subscription) => !subscription.addOn)?.plan
+    if (isNil(basePlan)) {
+        return []
+    }
+    return basePlan.items
+        .filter((item) => item.price?.billingMethod === PREPAID_BILLING_METHOD)
+        .map((item) => item.featureId)
+        .filter(isAutumnFeatureId)
+}
+
+function assertFeatureIsToppable({ customer, featureId }: { customer: GetCustomerResponse, featureId: string }): void {
+    if (!getToppableFeatureIds(customer).some((id) => id === featureId)) {
         throw new ActivepiecesError({
             code: ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS,
-            params: { message: 'Top-up is only available on paid plans' },
+            params: { message: 'Top-up is not available for this feature on the current plan' },
         })
     }
 }
@@ -416,13 +441,6 @@ function toBalanceCache(balance: Balance): CreditsBalanceCache {
         nextResetAt: balance.nextResetAt,
         syncedAt: Date.now(),
     }
-}
-
-function autumnPlanIdToStoredPlan(planId: string | null): string | null {
-    if (isNil(planId) || planId === AUTUMN_FREE_PLAN_ID) {
-        return null
-    }
-    return planId
 }
 
 function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements {
@@ -524,4 +542,9 @@ type ConsoleBillingCredentials = {
 type ConsoleBillingEnvelope = {
     success: boolean
     data: ConsoleBillingCredentials
+}
+
+type ConsolePlansEnvelope = {
+    success: boolean
+    data: PurchasablePlan[]
 }
