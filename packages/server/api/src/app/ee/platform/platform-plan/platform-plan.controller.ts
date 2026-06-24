@@ -53,16 +53,16 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
     })
 
     // Top-ups (apCredits today; appSumoAiCredits + future users/activeFlows/projects via featureId).
-    fastify.post('/ai-credits/create-checkout-session', ConsumableProductTopupRequest, async (request) => {
+    fastify.post('/consumable-product-topups/checkout', ConsumableProductTopupRequest, async (request) => {
         const { credits, featureId } = request.body
         const { checkoutUrl } = await billingProvider.get(request.log).topUpFeature({
             platformId: request.principal.platform.id,
             featureId: featureId ?? AutumnFeatureId.AP_CREDITS,
             quantity: credits,
         })
-        return { stripeCheckoutUrl: checkoutUrl }
+        return { paymentUrl: checkoutUrl }
     })
-    fastify.post('/ai-credits/auto-topup', UpdateAICreditsAutoTopUpRequest, async (request) => {
+    fastify.post('/consumable-product-topups/auto-topup', ConsumableProductAutoTopupRequest, async (request) => {
         const body = request.body
         const enabled = body.state === AiCreditsAutoTopUpState.ENABLED
         const { setupPaymentUrl } = await billingProvider.get(request.log).configureAutoTopUp({
@@ -73,7 +73,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
             quantity: enabled ? body.creditsToAdd : 0,
             maxMonthlyTopUps: enabled && !isNil(body.maxMonthlyLimit) ? Math.floor(body.maxMonthlyLimit / body.creditsToAdd) : null,
         })
-        return { stripeCheckoutUrl: setupPaymentUrl }
+        return { paymentUrl: setupPaymentUrl }
     })
 }
 
@@ -114,7 +114,7 @@ const ConsumableProductTopupRequest = {
         body: ConsumableProductTopupParams,
         response: {
             [StatusCodes.OK]: z.object({
-                stripeCheckoutUrl: z.string().nullable(),
+                paymentUrl: z.string().nullable(),
             }),
         },
     },
@@ -123,12 +123,14 @@ const ConsumableProductTopupRequest = {
     },
 }
 
-const UpdateAICreditsAutoTopUpRequest = {
+const ConsumableProductAutoTopupRequest = {
     schema: {
         body: ConsumableProductAutoTopupParams,
-        [StatusCodes.OK]: z.object({
-            stripeCheckoutUrl: z.string().optional(),
-        }),
+        response: {
+            [StatusCodes.OK]: z.object({
+                paymentUrl: z.string().optional(),
+            }),
+        },
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),

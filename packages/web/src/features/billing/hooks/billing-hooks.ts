@@ -49,9 +49,9 @@ export const billingMutations = {
   useConsumableProductTopup: (setIsOpen?: (isOpen: boolean) => void) => {
     return useMutation({
       mutationFn: async (params: ConsumableProductTopupParams) => {
-        const { stripeCheckoutUrl } =
+        const { paymentUrl } =
           await platformBillingApi.createConsumableProductTopup(params);
-        window.open(stripeCheckoutUrl, '_blank');
+        window.open(paymentUrl, '_blank');
       },
       onSuccess: () => {
         setIsOpen?.(false);
@@ -67,11 +67,9 @@ export const billingMutations = {
   useUpdateAutoTopUp: (queryClient: QueryClient) => {
     return useMutation({
       mutationFn: async (params: ConsumableProductAutoTopupParams) => {
-        const { stripeCheckoutUrl } = await platformBillingApi.updateAutoTopUp(
-          params,
-        );
-        if (stripeCheckoutUrl) {
-          window.open(stripeCheckoutUrl, '_blank');
+        const { paymentUrl } = await platformBillingApi.updateAutoTopUp(params);
+        if (paymentUrl) {
+          window.open(paymentUrl, '_blank');
         }
       },
       onSuccess: () => {

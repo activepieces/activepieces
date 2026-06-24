@@ -26,14 +26,14 @@ export const platformBillingApi = {
     return api.post<string>('/v1/platform-billing/portal');
   },
   createConsumableProductTopup(params: ConsumableProductTopupParams) {
-    return api.post<{ stripeCheckoutUrl: string }>(
-      '/v1/platform-billing/ai-credits/create-checkout-session',
+    return api.post<{ paymentUrl: string }>(
+      '/v1/platform-billing/consumable-product-topups/checkout',
       params,
     );
   },
   updateAutoTopUp(params: ConsumableProductAutoTopupParams) {
-    return api.post<{ stripeCheckoutUrl?: string }>(
-      '/v1/platform-billing/ai-credits/auto-topup',
+    return api.post<{ paymentUrl?: string }>(
+      '/v1/platform-billing/consumable-product-topups/auto-topup',
       params,
     );
   },
