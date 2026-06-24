@@ -5,14 +5,14 @@ import { fileSystemUtils } from '@activepieces/server-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ApEnvironment } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
-import { SandboxPoolSettings } from '../../types'
+import { SandboxSettings } from '../../types'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 
 const engineExecutablePath = 'dist/packages/engine/main.js'
 const ENGINE_CACHE_ID = nanoid()
 const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
-export const engineInstaller = (_log: ApLogger, getSettings: () => SandboxPoolSettings) => ({
+export const engineInstaller = (_log: ApLogger, getSettings: () => SandboxSettings) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
         // The egress proxy was removed, so there is a single engine bundle (main.js).

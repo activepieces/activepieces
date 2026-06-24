@@ -1,18 +1,22 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { type ApLogger } from '@activepieces/server-utils'
+import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
-import { CodeArtifact, SandboxPoolSettings } from '../../types'
+import { CodeArtifact, SandboxSettings } from '../../types'
 import { pieceCache, PieceNotFoundError } from '../pieces/piece-cache'
 import { flowBundleStore } from './flow-bundle-store'
 import { flowCache } from './flow-cache'
 import { flowSteps } from './flow-steps'
 
-export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
+export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxSettings) => ({
     async resolve({ flow, platformId }: ResolveParams): Promise<ResolvedFlow> {
         // A bundle is an optimization: never let a fetch error fail the run — fall through to resolve.
-        const { data: bundle, error: bundleError } = await tryCatch(() => flowBundleStore(log, apiClient, basePath).tryFetch({
-            flowVersionId: flow.versionId,
-            projectId: flow.projectId,
+        // Timed as flowBundleDownloadMs so a run's breakdown shows the bundle fetch cost.
+        const { data: bundle, error: bundleError } = await tryCatch(() => wideEvent.timed({
+            name: 'flowBundleDownload',
+            fn: () => flowBundleStore(log, apiClient, basePath).tryFetch({
+                flowVersionId: flow.versionId,
+                projectId: flow.projectId,
+            }),
         }))
         if (bundleError) {
             log.warn({ error: String(bundleError), flow: { id: flow.id } }, 'Flow bundle fetch failed, falling back to resolve')
@@ -91,7 +95,7 @@ type ResolvePiecesParams = {
     log: ApLogger
     apiClient: WorkerToApiContract
     basePath: string
-    getSettings: () => SandboxPoolSettings
+    getSettings: () => SandboxSettings
 }
 
 type BuildPublishBundleParams = {

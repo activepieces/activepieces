@@ -1,4 +1,4 @@
-export { createSandboxPool } from './lib/local-pool-runtime'
+export { createSandboxRuntime } from './lib/sandbox'
 export { createResolver } from './lib/resolver'
 
 export type {
@@ -7,12 +7,10 @@ export type {
     ResolveInput,
     ResolveResult,
     ExecuteParams,
-    ExecuteRequest,
-    ExecuteResponse,
     ProvisionInput,
     RuntimeExecutionResult,
     RuntimeExecutorInfo,
-    SandboxPoolSettings,
-    SandboxPoolDeps,
+    SandboxSettings,
+    SandboxDeps,
     CodeArtifact,
 } from './lib/types'

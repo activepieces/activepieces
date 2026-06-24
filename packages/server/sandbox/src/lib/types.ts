@@ -1,13 +1,12 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { EngineOperation, EngineOperationType, EngineResponse, FlowVersion, FlowVersionState, NetworkMode, PiecePackage, RuntimeKind, SourceCode } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, EngineResponse, FlowVersion, FlowVersionState, NetworkMode, PiecePackage, SourceCode } from '@activepieces/shared'
 
-// The seam has two halves, split along the line "what varies by Runtime Kind":
-//   - Resolver (kind-INDEPENDENT, worker-side, owns the only apiClient): turns a job into a
-//     fully-materialized `ProvisionInput` — resolve the flowVersion, piece metadata, and a ready
-//     (compiled) flow bundle, disabling the flow on a missing piece. Always runs before `execute`.
-//   - Runtime (kind-DEPENDENT): a single `execute` whose transport varies — in-process for LOCAL,
-//     POST /execute for GCP_CLOUD_RUN. It never reaches the app; it materializes the passed
-//     ProvisionInput, acquires a slot, runs one operation, and releases (or invalidates on throw).
+// Two roles:
+//   - Resolver (worker-side, owns the only apiClient): turns a job into a fully-materialized
+//     `ProvisionInput` — resolve the flowVersion, piece metadata, and a ready (compiled) flow bundle,
+//     disabling the flow on a missing piece. Always runs before `execute`.
+//   - Runtime: the in-process single sandbox box. It never reaches the app; it materializes the passed
+//     ProvisionInput, runs one engine operation, and releases (or invalidates on throw).
 
 export type Resolver = {
     resolve(input: ResolveInput): Promise<ResolveResult>
@@ -27,8 +26,7 @@ export type ResolveResult =
     | { kind: 'disabled' }
 
 export type Runtime = {
-    readonly kind: RuntimeKind
-    // Materialize provision, run one engine operation, return its result. Owns the slot lifecycle
+    // Materialize provision, run one engine operation, return its result. Owns the box lifecycle
     // internally: acquire -> run -> release on success / invalidate on throw. Re-raises the sandbox
     // ActivepiecesError codes (timeout / memory / log-size) that handlers already catch.
     execute(params: ExecuteParams): Promise<RuntimeExecutionResult>
@@ -63,23 +61,6 @@ export type RuntimeExecutionResult = EngineResponse<unknown> & {
     logs: string | undefined
 }
 
-// The /execute wire contract between the worker's cloud-run-runtime client and the Pool Server.
-// The body is self-contained (the remote pool has no app connection): settings travel per request.
-// See ADR 0003.
-export type ExecuteRequest = {
-    operationType: EngineOperationType
-    operation: EngineOperation
-    timeoutInSeconds: number
-    provision: ProvisionInput
-    settings: SandboxPoolSettings
-}
-
-// A thrown ActivepiecesError is round-tripped as { ok: false, errorCode, params } so the worker can
-// reconstruct and re-raise it — handlers branch on the same ErrorCode as for LOCAL.
-export type ExecuteResponse =
-    | { ok: true, result: RuntimeExecutionResult }
-    | { ok: false, errorCode: string, params?: unknown }
-
 export type RuntimeExecutorInfo = {
     sandboxId: string
     boxId: number
@@ -98,10 +79,10 @@ export type CodeArtifact = {
 
 // Structural subset of WorkerSettingsResponse used by the local-pool runtime tree.
 // Field names intentionally match WorkerSettingsResponse so workerSettings.getSettings is
-// directly assignable to () => SandboxPoolSettings without wrapping.
+// directly assignable to () => SandboxSettings without wrapping.
 // ENVIRONMENT and EXECUTION_MODE are strings (matching the Zod schema) — comparisons
 // against ApEnvironment / ExecutionMode enum values still work because enum values are strings.
-export type SandboxPoolSettings = {
+export type SandboxSettings = {
     EXECUTION_MODE: string
     DEV_PIECES: string[]
     ENVIRONMENT: string
@@ -115,8 +96,8 @@ export type SandboxPoolSettings = {
     SSRF_ALLOW_LIST: string[]
 }
 
-export type SandboxPoolDeps = {
+export type SandboxDeps = {
     basePath: string
-    getSettings: () => SandboxPoolSettings
+    getSettings: () => SandboxSettings
     log: ApLogger
 }

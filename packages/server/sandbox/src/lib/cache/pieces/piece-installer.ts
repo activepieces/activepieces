@@ -4,7 +4,7 @@ import { ensureTrailingSlash, groupBy, isEmpty, isNil, tryCatch } from '@activep
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
-import { SandboxPoolSettings } from '../../types'
+import { SandboxSettings } from '../../types'
 import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
 
@@ -14,7 +14,7 @@ const VALID_UNSCOPED_NAME_REGEX = /^[^/]+$/
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
-export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxPoolSettings) => ({
+export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
     async install({ pieces, includeFilters, publicApiUrl, engineToken }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
@@ -28,7 +28,16 @@ export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () 
     },
 })
 
-function getCustomPiecesPath(basePath: string, platformId: string, getSettings: () => SandboxPoolSettings): string {
+// Forget the in-memory "piece already installed" markers so a wiped-from-disk piece is reinstalled.
+// Pairs with cleanExceptEngine() under AP_SANDBOX_CLEAN_CACHE — otherwise a stale marker skips the
+// reinstall of pieces whose node_modules were just deleted.
+export function clearPieceMemoryCache(): void {
+    for (const key of Object.keys(usedPiecesMemoryCache)) {
+        usedPiecesMemoryCache[key] = false
+    }
+}
+
+function getCustomPiecesPath(basePath: string, platformId: string, getSettings: () => SandboxSettings): string {
     const paths = cacheUtils(basePath)
     switch (getSettings().EXECUTION_MODE) {
         case ExecutionMode.SANDBOX_PROCESS:
@@ -42,7 +51,7 @@ function getCustomPiecesPath(basePath: string, platformId: string, getSettings: 
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxPoolSettings): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxSettings): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { validPieces, invalidPieces } = partitionValidPieceNames(nonDevPieces)
@@ -189,7 +198,7 @@ async function tryInstallPiecesIndividually(
     return failures
 }
 
-function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getSettings: () => SandboxPoolSettings): Record<string, PiecePackage[]> {
+function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getSettings: () => SandboxSettings): Record<string, PiecePackage[]> {
     const paths = cacheUtils(basePath)
     return groupBy(pieces, (piece) => {
         switch (piece.packageType) {

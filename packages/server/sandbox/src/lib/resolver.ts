@@ -4,7 +4,7 @@ import { FlowVersion, WorkerToApiContract } from '@activepieces/shared'
 import { cacheUtils } from './cache/cache-paths'
 import { codeBuilder } from './cache/flow/code/code-builder'
 import { flowProvisioning } from './cache/flow/flow-provisioning'
-import { CodeArtifact, ProvisionInput, ResolveInput, Resolver, ResolveResult, SandboxPoolSettings } from './types'
+import { CodeArtifact, ProvisionInput, ResolveInput, Resolver, ResolveResult, SandboxSettings } from './types'
 
 // The Resolver is the worker-side, Runtime-Kind-independent half of the seam. It owns the only
 // apiClient and turns a job into a fully-materialized ProvisionInput before `execute` is ever called,
@@ -73,13 +73,13 @@ async function compileCodeSteps({ codes, basePath, getSettings, log }: CompileCo
 type CreateResolverParams = {
     apiClient: WorkerToApiContract
     basePath: string
-    getSettings: () => SandboxPoolSettings
+    getSettings: () => SandboxSettings
     log: ApLogger
 }
 
 type CompileCodeStepsParams = {
     codes: CodeArtifact[]
     basePath: string
-    getSettings: () => SandboxPoolSettings
+    getSettings: () => SandboxSettings
     log: ApLogger
 }

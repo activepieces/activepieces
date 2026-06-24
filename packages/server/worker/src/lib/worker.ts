@@ -1,9 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { createResolver, Runtime } from '@activepieces/sandbox-pool'
+import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, RuntimeKind, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -12,7 +12,6 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
-import { selectRuntime } from './runtime/runtime-factory'
 import { sandboxConfig } from './runtime/sandbox-config'
 
 
@@ -110,20 +109,19 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         runtime = null
     }
 
-    const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
-    const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
-    if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
-        logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
-    }
-    runtime = selectRuntime({ concurrency, log: logger })
+    // One worker = one sandbox = one job at a time. Parallelism is horizontal: run more worker
+    // replicas, each its own container capped at 0.5 CPU / 1 GB. So there is a single poll loop and a
+    // single in-process box; an OOM kills only this worker and the orchestrator restarts it. See ADR 0003.
+    runtime = createSandboxRuntime({
+        basePath: sandboxConfig.getCacheBasePath(),
+        getSettings: () => sandboxConfig.getSandboxSettings(),
+        cleanCacheAfterRun: system.get(WorkerSystemProp.SANDBOX_CLEAN_CACHE) === 'true',
+        log: logger,
+    })
 
-    logger.info({ concurrency }, 'Starting polling workers')
+    logger.info('Starting poll loop (concurrency 1)')
 
-    const activeRuntime = runtime
-    const workers = Array.from({ length: concurrency }, (_, workerIndex) =>
-        pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
-    )
-    await Promise.all(workers)
+    await pollAndExecute(apiClient, runtime, 0, generation)
 }
 
 async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, workerIndex: number, generation: number): Promise<void> {
@@ -224,16 +222,16 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
             log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
             const publicApiUrl = ensurePublicApiUrl(publicUrl)
-            // A remote runtime (e.g. GCP_CLOUD_RUN) runs the engine off-box, so its callback URL must be
-            // publicly reachable; only the in-process LOCAL runtime can use the internal (cluster) apiUrl.
-            const internalApiUrl = runtime.kind === RuntimeKind.LOCAL ? apiUrl : publicApiUrl
+            // The engine forks in-process inside this worker, so it reaches the app over the worker's own
+            // app URL (cluster-internal when co-located with the app, the public URL for a standalone worker).
+            const internalApiUrl = apiUrl
             const ctx: JobContext = {
                 apiClient,
                 runtime,
                 resolver: createResolver({
                     apiClient,
                     basePath: sandboxConfig.getCacheBasePath(),
-                    getSettings: () => sandboxConfig.getSandboxPoolSettings(),
+                    getSettings: () => sandboxConfig.getSandboxSettings(),
                     log,
                 }),
                 workerIndex,
@@ -244,7 +242,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 log,
             }
             try {
-                const handler = getHandler(jobData.jobType)
+                const handler = await getHandler(jobData.jobType)
                 log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
                 const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
                 if (error) {

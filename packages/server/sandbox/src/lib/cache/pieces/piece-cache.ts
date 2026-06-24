@@ -1,11 +1,11 @@
 import path from 'path'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
-import { SandboxPoolSettings } from '../../types'
+import { SandboxSettings } from '../../types'
 import { cacheUtils } from '../cache-paths'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 
-export const pieceCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxPoolSettings) => ({
+export const pieceCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxSettings) => ({
     async getPiece({ pieceName, pieceVersion, platformId }: PieceCacheKey): Promise<PiecePackage> {
         const isExactVersion = EXACT_VERSION_REGEX.test(pieceVersion)
 

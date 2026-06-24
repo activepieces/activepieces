@@ -1,13 +1,13 @@
 import { unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { PiecePackage } from '@activepieces/shared'
-import { CodeArtifact, SandboxPoolSettings } from '../types'
+import { CodeArtifact, SandboxSettings } from '../types'
 import { cacheUtils } from './cache-paths'
 import { engineInstaller } from './engine/engine-installer'
 import { codeBuilder } from './flow/code/code-builder'
 import { pieceInstaller } from './pieces/piece-installer'
 
-export const localExecutionCache = (log: ApLogger, basePath: string, getSettings: () => SandboxPoolSettings) => ({
+export const localExecutionCache = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
     async provision({
         pieces,
         codeSteps,

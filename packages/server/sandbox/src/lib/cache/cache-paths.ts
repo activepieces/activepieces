@@ -31,6 +31,25 @@ export const cacheUtils = (basePath: string) => ({
         return path.join(this.getGlobalCacheCommonPath(), 'main.js')
     },
 
+    // Wipe everything under the cache version EXCEPT the engine bundle (main.js + its map + the engine
+    // marker in common/cache.json). Used by AP_SANDBOX_CLEAN_CACHE so each run re-installs pieces/code
+    // cold while the static, version-pinned engine stays put (its install is a no-op cache hit).
+    async cleanExceptEngine(): Promise<void> {
+        const versionDir = this.getGlobalCachePathLatestVersion()
+        const commonDir = this.getGlobalCacheCommonPath()
+        const engineKeep = new Set(['main.js', 'main.js.map', 'cache.json'])
+
+        const versionEntries = await readdir(versionDir, { withFileTypes: true }).catch(() => [])
+        await Promise.all(versionEntries
+            .filter((entry) => entry.name !== 'common')
+            .map((entry) => rm(path.join(versionDir, entry.name), { recursive: true, force: true })))
+
+        const commonEntries = await readdir(commonDir, { withFileTypes: true }).catch(() => [])
+        await Promise.all(commonEntries
+            .filter((entry) => !engineKeep.has(entry.name))
+            .map((entry) => rm(path.join(commonDir, entry.name), { recursive: true, force: true })))
+    },
+
     async deleteStaleCache(log: ApLogger): Promise<void> {
         try {
             const cacheDir = path.resolve(basePath)

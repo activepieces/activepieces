@@ -7,14 +7,14 @@ import { simpleProcess } from './sandbox/fork'
 import { isolateProcess } from './sandbox/isolate'
 import { createSandbox } from './sandbox/sandbox'
 import { Sandbox, SandboxMount } from './sandbox/types'
-import { SandboxPoolSettings } from './types'
+import { SandboxSettings } from './types'
 
 export function createSandboxForJob(params: {
     log: ApLogger
     boxId: number
     reusable: boolean
     basePath: string
-    getSettings: () => SandboxPoolSettings
+    getSettings: () => SandboxSettings
 }): Sandbox {
     const { log, boxId, reusable, basePath, getSettings } = params
     const settings = getSettings()
@@ -71,7 +71,7 @@ function parseMemoryLimit(memoryLimitKb: string): number {
 }
 
 function buildSandboxEnv({ settings }: {
-    settings: SandboxPoolSettings
+    settings: SandboxSettings
 }): Record<string, string> {
     // STRICT enables the engine's in-process ssrfGuard (best-effort dns + socket
     // guards only — there is no longer an egress proxy or kernel firewall). The hard
@@ -84,7 +84,7 @@ function buildSandboxEnv({ settings }: {
     }
 }
 
-function baseEnv({ settings, networkMode }: { settings: SandboxPoolSettings, networkMode: NetworkMode }): Record<string, string> {
+function baseEnv({ settings, networkMode }: { settings: SandboxSettings, networkMode: NetworkMode }): Record<string, string> {
     return {
         HOME: '/tmp/',
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
@@ -95,7 +95,7 @@ function baseEnv({ settings, networkMode }: { settings: SandboxPoolSettings, net
     }
 }
 
-function ssrfEnv(settings: SandboxPoolSettings): Record<string, string> {
+function ssrfEnv(settings: SandboxSettings): Record<string, string> {
     const env: Record<string, string> = {}
     if (settings.DEV_PIECES.length > 0) {
         env['AP_DEV_PIECES'] = settings.DEV_PIECES.join(',')
@@ -106,7 +106,7 @@ function ssrfEnv(settings: SandboxPoolSettings): Record<string, string> {
     return env
 }
 
-function propagatedEnv(settings: SandboxPoolSettings): Record<string, string> {
+function propagatedEnv(settings: SandboxSettings): Record<string, string> {
     const env: Record<string, string> = {}
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {

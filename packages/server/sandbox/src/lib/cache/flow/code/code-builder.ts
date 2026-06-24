@@ -3,7 +3,7 @@ import path from 'node:path'
 import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode } from '@activepieces/shared'
-import { CodeArtifact, SandboxPoolSettings } from '../../../types'
+import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
 import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
 import { codeCache } from './code-cache'
@@ -40,7 +40,7 @@ const INVALID_ARTIFACT_TEMPLATE = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
-export const codeBuilder = (log: ApLogger, getSettings: () => SandboxPoolSettings) => ({
+export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) => ({
     async processCodeStep({
         artifact,
         codesFolderPath,
@@ -103,7 +103,7 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxPoolSetting
     },
 })
 
-function isPackagesAllowed(getSettings: () => SandboxPoolSettings): boolean {
+function isPackagesAllowed(getSettings: () => SandboxSettings): boolean {
     switch (getSettings().EXECUTION_MODE) {
         case ExecutionMode.SANDBOX_CODE_ONLY:
             return false
@@ -116,7 +116,7 @@ function isPackagesAllowed(getSettings: () => SandboxPoolSettings): boolean {
     }
 }
 
-function getPackageJson(packageJson: string, getSettings: () => SandboxPoolSettings): string {
+function getPackageJson(packageJson: string, getSettings: () => SandboxSettings): string {
     const packagedAllowed = isPackagesAllowed(getSettings)
     if (!packagedAllowed) {
         return '{"dependencies":{}}'

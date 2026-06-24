@@ -3,9 +3,9 @@ import { type ApLogger } from '@activepieces/server-utils'
 import { ApEnvironment, ExecutionMode } from '@activepieces/shared'
 import { createSandboxForJob } from './create-sandbox-for-job'
 import { Sandbox } from './sandbox/types'
-import { SandboxPoolSettings } from './types'
+import { SandboxSettings } from './types'
 
-export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: number, basePath: string, getSettings: () => SandboxPoolSettings }): SandboxManager {
+export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: number, basePath: string, getSettings: () => SandboxSettings }): SandboxManager {
     let currentSandbox: Sandbox | null = null
 
     return {
@@ -56,7 +56,7 @@ export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: 
     }
 }
 
-function canReuseSandbox(getSettings: () => SandboxPoolSettings): boolean {
+function canReuseSandbox(getSettings: () => SandboxSettings): boolean {
     const settings = getSettings()
     if (!isNil(settings.REUSE_SANDBOX)) {
         return settings.REUSE_SANDBOX === 'true'

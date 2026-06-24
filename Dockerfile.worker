@@ -1,8 +1,9 @@
-# The Cloud Run Pool Server image (ADR 0003): a minimal container that runs ONLY the sandbox pool
-# behind POST /execute. The server is esbuild-bundled into a single file (like the engine), so the
-# final image carries NO workspace node_modules — just node + bun + isolated-vm + esbuild + two
-# bundles. It runs SANDBOX_CODE_ONLY (node child + isolated-vm); pieces are pulled at runtime over
-# HTTP from publicApiUrl (ADR 0002). Kept tiny on purpose: image size is cold-boot latency on Cloud Run.
+# The unified worker image (ADR 0003): one worker = one sandbox = one job at a time. The worker polls,
+# resolves, and forks the engine child in-process (SANDBOX_CODE_ONLY: node child + isolated-vm); scale
+# is horizontal (more replicas, each capped at 0.5 CPU / 1 GB). The worker entry is esbuild-bundled into
+# a single file (like the engine), so the final image carries NO workspace node_modules — just node +
+# bun + isolated-vm + esbuild + two bundles. The heavy ai-sdk graph behind the chat agent is bundled but
+# lazy (dynamic import), so it never evaluates unless a chat job runs. Kept small on purpose.
 
 ### STAGE 1: Build (toolchain lives here only, never in the final image) ###
 FROM node:24.14.0-bullseye-slim AS build
@@ -28,13 +29,16 @@ COPY packages/ ./packages/
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 COPY . .
 
-# Build the dependency graph (engine bundle + sandbox-pool dist), then bundle the pool server entry
-# into one self-contained file. isolated-vm / the optional socket.io native addons stay external.
-RUN npx turbo run build --filter=@activepieces/engine --filter=@activepieces/sandbox-pool && \
-    npx esbuild packages/server/sandbox-pool/src/server/main.ts \
+# Build the dependency graph (engine bundle), then bundle the worker entry into one self-contained file.
+# Use the GLOBAL esbuild (npm -g, correct arch) not `npx` — npx resolves the bun-local esbuild whose
+# native binary can be the wrong platform when the lockfile was generated on another OS.
+# isolated-vm / the optional socket.io native addons stay external.
+RUN npx turbo run build --filter=@activepieces/engine && \
+    esbuild packages/server/worker/src/bootstrap.ts \
         --bundle --platform=node --format=cjs --target=node20 \
+        --tsconfig=tsconfig.base.json \
         --external:isolated-vm --external:bufferutil --external:utf-8-validate \
-        --outfile=/out/pool-server.js
+        --outfile=/out/worker.js
 
 # Prebuilt isolated-vm (the engine child resolves it at runtime via NODE_PATH).
 RUN --mount=type=cache,target=/root/.bun/install/cache cd /usr/src && bun install isolated-vm@6.0.2
@@ -52,16 +56,18 @@ RUN npm install -g --no-fund --no-audit esbuild@0.25.0 && npm cache clean --forc
 
 WORKDIR /app
 
-ENV AP_POOL_SERVER_PORT=8080
+ENV AP_CONTAINER_TYPE=WORKER
 ENV AP_CACHE_BASE_PATH=/tmp/cache
 
 COPY --from=build /usr/local/bin/bun /usr/local/bin/bun
 # isolated-vm at the filesystem-root node_modules so the forked engine resolves it by ancestor walk
 # from /tmp/cache/.../main.js (Node's standard resolution, independent of cwd/NODE_PATH).
 COPY --from=build /usr/src/node_modules/isolated-vm /node_modules/isolated-vm
-COPY --from=build /out/pool-server.js ./pool-server.js
+COPY --from=build /out/worker.js ./worker.js
 COPY --from=build /usr/src/app/dist/packages/engine ./dist/packages/engine
+# apVersionUtil reads <cwd>/package.json for the release version; the worker↔app version gate needs it
+# to match the app's, so ship the workspace package.json (not 0.0.0).
+COPY --from=build /usr/src/app/package.json ./package.json
 
-LABEL service=activepieces-pool-server
-EXPOSE 8080
-ENTRYPOINT ["node", "pool-server.js"]
+LABEL service=activepieces-worker
+ENTRYPOINT ["node", "worker.js"]

@@ -11,6 +11,15 @@ const cachePath = (folderPath: string): string =>
 const cached: Record<string, CacheMap | null> = {}
 export const NO_SAVE_GUARD = (_: string): boolean => false
 
+// Drops the in-memory cache layer so the next read re-reads from disk. Required after wiping the disk
+// cache (AP_SANDBOX_CLEAN_CACHE) — otherwise a stale "installed" entry survives and the next run skips
+// re-installing files that no longer exist on disk.
+export function clearMemoryCache(): void {
+    for (const key of Object.keys(cached)) {
+        cached[key] = null
+    }
+}
+
 export const cacheState = (folderPath: string) => {
     return {
         async getOrSetCache({
