@@ -39,26 +39,9 @@ import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
 
-import { RunTimelineRail } from './run-timeline-rail';
-
 type RunActiveTab = 'input' | 'output' | 'timeline';
 
 export const FlowStepInputOutput = () => {
-  const run = useBuilderStateContext((state) => state.run);
-  if (!run) {
-    return <></>;
-  }
-  return (
-    <div className="flex h-full min-h-0 flex-row">
-      <RunTimelineRail />
-      <div className="h-full min-w-0 flex-1">
-        <StepOutputInspector />
-      </div>
-    </div>
-  );
-};
-
-const StepOutputInspector = () => {
   const [run, loopsIndexes, flowVersion, selectedStep] = useBuilderStateContext(
     (state) => [
       state.run,
