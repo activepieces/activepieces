@@ -56,24 +56,32 @@ export const textToSpeech = createAction({
       description: 'The text to convert to speech.',
       required: true,
     }),
-    language: Property.StaticDropdown({
+    language: Property.Dropdown({
       displayName: 'Language',
       required: false,
-      options: {
-        options: [
-          { label: 'English', value: 'en' },
-          { label: 'Hindi', value: 'hi' },
-          { label: 'Marathi', value: 'mr' },
-          { label: 'Kannada', value: 'kn' },
-          { label: 'Tamil', value: 'ta' },
-          { label: 'Bengali', value: 'bn' },
-          { label: 'Gujarati', value: 'gu' },
-          { label: 'Telugu', value: 'te' },
-          { label: 'Malayalam', value: 'ml' },
-          { label: 'Punjabi', value: 'pa' },
-          { label: 'Odia', value: 'or' },
-          { label: 'Spanish', value: 'es' },
-        ],
+      refreshers: ['model'],
+      options: async ({ model }) => {
+        const isProModel = model === 'lightning_v3.1_pro';
+        const options = isProModel
+          ? [
+              { label: 'English', value: 'en' },
+              { label: 'Hindi', value: 'hi' },
+            ]
+          : [
+              { label: 'English', value: 'en' },
+              { label: 'Hindi', value: 'hi' },
+              { label: 'Marathi', value: 'mr' },
+              { label: 'Kannada', value: 'kn' },
+              { label: 'Tamil', value: 'ta' },
+              { label: 'Bengali', value: 'bn' },
+              { label: 'Gujarati', value: 'gu' },
+              { label: 'Telugu', value: 'te' },
+              { label: 'Malayalam', value: 'ml' },
+              { label: 'Punjabi', value: 'pa' },
+              { label: 'Odia', value: 'or' },
+              { label: 'Spanish', value: 'es' },
+            ];
+        return { disabled: false, options };
       },
     }),
     output_format: Property.StaticDropdown({
