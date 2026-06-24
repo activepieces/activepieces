@@ -232,9 +232,7 @@ const TestWebhookFunctionalityForm = (
                   <FormItem>
                     <DictionaryInput
                       values={field.value}
-                      onChange={(record) =>
-                        field.onChange({ target: { value: record } })
-                      }
+                      onChange={field.onChange}
                       disabled={false}
                     />
                   </FormItem>
@@ -252,9 +250,7 @@ const TestWebhookFunctionalityForm = (
                   <FormItem>
                     <DictionaryInput
                       values={field.value}
-                      onChange={(record) =>
-                        field.onChange({ target: { value: record } })
-                      }
+                      onChange={field.onChange}
                       disabled={false}
                     />
                   </FormItem>
@@ -369,3 +365,4 @@ const TestWebhookDialog = (props: TestWebhookDialogProps) => {
 
 TestWebhookDialog.displayName = 'TestWebhookDialog';
 export default TestWebhookDialog;
+
