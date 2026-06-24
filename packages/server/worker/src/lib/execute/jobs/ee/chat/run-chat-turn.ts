@@ -38,6 +38,10 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const loopStopCondition = stopWhen ?? isLoopFinished()
+    const baseStopConditions: StopCondition<ToolSet>[] = Array.isArray(loopStopCondition)
+        ? loopStopCondition
+        : [loopStopCondition]
+    const buildPhaseReached: StopCondition<ToolSet> = () => phaseState.phase === 'build'
 
     const uiParts: PersistedChatPart[] = []
     const toolCalls: ChatTurnToolCall[] = []
@@ -62,8 +66,8 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         const startedInBuild = attemptStartPhase === 'build'
         const thinkingBudget = startedInBuild ? tier.thinkingBudget : DISCOVERY_THINKING_BUDGET
         const stopWhenConditions = startedInBuild
-            ? loopStopCondition
-            : [loopStopCondition, (() => phaseState.phase === 'build') as StopCondition<ToolSet>]
+            ? baseStopConditions
+            : [...baseStopConditions, buildPhaseReached]
         return streamText({
             model,
             maxRetries: 3,
