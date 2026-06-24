@@ -94,18 +94,21 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 - `onStart()` → emit FLOW_RUN_STARTED application event
 - `onResume()` → emit FLOW_RUN_RESUMED
-- `onFinish()` → emit FLOW_RUN_FINISHED (terminal states only), notify via WebSocket, and (paid editions only) fire AI usage billing tracking (see AI Usage Billing below)
+- `onFinish()` → emit FLOW_RUN_FINISHED (terminal states only), notify via WebSocket, and (paid editions only) meter AI usage + charge the per-run credit to Autumn (see AI Usage Billing below)
 - On run start, project telemetry (`telemetry().trackProject(...)`) is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block the run
 
-### AI Usage Billing
+### AI Usage Billing & Credits
 
-On every terminal run, `flow-run-hooks.ts#onFinish` calls `aiUsageTracker(log).track({ flowRun, flowVersion })` wrapped in `tryCatch`, so any failure only logs a warning and can never break run completion. The tracker short-circuits in cost order:
-1. `paidEditions` (CLOUD/ENTERPRISE) and a non-nil `flowVersion` — gated in `onFinish` before the call.
-2. Flow-version pre-scan: skips entirely (no log read) unless the flow contains an `@activepieces/piece-ai` step.
-3. Resolves the platform's `licenseKey` (via project → platform plan); bails if empty.
-4. Reads the run's step outputs via `flowRunService.getStepsOrNull({ flowRun })` (deserializes the logs file; returns null when `logsFileId` is absent).
-5. `aiUsageExtractor.extractAiUsage(...)` walks the steps — recursing into loop iterations, fetching `FLOW_RUN_LOG_SLICE` files for sliced agent outputs, falling back to flow-version settings when the logged model is `**REDACTED**`, and (in single-step test mode) scoping to `flowRun.stepNameToTest` so testing one AI step doesn't bill the others. Each `@activepieces/piece-ai` step counts as one message; `run_agent` additionally counts its tool-call blocks.
-6. If any usage exists, emits `BillingEvents.AI_USAGE_PER_RUN` to PostHog (distinctId = license key) with per-`(provider, model)` breakdown, `messages`, `toolCalls`, edition, ids, status, and `environment`.
+On a terminal run, `flow-run-hooks.ts#onFinish` does two billing things, each wrapped in `tryCatch` (failures only warn, never break run completion):
+
+**1. AI usage** — `aiUsageTracker(log).track({ flowRun, flowVersion })` (paid editions + non-nil `flowVersion`, gated in `onFinish`). In order:
+1. Flow-version pre-scan: skips entirely (no log read) unless the flow contains an `@activepieces/piece-ai` step.
+2. Reads step outputs via `flowRunService.getStepsOrNull({ flowRun })` (deserializes the logs file; null when `logsFileId` is absent).
+3. `aiUsageExtractor.extractAiUsage(...)` walks the steps — recursing into loops, fetching `FLOW_RUN_LOG_SLICE` files for sliced agent outputs, falling back to flow-version settings when the logged model is `**REDACTED**`, and (in single-step test mode) scoping to `flowRun.stepNameToTest`. Each `@activepieces/piece-ai` step = one message; `run_agent` additionally counts its tool-call blocks.
+4. If usage > 0, **meters to Autumn first**: `billingProvider.trackCredits({ source: AI, value: messages+toolCalls, idempotencyKey: <runId>:ai })`, plus `trackAppSumoAiUsage({ idempotencyKey: <runId>:appSumoAi })` for the managed-`ACTIVEPIECES` portion (the AppSumo cap).
+5. **Then** resolves the platform's `licenseKey` purely as the PostHog `distinctId` (bails if empty) and emits `BillingEvents.AI_USAGE_PER_RUN` with per-`(provider, model)` breakdown, `messages`, `toolCalls`, edition, ids, status, `environment`. The license key is **no longer a gate on billing** — Autumn metering already happened above.
+
+**2. Per-run credit** — for a PRODUCTION run whose status is not `QUOTA_EXCEEDED`, `trackProductionRunCredit` charges **+1 `apCredit`**: `billingProvider.trackCredits({ source: FLOW_RUN, value: 1, idempotencyKey: <runId>:run })`. So a production run burns `1 + messages + toolCalls`.
 
 A separate scheduled EE job (`ee/flow-run-tracking/`, `SystemJobName.FLOW_RUN_TRACKING`) emits `BillingEvents.TOTAL_RUNS_PER_DAY` per licensed platform once a day.
 

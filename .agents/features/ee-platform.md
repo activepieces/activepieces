@@ -1,96 +1,75 @@
 # EE Platform Module
 
 ## Summary
-The EE Platform module manages billing, quota enforcement, AI credits, license keys, and cloud admin operations for the Activepieces platform. It provides the `PlatformPlan` entity that gates every enterprise feature flag, enforces active-flow limits, and integrates with Stripe for cloud subscriptions and OpenRouter for AI credit accounting. Self-hosted Enterprise installs use license keys instead of Stripe to unlock features.
+The EE Platform module manages billing, quota enforcement, AI credits, and cloud admin operations. Billing runs on
+**Autumn** (useautumn) as the entitlements/billing engine for **EE + Cloud** (CE is unbilled). Each platform is an
+Autumn **customer**: AP holds a per-platform `autumnCustomerId` + scoped `autumnApiKey` on `platform_plan` and calls
+Autumn directly. Feature flags and numeric limits are **projected from Autumn** onto the `PlatformPlan` entity
+(lazy-on-read); credit usage is metered to Autumn via `track`. License keys are an **activation/recovery handle** —
+redeemed through the console, which provisions the Autumn customer (the old Stripe + `secrets.activepieces.com` paths
+are gone).
 
 ## Key Files
-- `packages/server/api/src/app/ee/platform/` — backend service and controller
-- `packages/server/api/src/app/ee/billing/` — Stripe webhook, checkout, billing controller
-- `packages/core/shared/src/lib/ee/billing/index.ts` — shared plan constants, Zod schemas, `STANDARD_CLOUD_PLAN`, `OPEN_SOURCE_PLAN`
-- `packages/core/shared/src/lib/management/platform/` — `PlatformPlan` type and all feature-flag fields
-- `packages/web/src/features/billing/api/billing-plans-api.ts` — `platformBillingApi` (portal, checkout, AI credits, auto top-up)
-- `packages/web/src/features/billing/hooks/billing-hooks.ts` — `billingQueries`, `billingMutations`
-- `packages/web/src/features/billing/components/` — `SubscriptionInfo`, `ActiveFlowAddon`, `AICreditUsage`, `LicenseKey`, `PurchaseAICreditsDialog`, `AutoTopUpConfigDialog`
-- `packages/web/src/app/routes/platform/billing/index.tsx` — Billing page (gated by edition, uses `LockedFeatureGuard`)
+- `packages/server/api/src/app/ee/platform/platform-plan/autumn.ts` — the whole Autumn implementation: exports
+  `autumnBillingProvider` (EE impl of the seam) + `autumnUtils` (client, resolve/enroll, `refreshEntitlements`,
+  `mapEntitlementsToPlanLimits`, credit-balance caches, console helpers)
+- `packages/server/api/src/app/platform/billing-provider.ts` — the `BillingProvider` seam (CE no-op + EE impl)
+- `packages/server/api/src/app/ee/platform/platform-plan/platform-plan.{service,controller,entity}.ts`
+- `packages/core/shared/src/lib/ee/billing/index.ts` — plan constants (`STANDARD_CLOUD_PLAN`, `OPEN_SOURCE_PLAN`, `AUTUMN_FREE_PLAN`, `APPSUMO_PLAN`)
+- `packages/core/shared/src/lib/management/platform/platform.model.ts` — `PlatformPlan` + `AutumnFeatureId`
+- `packages/web/src/features/billing/` — `billing-plans-api.ts`, `billing-hooks.ts`, components (below)
 
 ## Edition Availability
-- **Community (CE)**: No billing UI. `OPEN_SOURCE_PLAN` applied — unlimited flows, 0 AI credits, no team projects. All feature flags off.
-- **Enterprise (EE, self-hosted)**: License key activates feature flags. No Stripe. `downgradeToFreePlan` reverts on expiry.
-- **Cloud**: Full Stripe integration. `STANDARD_CLOUD_PLAN` is the default; paid addons unlock higher active-flow limits and AI credits. Cloud Enterprise has all flags enabled.
+- **Community (CE)**: unbilled. `OPEN_SOURCE_PLAN` applied; `BillingProvider` is a no-op (never creates an Autumn customer).
+- **Enterprise (EE, self-hosted) + Cloud**: billed via Autumn. Each platform lazily enrolls as an Autumn customer
+  (console `/subscribe` for free, or `/activate` with a license key); entitlements project onto `platform_plan`.
 
 ## Domain Terms
-- **PlatformPlan**: The single entity (one-per-platform) holding all billing state, feature flags, and limits.
-- **Active Flows**: Published and enabled flows that count against the `activeFlowsLimit` quota.
-- **AI Credits**: Usage currency for OpenRouter-backed AI actions. 1000 credits = $1 USD.
-- **Auto Top-Up**: Automatic Stripe invoice triggered when AI credits fall below a configured threshold.
-- **License Key**: A signed token (self-hosted EE) that maps to a feature set and expiration date.
-- **QUOTA_EXCEEDED**: The HTTP 402 error code thrown when the active flow limit is reached.
-- **Included Credits**: Credits bundled in the plan that reset monthly via `tryResetPlanIncludedCredits()`.
+- **PlatformPlan**: one-per-platform entity holding projected feature flags + limits + Autumn credentials.
+- **Autumn customer / scoped key**: `autumnCustomerId` + `autumnApiKey` (entity-only, never serialized to clients).
+- **apCredits**: the credit currency (flow runs + AI steps + chat burn it), metered to Autumn.
+- **appSumoAiCredits**: a parallel, AppSumo-only finite cap on managed-`ACTIVEPIECES` AI spend (always-on gate).
+- **billingEnforced**: per-platform kill-switch (Redis-cached) — `shouldBlock` returns true only when set (else OBSERVE).
+- **QUOTA_EXCEEDED**: 402 thrown when a hard cap (active-flows / users) or an enforced credit balance is exceeded.
 
-## PlatformPlan Entity (40+ columns)
-
-**Billing**: plan (name), stripeCustomerId, stripeSubscriptionId, stripeSubscriptionStatus, stripeSubscriptionStartDate, stripeSubscriptionEndDate, stripeSubscriptionCancelDate.
-
-**AI Credits**: includedAiCredits, lastFreeAiCreditsRenewalDate, aiCreditsAutoTopUpState (ENABLED/DISABLED), aiCreditsAutoTopUpCreditsToAdd, aiCreditsAutoTopUpThreshold, maxAutoTopUpCreditsMonthly.
-
-**Feature Flags** (boolean): tablesEnabled, eventStreamingEnabled, environmentsEnabled, analyticsEnabled, showPoweredBy, auditLogEnabled, embeddingEnabled, agentsEnabled, managePiecesEnabled, manageTemplatesEnabled, customAppearanceEnabled, projectRolesEnabled, globalConnectionsEnabled, customRolesEnabled, apiKeysEnabled, ssoEnabled, scimEnabled, secretManagersEnabled.
-
-**Limits**: activeFlowsLimit (nullable), projectsLimit (nullable), teamProjectsLimit (NONE/ONE/UNLIMITED).
-
-**License**: licenseKey, licenseExpiresAt.
-
-**Workers**: dedicatedWorkers (JSONB: trustedEnvironment).
+## PlatformPlan Entity
+- **Billing/identity**: `plan` (verbatim Autumn plan id, nullable), `autumnCustomerId`, `autumnApiKey` (both entity-only),
+  `billingEnforced`, `licenseKey`, `licenseExpiresAt`.
+- **AI credits**: `includedAiCredits` (the projected grant).
+- **Feature flags** (boolean): tables, eventStreaming, environments, analytics, showPoweredBy, auditLog, embedding,
+  aiProviders, chat, dataManipulation, managePieces, manageTemplates, customAppearance, projectRoles,
+  globalConnections, customRoles, apiKeys, sso, scim, secretManagers.
+- **Limits** (`Nullable(number)`, null = unlimited / 0 = none / N = cap): `activeFlowsLimit`, `teamProjectsLimit`, `usersLimit`, `projectsLimit`.
+- **Workers**: `dedicatedWorkers`, `workerGroupId`, `canary`, `customDomainsEnabled`.
+- *(Removed when billing moved to Autumn: all `stripe*` cols, the `aiCreditsAutoTopUp*` / `lastFreeAiCreditsRenewalDate` cols, `agentsEnabled`.)*
 
 ## Usage & Quota Enforcement
+- `getUsage(platformId)` → `{ activeFlows, aiCreditsLimit, aiCreditsRemaining, totalAiCreditsUsed, totalAiCreditsUsedThisMonth, appSumoAiCredits }`.
+- `checkActiveFlowsExceededLimit()` — **always-on**, throws `QUOTA_EXCEEDED` when `activeFlows >= activeFlowsLimit` (null = unlimited). CE-skipped.
+- `checkUsersExceededLimit()` — **send-time only, OBSERVE-gated** (`shouldBlock`); throws at invite-send when a new seat would exceed `usersLimit`. (No accept-time enforcement — see billing-status plan.)
+- **Credit gate**: flow-run admission (`submitPayloads` → retryable `QUOTA_EXCEEDED` run, payload preserved), chat block, and the per-AI-step `GET /:provider/config` gate. `apCredits` gate is `shouldBlock`-gated; the `appSumoAiCredits` cap is always-on.
 
-`platformPlanService.getUsage(platformId)` returns: `{ activeFlows, aiCreditsLimit, aiCreditsRemaining, totalAiCreditsUsed, totalAiCreditsUsedThisMonth }`
+## Autumn Integration
+- **Metering**: `aiUsageTracker.track` / chat / flow-run-hooks → `billingProvider.trackCredits` (+`trackAppSumoAiUsage`) → Autumn `track` (idempotency via the `Idempotency-Key` header; 409 = no-op).
+- **Entitlements**: PULL only (no webhooks). `refreshEntitlements` fires lazy-on-read (Redis-claim deduped ~15 min), `getCustomer` → `mapEntitlementsToPlanLimits` → `platformPlanService.update`. Fail-open on Autumn outage (`failOpen`).
+- **Managed AI**: OpenRouter key per platform with a flat `$20` lifetime backstop (`ai-provider-service.ts`).
+- **Checkout/top-up/portal**: via the scoped key today (moves to console once real `keys.mint` scoped keys land).
 
-`checkActiveFlowsExceededLimit()` — called when enabling/publishing flows. Throws `QUOTA_EXCEEDED` (402) if `activeFlows >= activeFlowsLimit`. Skipped in CE edition.
+## License-Key Activation
+`POST /v1/platform-billing/activate { licenseKey }` → `billingProvider.activateLicense` → save `licenseKey` → console
+`/api/billing/activate` (Bearer key) → store creds → `refreshEntitlements`. The legacy `/verify` + `licenseKeysService`
++ `secrets.activepieces.com` path was deleted. See `.agents/features/license-keys.md`.
 
-## AI Credits (OpenRouter)
+## Admin Endpoints (Cloud, API-key auth)
+- `POST /v1/admin/pieces` · `POST /v1/admin/platforms/runs/retry` · `POST /v1/admin/platforms/increase-ai-credits` · `POST /v1/admin/platforms/dedicated-workers`. *(`apply-license-key` was removed — customers self-activate via `/activate`.)*
 
-- Rate: 1000 credits = $1 USD (`CREDIT_PER_DOLLAR = 1000`)
-- Usage cached 180s from OpenRouter API
-- Monthly reset: `tryResetPlanIncludedCredits()` adds `includedAiCredits / 1000` to OpenRouter key limit
-- Auto top-up: `tryAutoTopUpPlan()` checks threshold → creates Stripe invoice → charges payment method
-- Monthly limit enforcement: sums paid auto-topup invoices this month vs `maxAutoTopUpCreditsMonthly`
-- System job: `AI_CREDIT_UPDATE_CHECK` — fires on provider creation, runs both reset + topup checks
-
-## Stripe Integration (Cloud only)
-
-- `createCustomer()` — on platform creation
-- `createPortalSessionUrl()` — self-service billing portal
-- Active flows addon: subscription with per-unit pricing ($5/flow/month)
-- AI credits: one-time payment checkout sessions
-- Auto top-up: setup mode checkout (collects payment method) → automatic invoices
-- Webhook handler: `checkout.session.completed`, `invoice.paid`, `customer.subscription.*`
-
-## License Keys (Self-hosted EE)
-
-- `requestTrial(email, companyName, goal)` — request from licensing server
-- `verifyKeyOrReturnNull(platformId, license)` — validate + mark activated
-- `applyLimits(platformId, key)` — maps license features to PlatformPlan flags
-- `downgradeToFreePlan(platformId)` — disables all EE features
-- License has expiration date, trial flag
-
-## Admin Endpoints (Cloud only, API_KEY auth)
-
-- `POST /v1/admin/pieces` — register piece metadata
-- `POST /v1/admin/platforms/runs/retry` — batch retry failed runs
-- `POST /v1/admin/platforms/apply-license-key` — activate license by email
-- `POST /v1/admin/platforms/increase-ai-credits` — manually add credits
-- `POST /v1/admin/platforms/dedicated-workers` — enable/disable dedicated workers
-
-## Frontend Billing API
-
-`/v1/platform-billing/info` — `GET`, returns `PlatformBillingInformation` (plan details + usage).
-`/v1/platform-billing/portal` — `POST`, returns Stripe portal URL (opens in new tab).
-`/v1/platform-billing/create-checkout-session` — `POST`, creates subscription checkout → navigates to Stripe.
-`/v1/platform-billing/update-active-flows-addon` — `POST`, changes active-flow limit addon.
-`/v1/platform-billing/ai-credits/create-checkout-session` — `POST`, one-time AI credit purchase.
-`/v1/platform-billing/ai-credits/auto-topup` — `POST`, configure or disable auto top-up; may return `stripeCheckoutUrl` for first-time payment method setup.
+## Frontend Billing API (`/v1/platform-billing/*`)
+`info` (GET) · `plans` (GET) · `checkout` (POST) · `portal` (POST) · `activate` (POST) ·
+`consumable-product-topups/checkout` (POST, manual top-up) · `consumable-product-topups/auto-topup` (POST, native Autumn auto-top-up).
+Components: `subscription-info`, `manage-plan-dialog` (plan picker), `active-flows-addon` ("Manage Plan" button),
+`ai-credits/{ai-credit-usage, consumable-product-topups-dialog, auto-topup-config-dialog}`, `license-key`,
+`activate-license-dialog`, `features-status`, `success`.
 
 ## Plan Constants (from shared)
-
-- `STANDARD_CLOUD_PLAN`: 10 active flows, 200 AI credits, 1 team project
-- `OPEN_SOURCE_PLAN`: unlimited flows, 0 AI credits, no team projects
+- `STANDARD_CLOUD_PLAN`: 10 active flows, 200 AI credits, 1 team project · `AUTUMN_FREE_PLAN`: 100 credits, 1 project ·
+  `OPEN_SOURCE_PLAN`: unlimited flows, 0 AI credits · `APPSUMO_PLAN(tier)`: appsumo tiers.
