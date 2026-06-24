@@ -9,27 +9,27 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
     async execute(ctx: JobContext, data: PollingJobData): Promise<FireAndForgetJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        const p = await execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
 
-        if (p.kind === 'flow-not-found') {
+        if (resolved.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found for polling trigger, skipping')
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        if (p.kind === 'disabled') {
+        if (resolved.kind === 'disabled') {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        // p.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to provision
-        if (isNil(p.flowVersion)) {
-            await execution.dispose({ invalidate: true })
-            throw new Error('flowVersion missing after provision')
+        // resolved.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to resolve
+        if (isNil(resolved.flowVersion)) {
+            throw new Error('flowVersion missing after resolve')
         }
-        const flowVersion: FlowVersion = p.flowVersion
+        const flowVersion: FlowVersion = resolved.flowVersion
 
         try {
-            const result = await execution.run({
+            const result = await ctx.runtime.execute({
+                workerIndex: ctx.workerIndex,
+                log: ctx.log,
                 operationType: EngineOperationType.EXECUTE_TRIGGER_HOOK,
                 operation: {
                     hookType: TriggerHookType.RUN,
@@ -44,6 +44,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                     timeoutInSeconds,
                 },
                 timeoutInSeconds,
+                provision: resolved.provision,
             })
 
             if (result.status === EngineResponseStatus.OK) {
@@ -63,11 +64,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
-            await execution.dispose({ invalidate: true })
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
-        }
-        finally {
-            await execution.dispose({ invalidate: false })
         }
     },
 }
