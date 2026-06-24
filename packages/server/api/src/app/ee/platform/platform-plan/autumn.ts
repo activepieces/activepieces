@@ -22,7 +22,9 @@ import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
 import { getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getCreditsBalanceKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
-import { BillingProvider, CreditsGateState, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../platform/billing-provider'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { ApplyAppSumoPlanParams, AppSumoAction, BillingProvider, CreditsGateState, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../platform/billing-provider'
 import { platformPlanService } from './platform-plan.service'
 
 const CREDITS_CACHE_TTL_SECONDS = 180
@@ -354,6 +356,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     refreshEntitlements: async (platformId: string) => {
         await autumnUtils.refreshEntitlements(log, platformId)
     },
+    applyAppSumoPlan: async ({ platformId, planId, action }: ApplyAppSumoPlanParams) => {
+        await autumnUtils.ensureEnrolled(log, platformId)
+        await compAppSumoOnConsole({ platformId, planId, action })
+        await autumnUtils.refreshEntitlements(log, platformId)
+    },
     shouldBlock: async (platformId: string) => {
         return readBillingEnforced(platformId)
     },
@@ -510,6 +517,18 @@ async function migrateOnConsole({ licenseKey, platformId }: { licenseKey: string
         },
     )
     return response.data.data
+}
+
+async function compAppSumoOnConsole({ platformId, planId, action }: { platformId: string, planId?: string, action: AppSumoAction }): Promise<void> {
+    const token = system.get(AppSystemProp.APPSUMO_TOKEN)
+    await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/appsumo`,
+        { platformId, planId, action },
+        {
+            timeout: CONSOLE_REQUEST_TIMEOUT_MS,
+            headers: { Authorization: `Bearer ${token}` },
+        },
+    )
 }
 
 
