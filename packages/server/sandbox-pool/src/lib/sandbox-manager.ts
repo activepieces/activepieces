@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { ApEnvironment, ExecutionMode, WorkerToApiContract } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode } from '@activepieces/shared'
 import { createSandboxForJob } from './create-sandbox-for-job'
 import { Sandbox } from './sandbox/types'
 import { SandboxPoolSettings } from './types'
@@ -9,7 +9,7 @@ export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: 
     let currentSandbox: Sandbox | null = null
 
     return {
-        acquire(params: { log: ApLogger, apiClient: WorkerToApiContract }): Sandbox {
+        acquire(params: { log: ApLogger }): Sandbox {
             if (canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady()) {
                 return currentSandbox
             }
@@ -79,7 +79,7 @@ export type ActiveSandboxInfo = {
 }
 
 export type SandboxManager = {
-    acquire(params: { log: ApLogger, apiClient: WorkerToApiContract }): Sandbox
+    acquire(params: { log: ApLogger }): Sandbox
     invalidate(log: ApLogger): Promise<void>
     release(log: ApLogger): Promise<void>
     shutdown(log: ApLogger): Promise<void>
