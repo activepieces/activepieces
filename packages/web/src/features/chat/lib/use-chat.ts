@@ -29,7 +29,7 @@ function applyQuickRepliesToStore({
   setState: SetChatStore;
   data: QuickRepliesData;
 }): void {
-  if (data.replies.length === 0) return;
+  if (data.replies.length === 0 && !data.offerRecurringAutomation) return;
   setState({
     quickReplies: data.replies,
     offerRecurringAutomation: data.offerRecurringAutomation,

@@ -1,7 +1,14 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+
+function readFromWeb(relative: string): string {
+  return readFileSync(path.join(process.cwd(), relative), 'utf8');
+}
 
 function quickRepliesMessage(
   input: { replies?: string[]; offerRecurringAutomation?: boolean },
@@ -83,6 +90,28 @@ describe('quick replies extraction', () => {
         } as ChatUIMessage,
       ]);
       expect(result).toEqual({ replies: [], offerRecurringAutomation: false });
+    });
+  });
+
+  // The chip text, the message sent on click, and the agent's trigger phrase are
+  // the same literal in 3 files. This guards against a rename silently breaking it.
+  describe('recurring-automation trigger phrase contract', () => {
+    it('matches the phrase the prompt guides watch for', () => {
+      const component = readFromWeb(
+        'src/app/routes/chat-with-ai/components/recurring-chip.tsx',
+      );
+      const phrase = component.match(
+        /RECURRING_AUTOMATION_REPLY = '([^']+)'/,
+      )?.[1];
+      expect(phrase).toBeTruthy();
+
+      const guides = [
+        '../server/api/src/assets/prompts/guides/one_time_task.md',
+        '../server/api/src/assets/prompts/guides/build_flow.md',
+      ];
+      for (const guide of guides) {
+        expect(readFromWeb(guide)).toContain(phrase!);
+      }
     });
   });
 });
