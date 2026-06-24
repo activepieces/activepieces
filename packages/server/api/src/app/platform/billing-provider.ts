@@ -1,5 +1,10 @@
-import { AutoTopUpConfig, AutumnFeatureId, PurchasablePlan } from '@activepieces/shared'
+import { apDayjs } from '@activepieces/server-utils'
+import { AutoTopUpConfig, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import { hooksFactory } from '../helper/hooks-factory'
+
+function defaultBillingInfo(): BillingInfo {
+    return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix(), nextBillingAmount: 0, cancelAt: null }
+}
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     listPlans: async () => {
@@ -13,6 +18,9 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     },
     getBillingPortalUrl: async () => {
         return { url: '' }
+    },
+    getBillingInfo: async () => {
+        return defaultBillingInfo()
     },
     topUpFeature: async () => {
         return { checkoutUrl: null }
@@ -92,6 +100,13 @@ export type BillingPortalParams = {
     returnUrl?: string
 }
 
+export type BillingInfo = {
+    startDate: number
+    endDate: number
+    nextBillingAmount: number
+    cancelAt: number | null
+}
+
 export type TopUpFeatureParams = {
     platformId: string
     featureId: string
@@ -111,9 +126,10 @@ export type ConfigureAutoTopUpParams = {
 
 export type BillingProvider = {
     listPlans(platformId: string): Promise<PurchasablePlan[]>
-    getTopUpSettings(platformId: string): Promise<{ autoTopUps: AutoTopUpConfig[], topUpFeatures: AutumnFeatureId[] }>
+    getTopUpSettings(platformId: string): Promise<{ autoTopUps: AutoTopUpConfig[], topUpFeatures: ToppableFeature[] }>
     createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{ checkoutUrl: string | null }>
     getBillingPortalUrl(params: BillingPortalParams): Promise<{ url: string }>
+    getBillingInfo(platformId: string): Promise<BillingInfo>
     topUpFeature(params: TopUpFeatureParams): Promise<{ checkoutUrl: string | null }>
     configureAutoTopUp(params: ConfigureAutoTopUpParams): Promise<{ setupPaymentUrl?: string }>
     trackCredits(params: TrackCreditsParams): Promise<void>

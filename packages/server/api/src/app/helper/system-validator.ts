@@ -145,8 +145,6 @@ const systemPropValidators: {
     [AppSystemProp.FILE_STORAGE_LOCATION]: enumValidator(Object.values(FileLocation)),
     [AppSystemProp.FIREBASE_ADMIN_CREDENTIALS]: stringValidator,
     [AppSystemProp.FIREBASE_HASH_PARAMETERS]: stringValidator,
-    [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
-    [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.WORKERS]: numberValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),

@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  PRICE_PER_EXTRA_ACTIVE_FLOWS,
   ApEdition,
   ApFlagId,
   PlatformBillingInformation,
@@ -66,9 +65,7 @@ export function ActiveFlowAddon({
                 <CircleHelp className="size-4 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                {t(
-                  `Count of active flows, $${PRICE_PER_EXTRA_ACTIVE_FLOWS} for extra 5 active flows`,
-                )}
+                {t('Number of active flows included in your plan')}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

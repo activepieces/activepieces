@@ -1,7 +1,7 @@
 import {
-  UpdateAICreditsAutoTopUpParamsSchema,
+  ConsumableProductAutoTopupParams,
   AiCreditsAutoTopUpState,
-  ToppableFeatureId,
+  ToppableFeature,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -25,7 +25,7 @@ import { billingMutations } from '../../hooks/billing-hooks';
 interface AutoTopUpConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  featureId: ToppableFeatureId;
+  feature: ToppableFeature;
   currentThreshold?: number | null;
   currentCreditsToAdd?: number | null;
   currentMaxMonthlyLimit?: number | null;
@@ -35,7 +35,7 @@ interface AutoTopUpConfigDialogProps {
 export function AutoTopUpConfigDialog({
   isOpen,
   onOpenChange,
-  featureId,
+  feature,
   currentThreshold,
   currentCreditsToAdd,
   currentMaxMonthlyLimit,
@@ -56,12 +56,12 @@ export function AutoTopUpConfigDialog({
   const isPending = isUpdating;
 
   const handleSave = () => {
-    const params: UpdateAICreditsAutoTopUpParamsSchema = {
+    const params: ConsumableProductAutoTopupParams = {
       minThreshold: threshold,
       creditsToAdd: creditsToAdd,
       maxMonthlyLimit: maxMonthlyLimit,
       state: AiCreditsAutoTopUpState.ENABLED,
-      featureId,
+      featureId: feature.featureId,
     };
 
     const onSuccess = () => {
@@ -143,7 +143,10 @@ export function AutoTopUpConfigDialog({
                   {maxMonthlyLimit
                     ? t('{maxMonthlyLimit} credits (${usd})', {
                         maxMonthlyLimit: maxMonthlyLimit.toLocaleString(),
-                        usd: ((maxMonthlyLimit / 1000) * 1).toFixed(2),
+                        usd: (
+                          (maxMonthlyLimit / feature.billingUnits) *
+                          feature.pricePerUnit
+                        ).toFixed(2),
                       })
                     : t('No limit')}
                 </span>
@@ -172,12 +175,18 @@ export function AutoTopUpConfigDialog({
                 </span>
                 <span className="text-2xl font-bold text-primary">
                   {t('${totalCost}', {
-                    totalCost: ((creditsToAdd / 1000) * 1).toFixed(2),
+                    totalCost: (
+                      (creditsToAdd / feature.billingUnits) *
+                      feature.pricePerUnit
+                    ).toFixed(2),
                   })}
                 </span>
               </div>
               <div className="text-xs text-muted-foreground text-right">
-                {t('$1 per 1000 credits')}
+                {t('${cost} per {units} credits', {
+                  cost: feature.pricePerUnit,
+                  units: feature.billingUnits.toLocaleString(),
+                })}
               </div>
             </div>
           </div>

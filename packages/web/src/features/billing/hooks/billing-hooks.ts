@@ -1,13 +1,10 @@
 import {
-  UpdateActiveFlowsAddonParams,
-  CreateSubscriptionParams,
-  CreateAICreditCheckoutSessionParamsSchema,
-  UpdateAICreditsAutoTopUpParamsSchema,
+  ConsumableProductTopupParams,
+  ConsumableProductAutoTopupParams,
   CheckoutPlanParams,
 } from '@activepieces/shared';
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -49,47 +46,11 @@ export const billingMutations = {
       },
     });
   },
-  useUpdateActiveFlowsLimit: (setIsOpen?: (isOpen: boolean) => void) => {
-    const navigate = useNavigate();
+  useConsumableProductTopup: (setIsOpen?: (isOpen: boolean) => void) => {
     return useMutation({
-      mutationFn: (params: UpdateActiveFlowsAddonParams) =>
-        platformBillingApi.updateActiveFlowsLimits(params),
-      onSuccess: (url) => {
-        setIsOpen?.(false);
-        navigate(url);
-        toast.success(t('Plan updated successfully'), {
-          duration: 3000,
-        });
-      },
-      onError: () => {
-        navigate(`/platform/setup/billing/error`);
-      },
-    });
-  },
-  useCreateSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
-    return useMutation({
-      mutationFn: async (params: CreateSubscriptionParams) => {
-        const checkoutSessionURl = await platformBillingApi.createSubscription(
-          params,
-        );
-        window.open(checkoutSessionURl, '_blank');
-      },
-      onSuccess: () => {
-        setIsOpen?.(false);
-      },
-      onError: (error) => {
-        toast.error(t('Starting Subscription failed'), {
-          description: t(error.message),
-          duration: 3000,
-        });
-      },
-    });
-  },
-  useCreateAICreditCheckoutSession: (setIsOpen?: (isOpen: boolean) => void) => {
-    return useMutation({
-      mutationFn: async (params: CreateAICreditCheckoutSessionParamsSchema) => {
+      mutationFn: async (params: ConsumableProductTopupParams) => {
         const { stripeCheckoutUrl } =
-          await platformBillingApi.createAICreditCheckoutSession(params);
+          await platformBillingApi.createConsumableProductTopup(params);
         window.open(stripeCheckoutUrl, '_blank');
       },
       onSuccess: () => {
@@ -105,7 +66,7 @@ export const billingMutations = {
   },
   useUpdateAutoTopUp: (queryClient: QueryClient) => {
     return useMutation({
-      mutationFn: async (params: UpdateAICreditsAutoTopUpParamsSchema) => {
+      mutationFn: async (params: ConsumableProductAutoTopupParams) => {
         const { stripeCheckoutUrl } = await platformBillingApi.updateAutoTopUp(
           params,
         );

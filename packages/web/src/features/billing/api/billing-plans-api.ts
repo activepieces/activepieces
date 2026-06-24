@@ -1,8 +1,6 @@
 import {
-  UpdateActiveFlowsAddonParams,
-  CreateSubscriptionParams,
-  CreateAICreditCheckoutSessionParamsSchema,
-  UpdateAICreditsAutoTopUpParamsSchema,
+  ConsumableProductTopupParams,
+  ConsumableProductAutoTopupParams,
   PlatformBillingInformation,
   PurchasablePlan,
   CheckoutPlanParams,
@@ -27,27 +25,13 @@ export const platformBillingApi = {
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
   },
-  updateActiveFlowsLimits(params: UpdateActiveFlowsAddonParams) {
-    return api.post<string>(
-      '/v1/platform-billing/update-active-flows-addon',
-      params,
-    );
-  },
-  createSubscription(params: CreateSubscriptionParams) {
-    return api.post<string>(
-      '/v1/platform-billing/create-checkout-session',
-      params,
-    );
-  },
-  createAICreditCheckoutSession(
-    params: CreateAICreditCheckoutSessionParamsSchema,
-  ) {
+  createConsumableProductTopup(params: ConsumableProductTopupParams) {
     return api.post<{ stripeCheckoutUrl: string }>(
       '/v1/platform-billing/ai-credits/create-checkout-session',
       params,
     );
   },
-  updateAutoTopUp(params: UpdateAICreditsAutoTopUpParamsSchema) {
+  updateAutoTopUp(params: ConsumableProductAutoTopupParams) {
     return api.post<{ stripeCheckoutUrl?: string }>(
       '/v1/platform-billing/ai-credits/auto-topup',
       params,

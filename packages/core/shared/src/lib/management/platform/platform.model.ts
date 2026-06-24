@@ -71,6 +71,17 @@ export enum AutumnFeatureId {
     SCIM_ENABLED = 'scimEnabled',
 }
 
+// The subset of feature ids a customer can purchase as a top-up. apCredits/appSumoAiCredits (consumable)
+// today; the non-consumable one-time limits (users/projects/active-flows) can join later. A strict subset of
+// AutumnFeatureId by construction; whether a given plan actually offers a top-up for one of these is decided
+// per-plan at runtime.
+export const TOPPABLE_FEATURE_IDS = [
+    AutumnFeatureId.AP_CREDITS,
+    AutumnFeatureId.APP_SUMO_AI_CREDITS,
+] as const
+export const ToppableFeatureId = z.enum(TOPPABLE_FEATURE_IDS)
+export type ToppableFeatureId = z.infer<typeof ToppableFeatureId>
+
 export const PlatformPlan = z.object({
     ...BaseModelSchema,
     // TODO: We have to use the enum when we finalize the plan names
@@ -109,12 +120,6 @@ export const PlatformPlan = z.object({
     billingEnforced: Nullable(z.boolean()),
     licenseKey: Nullable(z.string()),
     licenseExpiresAt: Nullable(DateOrString),
-    stripeCustomerId: Nullable(z.string()),
-    stripeSubscriptionId: Nullable(z.string()),
-    stripeSubscriptionStatus: Nullable(z.string()),
-    stripeSubscriptionStartDate: Nullable(z.number()),
-    stripeSubscriptionEndDate: Nullable(z.number()),
-    stripeSubscriptionCancelDate: Nullable(z.number()),
 
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
@@ -133,7 +138,7 @@ export type PlatformPlan = z.infer<typeof PlatformPlan>
 
 export const PlatformPlanLimits = PlatformPlan.omit({ id: true, platformId: true, created: true, updated: true })
 export type PlatformPlanLimits = z.infer<typeof PlatformPlanLimits>
-export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'>
+export type PlatformPlanWithOnlyLimits = PlatformPlanLimits
 
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
@@ -260,6 +265,16 @@ export const AutoTopUpConfig = z.object({
 })
 export type AutoTopUpConfig = z.infer<typeof AutoTopUpConfig>
 
+// A feature the current plan lets the customer top up, with the plan's prepaid pricing for it: each
+// `billingUnits` of the feature costs `pricePerUnit`. The UI derives the total cost from these — pricing is
+// plan-driven, never hardcoded client-side.
+export const ToppableFeature = z.object({
+    featureId: ToppableFeatureId,
+    pricePerUnit: z.number(),
+    billingUnits: z.number(),
+})
+export type ToppableFeature = z.infer<typeof ToppableFeature>
+
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
@@ -267,6 +282,6 @@ export const PlatformBillingInformation = z.object({
     nextBillingAmount: z.number(),
     cancelAt: Nullable(z.number()),
     autoTopUps: z.array(AutoTopUpConfig),
-    topUpFeatures: z.array(z.enum(AutumnFeatureId)),
+    topUpFeatures: z.array(ToppableFeature),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

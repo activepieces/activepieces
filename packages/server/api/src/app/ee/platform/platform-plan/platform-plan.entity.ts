@@ -42,18 +42,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         aiCreditsAutoTopUpState: {
             type: String,
         },
-        stripeSubscriptionStartDate: {
-            type: Number,
-            nullable: true,
-        },
-        stripeSubscriptionEndDate: {
-            type: Number,
-            nullable: true,
-        },
-        stripeSubscriptionCancelDate: {
-            type: Number,
-            nullable: true,
-        },
         environmentsEnabled: {
             type: Boolean,
         },
@@ -127,18 +115,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             nullable: true,
         },
         autumnApiKey: {
-            type: String,
-            nullable: true,
-        },
-        stripeCustomerId: {
-            type: String,
-            nullable: true,
-        },
-        stripeSubscriptionId: {
-            type: String,
-            nullable: true,
-        },
-        stripeSubscriptionStatus: {
             type: String,
             nullable: true,
         },

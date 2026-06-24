@@ -1,9 +1,7 @@
-import { isNil, Nullable, PlatformUsageMetric } from '@activepieces/core-utils'
+import { isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { AiCreditsAutoTopUpState, AutumnFeatureId, PlanName, PlatformPlanWithOnlyLimits } from '../../management/platform'
+import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits, ToppableFeatureId } from '../../management/platform'
 import { PiecesFilterType } from '../../management/project'
-
-export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
 
 export type ProjectPlanLimits = {
     nickname?: string
@@ -13,45 +11,11 @@ export type ProjectPlanLimits = {
     piecesFilterType?: PiecesFilterType
 }
 
-export enum ApSubscriptionStatus {
-    ACTIVE = 'active',
-    CANCELED = 'canceled',
-}
-
-export const METRIC_TO_LIMIT_MAPPING = {
-    [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlowsLimit',
-} as const
-
-export const METRIC_TO_USAGE_MAPPING = {
-    [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
-} as const
-
-export const UpdateActiveFlowsAddonParamsSchema = z.object({
-    newActiveFlowsLimit: z.number(),
-})
-export type UpdateActiveFlowsAddonParams = z.infer<typeof UpdateActiveFlowsAddonParamsSchema>
-
-export const CreateCheckoutSessionParamsSchema = z.object({
-    newActiveFlowsLimit: z.number(),
-})
-export type CreateSubscriptionParams = z.infer<typeof CreateCheckoutSessionParamsSchema>
-
-// The subset of feature ids a customer can purchase as a top-up. apCredits/appSumoAiCredits today; the
-// non-consumable one-time limits (users/projects/active-flows) can join later. A strict subset of
-// AutumnFeatureId by construction; whether a given plan actually offers a top-up for one of these is decided
-// per-plan at runtime.
-export const TOPPABLE_FEATURE_IDS = [
-    AutumnFeatureId.AP_CREDITS,
-    AutumnFeatureId.APP_SUMO_AI_CREDITS,
-] as const
-export const ToppableFeatureId = z.enum(TOPPABLE_FEATURE_IDS)
-export type ToppableFeatureId = z.infer<typeof ToppableFeatureId>
-
-export const CreateAICreditCheckoutSessionParamsSchema = z.object({
+export const ConsumableProductTopupParams = z.object({
     credits: z.number(),
     featureId: ToppableFeatureId.optional(),
 })
-export type CreateAICreditCheckoutSessionParamsSchema = z.infer<typeof CreateAICreditCheckoutSessionParamsSchema>
+export type ConsumableProductTopupParams = z.infer<typeof ConsumableProductTopupParams>
 
 export const CheckoutPlanParamsSchema = z.object({
     planId: z.string(),
@@ -73,7 +37,7 @@ export const PurchasablePlan = z.object({
 })
 export type PurchasablePlan = z.infer<typeof PurchasablePlan>
 
-export const UpdateAICreditsAutoTopUpParamsSchema = z.union([
+export const ConsumableProductAutoTopupParams = z.union([
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.ENABLED),
         minThreshold: z.number(),
@@ -86,23 +50,7 @@ export const UpdateAICreditsAutoTopUpParamsSchema = z.union([
         featureId: ToppableFeatureId,
     }),
 ])
-export type UpdateAICreditsAutoTopUpParamsSchema = z.infer<typeof UpdateAICreditsAutoTopUpParamsSchema>
-
-export enum PRICE_NAMES {
-    AI_CREDITS = 'ai-credit',
-    ACTIVE_FLOWS = 'active-flow',
-}
-
-export const PRICE_ID_MAP = {
-    [PRICE_NAMES.AI_CREDITS]: {
-        dev: 'price_1SfgNxKTWXpWeD7hmDBG4YMZ',
-        prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
-    },
-    [PRICE_NAMES.ACTIVE_FLOWS]: {
-        dev: 'price_1SQbbYQN93Aoq4f8WK2JC4sf',
-        prod: 'price_1SQbcvKZ0dZRqLEKHV5UepRx',
-    },
-}
+export type ConsumableProductAutoTopupParams = z.infer<typeof ConsumableProductAutoTopupParams>
 
 export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'standard',
@@ -167,9 +115,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
-    stripeCustomerId: undefined,
-    stripeSubscriptionId: undefined,
-    stripeSubscriptionStatus: undefined,
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     dedicatedWorkers: null,
     canary: false,

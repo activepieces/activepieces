@@ -265,8 +265,6 @@ async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederate
     if (edition === ApEdition.COMMUNITY) {
         return {
             ...OPEN_SOURCE_PLAN,
-            stripeSubscriptionStartDate: 0,
-            stripeSubscriptionEndDate: 0,
         }
     }
     return platformPlanService(log).getOrCreateForPlatform(platform.id)

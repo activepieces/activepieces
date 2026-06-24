@@ -1,3 +1,4 @@
+import { ToppableFeature } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2, Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -15,27 +16,32 @@ import { Slider } from '@/components/ui/slider';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 
-interface PurchaseAICreditsDialogProps {
+interface ConsumableProductTopupsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  feature: ToppableFeature;
+  title: string;
 }
 
-export function PurchaseAICreditsDialog({
+export function ConsumableProductTopupsDialog({
   isOpen,
   onOpenChange,
-}: PurchaseAICreditsDialogProps) {
-  const [creditsToAdd, setCreditsToAdd] = useState(1000); // Default to 1k credits
-  const COST_PER_1000_CREDITS = 1;
+  feature,
+  title,
+}: ConsumableProductTopupsDialogProps) {
+  const [creditsToAdd, setCreditsToAdd] = useState(feature.billingUnits);
 
   const { mutate: createCheckoutSession, isPending: isCreatingSession } =
-    billingMutations.useCreateAICreditCheckoutSession(() =>
-      onOpenChange(false),
-    );
+    billingMutations.useConsumableProductTopup(() => onOpenChange(false));
 
-  const totalCost = (creditsToAdd / 1000) * COST_PER_1000_CREDITS;
+  const totalCost =
+    (creditsToAdd / feature.billingUnits) * feature.pricePerUnit;
 
   const handlePurchase = () => {
-    createCheckoutSession({ credits: creditsToAdd });
+    createCheckoutSession({
+      credits: creditsToAdd,
+      featureId: feature.featureId,
+    });
   };
 
   return (
@@ -43,7 +49,7 @@ export function PurchaseAICreditsDialog({
       <DialogContent className="max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
-            {t('Purchase AI Credits')}
+            {title}
           </DialogTitle>
           <DialogDescription>
             {t('Add more credits to your wallet for AI tasks')}
@@ -63,14 +69,10 @@ export function PurchaseAICreditsDialog({
             <Slider
               value={[creditsToAdd]}
               onValueChange={(v) => setCreditsToAdd(v[0])}
-              min={1000}
-              max={500000}
-              step={1000}
+              min={feature.billingUnits}
+              max={feature.billingUnits * 500}
+              step={feature.billingUnits}
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{t('1,000')}</span>
-              <span>{t('500,000')}</span>
-            </div>
           </div>
 
           <div className="rounded-lg border p-4 bg-primary/5 border-primary/30">
@@ -84,7 +86,10 @@ export function PurchaseAICreditsDialog({
                 </span>
               </div>
               <div className="text-xs text-muted-foreground text-right">
-                {t('${cost} per 1000 credits', { cost: COST_PER_1000_CREDITS })}
+                {t('${cost} per {units} credits', {
+                  cost: feature.pricePerUnit,
+                  units: feature.billingUnits.toLocaleString(),
+                })}
               </div>
             </div>
           </div>
@@ -101,7 +106,7 @@ export function PurchaseAICreditsDialog({
           <Button
             onClick={handlePurchase}
             className="gap-2"
-            disabled={isCreatingSession || creditsToAdd < 1000}
+            disabled={isCreatingSession || creditsToAdd < feature.billingUnits}
           >
             {isCreatingSession ? (
               <Loader2 className="w-4 h-4 animate-spin" />

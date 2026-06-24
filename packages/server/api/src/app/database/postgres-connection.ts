@@ -367,6 +367,7 @@ import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/177737
 import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
 import { AddThemeColorsToPlatform1781206955649 } from './migration/postgres/1781206955649-AddThemeColorsToPlatform'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
+import { RemoveStripeColumnsFromPlatformPlan1782293944311 } from './migration/postgres/1782293944311-RemoveStripeColumnsFromPlatformPlan'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
@@ -787,6 +788,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddPieceSelectorConfigToPlatform1796000000000,
         AddAutumnBillingColumnsToPlatformPlan1797000000000,
         MigrateTeamProjectsLimitToNumberAndAddUsersLimit1798000000000,
+        RemoveStripeColumnsFromPlatformPlan1782293944311,
     ]
     return migrations
 }

@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core-utils'
-import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan } from '@activepieces/shared'
+import { apDayjs, apVersionUtil, safeHttp } from '@activepieces/server-utils'
+import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, TOPPABLE_FEATURE_IDS, ToppableFeature, ToppableFeatureId } from '@activepieces/shared'
 import {
     type AttachParams,
     Autumn,
@@ -13,6 +13,7 @@ import {
     type GetEntityParams,
     type ListPlansParams,
     type OpenCustomerPortalParams,
+    PlanBillingMethod,
     type SetupPaymentParams,
     type TrackParams,
     type UpdateCustomerParams,
@@ -35,9 +36,6 @@ const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
 // Assumed FREE plan id — NOT yet verified against the Autumn dashboard. The free plan id auto-enrolled new
 // platforms attach via the console; update here once confirmed.
 const AUTUMN_FREE_PLAN_ID = 'free'
-
-// Autumn plan-item billing method that marks a feature as purchasable as a prepaid top-up (vs 'usage_based').
-const PREPAID_BILLING_METHOD = 'prepaid'
 
 // The boolean-flag feature ids, used when projecting Autumn flags onto platform-plan limits. The `satisfies`
 // pins each entry to a column that is BOTH a PlatformPlanLimits key AND an AutumnFeatureId value, so this
@@ -212,7 +210,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 maxMonthlyTopUps: autoTopUp.purchaseLimit?.limit ?? null,
             }]
         })
-        return { autoTopUps, topUpFeatures: getToppableFeatureIds(customer) }
+        return { autoTopUps, topUpFeatures: getToppableFeatures(customer) }
     },
     createCheckoutSession: async ({ platformId, planId, successUrl }) => {
         // Enroll first so a customer-scoped client exists (mints a FREE Autumn customer via the console for
@@ -233,6 +231,22 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         }
         const result = await client.openCustomerPortal({ returnUrl })
         return { url: result.url }
+    },
+    getBillingInfo: async (platformId) => {
+        const monthStart = apDayjs().startOf('month').unix()
+        const monthEnd = apDayjs().endOf('month').unix()
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null }
+        }
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
+        const basePlan = customer.subscriptions.find((subscription) => !subscription.addOn)
+        return {
+            startDate: basePlan?.currentPeriodStart ?? monthStart,
+            endDate: basePlan?.currentPeriodEnd ?? monthEnd,
+            nextBillingAmount: basePlan?.plan?.price?.amount ?? 0,
+            cancelAt: basePlan?.canceledAt ?? null,
+        }
     },
     topUpFeature: async ({ platformId, featureId, quantity, successUrl }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
@@ -374,22 +388,33 @@ function isAutumnFeatureId(value: string): value is AutumnFeatureId {
     return Object.values(AutumnFeatureId).some((id) => id === value)
 }
 
+function isToppableFeatureId(value: string): value is ToppableFeatureId {
+    return TOPPABLE_FEATURE_IDS.some((id) => id === value)
+}
+
 // Top-up availability is plan-driven and per-feature: a feature is toppable iff the customer's base plan
 // carries a prepaid item for it (credits today; users/projects/active-flows can be added by configuring a
-// prepaid item on the plan). Requires the customer to be fetched with `expand: ['subscriptions.plan']`.
-function getToppableFeatureIds(customer: GetCustomerResponse): AutumnFeatureId[] {
+// prepaid item on the plan). Each prepaid item also carries the pricing the UI uses (`pricePerUnit` per
+// `billingUnits`). Requires the customer to be fetched with `expand: ['subscriptions.plan']`.
+function getToppableFeatures(customer: GetCustomerResponse): ToppableFeature[] {
     const basePlan = customer.subscriptions.find((subscription) => !subscription.addOn)?.plan
     if (isNil(basePlan)) {
         return []
     }
-    return basePlan.items
-        .filter((item) => item.price?.billingMethod === PREPAID_BILLING_METHOD)
-        .map((item) => item.featureId)
-        .filter(isAutumnFeatureId)
+    return basePlan.items.flatMap((item) => {
+        if (item.price?.billingMethod !== PlanBillingMethod.Prepaid || !isToppableFeatureId(item.featureId)) {
+            return []
+        }
+        return [{
+            featureId: item.featureId,
+            pricePerUnit: item.price.amount ?? 0,
+            billingUnits: item.price.billingUnits,
+        }]
+    })
 }
 
 function assertFeatureIsToppable({ customer, featureId }: { customer: GetCustomerResponse, featureId: string }): void {
-    if (!getToppableFeatureIds(customer).some((id) => id === featureId)) {
+    if (!getToppableFeatures(customer).some((feature) => feature.featureId === featureId)) {
         throw new ActivepiecesError({
             code: ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS,
             params: { message: 'Top-up is not available for this feature on the current plan' },

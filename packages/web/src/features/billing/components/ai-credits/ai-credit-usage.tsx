@@ -4,7 +4,7 @@ import {
   AutumnFeatureId,
   isNil,
   PlatformBillingInformation,
-  ToppableFeatureId,
+  ToppableFeature,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -25,6 +25,7 @@ import { Switch } from '@/components/ui/switch';
 import { billingMutations } from '../../hooks/billing-hooks';
 
 import { AutoTopUpConfigDialog } from './auto-topup-config-dialog';
+import { ConsumableProductTopupsDialog } from './consumable-product-topups-dialog';
 
 interface AiCreditUsageProps {
   platformSubscription: PlatformBillingInformation;
@@ -36,11 +37,13 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const totalCreditsUsed = usage.totalAiCreditsUsed;
   const creditsRemaining = usage.aiCreditsRemaining;
 
-  // Top-up availability is plan-driven: a row shows only when the current plan offers a top-up for that
-  // feature (i.e. carries a prepaid item for it), surfaced by the backend as `topUpFeatures`.
-  const canManageApCredits = topUpFeatures.includes(AutumnFeatureId.AP_CREDITS);
-  const canManageAppSumoCredits = topUpFeatures.includes(
-    AutumnFeatureId.APP_SUMO_AI_CREDITS,
+  // Top-up availability is plan-driven: a control shows only when the current plan offers a top-up for that
+  // feature (i.e. carries a prepaid item for it), and the item carries the pricing the dialogs use.
+  const apCreditsFeature = topUpFeatures.find(
+    (feature) => feature.featureId === AutumnFeatureId.AP_CREDITS,
+  );
+  const appSumoFeature = topUpFeatures.find(
+    (feature) => feature.featureId === AutumnFeatureId.APP_SUMO_AI_CREDITS,
   );
   const apCreditsConfig = autoTopUps.find(
     (config) => config.featureId === AutumnFeatureId.AP_CREDITS,
@@ -66,11 +69,19 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             </span>
           </ItemDescription>
         </ItemContent>
+        {apCreditsFeature && (
+          <ItemActions>
+            <ConsumableTopupButton
+              feature={apCreditsFeature}
+              title={t('Purchase AI Credits')}
+            />
+          </ItemActions>
+        )}
       </Item>
 
-      {canManageApCredits && (
+      {apCreditsFeature && (
         <AutoTopUpRow
-          featureId={AutumnFeatureId.AP_CREDITS}
+          feature={apCreditsFeature}
           config={apCreditsConfig}
           title={t('Auto Top-up')}
         />
@@ -98,12 +109,20 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
               </span>
             </ItemDescription>
           </ItemContent>
+          {appSumoFeature && (
+            <ItemActions>
+              <ConsumableTopupButton
+                feature={appSumoFeature}
+                title={t('Purchase AppSumo AI Credits')}
+              />
+            </ItemActions>
+          )}
         </Item>
       )}
 
-      {canManageAppSumoCredits && (
+      {appSumoFeature && (
         <AutoTopUpRow
-          featureId={AutumnFeatureId.APP_SUMO_AI_CREDITS}
+          feature={appSumoFeature}
           config={appSumoConfig}
           title={t('AppSumo Auto Top-up')}
         />
@@ -112,13 +131,37 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   );
 }
 
+function ConsumableTopupButton({
+  feature,
+  title,
+}: {
+  feature: ToppableFeature;
+  title: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
+        {t('Purchase')}
+      </Button>
+      <ConsumableProductTopupsDialog
+        key={isOpen ? 'open' : 'closed'}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        feature={feature}
+        title={title}
+      />
+    </>
+  );
+}
+
 interface AutoTopUpRowProps {
-  featureId: ToppableFeatureId;
+  feature: ToppableFeature;
   config?: AutoTopUpConfig;
   title: string;
 }
 
-function AutoTopUpRow({ featureId, config, title }: AutoTopUpRowProps) {
+function AutoTopUpRow({ feature, config, title }: AutoTopUpRowProps) {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -171,7 +214,7 @@ function AutoTopUpRow({ featureId, config, title }: AutoTopUpRowProps) {
             } else {
               updateAutoTopUp({
                 state: AiCreditsAutoTopUpState.DISABLED,
-                featureId,
+                featureId: feature.featureId,
               });
             }
           }}
@@ -181,7 +224,7 @@ function AutoTopUpRow({ featureId, config, title }: AutoTopUpRowProps) {
         key={isDialogOpen ? 'open' : 'closed'}
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        featureId={featureId}
+        feature={feature}
         isEditing={isEditing}
         currentThreshold={config?.threshold}
         currentCreditsToAdd={config?.quantity}

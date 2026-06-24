@@ -1,5 +1,5 @@
-import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
-import { AiCreditsAutoTopUpState, AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, PlatformBillingInformation, PrincipalType, PurchasablePlan, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { AiCreditsAutoTopUpState, AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, PlatformBillingInformation, PrincipalType, PurchasablePlan } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -7,7 +7,6 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
 import { platformPlanService } from './platform-plan.service'
-import { stripeHelper } from './stripe-helper'
 
 export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => {
 
@@ -19,17 +18,14 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
             billingProvider.get(request.log).getTopUpSettings(platform.id),
         ])
 
-        const { stripeSubscriptionCancelDate: cancelDate } = platformPlan
-        const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformPlan)
-
-        const nextBillingAmount = await platformPlanService(request.log).getNextBillingAmount({ subscriptionId: platformPlan.stripeSubscriptionId })
+        const { endDate: nextBillingDate, nextBillingAmount, cancelAt } = await billingProvider.get(request.log).getBillingInfo(platform.id)
 
         const response: PlatformBillingInformation = {
             plan: platformPlan,
             usage,
             nextBillingAmount,
             nextBillingDate,
-            cancelAt: cancelDate,
+            cancelAt,
             autoTopUps,
             topUpFeatures,
         }
@@ -56,46 +52,8 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return url
     })
 
-    fastify.post('/create-checkout-session', CreateCheckoutSessionRequest, async (request) => {
-        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
-
-        const { newActiveFlowsLimit } = request.body
-
-        const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
-        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
-
-        return stripeHelper(request.log).createNewSubscriptionCheckoutSession({
-            platformId: platformPlan.platformId,
-            customerId,
-            extraActiveFlows,
-        })
-    })
-
-    fastify.post('/update-active-flows-addon', UpdateActiveFlowsAddonRequest, async (request) => {
-        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
-
-        const { newActiveFlowsLimit } = request.body
-
-        const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
-        const currentActiveFlowsLimit =  platformPlan.activeFlowsLimit ?? 0
-        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
-        const isFreeDowngrade = newActiveFlowsLimit === baseActiveFlowsLimit
-
-        assertNotNullOrUndefined(platformPlan.stripeSubscriptionId, 'Subscription doesnt exist')
-
-        const isUpgrade = newActiveFlowsLimit > currentActiveFlowsLimit
-        return stripeHelper(request.log).handleSubscriptionUpdate({
-            subscriptionId: platformPlan.stripeSubscriptionId,
-            extraActiveFlows,
-            isUpgrade, 
-            isFreeDowngrade,
-        })
-    })
-
     // Top-ups (apCredits today; appSumoAiCredits + future users/activeFlows/projects via featureId).
-    fastify.post('/ai-credits/create-checkout-session', CreateAICreditCheckoutSessionRequest, async (request) => {
+    fastify.post('/ai-credits/create-checkout-session', ConsumableProductTopupRequest, async (request) => {
         const { credits, featureId } = request.body
         const { checkoutUrl } = await billingProvider.get(request.log).topUpFeature({
             platformId: request.principal.platform.id,
@@ -128,24 +86,6 @@ const InfoRequest = {
     },
 }
 
-const UpdateActiveFlowsAddonRequest = {
-    schema: {
-        body: UpdateActiveFlowsAddonParamsSchema,
-    },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-}
-
-const CreateCheckoutSessionRequest = {
-    schema: {
-        body: CreateCheckoutSessionParamsSchema,
-    },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-}
-
 const ListPlansRequest = {
     schema: {
         response: {
@@ -169,9 +109,9 @@ const CheckoutRequest = {
     },
 }
 
-const CreateAICreditCheckoutSessionRequest = {
+const ConsumableProductTopupRequest = {
     schema: {
-        body: CreateAICreditCheckoutSessionParamsSchema,
+        body: ConsumableProductTopupParams,
         response: {
             [StatusCodes.OK]: z.object({
                 stripeCheckoutUrl: z.string().nullable(),
@@ -185,7 +125,7 @@ const CreateAICreditCheckoutSessionRequest = {
 
 const UpdateAICreditsAutoTopUpRequest = {
     schema: {
-        body: UpdateAICreditsAutoTopUpParamsSchema,
+        body: ConsumableProductAutoTopupParams,
         [StatusCodes.OK]: z.object({
             stripeCheckoutUrl: z.string().optional(),
         }),

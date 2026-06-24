@@ -1,9 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  ApSubscriptionStatus,
   AiCreditsAutoTopUpState,
   ApEdition,
   ApFlagId,
+  PlanName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -52,9 +52,9 @@ function BillingPageDetails() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
-  const status = platformPlanInfo?.plan?.stripeSubscriptionStatus;
-  const isSubscriptionActive =
-    ApSubscriptionStatus.ACTIVE === (status as ApSubscriptionStatus);
+  const hasPaidPlan =
+    !isNil(platformPlanInfo?.plan?.plan) &&
+    platformPlanInfo.plan.plan !== PlanName.FREE;
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
@@ -80,9 +80,9 @@ function BillingPageDetails() {
       )}
     >
       <div className="flex flex-col gap-6">
-        {isSubscriptionActive && <SubscriptionInfo info={platformPlanInfo} />}
+        {hasPaidPlan && <SubscriptionInfo info={platformPlanInfo} />}
 
-        {(isSubscriptionActive ||
+        {(hasPaidPlan ||
           platformPlanInfo?.plan.aiCreditsAutoTopUpState ===
             AiCreditsAutoTopUpState.ENABLED) && (
           <Button

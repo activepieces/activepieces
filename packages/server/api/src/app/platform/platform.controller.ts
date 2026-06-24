@@ -7,7 +7,6 @@ import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { fileService } from '../file/file.service'
 import { system } from '../helper/system/system'
@@ -137,10 +136,6 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                         message: 'Platform is not eligible for deletion',
                     },
                 })
-            }
-            const platformPlan = await platformPlanService(req.log).getOrCreateForPlatform(req.params.id)
-            if (platformPlan.stripeSubscriptionId) {
-                await stripeHelper(req.log).deleteCustomer(platformPlan.stripeSubscriptionId)
             }
 
             const platformId = req.params.id

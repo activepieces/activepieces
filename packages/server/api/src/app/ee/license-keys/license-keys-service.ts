@@ -151,8 +151,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 managePiecesEnabled: key.managePiecesEnabled,
                 activeFlowsLimit: undefined,
                 projectsLimit: undefined,
-                stripeSubscriptionId: undefined,
-                stripeSubscriptionStatus: undefined,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,
                 projectRolesEnabled: key.projectRolesEnabled,
