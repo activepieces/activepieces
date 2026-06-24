@@ -74,7 +74,7 @@ const BranchSingleCondition = ({
 }: BranchSingleConditionProps) => {
   const form = useFormContext<RouterAction>();
 
-  const condition = form.getValues(
+  const condition = form.watch(
     `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
   );
 
@@ -215,3 +215,4 @@ const BranchSingleCondition = ({
 
 BranchSingleCondition.displayName = 'BranchSingleCondition';
 export { BranchSingleCondition };
+
