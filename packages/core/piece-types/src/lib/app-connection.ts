@@ -46,7 +46,7 @@ export type CustomAuthConnectionValue<T extends Record<string, unknown> = Record
     type: AppConnectionType.CUSTOM_AUTH
     props: T
     access_token?: string
-    token_expires_at?: number
+    token_refresh_at?: number
 }
 
 export type OIDCConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {

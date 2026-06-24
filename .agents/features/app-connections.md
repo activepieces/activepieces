@@ -57,7 +57,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 | PLATFORM_OAUTH2 | Same but uses platform-managed OAuth app credentials | Auto-refresh |
 | SECRET_TEXT | token | None |
 | BASIC_AUTH | username, password | None |
-| CUSTOM_AUTH | piece-defined custom fields + optional `access_token`, `token_expires_at` | Optional — piece opts in via `refresh` callback; server caches token with 15-min early-refresh buffer |
+| CUSTOM_AUTH | piece-defined custom fields + optional `access_token`, `token_refresh_at` | Optional — piece opts in via `refresh` callback; server caches token with 15-min early-refresh buffer (clamped to half the token lifetime) |
 | NO_AUTH | (empty) | None |
 | OIDC | piece-defined props (e.g. role ARN, audience) — token fetched at runtime | None (short-lived JWT issued per-request) |
 
@@ -128,15 +128,15 @@ PieceAuth.CustomAuth({
 
 **Runtime flow:**
 1. `needRefresh()` checks `connection.value.access_token`:
-   - Present → compare `token_expires_at` against `now + 15 min` buffer (same as OAuth2)
+   - Present → stale once `now >= token_refresh_at` (the precomputed refresh instant)
    - Absent → consult `pieceRefreshSupportCache` (in-process LRU, 500 entries, 5-min TTL keyed by `pieceName@pieceVersion`); on cache miss, load piece metadata and check for `refresh` callback; result cached for future executions
 2. If refresh needed: acquires the same distributed Redis lock (`key = ${projectId}_${externalId}`, 60s)
 3. Dispatches `EXECUTE_TOKEN_REFRESH` worker job (user-interaction queue, same pattern as `EXECUTE_VALIDATION`)
 4. Engine calls the piece's `refresh.generate()` callback, returns `{ access_token, expires_in? }`
-5. `access_token` and `token_expires_at` stored encrypted in `CustomAuthConnectionValue`, status=ACTIVE
+5. `access_token` and `token_refresh_at` stored encrypted in `CustomAuthConnectionValue`, status=ACTIVE. `token_refresh_at = now + expiresIn - min(15 min, expiresIn / 2)` so the 15-min early-refresh buffer never exceeds half the token's lifetime (a short-lived token would otherwise be stale the instant it is minted); `expiresIn <= 0` means "never expires" → `token_refresh_at` is left unset
 6. On **timeout**: uses existing credentials unchanged — does NOT mark connection ERROR
 7. On **engine error** (non-OK status): throws `CustomAuthRefreshError` → sets status=ERROR
-8. If piece has no `refresh` callback (returns `skipped: true`): clears stale `access_token`/`token_expires_at` and sets cache to `false` so no further jobs fire
+8. If piece has no `refresh` callback (returns `skipped: true`): clears stale `access_token`/`token_refresh_at` and sets cache to `false` so no further jobs fire
 
 Inside piece actions/triggers, `context.auth.access_token` holds the cached token alongside the raw `props`.
 

@@ -100,7 +100,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     connection.value = {
                         ...connection.value,
                         access_token: undefined,
-                        token_expires_at: undefined,
+                        token_refresh_at: undefined,
                     }
                 }
                 else {
@@ -108,7 +108,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     connection.value = {
                         ...connection.value,
                         access_token: refreshResult.access_token,
-                        token_expires_at: refreshResult.expires_in > 0 ? dayjs().unix() + refreshResult.expires_in : undefined,
+                        token_refresh_at: computeTokenRefreshAt(refreshResult.expires_in),
                     }
                 }
                 break
@@ -226,10 +226,23 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
 const pieceRefreshSupportCache: LRU<boolean> = lru(500, 5 * 60 * 1000)
 
-export function isCustomAuthTokenStale(value: { access_token?: string, token_expires_at?: number }): boolean {
+export function isCustomAuthTokenStale(value: { access_token?: string, token_refresh_at?: number }): boolean {
     if (isNil(value.access_token)) return true
-    if (isNil(value.token_expires_at)) return false
-    return dayjs().unix() + TOKEN_REFRESH_BUFFER_SECONDS >= value.token_expires_at
+    if (isNil(value.token_refresh_at)) return false
+    return dayjs().unix() >= value.token_refresh_at
+}
+
+// Returns the unix timestamp at which the token should be refreshed: 15 minutes
+// before expiry, but never earlier than half the token's lifetime — otherwise a
+// token whose TTL is shorter than the buffer would be considered stale the instant
+// it is minted, refreshing on every fetch and defeating the cache. `expiresIn <= 0`
+// means the token never expires, so it never needs refreshing.
+export function computeTokenRefreshAt(expiresIn: number): number | undefined {
+    if (expiresIn <= 0) {
+        return undefined
+    }
+    const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresIn / 2))
+    return dayjs().unix() + expiresIn - buffer
 }
 
 class CustomAuthRefreshError extends Error {

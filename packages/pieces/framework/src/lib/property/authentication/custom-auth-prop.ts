@@ -40,8 +40,15 @@ export const CustomAuthProperty = z.object({
 export type CustomAuthRefresh<T extends CustomAuthProps> = {
   generate: (params: { auth: StaticPropsValue<T>; server: Omit<ServerContext, 'token'> }) => Promise<{
     access_token: string
+    /**
+     * Token lifetime in seconds. When omitted, `defaultExpiresIn` (or the framework
+     * default) is used. Use `0` to mark the token as non-expiring — it is then cached
+     * indefinitely and never refreshed. The server refreshes 15 minutes before expiry,
+     * clamped to half the lifetime so short-lived tokens are not refreshed on every call.
+     */
     expires_in?: number
   }>
+  /** Fallback token lifetime in seconds when `generate` omits `expires_in`. `0` means non-expiring. */
   defaultExpiresIn?: number
 }
 
