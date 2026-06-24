@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { smallestAiAuth } from '../..';
-import { SMALLEST_AI_BASE_URL, SMALLEST_AI_SOURCE_HEADERS, getVoices } from '../common';
+import { SMALLEST_AI_BASE_URL, SMALLEST_AI_SOURCE_HEADERS, PRO_VOICE_IDS, getVoices } from '../common';
 
 export const textToSpeech = createAction({
   name: 'text-to-speech',
@@ -27,20 +27,24 @@ export const textToSpeech = createAction({
     }),
     voice_id: Property.Dropdown({
       displayName: 'Voice',
-      description: 'Select a voice. Pro voices (e.g. meher) require the Pro model.',
+      description: 'Voices update automatically when you change the model.',
       required: true,
       auth: smallestAiAuth,
-      refreshers: [],
+      refreshers: ['model'],
       refreshOnSearch: false,
-      options: async ({ auth }) => {
+      options: async ({ auth, model }) => {
         if (!auth) {
           return { disabled: true, placeholder: 'Enter your API key first', options: [] };
         }
         try {
           const voices = await getVoices({ apiKey: auth as string });
+          const isProModel = model === 'lightning_v3.1_pro';
+          const filtered = voices.filter((v) =>
+            isProModel ? PRO_VOICE_IDS.has(v.voiceId) : !PRO_VOICE_IDS.has(v.voiceId)
+          );
           return {
             disabled: false,
-            options: voices.map((v) => ({ label: v.displayName ?? v.voiceId, value: v.voiceId })),
+            options: filtered.map((v) => ({ label: v.displayName ?? v.voiceId, value: v.voiceId })),
           };
         } catch {
           return { disabled: true, placeholder: "Couldn't load voices — check your API key.", options: [] };
