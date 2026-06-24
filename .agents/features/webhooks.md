@@ -27,7 +27,7 @@ Ingests inbound HTTP requests from external services and routes them to flows fo
 - **Draft webhook** — routes to the latest (draft) flow version instead of the published version; used for testing
 - **Test endpoint** (`/:flowId/test`) — captures the request as sample data without executing the flow
 - **Handshake** — a one-time ownership challenge sent by external services before activating a webhook subscription
-- **HandshakeStrategy** — how ownership is verified: `HEADER_PRESENT`, `QUERY_PRESENT`, `BODY_PARAM_PRESENT`, `NONE`
+- **HandshakeStrategy** — how ownership is verified: `HEADER_PRESENT`, `QUERY_PRESENT`, `BODY_PARAM_PRESENT`, `NONE`, `HEAD_REQUEST` (for services like Trello that validate by sending a HEAD request)
 - **engineResponseWatcher** — a one-time listener that bridges the BullMQ engine response back to the waiting HTTP connection for sync mode
 - **LOCKED_FALL_BACK_TO_LATEST** — version resolution: uses `publishedVersionId` if set, falls back to latest draft
 - **flowExecutionCache** — Redis-backed fast path for resolving flow metadata without hitting PostgreSQL on every webhook

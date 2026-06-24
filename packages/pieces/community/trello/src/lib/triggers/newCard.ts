@@ -18,15 +18,12 @@ export const newCardTrigger = createTrigger({
 		list_id_opt: trelloCommon.list_id_opt,
 	},
 	type: TriggerStrategy.WEBHOOK,
-		handshakeConfiguration:{
-			strategy:WebhookHandshakeStrategy.NONE
-		},
-		async onHandshake(context)
-		{
-			return{
-				status:200
-			}
-		},
+	handshakeConfiguration: {
+		strategy: WebhookHandshakeStrategy.HEAD_REQUEST,
+	},
+	async onHandshake() {
+		return { status: 200 }
+	},
 	async onEnable(context) {
 		const element_id = context.propsValue.list_id_opt || context.propsValue.board_id;
 		const webhooks = await trelloCommon.list_webhooks(context.auth);
