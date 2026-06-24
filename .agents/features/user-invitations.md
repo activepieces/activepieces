@@ -1,7 +1,7 @@
 # User Invitations
 
 ## Summary
-The User Invitations feature lets platform owners and project members with the `WRITE_INVITATION` permission invite users to join a platform or a specific project. An invitation is scoped to either a platform (granting a `PlatformRole`) or a project (granting a named `ProjectRole`). When created, an invitation is either immediately auto-accepted (for SERVICE key calls or when inviting an already-registered user to a project) or kept as PENDING and an email link is sent. The invitation link embeds a short-lived JWT token; recipients click it to accept without needing a login session. On acceptance, the user's platform role or project membership is provisioned automatically. Invitations are cleaned up after acceptance.
+The User Invitations feature lets platform owners and project members with the `WRITE_INVITATION` permission invite users to join a platform or a specific project. An invitation is scoped to either a platform (granting a `PlatformRole`) or a project (granting a named `ProjectRole`). When created, an invitation is either immediately auto-accepted (for SERVICE key calls or when inviting an already-registered user to a project) or kept as PENDING and an email link is sent. The invitation link embeds a short-lived JWT token; recipients click it to accept without needing a login session. On acceptance, the user's platform role or project membership is provisioned automatically. Invitations are cleaned up after acceptance. When an invitation would add a *new* platform user (the email is not yet a member of the platform), the platform's `usersLimit` seat cap is checked at **send time** (fast-fail with `QUOTA_EXCEEDED`). This is best-effort UX only — concurrent accepts can overshoot the cap, and authoritative/serialized enforcement at provisioning time is deliberately deferred (better a small overshoot than ever blocking a legitimate invite acceptance).
 
 ## Key Files
 - `packages/server/api/src/app/user-invitations/user-invitation.module.ts` — Fastify plugin registration + all route handlers (acts as both module and controller)
@@ -53,7 +53,7 @@ All routes are prefixed `/v1/user-invitations`.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/` | publicPlatform (USER, SERVICE) | Create or upsert an invitation |
+| POST | `/` | publicPlatform (USER, SERVICE) | Create or upsert an invitation; rejects with `QUOTA_EXCEEDED` when the invite would add a new platform user and the platform is at its `usersLimit` |
 | GET | `/` | publicPlatform (USER, SERVICE) | List invitations (paginated) |
 | POST | `/accept` | public | Accept an invitation via token |
 | DELETE | `/:id` | unscoped (USER, SERVICE) | Revoke a pending invitation |
@@ -63,7 +63,7 @@ All routes are prefixed `/v1/user-invitations`.
 **userInvitationsService**
 - `create({ email, platformId, projectId, type, projectRoleId, platformRole, invitationExpirySeconds, status })` — upserts by `(email, platformId, projectId)`. If `status = ACCEPTED`, immediately calls `accept()`. If `status = PENDING` and SMTP is configured, sends an email with the link; otherwise returns the link in the response body.
 - `accept({ invitationId, platformId })` — marks status ACCEPTED, resolves the user's identity by email, calls `provisionUserInvitation()` if the user already exists.
-- `provisionUserInvitation({ user, email })` — finds all ACCEPTED invitations for the email, applies PLATFORM invitations by updating the user's platformRole, applies PROJECT invitations by upserting a `ProjectMember`. Deletes each invitation after applying.
+- `provisionUserInvitation({ email })` — finds all ACCEPTED invitations for the email, applies PLATFORM invitations by updating the user's platformRole, applies PROJECT invitations by upserting a `ProjectMember`. Deletes each invitation after applying. No seat check here — seat enforcement is send-time only (see Summary); accepting an invite never blocks on `usersLimit`.
 - `list({ platformId, projectId, type, status, limit, cursor })` — paginated, always filtered by `platformId`.
 - `delete({ id, platformId })` — hard delete, scoped to platform.
 - `getOneByInvitationTokenOrThrow(token)` — decodes JWT, finds invitation by ID.
