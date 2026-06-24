@@ -44,6 +44,7 @@ export type ToolCallMeta = {
 
 export type ChatStoreState = {
   quickReplies: string[];
+  offerRecurringAutomation: boolean;
   toolCallMeta: Record<string, ToolCallMeta>;
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
@@ -70,6 +71,7 @@ function dismissAndCleanup(
 export const createChatStore = () =>
   create<ChatStoreState>((set) => ({
     quickReplies: [],
+    offerRecurringAutomation: false,
     toolCallMeta: {},
     dismissedGateIds: {},
     lastDismissedFormId: null,
@@ -91,6 +93,7 @@ export const createChatStore = () =>
     resetInteractions: () => {
       set({
         quickReplies: [],
+        offerRecurringAutomation: false,
         toolCallMeta: {},
         dismissedGateIds: {},
         lastDismissedFormId: null,

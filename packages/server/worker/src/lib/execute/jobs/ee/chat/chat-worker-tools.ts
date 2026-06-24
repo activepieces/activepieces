@@ -275,7 +275,8 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
         ap_show_quick_replies: tool({
             description: 'Offer 1-3 short, relevant follow-up suggestions above the chat input. Only use when concrete next steps genuinely exist; skip it otherwise.',
             inputSchema: z.object({
-                replies: z.array(z.string().max(80)).min(1).max(3).describe('Short suggestion texts'),
+                replies: z.array(z.string().max(80)).min(1).max(3).describe('Short suggestion texts. Keep to at most 2 when offerRecurringAutomation is true.'),
+                offerRecurringAutomation: z.boolean().optional().describe('Set to true when you have just successfully completed a one-time task that could plausibly run on a schedule. When true, the client pins a "Run this automatically every day" suggestion as the last chip, so phrase your replies around OTHER next steps and do not restate that phrase yourself. Omit or leave false for informational answers, partial or failed tasks, and tasks that are already recurring.'),
             }),
             execute: async () => {
                 return { displayed: true }
