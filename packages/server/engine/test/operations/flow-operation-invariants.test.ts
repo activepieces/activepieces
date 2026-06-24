@@ -41,7 +41,7 @@ const { mockDownload, mockUpload } = vi.hoisted(() => ({
     mockDownload: vi.fn(),
     mockUpload: vi.fn(),
 }))
-vi.mock('../../src/lib/engine-file-api', () => ({
+vi.mock('../../src/lib/api/engine-file-api', () => ({
     engineFileApi: {
         download: mockDownload,
         upload: mockUpload,

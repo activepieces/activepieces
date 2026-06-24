@@ -7,7 +7,6 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "form-data": "4.0.4",
-    "tslib": "2.6.2",
     "undici": "7.24.6",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
@@ -19,6 +18,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "tslib": "2.6.2"
   }
 }

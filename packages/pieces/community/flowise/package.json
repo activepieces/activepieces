@@ -4,7 +4,8 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "devDependencies": {
-    "@types/is-url": "^1.2.32"
+    "@types/is-url": "^1.2.32",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
@@ -14,7 +15,6 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   }

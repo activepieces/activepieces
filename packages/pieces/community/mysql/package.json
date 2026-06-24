@@ -8,7 +8,6 @@
     "@activepieces/pieces-framework": "workspace:*",
     "promise-mysql": "5.2.0",
     "sqlstring": "2.3.3",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -18,6 +17,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/sqlstring": "2.3.2"
+    "@types/sqlstring": "2.3.2",
+    "tslib": "2.6.2"
   }
 }

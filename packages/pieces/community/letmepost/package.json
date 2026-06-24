@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  },
+  "devDependencies": {
     "tslib": "^2.3.0"
   }
 }

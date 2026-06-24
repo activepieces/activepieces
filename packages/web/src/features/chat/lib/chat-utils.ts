@@ -229,6 +229,21 @@ function persistedPartToUIPart(
         errorText: part.errorText ?? 'Tool call failed',
       };
     }
+    case PersistedChatPartType.SOURCE_URL:
+      return {
+        type: 'source-url',
+        sourceId: part.sourceId,
+        url: part.url,
+        title: part.title,
+      };
+    case PersistedChatPartType.SOURCE_DOCUMENT:
+      return {
+        type: 'source-document',
+        sourceId: part.sourceId,
+        mediaType: part.mediaType,
+        title: part.title,
+        filename: part.filename,
+      };
     case PersistedChatPartType.BATCH_PROGRESS:
     case PersistedChatPartType.ACTION_RECEIPT:
       return { type: 'text', text: '' } as ChatUIMessage['parts'][number];

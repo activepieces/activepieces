@@ -11,7 +11,6 @@
     "form-data": "4.0.4",
     "google-auth-library": "10.5.0",
     "mime-types": "2.1.35",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -21,6 +20,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/mime-types": "2.1.1"
+    "@types/mime-types": "2.1.1",
+    "tslib": "2.6.2"
   }
 }

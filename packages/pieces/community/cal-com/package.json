@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-cal-com",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -11,8 +11,10 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "2.6.2"
   }
 }

@@ -46,20 +46,8 @@ jobs:
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
 
-      - name: publish shared package
-        run: npx turbo run build --filter=@activepieces/shared --force && npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/core/shared 
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: publish pieces-common package
-        run: npx turbo run build --filter=@activepieces/pieces-common --force && npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/common
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: publish pieces-framework package
-        run: npx turbo run build --filter=@activepieces/pieces-framework --force && npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/framework
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # @activepieces/shared, pieces-common and pieces-framework are no longer published to npm:
+      # pieces are now self-contained bundles that inline these dependencies at build time.
 
       - name: Find changed pieces
         id: changed

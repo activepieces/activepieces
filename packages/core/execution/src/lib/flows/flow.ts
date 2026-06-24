@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import * as zMini from 'zod/mini'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { ApId } from '@activepieces/core-utils'
 import { Metadata } from '@activepieces/core-utils'
@@ -61,13 +62,13 @@ export const Flow = z.object({
 export type Flow = z.infer<typeof Flow>
 export const PopulatedFlow = Flow.extend({
     version: FlowVersion,
-    triggerSource: TriggerSource.pick({ schedule: true }).optional(),
+    triggerSource: zMini.optional(zMini.pick(TriggerSource, { schedule: true })),
 })
 
 export type PopulatedFlow = z.infer<typeof PopulatedFlow>
 
 
-export const PopulatedTriggerSource = TriggerSource.extend({
+export const PopulatedTriggerSource = zMini.extend(TriggerSource, {
     flow: Flow,
 })
 export type PopulatedTriggerSource = z.infer<typeof PopulatedTriggerSource>

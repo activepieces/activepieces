@@ -1,14 +1,10 @@
-import http from 'node:http'
 import { inspect } from 'node:util'
 import {
     createNotifyClient,
-    createRpcClient,
     createRpcServer,
     EngineContract,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
-    NetworkMode,
-    WorkerContract,
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
@@ -18,7 +14,6 @@ import { execute } from './operations'
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
 
 let socket: Socket | undefined
-let workerClient: WorkerContract | undefined
 let notifyClient: WorkerNotifyContract | undefined
 let initialConnectWatchdog: NodeJS.Timeout | undefined
 
@@ -45,7 +40,6 @@ export const workerSocket = {
             process.exit(5)
         }, INITIAL_CONNECT_TIMEOUT_MS)
 
-        workerClient = createRpcClient<WorkerContract>(socket, 60_000)
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
 
         socket.on('connect', () => {
@@ -112,11 +106,6 @@ export const workerSocket = {
         socket.connect()
     },
 
-    getWorkerClient: (): WorkerContract => {
-        if (!workerClient) throw new Error('Worker client not initialized')
-        return workerClient
-    },
-
     sendError: (error: unknown): void => {
         notifyClient?.stderr({ message: inspect(error) })
     },
@@ -125,7 +114,6 @@ export const workerSocket = {
         clearInitialConnectWatchdog()
         socket?.disconnect()
         socket = undefined
-        workerClient = undefined
         notifyClient = undefined
     },
 }
@@ -143,11 +131,6 @@ function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketO
         // unauthorized — looping just turns the engine into a zombie. Self-exit on
         // disconnect (above) handles teardown.
         reconnection: false,
-    }
-    // In STRICT mode ssrf-guard rebinds http.globalAgent to HttpProxyAgent; a
-    // plain http.Agent here keeps the loopback worker RPC handshake off the proxy.
-    if (process.env['AP_NETWORK_MODE'] === NetworkMode.STRICT) {
-        Object.assign(base, { agent: new http.Agent() })
     }
     return base
 }

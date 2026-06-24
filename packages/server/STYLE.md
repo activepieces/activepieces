@@ -121,9 +121,9 @@ await fileExists(path)   // no file/namespace context at the call site
 
 Rules of thumb:
 
-- **One exported const per file**, named after the file (kebab → camel): `iptables-lockdown.ts` → `iptablesLockdown`, `sandbox-capacity.ts` → `sandboxCapacity`.
+- **One exported const per file**, named after the file (kebab → camel): `ssrf-ip-classifier.ts` → `ssrfIpClassifier`, `sandbox-capacity.ts` → `sandboxCapacity`.
 - **Group by file, not by category.** The file *is* the grouping.
-- **Exception — a single public entry point.** If the module exposes exactly one public function or class (e.g. `startEgressProxy`, a Fastify plugin like `flowController`), export it directly. The "group" is a group of one.
+- **Exception — a single public entry point.** If the module exposes exactly one public function or class (e.g. a Fastify plugin like `flowController`), export it directly. The "group" is a group of one.
 - **Error classes and types stay as named exports** (`export class BlockedHostError`, `export type EgressProxy`) — they don't belong inside the namespace const.
 - Applies equally to `xxxService`, `xxxHelper`, `xxxUtils`, `xxxRepo` — they're all the same pattern under different names (see section 1).
 

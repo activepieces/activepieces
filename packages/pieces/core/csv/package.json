@@ -9,7 +9,6 @@
     "csv-parse": "5.6.0",
     "csv-stringify": "6.5.2",
     "safe-flat": "2.1.0",
-    "tslib": "2.6.2",
     "xlsx": "0.18.5",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
@@ -21,6 +20,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "tslib": "2.6.2"
   }
 }

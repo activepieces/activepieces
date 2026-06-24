@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-gmail",
-  "version": "0.12.5",
+  "version": "0.12.6",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -13,7 +13,6 @@
     "mailparser": "3.9.3",
     "mime-types": "2.1.35",
     "nodemailer": "8.0.5",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -25,6 +24,7 @@
   "devDependencies": {
     "@types/mime-types": "2.1.1",
     "@types/mailparser": "3.4.6",
-    "@types/nodemailer": "7.0.11"
+    "@types/nodemailer": "7.0.11",
+    "tslib": "2.6.2"
   }
 }

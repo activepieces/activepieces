@@ -1,6 +1,6 @@
 import { BatchProgressData } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, RefreshCw, Volume2, VolumeOff } from 'lucide-react';
+import { Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
@@ -10,6 +10,7 @@ import {
   MessageAction,
   MessageActions,
 } from '@/components/prompt-kit/message';
+import { Source } from '@/components/prompt-kit/source';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
   AnyToolPart,
@@ -49,12 +50,10 @@ export const AssistantMessage = memo(function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
-  onRetry,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
-  onRetry: () => void;
 }) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
@@ -64,6 +63,7 @@ export const AssistantMessage = memo(function AssistantMessage({
     hasContent,
     lastDisplayIdx: _,
     lastTextIdx,
+    sources,
   } = useMemo(() => {
     const result: MessageBlock[] = [];
     let currentThinking: {
@@ -72,6 +72,14 @@ export const AssistantMessage = memo(function AssistantMessage({
     } | null = null;
     let hasText = false;
     let pendingDescription: string | null = null;
+    const sources: SourceItem[] = [];
+    const seenSourceKeys = new Set<string>();
+    function addSource(source: SourceItem) {
+      const dedupeKey = source.href ?? source.key;
+      if (seenSourceKeys.has(dedupeKey)) return;
+      seenSourceKeys.add(dedupeKey);
+      sources.push(source);
+    }
 
     function flushPendingDescription() {
       if (pendingDescription) {
@@ -114,6 +122,14 @@ export const AssistantMessage = memo(function AssistantMessage({
       const p = message.parts[i];
 
       if (p.type === 'step-start') {
+        continue;
+      }
+      if (p.type === 'source-url') {
+        addSource({ key: p.sourceId || p.url, href: p.url, title: p.title });
+        continue;
+      }
+      if (p.type === 'source-document') {
+        addSource({ key: p.sourceId, title: p.title || p.filename });
         continue;
       }
       if (p.type === 'text' && p.text.length > 0) {
@@ -247,6 +263,7 @@ export const AssistantMessage = memo(function AssistantMessage({
       hasContent: hasText,
       lastDisplayIdx,
       lastTextIdx,
+      sources,
     };
   }, [message.parts, isStreaming, toolCallMeta]);
 
@@ -401,25 +418,47 @@ export const AssistantMessage = memo(function AssistantMessage({
             }
           })}
 
+          {!isStreaming && sources.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-2">
+              <motion.span
+                className="text-xs text-muted-foreground"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {t('Sources')}
+              </motion.span>
+              {sources.map((source, i) => {
+                if (!source.href && !source.title) return null;
+                return (
+                  <motion.span
+                    key={source.key}
+                    className="inline-flex"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: 0.1 + i * 0.06 }}
+                  >
+                    {source.href ? (
+                      <Source href={source.href} title={source.title} />
+                    ) : (
+                      <span className="inline-flex items-center rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-foreground/80">
+                        {source.title}
+                      </span>
+                    )}
+                  </motion.span>
+                );
+              })}
+            </div>
+          )}
+
           {!isStreaming && !hasContent && hasRenderedContent && (
             <motion.div
-              className="flex items-center gap-2 py-3 text-sm text-muted-foreground"
+              className="py-3 text-sm text-muted-foreground"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <span>
-                {t(
-                  "The agent completed its work but didn't provide a summary.",
-                )}
-              </span>
-              <button
-                type="button"
-                onClick={onRetry}
-                className={cn(ACTION_BUTTON_CLASS, 'inline-flex')}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-              </button>
+              {t("The agent completed its work but didn't provide a summary.")}
             </motion.div>
           )}
 
@@ -456,15 +495,6 @@ export const AssistantMessage = memo(function AssistantMessage({
                     </button>
                   </MessageAction>
                 )}
-                <MessageAction tooltip={t('Regenerate')}>
-                  <button
-                    type="button"
-                    onClick={onRetry}
-                    className={ACTION_BUTTON_CLASS}
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                </MessageAction>
               </>
             )}
           </MessageActions>
@@ -551,22 +581,23 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
 
   return (
     <motion.div
-      className="rounded-xl border bg-background overflow-hidden my-2"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
+      className="flex justify-end my-2"
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25 }}
     >
-      <div className="px-4 py-3 flex items-center gap-2 border-b bg-muted/30">
-        <div className="bg-green-100 dark:bg-green-500/20 rounded-full p-1">
-          <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-        </div>
-        <span className="text-sm font-medium">{t('Your answers')}</span>
-      </div>
-      <div className="px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-muted rounded-2xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
-          <div key={i}>
-            <div className="text-xs text-muted-foreground">{pair.question}</div>
-            <div className="text-sm font-medium">{pair.answer}</div>
+          <div key={i} className="space-y-0.5">
+            <p className="text-sm font-semibold">
+              {t('Q{number}. {question}', {
+                number: i + 1,
+                question: pair.question,
+              })}
+            </p>
+            <p className="text-sm">
+              {t('→ {answer}', { answer: pair.answer })}
+            </p>
           </div>
         ))}
       </div>
@@ -607,3 +638,5 @@ type MessageBlock =
   | { kind: 'display-tool'; part: AnyToolPart }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | { kind: 'action-receipt'; toolCallId: string };
+
+type SourceItem = { key: string; href?: string; title?: string };

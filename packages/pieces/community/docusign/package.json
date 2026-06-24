@@ -8,7 +8,6 @@
     "@activepieces/pieces-framework": "workspace:*",
     "axios": "1.15.2",
     "docusign-esign": "8.1.0",
-    "tslib": "2.6.2",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
@@ -18,6 +17,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/docusign-esign": "5.19.9"
+    "@types/docusign-esign": "5.19.9",
+    "tslib": "2.6.2"
   }
 }
