@@ -36,8 +36,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 const RAIL_EXPANDED_STORAGE_KEY = 'ap.builder.runTimelineRailExpanded';
 
 function readRailExpanded(): boolean {
-  const stored = localStorage.getItem(RAIL_EXPANDED_STORAGE_KEY);
-  return stored === null ? true : stored === 'true';
+  return localStorage.getItem(RAIL_EXPANDED_STORAGE_KEY) === 'true';
 }
 
 const RunTimelineRail = () => {
@@ -82,27 +81,42 @@ const RunTimelineRail = () => {
 
   if (!isExpanded) {
     return (
-      <div className="h-full shrink-0 border-r border-border flex flex-col items-center py-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              onClick={toggleExpanded}
-              aria-label={t('Steps')}
-            >
-              <PanelLeftOpen className="size-4 text-muted-foreground" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t('Steps')}</TooltipContent>
-        </Tooltip>
+      <div className="h-full w-11 shrink-0 border-r border-border bg-background flex flex-col">
+        <div className="flex justify-center py-1.5 shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={toggleExpanded}
+                aria-label={t('Expand')}
+              >
+                <PanelLeftOpen className="size-4 text-muted-foreground" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t('Steps')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <ScrollArea className="flex-1 min-h-0 border-t border-border">
+          <div className="flex flex-col items-center gap-1 py-1.5">
+            {timelineItems.map((item, index) => (
+              <CompactStepButton
+                item={item}
+                isSelected={selectedStep === item.step.name}
+                key={item.step.name}
+                onSelectStep={() => selectStepByName(item.step.name)}
+                order={index + 1}
+              />
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-56 shrink-0 border-r border-border flex flex-col bg-background">
+    <div className="h-full w-52 shrink-0 border-r border-border flex flex-col bg-background">
       <div className="flex items-center justify-between gap-2 px-2 py-2 shrink-0">
         <div className="flex min-w-0 items-center gap-2 pl-1">
           <span className="text-sm font-medium truncate">{t('Steps')}</span>
@@ -145,6 +159,39 @@ const RunTimelineRail = () => {
     </div>
   );
 };
+
+const CompactStepButton = ({
+  isSelected,
+  item,
+  onSelectStep,
+  order,
+}: CompactStepButtonProps) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <button
+        className={cn(
+          'flex size-8 shrink-0 items-center justify-center rounded-md hover:bg-muted',
+          isSelected && 'bg-primary/10 ring-1 ring-primary/30',
+        )}
+        onClick={onSelectStep}
+        type="button"
+      >
+        <StepStatusIcon
+          hideTooltip
+          size="4"
+          status={item.output?.status ?? StepOutputStatus.RUNNING}
+        />
+      </button>
+    </TooltipTrigger>
+    <TooltipContent side="right">
+      {formatStepTooltip({
+        displayName: item.step.displayName,
+        duration: item.output?.duration,
+        order,
+      })}
+    </TooltipContent>
+  </Tooltip>
+);
 
 const TimelineStepRow = ({
   isSelected,
@@ -326,6 +373,17 @@ function getIterationButtonClassName(status: StepOutputStatus): string {
   }
 }
 
+function formatStepTooltip({
+  displayName,
+  duration,
+  order,
+}: FormatStepTooltipParams): string {
+  const base = `${order}. ${displayName}`;
+  return duration === undefined
+    ? base
+    : `${base} · ${formatUtils.formatDuration(duration, false)}`;
+}
+
 function formatDuration(duration: number | undefined): string {
   if (duration === undefined) {
     return '—';
@@ -352,6 +410,12 @@ type GetLoopIterationsParams = {
   step: Step;
 };
 
+type FormatStepTooltipParams = {
+  displayName: string;
+  duration: number | undefined;
+  order: number;
+};
+
 type TimelineItem = {
   iterations: TimelineIteration[];
   output: StepOutput | undefined;
@@ -362,6 +426,13 @@ type TimelineIteration = {
   index: number;
   isSelected: boolean;
   status: StepOutputStatus;
+};
+
+type CompactStepButtonProps = {
+  isSelected: boolean;
+  item: TimelineItem;
+  onSelectStep: () => void;
+  order: number;
 };
 
 type TimelineStepRowProps = {
