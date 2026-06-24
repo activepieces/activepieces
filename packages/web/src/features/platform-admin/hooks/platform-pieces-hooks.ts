@@ -53,6 +53,161 @@ export const platformPiecesMutations = {
       },
     });
   },
+  useToggleComponentVisibility: ({
+    platformId,
+    filteredActionNames,
+    filteredTriggerNames,
+    refetch,
+  }: {
+    platformId: string;
+    filteredActionNames: Record<string, string[]>;
+    filteredTriggerNames: Record<string, string[]>;
+    refetch: () => Promise<void>;
+  }) => {
+    return useMutation({
+      mutationFn: async ({
+        pieceName,
+        componentName,
+        isAction,
+      }: {
+        pieceName: string;
+        componentName: string;
+        isAction: boolean;
+      }) => {
+        if (isAction) {
+          const current = filteredActionNames[pieceName] ?? [];
+          const updated = current.includes(componentName)
+            ? current.filter((n) => n !== componentName)
+            : [...current, componentName];
+          await platformApi.update(
+            {
+              filteredActionNames: {
+                ...filteredActionNames,
+                [pieceName]: updated,
+              },
+            },
+            platformId,
+          );
+        } else {
+          const current = filteredTriggerNames[pieceName] ?? [];
+          const updated = current.includes(componentName)
+            ? current.filter((n) => n !== componentName)
+            : [...current, componentName];
+          await platformApi.update(
+            {
+              filteredTriggerNames: {
+                ...filteredTriggerNames,
+                [pieceName]: updated,
+              },
+            },
+            platformId,
+          );
+        }
+        await refetch();
+      },
+      onSuccess: () => {
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+    });
+  },
+  useBatchHideComponents: ({
+    platformId,
+    filteredActionNames,
+    filteredTriggerNames,
+    refetch,
+  }: {
+    platformId: string;
+    filteredActionNames: Record<string, string[]>;
+    filteredTriggerNames: Record<string, string[]>;
+    refetch: () => Promise<void>;
+  }) => {
+    return useMutation({
+      mutationFn: async ({
+        pieceName,
+        actionNames,
+        triggerNames,
+      }: {
+        pieceName: string;
+        actionNames: string[];
+        triggerNames: string[];
+      }) => {
+        const currentActions = filteredActionNames[pieceName] ?? [];
+        const currentTriggers = filteredTriggerNames[pieceName] ?? [];
+        const updatedActions = [
+          ...new Set([...currentActions, ...actionNames]),
+        ];
+        const updatedTriggers = [
+          ...new Set([...currentTriggers, ...triggerNames]),
+        ];
+        await platformApi.update(
+          {
+            filteredActionNames: {
+              ...filteredActionNames,
+              [pieceName]: updatedActions,
+            },
+            filteredTriggerNames: {
+              ...filteredTriggerNames,
+              [pieceName]: updatedTriggers,
+            },
+          },
+          platformId,
+        );
+        await refetch();
+      },
+      onSuccess: () => {
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+    });
+  },
+  useBatchShowComponents: ({
+    platformId,
+    filteredActionNames,
+    filteredTriggerNames,
+    refetch,
+  }: {
+    platformId: string;
+    filteredActionNames: Record<string, string[]>;
+    filteredTriggerNames: Record<string, string[]>;
+    refetch: () => Promise<void>;
+  }) => {
+    return useMutation({
+      mutationFn: async ({
+        pieceName,
+        actionNames,
+        triggerNames,
+      }: {
+        pieceName: string;
+        actionNames: string[];
+        triggerNames: string[];
+      }) => {
+        const currentActions = filteredActionNames[pieceName] ?? [];
+        const currentTriggers = filteredTriggerNames[pieceName] ?? [];
+        const updatedActions = currentActions.filter(
+          (n) => !actionNames.includes(n),
+        );
+        const updatedTriggers = currentTriggers.filter(
+          (n) => !triggerNames.includes(n),
+        );
+        await platformApi.update(
+          {
+            filteredActionNames: {
+              ...filteredActionNames,
+              [pieceName]: updatedActions,
+            },
+            filteredTriggerNames: {
+              ...filteredTriggerNames,
+              [pieceName]: updatedTriggers,
+            },
+          },
+          platformId,
+        );
+        await refetch();
+      },
+      onSuccess: () => {
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+    });
+  },
   useSyncPieces: () => {
     return useMutation({
       mutationFn: async () => {

@@ -66,6 +66,8 @@ export const UpdatePlatformRequestBody = z.object({
     pinnedPieces: OptionalArrayFromQuery(z.string()),
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
         .optional(),
+    filteredActionNames: z.record(z.string(), z.array(z.string())).optional(),
+    filteredTriggerNames: z.record(z.string(), z.array(z.string())).optional(),
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>

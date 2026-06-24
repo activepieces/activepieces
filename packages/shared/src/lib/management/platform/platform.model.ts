@@ -164,6 +164,8 @@ export const Platform = z.object({
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
+    filteredActionNames: z.record(z.string(), z.array(z.string())),
+    filteredTriggerNames: z.record(z.string(), z.array(z.string())),
 })
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
@@ -193,6 +195,8 @@ export const PlatformWithoutSensitiveData = z.object({
     ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
+    filteredActionNames: z.record(z.string(), z.array(z.string())),
+    filteredTriggerNames: z.record(z.string(), z.array(z.string())),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 

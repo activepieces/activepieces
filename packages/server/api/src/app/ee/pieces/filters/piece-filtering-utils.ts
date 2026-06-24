@@ -1,4 +1,4 @@
-import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, PlatformWithoutFederatedAuth } from '@activepieces/shared'
+import { ApEdition, FilteredPieceBehavior, isNil, PieceMetadataModelSummary, PiecesFilterType, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
@@ -6,6 +6,28 @@ import { platformService } from '../../../platform/platform.service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
+    async filterComponents({ platformId, summaries }: FilterComponentsParams): Promise<PieceMetadataModelSummary[]> {
+        const edition = system.getEdition()
+        if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
+            return summaries
+        }
+        if (isNil(platformId)) {
+            return summaries
+        }
+        const platform = await platformService(log).getOne(platformId)
+        if (isNil(platform)) {
+            return summaries
+        }
+        return summaries.map((summary) => ({
+            ...summary,
+            suggestedActions: summary.suggestedActions?.filter(
+                (action) => !(platform.filteredActionNames[summary.name] ?? []).includes(action.name),
+            ),
+            suggestedTriggers: summary.suggestedTriggers?.filter(
+                (trigger) => !(platform.filteredTriggerNames[summary.name] ?? []).includes(trigger.name),
+            ),
+        }))
+    },
     async filter(params: FilterParams): Promise<PieceMetadataSchema[]> {
         const edition = system.getEdition()
         if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
@@ -35,6 +57,11 @@ export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
         return filteredPieces.length === 0
     },
 })
+
+type FilterComponentsParams = {
+    platformId: string | undefined
+    summaries: PieceMetadataModelSummary[]
+}
 
 type IsFilteredParams = {
     piece: PieceMetadataSchema

@@ -131,6 +131,7 @@ const PlatformPiecesPage = () => {
                 )}
                 <PieceActions
                   pieceName={row.original.name}
+                  pieceDisplayName={row.original.displayName}
                   isEnabled={isEnabled}
                 />
               </div>

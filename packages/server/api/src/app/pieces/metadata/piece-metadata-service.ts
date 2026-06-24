@@ -51,7 +51,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 suggestionType: params.suggestionType,
             })
 
-            return toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
+            const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
+            return enterpriseFilteringUtils(log).filterComponents({ platformId: params.platformId, summaries })
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const registry = filterRegistry(await loadRegistry(log), {

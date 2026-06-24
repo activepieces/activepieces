@@ -96,6 +96,16 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             array: true,
             nullable: false,
         },
+        filteredActionNames: {
+            type: 'jsonb',
+            nullable: false,
+            default: {},
+        },
+        filteredTriggerNames: {
+            type: 'jsonb',
+            nullable: false,
+            default: {},
+        },
     },
     indices: [
         {
