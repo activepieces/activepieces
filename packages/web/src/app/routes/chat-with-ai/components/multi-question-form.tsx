@@ -1,22 +1,23 @@
 import { t } from 'i18next';
-import {
-  ArrowRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-  X,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 import { MultiQuestion } from '../lib/message-parsers';
+
+import {
+  ChatAnswerInputRow,
+  ChatCard,
+  ChatCardHeader,
+  ChatConfirmationBubble,
+  ChatOptionBadge,
+  ChatOptionRow,
+} from './chat-card-primitives';
 
 export function MultiQuestionForm({
   questions,
@@ -121,16 +122,7 @@ export function MultiQuestionForm({
   }
 
   if (submitted) {
-    return (
-      <motion.div
-        className="my-3 flex items-center gap-2 text-sm text-muted-foreground"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        <Check className="size-4 text-green-600 dark:text-green-400" />
-        <span>{t('Answers submitted')}</span>
-      </motion.div>
-    );
+    return <ChatConfirmationBubble message={t('Answers submitted')} />;
   }
 
   const q = questions[currentStep];
@@ -154,72 +146,59 @@ export function MultiQuestionForm({
     isOptionActive(i) || isOptionActive(i - 1);
   const isBottomSepHidden = isOptionActive(lastOptionIndex) || isCustomActive;
 
-  return (
-    <motion.div
-      className="rounded-2xl border border-border/60 bg-background p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] dark:bg-neutral-900 dark:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.45)] backdrop-blur-sm transition-colors"
-      initial={{ opacity: 0, y: 16, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`q-${currentStep}`}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Label
-                htmlFor={fieldId}
-                className="block text-base font-semibold leading-snug text-foreground"
-              >
-                {q.question}
-              </Label>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+  const titleNode = (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={`q-${currentStep}`}
+        initial={{ opacity: 0, x: 12 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -12 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Label
+          htmlFor={fieldId}
+          className="block text-base font-semibold leading-snug text-foreground"
+        >
+          {q.question}
+        </Label>
+      </motion.div>
+    </AnimatePresence>
+  );
 
-        <div className="flex items-center gap-1 text-muted-foreground shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setCurrentStep((s) => s - 1)}
-            disabled={currentStep === 0}
-            aria-label={t('Back')}
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <span className="text-xs tabular-nums px-1">
-            {t('{current} of {total}', {
-              current: currentStep + 1,
-              total: questions.length,
-            })}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => handleNext()}
-            disabled={!currentAnswer}
-            aria-label={t('Next')}
-          >
-            <ChevronRight className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ms-1 h-7 w-7"
-            onClick={onDismiss}
-            aria-label={t('Close')}
-          >
-            <X className="size-4" />
-          </Button>
-        </div>
-      </div>
+  const pager = (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-6"
+        onClick={() => setCurrentStep((s) => s - 1)}
+        disabled={currentStep === 0}
+        aria-label={t('Back')}
+      >
+        <ChevronLeft className="size-4" />
+      </Button>
+      <span className="text-xs font-medium tabular-nums px-0.5">
+        {t('{current} of {total}', {
+          current: currentStep + 1,
+          total: questions.length,
+        })}
+      </span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-6"
+        onClick={() => handleNext()}
+        disabled={!currentAnswer}
+        aria-label={t('Next')}
+      >
+        <ChevronRight className="size-4" />
+      </Button>
+    </>
+  );
+
+  return (
+    <ChatCard>
+      <ChatCardHeader title={titleNode} actions={pager} onClose={onDismiss} />
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -228,246 +207,140 @@ export function MultiQuestionForm({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -12 }}
           transition={{ duration: 0.2 }}
-          className="mt-4"
+          className="mt-2.5"
         >
-          <div>
-            {q.type === 'choice' && q.options && (
-              <div>
-                <div role="menu" aria-label={q.question} className="gap-0">
-                  {q.options.map((option, i) => {
-                    const selected = answers[currentStep] === option;
-                    const isFirst = i === 0;
-                    const isLast = i === q.options!.length - 1;
-                    return (
-                      <Fragment key={option}>
-                        {i > 0 && (
-                          <div className="px-3">
-                            <Separator
-                              className={cn(
-                                'bg-border/60 transition-opacity duration-150',
-                                isMidSepHidden(i) && 'opacity-0',
-                              )}
-                            />
-                          </div>
-                        )}
-                        <div
-                          role="menuitemradio"
-                          tabIndex={
-                            focusedRow === i || (focusedRow === null && isFirst)
-                              ? 0
-                              : -1
-                          }
-                          aria-checked={selected}
-                          ref={(el) => {
-                            optionRefs.current[i] = el;
-                            if (isFirst) setFirstOptionEl(el);
-                            if (isLast) lastOptionRef.current = el;
-                          }}
-                          onClick={() => handleNext(option)}
-                          onMouseEnter={() => setHoveredRow(i)}
-                          onMouseLeave={() =>
-                            setHoveredRow((prev) => (prev === i ? null : prev))
-                          }
-                          onFocus={() => setFocusedRow(i)}
-                          onBlur={() =>
-                            setFocusedRow((prev) => (prev === i ? null : prev))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleNext(option);
-                              return;
-                            }
-                            if (
-                              e.key === 'ArrowLeft' ||
-                              e.key === 'ArrowRight'
-                            ) {
-                              e.preventDefault();
-                              return;
-                            }
-                            if (e.key === 'ArrowDown') {
-                              e.preventDefault();
-                              if (isLast) {
-                                customAnswerInputRef.current?.focus();
-                              } else {
-                                setFocusedRow(i + 1);
-                                optionRefs.current[i + 1]?.focus();
-                              }
-                              return;
-                            }
-                            if (e.key === 'ArrowUp') {
-                              e.preventDefault();
-                              if (isFirst) {
-                                customAnswerInputRef.current?.focus();
-                              } else {
-                                setFocusedRow(i - 1);
-                                optionRefs.current[i - 1]?.focus();
-                              }
-                              return;
-                            }
-                          }}
-                          className={cn(
-                            'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-muted outline-none',
-                            focusedRow === i && !selected && 'bg-muted',
-                            selected && 'bg-muted-foreground/15',
-                          )}
-                        >
-                          <span
-                            aria-hidden
+          {q.type === 'choice' && q.options && (
+            <div>
+              <div role="menu" aria-label={q.question} className="gap-0">
+                {q.options.map((option, i) => {
+                  const selected = answers[currentStep] === option;
+                  const isFirst = i === 0;
+                  const isLast = i === q.options!.length - 1;
+                  return (
+                    <Fragment key={option}>
+                      {i > 0 && (
+                        <div className="px-3">
+                          <Separator
                             className={cn(
-                              'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-xs font-medium text-muted-foreground transition-colors',
-                              focusedRow === i &&
-                                'bg-foreground text-background',
-                              selected && 'bg-foreground text-background',
+                              'bg-border/60 transition-opacity duration-150',
+                              isMidSepHidden(i) && 'opacity-0',
                             )}
-                          >
-                            {i + 1}
-                          </span>
-                          <span className="flex-1 leading-snug">{option}</span>
+                          />
                         </div>
-                      </Fragment>
-                    );
-                  })}
-                </div>
-
-                <div className="px-3">
-                  <Separator
-                    className={cn(
-                      'bg-border/60 transition-opacity duration-150',
-                      isBottomSepHidden && 'opacity-0',
-                    )}
-                  />
-                </div>
-
-                <label
-                  htmlFor={fieldId}
-                  onMouseEnter={() => setHoveredRow('custom')}
-                  onMouseLeave={() =>
-                    setHoveredRow((prev) => (prev === 'custom' ? null : prev))
-                  }
-                  onFocus={() => setFocusedRow('custom')}
-                  onBlur={() =>
-                    setFocusedRow((prev) => (prev === 'custom' ? null : prev))
-                  }
-                  className={cn(
-                    'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors hover:bg-muted focus-within:bg-muted',
-                    isCustomTextActive && 'bg-muted',
-                  )}
-                >
-                  <span
-                    aria-hidden
-                    className={cn(
-                      'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-muted-foreground transition-colors group-focus-within:bg-foreground group-focus-within:text-background',
-                      isCustomTextActive && 'bg-foreground text-background',
-                    )}
-                  >
-                    <Pencil className="size-3.5" />
-                  </span>
-                  <Input
-                    ref={customAnswerInputRef}
-                    id={fieldId}
-                    className="h-auto flex-1 min-w-0 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:border-0 dark:bg-transparent"
-                    placeholder={t('Type your answer...')}
-                    value={isCustomTextActive ? answers[currentStep] : ''}
-                    onFocus={() => {
-                      if (q.options!.includes(answers[currentStep] ?? '')) {
-                        setAnswer('');
-                      }
-                    }}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        lastOptionRef.current?.focus();
-                        return;
-                      }
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        firstOptionRef.current?.focus();
-                        return;
-                      }
-                      if (e.key === 'Enter' && currentAnswer) {
-                        e.preventDefault();
-                        handleNext();
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant={isCustomTextActive ? 'default' : 'outline'}
-                    size={isCustomTextActive ? 'icon' : 'sm'}
-                    className={cn(
-                      'h-7 shrink-0',
-                      isCustomTextActive ? 'w-7' : 'px-2.5 text-sm',
-                    )}
-                    onClick={() =>
-                      isCustomTextActive ? handleNext() : handleSkip()
-                    }
-                    aria-label={isCustomTextActive ? t('Send') : t('Skip')}
-                  >
-                    {isCustomTextActive ? (
-                      <ArrowRight className="size-4" />
-                    ) : (
-                      t('Skip')
-                    )}
-                  </Button>
-                </label>
+                      )}
+                      <ChatOptionRow
+                        tabIndex={
+                          focusedRow === i || (focusedRow === null && isFirst)
+                            ? 0
+                            : -1
+                        }
+                        selected={selected}
+                        focused={focusedRow === i}
+                        ref={(el) => {
+                          optionRefs.current[i] = el;
+                          if (isFirst) setFirstOptionEl(el);
+                          if (isLast) lastOptionRef.current = el;
+                        }}
+                        onClick={() => handleNext(option)}
+                        onMouseEnter={() => setHoveredRow(i)}
+                        onMouseLeave={() =>
+                          setHoveredRow((prev) => (prev === i ? null : prev))
+                        }
+                        onFocus={() => setFocusedRow(i)}
+                        onBlur={() =>
+                          setFocusedRow((prev) => (prev === i ? null : prev))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleNext(option);
+                            return;
+                          }
+                          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                            e.preventDefault();
+                            return;
+                          }
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            if (isLast) {
+                              customAnswerInputRef.current?.focus();
+                            } else {
+                              setFocusedRow(i + 1);
+                              optionRefs.current[i + 1]?.focus();
+                            }
+                            return;
+                          }
+                          if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            if (isFirst) {
+                              customAnswerInputRef.current?.focus();
+                            } else {
+                              setFocusedRow(i - 1);
+                              optionRefs.current[i - 1]?.focus();
+                            }
+                            return;
+                          }
+                        }}
+                      >
+                        <ChatOptionBadge active={focusedRow === i || selected}>
+                          {i + 1}
+                        </ChatOptionBadge>
+                        <span className="flex-1 leading-snug">{option}</span>
+                      </ChatOptionRow>
+                    </Fragment>
+                  );
+                })}
               </div>
-            )}
 
-            {q.type === 'text' && (
-              <label
-                htmlFor={fieldId}
-                className={cn(
-                  'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors hover:bg-muted focus-within:bg-muted',
-                  currentAnswer && 'bg-muted',
-                )}
-              >
-                <span
-                  aria-hidden
+              <div className="px-3">
+                <Separator
                   className={cn(
-                    'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-muted-foreground transition-colors group-focus-within:bg-foreground group-focus-within:text-background',
-                    currentAnswer && 'bg-foreground text-background',
+                    'bg-border/60 transition-opacity duration-150',
+                    isBottomSepHidden && 'opacity-0',
                   )}
-                >
-                  <Pencil className="size-3.5" />
-                </span>
-                <Input
-                  ref={setTextInputEl}
-                  id={fieldId}
-                  className="h-auto flex-1 min-w-0 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:border-0 dark:bg-transparent"
-                  placeholder={q.placeholder}
-                  value={answers[currentStep] ?? ''}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && currentAnswer) {
-                      e.preventDefault();
-                      handleNext();
-                    }
-                  }}
                 />
-                <Button
-                  type="button"
-                  variant={currentAnswer ? 'default' : 'outline'}
-                  size={currentAnswer ? 'icon' : 'sm'}
-                  className={cn(
-                    'h-7 shrink-0',
-                    currentAnswer ? 'w-7' : 'px-2.5 text-sm',
-                  )}
-                  onClick={() => (currentAnswer ? handleNext() : handleSkip())}
-                  aria-label={currentAnswer ? t('Send') : t('Skip')}
-                >
-                  {currentAnswer ? (
-                    <ArrowRight className="size-4" />
-                  ) : (
-                    t('Skip')
-                  )}
-                </Button>
-              </label>
-            )}
-          </div>
+              </div>
+
+              <ChatAnswerInputRow
+                fieldId={fieldId}
+                inputRef={customAnswerInputRef}
+                value={isCustomTextActive ? answers[currentStep] : ''}
+                placeholder={t('Type your answer...')}
+                onChange={setAnswer}
+                onSubmit={() => handleNext()}
+                onSkip={handleSkip}
+                onFocus={() => {
+                  if (q.options!.includes(answers[currentStep] ?? '')) {
+                    setAnswer('');
+                  }
+                }}
+                onMouseEnter={() => setHoveredRow('custom')}
+                onMouseLeave={() =>
+                  setHoveredRow((prev) => (prev === 'custom' ? null : prev))
+                }
+                onRowFocus={() => setFocusedRow('custom')}
+                onRowBlur={() =>
+                  setFocusedRow((prev) => (prev === 'custom' ? null : prev))
+                }
+                onArrowUp={() => lastOptionRef.current?.focus()}
+                onArrowDown={() => firstOptionRef.current?.focus()}
+              />
+            </div>
+          )}
+
+          {q.type === 'text' && (
+            <ChatAnswerInputRow
+              fieldId={fieldId}
+              inputRef={setTextInputEl}
+              value={answers[currentStep] ?? ''}
+              placeholder={q.placeholder}
+              onChange={setAnswer}
+              onSubmit={() => handleNext()}
+              onSkip={handleSkip}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
-    </motion.div>
+    </ChatCard>
   );
 }

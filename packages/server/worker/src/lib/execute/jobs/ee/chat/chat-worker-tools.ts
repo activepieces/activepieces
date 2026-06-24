@@ -249,6 +249,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
         ap_show_project_picker: tool({
             description: 'Display a card for the user to select a project to work in. After selection, briefly confirm which project the user chose before proceeding.',
             inputSchema: z.object({
+                question: z.string().optional().describe('Question to show as the card title, e.g. "Which project should I build this in?"'),
                 suggestedProjects: z.array(z.object({
                     name: z.string().describe('Project display name'),
                     id: z.string().describe('Project ID'),
