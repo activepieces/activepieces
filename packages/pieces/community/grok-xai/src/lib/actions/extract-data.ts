@@ -16,7 +16,7 @@ import {
   XaiResponse,
   ExtractionResult
 } from '../common/utils';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 interface ExtractDataField {
   fieldName: string;
@@ -122,9 +122,9 @@ export const extractDataFromText = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      maxCompletionTokens: z.number().min(100).max(4000).optional(),
-      text: z.string().min(1).max(100000),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      maxCompletionTokens: z.optional(z.number().check(z.minimum(100), z.maximum(4000))),
+      text: z.string().check(z.minLength(1), z.maxLength(100000)),
     });
 
     const {

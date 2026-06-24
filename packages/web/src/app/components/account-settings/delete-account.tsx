@@ -1,4 +1,5 @@
-import { isCloudPlanButNotEnterprise, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { isCloudPlanButNotEnterprise } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 import { useForm } from 'react-hook-form';

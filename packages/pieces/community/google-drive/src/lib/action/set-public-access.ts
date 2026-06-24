@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { downloadFileFromDrive } from '../common/get-file-content';
 
 export const setPublicAccess = createAction({
@@ -36,7 +36,7 @@ export const setPublicAccess = createAction({
     const fileId = context.propsValue.fileId;
     const role = context.propsValue.role;
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
     const permission = {
       role,
       type: 'anyone',

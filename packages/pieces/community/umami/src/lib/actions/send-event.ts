@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiCommon } from '../common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export const sendEvent = createAction({
   auth: umamiAuth,

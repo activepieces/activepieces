@@ -1,4 +1,5 @@
-import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isNil, isObject, isString, SecretManagerConfig, SecretManagerConnectionScope, SecretManagerConnectionWithStatus, SecretManagerFieldsSeparator, SecretManagerProviderId, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, isObject, isString, SeekPage } from '@activepieces/core-utils'
+import { ConnectSecretManagerRequest, SecretManagerConfig, SecretManagerConnectionScope, SecretManagerConnectionWithStatus, SecretManagerFieldsSeparator, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'

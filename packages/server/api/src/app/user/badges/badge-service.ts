@@ -1,4 +1,5 @@
-import { apId, ApplicationEvent, BADGES, isNil, WebsocketClientEvent } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { ApplicationEvent, BADGES, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'

@@ -4,18 +4,16 @@ import { FlowExecutorContext } from '../../src/lib/handler/context/flow-executio
 import { generateMockEngineConstants } from '../handler/test-helper'
 
 const { uploadRunLogMock, updateRunProgressMock, updateStepProgressMock } = vi.hoisted(() => ({
-    uploadRunLogMock: vi.fn<(request: UploadRunLogsRequest) => Promise<void>>(async () => undefined),
-    updateRunProgressMock: vi.fn<(request: UpdateRunProgressRequest) => Promise<void>>(async () => undefined),
-    updateStepProgressMock: vi.fn<(request: { projectId: string, stepResponse: StepRunResponse }) => Promise<void>>(async () => undefined),
+    uploadRunLogMock: vi.fn<(params: { apiUrl: string, engineToken: string, request: UploadRunLogsRequest }) => Promise<void>>(async () => undefined),
+    updateRunProgressMock: vi.fn<(params: { apiUrl: string, engineToken: string, request: UpdateRunProgressRequest }) => Promise<void>>(async () => undefined),
+    updateStepProgressMock: vi.fn<(params: { apiUrl: string, engineToken: string, request: { projectId: string, stepResponse: StepRunResponse } }) => Promise<void>>(async () => undefined),
 }))
 
-vi.mock('../../src/lib/worker-socket', () => ({
-    workerSocket: {
-        getWorkerClient: () => ({
-            uploadRunLog: uploadRunLogMock,
-            updateRunProgress: updateRunProgressMock,
-            updateStepProgress: updateStepProgressMock,
-        }),
+vi.mock('../../src/lib/api/engine-run-api', () => ({
+    engineRunApi: {
+        uploadRunLog: uploadRunLogMock,
+        updateRunProgress: updateRunProgressMock,
+        updateStepProgress: updateStepProgressMock,
     },
 }))
 
@@ -43,7 +41,7 @@ const buildUpdateParams = ({ status }: { status: FlowRunStatus }) => {
 }
 
 const uploadStatuses = (): FlowRunStatus[] =>
-    uploadRunLogMock.mock.calls.map(([request]) => request.status)
+    uploadRunLogMock.mock.calls.map(([{ request }]) => request.status)
 
 const lastUploadStatus = (): FlowRunStatus | undefined => uploadStatuses().at(-1)
 
@@ -158,7 +156,7 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
         await flowRunProgressReporter.sendUpdate({ engineConstants, flowExecutorContext })
         await flowRunProgressReporter.backup()
 
-        const stepResponse = uploadRunLogMock.mock.calls.at(-1)![0].stepResponse
+        const stepResponse = uploadRunLogMock.mock.calls.at(-1)![0].request.stepResponse
         expect(stepResponse!.output).toEqual(big)
     })
 
@@ -198,6 +196,6 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
         const lastCall = updateStepProgressMock.mock.calls.at(-1)
         expect(lastCall).toBeDefined()
         // The live UI update must carry the actual payload, never the LogSliceRef
-        expect(lastCall![0].stepResponse.output).toEqual(big)
+        expect(lastCall![0].request.stepResponse.output).toEqual(big)
     })
 })

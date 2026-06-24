@@ -4,7 +4,7 @@ import { paperformCommon } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PaperformCreateProductResponse } from '../common/types';
 import { paperformCommonProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const updateFormProduct = createAction({
   auth: paperformAuth,

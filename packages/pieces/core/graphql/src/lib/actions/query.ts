@@ -11,7 +11,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';

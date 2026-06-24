@@ -3,7 +3,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { canvaCommon } from './lib/common';
 import { createDesign } from './lib/actions/create-design';

@@ -1,11 +1,10 @@
+import { LocalesEnum, isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
   FlowTriggerType,
-  LocalesEnum,
   SuggestionType,
   FlowTrigger,
-  isNil,
 } from '@activepieces/shared';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';

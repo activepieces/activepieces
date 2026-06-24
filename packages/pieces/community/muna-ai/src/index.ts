@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { munaAiAuth } from './lib/auth';
 import { createPrediction } from './lib/actions/create-prediction';
 

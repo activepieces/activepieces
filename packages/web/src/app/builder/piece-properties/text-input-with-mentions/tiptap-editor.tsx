@@ -1,10 +1,10 @@
 import {
   ApFunction,
-  flowStructureUtil,
   formulaEvaluator,
-  isNil,
   typeCheckTiptapDoc,
-} from '@activepieces/shared';
+} from '@activepieces/core-formula';
+import { isNil } from '@activepieces/core-utils';
+import { flowStructureUtil } from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';

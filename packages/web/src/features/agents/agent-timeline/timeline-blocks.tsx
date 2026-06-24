@@ -1,5 +1,5 @@
+import { isNil } from '@activepieces/core-utils';
 import {
-  isNil,
   MarkdownContentBlock,
   MarkdownVariant,
   TASK_COMPLETION_TOOL_NAME,

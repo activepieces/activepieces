@@ -71,6 +71,7 @@ Unique index on `(name, version, platformId)`.
 | POST | `/v1/pieces/sync` | publicPlatform (USER) | Trigger registry re-sync |
 | POST | `/v1/pieces/options` | project (USER, BODY) | Evaluate dynamic piece property options (dropdown values) |
 | POST | `/v1/pieces` | platformAdminOnly (USER, SERVICE) | Install a custom piece onto the platform |
+| DELETE | `/v1/pieces/:id` | platformAdminOnly (USER, SERVICE) | Delete all versions of a custom piece from the platform |
 
 ## Service Methods
 
@@ -79,6 +80,7 @@ Unique index on `(name, version, platformId)`.
 - `getOrThrow({ platformId, name, version, locale? })` — returns full `PieceMetadataModel` for exact piece; prefers platform-specific over official; applies i18n translation
 - `listVersions({ name, platformId, projectId })` — returns all available semver versions from registry cache
 - `create({ pieceMetadata, packageType, platformId, pieceType, archiveId? })` — inserts metadata record and invalidates cache
+- `delete({ id, platformId })` — looks up the piece by id, asserts it belongs to the caller's platform and is `CUSTOM` type, deletes all versions sharing the same name on that platform, then invalidates cache
 - `registry({ release? })` — returns lightweight name+version list for all pieces
 
 ### `enterpriseFilteringUtils` (EE/Cloud only — `src/app/ee/pieces/filters/piece-filtering-utils.ts`)

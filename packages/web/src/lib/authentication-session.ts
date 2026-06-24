@@ -1,6 +1,6 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   AuthenticationResponse,
-  isNil,
   Principal,
   PrincipalType,
 } from '@activepieces/shared';

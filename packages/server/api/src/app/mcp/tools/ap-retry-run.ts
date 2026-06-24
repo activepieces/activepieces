@@ -1,4 +1,5 @@
-import { FlowRetryStrategy, FlowRunStatus, isFlowRunStateTerminal, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowRetryStrategy, FlowRunStatus, isFlowRunStateTerminal, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'

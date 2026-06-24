@@ -1,23 +1,5 @@
-import {
-    ActivepiecesError,
-    ApId,
-    apId,
-    AppConnectionOwners,
-    Cursor,
-    ErrorCode,
-    isNil,
-    Metadata,
-    PlatformId,
-    ProjectId,
-    SeekPage,
-    spreadIfDefined,
-    User,
-    UserId,
-    UserIdentity,
-    UserWithMetaInformation,
-    Variable,
-    VariableWithoutSensitiveData,
-} from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
+import { AppConnectionOwners, User, UserIdentity, UserWithMetaInformation, Variable, VariableWithoutSensitiveData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, ILike, QueryFailedError } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'

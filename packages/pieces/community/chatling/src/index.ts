@@ -3,7 +3,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { makeRequest } from './lib/common';
 import { sendMessage } from './lib/actions/send-message';
 import { createChatbot } from './lib/actions/create-chatbot';

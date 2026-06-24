@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { amazonTextractAuth } from './lib/auth';
 import { analyzeDocument } from './lib/actions/analyze-document';
 import { detectDocumentText } from './lib/actions/detect-document-text';

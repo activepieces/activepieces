@@ -1,6 +1,6 @@
 import { InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { PropertyType } from './input/property-type';
 import { DropdownState } from './input/dropdown/common';
 

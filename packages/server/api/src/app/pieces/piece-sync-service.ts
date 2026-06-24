@@ -1,5 +1,6 @@
+import { groupBy, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
+import { PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -11,12 +12,14 @@ import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { pieceCache } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
+import { pieceBundle } from './piece-bundle'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
+        pieceBundle(log).registerJobHandler()
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
             await pieceSyncService(log).sync({ publishCacheRefresh: true })
         })

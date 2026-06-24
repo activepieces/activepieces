@@ -1,8 +1,8 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   CreateTemplateRequestBody,
   ListTemplatesRequestQuery,
   Template,
-  SeekPage,
   UpdateTemplateRequestBody,
   Flag,
 } from '@activepieces/shared';

@@ -1,5 +1,5 @@
 import { createAction, DynamicPropsValue, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { WorkbookRange } from '@microsoft/microsoft-graph-types';
 import {
 	createMSGraphClient,

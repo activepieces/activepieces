@@ -1,3 +1,4 @@
+import { PieceSelectorConfig } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
@@ -50,6 +51,40 @@ export const platformPiecesMutations = {
       },
       onSuccess: () => {
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+    });
+  },
+  useUpdatePieceSelectorConfig: ({
+    platformId,
+    refetch,
+  }: {
+    platformId: string;
+    refetch: () => Promise<void>;
+  }) => {
+    return useMutation({
+      mutationFn: async (pieceSelectorConfig: PieceSelectorConfig | null) => {
+        await platformApi.update({ pieceSelectorConfig }, platformId);
+        await refetch();
+      },
+      onSuccess: () => {
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+      onError: () => {
+        toast.error(t('Failed to save changes. Please try again.'));
+      },
+    });
+  },
+  useSyncPieces: () => {
+    return useMutation({
+      mutationFn: async () => {
+        await piecesApi.syncFromCloud();
+      },
+      onSuccess: () => {
+        toast.success(t('Pieces synced'), {
+          description: t(
+            'Pieces have been synced from the activepieces cloud.',
+          ),
+        });
       },
     });
   },
@@ -108,7 +143,7 @@ export const platformPiecesMutations = {
       onSuccess: () => {
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
-    });
+    })
   },
   useBatchHideComponents: ({
     platformId,
@@ -205,21 +240,7 @@ export const platformPiecesMutations = {
       },
       onSuccess: () => {
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
-      },
-    });
-  },
-  useSyncPieces: () => {
-    return useMutation({
-      mutationFn: async () => {
-        await piecesApi.syncFromCloud();
-      },
-      onSuccess: () => {
-        toast.success(t('Pieces synced'), {
-          description: t(
-            'Pieces have been synced from the activepieces cloud.',
-          ),
-        });
-      },
-    });
+      }
+    })
   },
 };

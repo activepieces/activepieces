@@ -1,4 +1,5 @@
-import { ActivepiecesError, ErrorCode, isNil, SAMLAttributeMapping } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { SAMLAttributeMapping } from '@activepieces/shared'
 
 export const resolveSamlAttributes = ({ rawAttributes, mapping }: ResolveArgs): SamlAttributes => {
     const safeAttributes = rawAttributes ?? {}

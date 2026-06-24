@@ -4,7 +4,7 @@ import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const clickAction = createAction({
 	name: 'click',
@@ -165,12 +165,12 @@ export const clickAction = createAction({
 		} = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			costThresholdCredits: z.number().min(0).optional(),
-			timeThresholdSeconds: z.number().min(0).optional(),
-			navigationTimeoutSeconds: z.number().min(0).optional(),
-			maxScanScrolls: z.number().min(1).optional(),
-			scanScrollDelay: z.number().min(0).optional(),
-			overlapPercentage: z.number().min(0).max(100).optional(),
+			costThresholdCredits: z.optional(z.number().check(z.minimum(0))),
+			timeThresholdSeconds: z.optional(z.number().check(z.minimum(0))),
+			navigationTimeoutSeconds: z.optional(z.number().check(z.minimum(0))),
+			maxScanScrolls: z.optional(z.number().check(z.minimum(1))),
+			scanScrollDelay: z.optional(z.number().check(z.minimum(0))),
+			overlapPercentage: z.optional(z.number().check(z.minimum(0), z.maximum(100))),
 		});
 
 		const config: Record<string, any> = {};

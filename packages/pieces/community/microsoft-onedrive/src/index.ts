@@ -3,7 +3,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { copyFile } from './lib/actions/copy-file';
 import { downloadFile } from './lib/actions/download-file';
 import { listFiles } from './lib/actions/list-files';

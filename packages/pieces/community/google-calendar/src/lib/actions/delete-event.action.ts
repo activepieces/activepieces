@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { calendar as googleCalendar } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 
 export const deleteEventAction = createAction({
@@ -22,7 +22,7 @@ export const deleteEventAction = createAction({
     const calendarId = context.propsValue.calendar_id;
     const eventId = context.propsValue.eventId;
 
-    const calendar = google.calendar({ version: 'v3', auth: authClient });
+    const calendar = googleCalendar({ version: 'v3', auth: authClient });
 
     const response = await calendar.events.delete({
       calendarId,

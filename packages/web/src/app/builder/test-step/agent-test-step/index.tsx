@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   AgentResult,
   AgentTaskStatus,
   AI_PIECE_NAME,
   FlowActionType,
-  isNil,
   Step,
 } from '@activepieces/shared';
 import { t } from 'i18next';

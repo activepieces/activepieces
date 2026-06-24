@@ -1,5 +1,5 @@
+import { AIProviderName } from '@activepieces/core-utils';
 import {
-  AIProviderName,
   AIProviderModelType,
   CreateAIProviderRequest,
   ProviderModelConfig,

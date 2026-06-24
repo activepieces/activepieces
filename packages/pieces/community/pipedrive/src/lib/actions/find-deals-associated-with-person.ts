@@ -7,7 +7,7 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { GetField } from '../common/types';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 

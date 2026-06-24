@@ -1,4 +1,4 @@
-import { isNil, isObject } from '@activepieces/shared';
+import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
 import { schemaUtils } from '@/components/custom/smart-output-viewer/resolve-schema';

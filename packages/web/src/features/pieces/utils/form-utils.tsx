@@ -1,3 +1,4 @@
+import { Metadata, isNil } from '@activepieces/core-utils';
 import {
   piecePropertiesUtils,
   OAuth2Props,
@@ -13,11 +14,9 @@ import {
   AppConnectionType,
   CodeActionSchema,
   LoopOnItemsActionSchema,
-  Metadata,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
-  isNil,
   RouterActionSchema,
   RouterBranchesSchema,
   RouterExecutionType,
@@ -42,6 +41,21 @@ import {
 import { t } from 'i18next';
 import { z, ZodObject, ZodType } from 'zod';
 
+// `piecePropertiesUtils.buildSchema` returns a zod/mini object (pieces-framework uses zod/mini
+// for bundle size), but the web validates with classic zod (react-hook-form + zodResolver) and
+// calls classic instance methods on this schema — `.optional()`, `.extend()`, `.omit()`,
+// `.safeParseAsync()`. zod/mini objects do NOT expose those methods, so a bare type cast lies to
+// the compiler and crashes at runtime (`propsSchema.optional is not a function`). Rebuild it as a
+// classic `z.object` over the same field schemas: zod 4's classic and mini schemas share one
+// runtime core, so the classic wrapper validates the (still-mini) fields with no conversion while
+// giving the web the classic method surface it relies on.
+function buildClassicSchema(
+  ...args: Parameters<typeof piecePropertiesUtils.buildSchema>
+): ZodType {
+  const miniSchema = piecePropertiesUtils.buildSchema(...args);
+  return z.object((miniSchema as unknown as ZodObject).shape);
+}
+
 function buildInputSchemaForStep(
   type: FlowActionType | FlowTriggerType,
   piece: PieceMetadata | null,
@@ -54,7 +68,7 @@ function buildInputSchemaForStep(
         actionNameOrTriggerName &&
         piece.actions[actionNameOrTriggerName]
       ) {
-        return piecePropertiesUtils.buildSchema(
+        return buildClassicSchema(
           piece.actions[actionNameOrTriggerName].props,
           piece.auth,
           piece.actions[actionNameOrTriggerName].requireAuth,
@@ -68,7 +82,7 @@ function buildInputSchemaForStep(
         actionNameOrTriggerName &&
         piece.triggers[actionNameOrTriggerName]
       ) {
-        return piecePropertiesUtils.buildSchema(
+        return buildClassicSchema(
           piece.triggers[actionNameOrTriggerName].props,
           piece.auth,
           piece.triggers[actionNameOrTriggerName].requireAuth,
@@ -213,7 +227,7 @@ const GLOBAL_CONNECTION_EXTRAS_SCHEMA = z.object({
   projectIds: z
     .array(z.string())
     .min(1, { error: t('Please select at least one project') }),
-  metadata: Metadata.optional(),
+  metadata: z.optional(Metadata),
   preSelectForNewProjects: z.boolean().optional(),
 });
 
@@ -234,10 +248,7 @@ function buildOAuth2ValueSchema(
   if (auth.type !== PropertyType.OAUTH2) {
     throw new Error('buildOAuth2ValueSchema expects OAuth2 auth');
   }
-  const propsSchema = piecePropertiesUtils.buildSchema(
-    auth.props ?? {},
-    undefined,
-  );
+  const propsSchema = buildClassicSchema(auth.props ?? {}, undefined);
   const isClientCredsGrantType =
     auth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS;
 

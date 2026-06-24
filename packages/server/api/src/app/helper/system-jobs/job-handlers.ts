@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import { SystemJobHandler, SystemJobName } from './common'
 
 const jobHandlers = new Map<SystemJobName, SystemJobHandler>()

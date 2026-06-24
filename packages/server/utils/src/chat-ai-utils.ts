@@ -1,19 +1,5 @@
-import {
-    AIProviderName,
-    AzureProviderConfig,
-    BaseAIProviderAuthConfig,
-    BedrockProviderAuthConfig,
-    BedrockProviderConfig,
-    chatPersistenceUtils,
-    chatToolClassification,
-    CloudflareGatewayProviderConfig,
-    OpenAICompatibleProviderConfig,
-    PersistedChatPart,
-    PersistedChatPartType,
-    PersistedToolCallStatus,
-    splitCloudflareGatewayModelId,
-    spreadIfDefined,
-} from '@activepieces/shared'
+import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils';
+import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, chatPersistenceUtils, chatToolClassification, CloudflareGatewayProviderConfig, OpenAICompatibleProviderConfig, PersistedChatPart, PersistedChatPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
@@ -21,14 +7,52 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { createOpenRouter } from '@openrouter/ai-sdk-provider'
-import { LanguageModel, ModelMessage, SystemModelMessage } from 'ai'
+import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
+import { LanguageModel, ModelMessage, SystemModelMessage, ToolSet } from 'ai'
 
-function createChatModel({ provider, auth, config, modelId }: {
+const MAX_WEB_SEARCH_RESULTS = 5
+
+type WebSearchSupport = {
+    nativeTools?: (auth: BaseAIProviderAuthConfig) => ToolSet
+    plugin?: boolean
+}
+
+// OpenAI is absent on purpose: its web search needs the Responses API, which breaks legacy BYOK models.
+const WEB_SEARCH_BY_PROVIDER: Partial<Record<AIProviderName, WebSearchSupport>> = {
+    [AIProviderName.ANTHROPIC]: {
+        nativeTools: ({ apiKey }) => ({ web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }),
+    },
+    [AIProviderName.GOOGLE]: {
+        nativeTools: ({ apiKey }) => ({ google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }),
+    },
+    [AIProviderName.OPENROUTER]: { plugin: true },
+    [AIProviderName.ACTIVEPIECES]: { plugin: true },
+}
+
+function supportsWebSearch(provider: AIProviderName): boolean {
+    return WEB_SEARCH_BY_PROVIDER[provider] !== undefined
+}
+
+function buildWebSearchTools({ provider, auth }: {
+    provider: AIProviderName
+    auth: Record<string, unknown>
+}): ToolSet {
+    return WEB_SEARCH_BY_PROVIDER[provider]?.nativeTools?.(auth as BaseAIProviderAuthConfig) ?? {}
+}
+
+function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
+    if (!webSearchEnabled || !WEB_SEARCH_BY_PROVIDER[provider]?.plugin) {
+        return undefined
+    }
+    return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
+}
+
+function createChatModel({ provider, auth, config, modelId, webSearchEnabled = false }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
+    webSearchEnabled?: boolean
 }): LanguageModel {
     switch (provider) {
         case AIProviderName.OPENAI: {
@@ -79,7 +103,7 @@ function createChatModel({ provider, auth, config, modelId }: {
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenRouter({ apiKey }).chat(modelId) as LanguageModel
+            return createOpenRouter({ apiKey }).chat(modelId, openRouterModelSettings(provider, webSearchEnabled)) as LanguageModel
         }
         default: {
             const exhaustiveCheck: never = provider
@@ -195,6 +219,12 @@ type ContentPartLike = {
     input?: unknown
     args?: unknown
     output?: unknown
+    sourceType?: string
+    id?: string
+    url?: string
+    title?: string
+    mediaType?: string
+    filename?: string
 }
 
 function buildStepParts({ content }: {
@@ -215,6 +245,25 @@ function buildStepParts({ content }: {
                 break
             case 'text':
                 if (part.text) parts.push({ type: PersistedChatPartType.TEXT, text: part.text })
+                break
+            case 'source':
+                if (part.sourceType === 'url' && part.url) {
+                    parts.push({
+                        type: PersistedChatPartType.SOURCE_URL,
+                        sourceId: part.id ?? '',
+                        url: part.url,
+                        ...spreadIfDefined('title', part.title),
+                    })
+                }
+                else if (part.sourceType === 'document') {
+                    parts.push({
+                        type: PersistedChatPartType.SOURCE_DOCUMENT,
+                        sourceId: part.id ?? '',
+                        mediaType: part.mediaType ?? '',
+                        title: part.title ?? '',
+                        ...spreadIfDefined('filename', part.filename),
+                    })
+                }
                 break
             case 'tool-call': {
                 const toolName = part.toolName ?? ''
@@ -280,6 +329,8 @@ function buildStepParts({ content }: {
 
 export const chatAiUtils = {
     createChatModel,
+    supportsWebSearch,
+    buildWebSearchTools,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,

@@ -6,7 +6,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { sendEmail } from './lib/actions/send-email';
 import { sendBatchEmails } from './lib/actions/send-batch-emails.action';
 import { createContact } from './lib/actions/create-contact.action';

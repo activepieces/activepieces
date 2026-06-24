@@ -1,5 +1,5 @@
 import { chatAiUtils } from '@activepieces/server-utils'
-import { AIProviderName } from '@activepieces/shared'
+import { AIProviderName } from '@activepieces/core-utils';
 import { generateText } from 'ai'
 
 const JUDGE_SYSTEM = 'You are a strict binary evaluator of an AI assistant transcript. You judge exactly ONE dimension against ONE pass criterion. Be conservative: if the criterion is not clearly met, answer FAIL. Respond with "PASS" or "FAIL" on the first line, then a single short sentence explaining why on the second line. Output nothing else.'

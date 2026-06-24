@@ -1,9 +1,5 @@
-import {
-    apId,
-    FileCompression,
-    FileType,
-    JobPayload,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { FileCompression, FileType, JobPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { system } from '../helper/system/system'

@@ -1,5 +1,6 @@
+import { SeekPage } from '@activepieces/core-utils'
 import { FlowsContext, ListFlowsContextParams } from '@activepieces/pieces-framework'
-import { FetchError, PopulatedFlow, SeekPage } from '@activepieces/shared'
+import { FetchError, PopulatedFlow } from '@activepieces/shared'
 
 export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVersionId }: CreateFlowsServiceParams): FlowsContext => {
     return {

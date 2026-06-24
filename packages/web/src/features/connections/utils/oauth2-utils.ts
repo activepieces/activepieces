@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import { OAuth2Property, OAuth2Props } from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  isNil,
   OAuth2GrantType,
   ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared';

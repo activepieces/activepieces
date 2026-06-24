@@ -3,7 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { ModelMessage, generateText, stepCountIs } from 'ai';
-import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/shared';
+import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/pieces-framework';
 import { aiProps } from '../../common/props';
 import { createAIModel } from '../../common/ai-sdk';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';

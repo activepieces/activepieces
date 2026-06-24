@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
-import { google } from 'googleapis';
+import { isNil } from '@activepieces/pieces-framework';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import {
 	areSheetIdsValid,
 	createGoogleClient,
@@ -62,7 +62,7 @@ export const insertRowAtTopAction = createAction({
 
 		const sheetName = await getWorkSheetName(auth, spreadsheetId, sheetId);
 		const authClient = await createGoogleClient(auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		await sheets.spreadsheets.batchUpdate({
 			spreadsheetId,
