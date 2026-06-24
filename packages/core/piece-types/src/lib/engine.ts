@@ -10,6 +10,7 @@ export const TriggerPayload = z.object({
 export type TriggerPayload<T = unknown> = {
     body: T
     rawBody?: unknown
+    method?: string
     headers: Record<string, string>
     queryParams: Record<string, string>
 }

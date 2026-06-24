@@ -18,14 +18,11 @@ export const cardMovedTrigger = createTrigger({
 		list_id: trelloCommon.list_id,
 	},
 	type: TriggerStrategy.WEBHOOK,
-	handshakeConfiguration:{
-		strategy:WebhookHandshakeStrategy.NONE
+	handshakeConfiguration: {
+		strategy: WebhookHandshakeStrategy.HEAD_REQUEST,
 	},
-	async onHandshake(context)
-	{
-		return{
-			status:200
-		}
+	async onHandshake() {
+		return { status: 200 }
 	},
 	async onEnable(context) {
 		const element_id = context.propsValue.list_id;
