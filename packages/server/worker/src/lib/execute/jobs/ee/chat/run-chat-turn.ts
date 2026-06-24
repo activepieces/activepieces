@@ -55,9 +55,15 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
     let totalInputTokens = 0
     let totalOutputTokens = 0
     let lastFinishReason = ''
+    let attemptStartPhase: ChatPhase = phaseState.phase
 
     const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => {
-        const thinkingBudget = phaseState.phase === 'build' ? tier.thinkingBudget : DISCOVERY_THINKING_BUDGET
+        attemptStartPhase = phaseState.phase
+        const startedInBuild = attemptStartPhase === 'build'
+        const thinkingBudget = startedInBuild ? tier.thinkingBudget : DISCOVERY_THINKING_BUDGET
+        const stopWhenConditions = startedInBuild
+            ? loopStopCondition
+            : [loopStopCondition, (() => phaseState.phase === 'build') as StopCondition<ToolSet>]
         return streamText({
             model,
             maxRetries: 3,
@@ -67,7 +73,7 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
             messages: chatAiUtils.stripThinkingBlocks(attemptMessages, provider),
             tools,
             providerOptions: chatAiUtils.buildProviderOptions({ provider, thinkingBudget }),
-            stopWhen: loopStopCondition,
+            stopWhen: stopWhenConditions,
             prepareStep: ({ steps }) => {
                 const lastStep = steps[steps.length - 1]
                 const widened = lastStep?.toolCalls?.some((c) => chatToolPhases.isBuildOnlyTool(c.toolName))
@@ -147,6 +153,12 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         totalInputTokens += attemptUsage.inputTokens ?? 0
         totalOutputTokens += attemptUsage.outputTokens ?? 0
         lastFinishReason = finishReason
+
+        if (attemptStartPhase === 'discovery' && phaseState.phase === 'build') {
+            accumulatedResponseMessages.push(...stepMessages)
+            llmMessages = [...llmMessages, ...stepMessages]
+            continue
+        }
 
         const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
 
