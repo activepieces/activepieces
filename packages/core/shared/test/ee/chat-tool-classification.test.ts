@@ -58,6 +58,28 @@ describe('chatToolClassification.isWriteActionName', () => {
     })
 })
 
+describe('chatToolClassification.requiresActionPreview', () => {
+    it('never requires a preview for custom_api_call, regardless of needsConfirmation', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call' })).toBe(false)
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', needsConfirmation: true })).toBe(false)
+    })
+
+    it('requires a preview for write actions', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'send_channel_message' })).toBe(true)
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'delete_record' })).toBe(true)
+    })
+
+    it('does not require a preview for read actions', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'get_rows' })).toBe(false)
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'list_channels' })).toBe(false)
+    })
+
+    it('falls back to needsConfirmation for unrecognized actions', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing' })).toBe(true)
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing', needsConfirmation: false })).toBe(false)
+    })
+})
+
 describe('chatToolClassification.hasFailureTextPrefix', () => {
     it('flags text starting with a failure glyph', () => {
         expect(chatToolClassification.hasFailureTextPrefix('❌ Something went wrong')).toBe(true)

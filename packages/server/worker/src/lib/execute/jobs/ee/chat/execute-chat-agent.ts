@@ -24,11 +24,13 @@ const STREAM_IDLE_TIMEOUT_MS = 90_000
 // can't see (runaway continuations, watchdog mis-detection). Must exceed the longest
 // legitimate single wait — the approval/display-tool timeout is 15m — so set well above it.
 const MAX_TURN_WALL_CLOCK_MS = 20 * 60 * 1_000
+// The single side-effecting piece-execution tool, neutralized under discovery-only eval runs.
+const DISCOVERY_ONLY_NEUTRALIZED_TOOL = 'ap_execute_action'
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
     async execute(ctx: JobContext, data: ExecuteChatAgentJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = data
+        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
         const config = await ctx.apiClient.getChatConfig({
@@ -116,7 +118,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 ...(aiTools.webSearch ? chatWorkerTools.createSearchTools({ webSearch: aiTools.webSearch }) : {}),
                 ...(webSearchActive ? chatAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
                 ...(aiTools.webScraping ? chatWorkerTools.createScrapeTools({ scraping: aiTools.webScraping }) : {}),
-                ...(aiTools.imageGeneration ? chatWorkerTools.createImageTools({
+                ...(aiTools.imageGeneration && !discoveryOnly ? chatWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveChatFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
                     emitImage: eventEmitter.emitImageGenerated,
@@ -126,7 +128,8 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, phaseState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, platformId, userId,
-                guides: config.guides, dryRun: dryRun ?? false,
+                guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
+                emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
             })
 
@@ -160,15 +163,16 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                             abortController.abort()
                         },
                     }),
-                    onProgress: (parts) => {
+                    onProgress: ({ uiParts, responseMessages }) => {
                         void retryWithBackoff({
                             fn: () => ctx.apiClient.updateChatProgress({
                                 conversationId,
                                 runId,
                                 uiMessages: [
                                     ...(config.previousUiMessages as PersistedChatMessage[]),
-                                    { role: PersistedChatRole.ASSISTANT, parts, thinkingDurationMs: Date.now() - thinkingStartTime },
+                                    { role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime },
                                 ],
+                                messages: [...(config.allMessages as ModelMessage[]), ...responseMessages],
                             }),
                             maxAttempts: 2,
                             log,
@@ -177,18 +181,18 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 },
             })
 
-            const { uiParts, accumulatedResponseMessages, abortedStepMessages, streamError, truncatedAfterRetries, continuations, usage, totalInputTokens, totalOutputTokens } = turn
+            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, continuations, usage, totalInputTokens, totalOutputTokens } = turn
 
             if (abortController.signal.aborted) {
                 if (streamError) {
                     log.warn({ error: streamError, conversation: { id: conversationId } }, 'Stream error occurred during abort')
                 }
-                log.info({ conversation: { id: conversationId }, completedSteps: abortedStepMessages.length }, 'Chat agent cancelled by user')
+                log.info({ conversation: { id: conversationId }, completedSteps: accumulatedResponseMessages.length }, 'Chat agent cancelled by user')
                 const thinkingDurationMs = Date.now() - thinkingStartTime
                 const cancelSavePayload = {
                     conversationId,
                     runId,
-                    messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages, ...abortedStepMessages],
+                    messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                     uiMessages: [
                         ...(config.previousUiMessages as PersistedChatMessage[]),
                         ...(uiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
@@ -270,6 +274,10 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             log.error({ error: err, conversation: { id: conversationId } }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
+            // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
+            // saveChatMessages handler's no-shrink guard preserves whatever was persisted
+            // incrementally (updateChatProgress) and only flips status, so an errored turn keeps
+            // its prior context instead of resetting the conversation.
             await ctx.apiClient.saveChatMessages({
                 conversationId, runId, messages: [], uiMessages: [],
             }).catch(() => {})
@@ -296,7 +304,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, guides, dryRun, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -310,6 +318,8 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     userId: string
     guides: Record<string, string>
     dryRun: boolean
+    discoveryOnly: boolean
+    emailEnabled: boolean
     abortSignal: AbortSignal
 }) {
     const brokenConnectors = new Set<string>()
@@ -318,12 +328,19 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         if (dryRun) {
             return { preview: true, message: `Tool "${toolName}" was not executed (prompt playground preview).` }
         }
+        // Discovery-only eval: real discovery/reads still run, but neutralize the side-effecting
+        // execute so we can measure how the agent reaches a runnable call without firing it.
+        if (discoveryOnly && toolName === DISCOVERY_ONLY_NEUTRALIZED_TOOL) {
+            return { content: [{ type: 'text', text: `🧪 Discovery-only run — ${toolName} was not executed. The agent reached a runnable call.` }] }
+        }
         const response = await ctx.apiClient.executeChatTool({ toolName, toolInput, platformId, userId, conversationId })
         return response.result
     }
 
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
-        if (dryRun) {
+        // Auto-resolve in dry-run (playground) and discovery-only (eval): there's no UI to click
+        // approve, so a real wait would stall the entire turn for APPROVAL_TIMEOUT_MS.
+        if (dryRun || discoveryOnly) {
             return { approved: true }
         }
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
@@ -360,9 +377,14 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     }
 
     // Restore the conversation's already-chosen project so a continued turn doesn't
-    // lose context and re-hit "No project selected"; fall back to single-project auto-select.
+    // lose context and re-hit "No project selected"; otherwise default to the user's first
+    // project (getChatConfig persists the same default) so the agent never starts project-less.
     const persistedProjectId = !isNil(projectId) && projects.some((p) => p.id === projectId) ? projectId : null
-    const projectState: { projectId: string | null } = { projectId: persistedProjectId ?? (projects.length === 1 ? projects[0].id : null) }
+    const projectState: { projectId: string | null } = { projectId: persistedProjectId ?? projects[0]?.id ?? null }
+    // Once the user picks a connection for a piece, that pick is authoritative for the rest of
+    // the turn — injected as `auth` into piece-introspection tools so the model can't resolve
+    // props/dropdowns against a guessed externalId. Keyed by normalized piece name.
+    const selectedConnectionByPiece = new Map<string, string>()
     const localTools = chatWorkerTools.createLocalTools({
         onSetProjectContext: async (projectId) => {
             projectState.projectId = projectId
@@ -386,8 +408,8 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     const displayTools = chatWorkerTools.createDisplayTools({
         waitForApproval,
         displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS,
-        log,
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
+            selectedConnectionByPiece.set(pieceName, connectionExternalId)
             await tryCatch(() => ctx.apiClient.executeChatTool({
                 toolName: '__store_selected_connection',
                 toolInput: { pieceName, connectionExternalId, label, projectId: connProjectId },
@@ -407,7 +429,18 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         getProjectId: () => projectState.projectId,
     })
     const mcpTools = chatWorkerTools.wrapTestFlowGate({
-        mcpTools: chatMcpClient.withToolTimeouts({ mcpToolSet, brokenConnectors }),
+        mcpTools: chatMcpClient.withToolTimeouts({
+            mcpToolSet,
+            brokenConnectors,
+            getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
+            saveLargeResult: async ({ json, fileName }) => {
+                const { data: saved } = await tryCatch(() => ctx.apiClient.saveChatFile({
+                    platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
+                    ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
+                }))
+                return saved?.fileId ?? null
+            },
+        }),
         checkFlowWrites: async (flowId) => {
             const response = await ctx.apiClient.executeChatTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, conversationId })
             return response.result
@@ -417,8 +450,14 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         eventEmitter,
         log,
     })
+    const emailTools = emailEnabled && !dryRun && !discoveryOnly
+        ? chatWorkerTools.createEmailTools({
+            sendEmail: ({ to, subject, body }) => ctx.apiClient.sendChatEmail({ conversationId, platformId, userId, to, subject, body }),
+            eventEmitter,
+        })
+        : {}
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamStalled }: {

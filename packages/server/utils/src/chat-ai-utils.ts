@@ -14,6 +14,9 @@ const MAX_WEB_SEARCH_RESULTS = 5
 
 const KEEP_RECENT_TOOL_RESULTS = 6
 const COLLAPSE_OUTPUT_OVER_CHARS = 600
+// Tool results that are the agent's working memory of an action's input schema — never collapsed,
+// so it doesn't re-discover or guess a schema it already fetched (A5 pin-discovered-schemas).
+const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action'])
 const CHARS_PER_TOKEN_ESTIMATE = 4
 
 type WebSearchSupport = {
@@ -189,16 +192,6 @@ function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[]
     return steps[steps.length - 1]?.response.messages ?? []
 }
 
-/**
- * Every step's response messages flattened — the full set of messages generated
- * so far within a single streamText call (unlike collectStepMessages, which is
- * only the last step). Prepend the turn's base messages to reconstruct the
- * complete context the model would see at the current step.
- */
-function collectAllStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
-    return steps.flatMap((step) => step.response.messages)
-}
-
 function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {
     return Math.ceil((JSON.stringify(messages).length + systemPromptLength) / CHARS_PER_TOKEN_ESTIMATE)
 }
@@ -224,6 +217,10 @@ function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): M
         if (message.role !== 'tool' || !Array.isArray(message.content)) return message
         const content = message.content.map((part) => {
             if (part.type !== 'tool-result') return part
+            // Pin discovered schemas: never collapse a piece-props/prepare result. These are the
+            // agent's memory of an action's inputs — collapsing them makes it re-discover (or guess)
+            // a schema it already fetched. They don't consume a stale slot either.
+            if (SCHEMA_TOOL_NAMES.has(part.toolName)) return part
             const isStale = seen++ < staleCount
             if (!isStale) return part
             const serialized = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
@@ -430,6 +427,76 @@ function buildStepParts({ content }: {
     return parts
 }
 
+const DATA_ARRAY_KEYS = ['data', 'results', 'records', 'items', 'value', 'rows', 'entries']
+const PREVIEW_RECORD_COUNT = 5
+
+function findDataArray(payload: unknown): { array: unknown[], path: string } | null {
+    if (Array.isArray(payload)) {
+        return { array: payload, path: 'root' }
+    }
+    if (!isPlainObject(payload)) {
+        return null
+    }
+    for (const key of DATA_ARRAY_KEYS) {
+        const value = payload[key]
+        if (Array.isArray(value)) {
+            return { array: value, path: key }
+        }
+    }
+    return null
+}
+
+// Depth-capped, value-clipped copy of a value — shows the SHAPE of a record (so the model can
+// see how to project it) without dragging the full payload (incl. deep history) into context.
+function shrinkForPreview(value: unknown, opts: { maxDepth: number, maxString: number, maxArray: number, depth?: number }): unknown {
+    const depth = opts.depth ?? 0
+    if (typeof value === 'string') {
+        return value.length <= opts.maxString ? value : `${value.slice(0, opts.maxString)}…`
+    }
+    if (Array.isArray(value)) {
+        if (depth >= opts.maxDepth) return `[${value.length} items]`
+        const kept = value.slice(0, opts.maxArray).map((item) => shrinkForPreview(item, { ...opts, depth: depth + 1 }))
+        return value.length > opts.maxArray ? [...kept, `…+${value.length - opts.maxArray} more`] : kept
+    }
+    if (isPlainObject(value)) {
+        if (depth >= opts.maxDepth) return '{…}'
+        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkForPreview(val, { ...opts, depth: depth + 1 })]))
+    }
+    return value
+}
+
+// Builds a compact, never-mangled preview of a large tool result: a depth-capped shape sample of
+// the first few records + a clear instruction to process the FULL data with ap_run_code via the
+// offloaded fileId (so the giant payload never enters the model context). When there is no fileId
+// (backstop path), it instead steers toward narrowing/paginating.
+function buildLargeResultPreview({ payload, byteSize, fileId, label = 'Result', statusNote = '' }: {
+    payload: unknown
+    byteSize: number
+    fileId?: string
+    label?: string
+    statusNote?: string
+}): string {
+    const kb = Math.round(byteSize / 1024)
+    const found = findDataArray(payload)
+    if (found) {
+        const previewCount = Math.min(found.array.length, PREVIEW_RECORD_COUNT)
+        const preview = found.array.slice(0, previewCount).map((record) => shrinkForPreview(record, { maxDepth: 4, maxString: 200, maxArray: 4 }))
+        const how = fileId !== undefined
+            ? `→ Full result (all ${found.array.length} records) saved as file ${fileId}. Process it with ap_run_code: pass inputFileIds:['${fileId}'] and read inputs.data (parsed JSON) — pull just the fields you need (e.g. name, stage, value, owner), then return a compact summary. Do NOT re-run this call or regex the preview.`
+            : `→ Narrow with a filter/limit or paginate (offset/cursor) to get the rest — or process it in ap_run_code.`
+        return `✅ ${label} completed${statusNote}. ${found.array.length} record(s) at "${found.path}", ~${kb}KB — too large to load inline.\nShape preview (first ${previewCount}, values clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
+    }
+    const preview = shrinkForPreview(payload, { maxDepth: 3, maxString: 300, maxArray: 5 })
+    const how = fileId !== undefined
+        ? `→ Full result saved as file ${fileId}. Inspect/process it with ap_run_code via inputFileIds:['${fileId}'] (read inputs.data).`
+        : '→ Process it in ap_run_code or request a narrower slice.'
+    return `✅ ${label} completed${statusNote}. Large result ~${kb}KB — too large to load inline.\nShape preview (clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 export const chatAiUtils = {
     createChatModel,
     supportsWebSearch,
@@ -437,12 +504,13 @@ export const chatAiUtils = {
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
-    collectAllStepMessages,
     estimateTokenCount,
     collapseStaleToolOutputs,
     buildProviderOptions,
     buildSystemPromptWithCaching,
     buildStepParts,
+    findDataArray,
+    buildLargeResultPreview,
 }
 
 export type { ContentPartLike }

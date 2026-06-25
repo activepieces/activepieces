@@ -49,7 +49,11 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
     const uiParts: PersistedChatPart[] = []
     const toolCalls: ChatTurnToolCall[] = []
     let toolCallOrder = 0
-    let abortedStepMessages: ModelMessage[] = []
+    // The cumulative response.messages of the CURRENT streamText attempt, captured per-step in
+    // onStepFinish (the reliable source — mirrors what we stream to the UI). Folded into
+    // accumulatedResponseMessages on EVERY loop exit, so an abort/error break never drops the
+    // steps that already happened (which previously left the saved LLM history as just [user]).
+    let currentAttemptMessages: ModelMessage[] = []
     let streamError: Error | null = null
 
     let llmMessages = messages
@@ -87,10 +91,15 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
             // From round two we switch to the smart model with thinking ON for planning depth.
             // It's one continuous turn (no second call), so there's no double-greeting.
             const isFirstStep = steps.length === 0
+            // Thinking stays OFF for the whole discovery phase, not just round one: extended
+            // thinking makes the model deliberate and fire ONE tool per step, serializing the
+            // read-only lookups that should run as one parallel burst. Once a build-only tool
+            // flips the phase to 'build', thinking comes back on for planning depth.
+            const disableThinking = isFirstStep || phaseState.phase === 'discovery'
             return {
                 ...(isFirstStep && fastModel ? { model: fastModel } : {}),
                 activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }),
-                providerOptions: chatAiUtils.buildProviderOptions({ provider, tier, disableThinking: isFirstStep }),
+                providerOptions: chatAiUtils.buildProviderOptions({ provider, tier, disableThinking }),
                 ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),
             }
         },
@@ -125,12 +134,16 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
                 log.warn({ tool: { name: result.toolCall.toolName, durationMs: result.durationMs }, error: result.error }, 'Tool call failed')
             }
         },
-        onAbort: ({ steps }) => {
-            abortedStepMessages = chatAiUtils.collectStepMessages(steps)
-        },
-        onStepFinish: ({ content }) => {
+        onStepFinish: ({ content, response }) => {
             uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
-            onProgress([...uiParts])
+            // Persist the LLM history incrementally (not just UI parts): a turn preempted or
+            // cancelled mid-flight must leave its assistant + tool messages behind so the next
+            // run inherits them instead of re-discovering from scratch. accumulatedResponseMessages
+            // holds prior continuation attempts; this step's response.messages is cumulative for
+            // the current attempt (collectStepMessages takes the last step).
+            currentAttemptMessages = chatAiUtils.collectStepMessages([{ response }])
+            const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
+            onProgress({ uiParts: [...uiParts], responseMessages })
             log.debug({ partCount: uiParts.length, phase: phaseState.phase }, 'Chat step finished')
         },
         onError: ({ error }) => {
@@ -142,10 +155,17 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
     for (;;) {
         log.debug({ phase: phaseState.phase, continuations, emptyContinuations, streamRetries }, 'Chat turn loop iteration')
         const uiPartsCountBefore = uiParts.length
+        currentAttemptMessages = []
         const result = runStreamAttempt(llmMessages)
         await drainStream(result)
         const producedVisibleOutput = uiParts.length > uiPartsCountBefore
-        if (abortSignal.aborted) break
+        // On abort/error we leave the loop WITHOUT reaching the clean-exit pushes below, so fold
+        // this attempt's completed steps in here — otherwise the turn's work is lost from the
+        // saved LLM history even though it streamed to the UI.
+        if (abortSignal.aborted) {
+            accumulatedResponseMessages.push(...currentAttemptMessages)
+            break
+        }
         if (streamError) {
             if (shouldRetryStream({ producedVisibleOutput, streamRetries })) {
                 streamRetries++
@@ -154,6 +174,7 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
                 await delayWithJitter(STREAM_RETRY_BASE_DELAY_MS)
                 continue
             }
+            accumulatedResponseMessages.push(...currentAttemptMessages)
             break
         }
 
@@ -199,7 +220,6 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
 
     return {
         accumulatedResponseMessages,
-        abortedStepMessages,
         uiParts,
         usage,
         finishReason: lastFinishReason,
@@ -234,12 +254,18 @@ function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: ChatTu
             execute: async (input: unknown, options: ToolCallOptions) => {
                 const key = `${name}::${fingerprintInput(input)}`
                 if ((failureCounts.get(key) ?? 0) >= MAX_IDENTICAL_TOOL_FAILURES) {
-                    log.warn({ tool: { name } }, 'Short-circuited repeated failing tool call')
-                    return { content: [{ type: 'text', text: `✋ This exact ${name} call already failed ${MAX_IDENTICAL_TOOL_FAILURES} times with the same input — it was NOT retried. Stop repeating it: change the parameters based on the error, or switch to a different approach or tool. Do not re-send the identical call.` }] }
+                    log.warn({ tool: { name } }, 'Short-circuited repeated unproductive tool call')
+                    return { content: [{ type: 'text', text: `✋ This exact ${name} call already came back the same unproductive way ${MAX_IDENTICAL_TOOL_FAILURES} times (an error, or an empty result) and was NOT retried. Stop repeating it: change the parameters, switch the action (e.g. a list/search action instead of a find-one), or try a different approach. Do not re-send the identical call.` }] }
                 }
                 const result = await originalExecute(input, options)
                 const text = extractResultText(result)
-                if (text.length > 0 && chatToolClassification.hasFailureTextPrefix(text)) {
+                const isFailure = text.length > 0 && chatToolClassification.hasFailureTextPrefix(text)
+                const isEmptyRead = text.length > 0 && !isFailure && looksEmptyResultText(text)
+                const isTransient = isFailure && isTransientFailureText(text)
+                // Brake on repeated UNPRODUCTIVE identical calls — permanent failures AND empty reads —
+                // so the agent stops re-running the same find that keeps returning nothing (the Attio
+                // thrash). Transient errors (429/5xx/timeout) are exempt: retrying those can succeed.
+                if ((isFailure && !isTransient) || isEmptyRead) {
                     failureCounts.set(key, (failureCounts.get(key) ?? 0) + 1)
                 }
                 else {
@@ -257,6 +283,18 @@ function fingerprintInput(input: unknown): string {
     return data ?? ''
 }
 
+// Transient = worth retrying (rate limit, 5xx, timeout, dropped socket); these are exempt from the
+// repeat-breaker so the agent isn't blocked from re-trying a call that can legitimately recover.
+export function isTransientFailureText(text: string): boolean {
+    return /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|try again|econnreset|etimedout|socket hang up|service unavailable/i.test(text)
+}
+
+// A "successful" but empty read — the result the agent kept re-fetching in the Attio thrash. Matched
+// from the shapes our action results use (found:false, empty array) and the A3a empty-result note.
+export function looksEmptyResultText(text: string): boolean {
+    return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
+}
+
 /**
  * Within a single streamText call the SDK appends every tool result and re-sends
  * the full history each step, with no built-in size cap — a turn with many or
@@ -271,7 +309,7 @@ function boundContextForStep({ baseMessages, steps, systemPrompt, provider }: {
     systemPrompt: string
     provider: AIProviderName
 }): { messages?: ModelMessage[] } {
-    const candidate = [...baseMessages, ...chatAiUtils.collectAllStepMessages(steps)]
+    const candidate = [...baseMessages, ...chatAiUtils.collectStepMessages(steps)]
     const estimatedTokens = chatAiUtils.estimateTokenCount({ messages: candidate, systemPromptLength: systemPrompt.length })
     const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
     if (estimatedTokens <= maxContext * IN_LOOP_COMPACTION_THRESHOLD) {
@@ -319,7 +357,7 @@ export type ChatTurnToolCall = {
 
 export type ChatTurnSinks = {
     drainStream?: (result: ReturnType<typeof streamText>) => Promise<void>
-    onProgress?: (uiParts: PersistedChatPart[]) => void
+    onProgress?: (progress: { uiParts: PersistedChatPart[], responseMessages: ModelMessage[] }) => void
 }
 
 export type RunChatTurnParams = {
@@ -340,7 +378,6 @@ export type RunChatTurnParams = {
 
 export type ChatTurnResult = {
     accumulatedResponseMessages: ModelMessage[]
-    abortedStepMessages: ModelMessage[]
     uiParts: PersistedChatPart[]
     usage: LanguageModelUsage | undefined
     finishReason: string

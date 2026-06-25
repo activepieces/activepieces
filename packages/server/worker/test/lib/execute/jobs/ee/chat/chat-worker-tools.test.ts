@@ -1,4 +1,4 @@
-import { ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, SendChatEmailResponse, ToolProgressEvent } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
 import { ChatEventEmitter, chatWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
 
@@ -358,20 +358,20 @@ describe('chatWorkerTools', () => {
             expect(chatWorkerTools.truncateLargeResult(small)).toBe(small)
         })
 
-        it('previews the first 3 items of a large top-level array', () => {
+        it('previews the first 5 items of a large top-level array', () => {
             const result = chatWorkerTools.truncateLargeResult({
-                items: Array.from({ length: 5000 }, (_, i) => ({ id: i, text: 'x'.repeat(50) })),
+                items: Array.from({ length: 5000 }, (_, i) => ({ id: i, text: 'x'.repeat(300) })),
             }) as { content: Array<{ text: string }> }
             const text = result.content[0].text
             expect(text).toContain('[LARGE RESPONSE]')
             expect(text).toContain('5000 items')
-            expect(text).toContain('Preview (3 of 5000 items)')
+            expect(text).toContain('Preview (5 of 5000 items)')
         })
 
         it('structurally shrinks a large non-array object instead of discarding it', () => {
             const result = chatWorkerTools.truncateLargeResult({
-                description: 'd'.repeat(60_000),
-                detail: 'e'.repeat(60_000),
+                description: 'd'.repeat(600_000),
+                detail: 'e'.repeat(600_000),
             }) as { content: Array<{ text: string }> }
             const text = result.content[0].text
             expect(text).toContain('long values were truncated to fit, structure preserved')
@@ -381,8 +381,8 @@ describe('chatWorkerTools', () => {
         })
 
         it('truncates based on byte size, not UTF-16 length (multibyte)', () => {
-            const emojiHeavy = { s: '😀'.repeat(30_000) }
-            expect(JSON.stringify(emojiHeavy).length).toBeLessThanOrEqual(100 * 1024)
+            const emojiHeavy = { s: '😀'.repeat(300_000) }
+            expect(JSON.stringify(emojiHeavy).length).toBeLessThanOrEqual(1024 * 1024)
             const result = chatWorkerTools.truncateLargeResult(emojiHeavy)
             expect(result).not.toBe(emojiHeavy)
             expect(result).toHaveProperty('content')
@@ -434,49 +434,49 @@ describe('chatWorkerTools', () => {
     })
 
     describe('truncateLargeResult', () => {
-        const MAX_RESULT_SIZE_BYTES = 100 * 1024
+        const MAX_RESULT_SIZE_BYTES = 128 * 1024
 
         const serializedBytes = (value: unknown): number => Buffer.byteLength(JSON.stringify(value), 'utf8')
 
         it('caps the exact incident shape — MCP { content: [{ text: <huge> }] }', () => {
-            const huge = JSON.stringify({ data: 'x'.repeat(170 * 1024) })
+            const huge = JSON.stringify({ data: 'x'.repeat(1200 * 1024) })
             const input = { content: [{ type: 'text', text: huge }] }
             const out = chatWorkerTools.truncateLargeResult(input)
             expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
         })
 
         it('caps a root array of thousands of small objects (preview path)', () => {
-            const input = Array.from({ length: 5000 }, (_, i) => ({ id: i, name: `item-${i}`, note: 'lorem ipsum dolor' }))
+            const input = Array.from({ length: 30_000 }, (_, i) => ({ id: i, name: `item-${i}`, note: 'lorem ipsum dolor' }))
             const out = chatWorkerTools.truncateLargeResult(input)
             expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
         })
 
         it('caps an object with one giant string field (shrink path)', () => {
-            const input = { status: 200, body: 'y'.repeat(200 * 1024) }
+            const input = { status: 200, body: 'y'.repeat(1200 * 1024) }
             const out = chatWorkerTools.truncateLargeResult(input)
             expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
         })
 
         it('caps a >3-length array whose items are each huge (preview re-check falls through to shrink)', () => {
-            const input = { rows: Array.from({ length: 5 }, (_, i) => ({ id: i, blob: 'z'.repeat(166 * 1024) })) }
+            const input = { rows: Array.from({ length: 5 }, (_, i) => ({ id: i, blob: 'z'.repeat(300 * 1024) })) }
             const out = chatWorkerTools.truncateLargeResult(input)
             expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
         })
 
         it('caps a huge primitive string', () => {
-            const out = chatWorkerTools.truncateLargeResult('w'.repeat(300 * 1024))
+            const out = chatWorkerTools.truncateLargeResult('w'.repeat(1200 * 1024))
             expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
         })
 
         it('preserves a top-level _meta after truncation', () => {
-            const input = { _meta: { pieceName: '@activepieces/piece-attio', connectionLabel: 'Attio0' }, content: [{ type: 'text', text: 'x'.repeat(170 * 1024) }] }
+            const input = { _meta: { pieceName: '@activepieces/piece-attio', connectionLabel: 'Attio0' }, content: [{ type: 'text', text: 'x'.repeat(1200 * 1024) }] }
             const out = chatWorkerTools.truncateLargeResult(input)
             expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
             expect(out).toHaveProperty('_meta', input._meta)
         })
 
         it('does not throw on a circular object and still caps the result', () => {
-            const circular: Record<string, unknown> = { big: 'q'.repeat(200 * 1024) }
+            const circular: Record<string, unknown> = { big: 'q'.repeat(1200 * 1024) }
             circular['self'] = circular
             expect(() => chatWorkerTools.truncateLargeResult(circular)).not.toThrow()
             expect(serializedBytes(chatWorkerTools.truncateLargeResult(circular))).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
@@ -485,6 +485,45 @@ describe('chatWorkerTools', () => {
         it('returns small results unchanged', () => {
             const input = { content: [{ type: 'text', text: '✅ Listed 3 connections' }] }
             expect(chatWorkerTools.truncateLargeResult(input)).toBe(input)
+        })
+    })
+
+    describe('createEmailTools / ap_send_email', () => {
+        const callOptions = { messages: [], abortSignal: undefined as unknown as AbortSignal }
+
+        function setup(sendImpl?: () => Promise<SendChatEmailResponse>) {
+            const previews: ActionPreviewEvent[] = []
+            const receipts: ActionReceiptEvent[] = []
+            const eventEmitter: ChatEventEmitter = {
+                emitToolProgress: () => {},
+                emitActionPreview: (data: ActionPreviewEvent) => { previews.push(data) },
+                emitActionReceipt: (data: ActionReceiptEvent) => { receipts.push(data) },
+            }
+            const sendEmail = vi.fn(sendImpl ?? (async () => ({ sent: true, message: 'Email sent to x.' })))
+            const tools = chatWorkerTools.createEmailTools({ sendEmail, eventEmitter })
+            return { tools, previews, receipts, sendEmail }
+        }
+
+        it('sends immediately with no confirmation card, for any recipient', async () => {
+            const { tools, previews, receipts, sendEmail } = setup()
+            await tools.ap_send_email.execute(
+                { to: ['teammate@acme.com'], subject: 'FYI', body: 'hi' },
+                { ...callOptions, toolCallId: 'e1' },
+            )
+            expect(previews).toHaveLength(0)
+            expect(sendEmail).toHaveBeenCalledOnce()
+            expect(sendEmail.mock.calls[0][0]).toMatchObject({ to: ['teammate@acme.com'], subject: 'FYI' })
+            expect(receipts[0].status).toBe('success')
+        })
+
+        it('reports failure when the send fails server-side', async () => {
+            const { tools, receipts, sendEmail } = setup(async () => ({ sent: false, message: 'rate limit reached' }))
+            await tools.ap_send_email.execute(
+                { to: ['out@gmail.com'], subject: 'Hi', body: 'hi' },
+                { ...callOptions, toolCallId: 'e2' },
+            )
+            expect(sendEmail).toHaveBeenCalledOnce()
+            expect(receipts[0].status).toBe('failed')
         })
     })
 })

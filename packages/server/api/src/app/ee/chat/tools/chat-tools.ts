@@ -1,4 +1,5 @@
 import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { chatAiUtils } from '@activepieces/server-utils'
 import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
@@ -7,7 +8,7 @@ import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -26,6 +27,7 @@ const CROSS_PROJECT_FLOW_LIMIT = 200
 const MAX_PRODUCED_FILES = 10
 const MAX_PRODUCED_FILE_BYTES = 25 * 1024 * 1024
 const MAX_RESULT_TEXT_CHARS = 20_000
+const LARGE_RESULT_OFFLOAD_BYTES = 64 * 1024
 const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
 const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
 
@@ -220,10 +222,24 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 
     switch (toolName) {
         case 'ap_discover_action_auth': {
+            const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
+            // Sticky connection: if the user already chose a connection for this piece this
+            // conversation, reuse it instead of popping another picker for the next action.
+            if (conversationId) {
+                const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+                if (selected) {
+                    return {
+                        alreadyConnected: true,
+                        piece: normalizedPiece,
+                        auth: selected.externalId,
+                        connectionLabel: selected.label,
+                        note: 'A connection for this piece was already selected this conversation — pass this auth and do NOT show another connection picker.',
+                    }
+                }
+            }
             const discoveryResult = await findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
 
             if (conversationId && 'pickConnection' in discoveryResult && discoveryResult.pickConnection) {
-                const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
                 await chatApprovalGate.storeAvailableConnections({
                     conversationId,
                     pieceName: normalizedPiece,
@@ -240,17 +256,18 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_execute_action': {
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log })
         }
         case 'ap_run_code': {
             return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
         }
         case 'ap_explore_data': {
             const actionName = toolInput.actionName as string
-            if (!chatToolClassification.isReadActionName(actionName)) {
+            const exploreInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : undefined
+            if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -282,11 +299,49 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
     }
 }
 
-async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log }: {
+// A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
+// the model context with a compact shape preview + the fileId. The agent then processes the FULL
+// data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
+function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }: {
+    projectId: string
+    platformId?: string
+    pieceName: string
+    actionName: string
+    log: FastifyBaseLogger
+}): AdhocOffload | undefined {
+    if (isNil(platformId)) {
+        return undefined
+    }
+    return {
+        thresholdBytes: LARGE_RESULT_OFFLOAD_BYTES,
+        handle: async ({ payload, byteSize, label, statusNote }) => {
+            const json = JSON.stringify(payload, null, 2)
+            const fileName = `${pieceName.replace('@activepieces/piece-', '')}-${actionName}.json`
+            const { data: saved, error } = await tryCatch(() => fileService(log).save({
+                projectId,
+                platformId,
+                data: Buffer.from(json, 'utf8'),
+                size: Buffer.byteLength(json, 'utf8'),
+                type: FileType.FLOW_STEP_FILE,
+                fileName,
+                compression: FileCompression.NONE,
+                metadata: { mimetype: 'application/json' },
+            }))
+            if (error || isNil(saved)) {
+                log.warn({ error, pieceName, actionName }, '[chat] large-result offload failed; falling back to inline truncation')
+                return null
+            }
+            return chatAiUtils.buildLargeResultPreview({ payload, byteSize, fileId: saved.id, label, statusNote })
+        },
+    }
+}
+
+async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
     conversationId?: string
+    platformId?: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const pieceName = toolInput.pieceName as string
@@ -326,6 +381,7 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
         actionName,
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
+        ...spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
 
@@ -390,7 +446,19 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
         const mimeType = isObject(fileData.metadata) && typeof fileData.metadata.mimetype === 'string' ? fileData.metadata.mimetype : 'application/octet-stream'
         inputFiles.push({ name: fileData.fileName ?? fileId, mimeType, base64: fileData.data.toString('base64') })
     }
-    const input = inputFiles.length > 0 ? { ...baseInput, files: inputFiles } : baseInput
+    const jsonValues = inputFiles
+        .filter((f) => f.mimeType.includes('json') || f.name.toLowerCase().endsWith('.json'))
+        .map((f) => parseToJsonIfPossible(Buffer.from(f.base64, 'base64').toString('utf8')))
+        .filter((v) => isObject(v) || Array.isArray(v))
+    const input: Record<string, unknown> = { ...baseInput }
+    if (inputFiles.length > 0) {
+        input.files = inputFiles
+    }
+    // JSON attachments (e.g. an offloaded large tool result) are parsed and handed over as
+    // `inputs.data` so the agent can process them in two lines instead of base64-decoding by hand.
+    if (jsonValues.length > 0 && baseInput.data === undefined) {
+        input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
+    }
 
     const result = await executeAdhocCode({ projectId, code, packageJson, input, log })
 

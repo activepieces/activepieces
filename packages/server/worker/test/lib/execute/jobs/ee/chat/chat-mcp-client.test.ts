@@ -70,6 +70,30 @@ describe('chatMcpClient.classifyMcpAuthError', () => {
             })
             expect(result.isAuthError).toBe(false)
         })
+
+        it('does not flag an isError result whose user data merely contains the word reconnect', () => {
+            const result = chatMcpClient.classifyMcpAuthError({
+                result: { isError: true, content: [{ type: 'text', text: 'Deal "Reconnect Energy Corp" is past its close date' }] },
+                toolName: ATTIO_TOOL,
+            })
+            expect(result.isAuthError).toBe(false)
+        })
+
+        it('does not flag an isError result whose user data mentions an invalid token field', () => {
+            const result = chatMcpClient.classifyMcpAuthError({
+                result: { isError: true, content: [{ type: 'text', text: 'Validation failed: the invalid_token attribute is read-only' }] },
+                toolName: ATTIO_TOOL,
+            })
+            expect(result.isAuthError).toBe(false)
+        })
+
+        it('still flags an isError result that signals an expired token', () => {
+            const result = chatMcpClient.classifyMcpAuthError({
+                result: { isError: true, content: [{ type: 'text', text: 'Your token has expired' }] },
+                toolName: ATTIO_TOOL,
+            })
+            expect(result.isAuthError).toBe(true)
+        })
     })
 
     describe('connector uuid parsing', () => {

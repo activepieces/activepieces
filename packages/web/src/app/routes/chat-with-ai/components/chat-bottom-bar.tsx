@@ -19,10 +19,6 @@ import { ActionPreviewCard } from './action-preview-card';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
-import {
-  ConnectionRequiredData,
-  ConnectionsRequiredCard,
-} from './connections-required-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
@@ -171,9 +167,10 @@ function BlockingDisplayCard({
         />
       );
     case 'ap_show_connection_required':
+    case 'ap_show_connection_picker':
       return (
-        <ConnectionsRequiredCard
-          connections={[data as unknown as ConnectionRequiredData]}
+        <ConnectionPickerCard
+          picker={data as unknown as ConnectionPickerData}
           onResolve={(payload) => approveGate(toolCallId, payload)}
           onDismiss={() => rejectGate(toolCallId)}
         />
@@ -182,14 +179,6 @@ function BlockingDisplayCard({
       return (
         <McpReconnectCard
           reconnect={data as unknown as McpReconnectData}
-          onResolve={(payload) => approveGate(toolCallId, payload)}
-          onDismiss={() => rejectGate(toolCallId)}
-        />
-      );
-    case 'ap_show_connection_picker':
-      return (
-        <ConnectionPickerCard
-          picker={data as unknown as ConnectionPickerData}
           onResolve={(payload) => approveGate(toolCallId, payload)}
           onDismiss={() => rejectGate(toolCallId)}
         />

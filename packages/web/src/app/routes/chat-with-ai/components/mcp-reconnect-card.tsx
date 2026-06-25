@@ -72,11 +72,7 @@ export function McpReconnectCard({
             className={cn('shrink-0 gap-1.5')}
             disabled={!canOpen}
             onClick={() => {
-              window.open(
-                reconnect.connectUrl,
-                '_blank',
-                'noopener,noreferrer',
-              );
+              openReconnectPopup(reconnect.connectUrl);
               setOpened(true);
             }}
           >
@@ -105,6 +101,21 @@ export function McpReconnectCard({
       </motion.div>
     </InteractiveCardShell>
   );
+}
+
+function openReconnectPopup(url: string) {
+  const width = 520;
+  const height = 640;
+  const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
+  const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
+  const popup = window.open(
+    url,
+    'ap-mcp-reconnect',
+    `popup=yes,width=${width},height=${height},left=${left},top=${top},noopener,noreferrer`,
+  );
+  if (!popup) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
 }
 
 function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {

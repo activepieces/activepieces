@@ -86,6 +86,7 @@ export type WorkerToApiContract = {
     heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
+    sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse>
 }
 
 export type SendChatEventRequest = {
@@ -239,6 +240,8 @@ export type ChatConfigResponse = {
     projects: Array<{ id: string, displayName: string, type: string }>
     guides: Record<string, string>
     aiTools: ChatAiToolsConfig
+    emailEnabled: boolean
+    userEmail: string
 }
 
 export type SaveChatMessagesRequest = {
@@ -268,6 +271,7 @@ export type UpdateChatProgressRequest = {
     conversationId: string
     runId?: string
     uiMessages: unknown[]
+    messages?: unknown[]
 }
 
 export type HeartbeatChatConversationRequest = {
@@ -290,6 +294,21 @@ export type ExecuteChatToolRequest = {
 
 export type ExecuteChatToolResponse = {
     result: unknown
+}
+
+export type SendChatEmailRequest = {
+    conversationId: string
+    platformId: string
+    userId: string
+    to: string[]
+    subject: string
+    body: string
+}
+
+export type SendChatEmailResponse = {
+    sent: boolean
+    message: string
+    blockedRecipients?: string[]
 }
 
 export type DisableFlowRequest = {

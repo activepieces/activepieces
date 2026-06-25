@@ -1,4 +1,5 @@
 import { tryCatch } from '@activepieces/core-utils'
+import { chatAiUtils } from '@activepieces/server-utils'
 import { chatToolPhases } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions } from 'ai'
@@ -6,9 +7,13 @@ import { FastifyBaseLogger } from 'fastify'
 import { chatWorkerTools } from './chat-worker-tools'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
+const MCP_OFFLOAD_BYTES = 64 * 1024
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
-const MCP_AUTH_ERROR_PATTERN = /\b(401|403)\b|unauthorized|forbidden|invalid[_\s-]?(access[_\s-]?)?token|token (has )?(expired|revoked)|\breconnect\b|re-?authenticat|authentication (failed|error|required)|not (authenticated|authorized)|oauth\s*(error|token|expired)/i
+// High-precision: matched against tool RESULT text (which can contain user/CRM data), so it
+// only fires on explicit auth signals. Low-precision alternations that match ordinary prose —
+// bare "reconnect", generic "invalid token", bare "oauth" — are deliberately excluded.
+const MCP_AUTH_ERROR_PATTERN = /\b(401|403)\b|unauthorized|forbidden|token (has )?(expired|revoked)|re-?authenticat|authentication (failed|error|required)|not (authenticated|authorized)|oauth\s*error/i
 
 async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
@@ -120,9 +125,65 @@ function buildReconnectGuidance({ connectorUuid, alreadyFlagged }: { connectorUu
     }
 }
 
-function withToolTimeouts({ mcpToolSet, brokenConnectors }: {
+// Piece-introspection tools accept an `auth` (connection externalId). Once the user has
+// picked a connection for a piece, that pick is authoritative — inject it so the model can
+// never resolve dropdowns/props against a guessed or stale externalId (which silently yields
+// empty options and pushes the agent off the native path onto raw custom_api_call).
+const AUTH_INJECTABLE_TOOLS = new Set(['ap_get_piece_props', 'ap_resolve_property_options', 'ap_resolve_property_chain'])
+
+function injectSelectedAuth({ name, args, getSelectedAuth }: {
+    name: string
+    args: unknown
+    getSelectedAuth?: (params: { pieceName: string }) => string | undefined
+}): unknown {
+    if (getSelectedAuth === undefined || !AUTH_INJECTABLE_TOOLS.has(name) || !isObject(args)) {
+        return args
+    }
+    const pieceName = args['pieceName']
+    if (typeof pieceName !== 'string') {
+        return args
+    }
+    const externalId = getSelectedAuth({ pieceName: chatWorkerTools.normalizePieceName(pieceName) })
+    if (externalId === undefined || args['auth'] === externalId) {
+        return args
+    }
+    return { ...args, auth: externalId }
+}
+
+// A large mcp__ tool result is persisted to a file and replaced with a compact preview + fileId,
+// so the agent processes it in ap_run_code (inputs.data) instead of the blob flooding context —
+// the same contract as the native-action offload. Returns null to fall through to truncation.
+async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
+    result: unknown
+    toolName: string
+    saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
+}): Promise<unknown> {
+    if (saveLargeResult === undefined) {
+        return null
+    }
+    let serialized: string
+    try {
+        serialized = JSON.stringify(result)
+    }
+    catch {
+        return null
+    }
+    const byteSize = Buffer.byteLength(serialized, 'utf8')
+    if (byteSize <= MCP_OFFLOAD_BYTES) {
+        return null
+    }
+    const fileId = await saveLargeResult({ json: serialized, fileName: `${toolName}-result.json` })
+    if (fileId === null) {
+        return null
+    }
+    return { content: [{ type: 'text', text: chatAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
+}
+
+function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult }: {
     mcpToolSet: Record<string, unknown>
     brokenConnectors: Set<string>
+    getSelectedAuth?: (params: { pieceName: string }) => string | undefined
+    saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
 
@@ -136,7 +197,8 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors }: {
         const toolConnectorUuid = parseConnectorUuid(name)
 
         result[name] = Object.assign({}, tool, {
-            execute: async (args: unknown, options?: ToolExecutionOptions) => {
+            execute: async (rawArgs: unknown, options?: ToolExecutionOptions) => {
+                const args = injectSelectedAuth({ name, args: rawArgs, getSelectedAuth })
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
                 }
@@ -161,6 +223,10 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors }: {
                         brokenConnectors.add(connectorUuid)
                     }
                     return buildReconnectGuidance({ connectorUuid })
+                }
+                const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
+                if (offloaded !== null) {
+                    return offloaded
                 }
                 return chatWorkerTools.truncateLargeResult(toolResult)
             },

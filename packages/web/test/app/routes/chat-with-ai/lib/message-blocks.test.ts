@@ -136,30 +136,81 @@ describe('buildMessageBlocks — one accordion per segment', () => {
     ).toEqual(['thinking', 'text', 'thinking']);
   });
 
-  it('keeps a single accordion when tools are interrupted only by cards', () => {
+  it('keeps a single accordion when tools are interrupted only by cards, and coalesces adjacent receipts', () => {
     const id1 = 'exec1';
     const id2 = 'exec2';
     const blocks = buildMessageBlocks({
       parts: [
         status('Sending the first message', 's1'),
-        tool({ name: 'ap_execute_action', id: id1 }),
+        tool({
+          name: 'ap_execute_action',
+          id: id1,
+          input: { actionName: 'send_message' },
+        }),
         status('Sending the second message', 's2'),
-        tool({ name: 'ap_execute_action', id: id2 }),
+        tool({
+          name: 'ap_execute_action',
+          id: id2,
+          input: { actionName: 'send_message' },
+        }),
       ],
       isStreaming: false,
       toolCallMeta: { ...receiptMeta(id1), ...receiptMeta(id2) },
       claimedBuildIds: new Set(),
     }).blocks;
 
-    // One accordion on top, both receipts stacked below it — not split.
-    expect(blocks.map((b) => b.kind)).toEqual([
-      'thinking',
-      'action-receipt',
-      'action-receipt',
-    ]);
+    // One accordion on top, the two receipts coalesced into one quiet group.
+    expect(blocks.map((b) => b.kind)).toEqual(['thinking', 'card-group']);
     if (blocks[0].kind !== 'thinking') throw new Error('expected thinking');
     // the execute-action tool calls still appear as steps inside the accordion
     expect(blocks[0].steps.filter((s) => s.kind === 'tool')).toHaveLength(2);
+    if (blocks[1].kind !== 'card-group') throw new Error('expected card-group');
+    expect(blocks[1].cards).toHaveLength(2);
+    expect(blocks[1].cards.every((c) => c.kind === 'action-receipt')).toBe(true);
+  });
+
+  it('folds read-only executions into the accordion with no card', () => {
+    const blocks = buildMessageBlocks({
+      parts: [
+        status('Looking things up', 's1'),
+        tool({
+          name: 'ap_execute_action',
+          id: 'read1',
+          input: { actionName: 'list_records' },
+        }),
+        tool({
+          name: 'ap_execute_action',
+          id: 'read2',
+          input: { actionName: 'custom_api_call', input: { method: 'GET' } },
+        }),
+      ],
+      isStreaming: false,
+      // receipts present, but read-only calls must NOT surface a card
+      toolCallMeta: { ...receiptMeta('read1'), ...receiptMeta('read2') },
+      claimedBuildIds: new Set(),
+    }).blocks;
+
+    expect(blocks.map((b) => b.kind)).toEqual(['thinking']);
+    if (blocks[0].kind !== 'thinking') throw new Error('expected thinking');
+    expect(blocks[0].steps.filter((s) => s.kind === 'tool')).toHaveLength(2);
+  });
+
+  it('renders a single write outcome as a lone card, not a group', () => {
+    const blocks = buildMessageBlocks({
+      parts: [
+        status('Sending the message', 's1'),
+        tool({
+          name: 'ap_execute_action',
+          id: 'w1',
+          input: { actionName: 'send_message' },
+        }),
+      ],
+      isStreaming: false,
+      toolCallMeta: { ...receiptMeta('w1') },
+      claimedBuildIds: new Set(),
+    }).blocks;
+
+    expect(blocks.map((b) => b.kind)).toEqual(['thinking', 'action-receipt']);
   });
 
   it('renders a card with no preceding thinking on its own', () => {

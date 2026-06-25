@@ -16,8 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
 import { cn } from '@/lib/utils';
 
+import { ConversationStatusDot } from './components/conversation-status-dot';
 import { DelayedTooltip } from './components/delayed-tooltip';
 
 export function ConversationList({
@@ -63,6 +65,11 @@ export function ConversationList({
 
   const allConversations = conversationsPage?.data ?? [];
 
+  const { getIndicator, markRead } = useConversationIndicators({
+    conversations: allConversations,
+    activeId: selectedId ?? null,
+  });
+
   const conversations = useMemo(() => {
     if (!searchQuery.trim()) return allConversations;
     const query = searchQuery.toLowerCase();
@@ -107,6 +114,7 @@ export function ConversationList({
   }, [conversations]);
 
   const handleClick = (conv: ChatConversation) => {
+    markRead(conv.id);
     onSelect?.(conv.id);
   };
 
@@ -139,53 +147,61 @@ export function ConversationList({
           />
         </button>
         {!isCollapsed &&
-          items.map((conv) => (
-            <button
-              type="button"
-              key={conv.id}
-              className={cn(
-                'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-muted relative',
-                mobile && 'px-3 py-2.5 text-sm',
-                selectedId === conv.id &&
-                  'bg-muted font-semibold border-l-2 border-l-primary',
-              )}
-              onClick={() => handleClick(conv)}
-            >
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
-                {conv.title
-                  ? chatUtils.sanitizeTitle(conv.title)
-                  : t('New conversation')}
-              </span>
-              <DelayedTooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className={cn(
-                      'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all',
-                      mobile && 'opacity-100 p-1.5',
-                    )}
-                    onClick={(e) => handleDelete(e, conv.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.stopPropagation();
-                        deleteConv(conv.id);
-                      }
-                    }}
-                  >
-                    <Trash2 size={12} />
+          items.map((conv) => {
+            const indicator = getIndicator(conv);
+            return (
+              <button
+                type="button"
+                key={conv.id}
+                className={cn(
+                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-muted relative',
+                  mobile && 'px-3 py-2.5 text-sm',
+                  selectedId === conv.id &&
+                    'bg-muted font-semibold border-l-2 border-l-primary',
+                )}
+                onClick={() => handleClick(conv)}
+              >
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
+                  {conv.title
+                    ? chatUtils.sanitizeTitle(conv.title)
+                    : t('New conversation')}
+                </span>
+                {indicator && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
+                    <ConversationStatusDot state={indicator} />
                   </span>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="right"
-                  align="center"
-                  className="pointer-events-none"
-                >
-                  {t('Delete')}
-                </TooltipContent>
-              </DelayedTooltip>
-            </button>
-          ))}
+                )}
+                <DelayedTooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className={cn(
+                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all',
+                        mobile && 'opacity-100 p-1.5',
+                      )}
+                      onClick={(e) => handleDelete(e, conv.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.stopPropagation();
+                          deleteConv(conv.id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="right"
+                    align="center"
+                    className="pointer-events-none"
+                  >
+                    {t('Delete')}
+                  </TooltipContent>
+                </DelayedTooltip>
+              </button>
+            );
+          })}
       </div>
     );
   };

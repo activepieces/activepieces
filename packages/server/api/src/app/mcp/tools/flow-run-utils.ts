@@ -1,4 +1,4 @@
-import { apId, formatPieceError, isNil, isObject, tryCatch, tryParseFriendlyPieceError } from '@activepieces/core-utils'
+import { apId, formatPieceError, isNil, isObject, tryCatch, tryCatchSync, tryParseFriendlyPieceError } from '@activepieces/core-utils'
 import { createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, RunEnvironment, SampleDataFileType, Step, StepLocationRelativeToParent, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
@@ -11,7 +11,9 @@ import { mcpUtils } from './mcp-utils'
 
 const POLL_INTERVAL_MS = 2000
 const MAX_WAIT_MS = 120_000
-const ERROR_SUMMARY_MAX_LENGTH = 300
+// The actionable part of an API error (which field, what format, allowed values) often lands past
+// 300 chars, so the agent never saw it. Keep the head but allow enough to carry the real guidance.
+const ERROR_SUMMARY_MAX_LENGTH = 900
 
 type AdhocActionResult = {
     text: string
@@ -112,6 +114,7 @@ export async function executeAdhocAction({
     actionName,
     input,
     connectionExternalId,
+    offload,
     log,
 }: {
     projectId: string
@@ -120,9 +123,13 @@ export async function executeAdhocAction({
     actionName: string
     input?: Record<string, unknown>
     connectionExternalId?: string
+    offload?: AdhocOffload
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
-    const authError = mcpUtils.validateAuth(connectionExternalId)
+    const { auth: inlineAuth, ...inputWithoutAuth } = input ?? {}
+    const effectiveExternalId = connectionExternalId ?? (typeof inlineAuth === 'string' ? inlineAuth : undefined)
+
+    const authError = mcpUtils.validateAuth(effectiveExternalId)
     if (authError) {
         return authError
     }
@@ -145,8 +152,8 @@ export async function executeAdhocAction({
     const { piece, component: action, pieceName: resolvedPieceName } = lookup
 
     const resolvedInput: Record<string, unknown> = {
-        ...(input ?? {}),
-        ...(connectionExternalId !== undefined && { auth: `{{connections['${connectionExternalId}']}}` }),
+        ...inputWithoutAuth,
+        ...(effectiveExternalId !== undefined && { auth: `{{connections['${effectiveExternalId}']}}` }),
     }
 
     // createCustomApiCallAction wraps url in DynamicProperties, expecting { url: string } not a flat string
@@ -154,9 +161,13 @@ export async function executeAdhocAction({
         resolvedInput.url = { url: resolvedInput.url }
     }
 
+    // Empty-able container props (OBJECT/ARRAY) like custom_api_call's required headers/queryParams
+    // mean "none" when omitted — fill them so a first-shot call isn't bounced for an empty bag.
+    const coercedInput = mcpUtils.coerceEmptyContainerInputs({ props: action.props, input: resolvedInput })
+
     const diagnosis = mcpUtils.diagnosePieceProps({
         props: action.props,
-        input: resolvedInput,
+        input: coercedInput,
         pieceAuth: piece.auth,
         requireAuth: action.requireAuth,
         componentType: 'action',
@@ -213,7 +224,7 @@ export async function executeAdhocAction({
             pieceName: resolvedPieceName,
             pieceVersion: resolvedPieceVersion,
             actionName: action.name,
-            input: resolvedInput,
+            input: coercedInput,
             propertySettings: {},
             errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({}),
         }
@@ -274,7 +285,14 @@ export async function executeAdhocAction({
             }
         }
 
-        const formatted = formatAdhocActionResult(completedRun, stepName, action.displayName)
+        if (offload !== undefined) {
+            const offloaded = await maybeOffloadLargeResult({ run: completedRun, stepName, actionName: action.name, displayName: action.displayName, offload })
+            if (offloaded !== null) {
+                return offloaded
+            }
+        }
+
+        const formatted = formatAdhocActionResult(completedRun, stepName, action.displayName, action.name)
         return {
             content: [{ type: 'text', text: formatted.text }],
             ...(formatted.errorSummary !== undefined ? { structuredContent: { errorSummary: formatted.errorSummary } } : {}),
@@ -437,6 +455,17 @@ function buildTriggerShapeHint(trigger: Step): string {
     return `${note}\nExpected trigger output keys:\n${keyLines.join('\n')}\n\n`
 }
 
+// An empty result is the classic thrash trigger: the old note ("try broader parameters") pushed the
+// agent to re-run the SAME action with looser filters. When the action was a find-one, the real fix
+// is usually a different INSTRUMENT — switch to the app's list_*/search_* action — so redirect there.
+function emptyResultNote(actionName?: string): string {
+    const cardinality = isNil(actionName) ? 'other' : mcpUtils.classifyActionCardinality(actionName)
+    if (cardinality === 'single') {
+        return `Note: empty result. "${actionName}" returns a SINGLE match — if you meant to enumerate records, switch to this app's list/search action (e.g. list_records) rather than retrying this one. Otherwise confirm a connection (auth) is set and any required object/list id is resolved before treating this as "no data".`
+    }
+    return 'Note: empty result. Before concluding there\'s no data: confirm a connection (auth) is set and any required object/list id is resolved; if you intended to enumerate, use a list/search action. Retrying the same call with looser filters rarely helps.'
+}
+
 function looksEmpty(output: unknown): boolean {
     if (output === undefined || output === null) return true
     if (Array.isArray(output) && output.length === 0) return true
@@ -462,7 +491,70 @@ function summarizeActionError(errorMessage: unknown): string {
         : withStatus
 }
 
-function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string): AdhocActionResult {
+function isHttpEnvelope(output: unknown): output is { status: number, headers?: unknown, body: unknown } {
+    return isObject(output) && typeof output['status'] === 'number' && 'body' in output
+}
+
+// custom_api_call returns the full HTTP envelope { status, headers, body }. The headers
+// (cloudflare/CORS/rate-limit noise) and the wrapping balloon the result and bury the data.
+// Keep just the body as the payload and surface the status compactly in the summary line.
+function slimCustomApiCallOutput(output: unknown): { payload: unknown, statusNote: string } {
+    if (!isHttpEnvelope(output)) {
+        return { payload: output, statusNote: '' }
+    }
+    const ok = output.status >= 200 && output.status < 300
+    return { payload: output.body, statusNote: ok ? '' : ` (HTTP ${output.status})` }
+}
+
+function getAdhocStepOutput(run: FlowRun, stepName: string): { status: unknown, output: unknown } | null {
+    const steps = run.steps
+    if (isNil(steps) || typeof steps !== 'object') {
+        return null
+    }
+    const step = (steps as Record<string, unknown>)[stepName]
+    if (isNil(step) || typeof step !== 'object') {
+        return null
+    }
+    const stepRecord = step as Record<string, unknown>
+    return { status: stepRecord.status, output: stepRecord.output }
+}
+
+// A large successful result (e.g. a 1.4MB Attio query) is offloaded to a file via the caller's
+// handler, which returns a compact preview + fileId in place of the blob. Returns null to fall
+// through to normal formatting (result small, empty, failed, or persistence declined/failed).
+async function maybeOffloadLargeResult({ run, stepName, actionName, displayName, offload }: {
+    run: FlowRun
+    stepName: string
+    actionName: string
+    displayName: string
+    offload: AdhocOffload
+}): Promise<McpToolResult | null> {
+    const outcome = getAdhocStepOutput(run, stepName)
+    if (outcome === null || outcome.status !== StepOutputStatus.SUCCEEDED) {
+        return null
+    }
+    const { payload, statusNote } = actionName === 'custom_api_call'
+        ? slimCustomApiCallOutput(outcome.output)
+        : { payload: outcome.output, statusNote: '' }
+    if (payload === undefined || looksEmpty(payload)) {
+        return null
+    }
+    const { data: serialized } = tryCatchSync(() => JSON.stringify(payload))
+    if (isNil(serialized)) {
+        return null
+    }
+    const byteSize = Buffer.byteLength(serialized, 'utf8')
+    if (byteSize <= offload.thresholdBytes) {
+        return null
+    }
+    const { data: text, error } = await tryCatch(() => offload.handle({ payload, byteSize, label: displayName, statusNote }))
+    if (error || isNil(text)) {
+        return null
+    }
+    return { content: [{ type: 'text', text }] }
+}
+
+function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string, actionName?: string): AdhocActionResult {
     const steps = run.steps
     if (isNil(steps) || typeof steps !== 'object') {
         return {
@@ -482,12 +574,15 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
     const output = stepRecord.output
     const errorMessage = stepRecord.errorMessage
     if (status === StepOutputStatus.SUCCEEDED) {
-        const outStr = output === undefined
+        const { payload, statusNote } = actionName === 'custom_api_call'
+            ? slimCustomApiCallOutput(output)
+            : { payload: output, statusNote: '' }
+        const outStr = payload === undefined
             ? '(no output)'
-            : typeof output === 'string' ? output : JSON.stringify(output)
-        const base = `✅ ${displayName} completed (run ${run.id}).\n\n${outStr}`
-        if (looksEmpty(output)) {
-            return { text: `${base}\n\nNote: No results matched. If the user expected data, try broader parameters (e.g., wider date range, fewer filters).` }
+            : typeof payload === 'string' ? payload : JSON.stringify(payload)
+        const base = `✅ ${displayName} completed (run ${run.id})${statusNote}.\n\n${outStr}`
+        if (looksEmpty(payload)) {
+            return { text: `${base}\n\n${emptyResultNote(actionName)}` }
         }
         return { text: base }
     }
@@ -607,5 +702,10 @@ export type AdhocCodeResult = {
     output?: unknown
     errorMessage?: string
     runId?: string
+}
+
+export type AdhocOffload = {
+    thresholdBytes: number
+    handle: (args: { payload: unknown, byteSize: number, label: string, statusNote: string }) => Promise<string | null>
 }
 

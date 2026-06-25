@@ -53,6 +53,7 @@ export function useStreamingReducer({
     useState<ChatUIMessage | null>(null);
   const [streamPhase, setStreamPhase] = useState<StreamPhase>('idle');
   const [streamError, setStreamError] = useState<string | null>(null);
+  const [isResumedStream, setIsResumedStream] = useState(false);
 
   const streamPhaseRef = useRef<StreamPhase>('idle');
   const streamGenerationRef = useRef(0);
@@ -157,6 +158,7 @@ export function useStreamingReducer({
       },
     ) => {
       teardown();
+      setIsResumedStream(!!options?.initialParts?.length);
       streamGenerationRef.current++;
       activeRunIdRef.current = undefined;
       chatDebug.setContext({ conversation: { id: conversationId } });
@@ -346,6 +348,7 @@ export function useStreamingReducer({
     streamPhase,
     streamGeneration: streamGenerationRef,
     streamError,
+    isResumedStream,
     startStream,
     setActiveRunId,
     stopStream,

@@ -84,6 +84,10 @@ export function buildMessageBlocks({
     const toolCallId = chatPartUtils.getToolCallId(p);
     if (!toolCallId) return;
 
+    // Read-only executions (lookups / HTTP GETs) are not outcomes: no card, no
+    // skeleton. They already show as a step in the thinking accordion above.
+    if (chatPartUtils.isReadOnlyExecuteAction(p)) return;
+
     const hasReceipt =
       toolName === 'ap_execute_action' &&
       !!toolCallMeta[toolCallId]?.actionReceipt;
@@ -215,10 +219,46 @@ export function buildMessageBlocks({
   });
 
   return {
-    blocks: groupBuildBlocks(cleaned, isStreaming),
+    blocks: groupAdjacentCards(groupBuildBlocks(cleaned, isStreaming)),
     hasContent: hasText,
     sources,
   };
+}
+
+// Several genuine outcomes in a row (e.g. a handful of individual writes) would
+// otherwise stack as N full-width cards. Coalesce an adjacent run of 2+ outcome
+// cards into one collapsed `card-group` so the timeline stays calm; a lone card
+// renders unchanged. Recurses into a build's children, which render through the
+// same block pipeline.
+function groupAdjacentCards(blocks: MessageBlock[]): MessageBlock[] {
+  const out: MessageBlock[] = [];
+  let run: OutcomeCardBlock[] = [];
+  const flushRun = () => {
+    if (run.length === 1) {
+      out.push(run[0]);
+    } else if (run.length > 1) {
+      out.push({ kind: 'card-group', cards: run });
+    }
+    run = [];
+  };
+  for (const block of blocks) {
+    if (
+      block.kind === 'action-receipt' ||
+      block.kind === 'image' ||
+      block.kind === 'files'
+    ) {
+      run.push(block);
+      continue;
+    }
+    flushRun();
+    if (block.kind === 'build-plan' && block.children) {
+      out.push({ ...block, children: groupAdjacentCards(block.children) });
+    } else {
+      out.push(block);
+    }
+  }
+  flushRun();
+  return out;
 }
 
 // Fold a build's activity into its single card so it streams INSIDE the card,
@@ -311,9 +351,8 @@ export type MessageBlock =
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
   | { kind: 'batch-progress'; data: BatchProgressData }
-  | { kind: 'action-receipt'; toolCallId: string }
-  | { kind: 'image'; toolCallId: string }
-  | { kind: 'files'; toolCallId: string }
+  | OutcomeCardBlock
+  | { kind: 'card-group'; cards: OutcomeCardBlock[] }
   | {
       kind: 'card-skeleton';
       cardKind: PendingCardKind;
@@ -328,5 +367,10 @@ export type MessageBlock =
       phase?: string;
       children?: MessageBlock[];
     };
+
+export type OutcomeCardBlock =
+  | { kind: 'action-receipt'; toolCallId: string }
+  | { kind: 'image'; toolCallId: string }
+  | { kind: 'files'; toolCallId: string };
 
 export type SourceItem = { key: string; href?: string; title?: string };

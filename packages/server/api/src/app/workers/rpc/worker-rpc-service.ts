@@ -363,6 +363,10 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             const conversationId = input.conversationId ?? (typeof input.toolInput.conversationId === 'string' ? input.toolInput.conversationId : undefined)
             return chatRpcHandlers(chatRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeChatTool(input)
         },
+
+        async sendChatEmail(input) {
+            return chatRpcHandlers(chatRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendChatEmail(input)
+        },
     }
 }
 

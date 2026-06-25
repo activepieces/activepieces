@@ -712,6 +712,14 @@
   [data-slot='sheet-content'][data-state='closed'] {
     --tw-exit-translate-x: 100% !important;
   }
+
+  /* Left-anchored sheets must slide in from the left, not the default right */
+  [data-slot='sheet-content'][data-side='left'][data-state='open'] {
+    --tw-enter-translate-x: -100% !important;
+  }
+  [data-slot='sheet-content'][data-side='left'][data-state='closed'] {
+    --tw-exit-translate-x: -100% !important;
+  }
 }
 
 @layer base {

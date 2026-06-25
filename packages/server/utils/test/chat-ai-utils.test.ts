@@ -127,16 +127,20 @@ describe('collectStepMessages', () => {
         content: [{ type: 'text', text: 'That table does not exist yet — want me to create it?' }],
     }
 
-    it('returns the messages from every step, including the tool calls and results of earlier steps', () => {
+    it('returns the last step (which on this provider is cumulative — holds every earlier step)', () => {
+        // The provider's `response.messages` is cumulative: each step already contains every prior
+        // step's assistant/tool messages, so the LAST step holds the full set. Flat-mapping would
+        // re-emit the earlier steps in a 4,3,2,1 staircase (the bug this guards against).
         const steps = [
             { response: { messages: [listCall, listResult] } },
-            { response: { messages: [finalText] } },
+            { response: { messages: [listCall, listResult, finalText] } },
         ]
         const result = chatAiUtils.collectStepMessages(steps)
         expect(result).toEqual([listCall, listResult, finalText])
-        // The regression this guards: the tool call + its result must survive, not just the last step.
+        // The regression this guards: the tool call + its result must survive (the last step carries them).
         expect(result).toContainEqual(listResult)
-        expect(result).not.toEqual([finalText])
+        // And no duplication from flat-mapping the staircase.
+        expect(result.filter((m) => m === listCall).length).toBe(1)
     })
 
     it('returns an empty array when there are no steps', () => {
@@ -263,20 +267,6 @@ function toolResultMessage({ id, outputText }: { id: string, outputText: string 
     }
 }
 
-describe('collectAllStepMessages', () => {
-    it('flattens the response messages of every step (full in-loop history)', () => {
-        const a: ModelMessage = { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'c1', toolName: 'ap_list_tables', input: {} }] }
-        const b: ModelMessage = { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'c1', toolName: 'ap_list_tables', output: { type: 'json', value: { ok: true } } }] }
-        const c: ModelMessage = { role: 'assistant', content: [{ type: 'text', text: 'done' }] }
-        const steps = [{ response: { messages: [a, b] } }, { response: { messages: [c] } }]
-        expect(chatAiUtils.collectAllStepMessages(steps)).toEqual([a, b, c])
-    })
-
-    it('returns an empty array when there are no steps', () => {
-        expect(chatAiUtils.collectAllStepMessages([])).toEqual([])
-    })
-})
-
 describe('collapseStaleToolOutputs', () => {
     it('returns input unchanged when at or below the keep-recent count', () => {
         const messages: ModelMessage[] = Array.from({ length: 6 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: 'z'.repeat(2000) }))
@@ -304,6 +294,22 @@ describe('collapseStaleToolOutputs', () => {
         const messages: ModelMessage[] = Array.from({ length: 10 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: 'short' }))
         expect(chatAiUtils.collapseStaleToolOutputs({ messages })).toEqual(messages)
     })
+
+    it('pins discovered schemas: a stale ap_get_piece_props result is never collapsed', () => {
+        const big = 'z'.repeat(2000)
+        const schemaMessage: ModelMessage = {
+            role: 'tool',
+            content: [{ type: 'tool-result', toolCallId: 'schema', toolName: 'ap_get_piece_props', output: { type: 'text', value: big } }],
+        }
+        // schema result first (oldest/stalest), then 9 ordinary big results.
+        const messages: ModelMessage[] = [schemaMessage, ...Array.from({ length: 9 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))]
+        const out = chatAiUtils.collapseStaleToolOutputs({ messages })
+        const outputAt = (idx: number): string => JSON.stringify(Array.isArray(out[idx].content) ? out[idx].content[0] : undefined)
+
+        expect(outputAt(0)).toContain(big) // schema preserved despite being the stalest
+        expect(outputAt(0)).not.toContain('omitted to save context')
+        expect(outputAt(1)).toContain('omitted to save context') // ordinary stale result still collapses
+    })
 })
 
 describe('estimateTokenCount', () => {
@@ -311,5 +317,49 @@ describe('estimateTokenCount', () => {
         const small = chatAiUtils.estimateTokenCount({ messages: [{ role: 'user', content: 'hi' }], systemPromptLength: 0 })
         const large = chatAiUtils.estimateTokenCount({ messages: [{ role: 'user', content: 'x'.repeat(4000) }], systemPromptLength: 4000 })
         expect(large).toBeGreaterThan(small)
+    })
+})
+
+describe('findDataArray', () => {
+    it('detects a top-level array', () => {
+        expect(chatAiUtils.findDataArray([1, 2, 3])).toEqual({ array: [1, 2, 3], path: 'root' })
+    })
+
+    it('detects a nested data/results/records array (Attio-style { data: [...] })', () => {
+        expect(chatAiUtils.findDataArray({ data: [{ id: 1 }] })?.path).toBe('data')
+        expect(chatAiUtils.findDataArray({ results: [1] })?.path).toBe('results')
+        expect(chatAiUtils.findDataArray({ records: [1] })?.path).toBe('records')
+    })
+
+    it('returns null when there is no array payload', () => {
+        expect(chatAiUtils.findDataArray({ id: 1, name: 'x' })).toBeNull()
+        expect(chatAiUtils.findDataArray('plain string')).toBeNull()
+    })
+})
+
+describe('buildLargeResultPreview', () => {
+    it('previews a record array, reports the count, and points to the fileId for the rest', () => {
+        const payload = { data: Array.from({ length: 50 }, (_, i) => ({ id: i, name: `Deal ${i}`, history: 'x'.repeat(5000) })) }
+        const text = chatAiUtils.buildLargeResultPreview({ payload, byteSize: 1_400_000, fileId: 'file_abc', label: 'List deals' })
+        expect(text).toContain('50 record(s) at "data"')
+        expect(text).toContain('file_abc')
+        expect(text).toContain('ap_run_code')
+        expect(text).toContain('inputs.data')
+        // values are clipped, not the full 5000-char history
+        expect(text.length).toBeLessThan(4000)
+    })
+
+    it('clips deep/long values so the preview never reproduces the blob', () => {
+        const payload = [{ id: 1, blob: 'y'.repeat(10_000), nested: { deep: { deeper: { deepest: 'z'.repeat(10_000) } } } }]
+        const text = chatAiUtils.buildLargeResultPreview({ payload, byteSize: 200_000, fileId: 'f1' })
+        expect(text).not.toContain('y'.repeat(1000))
+        expect(text).not.toContain('z'.repeat(1000))
+    })
+
+    it('without a fileId, steers toward narrowing/paginating instead of a dead-end', () => {
+        const payload = { data: Array.from({ length: 10 }, (_, i) => ({ id: i })) }
+        const text = chatAiUtils.buildLargeResultPreview({ payload, byteSize: 200_000 })
+        expect(text.toLowerCase()).toMatch(/paginate|filter|narrow/)
+        expect(text).not.toContain('undefined')
     })
 })

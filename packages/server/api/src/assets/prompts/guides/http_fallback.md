@@ -1,6 +1,8 @@
-# Guide: HTTP fallback when no connection exists
+# Guide: calling an API directly over HTTP
 
-Load this when a piece connection is unavailable and the user cannot or declines to create one. Use the HTTP piece (`@activepieces/piece-http`, action `send_request`) to call the service's API directly. If the user declines the HTTP fallback too, report the limitation and stop.
+Load this whenever the work needs a web API and either **no piece exists for that service at all**, or a piece exists but its connection is unavailable and the user can't/won't create one. Use the HTTP piece (`@activepieces/piece-http`, action `send_request`) to call the API directly and **carry the task to completion** — fetch the data, use it, finish the job. If the user declines the HTTP fallback too, report the limitation and stop.
+
+**`ap_fetch_url` is NOT how you call an API.** `ap_fetch_url` reads a web *page* as text for your own reading; it is not the way to hit a JSON API and act on the result. To call an API (public or authed) and use its response in the task or an automation, ALWAYS use the HTTP piece `send_request` below — never stop at `ap_fetch_url` and hand back. A public API with no auth is the *easiest* case, not a reason to fall back to page-reading.
 
 **First, prefer a native piece.** Before falling back to HTTP, confirm there isn't a native action that does this with no connection — e.g. Discord's `send_message_webhook` (just `webhook_url` + `content`), Slack incoming webhooks, etc. A native action has simple, validated fields and is far less error-prone than a raw HTTP request. Only use HTTP when no native action fits.
 
@@ -50,6 +52,20 @@ Load this when a piece connection is unavailable and the user cannot or declines
   "body": { "data": { "content": "🎉 Your message text here" } }
 }
 ```
+
+## Worked example — GET data from a public API (no auth)
+
+```jsonc
+{
+  "method": "GET",
+  "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+  "headers": {},
+  "queryParams": {},
+  "authType": "NONE",
+  "body_type": "none"
+}
+```
+Then read the response and use it to finish the task (state the value, write it where it belongs, etc.) — the GET is the start, not the end.
 
 4. For automation builds, use the HTTP piece step with the same contract and inline auth pattern.
 

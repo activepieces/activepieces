@@ -219,6 +219,8 @@ export function useAgentChat({
   persistedMessagesRef.current = persistedMessages;
   const [optimisticUserMessage, setOptimisticUserMessage] =
     useState<ChatUIMessage | null>(null);
+  const optimisticUserMessageRef = useRef(optimisticUserMessage);
+  optimisticUserMessageRef.current = optimisticUserMessage;
 
   const pendingFilesRef = useRef<
     { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
@@ -371,6 +373,7 @@ export function useAgentChat({
     streamPhase,
     streamError,
     streamGeneration,
+    isResumedStream,
     startStream,
     setActiveRunId,
     stopStream,
@@ -489,20 +492,46 @@ export function useAgentChat({
   const streamingMessageRef = useRef(streamingMessage);
   streamingMessageRef.current = streamingMessage;
 
+  // Folds the in-flight turn (optimistic user message + live streaming assistant)
+  // into persisted history so it stays painted continuously when the turn is
+  // preempted or cancelled — otherwise both halves live only in ephemeral state
+  // and vanish until the next end-of-turn reconcile. Deduped by id so it can
+  // never double-add; the reconcile later replaces persisted with authoritative
+  // server history.
+  const commitInFlightTurn = useCallback(() => {
+    const inflightUser = optimisticUserMessageRef.current;
+    const inflightStreaming = streamingMessageRef.current;
+    const hasStreaming =
+      !!inflightStreaming && inflightStreaming.parts.length > 0;
+    if (!inflightUser && !hasStreaming) return;
+    setPersistedMessages((prev) => {
+      const existingIds = new Set(prev.map((m) => m.id));
+      const additions: ChatUIMessage[] = [];
+      if (inflightUser && !existingIds.has(inflightUser.id)) {
+        additions.push(inflightUser);
+      }
+      if (
+        hasStreaming &&
+        inflightStreaming &&
+        !existingIds.has(inflightStreaming.id)
+      ) {
+        additions.push(inflightStreaming);
+      }
+      return additions.length > 0 ? [...prev, ...additions] : prev;
+    });
+  }, []);
+
   const cancelStream = useCallback(() => {
-    const currentStreaming = streamingMessageRef.current;
+    commitInFlightTurn();
     stopStream();
-    if (currentStreaming && currentStreaming.parts.length > 0) {
-      setPersistedMessages((prev) => [...prev, currentStreaming]);
-    }
+    setOptimisticUserMessage(null);
     setIsPollingForAgentReply(false);
     updateSendStatus({ type: 'cancelled' });
-    setOptimisticUserMessage(null);
     const convId = conversationIdRef.current;
     if (convId) {
       void chatApi.cancelConversation(convId);
     }
-  }, [stopStream, updateSendStatus]);
+  }, [commitInFlightTurn, stopStream, updateSendStatus]);
 
   const createConversation = useCallback(
     async ({
@@ -536,6 +565,11 @@ export function useAgentChat({
         ],
       };
 
+      // Preempting an in-flight turn: keep its messages on screen by folding them
+      // into persisted history before they get overwritten/reset below, then clear
+      // the live stream so it isn't shown twice during the send.
+      commitInFlightTurn();
+      stopStream();
       setOptimisticUserMessage(optimisticUser);
       store.getState().resetInteractions();
 
@@ -647,6 +681,7 @@ export function useAgentChat({
       setActiveRunId,
       stopStream,
       updateSendStatus,
+      commitInFlightTurn,
       store,
     ],
   );
@@ -810,6 +845,7 @@ export function useAgentChat({
     modelName,
     messages,
     isStreaming,
+    isResumedStream,
     isAwaitingResponse,
     wasCancelled,
     isLoadingHistory,

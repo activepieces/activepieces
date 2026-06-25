@@ -76,6 +76,7 @@ function ChatBoxContent({
     messages,
     modelName,
     isStreaming,
+    isResumedStream,
     isAwaitingResponse,
     wasCancelled,
     isLoadingHistory,
@@ -222,6 +223,7 @@ function ChatBoxContent({
                       key={msg.id}
                       message={msg}
                       isStreaming={isLastStreamingAssistant}
+                      isResumed={isLastStreamingAssistant && isResumedStream}
                       isLastMessage={isLastAssistant}
                       onSendPrompt={(text) => void handleSend(text)}
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
