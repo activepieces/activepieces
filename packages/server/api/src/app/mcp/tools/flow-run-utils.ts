@@ -1,4 +1,4 @@
-import { apId, isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { apId, formatPieceError, isNil, isObject, tryCatch, tryParseFriendlyPieceError } from '@activepieces/core-utils'
 import { createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, RunEnvironment, SampleDataFileType, Step, StepLocationRelativeToParent, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
@@ -11,6 +11,12 @@ import { mcpUtils } from './mcp-utils'
 
 const POLL_INTERVAL_MS = 2000
 const MAX_WAIT_MS = 120_000
+const ERROR_SUMMARY_MAX_LENGTH = 300
+
+type AdhocActionResult = {
+    text: string
+    errorSummary?: string
+}
 
 export async function executeFlowTest({ flowId, projectId, stepName, triggerTestData, log }: {
     flowId: string
@@ -158,7 +164,7 @@ export async function executeAdhocAction({
     if (diagnosis.unknownKeys.length > 0) {
         return { content: [{ type: 'text', text: `❌ ${diagnosis.parts.join(' ')}` }] }
     }
-    if (diagnosis.missing.length > 0) {
+    if (diagnosis.missing.length > 0 || diagnosis.invalidEnums.length > 0) {
         return { content: [{ type: 'text', text: `❌ Cannot run action: ${diagnosis.parts.join(' ')}` }] }
     }
 
@@ -254,6 +260,7 @@ export async function executeAdhocAction({
                     type: 'text',
                     text: `⏳ Action still running after 120s. Run ID: ${completedRun.id} (status: ${completedRun.status}). Use ap_get_run to check results later.`,
                 }],
+                structuredContent: { errorSummary: 'Still running — this is taking longer than usual.' },
             }
         }
 
@@ -263,10 +270,15 @@ export async function executeAdhocAction({
                     type: 'text',
                     text: `❌ ${action.displayName} failed with INTERNAL_ERROR (no step data) — the engine crashed while loading or executing the piece. Run ID: ${completedRun.id}.`,
                 }],
+                structuredContent: { errorSummary: 'The step couldn’t start — something went wrong loading it.' },
             }
         }
 
-        return { content: [{ type: 'text', text: formatAdhocActionResult(completedRun, stepName, action.displayName) }] }
+        const formatted = formatAdhocActionResult(completedRun, stepName, action.displayName)
+        return {
+            content: [{ type: 'text', text: formatted.text }],
+            ...(formatted.errorSummary !== undefined ? { structuredContent: { errorSummary: formatted.errorSummary } } : {}),
+        }
     }
     catch (err) {
         log.error({ error: err, project: { id: projectId }, flow: { id: flow.id } }, 'executeAdhocAction failed')
@@ -276,6 +288,134 @@ export async function executeAdhocAction({
         flowService(log).delete({ id: flow.id, projectId }).catch(err => {
             log.warn({ error: err, flow: { id: flow.id } }, 'adhoc flow cleanup failed')
         })
+    }
+}
+
+export async function executeAdhocCode({
+    projectId,
+    code,
+    packageJson,
+    input,
+    log,
+}: {
+    projectId: string
+    code: string
+    packageJson?: string
+    input?: Record<string, unknown>
+    log: FastifyBaseLogger
+}): Promise<AdhocCodeResult> {
+    const { data: project, error: projectError } = await tryCatch(
+        () => projectService(log).getOneOrThrow(projectId),
+    )
+    if (projectError) {
+        return { status: 'internal_error', errorMessage: 'Failed to load project.' }
+    }
+
+    const { data: flow, error: flowError } = await tryCatch(
+        () => flowService(log).create({
+            projectId,
+            request: { displayName: `__adhoc_code_${apId()}__`, projectId },
+        }),
+    )
+    if (flowError) {
+        return { status: 'internal_error', errorMessage: 'Failed to create adhoc flow.' }
+    }
+
+    try {
+        const triggerName = flow.version.trigger.name
+
+        const flowWithTrigger = await flowService(log).update({
+            id: flow.id,
+            projectId,
+            userId: null,
+            platformId: project.platformId,
+            operation: {
+                type: FlowOperationType.UPDATE_TRIGGER,
+                request: {
+                    name: triggerName,
+                    displayName: 'Manual',
+                    valid: true,
+                    type: FlowTriggerType.EMPTY,
+                    settings: {},
+                },
+            },
+        })
+
+        const stepName = flowStructureUtil.findUnusedName(flowWithTrigger.version.trigger)
+
+        const parsedAction = UpdateActionRequest.safeParse({
+            type: FlowActionType.CODE,
+            name: stepName,
+            displayName: 'Run code',
+            valid: true,
+            settings: {
+                sourceCode: { code, packageJson: packageJson ?? '{}' },
+                input: input ?? {},
+                errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({}),
+            },
+        })
+        if (!parsedAction.success) {
+            const message = parsedAction.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
+            return { status: 'internal_error', errorMessage: `Invalid code configuration: ${message}` }
+        }
+
+        const flowWithStep = await flowService(log).update({
+            id: flow.id,
+            projectId,
+            userId: null,
+            platformId: project.platformId,
+            operation: {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: triggerName,
+                    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+                    action: parsedAction.data,
+                },
+            },
+        })
+
+        const flowRun = await flowRunService(log).test({
+            projectId,
+            flowVersionId: flowWithStep.version.id,
+            stepNameToTest: stepName,
+        })
+
+        const completedRun = await pollForRunCompletion(log, flowRun.id, projectId)
+
+        if (!isFlowRunStateTerminal({ status: completedRun.status, ignoreInternalError: false })) {
+            return { status: 'timeout', runId: completedRun.id, errorMessage: 'Code is still running after 120s.' }
+        }
+
+        return extractCodeStepResult(completedRun, stepName)
+    }
+    catch (err) {
+        log.error({ error: err, project: { id: projectId }, flow: { id: flow.id } }, 'executeAdhocCode failed')
+        return { status: 'internal_error', errorMessage: 'Failed to run code.' }
+    }
+    finally {
+        flowService(log).delete({ id: flow.id, projectId }).catch(err => {
+            log.warn({ error: err, flow: { id: flow.id } }, 'adhoc code flow cleanup failed')
+        })
+    }
+}
+
+function extractCodeStepResult(run: FlowRun, stepName: string): AdhocCodeResult {
+    const steps = run.steps
+    if (isNil(steps) || typeof steps !== 'object') {
+        return { status: 'internal_error', runId: run.id, errorMessage: 'The code finished without returning anything.' }
+    }
+    const step = (steps as Record<string, unknown>)[stepName]
+    if (isNil(step) || typeof step !== 'object') {
+        return { status: 'internal_error', runId: run.id, errorMessage: 'The code finished without returning anything.' }
+    }
+    const stepRecord = step as Record<string, unknown>
+    if (stepRecord.status === StepOutputStatus.SUCCEEDED) {
+        return { status: 'succeeded', runId: run.id, output: stepRecord.output }
+    }
+    return {
+        status: 'failed',
+        runId: run.id,
+        errorMessage: stepRecord.errorMessage === undefined ? `status: ${String(stepRecord.status)}` : summarizeActionError(stepRecord.errorMessage),
     }
 }
 
@@ -313,14 +453,29 @@ function looksEmpty(output: unknown): boolean {
     return false
 }
 
-function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string): string {
+function summarizeActionError(errorMessage: unknown): string {
+    const friendly = tryParseFriendlyPieceError(errorMessage) ?? formatPieceError(errorMessage)
+    const base = friendly.apiMessage ?? friendly.message
+    const withStatus = isNil(friendly.status) ? base : `${base} (${friendly.status})`
+    return withStatus.length > ERROR_SUMMARY_MAX_LENGTH
+        ? `${withStatus.slice(0, ERROR_SUMMARY_MAX_LENGTH)}…`
+        : withStatus
+}
+
+function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string): AdhocActionResult {
     const steps = run.steps
     if (isNil(steps) || typeof steps !== 'object') {
-        return `❌ ${displayName} — run ${run.id} completed with no step output (status: ${run.status}).`
+        return {
+            text: `❌ ${displayName} — run ${run.id} completed with no step output (status: ${run.status}).`,
+            errorSummary: 'The step finished without returning anything.',
+        }
     }
     const step = (steps as Record<string, unknown>)[stepName]
     if (isNil(step) || typeof step !== 'object') {
-        return `❌ ${displayName} — run ${run.id} completed with no step output (status: ${run.status}).`
+        return {
+            text: `❌ ${displayName} — run ${run.id} completed with no step output (status: ${run.status}).`,
+            errorSummary: 'The step finished without returning anything.',
+        }
     }
     const stepRecord = step as Record<string, unknown>
     const status = stepRecord.status
@@ -332,14 +487,15 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
             : typeof output === 'string' ? output : JSON.stringify(output)
         const base = `✅ ${displayName} completed (run ${run.id}).\n\n${outStr}`
         if (looksEmpty(output)) {
-            return `${base}\n\nNote: No results matched. If the user expected data, try broader parameters (e.g., wider date range, fewer filters).`
+            return { text: `${base}\n\nNote: No results matched. If the user expected data, try broader parameters (e.g., wider date range, fewer filters).` }
         }
-        return base
+        return { text: base }
     }
-    const errStr = errorMessage === undefined
-        ? `status: ${String(status)}`
-        : typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-    return `❌ ${displayName} failed (run ${run.id}): ${errStr}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`
+    const summary = errorMessage === undefined ? `status: ${String(status)}` : summarizeActionError(errorMessage)
+    return {
+        text: `❌ ${displayName} failed (run ${run.id}): ${summary}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`,
+        errorSummary: summary,
+    }
 }
 
 export async function pollForRunCompletion(log: FastifyBaseLogger, runId: string, projectId: string): Promise<FlowRun> {
@@ -417,8 +573,7 @@ function formatStepOutput(name: string, step: unknown): string {
     const parts = [`  - ${icon} ${name}${dur}`]
 
     if (status === StepOutputStatus.FAILED && errorMessage !== undefined) {
-        const errStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-        parts.push(`    Error: ${errStr}`)
+        parts.push(`    Error: ${summarizeActionError(errorMessage)}`)
     }
     else if (output !== undefined) {
         const outStr = typeof output === 'string' ? output : JSON.stringify(output)
@@ -445,5 +600,12 @@ function isStepDataExpired(run: FlowRun): boolean {
     }
     const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
     return isOutsideRetentionWindow(run.created, retentionDays)
+}
+
+export type AdhocCodeResult = {
+    status: 'succeeded' | 'failed' | 'timeout' | 'internal_error'
+    output?: unknown
+    errorMessage?: string
+    runId?: string
 }
 

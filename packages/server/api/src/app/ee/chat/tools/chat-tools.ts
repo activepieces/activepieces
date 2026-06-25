@@ -1,11 +1,13 @@
-import { isNil, isObject, parseToJsonIfPossible } from '@activepieces/core-utils'
-import { AppConnectionStatus, AppConnectionType, chatToolClassification, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
+import { fileService } from '../../../file/file.service'
+import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { executeAdhocAction, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -21,6 +23,9 @@ const OAUTH_TYPES: ReadonlySet<AppConnectionType> = new Set([
 ])
 const CLOCK_SKEW_BUFFER_S = 5 * 60
 const CROSS_PROJECT_FLOW_LIMIT = 200
+const MAX_PRODUCED_FILES = 10
+const MAX_PRODUCED_FILE_BYTES = 25 * 1024 * 1024
+const MAX_RESULT_TEXT_CHARS = 20_000
 const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
 const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
 
@@ -237,6 +242,9 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         case 'ap_execute_action': {
             return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
         }
+        case 'ap_run_code': {
+            return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
+        }
         case 'ap_explore_data': {
             const actionName = toolInput.actionName as string
             if (!chatToolClassification.isReadActionName(actionName)) {
@@ -321,10 +329,136 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
         log,
     })
 
-    if (connectionLabel && typeof result === 'object' && result !== null) {
-        return { ...(result as Record<string, unknown>), _meta: { connectionLabel, pieceName: normalizedPiece } }
+    if (typeof result === 'object' && result !== null) {
+        const resultObj = result as Record<string, unknown>
+        const structured = isObject(resultObj.structuredContent) ? resultObj.structuredContent as Record<string, unknown> : undefined
+        const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
+        if (isNil(connectionLabel) && isNil(errorSummary)) {
+            return result
+        }
+        return {
+            ...resultObj,
+            _meta: {
+                ...spreadIfDefined('connectionLabel', connectionLabel),
+                ...spreadIfDefined('errorSummary', errorSummary),
+                pieceName: normalizedPiece,
+            },
+        }
     }
     return result
+}
+
+async function runChatCode({ toolInput, projects, platformId, userId, conversationId, log }: {
+    toolInput: Record<string, unknown>
+    projects: Project[]
+    platformId: string
+    userId: string
+    conversationId?: string
+    log: FastifyBaseLogger
+}): Promise<RunCodeToolResult> {
+    const code = typeof toolInput.code === 'string' ? toolInput.code : undefined
+    if (isNil(code) || code.trim().length === 0) {
+        return { text: '❌ `code` is required and must be a non-empty string.', producedFiles: [] }
+    }
+    const packageJson = typeof toolInput.packageJson === 'string' ? toolInput.packageJson : undefined
+
+    let projectId = projects[0]?.id
+    if (conversationId) {
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+        if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
+            projectId = conversation.projectId
+        }
+    }
+    if (isNil(projectId)) {
+        return { text: '❌ No projects available. Create a project first.', producedFiles: [] }
+    }
+
+    const baseInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : {}
+    const inputFileIds = Array.isArray(toolInput.inputFileIds)
+        ? toolInput.inputFileIds.filter((id): id is string => typeof id === 'string')
+        : []
+    const inputFiles: { name: string, mimeType: string, base64: string }[] = []
+    for (const fileId of inputFileIds) {
+        const { data: file, error: lookupError } = await tryCatch(() => fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE }))
+        if (lookupError || isNil(file) || file.platformId !== platformId) {
+            return { text: `❌ Couldn't load attachment ${fileId}. If this is an image you generated, pass its URL into the code and fetch() it instead of using inputFileIds.`, producedFiles: [] }
+        }
+        const { data: fileData, error: dataError } = await tryCatch(() => fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE }))
+        if (dataError || isNil(fileData)) {
+            return { text: `❌ Couldn't read attachment ${fileId}.`, producedFiles: [] }
+        }
+        const mimeType = isObject(fileData.metadata) && typeof fileData.metadata.mimetype === 'string' ? fileData.metadata.mimetype : 'application/octet-stream'
+        inputFiles.push({ name: fileData.fileName ?? fileId, mimeType, base64: fileData.data.toString('base64') })
+    }
+    const input = inputFiles.length > 0 ? { ...baseInput, files: inputFiles } : baseInput
+
+    const result = await executeAdhocCode({ projectId, code, packageJson, input, log })
+
+    if (result.status !== 'succeeded') {
+        const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'
+        return { text: `❌ ${reason}`, producedFiles: [] }
+    }
+
+    return persistProducedFiles({ output: result.output, projectId, platformId, log })
+}
+
+function extractFilesFromOutput(output: unknown): { files: RawProducedFile[], rest: unknown } {
+    if (!isObject(output) || !Array.isArray(output.files)) {
+        return { files: [], rest: output }
+    }
+    const files = output.files.filter((f): f is RawProducedFile =>
+        isObject(f) && typeof f.name === 'string' && typeof f.mimeType === 'string' && typeof f.base64 === 'string')
+    const rest: Record<string, unknown> = { ...output }
+    delete rest.files
+    return { files, rest }
+}
+
+function decodeBase64(value: string): Buffer | undefined {
+    const stripped = value.replace(/^data:[^;]+;base64,/, '')
+    const buffer = Buffer.from(stripped, 'base64')
+    return buffer.length > 0 ? buffer : undefined
+}
+
+async function persistProducedFiles({ output, projectId, platformId, log }: {
+    output: unknown
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<RunCodeToolResult> {
+    const { files, rest } = extractFilesFromOutput(output)
+    const producedFiles: ProducedFile[] = []
+    for (const file of files.slice(0, MAX_PRODUCED_FILES)) {
+        const buffer = decodeBase64(file.base64)
+        if (isNil(buffer) || buffer.length > MAX_PRODUCED_FILE_BYTES) {
+            continue
+        }
+        const saved = await fileService(log).save({
+            projectId,
+            platformId,
+            data: buffer,
+            size: buffer.length,
+            type: FileType.FLOW_STEP_FILE,
+            fileName: file.name,
+            compression: FileCompression.NONE,
+            metadata: { mimetype: file.mimeType },
+        })
+        const url = await filesService.constructReadUrl({ fileId: saved.id, fileType: saved.type, platformId })
+        producedFiles.push({ fileId: saved.id, url, mediaType: file.mimeType, fileName: file.name, byteSize: buffer.length })
+    }
+    return { text: buildCodeResultText({ rest, producedFiles }), producedFiles }
+}
+
+function buildCodeResultText({ rest, producedFiles }: { rest: unknown, producedFiles: ProducedFile[] }): string {
+    const fileNote = producedFiles.length > 0
+        ? `Returned ${producedFiles.length} file(s) to the user: ${producedFiles.map((f) => f.fileName).join(', ')}.`
+        : ''
+    const hasRest = !isNil(rest) && !(isObject(rest) && Object.keys(rest).length === 0)
+    if (!hasRest) {
+        return fileNote.length > 0 ? `✅ Code ran. ${fileNote}` : '✅ Code ran (no output returned).'
+    }
+    const outStr = typeof rest === 'string' ? rest : JSON.stringify(rest)
+    const truncated = outStr.length > MAX_RESULT_TEXT_CHARS ? `${outStr.slice(0, MAX_RESULT_TEXT_CHARS)}… (truncated)` : outStr
+    return ['✅ Code ran.', truncated, fileNote].filter((s) => s.length > 0).join('\n\n')
 }
 
 function resolveConnectionInfo({ status, type, value }: { status: AppConnectionStatus, type: AppConnectionType, value: unknown }): { status: AppConnectionStatus, grantedScopes: string[] } {
@@ -363,5 +497,24 @@ type FindConnectionsResult =
     | { noAuthRequired: true, piece: string }
     | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
     | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
+
+type RawProducedFile = {
+    name: string
+    mimeType: string
+    base64: string
+}
+
+type ProducedFile = {
+    fileId: string
+    url: string
+    mediaType: string
+    fileName: string
+    byteSize: number
+}
+
+type RunCodeToolResult = {
+    text: string
+    producedFiles: ProducedFile[]
+}
 
 export { executeCrossProjectTool, findConnectionsForPiece }

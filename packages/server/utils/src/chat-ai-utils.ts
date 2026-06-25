@@ -12,6 +12,10 @@ import { LanguageModel, ModelMessage, SystemModelMessage, ToolSet } from 'ai'
 
 const MAX_WEB_SEARCH_RESULTS = 5
 
+const KEEP_RECENT_TOOL_RESULTS = 6
+const COLLAPSE_OUTPUT_OVER_CHARS = 600
+const CHARS_PER_TOKEN_ESTIMATE = 4
+
 type WebSearchSupport = {
     nativeTools?: (auth: BaseAIProviderAuthConfig) => ToolSet
     plugin?: boolean
@@ -175,23 +179,72 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
 }
 
 /**
- * Collect the messages from EVERY step of a streamText turn, not just the last one.
- * `result.response.messages` is the last step only — using it drops the tool calls and
- * tool results of all earlier steps, so the persisted history would lose what the agent
- * already did this conversation and it would re-run those tools on the next turn.
+ * The response messages of a streamText turn. Each step's `response.messages` is
+ * CUMULATIVE — it already contains every prior step's assistant/tool messages — so the
+ * last step holds the complete set. Flat-mapping all steps instead would re-emit earlier
+ * steps in a 4,3,2,1 staircase, persisting (and re-sending to the model) the same tool
+ * call and reasoning block multiple times. Take the last step only.
  */
 function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
+    return steps[steps.length - 1]?.response.messages ?? []
+}
+
+/**
+ * Every step's response messages flattened — the full set of messages generated
+ * so far within a single streamText call (unlike collectStepMessages, which is
+ * only the last step). Prepend the turn's base messages to reconstruct the
+ * complete context the model would see at the current step.
+ */
+function collectAllStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
     return steps.flatMap((step) => step.response.messages)
 }
 
-function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
+function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {
+    return Math.ceil((JSON.stringify(messages).length + systemPromptLength) / CHARS_PER_TOKEN_ESTIMATE)
+}
+
+/**
+ * A tool result's full payload is only needed while the model is acting on it;
+ * older oversized results just dilute the context and can overflow the window.
+ * Keeps the most recent results intact and replaces older oversized ones with a
+ * short marker. Never removes a message (keeps tool_use/tool_result pairing
+ * valid) and never mutates the input. Pure.
+ */
+function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
+    const totalToolResults = messages.reduce((count, message) => {
+        if (message.role !== 'tool' || !Array.isArray(message.content)) return count
+        return count + message.content.filter((part) => part.type === 'tool-result').length
+    }, 0)
+
+    const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS
+    if (staleCount <= 0) return messages
+
+    let seen = 0
+    return messages.map((message) => {
+        if (message.role !== 'tool' || !Array.isArray(message.content)) return message
+        const content = message.content.map((part) => {
+            if (part.type !== 'tool-result') return part
+            const isStale = seen++ < staleCount
+            if (!isStale) return part
+            const serialized = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
+            if (serialized.length <= COLLAPSE_OUTPUT_OVER_CHARS) return part
+            return {
+                ...part,
+                output: { type: 'text' as const, value: `[earlier ${part.toolName} result omitted to save context — it was used at the time]` },
+            }
+        })
+        return { ...message, content }
+    })
+}
+
+function buildProviderOptions({ provider, tier, disableThinking = false }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number }, disableThinking?: boolean }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
         case AIProviderName.BEDROCK:
-            return { anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
+            return { anthropic: { thinking: disableThinking ? { type: 'disabled' } : { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { max_tokens: tier.thinkingBudget } } }
+            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: disableThinking ? { enabled: false } : { max_tokens: tier.thinkingBudget } } }
         default:
             return {}
     }
@@ -295,6 +348,56 @@ function buildStepParts({ content }: {
                         data: (rawOutput as Record<string, unknown>)['batchProgress'] as Record<string, unknown>,
                     })
                 }
+                if (toolName === 'ap_set_build_plan') {
+                    const buildId = typeof toRecord(rawOutput)['buildId'] === 'string' ? toRecord(rawOutput)['buildId'] : undefined
+                    if (typeof buildId === 'string') {
+                        parts.push({
+                            type: PersistedChatPartType.BUILD_PLAN,
+                            buildId,
+                            data: { ...input, updatedAt: new Date().toISOString() },
+                        })
+                    }
+                }
+                if (toolName === 'ap_generate_image' && result) {
+                    const out = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const imageUrl = typeof out['url'] === 'string' ? out['url'] : undefined
+                    const imageFileId = typeof out['fileId'] === 'string' ? out['fileId'] : undefined
+                    if (imageUrl && imageFileId) {
+                        parts.push({
+                            type: PersistedChatPartType.IMAGE,
+                            toolCallId: part.toolCallId ?? '',
+                            fileId: imageFileId,
+                            url: imageUrl,
+                            mediaType: typeof out['mediaType'] === 'string' ? out['mediaType'] : 'image/png',
+                            ...spreadIfDefined('prompt', typeof out['prompt'] === 'string' ? out['prompt'] : undefined),
+                            ...spreadIfDefined('model', typeof out['model'] === 'string' ? out['model'] : undefined),
+                            ...spreadIfDefined('title', title),
+                            timestamp: new Date().toISOString(),
+                        })
+                    }
+                }
+                if (toolName === 'ap_run_code' && result) {
+                    const out = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const producedFiles = Array.isArray(out['producedFiles']) ? out['producedFiles'] : []
+                    for (const file of producedFiles) {
+                        if (typeof file !== 'object' || file === null) continue
+                        const fileRecord = file as Record<string, unknown>
+                        const fileUrl = typeof fileRecord['url'] === 'string' ? fileRecord['url'] : undefined
+                        const fileId = typeof fileRecord['fileId'] === 'string' ? fileRecord['fileId'] : undefined
+                        if (!fileUrl || !fileId) continue
+                        parts.push({
+                            type: PersistedChatPartType.FILE,
+                            toolCallId: part.toolCallId ?? '',
+                            fileId,
+                            url: fileUrl,
+                            mediaType: typeof fileRecord['mediaType'] === 'string' ? fileRecord['mediaType'] : 'application/octet-stream',
+                            fileName: typeof fileRecord['fileName'] === 'string' ? fileRecord['fileName'] : 'file',
+                            byteSize: typeof fileRecord['byteSize'] === 'number' ? fileRecord['byteSize'] : 0,
+                            ...spreadIfDefined('title', title),
+                            timestamp: new Date().toISOString(),
+                        })
+                    }
+                }
                 if (toolName === 'ap_execute_action' && result) {
                     const outputRecord = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
                     const meta = typeof outputRecord['_meta'] === 'object' && outputRecord['_meta'] !== null ? outputRecord['_meta'] as Record<string, unknown> : undefined
@@ -334,6 +437,9 @@ export const chatAiUtils = {
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
+    collectAllStepMessages,
+    estimateTokenCount,
+    collapseStaleToolOutputs,
     buildProviderOptions,
     buildSystemPromptWithCaching,
     buildStepParts,

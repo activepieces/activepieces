@@ -132,6 +132,10 @@ async function searchPieces({ params, projectId, platformId, log }: {
         locale: params.locale as LocalesEnum | undefined,
     })
 
+    if (pieces.length === 0) {
+        return emptySearchResult(params.searchQuery)
+    }
+
     if (!params.includeActions && !params.includeTriggers) {
         const totalCount = pieces.length
         const LIST_CAP = 50
@@ -189,6 +193,17 @@ async function searchPieces({ params, projectId, platformId, log }: {
             count: enrichedPieces.length,
             totalCount,
         },
+    }
+}
+
+function emptySearchResult(searchQuery: string | undefined): { content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> } {
+    const query = searchQuery ?? ''
+    const suggestion = query.trim().length > 0
+        ? `No pieces matched "${query}". Try a shorter, single-word app name, or look the app up directly with pieceNames (e.g. pieceNames:["${query.trim().split(/\s+/)[0].toLowerCase()}"]). If it still isn't found, the app likely has no dedicated piece — reach it over the web with an HTTP request instead.`
+        : 'No pieces matched. Provide a searchQuery (a single-word app name works best) or use pieceNames for an exact lookup.'
+    return {
+        content: [{ type: 'text', text: `⚠️ ${suggestion}` }],
+        structuredContent: { pieces: [], count: 0, totalCount: 0 },
     }
 }
 

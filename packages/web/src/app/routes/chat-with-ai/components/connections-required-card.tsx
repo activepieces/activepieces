@@ -17,14 +17,18 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import { normalizePieceName } from '../lib/message-parsers';
 
+import { InteractiveCardShell } from './interactive-card-shell';
+
 export function ConnectionsRequiredCard({
   connections,
   onResolve,
+  onDismiss,
   projectId: selectedProjectId,
   isInteractive = true,
 }: {
   connections: ConnectionRequiredData[];
   onResolve?: (payload: Record<string, unknown>) => void;
+  onDismiss?: () => void;
   projectId?: string | null;
   isInteractive?: boolean;
 }) {
@@ -94,27 +98,27 @@ export function ConnectionsRequiredCard({
 
   if (!isInteractive) {
     return (
-      <div className="rounded-xl border bg-background overflow-hidden my-2">
+      <div className="my-2 flex flex-col gap-2">
         {connections.map((conn) => {
           const pieceName = normalizePieceName(conn.piece);
           return (
             <div
               key={conn.piece}
-              className="flex items-center gap-3 px-4 py-3 border-t first:border-t-0"
+              className="flex items-center gap-3 rounded-xl border bg-background p-3"
             >
               <div className="relative">
                 <PieceIconWithPieceName
                   pieceName={pieceName}
-                  size="sm"
-                  border={false}
+                  size="lg"
+                  border={true}
                   showTooltip={false}
                 />
                 <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full p-0.5">
-                  <Check className="h-2 w-2 text-white" />
+                  <Check className="h-2.5 w-2.5 text-white" />
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">{conn.displayName}</div>
+                <div className="text-sm font-semibold">{conn.displayName}</div>
                 <div className="text-xs text-muted-foreground">
                   {t('Connected')}
                 </div>
@@ -137,76 +141,75 @@ export function ConnectionsRequiredCard({
     setActiveConnection(connection);
   }
 
+  const title =
+    connections.length === 1
+      ? t('Connect {name}', { name: connections[0].displayName })
+      : t('Connect your apps');
+
   return (
     <>
-      <motion.div
-        className="rounded-xl border bg-background overflow-hidden my-2"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.3,
-          type: 'spring',
-          stiffness: 300,
-          damping: 25,
-        }}
-      >
-        {connections.map((conn) => (
-          <ConnectionRow
-            key={conn.piece}
-            connection={conn}
-            isConnected={connectedSet.has(conn.piece)}
-            existingConn={existingConns[conn.piece] ?? null}
-            onConnect={() =>
-              openConnectionDialog({ connection: conn, isNew: false })
-            }
-            onSwitch={() =>
-              openConnectionDialog({ connection: conn, isNew: true })
-            }
-            continued={continued}
-          />
-        ))}
+      <InteractiveCardShell onDismiss={() => onDismiss?.()} title={title}>
+        <div className="flex flex-col gap-2">
+          {connections.map((conn, i) => (
+            <ConnectionRow
+              key={conn.piece}
+              index={i}
+              connection={conn}
+              isConnected={connectedSet.has(conn.piece)}
+              existingConn={existingConns[conn.piece] ?? null}
+              onConnect={() =>
+                openConnectionDialog({ connection: conn, isNew: false })
+              }
+              onSwitch={() =>
+                openConnectionDialog({ connection: conn, isNew: true })
+              }
+              continued={continued}
+            />
+          ))}
 
-        {allConnected && (
-          <div className="border-t px-4 py-3 bg-muted/30">
-            {continued ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                {t('All connected')}
-              </div>
-            ) : (
-              onResolve && (
-                <Button
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => {
-                    setContinued(true);
-                    const resolvedProjectId =
-                      selectedProjectId ??
-                      authenticationSession.getProjectId() ??
-                      '';
-                    const confirmedConnections = connections.map((conn) => {
-                      const existing = existingConns[conn.piece];
-                      return {
-                        piece: conn.piece,
-                        displayName: conn.displayName,
-                        connectionExternalId: existing?.externalId ?? null,
-                        projectId: resolvedProjectId,
-                      };
-                    });
-                    onResolve({
-                      message: 'All connections are ready, continue building.',
-                      connections: confirmedConnections,
-                    });
-                  }}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  {t('Continue')}
-                </Button>
-              )
-            )}
-          </div>
-        )}
-      </motion.div>
+          {allConnected && (
+            <div className="flex items-center rounded-xl border bg-muted/30 px-4 py-3">
+              {continued ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                  {t('All connected')}
+                </div>
+              ) : (
+                onResolve && (
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => {
+                      setContinued(true);
+                      const resolvedProjectId =
+                        selectedProjectId ??
+                        authenticationSession.getProjectId() ??
+                        '';
+                      const confirmedConnections = connections.map((conn) => {
+                        const existing = existingConns[conn.piece];
+                        return {
+                          piece: conn.piece,
+                          displayName: conn.displayName,
+                          connectionExternalId: existing?.externalId ?? null,
+                          projectId: resolvedProjectId,
+                        };
+                      });
+                      onResolve({
+                        message:
+                          'All connections are ready, continue building.',
+                        connections: confirmedConnections,
+                      });
+                    }}
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    {t('Continue')}
+                  </Button>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      </InteractiveCardShell>
 
       {pieceModel && activeConnection && (
         <CreateOrEditConnectionDialog
@@ -247,6 +250,7 @@ export function ConnectionsRequiredCard({
 
 function ConnectionRow({
   connection,
+  index,
   isConnected,
   existingConn,
   onConnect,
@@ -254,6 +258,7 @@ function ConnectionRow({
   continued,
 }: {
   connection: ConnectionRequiredData;
+  index: number;
   isConnected: boolean;
   existingConn: AppConnectionWithoutSensitiveData | null;
   onConnect: () => void;
@@ -266,15 +271,27 @@ function ConnectionRow({
     existingConn !== null && existingConn.status !== AppConnectionStatus.ACTIVE;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-t first:border-t-0">
-      <PieceIconWithPieceName
-        pieceName={pieceName}
-        size="sm"
-        border={false}
-        showTooltip={false}
-      />
+    <motion.div
+      className="group flex items-center gap-3 rounded-xl border bg-background p-3 transition-colors hover:border-primary/40 hover:bg-muted/40"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, delay: index * 0.05 }}
+    >
+      <div className="relative transition-transform duration-300 ease-out group-hover:scale-105">
+        <PieceIconWithPieceName
+          pieceName={pieceName}
+          size="lg"
+          border={true}
+          showTooltip={false}
+        />
+        {isConnected && (
+          <div className="absolute -bottom-0.5 -right-0.5 rounded-full bg-green-500 p-0.5">
+            <Check className="h-2.5 w-2.5 text-white" />
+          </div>
+        )}
+      </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium">
+        <div className="text-sm font-semibold">
           {isConnected && existingConn
             ? existingConn.displayName
             : connection.displayName}
@@ -313,7 +330,7 @@ function ConnectionRow({
       ) : (
         <Button
           size="sm"
-          variant="outline"
+          variant="default"
           className="gap-1.5 shrink-0"
           disabled={isLoading}
           onClick={onConnect}
@@ -321,7 +338,7 @@ function ConnectionRow({
           {isReconnect ? t('Reconnect') : t('Connect')}
         </Button>
       )}
-    </div>
+    </motion.div>
   );
 }
 

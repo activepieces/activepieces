@@ -9,6 +9,7 @@ import axios, {
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { chatDebug } from '@/lib/chat-debug-logger';
 export const isRunningCloudInDevMode = import.meta.env.MODE === 'cloud';
 
 export const API_BASE_URL = isRunningCloudInDevMode
@@ -61,6 +62,7 @@ function request<TResponse>(
     resolvedUrl.replace(API_URL, '').startsWith(route),
   );
 
+  const startedAt = performance.now();
   return axios({
     url: resolvedUrl,
     ...config,
@@ -73,12 +75,25 @@ function request<TResponse>(
       ),
     },
   })
-    .then((response) =>
-      config.responseType === 'blob'
+    .then((response) => {
+      logChatHttp({
+        url: resolvedUrl,
+        config,
+        startedAt,
+        status: response.status,
+      });
+      return config.responseType === 'blob'
         ? response.data
-        : (response.data as TResponse),
-    )
+        : (response.data as TResponse);
+    })
     .catch((error) => {
+      logChatHttp({
+        url: resolvedUrl,
+        config,
+        startedAt,
+        status: isAxiosError(error) ? error.response?.status : undefined,
+        error,
+      });
       if (
         isAxiosError(error) &&
         !ignroedGlobalErrorHandlerRoutes.includes(url)
@@ -87,6 +102,47 @@ function request<TResponse>(
       }
       throw error;
     });
+}
+
+// Mirrors chat HTTP calls into the debug logger so a chat run reconstructs
+// from the request side too. Skips the ingest endpoint to avoid recursion.
+function logChatHttp({
+  url,
+  config,
+  startedAt,
+  status,
+  error,
+}: {
+  url: string;
+  config: AxiosRequestConfig;
+  startedAt: number;
+  status?: number;
+  error?: unknown;
+}): void {
+  if (!chatDebug.isEnabled()) return;
+  const path = url.replace(API_URL, '');
+  if (!path.startsWith('/v1/chat') || path.startsWith('/v1/logs')) return;
+  const conversationId = path.match(/\/v1\/chat\/conversations\/([^/?]+)/)?.[1];
+  const fields = {
+    http: {
+      method: (config.method ?? 'GET').toUpperCase(),
+      path,
+      status,
+      durationMs: Math.round(performance.now() - startedAt),
+    },
+    ...(conversationId ? { conversation: { id: conversationId } } : {}),
+  };
+  if (error !== undefined) {
+    chatDebug.error(
+      {
+        ...fields,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'chat http request failed',
+    );
+  } else {
+    chatDebug.info(fields, 'chat http request');
+  }
 }
 
 function getToken(

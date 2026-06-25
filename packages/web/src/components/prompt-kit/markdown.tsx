@@ -1,6 +1,6 @@
 import { marked } from 'marked';
 import React, { memo, useId, useMemo } from 'react';
-import ReactMarkdown, { Components } from 'react-markdown';
+import ReactMarkdown, { Components, Options } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
@@ -8,13 +8,6 @@ import { cn } from '@/lib/utils';
 
 import { CodeBlock, CodeBlockCode, CodeBlockGroup } from './code-block';
 import { Source } from './source';
-
-export type MarkdownProps = {
-  children: string;
-  id?: string;
-  className?: string;
-  components?: Partial<Components>;
-};
 
 function normalizeMarkdownSpacing(markdown: string): string {
   let text = markdown;
@@ -84,13 +77,6 @@ function extractLanguage(className?: string): string {
   return match ? match[1] : 'plaintext';
 }
 
-type HastNode = {
-  type: string;
-  tagName?: string;
-  value?: string;
-  children?: HastNode[];
-};
-
 function isLinkOnlyItem(node: HastNode): boolean {
   const significant =
     node.children?.filter((c) => !(c.type === 'text' && !c.value?.trim())) ??
@@ -130,13 +116,7 @@ function hasTextContent(children: React.ReactNode): boolean {
   return Boolean(children);
 }
 
-const HEADING_CLASSES: Record<'h1' | 'h2' | 'h3', string> = {
-  h1: 'text-2xl font-bold mt-6 first:mt-0 mb-3',
-  h2: 'text-xl font-semibold mt-5 first:mt-0 mb-2',
-  h3: 'text-lg font-semibold mt-4 first:mt-0 mb-2',
-};
-
-function makeHeading(Tag: 'h1' | 'h2' | 'h3') {
+function makeHeading(Tag: HeadingTag) {
   const Component = function ({ children }: { children?: React.ReactNode }) {
     if (!hasTextContent(children)) return null;
     return <Tag className={HEADING_CLASSES[Tag]}>{children}</Tag>;
@@ -144,6 +124,92 @@ function makeHeading(Tag: 'h1' | 'h2' | 'h3') {
   Component.displayName = Tag.toUpperCase();
   return Component;
 }
+
+function MarkdownComponent({
+  children,
+  id,
+  className,
+  components = INITIAL_COMPONENTS,
+  isAnimating,
+  rehypePlugins,
+}: MarkdownProps) {
+  const generatedId = useId();
+  const blockId = id ?? generatedId;
+  const blocks = useMemo(() => parseMarkdownIntoBlocks(children), [children]);
+
+  // While the message is actively streaming, each top-level block fades in once
+  // as it mounts (`data-stream-animate` drives the CSS in styles.css). Because
+  // completed blocks are content-memoized, an already-mounted block never
+  // re-renders/replays — only genuinely-new blocks animate, so there's no
+  // flicker or re-stream. Historical/settled messages pass isAnimating=false
+  // and render fully static.
+  return (
+    <div
+      data-stream-animate={isAnimating ? '' : undefined}
+      className={cn(
+        'text-sm leading-relaxed',
+        '[&>*:first-child]:mt-0 [&>*:last-child]:mb-0',
+        '[&_li>p]:my-0 [&_li_ul]:my-1.5 [&_li_ol]:my-1.5',
+        '[&_pre]:overflow-x-auto [&_pre]:max-w-full',
+        '[&_th]:text-left [&_th]:p-2.5 [&_th]:border-b [&_th]:border-border [&_th]:font-semibold',
+        '[&_td]:p-2.5 [&_td]:border-b [&_td]:border-border',
+        '[&_tr:last-child_td]:border-b-0',
+        className,
+      )}
+    >
+      {blocks.map((block, index) => (
+        <MemoizedMarkdownBlock
+          key={`${blockId}-block-${index}`}
+          content={block}
+          components={components}
+          rehypePlugins={rehypePlugins}
+        />
+      ))}
+    </div>
+  );
+}
+
+const MemoizedMarkdownBlock = memo(
+  function MarkdownBlock({
+    content,
+    components = INITIAL_COMPONENTS,
+    rehypePlugins,
+  }: {
+    content: string;
+    components?: Partial<Components>;
+    rehypePlugins?: Options['rehypePlugins'];
+  }) {
+    return (
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={rehypePlugins}
+        components={components}
+      >
+        {content}
+      </ReactMarkdown>
+    );
+  },
+  function propsAreEqual(prevProps, nextProps) {
+    return (
+      prevProps.content === nextProps.content &&
+      prevProps.rehypePlugins === nextProps.rehypePlugins
+    );
+  },
+);
+
+MemoizedMarkdownBlock.displayName = 'MemoizedMarkdownBlock';
+
+const Markdown = memo(MarkdownComponent);
+Markdown.displayName = 'Markdown';
+
+const HEADING_CLASSES: Record<HeadingTag, string> = {
+  h1: 'text-lg font-semibold tracking-tight mt-6 first:mt-0 mb-3',
+  h2: 'text-base font-semibold tracking-tight mt-5 first:mt-0 mb-2',
+  h3: 'text-sm font-semibold mt-4 first:mt-0 mb-2',
+  h4: 'text-sm font-semibold mt-4 first:mt-0 mb-1',
+  h5: 'text-sm font-semibold text-muted-foreground mt-3 first:mt-0 mb-1',
+  h6: 'text-xs font-semibold uppercase tracking-wide text-muted-foreground mt-3 first:mt-0 mb-1',
+};
 
 const INITIAL_COMPONENTS: Partial<Components> = {
   table: function TableComponent({ children }) {
@@ -156,25 +222,51 @@ const INITIAL_COMPONENTS: Partial<Components> = {
   h1: makeHeading('h1'),
   h2: makeHeading('h2'),
   h3: makeHeading('h3'),
+  h4: makeHeading('h4'),
+  h5: makeHeading('h5'),
+  h6: makeHeading('h6'),
+  p: function ParagraphComponent({ children }) {
+    return (
+      <p className="leading-relaxed my-4 first:mt-0 last:mb-0">{children}</p>
+    );
+  },
+  strong: function StrongComponent({ children }) {
+    return <strong className="font-semibold">{children}</strong>;
+  },
+  blockquote: function BlockquoteComponent({ children }) {
+    return (
+      <blockquote className="border-l-2 border-border pl-4 my-4 text-muted-foreground italic">
+        {children}
+      </blockquote>
+    );
+  },
   ul: function UlComponent({ children, node }) {
     if (isLinkOnlyList(node as HastNode | undefined)) {
       return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
     }
-    return <ul className="list-disc pl-6 my-2 space-y-1">{children}</ul>;
+    return (
+      <ul className="list-disc pl-6 my-4 space-y-1.5 marker:text-muted-foreground">
+        {children}
+      </ul>
+    );
   },
   ol: function OlComponent({ children, node }) {
     if (isLinkOnlyList(node as HastNode | undefined)) {
       return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
     }
-    return <ol className="list-decimal pl-6 my-2 space-y-1">{children}</ol>;
+    return (
+      <ol className="list-decimal pl-6 my-4 space-y-1.5 marker:text-muted-foreground">
+        {children}
+      </ol>
+    );
   },
   li: function LiComponent({ children, node }) {
     if (node && isLinkOnlyItem(node as HastNode)) {
       return <>{children}</>;
     }
-    return <li className="pl-1">{children}</li>;
+    return <li className="pl-1 leading-relaxed">{children}</li>;
   },
-  a: function LinkComponent({ href, children, node }) {
+  a: function LinkComponent({ href, children }) {
     if (!href) return <>{children}</>;
     const isWebUrl = href.startsWith('http://') || href.startsWith('https://');
     const isSafeProtocol =
@@ -182,31 +274,20 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     if (!isSafeProtocol) {
       return <span>{children}</span>;
     }
-    if (!isWebUrl) {
-      return (
-        <a
-          href={href}
-          className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
-        >
-          {children}
-        </a>
-      );
-    }
+
     const text = typeof children === 'string' ? children : '';
+    const isBareUrl =
+      isWebUrl && (text === '' || text === href || text.startsWith('http'));
 
-    const isInListItem =
-      node?.position?.start.column && node.position.start.column > 1;
-    const isStandaloneLink = !isInListItem && text.startsWith('http');
-
-    if (isStandaloneLink || isInListItem) {
-      return <Source href={href} title={text !== href ? text : undefined} />;
+    if (isBareUrl) {
+      return <Source href={href} />;
     }
 
     return (
       <a
         href={href}
-        target="_blank"
-        rel="noopener noreferrer"
+        target={isWebUrl ? '_blank' : undefined}
+        rel={isWebUrl ? 'noopener noreferrer' : undefined}
         className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
       >
         {children}
@@ -222,7 +303,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       return (
         <span
           className={cn(
-            'bg-muted text-foreground rounded-sm px-1 font-mono text-sm',
+            'bg-muted text-foreground rounded px-1.5 py-0.5 font-mono text-[0.85em]',
             className,
           )}
           {...props}
@@ -253,66 +334,39 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     );
   },
   hr: function HrComponent() {
-    return <hr className="my-6 border-t border-border/50" />;
+    return <hr className="my-6 border-t border-border/60" />;
+  },
+  img: function ImgComponent({ src, alt }) {
+    if (!src) return null;
+    return (
+      <img
+        src={src}
+        alt={alt ?? ''}
+        className="my-4 max-w-full rounded-lg border border-border"
+      />
+    );
   },
   pre: function PreComponent({ children }) {
     return <>{children}</>;
   },
 };
 
-const MemoizedMarkdownBlock = memo(
-  function MarkdownBlock({
-    content,
-    components = INITIAL_COMPONENTS,
-  }: {
-    content: string;
-    components?: Partial<Components>;
-  }) {
-    return (
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-        {content}
-      </ReactMarkdown>
-    );
-  },
-  function propsAreEqual(prevProps, nextProps) {
-    return prevProps.content === nextProps.content;
-  },
-);
+type HeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
-MemoizedMarkdownBlock.displayName = 'MemoizedMarkdownBlock';
+type HastNode = {
+  type: string;
+  tagName?: string;
+  value?: string;
+  children?: HastNode[];
+};
 
-function MarkdownComponent({
-  children,
-  id,
-  className,
-  components = INITIAL_COMPONENTS,
-}: MarkdownProps) {
-  const generatedId = useId();
-  const blockId = id ?? generatedId;
-  const blocks = useMemo(() => parseMarkdownIntoBlocks(children), [children]);
+export type MarkdownProps = {
+  children: string;
+  id?: string;
+  className?: string;
+  components?: Partial<Components>;
+  isAnimating?: boolean;
+  rehypePlugins?: Options['rehypePlugins'];
+};
 
-  return (
-    <div
-      className={cn(
-        '[&_pre]:overflow-x-auto [&_pre]:max-w-full',
-        '[&_th]:text-left [&_th]:p-2.5 [&_th]:border-b [&_th]:border-border [&_th]:font-semibold',
-        '[&_td]:p-2.5 [&_td]:border-b [&_td]:border-border',
-        '[&_tr:last-child_td]:border-b-0',
-        className,
-      )}
-    >
-      {blocks.map((block, index) => (
-        <MemoizedMarkdownBlock
-          key={`${blockId}-block-${index}`}
-          content={block}
-          components={components}
-        />
-      ))}
-    </div>
-  );
-}
-
-const Markdown = memo(MarkdownComponent);
-Markdown.displayName = 'Markdown';
-
-export { Markdown };
+export { Markdown, INITIAL_COMPONENTS, extractLanguage };

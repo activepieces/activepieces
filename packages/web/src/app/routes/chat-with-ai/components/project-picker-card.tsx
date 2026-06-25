@@ -26,9 +26,12 @@ import { cn } from '@/lib/utils';
 
 import { ProjectPickerData } from '../lib/message-parsers';
 
+import { InteractiveCardShell } from './interactive-card-shell';
+
 export function ProjectPickerCard({
   picker,
   onResolve,
+  onDismiss,
   isInteractive = true,
   selectedProjectId,
 }: ProjectPickerCardProps) {
@@ -95,106 +98,112 @@ export function ProjectPickerCard({
   }
 
   return (
-    <motion.div
-      className="flex flex-wrap gap-2 my-2"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+    <InteractiveCardShell
+      onDismiss={() => onDismiss?.()}
+      title={t('Which project should I use?')}
     >
-      {suggestedProjects
-        .filter((s) => projects.some((p) => p.id === s.id))
-        .map((suggested, i) => {
-          const resolvedProject = projects.find((p) => p.id === suggested.id);
-          return (
+      <motion.div
+        className="flex flex-wrap gap-2"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        {suggestedProjects
+          .filter((s) => projects.some((p) => p.id === s.id))
+          .map((suggested, i) => {
+            const resolvedProject = projects.find((p) => p.id === suggested.id);
+            return (
+              <motion.button
+                key={suggested.id}
+                type="button"
+                onClick={() =>
+                  handleSelect(
+                    suggested.id,
+                    resolvedProject
+                      ? getProjectName(resolvedProject)
+                      : suggested.name,
+                  )
+                }
+                className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm hover:bg-muted transition-colors cursor-pointer"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: i * 0.04 }}
+              >
+                {resolvedProject ? (
+                  <ApProjectDisplay
+                    title={getProjectName(resolvedProject)}
+                    icon={resolvedProject.icon}
+                    projectType={resolvedProject.type}
+                    iconClassName="size-4"
+                    titleClassName="text-sm"
+                  />
+                ) : (
+                  <span>{suggested.name}</span>
+                )}
+              </motion.button>
+            );
+          })}
+
+        <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
+          <PopoverTrigger asChild>
             <motion.button
-              key={suggested.id}
               type="button"
-              onClick={() =>
-                handleSelect(
-                  suggested.id,
-                  resolvedProject
-                    ? getProjectName(resolvedProject)
-                    : suggested.name,
-                )
-              }
-              className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm hover:bg-muted transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-dashed bg-background px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: i * 0.04 }}
+              transition={{
+                duration: 0.2,
+                delay: suggestedProjects.length * 0.04,
+              }}
             >
-              {resolvedProject ? (
-                <ApProjectDisplay
-                  title={getProjectName(resolvedProject)}
-                  icon={resolvedProject.icon}
-                  projectType={resolvedProject.type}
-                  iconClassName="size-4"
-                  titleClassName="text-sm"
-                />
-              ) : (
-                <span>{suggested.name}</span>
-              )}
+              <Ellipsis className="size-3.5" />
+              {t('Another project')}
             </motion.button>
-          );
-        })}
-
-      <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
-        <PopoverTrigger asChild>
-          <motion.button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-full border border-dashed bg-background px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.2,
-              delay: suggestedProjects.length * 0.04,
-            }}
-          >
-            <Ellipsis className="size-3.5" />
-            {t('Another project')}
-          </motion.button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-72" align="start">
-          <Command>
-            <CommandInput placeholder={t('Search projects...')} />
-            <CommandEmpty>{t('No project found.')}</CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto">
-              {projects.map((project) => (
-                <CommandItem
-                  key={project.id}
-                  value={getProjectName(project)}
-                  onSelect={() => {
-                    handleSelect(project.id, getProjectName(project));
-                    setDropdownOpen(false);
-                  }}
-                  className="cursor-pointer gap-2"
-                >
-                  <ApProjectDisplay
-                    title={getProjectName(project)}
-                    icon={project.icon}
-                    projectType={project.type}
-                    iconClassName="size-4"
-                  />
-                  <Check
-                    className={cn(
-                      'ml-auto size-4',
-                      selectedProjectId === project.id
-                        ? 'opacity-100'
-                        : 'opacity-0',
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </motion.div>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-72" align="start">
+            <Command>
+              <CommandInput placeholder={t('Search projects...')} />
+              <CommandEmpty>{t('No project found.')}</CommandEmpty>
+              <CommandGroup className="max-h-64 overflow-auto">
+                {projects.map((project) => (
+                  <CommandItem
+                    key={project.id}
+                    value={getProjectName(project)}
+                    onSelect={() => {
+                      handleSelect(project.id, getProjectName(project));
+                      setDropdownOpen(false);
+                    }}
+                    className="cursor-pointer gap-2"
+                  >
+                    <ApProjectDisplay
+                      title={getProjectName(project)}
+                      icon={project.icon}
+                      projectType={project.type}
+                      iconClassName="size-4"
+                    />
+                    <Check
+                      className={cn(
+                        'ml-auto size-4',
+                        selectedProjectId === project.id
+                          ? 'opacity-100'
+                          : 'opacity-0',
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </motion.div>
+    </InteractiveCardShell>
   );
 }
 
 type ProjectPickerCardProps = {
   picker: ProjectPickerData;
   onResolve: (payload: Record<string, unknown>) => void;
+  onDismiss?: () => void;
   isInteractive?: boolean;
   selectedProjectId?: string | null;
 };

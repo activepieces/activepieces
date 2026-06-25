@@ -3,6 +3,31 @@
 ## Summary
 A platform-level AI chat assistant that lets users interact with an LLM to manage their Activepieces projects through natural language. The chat connects to the platform's configured AI provider, streams responses via a custom WebSocket chunk reducer, and exposes Activepieces resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations are persisted per-user with support for message compaction, file attachments, multi-project context switching, two-phase (discovery/build) tool gating, and an action-preview gate for ad-hoc write actions. The full tool-call/tool-result history of every turn is persisted (all AI-SDK steps, not just the last), so the agent remembers what it already did within a conversation and does not re-run tools. Inputs are gathered conversationally through connection pickers and multi-question cards during discovery; once understood, the agent builds directly with no separate approval step (flow construction and publishing are not gated; a live test of a flow that contains write/destructive steps is gated behind a confirmation).
 
+## Developer Quickstart
+
+**Execution model (read this first).** The chat LLM loop runs in the **worker**, not the API. Send-message path: `chat-controller.ts` (`POST /conversations/:id/messages`) enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job → worker `execute-chat-agent.ts` calls the `getChatConfig` RPC, assembles tools, and runs `run-chat-turn.ts` (the shared `streamText()` DI loop) → chunks stream back via the `sendChatEvent` RPC → websocket `CHAT_MESSAGE_CHUNK` (filtered by `runId`) → frontend `use-streaming-reducer.ts` + `chunk-reducer.ts`. `chat-service.ts` only does conversation CRUD + persistence.
+
+**Run it locally (EE + chat).** Chat is EE/Cloud-only and refuses to run on the default PGLite dev DB. To bring it up self-hosted:
+- `AP_EDITION=ee` **and** `AP_DB_TYPE=POSTGRES` (+ `AP_POSTGRES_*`) — set in `.env.dev` (Turbo strips ad-hoc env vars unless declared in `globalPassThroughEnv`). Redis is also required.
+- A platform only exists in dev via the **dev seed** (`dev-seeds.ts`, `dev@ap.com` / `12345678`), which is gated off for EE — temporarily allow it, or seed under CE first, then switch to EE on the same Postgres DB.
+- `platform.plan.chatEnabled` must be true. In CE the plan is derived live from `OPEN_SOURCE_PLAN`; in EE it's a DB row in `platform_plan` (set by a license key via Platform Admin → Setup → License Keys, or flip the flags directly for local testing).
+
+**Debugging a chat run (local, full logging).** Given a chat (conversation) id, reconstruct the whole turn — requests, responses, the worker LLM loop, every tool call's full input/output, websocket chunks, and what the user saw — from one NDJSON corpus. Dev-only, off by default; never enabled in cloud/prod.
+- Turn it on: backend `LOG_FILE=true` (api) + `AP_LOG_FILE=true` (worker) + `AP_LOG_LEVEL=debug`/`LOG_LEVEL=debug` (debug captures per-chunk, per-step, and full tool I/O); frontend `localStorage['chat-debug']='1'` then reload the chat page.
+- Where logs land: repo-root `.evlog/logs/<date>.jsonl` (gitignored). The evlog filesystem drain (`evlog/fs`, wired in `packages/server/utils/src/evlog-drains.ts`) collects **both** api and worker events; the browser ships its events to the dev-only `POST /v1/logs/client` ingest (`packages/server/api/src/app/helper/logs/`, registered in `app.ts` only when `LOG_FILE=true` and edition ≠ cloud), which re-emits them into the same file tagged `source:"client"`.
+- Correlation: every chat log line carries `conversation: { id }` + `run: { id }` (the per-message run id, threaded controller → job → worker → RPC; `worker.ts` maps chat `runId` to `run.id`, not `flowRun.id`). The frontend logger (`packages/web/src/lib/chat-debug-logger.ts`) tags the same ids.
+- Read it: `npm run chat:logs -- <conversationId> [runId]` (`scripts/chat-logs.mjs`) merges api/worker/web events and prints a timeline; or use the `analyze-logs` skill; or `jq -c 'select(.conversation.id=="X")' .evlog/logs/*.jsonl | jq -s 'sort_by(.timestamp)'`.
+
+**Extension points (where to edit).**
+| Goal | Edit |
+| --- | --- |
+| Add a local `ap_*` tool | `worker/.../ee/chat/chat-worker-tools.ts` (tool def/factory) + `ee/chat/tools/chat-tools.ts` (server-side logic: connections, RPC) |
+| Change the system prompt / guides | `src/assets/prompts/*.md` (loaded by `prompt/chat-prompt.ts`) |
+| Change tool gating / phases | `core/shared/src/lib/ee/chat/tool-phases.ts` (`BUILD_ONLY_TOOL_NAMES`, `CHAT_HIDDEN_TOOL_NAMES`) |
+| Change write/approval classification | `core/shared/src/lib/ee/chat/tool-classification.ts` |
+| Change the streaming loop behavior | `worker/.../ee/chat/run-chat-turn.ts` |
+| Add an endpoint | `ee/chat/chat-controller.ts` |
+
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration with `chatEnabled` plan gate
 - `packages/server/api/src/app/ee/chat/chat-controller.ts` — HTTP endpoints (conversations CRUD, messages, tool approvals)
@@ -84,7 +109,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `updateConversation()` — updates title and/or modelName
 - `deleteConversation()` — deletes a conversation after ownership check; blocked while status is STREAMING
 - `getMessages()` — reconstructs `ChatHistoryMessage[]` from stored `ModelMessage[]`
-- `sendMessage()` — the main streaming flow: resolves provider, connects MCP, builds prompt, runs `streamText()` with `stopWhen: isLoopFinished()` (no hard step cap), `prepareStep` (narrows the active toolset to the current discovery/build phase), `experimental_repairToolCall` (auto-fixes malformed JSON), and `experimental_onToolCallFinish` (per-tool logging); retries event delivery with exponential backoff; tools have a 5-minute per-call timeout with AbortSignal propagation; persists assistant response on completion
+- Sending a message does **not** stream inline in `chat-service.ts` anymore. The controller (`chat-controller.ts`) enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job (with `runId`) and returns immediately; the **worker** runs the streaming loop. `chat-service.ts` now owns conversation CRUD + persistence (`saveChatMessages` RPC), not the LLM loop. See **Execution model** in Developer Quickstart.
 
 ## Local Tools
 - `ap_set_session_title` — auto-names the conversation after the first exchange
@@ -131,9 +156,10 @@ All chat endpoints require `PrincipalType.USER` authentication at the platform l
 1a. If the conversation is STREAMING, the controller reads the active runId, cancels that run, and resets status to IDLE
 1b. If the platform's chat provider is ACTIVEPIECES and `usageRemaining <= 0`, the endpoint returns a 402 `AI_CREDIT_LIMIT_EXCEEDED` error before queuing the job; the frontend surfaces a non-dismissible error banner
 1c. Controller generates a `runId`, includes it in the job data, and returns it to the frontend
-2. Service resolves AI provider, connects MCP client, builds system prompt with project list
+1d. Controller enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job and returns `{ conversationId, runId }`; all LLM work happens in the worker (`execute-chat-agent.ts`), not the API process
+2. Worker calls the `getChatConfig` RPC (history, system prompt, resolved provider, MCP credentials, project list), assembles the tool set (local + display + cross-project + web + MCP, phase-gated), and connects the MCP client
 3. If conversation is long, compaction summarizes older messages
-4. `streamText()` streams the LLM response with local tools + display tools + MCP tools available
+4. `run-chat-turn.ts` runs `streamText()` (the shared DI loop) with `stopWhen: isLoopFinished()` (no hard step cap), `prepareStep` (narrows toolset to the current discovery/build phase), and `experimental_repairToolCall`; chunks stream back to the API via the `sendChatEvent` RPC, which emits `CHAT_MESSAGE_CHUNK` over websocket to the user's socket (filtered by `runId`)
 5. Display-tool cards (connection picker, questions) and ad-hoc write actions (`ap_execute_action` previews) pause and emit a gate request to the UI via the stream; flow build and publish run without gating, and `ap_test_flow` is gated only when the flow has write steps (the worker's `__flow_write_check` RPC confirms before a live run)
 6. User responds via `POST /tool-approvals/:gateId`, unblocking the gate via Redis pub/sub
 7. On stream completion, assistant messages are appended to the stored conversation

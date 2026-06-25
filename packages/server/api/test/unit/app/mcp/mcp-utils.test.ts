@@ -102,3 +102,53 @@ describe('mcpUtils.deriveFieldPathsFromSample — trigger sample data → refere
         expect(mcpUtils.deriveFieldPathsFromSample({})).toEqual([])
     })
 })
+
+function staticDropdown({ displayName, required, values }: { displayName: string, required: boolean, values: string[] }) {
+    return {
+        type: PropertyType.STATIC_DROPDOWN,
+        displayName,
+        required,
+        options: { options: values.map((v) => ({ label: v, value: v })) },
+    }
+}
+
+describe('mcpUtils.diagnosePieceProps — static dropdown value validation', () => {
+    it('flags a value that is not among the allowed options and lists the valid values', () => {
+        const diagnosis = mcpUtils.diagnosePieceProps({
+            props: { body_type: staticDropdown({ displayName: 'Body Type', required: false, values: ['none', 'json', 'raw', 'form_data'] }) },
+            input: { body_type: 'JSON' },
+            pieceAuth: undefined,
+            requireAuth: false,
+            componentType: 'action',
+        })
+        expect(diagnosis.invalidEnums.length).toBe(1)
+        const text = diagnosis.parts.join('\n')
+        expect(text).toContain('Invalid option values')
+        expect(text).toContain('body_type')
+        expect(text).toContain('json')
+    })
+
+    it('accepts a value that matches an allowed option', () => {
+        const diagnosis = mcpUtils.diagnosePieceProps({
+            props: { body_type: staticDropdown({ displayName: 'Body Type', required: false, values: ['none', 'json', 'raw'] }) },
+            input: { body_type: 'json' },
+            pieceAuth: undefined,
+            requireAuth: false,
+            componentType: 'action',
+        })
+        expect(diagnosis.invalidEnums).toEqual([])
+    })
+
+    it('flags an empty required dropdown as missing (not as an invalid enum) and shows the options', () => {
+        const diagnosis = mcpUtils.diagnosePieceProps({
+            props: { authType: staticDropdown({ displayName: 'Authentication', required: true, values: ['NONE', 'BASIC', 'BEARER_TOKEN'] }) },
+            input: {},
+            pieceAuth: undefined,
+            requireAuth: false,
+            componentType: 'action',
+        })
+        expect(diagnosis.invalidEnums).toEqual([])
+        expect(diagnosis.missing.length).toBe(1)
+        expect(diagnosis.parts.join('\n')).toContain('NONE')
+    })
+})

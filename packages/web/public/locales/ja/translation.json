@@ -610,7 +610,6 @@
   "Thought for {hours} {hours, plural, =1 {hour} other {hours}} {minutes} {minutes, plural, =1 {minute} other {minutes}}": "Thought for {hours} {hours, plural, =1 {hour} other {hours}} {minutes} {minutes, plural, =1 {minute} other {minutes}}",
   "Thought for {hours} {hours, plural, =1 {hour} other {hours}}": "Thought for {hours} {hours, plural, =1 {hour} other {hours}}",
   "Sources": "",
-  "The agent completed its work but didn't provide a summary.": "The agent completed its work but didn't provide a summary.",
   "Stop reading": "読書を停止する",
   "Read aloud": "音声読み上げ",
   "Q{number}. {question}": "",

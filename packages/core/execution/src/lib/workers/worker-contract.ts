@@ -81,7 +81,9 @@ export type WorkerToApiContract = {
     sendChatEvent(input: SendChatEventRequest): Promise<void>
     getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse>
     saveChatMessages(input: SaveChatMessagesRequest): Promise<void>
+    saveChatFile(input: SaveChatFileRequest): Promise<SaveChatFileResponse>
     updateChatProgress(input: UpdateChatProgressRequest): Promise<void>
+    heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
 }
@@ -101,6 +103,9 @@ export enum ChatAgentEventType {
     TOOL_PROGRESS = 'TOOL_PROGRESS',
     ACTION_PREVIEW = 'ACTION_PREVIEW',
     ACTION_RECEIPT = 'ACTION_RECEIPT',
+    IMAGE = 'IMAGE',
+    FILE = 'FILE',
+    BUILD_PLAN = 'BUILD_PLAN',
 }
 
 export type ToolProgressEvent = {
@@ -139,6 +144,50 @@ export type ActionReceiptEvent = {
     timestamp: string
 }
 
+export type ImageGeneratedEvent = {
+    toolCallId: string
+    fileId: string
+    url: string
+    mediaType: string
+    prompt?: string
+    model?: string
+    caption?: string
+    timestamp: string
+}
+
+export type FileProducedEvent = {
+    toolCallId: string
+    fileId: string
+    url: string
+    mediaType: string
+    fileName: string
+    byteSize: number
+    title?: string
+    timestamp: string
+}
+
+export type BuildPlanStepStatus = 'pending' | 'in_progress' | 'done' | 'failed'
+
+export type BuildPlanPhase = 'detecting' | 'building' | 'testing' | 'done' | 'failed'
+
+export type BuildPlanStep = {
+    id: string
+    label: string
+    status: BuildPlanStepStatus
+}
+
+export type BuildPlanEvent = {
+    buildId: string
+    flowId?: string
+    flowName?: string
+    tagline?: string
+    iconName?: string
+    projectId?: string
+    phase: BuildPlanPhase
+    steps: BuildPlanStep[]
+    updatedAt: string
+}
+
 export type ChatAgentEvent =
     | { type: ChatAgentEventType.CHUNK, data: unknown }
     | { type: ChatAgentEventType.FINISHED, data: { conversationId: string } }
@@ -147,6 +196,9 @@ export type ChatAgentEvent =
     | { type: ChatAgentEventType.TOOL_PROGRESS, data: ToolProgressEvent }
     | { type: ChatAgentEventType.ACTION_PREVIEW, data: ActionPreviewEvent }
     | { type: ChatAgentEventType.ACTION_RECEIPT, data: ActionReceiptEvent }
+    | { type: ChatAgentEventType.IMAGE, data: ImageGeneratedEvent }
+    | { type: ChatAgentEventType.FILE, data: FileProducedEvent }
+    | { type: ChatAgentEventType.BUILD_PLAN, data: BuildPlanEvent }
 
 export type GetChatConfigRequest = {
     conversationId: string
@@ -160,11 +212,24 @@ export type GetChatConfigRequest = {
     dryRun?: boolean
 }
 
+export type ResolvedAiToolConfig = {
+    provider: string
+    apiKey: string
+    config?: Record<string, unknown>
+}
+
+export type ChatAiToolsConfig = {
+    webSearch?: ResolvedAiToolConfig
+    webScraping?: ResolvedAiToolConfig
+    imageGeneration?: ResolvedAiToolConfig
+}
+
 export type ChatConfigResponse = {
     provider: string
     auth: Record<string, unknown>
     providerConfig: Record<string, unknown>
     modelId: string
+    fastModelId: string
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
@@ -173,19 +238,41 @@ export type ChatConfigResponse = {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
     guides: Record<string, string>
+    aiTools: ChatAiToolsConfig
 }
 
 export type SaveChatMessagesRequest = {
     conversationId: string
+    runId?: string
     messages: unknown[]
     uiMessages: unknown[]
     title?: string
     modelName?: string
 }
 
+export type SaveChatFileRequest = {
+    platformId: string
+    projectId?: string
+    conversationId: string
+    data: Buffer
+    mediaType: string
+    fileName?: string
+}
+
+export type SaveChatFileResponse = {
+    fileId: string
+    url: string
+}
+
 export type UpdateChatProgressRequest = {
     conversationId: string
+    runId?: string
     uiMessages: unknown[]
+}
+
+export type HeartbeatChatConversationRequest = {
+    conversationId: string
+    runId?: string
 }
 
 export type UpdateProjectContextRequest = {

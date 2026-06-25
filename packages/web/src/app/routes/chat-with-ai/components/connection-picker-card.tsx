@@ -23,6 +23,8 @@ import {
 } from '../lib/message-parsers';
 import { useConversationId } from '../lib/use-conversation-id';
 
+import { InteractiveCardShell } from './interactive-card-shell';
+
 function connectionStatusLabel(status: AppConnectionStatus): string | null {
   if (status === AppConnectionStatus.ERROR) return t('Expired');
   if (status === AppConnectionStatus.MISSING) return t('Missing');
@@ -146,6 +148,7 @@ function useLiveConnections({
 export function ConnectionPickerCard({
   picker,
   onResolve,
+  onDismiss,
   isInteractive = true,
   selectedProjectId,
   selectedConnectionLabel,
@@ -245,25 +248,12 @@ export function ConnectionPickerCard({
 
   return (
     <>
-      <motion.div
-        className="rounded-xl border bg-background overflow-hidden my-2"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.3,
-          type: 'spring',
-          stiffness: 300,
-          damping: 25,
-        }}
+      <InteractiveCardShell
+        onDismiss={() => onDismiss?.()}
+        title={t('Which {name} account should I use?', {
+          name: filteredPicker.displayName,
+        })}
       >
-        <div className="p-4 pb-3">
-          <h3 className="font-semibold text-base">
-            {t('Which {name} account should I use?', {
-              name: filteredPicker.displayName,
-            })}
-          </h3>
-        </div>
-
         <div className="max-h-64 overflow-auto">
           {filteredPicker.connections.map((conn) => {
             const status = liveStatuses[conn.externalId] ?? conn.status;
@@ -271,7 +261,7 @@ export function ConnectionPickerCard({
             return (
               <div
                 key={conn.externalId}
-                className="flex items-center gap-3 px-4 py-3 border-t"
+                className="flex items-center gap-3 py-3 border-t"
               >
                 <PieceIconWithPieceName
                   pieceName={pieceName}
@@ -333,7 +323,7 @@ export function ConnectionPickerCard({
           })}
         </div>
 
-        <div className="flex items-center gap-3 px-4 py-3 border-t bg-muted/30">
+        <div className="flex items-center gap-3 py-3 border-t">
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium">
               {t('Use a different account')}
@@ -354,7 +344,7 @@ export function ConnectionPickerCard({
             {t('Connect')}
           </Button>
         </div>
-      </motion.div>
+      </InteractiveCardShell>
 
       {pieceModel && (
         <CreateOrEditConnectionDialog
@@ -394,6 +384,7 @@ export function ConnectionPickerCard({
 type ConnectionPickerCardProps = {
   picker: ConnectionPickerData;
   onResolve: (payload: Record<string, unknown>) => void;
+  onDismiss?: () => void;
   isInteractive?: boolean;
   selectedProjectId?: string | null;
   selectedConnectionLabel?: string;

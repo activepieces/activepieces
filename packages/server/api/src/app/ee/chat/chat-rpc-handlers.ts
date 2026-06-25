@@ -1,16 +1,18 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FlowActionType, flowStructureUtil, GetChatConfigRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatMessagesRequest, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { aiToolConfigService } from '../../ai/ai-tool-config-service'
+import { fileService } from '../../file/file.service'
+import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatCompaction } from './chat-compaction'
-import { buildUserContentWithFiles } from './chat-file-utils'
+import { buildAttachmentNote, buildUserContentWithFiles, persistChatAttachments } from './chat-file-utils'
 import { chatHelpers } from './chat-helpers'
-import { chatHistoryHygiene } from './chat-history-hygiene'
 import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
@@ -18,30 +20,83 @@ import { executeCrossProjectTool } from './tools/chat-tools'
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 
-function buildWebAccessNote({ searchAvailable, fetchAvailable }: { searchAvailable: boolean, fetchAvailable: boolean }): string {
+// A conversation row is owned by a single active run at a time. A turn that was
+// preempted by a newer message (or otherwise superseded) must never write back:
+// its in-flight snapshot is stale and would clobber the run that now owns the
+// row. Returns true only when both an active run and the caller's runId are
+// present and they differ — missing either side is treated as "not stale" so
+// older callers stay backward-compatible.
+async function isStaleRun({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<boolean> {
+    if (isNil(runId)) {
+        return false
+    }
+    const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+    if (isNil(activeRunId)) {
+        return false
+    }
+    return activeRunId !== runId
+}
+
+function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable }: {
+    currentDate: string
+    searchAvailable: boolean
+    fetchAvailable: boolean
+    scrapeAvailable: boolean
+    imageAvailable: boolean
+}): string {
+    const lines: string[] = ['\n\n## Capabilities (current session)']
+
+    lines.push(`- **Today's date**: ${currentDate}. Use this for anything time-relative — and when you add a year to a search query to get recent results, take it from here. Never assume the year from memory; your training is stale and will be wrong.`)
+
     if (searchAvailable) {
-        return '\n\n## Web access (current session)\nBoth web search and `ap_fetch_url` are available right now. Follow the "Web access" guidance above.'
+        lines.push('- **Web search** (`ap_web_search`): search the live web for current, factual, or up-to-date information. Prefer it whenever the answer depends on recent or external knowledge.')
     }
-    if (fetchAvailable) {
-        return '\n\n## Web access (current session)\nWeb search is NOT available with the current model — do not claim to have searched the web. You can still read a specific URL with `ap_fetch_url`.'
+    else {
+        lines.push('- **Web search**: NOT available — do not claim to have searched the web.')
     }
-    return '\n\n## Web access (current session)\nYou have no web access right now — do not claim to search the web or fetch URLs.'
+
+    if (scrapeAvailable) {
+        lines.push('- **Web scraping** (`ap_scrape_url`): extract the full clean content of a page as markdown (handles JS-rendered pages). Use it when you need the complete content of a page; use `ap_fetch_url` only for a quick lightweight read.')
+    }
+    else if (fetchAvailable) {
+        lines.push('- **Read a URL** (`ap_fetch_url`): read a specific page as text. No dedicated scraper is configured.')
+    }
+    else {
+        lines.push('- **URL reading**: NOT available — do not claim to fetch or scrape URLs.')
+    }
+
+    if (imageAvailable) {
+        lines.push('- **Image generation** (`ap_generate_image`): create images from a text prompt. Choose `style`: "realistic" for photos, "graphic_text" for social/email/marketing graphics with readable text, "brand_vector" for logos/icons/vector graphics, "abstract" for artistic/background images. Pass a short, fun, task-specific `caption` for the card. The image is shown to the user automatically — never paste the image URL into your reply.')
+    }
+
+    return lines.join('\n')
 }
 
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
         const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
 
-        const [conversation, providerConfig, userProjects, userContent, mcpCredentials] = await Promise.all([
+        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
             chatHelpers.resolveChatProvider({ platformId, log }),
             chatHelpers.getUserProjects({ platformId, userId, log }),
-            buildUserContentWithFiles({ text: userMessage, files }),
             chatMcp.getCredentials({ platformId, userId, log }),
+            aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
+        const attachmentProjectId = (conversation.projectId && userProjects.some((p) => p.id === conversation.projectId))
+            ? conversation.projectId
+            : userProjects[0]?.id
+        const attachmentRefs = files && files.length > 0 && !isNil(attachmentProjectId)
+            ? await persistChatAttachments({ files, projectId: attachmentProjectId, platformId, log })
+            : []
+        const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
+
+        const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const fetchAvailable = !dryRun
-        const webSearchAvailable = fetchAvailable && chatAiUtils.supportsWebSearch(providerConfig.provider)
+        // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
+        const tavilySearchAvailable = !isNil(aiTools.webSearch)
+        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || chatAiUtils.supportsWebSearch(providerConfig.provider))
 
         const lockResult = await chatHelpers.conversationRepo()
             .createQueryBuilder()
@@ -50,6 +105,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             .where('id = :id AND status != :streaming', { id: conversationId, streaming: ChatConversationStatus.STREAMING })
             .execute()
         if (lockResult.affected === 0) {
+            log.warn({ conversation: { id: conversationId } }, '[chatRpc#getChatConfig] Concurrent run rejected (conversation already STREAMING)')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'An agent is already running for this conversation' },
@@ -70,7 +126,13 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             currentProjectId: selectedProjectId,
             frontendUrl,
             templates: promptOverride,
-        }) + buildWebAccessNote({ searchAvailable: webSearchAvailable, fetchAvailable })
+        }) + buildCapabilitiesNote({
+            currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
+            searchAvailable: webSearchAvailable,
+            fetchAvailable,
+            scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
+            imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
+        })
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides
@@ -80,7 +142,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
-        const llmHistory = chatHistoryHygiene.collapseStaleToolOutputs({ messages: allMessages })
+        const llmHistory = chatAiUtils.collapseStaleToolOutputs({ messages: allMessages })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
         const uiMessagesWithUser: PersistedChatMessage[] = [
@@ -96,7 +158,9 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const estimatedTokens = chatCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
-        if (chatCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })) {
+        const willCompact = chatCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })
+        log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[chatRpc#getChatConfig] Compaction decision')
+        if (willCompact) {
             const model = chatAiUtils.createChatModel({
                 provider: providerConfig.provider,
                 auth: providerConfig.auth as Record<string, unknown>,
@@ -115,6 +179,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 summary: compactionState.summary,
                 summarizedUpToIndex: compactionState.summarizedUpToIndex,
             })
+            log.info({ summarizedUpToIndex: compactionState.summarizedUpToIndex, summaryLength: compactionState.summary?.length ?? 0 }, '[chatRpc#getChatConfig] Compaction ran')
         }
 
         const messagesForLlm = chatCompaction.buildCompactedPayload({
@@ -124,11 +189,23 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             provider: providerConfig.provider,
         })
 
+        log.info({
+            historyMessageCount: messagesForLlm.length,
+            estimatedTokens,
+            model: { id: resolvedModelId },
+            provider: providerConfig.provider,
+            tier: { id: tier.id },
+            project: selectedProjectId ? { id: selectedProjectId } : undefined,
+            webSearchAvailable,
+        }, '[chatRpc#getChatConfig] Chat config resolved')
+        log.debug({ systemPrompt: systemPromptText, guideNames: Object.keys(guides) }, '[chatRpc#getChatConfig] System prompt assembled')
+
         return {
             provider: providerConfig.provider,
             auth: providerConfig.auth as Record<string, unknown>,
             providerConfig: providerConfig.config as Record<string, unknown>,
             modelId: resolvedModelId,
+            fastModelId: chatHelpers.resolveFastModelId({ provider: providerConfig.provider }),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -139,10 +216,39 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 : null,
             projects: userProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
             guides,
+            aiTools,
         }
     },
 
+    async saveChatFile(input: SaveChatFileRequest): Promise<SaveChatFileResponse> {
+        const conversation = await chatHelpers.conversationRepo().findOneBy({
+            id: input.conversationId,
+            platformId: input.platformId,
+        })
+        const projectId = conversation?.projectId ?? input.projectId
+        const file = await fileService(log).save({
+            projectId,
+            platformId: input.platformId,
+            data: input.data,
+            size: input.data.length,
+            type: FileType.FLOW_STEP_FILE,
+            fileName: input.fileName,
+            compression: FileCompression.NONE,
+            metadata: { mimetype: input.mediaType },
+        })
+        const url = await filesService.constructReadUrl({
+            fileId: file.id,
+            fileType: file.type,
+            platformId: input.platformId,
+        })
+        return { fileId: file.id, url }
+    },
+
     async saveChatMessages(input: SaveChatMessagesRequest): Promise<void> {
+        if (await isStaleRun({ conversationId: input.conversationId, runId: input.runId })) {
+            log.info({ conversation: { id: input.conversationId }, run: { id: input.runId } }, '[chatRpc#saveChatMessages] Skipped write from superseded run')
+            return
+        }
         const isSuccessfulCompletion = input.messages.length > 0
         const updates: Record<string, unknown> = {
             status: isSuccessfulCompletion ? ChatConversationStatus.IDLE : ChatConversationStatus.ERROR,
@@ -159,6 +265,13 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         if (saveResult.affected === 0) {
             log.warn({ conversation: { id: input.conversationId } }, 'saveChatMessages: conversation not found, may have been deleted')
         }
+        log.info({
+            conversation: { id: input.conversationId },
+            messageCount: input.messages.length,
+            uiMessageCount: input.uiMessages.length,
+            status: updates.status,
+            titlePresent: !isNil(input.title),
+        }, '[chatRpc#saveChatMessages] Conversation persisted')
 
         if (input.messages.length > 0) {
             const conversation = await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId })
@@ -170,13 +283,35 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async updateChatProgress(input: UpdateChatProgressRequest): Promise<void> {
+        if (await isStaleRun({ conversationId: input.conversationId, runId: input.runId })) {
+            log.debug({ conversation: { id: input.conversationId }, run: { id: input.runId } }, '[chatRpc#updateChatProgress] Skipped write from superseded run')
+            return
+        }
         await chatHelpers.conversationRepo().update(input.conversationId, {
             uiMessages: JSON.parse(JSON.stringify(input.uiMessages)),
         })
+        log.debug({ conversation: { id: input.conversationId }, uiMessageCount: input.uiMessages.length }, '[chatRpc#updateChatProgress] Progress persisted')
+    },
+
+    async heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void> {
+        if (await isStaleRun({ conversationId: input.conversationId, runId: input.runId })) {
+            return
+        }
+        // Liveness signal from the still-running worker. Bumping `updated` only while the row
+        // is STREAMING keeps the passive stale-recovery in getConversationOrThrow from flipping
+        // a genuinely-working long turn to IDLE; once the worker stops heartbeating (finished,
+        // cancelled, or dead) the row goes stale and recovery reclaims it within the timeout.
+        await chatHelpers.conversationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ updated: () => 'now()' })
+            .where('id = :id AND status = :streaming', { id: input.conversationId, streaming: ChatConversationStatus.STREAMING })
+            .execute()
     },
 
     async updateProjectContext(input: UpdateProjectContextRequest): Promise<void> {
         await chatHelpers.conversationRepo().update(input.conversationId, { projectId: input.projectId })
+        log.info({ conversation: { id: input.conversationId }, project: input.projectId ? { id: input.projectId } : undefined }, '[chatRpc#updateProjectContext] Project context updated')
     },
 
     async executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse> {
@@ -251,6 +386,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                     && typeof step.settings.actionName === 'string'
                     && chatToolClassification.isWriteActionName(step.settings.actionName))
                 .map((step) => step.displayName)
+            log.info({ flow: { id: flowId }, hasWrites: writeSteps.length > 0, writeStepCount: writeSteps.length }, '[chatRpc#executeChatTool] Flow write check')
             return { result: { hasWrites: writeSteps.length > 0, flowName: flow.version.displayName, writeSteps } }
         }
         if (input.toolName === '__get_available_connections') {
@@ -262,6 +398,8 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             return { result: [] }
         }
 
+        log.debug({ tool: { name: input.toolName, input: input.toolInput } }, '[chatRpc#executeChatTool] Tool invoke')
+        const startedAt = Date.now()
         const result = await executeCrossProjectTool({
             toolName: input.toolName,
             toolInput: input.toolInput,
@@ -270,6 +408,16 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             conversationId: input.conversationId,
             log,
         })
+        log.debug({ tool: { name: input.toolName, durationMs: Date.now() - startedAt, output: result }, resultBytes: byteLengthOf(result) }, '[chatRpc#executeChatTool] Tool finished')
         return { result }
     },
 })
+
+function byteLengthOf(value: unknown): number {
+    try {
+        return Buffer.byteLength(JSON.stringify(value) ?? '', 'utf8')
+    }
+    catch {
+        return -1
+    }
+}

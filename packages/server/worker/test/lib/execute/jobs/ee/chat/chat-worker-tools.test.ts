@@ -87,6 +87,26 @@ describe('chatWorkerTools', () => {
         })
     })
 
+    describe('extractUserFacingError', () => {
+        it('prefers the clean summary from _meta', () => {
+            const result = { content: [{ type: 'text', text: '❌ Send HTTP request failed (run abc): The request body contains invalid JSON. (400)\n\nRetry suggestion: Check the error above.' }] }
+            const meta = { errorSummary: 'The request body contains invalid JSON. (400)' }
+            expect(chatWorkerTools.extractUserFacingError({ result, meta })).toBe('The request body contains invalid JSON. (400)')
+        })
+
+        it('strips emoji and retry coaching when no summary is present', () => {
+            const result = { content: [{ type: 'text', text: '❌ Action failed (run abc): Something broke.\n\nRetry suggestion: Try again later.' }] }
+            expect(chatWorkerTools.extractUserFacingError({ result })).toBe('Action failed (run abc): Something broke.')
+        })
+
+        it('truncates very long raw errors', () => {
+            const longError = 'x'.repeat(500)
+            const out = chatWorkerTools.extractUserFacingError({ result: { error: longError } })
+            expect(out.length).toBeLessThanOrEqual(301)
+            expect(out.endsWith('…')).toBe(true)
+        })
+    })
+
     describe('ap_execute_action batch mode', () => {
         it('calls executeTool for each item and emits progress events', async () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
@@ -366,6 +386,105 @@ describe('chatWorkerTools', () => {
             const result = chatWorkerTools.truncateLargeResult(emojiHeavy)
             expect(result).not.toBe(emojiHeavy)
             expect(result).toHaveProperty('content')
+        })
+    })
+
+    describe('ap_execute_action progress guard', () => {
+        const callOptions = { messages: [], abortSignal: undefined as unknown as AbortSignal }
+
+        it('stops retrying an identical call after it fails MAX_IDENTICAL_ACTION_FAILURES times', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue(mcpFailure('The request body contains invalid JSON. (400)'))
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+
+            const input = { pieceName: '@activepieces/piece-http', actionName: 'send_request', input: { url: 'https://x', body: { type: 'json_raw' } } }
+            await tools.ap_execute_action.execute(input, { ...callOptions, toolCallId: 'g1' })
+            await tools.ap_execute_action.execute(input, { ...callOptions, toolCallId: 'g2' })
+            const third = await tools.ap_execute_action.execute(input, { ...callOptions, toolCallId: 'g3' })
+
+            expect(executeTool).toHaveBeenCalledTimes(2)
+            const text = (third as { content: Array<{ text: string }> }).content[0].text
+            expect(text).toContain('already failed')
+            expect(text).toContain('ap_get_piece_props')
+        })
+
+        it('blocks re-running a write action that already succeeded (duplicate-send guard)', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue(mcpSuccess('Sent (204)'))
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+
+            const input = { pieceName: '@activepieces/piece-http', actionName: 'send_request', input: { url: 'https://x', body_type: 'json', body: { data: { content: 'hi' } } } }
+            await tools.ap_execute_action.execute(input, { ...callOptions, toolCallId: 's1' })
+            const second = await tools.ap_execute_action.execute(input, { ...callOptions, toolCallId: 's2' })
+
+            expect(executeTool).toHaveBeenCalledTimes(1)
+            expect((second as { content: Array<{ text: string }> }).content[0].text).toContain('already ran successfully')
+        })
+
+        it('allows a different input through after a failure (key is input-specific)', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue(mcpSuccess('Sent'))
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+
+            await tools.ap_execute_action.execute({ pieceName: 'p', actionName: 'send_request', input: { a: 1 } }, { ...callOptions, toolCallId: 'a1' })
+            await tools.ap_execute_action.execute({ pieceName: 'p', actionName: 'send_request', input: { a: 2 } }, { ...callOptions, toolCallId: 'a2' })
+
+            expect(executeTool).toHaveBeenCalledTimes(2)
+        })
+    })
+
+    describe('truncateLargeResult', () => {
+        const MAX_RESULT_SIZE_BYTES = 100 * 1024
+
+        const serializedBytes = (value: unknown): number => Buffer.byteLength(JSON.stringify(value), 'utf8')
+
+        it('caps the exact incident shape — MCP { content: [{ text: <huge> }] }', () => {
+            const huge = JSON.stringify({ data: 'x'.repeat(170 * 1024) })
+            const input = { content: [{ type: 'text', text: huge }] }
+            const out = chatWorkerTools.truncateLargeResult(input)
+            expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
+        })
+
+        it('caps a root array of thousands of small objects (preview path)', () => {
+            const input = Array.from({ length: 5000 }, (_, i) => ({ id: i, name: `item-${i}`, note: 'lorem ipsum dolor' }))
+            const out = chatWorkerTools.truncateLargeResult(input)
+            expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
+        })
+
+        it('caps an object with one giant string field (shrink path)', () => {
+            const input = { status: 200, body: 'y'.repeat(200 * 1024) }
+            const out = chatWorkerTools.truncateLargeResult(input)
+            expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
+        })
+
+        it('caps a >3-length array whose items are each huge (preview re-check falls through to shrink)', () => {
+            const input = { rows: Array.from({ length: 5 }, (_, i) => ({ id: i, blob: 'z'.repeat(166 * 1024) })) }
+            const out = chatWorkerTools.truncateLargeResult(input)
+            expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
+        })
+
+        it('caps a huge primitive string', () => {
+            const out = chatWorkerTools.truncateLargeResult('w'.repeat(300 * 1024))
+            expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
+        })
+
+        it('preserves a top-level _meta after truncation', () => {
+            const input = { _meta: { pieceName: '@activepieces/piece-attio', connectionLabel: 'Attio0' }, content: [{ type: 'text', text: 'x'.repeat(170 * 1024) }] }
+            const out = chatWorkerTools.truncateLargeResult(input)
+            expect(serializedBytes(out)).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
+            expect(out).toHaveProperty('_meta', input._meta)
+        })
+
+        it('does not throw on a circular object and still caps the result', () => {
+            const circular: Record<string, unknown> = { big: 'q'.repeat(200 * 1024) }
+            circular['self'] = circular
+            expect(() => chatWorkerTools.truncateLargeResult(circular)).not.toThrow()
+            expect(serializedBytes(chatWorkerTools.truncateLargeResult(circular))).toBeLessThanOrEqual(MAX_RESULT_SIZE_BYTES)
+        })
+
+        it('returns small results unchanged', () => {
+            const input = { content: [{ type: 'text', text: '✅ Listed 3 connections' }] }
+            expect(chatWorkerTools.truncateLargeResult(input)).toBe(input)
         })
     })
 })

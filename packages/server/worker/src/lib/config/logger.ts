@@ -28,6 +28,7 @@ function buildLogger(): ApLogger {
                 betterstackToken: system.get(WorkerSystemProp.BETTERSTACK_TOKEN),
                 betterstackHost: system.get(WorkerSystemProp.BETTERSTACK_HOST),
                 otlpEnabled: system.getBoolean(WorkerSystemProp.OTEL_ENABLED) ?? false,
+                fileEnabled: system.getBoolean(WorkerSystemProp.LOG_FILE) ?? false,
             },
         },
     })

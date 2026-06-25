@@ -1,5 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "AP_EDITION",
+    "AP_DB_TYPE",
+    "AP_POSTGRES_HOST",
+    "AP_POSTGRES_PORT",
+    "AP_POSTGRES_USERNAME",
+    "AP_POSTGRES_PASSWORD",
+    "AP_POSTGRES_DATABASE",
+    "LOG_FILE",
+    "LOG_LEVEL",
+    "LOG_PRETTY",
+    "AP_LOG_FILE",
+    "AP_LOG_LEVEL",
+    "AP_LOG_PRETTY"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

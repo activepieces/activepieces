@@ -1,4 +1,3 @@
-import { BatchProgressData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Volume2, VolumeOff } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -11,16 +10,22 @@ import {
   MessageActions,
 } from '@/components/prompt-kit/message';
 import { Source } from '@/components/prompt-kit/source';
+import { StreamingText } from '@/components/prompt-kit/streaming-text';
+import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
   AnyToolPart,
   ChatUIMessage,
-  ThinkingStep,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { useTts } from '@/features/chat/lib/use-tts';
 import { cn } from '@/lib/utils';
 
+import {
+  buildMessageBlocks,
+  getLastThinkingSegment,
+  MessageBlock,
+} from '../lib/message-blocks';
 import {
   ConnectionPickerData,
   getTextFromParts,
@@ -30,242 +35,56 @@ import {
 import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
+import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
 import {
   ConnectionRequiredData,
   ConnectionsRequiredCard,
 } from './connections-required-card';
 import { CopyIconButton } from './copy-icon-button';
+import { FlowBuildCard } from './flow-build-card';
+import { GeneratedImageCard } from './generated-image-card';
+import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
+import { DocumentPreview } from './previews/document-preview';
+import { markdownPreviewComponents } from './previews/markdown-preview-components';
+import { previewUtils } from './previews/preview-utils';
+import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
-import { StreamingText } from './streaming-text';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
-const PROSE_CLASSES =
-  'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
+const PROSE_CLASSES = 'max-w-none break-words';
 
 const ACTION_BUTTON_CLASS =
   'flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
+
+const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
+  onSendPrompt,
+  claimedBuildIds = EMPTY_BUILD_IDS,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
+  onSendPrompt?: (text: string) => void;
+  claimedBuildIds?: ReadonlySet<string>;
 }) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
 
-  const {
-    blocks,
-    hasContent,
-    lastDisplayIdx: _,
-    lastTextIdx,
-    sources,
-  } = useMemo(() => {
-    const result: MessageBlock[] = [];
-    let currentThinking: {
-      steps: ThinkingStep[];
-      reasoningText: string;
-    } | null = null;
-    let hasText = false;
-    let pendingDescription: string | null = null;
-    const sources: SourceItem[] = [];
-    const seenSourceKeys = new Set<string>();
-    function addSource(source: SourceItem) {
-      const dedupeKey = source.href ?? source.key;
-      if (seenSourceKeys.has(dedupeKey)) return;
-      seenSourceKeys.add(dedupeKey);
-      sources.push(source);
-    }
-
-    function flushPendingDescription() {
-      if (pendingDescription) {
-        const thinking = ensureThinking();
-        thinking.steps.push({
-          kind: 'thinking-status',
-          text: pendingDescription,
-        });
-        pendingDescription = null;
-      }
-    }
-
-    function flushThinking() {
-      flushPendingDescription();
-      if (
-        currentThinking &&
-        (currentThinking.steps.length > 0 ||
-          currentThinking.reasoningText.length > 0)
-      ) {
-        result.push({ kind: 'thinking', ...currentThinking });
-      }
-      currentThinking = null;
-    }
-
-    function ensureThinking() {
-      if (!currentThinking) {
-        currentThinking = { steps: [], reasoningText: '' };
-      }
-      return currentThinking;
-    }
-
-    function pushToolStep(p: AnyToolPart) {
-      const thinking = ensureThinking();
-      const description = pendingDescription;
-      pendingDescription = null;
-      thinking.steps.push({ kind: 'tool', part: p, description });
-    }
-
-    for (let i = 0; i < message.parts.length; i++) {
-      const p = message.parts[i];
-
-      if (p.type === 'step-start') {
-        continue;
-      }
-      if (p.type === 'source-url') {
-        addSource({ key: p.sourceId || p.url, href: p.url, title: p.title });
-        continue;
-      }
-      if (p.type === 'source-document') {
-        addSource({ key: p.sourceId, title: p.title || p.filename });
-        continue;
-      }
-      if (p.type === 'text' && p.text.length > 0) {
-        flushThinking();
-        hasText = true;
-        result.push({ kind: 'text', text: p.text });
-      } else if (p.type === 'reasoning') {
-        flushPendingDescription();
-        const thinking = ensureThinking();
-        thinking.reasoningText += p.text;
-        const trimmed = p.text.trim();
-        if (trimmed) {
-          thinking.steps.push({ kind: 'reasoning', text: trimmed });
-        }
-      } else if (chatPartUtils.isAnyToolPart(p)) {
-        const toolName = chatPartUtils.getToolPartName(p);
-        if (chatPartUtils.isThinkingStatusTool(toolName)) {
-          const input = p.input as { status?: string } | undefined;
-          const statusText = (input?.status ?? '').trim();
-          if (statusText) {
-            flushPendingDescription();
-            pendingDescription = statusText;
-          }
-          continue;
-        }
-        if (chatPartUtils.HIDDEN_TOOL_NAMES.has(toolName)) {
-          continue;
-        }
-        if (chatPartUtils.isDisplayTool(toolName)) {
-          flushThinking();
-          result.push({ kind: 'display-tool', part: p });
-        } else if (toolName === 'ap_execute_action') {
-          const batchPart = chatPartUtils.extractBatchProgressFromOutput(p);
-          if (batchPart) {
-            flushThinking();
-            result.push({ kind: 'batch-progress', data: batchPart });
-          }
-          pushToolStep(p);
-        } else {
-          pushToolStep(p);
-        }
-      }
-    }
-
-    flushThinking();
-
-    for (let j = result.length - 1; j > 0; j--) {
-      const block = result[j];
-      const prevBlock = result[j - 1];
-      if (
-        block.kind === 'thinking' &&
-        prevBlock.kind === 'display-tool' &&
-        block.reasoningText.length === 0 &&
-        block.steps.every((s) => s.kind === 'thinking-status')
-      ) {
-        result.splice(j, 1);
-      }
-    }
-
-    const lastDisplayIdx = result.findLastIndex(
-      (b) => b.kind === 'display-tool',
-    );
-
-    if (isStreaming && !hasText) {
-      const hasThinkingBlock = result.some((b) => b.kind === 'thinking');
-      if (!hasThinkingBlock) {
-        result.push({ kind: 'thinking', steps: [], reasoningText: '' });
-      }
-    }
-
-    const lastTextIdx = result.findLastIndex((b) => b.kind === 'text');
-
-    const withReceipts: MessageBlock[] = [];
-    for (const block of result) {
-      if (block.kind !== 'thinking') {
-        withReceipts.push(block);
-        continue;
-      }
-
-      let currentSteps: ThinkingStep[] = [];
-      // Reasoning is one flat string from the AI SDK — no way to slice per tool call,
-      // so only the first sub-block after a split shows the reasoning accordion text.
-      let currentReasoning = block.reasoningText;
-
-      for (const step of block.steps) {
-        currentSteps.push(step);
-
-        if (step.kind !== 'tool') continue;
-        const toolName = chatPartUtils.getToolPartName(step.part);
-        if (toolName !== 'ap_execute_action') continue;
-        const toolCallId = chatPartUtils.getToolCallId(step.part);
-        if (!toolCallId) continue;
-
-        const hasReceipt = !!toolCallMeta[toolCallId]?.actionReceipt;
-        if (hasReceipt) {
-          if (currentSteps.length > 0 || currentReasoning.length > 0) {
-            withReceipts.push({
-              kind: 'thinking',
-              steps: currentSteps,
-              reasoningText: currentReasoning,
-            });
-          }
-          withReceipts.push({ kind: 'action-receipt', toolCallId });
-          currentSteps = [];
-          currentReasoning = '';
-        }
-      }
-
-      if (currentSteps.length > 0 || currentReasoning.length > 0) {
-        withReceipts.push({
-          kind: 'thinking',
-          steps: currentSteps,
-          reasoningText: currentReasoning,
-        });
-      } else if (block.steps.length === 0 && block.reasoningText.length === 0) {
-        withReceipts.push(block);
-      }
-    }
-
-    const lastThinkingWithReceiptsIdx = withReceipts.findLastIndex(
-      (b) => b.kind === 'thinking',
-    );
-    const cleaned = withReceipts.filter((block, idx) => {
-      if (block.kind !== 'thinking') return true;
-      if (idx === lastThinkingWithReceiptsIdx && isStreaming) return true;
-      return block.steps.length > 0 || block.reasoningText.length > 0;
-    });
-
-    return {
-      blocks: cleaned,
-      hasContent: hasText,
-      lastDisplayIdx,
-      lastTextIdx,
-      sources,
-    };
-  }, [message.parts, isStreaming, toolCallMeta]);
+  const { blocks, hasContent, sources } = useMemo(
+    () =>
+      buildMessageBlocks({
+        parts: message.parts,
+        isStreaming,
+        toolCallMeta,
+        claimedBuildIds,
+      }),
+    [message.parts, isStreaming, toolCallMeta, claimedBuildIds],
+  );
 
   const fullText = useMemo(
     () => (isStreaming ? '' : getTextFromParts(message.parts)),
@@ -288,10 +107,6 @@ export const AssistantMessage = memo(function AssistantMessage({
   }
 
   const isFromHistory = message.id.startsWith('hist-');
-  const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
-  const hasActiveDisplayCard = blocks.some(
-    (b) => b.kind === 'display-tool' && b.part.state === 'input-available',
-  );
 
   return (
     <motion.div
@@ -302,121 +117,16 @@ export const AssistantMessage = memo(function AssistantMessage({
     >
       <Message>
         <div className="min-w-0 flex-1">
-          {blocks.map((block, i) => {
-            const prevBlock = i > 0 ? blocks[i - 1] : null;
-            const needsSectionGap =
-              block.kind === 'thinking' && prevBlock?.kind === 'text';
-            switch (block.kind) {
-              case 'thinking': {
-                const hasTextAfter = blocks
-                  .slice(i + 1)
-                  .some((b) => b.kind === 'text');
-                const isMessageStreaming =
-                  isStreaming &&
-                  i === lastThinkingIdx &&
-                  !hasActiveDisplayCard &&
-                  !hasTextAfter;
-                const lastStep =
-                  block.steps.length > 0
-                    ? block.steps[block.steps.length - 1]
-                    : null;
-                const lastToolStep =
-                  lastStep?.kind === 'tool' ? lastStep : null;
-                const lastThinkingStatus =
-                  block.steps.filter((s) => s.kind === 'thinking-status').at(-1)
-                    ?.text ?? null;
-                return (
-                  <div
-                    key={`thinking-${i}`}
-                    className={cn('py-2', needsSectionGap && 'mt-6')}
-                  >
-                    <ThinkingBlock
-                      thinkingSteps={block.steps}
-                      reasoningText={block.reasoningText}
-                      isStreaming={isMessageStreaming}
-                      thinkingDurationMs={
-                        i === lastThinkingIdx
-                          ? (
-                              message as ChatUIMessage & {
-                                thinkingDurationMs?: number;
-                              }
-                            ).thinkingDurationMs
-                          : undefined
-                      }
-                      onOpenChange={setIsAccordionOpen}
-                    />
-                    {isMessageStreaming &&
-                      !isAccordionOpen &&
-                      lastStep &&
-                      (lastToolStep ? (
-                        <ToolShimmerPills
-                          toolSteps={block.steps.filter(
-                            (s): s is ThinkingStep & { kind: 'tool' } =>
-                              s.kind === 'tool',
-                          )}
-                          lastThinkingStatus={lastThinkingStatus}
-                        />
-                      ) : (
-                        lastStep.kind !== 'tool' && (
-                          <p className="pt-2 text-sm text-muted-foreground">
-                            {lastStep.text}
-                          </p>
-                        )
-                      ))}
-                  </div>
-                );
-              }
-              case 'text': {
-                const isActiveText = isStreaming && i === lastTextIdx;
-                return (
-                  <div key={`text-${i}`} className={cn('py-1', PROSE_CLASSES)}>
-                    {isActiveText ? (
-                      <StreamingText text={block.text} isStreaming={true} />
-                    ) : (
-                      <Markdown>{block.text}</Markdown>
-                    )}
-                    {isActiveText && lastTextIdx === blocks.length - 1 && (
-                      <StreamingCursor />
-                    )}
-                  </div>
-                );
-              }
-              case 'display-tool': {
-                const toolCompleted =
-                  block.part.state === 'output-available' ||
-                  block.part.state === 'output-error';
-                if (toolCompleted) {
-                  return (
-                    <div key={block.part.toolCallId} className="py-2">
-                      <DisplayToolCard
-                        part={block.part}
-                        onResolve={approveGate}
-                        isInteractive={false}
-                      />
-                    </div>
-                  );
-                }
-                return null;
-              }
-              case 'batch-progress':
-                return (
-                  <div key={`batch-${i}`} className="py-2">
-                    <BatchProgressCard progress={block.data} />
-                  </div>
-                );
-              case 'action-receipt': {
-                const receipt = toolCallMeta[block.toolCallId]?.actionReceipt;
-                if (!receipt) return null;
-                return (
-                  <div key={`receipt-${block.toolCallId}`} className="py-2">
-                    <ActionReceiptCard receipt={receipt} />
-                  </div>
-                );
-              }
-              default:
-                return null;
-            }
-          })}
+          <MessageBlocks
+            blocks={blocks}
+            isStreaming={isStreaming}
+            message={message}
+            toolCallMeta={toolCallMeta}
+            approveGate={approveGate}
+            onSendPrompt={onSendPrompt}
+            isAccordionOpen={isAccordionOpen}
+            setIsAccordionOpen={setIsAccordionOpen}
+          />
 
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">
@@ -449,17 +159,6 @@ export const AssistantMessage = memo(function AssistantMessage({
                 );
               })}
             </div>
-          )}
-
-          {!isStreaming && !hasContent && hasRenderedContent && (
-            <motion.div
-              className="py-3 text-sm text-muted-foreground"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-            >
-              {t("The agent completed its work but didn't provide a summary.")}
-            </motion.div>
           )}
 
           <MessageActions
@@ -504,6 +203,238 @@ export const AssistantMessage = memo(function AssistantMessage({
   );
 });
 
+function MessageBlocks({
+  blocks,
+  isStreaming,
+  message,
+  toolCallMeta,
+  approveGate,
+  onSendPrompt,
+  isAccordionOpen,
+  setIsAccordionOpen,
+}: {
+  blocks: MessageBlock[];
+  isStreaming: boolean;
+  message: ChatUIMessage;
+  toolCallMeta: Record<string, ToolCallMeta>;
+  approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
+  onSendPrompt?: (text: string) => void;
+  isAccordionOpen: boolean;
+  setIsAccordionOpen: (open: boolean) => void;
+}) {
+  const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
+  const lastTextIdx = blocks.findLastIndex((b) => b.kind === 'text');
+  const hasActiveDisplayCard = blocks.some(
+    (b) => b.kind === 'display-tool' && b.part.state === 'input-available',
+  );
+
+  return (
+    <>
+      {blocks.map((block, i) => {
+        const prevBlock = i > 0 ? blocks[i - 1] : null;
+        const needsSectionGap =
+          block.kind === 'thinking' && prevBlock?.kind === 'text';
+        switch (block.kind) {
+          case 'thinking': {
+            const hasTextAfter = blocks
+              .slice(i + 1)
+              .some((b) => b.kind === 'text');
+            // A skeleton after this block IS the live indicator now — let the
+            // thinking accordion settle so we don't show a shimmer pill and a
+            // skeleton at once.
+            const hasSkeletonAfter = blocks
+              .slice(i + 1)
+              .some((b) => b.kind === 'card-skeleton');
+            // A build card after this block owns the live indicator now — this
+            // is the settled discovery accordion above it, not the active one.
+            const hasBuildAfter = blocks
+              .slice(i + 1)
+              .some((b) => b.kind === 'build-plan');
+            const isMessageStreaming =
+              isStreaming &&
+              i === lastThinkingIdx &&
+              !hasActiveDisplayCard &&
+              !hasTextAfter &&
+              !hasSkeletonAfter &&
+              !hasBuildAfter;
+            const lastStep =
+              block.steps.length > 0
+                ? block.steps[block.steps.length - 1]
+                : null;
+            // Collapsed view = ONLY the last segment: the last thought and the
+            // tools after it. Earlier segments live in the expanded accordion.
+            // The thought lives in the first tool's `description`, so derive the
+            // segment from that — not from `thinking-status` steps (which only
+            // exist for a dangling thought).
+            // The thought MUST come from this round's own block — never borrow
+            // a previous round's thought (the segments are isolated by text).
+            const lastSegment = getLastThinkingSegment(block.steps);
+            const lastSegmentToolSteps = lastSegment.toolSteps;
+            const lastThinkingStatus = lastSegment.thought;
+            return (
+              <div
+                key={`thinking-${i}`}
+                className={cn('py-2', needsSectionGap && 'mt-6')}
+              >
+                <ThinkingBlock
+                  thinkingSteps={block.steps}
+                  reasoningText={block.reasoningText}
+                  isStreaming={isMessageStreaming}
+                  thinkingDurationMs={
+                    i === lastThinkingIdx
+                      ? (
+                          message as ChatUIMessage & {
+                            thinkingDurationMs?: number;
+                          }
+                        ).thinkingDurationMs
+                      : undefined
+                  }
+                  onOpenChange={setIsAccordionOpen}
+                />
+                {isMessageStreaming &&
+                  !isAccordionOpen &&
+                  lastStep &&
+                  (lastSegmentToolSteps.length > 0 ? (
+                    <ToolShimmerPills
+                      toolSteps={lastSegmentToolSteps}
+                      lastThinkingStatus={lastThinkingStatus}
+                    />
+                  ) : (
+                    lastThinkingStatus && (
+                      <p className="pt-2 text-sm text-muted-foreground line-clamp-1">
+                        {lastThinkingStatus}
+                      </p>
+                    )
+                  ))}
+              </div>
+            );
+          }
+          case 'text': {
+            const isActiveText = isStreaming && i === lastTextIdx;
+            if (previewUtils.isLikelyDocument(block.text)) {
+              return (
+                <div key={`text-${i}`} className={cn('py-1', PROSE_CLASSES)}>
+                  <DocumentPreview
+                    markdown={block.text}
+                    streaming={isActiveText}
+                  />
+                </div>
+              );
+            }
+            return (
+              <div key={`text-${i}`} className={cn('py-1', PROSE_CLASSES)}>
+                {isActiveText ? (
+                  <StreamingText
+                    text={block.text}
+                    components={markdownPreviewComponents}
+                  />
+                ) : (
+                  <Markdown components={markdownPreviewComponents}>
+                    {block.text}
+                  </Markdown>
+                )}
+              </div>
+            );
+          }
+          case 'display-tool': {
+            const toolCompleted =
+              block.part.state === 'output-available' ||
+              block.part.state === 'output-error';
+            if (toolCompleted) {
+              return (
+                <div key={block.part.toolCallId} className="py-2">
+                  <DisplayToolCard
+                    part={block.part}
+                    onResolve={approveGate}
+                    isInteractive={false}
+                  />
+                </div>
+              );
+            }
+            return null;
+          }
+          case 'batch-progress':
+            return (
+              <div key={`batch-${i}`} className="py-2">
+                <BatchProgressCard progress={block.data} />
+              </div>
+            );
+          case 'action-receipt': {
+            const receipt = toolCallMeta[block.toolCallId]?.actionReceipt;
+            if (!receipt) return null;
+            return (
+              <div key={`receipt-${block.toolCallId}`} className="py-2">
+                <ActionReceiptCard receipt={receipt} />
+              </div>
+            );
+          }
+          case 'image': {
+            const image = toolCallMeta[block.toolCallId]?.image;
+            if (!image) return null;
+            return (
+              <div key={`image-${block.toolCallId}`} className="py-2">
+                <GeneratedImageCard image={image} />
+              </div>
+            );
+          }
+          case 'files': {
+            const files = toolCallMeta[block.toolCallId]?.files;
+            if (!files || files.length === 0) return null;
+            return (
+              <div
+                key={`files-${block.toolCallId}`}
+                className="flex flex-col gap-2 py-2"
+              >
+                {files.map((file) => (
+                  <ProducedFileCard key={file.fileId} file={file} />
+                ))}
+              </div>
+            );
+          }
+          case 'card-skeleton':
+            return (
+              <div key={`skeleton-${block.toolCallId}`} className="py-2">
+                <CardSkeleton
+                  cardKind={block.cardKind}
+                  phase={block.phase}
+                  part={block.part}
+                  description={block.description}
+                />
+              </div>
+            );
+          case 'build-plan': {
+            const children = block.children ?? [];
+            return (
+              <div key={`build-${block.buildId}`} className="py-2">
+                <FlowBuildCard
+                  buildId={block.buildId}
+                  onSendPrompt={onSendPrompt}
+                  activity={
+                    children.length > 0 ? (
+                      <MessageBlocks
+                        blocks={children}
+                        isStreaming={isStreaming}
+                        message={message}
+                        toolCallMeta={toolCallMeta}
+                        approveGate={approveGate}
+                        onSendPrompt={onSendPrompt}
+                        isAccordionOpen={isAccordionOpen}
+                        setIsAccordionOpen={setIsAccordionOpen}
+                      />
+                    ) : null
+                  }
+                />
+              </div>
+            );
+          }
+          default:
+            return null;
+        }
+      })}
+    </>
+  );
+}
+
 function DisplayToolCard({
   part,
   onResolve,
@@ -529,6 +460,16 @@ function DisplayToolCard({
       return (
         <ConnectionsRequiredCard
           connections={[data as unknown as ConnectionRequiredData]}
+          onResolve={(payload) => onResolve(toolCallId, payload)}
+          isInteractive={isInteractive}
+        />
+      );
+    }
+    case 'ap_show_mcp_reconnect': {
+      if (!isInteractive && toolOutput?.['dismissed'] === true) return null;
+      return (
+        <McpReconnectCard
+          reconnect={data as unknown as McpReconnectData}
           onResolve={(payload) => onResolve(toolCallId, payload)}
           isInteractive={isInteractive}
         />
@@ -605,15 +546,6 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
   );
 }
 
-function StreamingCursor() {
-  return (
-    <span
-      className="inline-block w-[3px] h-[1.1em] bg-foreground/70 rounded-sm align-text-bottom ml-0.5 animate-pulse"
-      style={{ animationDuration: '3s' }}
-    />
-  );
-}
-
 function parseAnswerPairs(
   text: string,
 ): Array<{ question: string; answer: string }> {
@@ -627,16 +559,3 @@ function parseAnswerPairs(
     })
     .filter((p): p is { question: string; answer: string } => p !== null);
 }
-
-type MessageBlock =
-  | {
-      kind: 'thinking';
-      steps: ThinkingStep[];
-      reasoningText: string;
-    }
-  | { kind: 'text'; text: string }
-  | { kind: 'display-tool'; part: AnyToolPart }
-  | { kind: 'batch-progress'; data: BatchProgressData }
-  | { kind: 'action-receipt'; toolCallId: string };
-
-type SourceItem = { key: string; href?: string; title?: string };

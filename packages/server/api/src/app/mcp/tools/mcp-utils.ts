@@ -110,6 +110,7 @@ function suggestClosestKey(key: string, validKeys: string[]): string | null {
 function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
     const missing: string[] = []
     const uiRequired: string[] = []
+    const invalidEnums: string[] = []
     const allProps: string[] = []
     const validPropKeys = new Set<string>()
     for (const [propName, prop] of Object.entries(props)) {
@@ -117,19 +118,27 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             continue
         }
         validPropKeys.add(propName)
-        allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
-        if (prop.required) {
-            const value = input[propName]
-            if (value === undefined || value === null || value === '') {
-                if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
-                    uiRequired.push(`${propName} (${prop.displayName})`)
-                }
-                else {
-                    const hint = (prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN)
-                        ? formatOptionsHint(prop.options?.options)
-                        : ''
-                    missing.push(`${propName} (${prop.type}${hint})`)
-                }
+        const isStaticDropdown = prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
+        const optionsHint = isStaticDropdown
+            ? formatOptionsHint(prop.options?.options)
+            : (prop.type === PropertyType.DYNAMIC ? ' — DYNAMIC: resolve sub-fields with ap_get_piece_props' : '')
+        allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''}${optionsHint})`)
+        const value = input[propName]
+        const valueProvided = value !== undefined && value !== null && value !== ''
+        if (prop.required && !valueProvided) {
+            if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
+                uiRequired.push(`${propName} (${prop.displayName})`)
+            }
+            else {
+                missing.push(`${propName} (${prop.type}${isStaticDropdown ? optionsHint : ''})`)
+            }
+        }
+        if (isStaticDropdown && valueProvided && prop.options?.options) {
+            const allowed = prop.options.options.map((o) => o.value)
+            const provided = Array.isArray(value) ? value : [value]
+            const bad = provided.filter((v) => !allowed.some((a) => a === v))
+            if (bad.length > 0) {
+                invalidEnums.push(`${propName}: ${bad.map((b) => JSON.stringify(b)).join(', ')} not allowed${optionsHint}`)
             }
         }
     }
@@ -155,6 +164,9 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
         const suggestionLine = suggestions.length > 0 ? `\nSuggestions: ${suggestions.join('; ')}.` : ''
         parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.${suggestionLine} Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
     }
+    if (invalidEnums.length > 0) {
+        parts.push(`Invalid option values: ${invalidEnums.join('; ')}. Use one of the listed option values exactly (case-sensitive).`)
+    }
     if (missing.length > 0) {
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
     }
@@ -167,7 +179,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     if (hasAuth && !input.auth) {
         parts.push(`This ${componentType} requires authentication.`)
     }
-    return { parts, missing, unknownKeys, uiRequired, hasAuth }
+    return { parts, missing, unknownKeys, uiRequired, invalidEnums, hasAuth }
 }
 
 async function detectUnknownInputProps({ pieceName, pieceVersion, componentName, componentType, input, platformId, log }: DetectUnknownInputPropsParams): Promise<{ unknownKeys: string[], message: string }> {
@@ -629,6 +641,7 @@ type DiagnosisResult = {
     missing: string[]
     unknownKeys: string[]
     uiRequired: string[]
+    invalidEnums: string[]
     hasAuth: boolean
 }
 

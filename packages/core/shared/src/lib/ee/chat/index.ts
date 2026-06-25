@@ -33,6 +33,9 @@ export enum PersistedChatPartType {
     ACTION_RECEIPT = 'action-receipt',
     SOURCE_URL = 'source-url',
     SOURCE_DOCUMENT = 'source-document',
+    IMAGE = 'image',
+    FILE = 'file',
+    BUILD_PLAN = 'build-plan',
 }
 
 export enum PersistedToolCallStatus {
@@ -89,6 +92,12 @@ const PersistedActionReceiptPartSchema = z.object({
     timestamp: z.string(),
 })
 
+const PersistedBuildPlanPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.BUILD_PLAN),
+    buildId: z.string(),
+    data: z.record(z.string(), z.unknown()),
+})
+
 const PersistedSourceUrlPartSchema = z.object({
     type: z.literal(PersistedChatPartType.SOURCE_URL),
     sourceId: z.string(),
@@ -104,6 +113,30 @@ const PersistedSourceDocumentPartSchema = z.object({
     filename: z.string().optional(),
 })
 
+const PersistedImagePartSchema = z.object({
+    type: z.literal(PersistedChatPartType.IMAGE),
+    toolCallId: z.string(),
+    fileId: z.string(),
+    url: z.string(),
+    mediaType: z.string(),
+    prompt: z.string().optional(),
+    model: z.string().optional(),
+    title: z.string().optional(),
+    timestamp: z.string(),
+})
+
+const PersistedFilePartSchema = z.object({
+    type: z.literal(PersistedChatPartType.FILE),
+    toolCallId: z.string(),
+    fileId: z.string(),
+    url: z.string(),
+    mediaType: z.string(),
+    fileName: z.string(),
+    byteSize: z.number(),
+    title: z.string().optional(),
+    timestamp: z.string(),
+})
+
 const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedTextPartSchema,
     PersistedReasoningPartSchema,
@@ -111,8 +144,11 @@ const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedThinkingStatusPartSchema,
     PersistedBatchProgressPartSchema,
     PersistedActionReceiptPartSchema,
+    PersistedBuildPlanPartSchema,
     PersistedSourceUrlPartSchema,
     PersistedSourceDocumentPartSchema,
+    PersistedImagePartSchema,
+    PersistedFilePartSchema,
 ])
 
 export const PersistedChatMessageSchema = z.object({
@@ -126,8 +162,11 @@ export type PersistedReasoningPart = z.infer<typeof PersistedReasoningPartSchema
 export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
 export type PersistedThinkingStatusPart = z.infer<typeof PersistedThinkingStatusPartSchema>
 export type PersistedActionReceiptPart = z.infer<typeof PersistedActionReceiptPartSchema>
+export type PersistedBuildPlanPart = z.infer<typeof PersistedBuildPlanPartSchema>
 export type PersistedSourceUrlPart = z.infer<typeof PersistedSourceUrlPartSchema>
 export type PersistedSourceDocumentPart = z.infer<typeof PersistedSourceDocumentPartSchema>
+export type PersistedImagePart = z.infer<typeof PersistedImagePartSchema>
+export type PersistedFilePart = z.infer<typeof PersistedFilePartSchema>
 export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
 export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
 
