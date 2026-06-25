@@ -7,6 +7,10 @@ import { createDocumentBasedOnTemplate } from './lib/actions/create-document-bas
 import { readDocument } from './lib/actions/read-document.action';
 import { appendText } from './lib/actions/append-text';
 import { findDocumentAction } from './lib/actions/find-document';
+import { getDocumentPlaintext } from './lib/actions/get-document-plaintext.action';
+import { replaceAllText } from './lib/actions/replace-all-text.action';
+import { searchDocuments } from './lib/actions/search-documents.action';
+import { copyDocument } from './lib/actions/copy-document.action';
 import { newDocumentTrigger } from './lib/triggers/new-document';
 import { googleDocsAuth, getAccessToken, GoogleDocsAuthValue } from './lib/auth';
 
@@ -33,6 +37,10 @@ export const googleDocs = createPiece({
 		createDocumentBasedOnTemplate,
 		readDocument,
 		findDocumentAction,
+		getDocumentPlaintext,
+		replaceAllText,
+		searchDocuments,
+		copyDocument,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://docs.googleapis.com/v1',
 			auth: googleDocsAuth,
