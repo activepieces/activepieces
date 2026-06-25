@@ -8,6 +8,12 @@ pieces-cache-db-*.sqlite
 # local debug logs (evlog filesystem drain)
 .evlog/
 
+# local dev/session artifacts (research dumps, IDE config, captured eval output)
+.firecrawl/
+.claude/launch.json
+CONTEXT.md
+packages/server/worker/test/lib/chat-eval/live/results/
+
 # compiled output
 dist
 tmp
