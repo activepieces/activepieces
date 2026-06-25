@@ -1,4 +1,6 @@
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import {
+    AppConnectionValue,
     EngineOperationType,
     EngineResponseStatus,
     ExecuteTokenRefreshJobData,
@@ -6,22 +8,25 @@ import {
 } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
-import { isSandboxTimeout } from '../utils/sandbox-helpers'
 
 export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_TOKEN_REFRESH,
     async execute(ctx: JobContext, data: ExecuteTokenRefreshJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, pieces: [data.piece] })
+        if (resolved.kind !== 'ready') {
+            throw new Error(`Unexpected resolve outcome "${resolved.kind}" for piece-only job`)
+        }
 
         try {
-            const result = await execution.run({
+            const result = await ctx.runtime.execute({
+                workerIndex: ctx.workerIndex,
+                log: ctx.log,
                 operationType: EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH,
                 operation: {
                     piece: data.piece,
-                    auth: data.connectionValue,
+                    auth: data.connectionValue as AppConnectionValue,
                     platformId: data.platformId,
                     engineToken: ctx.engineToken,
                     internalApiUrl: ctx.internalApiUrl,
@@ -29,6 +34,7 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
                     timeoutInSeconds,
                 },
                 timeoutInSeconds,
+                provision: resolved.provision,
             })
 
             return {
@@ -39,19 +45,15 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
                 logs: result.logs,
             }
         }
-        catch (error) {
-            await execution.dispose({ invalidate: true })
-            if (isSandboxTimeout(error)) {
+        catch (e) {
+            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                 return {
                     kind: JobResultKind.SYNCHRONOUS,
                     status: EngineResponseStatus.TIMEOUT,
                     response: { skipped: true },
                 }
             }
-            throw error
-        }
-        finally {
-            await execution.dispose({ invalidate: false })
+            throw e
         }
     },
 }

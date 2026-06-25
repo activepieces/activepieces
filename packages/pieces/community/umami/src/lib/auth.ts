@@ -1,7 +1,4 @@
-import {
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   AppConnectionValueForAuthProperty,
   PieceAuth,
@@ -105,22 +102,9 @@ export function getBaseUrl(auth: UmamiAuthValue): string {
   return auth.props.baseUrl.replace(/\/+$/, '') + '/api';
 }
 
-export async function getAuthHeaders(
-  auth: UmamiAuthValue,
-): Promise<Record<string, string>> {
+export function getAuthHeaders(auth: UmamiAuthValue): Record<string, string> {
   if (auth.type === AppConnectionType.SECRET_TEXT) {
     return { 'x-umami-api-key': auth.secret_text };
   }
-  // Use the server-cached token when available (set by the refresh callback).
-  // Falls back to a fresh login only on the very first call before the cache warms up.
-  if (auth.access_token) {
-    return { Authorization: `Bearer ${auth.access_token}` };
-  }
-  const baseUrl = auth.props.baseUrl.replace(/\/+$/, '');
-  const loginResponse = await httpClient.sendRequest<{ token: string }>({
-    method: HttpMethod.POST,
-    url: `${baseUrl}/api/auth/login`,
-    body: { username: auth.props.username, password: auth.props.password },
-  });
-  return { Authorization: `Bearer ${loginResponse.body.token}` };
+  return { Authorization: `Bearer ${auth.access_token}` };
 }
