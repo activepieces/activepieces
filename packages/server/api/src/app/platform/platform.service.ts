@@ -54,6 +54,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
             filteredPieceNames: [],
+            filteredActionNames: {},
+            filteredTriggerNames: {},
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,

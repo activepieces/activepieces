@@ -1,11 +1,13 @@
-import { PieceSet } from '@activepieces/shared'
+import { PieceSet, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../../database/database-common'
 
-type PieceSetSchema = PieceSet
+type PieceSetSchema = {
+    platform: Platform
+} & PieceSet
 
 export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
     name: 'piece_set',
