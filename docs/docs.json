@@ -176,7 +176,6 @@
                   "pages": [
                      "install/configuration/overview",
                      "install/configuration/environment-variables",
-                     "install/configuration/hardware",
                      "install/configuration/breaking-changes",
                      "install/configuration/telemetry"
                   ]
@@ -205,6 +204,7 @@
                   "group": "Architecture",
                   "pages": [
                      "install/architecture/overview",
+                     "install/architecture/recommended-setup",
                      "install/architecture/workers",
                      "install/architecture/sandboxing",
                      "install/architecture/durable-execution",

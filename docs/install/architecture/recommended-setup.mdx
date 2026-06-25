@@ -1,0 +1,120 @@
+---
+title: "Recommended Setup"
+description: "The one production shape we recommend — and why we don't recommend the alternatives"
+icon: "ruler-combined"
+---
+
+There are a hundred ways to deploy Activepieces. This page describes the **one** we recommend for production, and it is deliberately opinionated: pick a single number — your peak concurrent flows — and everything else follows from it. No tuning matrix, no "it depends." If you follow this shape, the system behaves predictably under load, fails in small pieces, and scales by arithmetic.
+
+If you want the architecture behind the choices, read [Workers](./workers) and [Sandboxing](./sandboxing). If you want the raw numbers, read the [Benchmark](./benchmark). This page is the recommendation.
+
+## The shape
+
+One flow per worker. A small fleet of those. A thin tier of apps in front. Managed storage behind.
+
+| Component | Size each | How many |
+|---|---|---|
+| **Worker** | 0.5 vCPU / 1 GB, concurrency **1** | one per concurrent flow |
+| **App** | 1 vCPU / 1 GB | one per ten workers |
+| **Object storage (S3)** | same region | required |
+| **Postgres** | 2 vCPU / 4 GB, managed | one, grows with the fleet |
+| **Redis** | 1 vCPU / 1 GB, managed | one |
+
+The rest of this page is why each of those is the way it is.
+
+## One flow per worker
+
+This is the decision everything else hangs on: **run each worker at concurrency 1, hard-capped at 0.5 vCPU / 1 GB.**
+
+A worker that runs exactly one flow at a time has no neighbors to be noisy. It cannot starve another flow of CPU, it cannot steal another flow's memory, and when it dies it takes nothing with it. If a flow exhausts its 1 GB, the orchestrator kills that one worker, that one job is requeued, and every other flow in your fleet keeps running untouched. The blast radius of any failure is exactly one job.
+
+It also makes sizing trivial: **one worker is one slot is one concurrent flow.** There is no per-container memory arithmetic, no "how many sandboxes fit in this box" — the box *is* the sandbox.
+
+<Warning>
+The shipped default is `AP_WORKER_CONCURRENCY=5`, which packs five sandboxes into one container as a transitional compatibility mode. **Set it to `1`.** At 5, one runaway flow OOM-kills the container and takes all five in-flight jobs with it — the exact noisy-neighbor failure this setup exists to avoid. None of the guarantees on this page hold at the default.
+</Warning>
+
+You scale this fleet **horizontally** — add replicas, never raise concurrency. And you can ignore two knobs people often reach for: you do **not** need `AP_SANDBOX_MEMORY_LIMIT` (the 1 GB container cap is the limit), and you do **not** need a persistent cache volume (each worker fills its cache lazily and stays warm for the life of the replica). Long-lived replicas are the only warm-up mechanism you need.
+
+## Ten workers per app
+
+Put **one app (1 vCPU / 1 GB) in front of every ten workers.**
+
+The instinct is that workers do the heavy lifting, so apps can be an afterthought. It is the opposite under burst load. Every step a flow runs calls back to the app — to report progress, persist output, and deliver the final webhook response — so the app tier saturates before the worker tier does. The 1:10 ratio gives the app enough headroom that it never becomes the wall during a spike. The math is a single line:
+
+```
+apps = ceil(workers / 10)
+```
+
+## S3 is not optional
+
+Set `AP_FILE_STORAGE_LOCATION=S3` and `AP_S3_USE_SIGNED_URLS=true`, with the bucket in the **same region as your workers and database**.
+
+Activepieces *can* run without S3 — the app will serve flow bundles and piece archives itself. Don't. That funnels every artifact through the app tier, breaks the 1:10 ratio, and quietly invalidates every capacity number below. With signed URLs on, workers pull bundles and archives **straight from S3**, the app stays thin, and the cold-install fetch stays in-region and fast. Treat S3 as a hard requirement of this setup, not a nice-to-have.
+
+Full variable list: [Set up S3](../guides/setup-s3).
+
+## Sizing: count flows, not requests
+
+Here is the one place people miscount. A concurrency-1 worker is busy for the **whole duration of a flow** — up to ten minutes (`AP_FLOW_TIMEOUT_SECONDS`, default 600 s). So you size by how many flows run *at the same time*, not by how fast triggers fire.
+
+```
+workers = peak concurrent flows
+apps    = ceil(workers / 10)
+```
+
+<Tip>
+Requests per second only equals slots when flows finish almost instantly. A ten-minute flow holds its slot for ten minutes no matter how briefly its trigger fired. **Always size by concurrency, never by trigger rate.**
+</Tip>
+
+Say your peak is **50 concurrent flows**. Then:
+
+- **50 workers** → 25 vCPU / 50 GB of worker tier
+- **5 apps** (`ceil(50 / 10)`) → 5 vCPU / 5 GB of app tier
+
+That's the whole calculation. Flows beyond 50 queue in Redis and drain as slots free up — but treat that queue as an overflow cushion, not a capacity plan.
+
+### Provision for peak — autoscaling won't save you
+
+Size the worker fleet **statically for your measured peak**, and don't lean on autoscaling to catch spikes. A new worker pays a ~1-second boot tax to fork a fresh engine, *plus* however long your orchestrator takes to schedule the pod. Meanwhile a **synchronous webhook** — the `/sync` URLs behind time-sensitive call and voice flows — has to answer within 30 seconds (`AP_WEBHOOK_TIMEOUT_SECONDS`). Reactive scale-up is far too slow to defend that budget. Sizing for peak keeps a slot already warm and waiting, so latency-sensitive traffic never blocks on a worker that doesn't exist yet.
+
+## Postgres and Redis carry the whole fleet
+
+Every callback hits Postgres; every job passes through Redis. They are the shared bottleneck and the single point of failure for the entire deployment — scaling workers without scaling the database just moves the wall.
+
+So: use **managed** Postgres and Redis, in the **same region** as everything else. Start at **2 vCPU / 4 GB** for Postgres and **1 vCPU / 1 GB** for Redis, and grow Postgres as the worker count climbs, because the callback load is database-bound. One trap to avoid — set `AP_POSTGRES_POOL_SIZE` so that `fleet × pool` stays under the database's `max_connections`, or you'll hit connection exhaustion long before you hit a CPU limit.
+
+## Plan for cold, enjoy warm
+
+Every worker runs **cold by default** — a fresh engine fork per job (`AP_REUSE_SANDBOX=false`). That is the honest number to plan against, and it's also the stronger isolation guarantee: nothing leaks between runs because nothing is reused.
+
+Warm execution (`AP_REUSE_SANDBOX=true`, engine reused between jobs) is 3–5× faster in the [benchmark](./benchmark) — but treat that as upside you may observe in steady state, not a number you size for. Plan cold, and let warm be the pleasant surprise.
+
+## The limits that shape this setup
+
+Two defaults drive the whole design: the **600 s flow timeout** (how long a slot stays occupied) and the **30 s sync-webhook timeout** (your latency budget). The rest are good to know:
+
+| Limit | Default | Env var |
+|---|---|---|
+| Flow run timeout | 600 s | `AP_FLOW_TIMEOUT_SECONDS` |
+| Sync webhook response | 30 s | `AP_WEBHOOK_TIMEOUT_SECONDS` |
+| Max webhook payload | 25 MB | `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` |
+| Step file size | 25 MB | `AP_MAX_FILE_SIZE_MB` |
+| Flow run log size | 50 MB | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` |
+
+The complete table lives in [Technical Limits](/flows/known-limits).
+
+## What's coming: worker groups
+
+<Note>
+Partially shipped today (per-platform, Enterprise) and heading toward per-project. Not yet configurable per project on Community Edition.
+</Note>
+
+So far every worker in your fleet serves every project. **Worker groups** change that: a group is a named pool of concurrency-1 workers polling its own dedicated queue — a guaranteed, partitioned slice of capacity that no one outside the group can touch. Workers join a group with `AP_WORKER_GROUP_ID`.
+
+Keep two ideas separate, because they're easy to conflate:
+
+- A **worker group** is a **floor** — capacity reserved for its tenants, that nobody else can consume.
+- A **soft cap** is a **ceiling** — an optional per-project throttle on how much capacity a project may use. (The per-project version of this ceiling already exists; see [Manage Concurrency](/admin-guide/guides/manage-concurrency).)
+
+Assignment is per-platform today; the destination is **per-project, with an optional per-project soft cap** — dedicated capacity for the tenants that need it, throttling for the ones that don't.

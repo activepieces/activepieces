@@ -19,9 +19,9 @@ when the variable is unset.
 | Limit | Cloud | Env var | Self-hosted default |
 |---|---|---|---|
 | Flow run timeout | 10 min | `AP_FLOW_TIMEOUT_SECONDS` | `600` |
-| Worker process memory | 1 GB | `AP_SANDBOX_MEMORY_LIMIT` (KB) | `1048576` |
+| Worker process memory | 1 GB | the worker container's memory cap | `1 GB` |
 | Paused flow lifetime | 30 days | `AP_PAUSED_FLOW_TIMEOUT_DAYS` | `30` |
-| Worker concurrency (per worker) | 10 | `AP_WORKER_CONCURRENCY` | `5` |
+| Worker concurrency (per worker) | 1 | `AP_WORKER_CONCURRENCY` | `5` (set to `1` — see [Recommended Setup](/install/architecture/recommended-setup)) |
 
 <Tip>
 Flows paused by **Wait for Approval** or **Delay** do **not** count toward the
@@ -29,8 +29,10 @@ flow run timeout — the timeout only counts active execution time.
 </Tip>
 
 <Tip>
-The memory limit is measured for the entire Node.js process running the flow.
-About 300 MB of that is overhead for a warm process with pieces loaded.
+At the recommended concurrency of 1, the worker container's memory cap (1 GB)
+is the memory limit for the flow. If a flow exhausts it, that one worker is
+OOM-killed and the job is requeued. About 300 MB of the budget is overhead for a
+warm process with pieces loaded.
 </Tip>
 
 <Tip>

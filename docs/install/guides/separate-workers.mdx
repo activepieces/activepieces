@@ -25,15 +25,14 @@ Benefits of separating workers from the main application (APP):
     - Specify `AP_FRONTEND_URL`
     - Provide `AP_WORKER_TOKEN`
   </Step>
-  <Step title="Configure Persistent Volume">
-    Configure a persistent volume for the worker to cache flows and pieces. This is important as first uncached execution of pieces and flows are very slow. Having a persistent volume significantly improves execution speed.
-    
-    Add the following volume mapping to your docker configuration:
+  <Step title="(Optional) Configure Persistent Volume">
+    A persistent volume is **not required**. Each worker fills its execution cache lazily on first use and stays warm for the life of the replica, so long-lived workers reach steady-state speed on their own.
+
+    A volume only helps if your workers restart frequently and you want to skip the first-run cache fill after each restart. If you want it, map one volume **per worker** (it cannot be shared across workers):
     ```yaml
     volumes:
       - <your path>:/usr/src/app/cache
     ```
-    Note: This setup works whether you attach one volume per worker, It cannot be shared across multiple workers.
   </Step>
   <Step title="Launch Worker Machine">
     Launch the worker machine and supply it with the generated token.

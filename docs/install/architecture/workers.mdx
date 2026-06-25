@@ -12,18 +12,13 @@ Each worker pulls jobs off the BullMQ queue in Redis, hands them to a sandboxed 
 
 ## Scaling
 
-There are two independent knobs:
+Workers scale **horizontally**: add replicas behind any orchestrator (Docker Compose, Kubernetes, Nomad). The recommended model is **one flow per worker** — concurrency 1, one worker per concurrent flow — so you size the fleet from a single number.
 
-- **Replicas** — scale horizontally. Workers are stateless, so adding replicas is safe behind any orchestrator (Docker Compose, Kubernetes, Nomad). The default Docker Compose setup starts 5 replicas.
-- **`AP_WORKER_CONCURRENCY`** — concurrent jobs per replica. Default `5`. Each concurrent job uses one sandbox instance, so this also sets the peak sandbox count per worker.
+For the full sizing recommendation (worker/app sizes, the 1:10 app:worker ratio, the slot-based capacity formula, and database sizing), see [Recommended Setup](./recommended-setup).
 
-Size replicas for throughput, and concurrency for how much a single replica can chew on. If flows are CPU-bound, lower concurrency and add replicas. If flows are I/O-bound (most automation workloads), raise concurrency before adding replicas.
-
-See [Hardware Requirements](../configuration/hardware) for per-replica memory and CPU sizing.
-
-<Tip>
-In `UNSANDBOXED` and `SANDBOX_CODE_ONLY` modes, sandboxes stay warm across jobs, so steady-state execution is fast. `SANDBOX_PROCESS` spins up a fresh sandbox per run, which trades latency for kernel-level isolation.
-</Tip>
+<Warning>
+The shipped default `AP_WORKER_CONCURRENCY=5` runs multiple sandboxes in one container as a transitional compatibility mode. It widens the OOM blast radius to all in-flight jobs in that container. Prefer `AP_WORKER_CONCURRENCY=1` and scale by replicas.
+</Warning>
 
 ## Failure Behaviour
 

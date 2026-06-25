@@ -15,6 +15,7 @@
  .box{background:#f7f9fc;border:1px solid #e3e8f0;border-radius:8px;padding:14px 18px;margin:16px 0}
  code{background:#f0f0f0;padding:1px 5px;border-radius:4px;font-size:12px}
  .key{color:#b00} small{color:#999;font-weight:400}
+ .diagram{display:block;margin:18px auto;max-width:740px;width:100%;border:1px solid #ececec;border-radius:8px}
 </style></head><body>
 <h1>Worker-is-the-sandbox — GKE benchmark: 1:10 vs 1:20 app:worker</h1>
 <p class="sub">Does a 1:10 app:worker ratio beat 1:20? · app = 1 vCPU / 1 GB · worker = 0.5 vCPU / 1 GB · -c matched to worker count · warm vs cold</p>
@@ -45,6 +46,8 @@ so even the first install is a fast in-region fetch rather than a slow npm/regis
 warmth comes from running long-lived worker replicas, not a warm-up flag.
 </div>
 
+<img class="diagram" src="diagram-architecture.png" alt="Worker-is-the-sandbox request path">
+
 <h2>Headline — throughput by config</h2>
 <table>
 <thead><tr><th>config</th><th>warm req/s</th><th>cold req/s</th>
@@ -52,6 +55,8 @@ warmth comes from running long-lived worker replicas, not a warm-up flag.
 <tbody><tr><td><b>2 app · 40 w</b></td><td class="warm-c">59.1</td><td class="cold-c">19.8</td><td>415m (42%)</td><td>346m (69%)</td></tr><tr><td><b>4 app · 40 w</b></td><td class="warm-c">93.5</td><td class="cold-c">19.6</td><td>257m (26%)</td><td>339m (68%)</td></tr><tr><td><b>4 app · 80 w</b></td><td class="warm-c">110.5</td><td class="cold-c">33.3</td><td>0m (0%)</td><td>0m (0%)</td></tr><tr><td><b>8 app · 80 w</b></td><td class="warm-c">148.9</td><td class="cold-c">33.5</td><td>235m (24%)</td><td>336m (67%)</td></tr></tbody>
 </table>
 <p><small>app limit 1000m · worker limit 500m. The bottleneck is whoever saturates its cap first.</small></p>
+
+<img class="diagram" src="diagram-throughput.png" alt="1:10 vs 1:20 warm throughput">
 
 <h2>Per-config detail</h2>
 
@@ -114,6 +119,8 @@ warmth comes from running long-lived worker replicas, not a warm-up flag.
 
 <h2>Latency anatomy — where the milliseconds go</h2>
 
+<img class="diagram" src="diagram-latency.png" alt="Warm vs cold latency anatomy">
+
 <p><b>The flow.</b> A 4-node synchronous webhook flow: <b>Webhook trigger</b>
 (<code>catch_webhook</code>, <code>/sync</code> — holds the HTTP connection until the flow returns) →
 <b>Math Helper</b> (<code>addition_math</code>, 2 + 3) → <b>Code step</b> in isolated-vm
@@ -155,6 +162,8 @@ is structural, not timed.</p>
 
 <h2>What it says about the app : worker ratio</h2>
 <div class="box" id="verdict">
+<img class="diagram" src="diagram-bottleneck.png" alt="Bottleneck flips: warm app-bound, cold worker-bound">
+
 <b>Question: at app = 1 vCPU, does halving the ratio from 1:20 to 1:10 (twice as many apps per worker)
 buy more throughput?</b><br><br>
 
