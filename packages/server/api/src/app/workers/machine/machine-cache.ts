@@ -10,6 +10,7 @@ export type WorkerMachine = {
     information: MachineInformation
     type?: 'SHARED' | 'DEDICATED'
     workerGroupId?: string
+    workerTag?: string
 }
 
 const REDIS_KEY = 'workerMachines'

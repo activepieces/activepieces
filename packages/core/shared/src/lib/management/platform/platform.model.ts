@@ -64,6 +64,7 @@ export const PlatformPlan = z.object({
     aiProvidersEnabled: z.boolean(),
     chatEnabled: z.boolean(),
     dataManipulationEnabled: z.boolean(),
+    isolatedWorkersEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),

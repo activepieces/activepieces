@@ -1,4 +1,4 @@
-import { isNil, partition } from '@activepieces/core-utils'
+import { isNil, partition, unique } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
 import { ExecutionMode, NetworkMode, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
@@ -68,7 +68,7 @@ export const machineService = (log: FastifyBaseLogger) => {
             })
             await workerMachineCache().delete([request.workerId])
         },
-        async onConnection(request: WorkerMachineHealthcheckRequest, workerGroupId?: string | undefined): Promise<WorkerSettingsResponse> {
+        async onConnection(request: WorkerMachineHealthcheckRequest, { workerGroupId, workerTag }: OnConnectionScope = {}): Promise<WorkerSettingsResponse> {
             const existingWorker = await workerMachineCache().findOne(request.workerId)
 
             const type = isNil(workerGroupId) ? 'SHARED' : 'DEDICATED'
@@ -77,6 +77,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 information: request,
                 type,
                 workerGroupId,
+                workerTag,
             }, existingWorker)
             return buildSettingsResponse(log)
         },
@@ -102,9 +103,24 @@ export const machineService = (log: FastifyBaseLogger) => {
                     status: WorkerMachineStatus.ONLINE,
                     type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
                     workerGroupId: worker.workerGroupId,
+                    workerTag: worker.workerTag,
                 }))
         },
+        async listWorkerTags(): Promise<string[]> {
+            const allWorkers = await workerMachineCache().find()
+            const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
+            const onlineTags = allWorkers
+                .filter(worker => dayjs(worker.updated).isAfter(offlineThreshold))
+                .map(worker => worker.workerTag)
+                .filter((tag): tag is string => !isNil(tag) && tag.length > 0)
+            return unique(onlineTags)
+        },
     }
+}
+
+type OnConnectionScope = {
+    workerGroupId?: string
+    workerTag?: string
 }
 
 type OnDisconnectParams = {

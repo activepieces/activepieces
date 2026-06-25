@@ -20,12 +20,18 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getWorkerGroupQueueName, QueueName } from '../job'
+import { getWorkerGroupQueueName, getWorkerTagQueueName, QueueName } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-const getPollQueueName = (workerGroupId?: string): string => {
-    return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
+const getPollQueueName = ({ workerGroupId, workerTag }: WorkerScope): string => {
+    if (workerTag) {
+        return getWorkerTagQueueName(workerTag)
+    }
+    if (workerGroupId) {
+        return getWorkerGroupQueueName(workerGroupId)
+    }
+    return QueueName.WORKER_JOBS
 }
 
 let pagedForUnreadableAppVersion = false
@@ -44,11 +50,12 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
     })
 }
 
-export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, scope: WorkerScope = {}): WorkerToApiContract {
+    const { workerGroupId, workerTag } = scope
     return {
         async poll(input) {
-            log.info({ worker: { id: input.workerId }, workerGroupId }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, workerGroupId)
+            log.info({ worker: { id: input.workerId }, workerGroupId, workerTag }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection(input, { workerGroupId, workerTag })
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
             if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
@@ -64,7 +71,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 }
                 return null
             }
-            const pollQueueName = getPollQueueName(workerGroupId)
+            const pollQueueName = getPollQueueName({ workerGroupId, workerTag })
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
@@ -238,13 +245,13 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async getUsedPieces() {
-            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
+            const redisKey = `usedPieces:${workerTag ?? workerGroupId ?? 'shared'}`
             const pieces = await distributedStore.get<PiecePackage[]>(redisKey)
             return pieces ?? []
         },
 
         async markPieceAsUsed(input) {
-            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
+            const redisKey = `usedPieces:${workerTag ?? workerGroupId ?? 'shared'}`
             const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
             const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
             const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))
@@ -302,4 +309,9 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             return chatRpcHandlers(log).executeChatTool(input)
         },
     }
+}
+
+type WorkerScope = {
+    workerGroupId?: string
+    workerTag?: string
 }

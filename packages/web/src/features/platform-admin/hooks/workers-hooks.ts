@@ -5,6 +5,7 @@ import { workersApi } from '../api/workers-api';
 
 export const workersKeys = {
   all: ['worker-machines'] as const,
+  tags: ['worker-tags'] as const,
 };
 
 export const workersQueries = {
@@ -15,5 +16,11 @@ export const workersQueries = {
       gcTime: 0,
       refetchInterval: 5000,
       queryFn: () => workersApi.list(),
+    }),
+  useWorkerTags: (enabled: boolean) =>
+    useQuery<string[]>({
+      queryKey: workersKeys.tags,
+      queryFn: () => workersApi.listWorkerTags(),
+      enabled,
     }),
 };

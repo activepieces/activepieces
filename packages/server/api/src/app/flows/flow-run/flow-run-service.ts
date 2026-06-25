@@ -441,6 +441,8 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
     await jobQueue(log).removeOneTimeJob({
         jobId: flowRun.id,
         platformId,
+        projectId: flowRun.projectId,
+        jobType: WorkerJobType.EXECUTE_FLOW,
     })
     await runsMetadataQueue(log).add({
         id: flowRun.id,

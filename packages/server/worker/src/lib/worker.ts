@@ -51,8 +51,9 @@ let runtime: Runtime | null = null
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
+        const workerTag = system.get(WorkerSystemProp.WORKER_TAG)
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId },
+            auth: { token: workerToken, workerId, workerGroupId, workerTag },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -280,14 +281,16 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 response.EXECUTION_MODE = localExecutionMode
             }
             const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
-            if (!isNil(workerGroupId)) {
+            const workerTag = system.get(WorkerSystemProp.WORKER_TAG)
+            const isolatedScope = workerGroupId ?? (isNil(workerTag) ? undefined : `tag:${workerTag}`)
+            if (!isNil(isolatedScope)) {
                 const processSandboxedModes = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
                 if (!processSandboxedModes.includes(response.EXECUTION_MODE as ExecutionMode)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                    throw new Error(`Worker "${isolatedScope}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
                 }
                 const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
                 if (isNil(reuseSandbox)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_REUSE_SANDBOX to be set (true or false)`)
+                    throw new Error(`Worker "${isolatedScope}" requires AP_REUSE_SANDBOX to be set (true or false)`)
                 }
             }
             workerSettings.set(response)

@@ -23,6 +23,10 @@ export const getWorkerGroupQueueName = (workerGroupId: string): string => {
     return `platform-${workerGroupId}-jobs`
 }
 
+export const getWorkerTagQueueName = (workerTag: string): string => {
+    return `tag-${workerTag}-jobs`
+}
+
 export const ApQueueJob = z.object({
     id: z.string(),
     data: z.custom<JobData>(),

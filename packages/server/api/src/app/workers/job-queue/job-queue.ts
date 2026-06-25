@@ -7,7 +7,8 @@ import { redisConnections } from '../../database/redis-connections'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { getWorkerGroupQueueName, QueueName } from '../job'
+import { projectWorkerTagService } from '../../project/project-worker-tag.service'
+import { getWorkerGroupQueueName, getWorkerTagQueueName, QueueName } from '../job'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -24,7 +25,8 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         const { type, data } = params
 
         const platformId = data.platformId
-        const queueName = await getQueueName(platformId, log)
+        const projectId = 'projectId' in data ? data.projectId : null
+        const queueName = await getQueueName({ platformId, projectId, jobType: data.jobType }, log)
         const queue = await ensureQueueExists({ log, queueName })
 
         switch (type) {
@@ -68,8 +70,8 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }, '[jobQueue#removeRepeatingJob] removed jobs from all queues')
     },
 
-    async removeOneTimeJob({ jobId, platformId }: { jobId: ApId, platformId: string | null }): Promise<void> {
-        const queueName = await getQueueName(platformId, log)
+    async removeOneTimeJob({ jobId, platformId, projectId, jobType }: RemoveOneTimeJobParams): Promise<void> {
+        const queueName = await getQueueName({ platformId, projectId, jobType }, log)
         const queue = await ensureQueueExists({ log, queueName })
         const job = await queue.getJob(jobId)
         if (!isNil(job)) {
@@ -169,7 +171,18 @@ export function isUserInteractionJobData(jobData: JobData): jobData is UserInter
     return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
-async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {
+const TAG_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
+    WorkerJobType.EXECUTE_FLOW,
+    WorkerJobType.EXECUTE_WEBHOOK,
+])
+
+async function getQueueName({ platformId, projectId, jobType }: GetQueueNameParams, log: FastifyBaseLogger): Promise<string> {
+    if (!isNil(projectId) && !isNil(jobType) && TAG_ROUTABLE_JOB_TYPES.has(jobType)) {
+        const workerTag = await projectWorkerTagService(log).getProjectWorkerTag({ projectId })
+        if (!isNil(workerTag)) {
+            return getWorkerTagQueueName(workerTag)
+        }
+    }
     if (!platformId) {
         return QueueName.WORKER_JOBS
     }
@@ -184,6 +197,19 @@ async function getQueueName(platformId: string | null, log: FastifyBaseLogger): 
 export enum JobType {
     REPEATING = 'repeating',
     ONE_TIME = 'one_time',
+}
+
+type GetQueueNameParams = {
+    platformId: string | null
+    projectId?: string | null
+    jobType?: WorkerJobType
+}
+
+type RemoveOneTimeJobParams = {
+    jobId: ApId
+    platformId: string | null
+    projectId?: string | null
+    jobType?: WorkerJobType
 }
 
 type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> = {
