@@ -52,6 +52,31 @@ export const PieceComponentVisibilitySheet = ({
   onOpenChange,
   pieceSet,
 }: PieceComponentVisibilitySheetProps) => {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[600px] sm:max-w-[600px] flex flex-col p-0">
+        <PieceComponentVisibilitySheetContent
+          key={`${pieceName}:${open}`}
+          pieceName={pieceName}
+          pieceDisplayName={pieceDisplayName}
+          open={open}
+          onOpenChange={onOpenChange}
+          pieceSet={pieceSet}
+        />
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+PieceComponentVisibilitySheet.displayName = 'PieceComponentVisibilitySheet';
+
+function PieceComponentVisibilitySheetContent({
+  pieceName,
+  pieceDisplayName,
+  open,
+  onOpenChange,
+  pieceSet,
+}: PieceComponentVisibilitySheetProps) {
   const [search, setSearch] = useState('');
   const [selectedKeys, setSelectedKeys] = useState<Set<ItemKey>>(new Set());
   const [actionsExpanded, setActionsExpanded] = useState(true);
@@ -303,144 +328,138 @@ export const PieceComponentVisibilitySheet = ({
   const hasSelection = selectedKeys.size > 0;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[600px] sm:max-w-[600px] flex flex-col p-0">
-        <SheetHeader className="px-6 py-4 border-b shrink-0">
-          <SheetTitle className="text-base">
-            {t('Manage visibility')}
-          </SheetTitle>
-          <SheetDescription>
-            {pieceSet
-              ? t(
-                  'Select which actions and triggers to include in this piece set for',
-                )
-              : t(
-                  'Control which actions and triggers are available in the flow builder for',
-                )}{' '}
-            <span className="font-medium text-foreground">
-              {pieceDisplayName}
-            </span>
-          </SheetDescription>
-        </SheetHeader>
+    <>
+      <SheetHeader className="px-6 py-4 border-b shrink-0">
+        <SheetTitle className="text-base">{t('Manage visibility')}</SheetTitle>
+        <SheetDescription>
+          {pieceSet
+            ? t(
+                'Select which actions and triggers to include in this piece set for',
+              )
+            : t(
+                'Control which actions and triggers are available in the flow builder for',
+              )}{' '}
+          <span className="font-medium text-foreground">
+            {pieceDisplayName}
+          </span>
+        </SheetDescription>
+      </SheetHeader>
 
-        <div className="px-4 pt-3 flex flex-col gap-2 shrink-0">
-          <Input
-            placeholder={t('Search actions & triggers...')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-sm">
-              <Checkbox
-                checked={
-                  allVisibleSelected ||
-                  (someVisibleSelected ? 'indeterminate' : false)
-                }
-                onCheckedChange={toggleSelectAll}
-                disabled={allVisibleItems.length === 0}
-              />
-              {t('Select all')}
-            </label>
-            <div className="flex-1" />
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasSelection || isLoading}
-              onClick={handleHideSelected}
-            >
-              <EyeOff className="size-4" />
-              {t('Hide selected')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasSelection || isLoading}
-              onClick={handleShowSelected}
-            >
-              <Eye className="size-4" />
-              {t('Show selected')}
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="size-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : allVisibleItems.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-              {t('No results found')}
-            </div>
-          ) : (
-            <div>
-              {filteredActions.length > 0 && (
-                <ComponentGroup
-                  label={t('Actions')}
-                  items={filteredActions}
-                  totalCount={allActions.length}
-                  visibleCount={visibleActionCount}
-                  expanded={actionsExpanded}
-                  onExpandedChange={setActionsExpanded}
-                  selectedKeys={selectedKeys}
-                  hiddenNames={localHiddenActions}
-                  onToggleGroupSelection={toggleGroupSelection}
-                  onToggleItemSelection={toggleItemSelection}
-                  chevronAtEnd={true}
-                  onToggleComponentVisibility={(componentName) =>
-                    toggleComponent({
-                      pieceName,
-                      componentName,
-                      isAction: true,
-                    })
-                  }
-                />
-              )}
-              {filteredTriggers.length > 0 && (
-                <ComponentGroup
-                  label={t('Triggers')}
-                  items={filteredTriggers}
-                  totalCount={allTriggers.length}
-                  visibleCount={visibleTriggerCount}
-                  expanded={triggersExpanded}
-                  onExpandedChange={setTriggersExpanded}
-                  selectedKeys={selectedKeys}
-                  hiddenNames={localHiddenTriggers}
-                  onToggleGroupSelection={toggleGroupSelection}
-                  onToggleItemSelection={toggleItemSelection}
-                  chevronAtEnd={true}
-                  onToggleComponentVisibility={(componentName) =>
-                    toggleComponent({
-                      pieceName,
-                      componentName,
-                      isAction: false,
-                    })
-                  }
-                />
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-2">
+      <div className="px-4 pt-3 flex flex-col gap-2 shrink-0">
+        <Input
+          placeholder={t('Search actions & triggers...')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-sm">
+            <Checkbox
+              checked={
+                allVisibleSelected ||
+                (someVisibleSelected ? 'indeterminate' : false)
+              }
+              onCheckedChange={toggleSelectAll}
+              disabled={allVisibleItems.length === 0}
+            />
+            {t('Select all')}
+          </label>
+          <div className="flex-1" />
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isMutating}
+            size="sm"
+            disabled={!hasSelection || isLoading}
+            onClick={handleHideSelected}
           >
-            {t('Cancel')}
+            <EyeOff className="size-4" />
+            {t('Hide selected')}
           </Button>
-          <Button disabled={!isDirty || isMutating} onClick={handleSave}>
-            {isMutating && <Loader2 className="size-4 animate-spin" />}
-            {t('Save changes')}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!hasSelection || isLoading}
+            onClick={handleShowSelected}
+          >
+            <Eye className="size-4" />
+            {t('Show selected')}
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
-  );
-};
+      </div>
 
-PieceComponentVisibilitySheet.displayName = 'PieceComponentVisibilitySheet';
+      <div className="flex-1 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : allVisibleItems.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            {t('No results found')}
+          </div>
+        ) : (
+          <div>
+            {filteredActions.length > 0 && (
+              <ComponentGroup
+                label={t('Actions')}
+                items={filteredActions}
+                totalCount={allActions.length}
+                visibleCount={visibleActionCount}
+                expanded={actionsExpanded}
+                onExpandedChange={setActionsExpanded}
+                selectedKeys={selectedKeys}
+                hiddenNames={localHiddenActions}
+                onToggleGroupSelection={toggleGroupSelection}
+                onToggleItemSelection={toggleItemSelection}
+                chevronAtEnd={true}
+                onToggleComponentVisibility={(componentName) =>
+                  toggleComponent({
+                    pieceName,
+                    componentName,
+                    isAction: true,
+                  })
+                }
+              />
+            )}
+            {filteredTriggers.length > 0 && (
+              <ComponentGroup
+                label={t('Triggers')}
+                items={filteredTriggers}
+                totalCount={allTriggers.length}
+                visibleCount={visibleTriggerCount}
+                expanded={triggersExpanded}
+                onExpandedChange={setTriggersExpanded}
+                selectedKeys={selectedKeys}
+                hiddenNames={localHiddenTriggers}
+                onToggleGroupSelection={toggleGroupSelection}
+                onToggleItemSelection={toggleItemSelection}
+                chevronAtEnd={true}
+                onToggleComponentVisibility={(componentName) =>
+                  toggleComponent({
+                    pieceName,
+                    componentName,
+                    isAction: false,
+                  })
+                }
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={isMutating}
+        >
+          {t('Cancel')}
+        </Button>
+        <Button disabled={!isDirty || isMutating} onClick={handleSave}>
+          {isMutating && <Loader2 className="size-4 animate-spin" />}
+          {t('Save changes')}
+        </Button>
+      </div>
+    </>
+  );
+}
 
 type ComponentGroupProps = {
   label: string;

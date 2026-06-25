@@ -9,6 +9,8 @@ import { PieceSetEntity } from './piece-set.entity'
 
 export const pieceSetRepo = repoFactory<PieceSet>(PieceSetEntity)
 
+const NEW_PIECE_BATCH_SIZE = 200
+
 type ListParams = {
     platformId: string
     cursor?: string
@@ -201,50 +203,73 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
     },
 
     async handleNewPieceInstalled({ platformId, pieceName, isNewPiece, newActionNames, newTriggerNames }: HandleNewPieceInstalledParams): Promise<void> {
-        const sets = platformId
-            ? await pieceSetRepo().find({ where: { platformId } })
-            : await pieceSetRepo().find()
+        const hasNewActionsOrTriggers = newActionNames.length > 0 || newTriggerNames.length > 0
+        if (!isNewPiece && !hasNewActionsOrTriggers) return
 
-        await Promise.all(sets.map(async (set) => {
-            const config = set.config
-            let changed = false
+        const orConditions: string[] = []
+        if (isNewPiece) orConditions.push('ps.includeNewPieces = false')
+        if (hasNewActionsOrTriggers) orConditions.push('ps.includeNewActions = false')
 
-            const disabledPieces = [...config.disabledPieces]
-            const disabledActions = { ...config.disabledActions }
-            const disabledTriggers = { ...config.disabledTriggers }
+        let cursor: string | undefined
+        for (;;) {
+            const qb = pieceSetRepo()
+                .createQueryBuilder('ps')
+                .where(`(${orConditions.join(' OR ')})`)
+                .orderBy('ps.id', 'ASC')
+                .take(NEW_PIECE_BATCH_SIZE)
 
-            if (isNewPiece && !set.includeNewPieces && !disabledPieces.includes(pieceName)) {
-                disabledPieces.push(pieceName)
-                changed = true
-            }
+            if (!isNil(platformId)) qb.andWhere('ps.platformId = :platformId', { platformId })
+            if (!isNil(cursor)) qb.andWhere('ps.id > :cursor', { cursor })
 
-            if (!set.includeNewActions) {
-                if (newActionNames.length > 0) {
-                    const existing = disabledActions[pieceName] ?? []
-                    const toAdd = newActionNames.filter((a) => !existing.includes(a))
-                    if (toAdd.length > 0) {
-                        disabledActions[pieceName] = [...existing, ...toAdd]
-                        changed = true
-                    }
-                }
-                if (newTriggerNames.length > 0) {
-                    const existing = disabledTriggers[pieceName] ?? []
-                    const toAdd = newTriggerNames.filter((t) => !existing.includes(t))
-                    if (toAdd.length > 0) {
-                        disabledTriggers[pieceName] = [...existing, ...toAdd]
-                        changed = true
-                    }
-                }
-            }
+            const sets = await qb.getMany()
+            if (sets.length === 0) break
 
-            if (changed) {
-                await pieceSetRepo().update({ id: set.id }, {
-                    config: { disabledPieces, disabledActions, disabledTriggers },
-                })
-            }
-        }))
+            await Promise.all(sets.map(async (set) => {
+                const updatedConfig = computeConfigForNewPiece({ set, pieceName, isNewPiece, newActionNames, newTriggerNames })
+                if (isNil(updatedConfig)) return
+                await pieceSetRepo().update({ id: set.id }, { config: updatedConfig })
+            }))
+
+            if (sets.length < NEW_PIECE_BATCH_SIZE) break
+            cursor = sets[sets.length - 1].id
+        }
     },
 })
+
+function computeConfigForNewPiece({ set, pieceName, isNewPiece, newActionNames, newTriggerNames }: { set: PieceSet, pieceName: string, isNewPiece: boolean, newActionNames: string[], newTriggerNames: string[] }): PieceSetConfig | null {
+    const config = set.config
+    let changed = false
+
+    const disabledPieces = [...config.disabledPieces]
+    const disabledActions = { ...config.disabledActions }
+    const disabledTriggers = { ...config.disabledTriggers }
+
+    if (isNewPiece && !set.includeNewPieces && !disabledPieces.includes(pieceName)) {
+        disabledPieces.push(pieceName)
+        changed = true
+    }
+
+    if (!set.includeNewActions) {
+        if (newActionNames.length > 0) {
+            const existing = disabledActions[pieceName] ?? []
+            const toAdd = newActionNames.filter((a) => !existing.includes(a))
+            if (toAdd.length > 0) {
+                disabledActions[pieceName] = [...existing, ...toAdd]
+                changed = true
+            }
+        }
+        if (newTriggerNames.length > 0) {
+            const existing = disabledTriggers[pieceName] ?? []
+            const toAdd = newTriggerNames.filter((t) => !existing.includes(t))
+            if (toAdd.length > 0) {
+                disabledTriggers[pieceName] = [...existing, ...toAdd]
+                changed = true
+            }
+        }
+    }
+
+    return changed ? { disabledPieces, disabledActions, disabledTriggers } : null
+}
 
 function buildDefaultSet(platformId: string) {
     return {

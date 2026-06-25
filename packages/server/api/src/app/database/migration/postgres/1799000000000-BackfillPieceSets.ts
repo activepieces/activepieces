@@ -1,8 +1,9 @@
 import { apId } from '@activepieces/core-utils'
 import { ApEdition } from '@activepieces/shared'
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+import { Migration } from '../../migration'
 
 // Matches the post-1798 config format: blocklist-only arrays
 type PieceSetConfig = {
@@ -22,8 +23,10 @@ const PROJECT_BATCH = 500
 
 const log = system.globalLogger()
 
-export class BackfillPieceSets1799000000000 implements MigrationInterface {
+export class BackfillPieceSets1799000000000 implements Migration {
     name = 'BackfillPieceSets1799000000000'
+    breaking = false
+    release = '0.103.0'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
