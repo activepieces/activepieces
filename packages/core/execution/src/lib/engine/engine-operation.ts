@@ -15,6 +15,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+    EXECUTE_REFRESH_TOKEN_AUTH = 'EXECUTE_REFRESH_TOKEN_AUTH',
 }
 
 export enum TriggerHookType {
@@ -33,6 +34,7 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
+    | ExecuteRefreshTokenAuthOperation
 
 
 export const EngineStdout = z.object({
@@ -61,6 +63,12 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
     piece: PiecePackage
     auth: AppConnectionValue
 }
+
+export type ExecuteRefreshTokenAuthOperation = ExecuteValidateAuthOperation
+
+export type ExecuteRefreshTokenAuthResponse =
+    | { skipped: true }
+    | { skipped: false, access_token: string, expires_in: number }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
