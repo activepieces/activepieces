@@ -32,8 +32,10 @@ if [ "$WORKER_IMAGE" = "ap-worker:local" ]; then
 fi
 
 # The minimal worker image has no entrypoint to auto-generate the worker token, so mint it here
-# (signed with the same AP_JWT_SECRET the app validates with) and inject it.
-export AP_WORKER_TOKEN=$(node -e "const jwt=require('jsonwebtoken'),crypto=require('crypto');process.stdout.write(jwt.sign({id:crypto.randomUUID(),type:'WORKER'},'benchmark-secret-key-for-testing',{expiresIn:'100y',keyid:'1',algorithm:'HS256',issuer:'activepieces'}))")
+# (signed with the same AP_JWT_SECRET the app validates with) and inject it. Override the secret via env;
+# the default matches docker-compose.yml. Short-lived (1 day) — a benchmark run lasts minutes.
+JWT_SECRET="${AP_JWT_SECRET:-benchmark-secret-key-for-testing}"
+export AP_WORKER_TOKEN=$(JWT_SECRET="$JWT_SECRET" node -e "const jwt=require('jsonwebtoken'),crypto=require('crypto');process.stdout.write(jwt.sign({id:crypto.randomUUID(),type:'WORKER'},process.env.JWT_SECRET,{expiresIn:'1d',keyid:'1',algorithm:'HS256',issuer:'activepieces'}))")
 
 echo "=== Starting stack ($WORKER_REPLICAS workers @ 0.5 CPU / 1 GB, concurrency 1) ==="
 WORKER_REPLICAS=$WORKER_REPLICAS WORKER_IMAGE=$WORKER_IMAGE AP_WORKER_TOKEN=$AP_WORKER_TOKEN AP_EXECUTION_MODE=SANDBOX_CODE_ONLY $COMPOSE up -d

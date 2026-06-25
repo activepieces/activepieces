@@ -14,7 +14,8 @@ data:
   AP_POSTGRES_PORT: "5432"
   AP_REDIS_HOST: redis
   AP_REDIS_PORT: "6379"
-  AP_JWT_SECRET: benchmark-secret-key-for-testing
+  # Substituted by run-gke.sh (defaults to a random per-run secret); kept in sync with the signed worker token.
+  AP_JWT_SECRET: __AP_JWT_SECRET__
   AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
   AP_ENVIRONMENT: prod
   AP_TELEMETRY_ENABLED: "false"

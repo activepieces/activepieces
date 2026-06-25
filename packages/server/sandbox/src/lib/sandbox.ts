@@ -20,10 +20,19 @@ import {
 // (threadSafeMkdir / cache-state), so there is no per-key provision dedup here. execute owns the slot
 // lifecycle: acquire -> provision -> run -> release on success / invalidate on throw, re-raising the
 // sandbox ActivepiecesError codes (timeout / memory / log-size) that handlers already catch. See ADR 0004.
-export function createSandboxRuntime({ concurrency = 1, basePath, getSettings, cleanCacheAfterRun = false, log: _log }: CreateSandboxRuntimeParams): Runtime {
+export function createSandboxRuntime({ concurrency = 1, basePath, getSettings, cleanCacheAfterRun = false, log }: CreateSandboxRuntimeParams): Runtime {
     const managers: SandboxManager[] = Array.from({ length: concurrency }, (_, index) =>
         createSandboxManager({ boxId: index + 1, basePath, getSettings }),
     )
+
+    // cleanExceptEngine() wipes the SHARED basePath, so it is only safe when this runtime owns a single
+    // box. With concurrency > 1 (transitional multi-box mode, ADR 0004) the boxes share basePath and a
+    // wipe after one run would delete pieces another box is mid-provision into. Gate the knob to the
+    // single-box model and warn loudly if it was requested alongside concurrency > 1.
+    const cleanCacheEnabled = cleanCacheAfterRun && concurrency === 1
+    if (cleanCacheAfterRun && !cleanCacheEnabled) {
+        log.warn({ concurrency }, 'AP_SANDBOX_CLEAN_CACHE ignored: shared-cache wipe is unsafe with concurrency > 1')
+    }
 
     return {
         async execute({ workerIndex, log, operationType, operation, timeoutInSeconds, provision }: ExecuteParams): Promise<RuntimeExecutionResult> {
@@ -84,7 +93,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings, c
                 // every run so the next one re-provisions cold — but KEEP the static engine bundle (its
                 // install is then a no-op cache hit). Clear the in-memory cache layers too, or the next run
                 // sees a stale "installed" entry and skips re-installing files that no longer exist on disk.
-                if (cleanCacheAfterRun) {
+                if (cleanCacheEnabled) {
                     await tryCatch(() => cacheUtils(basePath).cleanExceptEngine())
                     clearMemoryCache()
                     clearPieceMemoryCache()
