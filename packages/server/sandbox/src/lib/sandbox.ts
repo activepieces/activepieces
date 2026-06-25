@@ -1,10 +1,10 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { cacheUtils } from './cache/cache-paths'
 import { clearMemoryCache } from './cache/cache-state'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { clearPieceMemoryCache } from './cache/pieces/piece-installer'
-import { createSandboxManager } from './sandbox-manager'
+import { createSandboxManager, SandboxManager } from './sandbox-manager'
 import {
     ExecuteParams,
     Runtime,
@@ -13,16 +13,27 @@ import {
     SandboxSettings,
 } from './types'
 
-// A single sandbox box. One manager, one in-flight operation at a time — concurrency is gated by the
-// host (the worker's container pool or Cloud Run runs one box per container at request concurrency 1),
-// so there is no slot allocation and no per-key provision dedup to do here. execute owns the slot
+// One box per worker at the destination (concurrency 1), or N independent boxes in the transitional
+// compatibility mode that honors AP_WORKER_CONCURRENCY. Each box is its own manager, holding one
+// in-flight operation at a time; the worker runs one poll loop per box and routes each execute to its
+// box by workerIndex. The boxes share the on-disk caches, which are already concurrency-safe
+// (threadSafeMkdir / cache-state), so there is no per-key provision dedup here. execute owns the slot
 // lifecycle: acquire -> provision -> run -> release on success / invalidate on throw, re-raising the
-// sandbox ActivepiecesError codes (timeout / memory / log-size) that handlers already catch.
-export function createSandboxRuntime({ basePath, getSettings, cleanCacheAfterRun = false, log: _log }: CreateSandboxRuntimeParams): Runtime {
-    const manager = createSandboxManager({ boxId: 1, basePath, getSettings })
+// sandbox ActivepiecesError codes (timeout / memory / log-size) that handlers already catch. See ADR 0004.
+export function createSandboxRuntime({ concurrency = 1, basePath, getSettings, cleanCacheAfterRun = false, log: _log }: CreateSandboxRuntimeParams): Runtime {
+    const managers: SandboxManager[] = Array.from({ length: concurrency }, (_, index) =>
+        createSandboxManager({ boxId: index + 1, basePath, getSettings }),
+    )
 
     return {
-        async execute({ log, operationType, operation, timeoutInSeconds, provision }: ExecuteParams): Promise<RuntimeExecutionResult> {
+        async execute({ workerIndex, log, operationType, operation, timeoutInSeconds, provision }: ExecuteParams): Promise<RuntimeExecutionResult> {
+            const manager = managers[workerIndex]
+            if (isNil(manager)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: `No sandbox manager for worker index ${workerIndex} (concurrency=${concurrency})` },
+                })
+            }
             try {
                 const sandbox = manager.acquire({ log })
 
@@ -38,18 +49,26 @@ export function createSandboxRuntime({ basePath, getSettings, cleanCacheAfterRun
                 }
 
                 try {
-                    // Time the actual engine run (start child + execute one operation) separately from
-                    // provisioning, so the wide event carries executionMs alongside installPiecesMs /
-                    // flowBundleDownloadMs for a clean per-run breakdown.
+                    // Break the engine timeline into its two worker-observable phases:
+                    //   sandboxStart = fork the engine child + Node boot + parse main.js (V8-cached) +
+                    //                  isolated-vm init + socket connect handshake.
+                    //   sandboxRun   = send the operation + the engine runs the flow steps + returns.
+                    // executionMs wraps both (total), so the report shows execution = start + run.
                     const result = await wideEvent.timed({
                         name: 'execution',
                         fn: async () => {
-                            await sandbox.start({
-                                flowVersionId: provision.flowVersionId,
-                                platformId: provision.platformId,
-                                mounts: [],
+                            await wideEvent.timed({
+                                name: 'sandboxStart',
+                                fn: () => sandbox.start({
+                                    flowVersionId: provision.flowVersionId,
+                                    platformId: provision.platformId,
+                                    mounts: [],
+                                }),
                             })
-                            return sandbox.execute(operationType, operation, { timeoutInSeconds })
+                            return wideEvent.timed({
+                                name: 'sandboxRun',
+                                fn: () => sandbox.execute(operationType, operation, { timeoutInSeconds }),
+                            })
                         },
                     })
                     await manager.release(log)
@@ -73,24 +92,24 @@ export function createSandboxRuntime({ basePath, getSettings, cleanCacheAfterRun
             }
         },
         getActiveExecutors(): RuntimeExecutorInfo[] {
-            const info = manager.getActiveSandbox()
-            if (isNil(info)) {
-                return []
-            }
-            return [{
-                sandboxId: info.sandboxId,
-                boxId: info.boxId,
-                pid: info.pid,
-                busy: info.busy,
-            }]
+            return managers
+                .map((manager) => manager.getActiveSandbox())
+                .filter((info) => !isNil(info))
+                .map((info) => ({
+                    sandboxId: info.sandboxId,
+                    boxId: info.boxId,
+                    pid: info.pid,
+                    busy: info.busy,
+                }))
         },
         async shutdown(shutdownLog: ApLogger): Promise<void> {
-            await manager.shutdown(shutdownLog)
+            await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))
         },
     }
 }
 
 type CreateSandboxRuntimeParams = {
+    concurrency?: number
     basePath: string
     getSettings: () => SandboxSettings
     cleanCacheAfterRun?: boolean

@@ -1,0 +1,151 @@
+# Worker-is-the-sandbox stack on GKE (ADR 0003). No poolserver: each worker IS the sandbox, capped at
+# 0.5 CPU / 1 GB, concurrency 1, running the engine in-process. Scale = worker replicas. Object store is
+# a real same-region GCS bucket (europe-west1) over the S3-interop endpoint with signed URLs on, so the
+# engine pulls the flow bundle + piece archives via presigned links. Webhook traffic enters via the app
+# LoadBalancer.
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: ap-config }
+data:
+  AP_POSTGRES_DATABASE: activepieces
+  AP_POSTGRES_USERNAME: postgres
+  AP_POSTGRES_PASSWORD: password
+  AP_POSTGRES_HOST: postgres
+  AP_POSTGRES_PORT: "5432"
+  AP_REDIS_HOST: redis
+  AP_REDIS_PORT: "6379"
+  AP_JWT_SECRET: benchmark-secret-key-for-testing
+  AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
+  AP_ENVIRONMENT: prod
+  AP_TELEMETRY_ENABLED: "false"
+  AP_LOG_LEVEL: error
+  AP_FRONTEND_URL: http://app:80
+  AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
+  AP_DEFAULT_CONCURRENT_JOBS_LIMIT: "1000"
+  AP_PROJECT_RATE_LIMITER_ENABLED: "false"
+  AP_FILE_STORAGE_LOCATION: S3
+  # Real same-region object store: a GCS bucket in europe-west1 reached over the S3-interop endpoint
+  # with HMAC keys. The app generates SigV4 presigned URLs (forcePathStyle on, since endpoint is set);
+  # the engine fetches flow bundle + piece archives directly from GCS via those links.
+  AP_S3_BUCKET: ap-bench-eu-b3803
+  # HMAC access key + secret are NOT here — they live in the `ap-s3-secret` Kubernetes Secret,
+  # created out-of-band (kubectl create secret) and injected via secretRef on app + worker, so the
+  # live credential never sits in this plaintext manifest.
+  AP_S3_ENDPOINT: https://storage.googleapis.com
+  AP_S3_REGION: europe-west1
+  AP_S3_USE_SIGNED_URLS: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: postgres }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: postgres } }
+  template:
+    metadata: { labels: { app: postgres } }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:14.4
+          env:
+            - { name: POSTGRES_DB, value: activepieces }
+            - { name: POSTGRES_USER, value: postgres }
+            - { name: POSTGRES_PASSWORD, value: password }
+          ports: [{ containerPort: 5432 }]
+          resources: { requests: { cpu: "500m", memory: 512Mi } }
+          volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
+      volumes: [{ name: data, emptyDir: {} }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: postgres }
+spec:
+  selector: { app: postgres }
+  ports: [{ port: 5432, targetPort: 5432 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: redis }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: redis } }
+  template:
+    metadata: { labels: { app: redis } }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.0.7
+          ports: [{ containerPort: 6379 }]
+          resources: { requests: { cpu: "250m", memory: 256Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: redis }
+spec:
+  selector: { app: redis }
+  ports: [{ port: 6379, targetPort: 6379 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: app }
+spec:
+  replicas: __APP_REPLICAS__
+  selector: { matchLabels: { app: app } }
+  template:
+    metadata: { labels: { app: app } }
+    spec:
+      containers:
+        - name: app
+          # App image lives in the EU AR repo (built by the team); GKE pulls it cross-region once at
+          # provisioning. The runtime data path (webhook -> app -> redis -> worker -> MinIO) stays in US.
+          image: europe-west1-docker.pkg.dev/activepieces-b3803/poolserver/ap-app:latest
+          envFrom: [{ configMapRef: { name: ap-config } }, { secretRef: { name: ap-s3-secret } }]
+          env:
+            - { name: AP_CONTAINER_TYPE, value: APP }
+            - { name: AP_PORT, value: "80" }
+          ports: [{ containerPort: 80 }]
+          resources: { requests: { cpu: "__APP_CPU__", memory: 1Gi } }
+          readinessProbe:
+            httpGet: { path: /api/v1/flags, port: 80 }
+            initialDelaySeconds: 20
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata: { name: app }
+spec:
+  type: LoadBalancer
+  selector: { app: app }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: worker }
+spec:
+  # Scale knob: each replica is one sandbox at concurrency 1. __WORKER_REPLICAS__ substituted by run-gke.sh.
+  replicas: __WORKER_REPLICAS__
+  # maxSurge:0 so a rolling restart never needs spare capacity beyond `replicas` (the fleet runs near
+  # full node capacity at high worker counts); old pods drain before new ones are created.
+  strategy: { rollingUpdate: { maxSurge: 0, maxUnavailable: 4 } }
+  selector: { matchLabels: { app: worker } }
+  template:
+    metadata: { labels: { app: worker } }
+    spec:
+      containers:
+        - name: worker
+          image: us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench
+          imagePullPolicy: Always
+          envFrom: [{ configMapRef: { name: ap-config } }, { secretRef: { name: ap-s3-secret } }]
+          env:
+            - { name: AP_CONTAINER_TYPE, value: WORKER }
+            - { name: AP_WORKER_CONCURRENCY, value: "1" }
+            - { name: AP_REUSE_SANDBOX, value: "__REUSE_SANDBOX__" }
+            - { name: AP_SANDBOX_CLEAN_CACHE, value: "__CLEAN_CACHE__" }
+            - { name: AP_CACHE_BASE_PATH, value: /tmp/cache }
+            # Minimal image has no entrypoint to mint the worker token; injected by run-gke.sh.
+            - { name: AP_WORKER_TOKEN, value: __AP_WORKER_TOKEN__ }
+          # The hard CPU / 1 GB cap per the model — requests == limits for a guaranteed slice.
+          # __WORKER_CPU__ is substituted by run-gke.sh (e.g. 500m or "1").
+          resources:
+            requests: { cpu: "__WORKER_CPU__", memory: 1Gi }
+            limits: { cpu: "__WORKER_CPU__", memory: 1Gi }

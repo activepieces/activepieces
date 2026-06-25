@@ -1,19 +1,19 @@
 # Activepieces — Execution Runtime
 
-The vocabulary around *where and how a flow job is executed*: the **Worker**, which is itself the **Sandbox** — it polls one job, resolves it, and runs the engine in-process. Parallelism is horizontal (more worker replicas), not internal.
+The vocabulary around *where and how a flow job is executed*: the **Worker**, which is itself the **Sandbox** — it polls a job, resolves it, and runs the engine in-process. The destination model is concurrency 1 with horizontal parallelism (more worker replicas); a transitional compatibility mode still honors `AP_WORKER_CONCURRENCY=N` by running N in-process boxes in one container (see **Worker**, ADR 0004).
 
 ## Language
 
 **Worker**:
-The deployment unit and the execution unit, now one and the same. A worker polls **one** job at a time (concurrency 1), acts as **Resolver**, runs the job in its in-process **Sandbox**, and reports the result. It is the only holder of the `apiClient`. Scale is **horizontal**: run N worker replicas, each its own container hard-capped at 0.5 CPU / 1 GB. An OOM kills one worker and the orchestrator restarts it — the blast radius is one job. (Replaces the old split of a poller worker + a separate sandbox pool/Cloud Run.)
+The deployment unit and the execution unit, now one and the same. A worker polls jobs, acts as **Resolver**, runs each job in an in-process **Sandbox**, and reports the result. It is the only holder of the `apiClient`. The destination model is **concurrency 1** — one job at a time per container — with scale **horizontal**: run N worker replicas, each its own container hard-capped at 0.5 CPU / 1 GB, so an OOM kills one worker (blast radius one job) and the orchestrator restarts it. **Transitional compatibility mode:** a worker still honors `AP_WORKER_CONCURRENCY=N` by running **N poll loops** over **N in-process boxes** in one container, preserving the per-container throughput existing deployments depend on. The default is **5** (`main`'s historical value — preserving old behavior), so the default deployment *is* this mode; concurrency 1 is the destination, reached later by flipping the default and removing the box array. At `N>1` the OOM blast radius is all N in-flight jobs and the operator must size the container accordingly (see ADR 0004). (Replaces the old split of a poller worker + a separate sandbox pool/Cloud Run.)
 
 **Runtime**:
-The worker's **in-process** execution object — `{ execute(params), getActiveExecutors(), shutdown() }`. `execute` materializes the resolved **provision** onto disk, forks the engine child for one operation, and returns the result; it does **not** resolve dependencies (the **Resolver** does, first) and never reaches the app. There is a single implementation — no pluggable seam, no remote transport, no `kind`. (Supersedes the old `createExecution → provision → run → dispose` triad and the `LOCAL`/`GCP_CLOUD_RUN` kinds.)
+The worker's **in-process** execution object — `{ execute(params), getActiveExecutors(), shutdown() }`. `execute` materializes the resolved **provision** onto disk, forks the engine child for one operation, and returns the result; it does **not** resolve dependencies (the **Resolver** does, first) and never reaches the app. There is a single implementation — no pluggable seam, no remote transport, no `kind`. It holds one box at concurrency 1, or **N boxes** in the transitional compatibility mode, and routes each `execute` to its box by `workerIndex`. (Supersedes the old `createExecution → provision → run → dispose` triad and the `LOCAL`/`GCP_CLOUD_RUN` kinds.)
 _Avoid_: executor (means something narrower — see Executor), backend, driver, runtime kind (there is only one).
 
 **Sandbox**:
-The **single execution box** the worker runs in-process: given fully-resolved inputs it materializes them onto disk, mounts them, runs **one** engine operation in a child process, and returns the result. It holds **no app connection** — its only outbound traffic is pulling the blobs named in its parameters (S3 by signed URL, npm registry / app file-store for pieces). One worker contains exactly one box; there is no slot multiplexing and no pool inside a process.
-_Avoid_: pool (parallelism is replicas now), pool server, sandbox manager (that is the box's internal lifecycle).
+The **single execution box** the worker runs in-process: given fully-resolved inputs it materializes them onto disk, mounts them, runs **one** engine operation in a child process, and returns the result. It holds **no app connection** — its only outbound traffic is pulling the blobs named in its parameters (S3 by signed URL, npm registry / app file-store for pieces). At the destination (concurrency 1) one worker contains exactly one box; in the transitional compatibility mode a worker holds **N independent boxes** (one per `workerIndex`), each a self-contained box with its own lifecycle — still no slot multiplexing *within* a box.
+_Avoid_: pool (the N-box mode is a transitional bridge, not the "pool"/pool-server architecture that was deleted — parallelism at the destination is replicas), pool server, sandbox manager (that is a box's internal lifecycle).
 
 **Resolver**:
 The role that turns a job into fully-materialized box inputs — resolve the `flowVersion` and piece metadata, and produce a **ready (compiled) `flowBundle`**: on a cache hit, the existing S3 ref; on a miss, **compile the code, build the bundle, and publish it to S3** before handing back the ref (so it retains bun/build tooling). It disables the flow on a missing piece. **Always the worker** (it owns the only `apiClient`). All of this happens *before* `execute` is called, so the box only ever sees healthy, complete, already-compiled inputs.
@@ -38,6 +38,17 @@ The calls a run emits to the app *during* execution: `updateRunProgress`, `updat
 
 **Flow Bundle**:
 A per-locked-flow-version artifact (frozen piece manifest + compiled code) stored in S3/DB. The **Resolver** uses it as the fast path (resolve from the manifest instead of re-fetch-and-compile); on a miss it builds and publishes the bundle to S3 itself, then passes the ref into `execute.provision`. The **Sandbox** only ever consumes a ready bundle — it pulls the blob from S3 and never builds one. (Distinct from **Piece Bundle**.)
+
+**Slot**:
+One unit of concurrency — capacity for exactly one in-flight job. Because a **Worker** is one box at concurrency 1, a slot maps to a worker's worth of compute. Throughput guarantees are counted in slots, not workers, so the backing (a replica, a Cloud Run instance) can vary.
+
+**Reservation** (a.k.a. Capacity Envelope):
+A guaranteed *floor* of **Slots** that a tenant/project always has available regardless of neighbors — the unit a Cloud/embed plan promises. Distinct from a *limit* (a ceiling): our existing per-project concurrency **pool** caps usage, a Reservation guarantees it. A Reservation is **strictly partitioned** — its slots are not lent out — so the guarantee holds even under long-running jobs without preemption, at the cost of slots that may sit idle.
+_Avoid_: limit, quota (those are ceilings, not floors).
+
+**Priority Class**:
+A named tier *within a project* (e.g. `important` vs `normal`) that owns its own strictly-partitioned sub-**Reservation** of the project's **Slots**. It is **not** queue ordering and **not** preemption: an `important` flow has dedicated slots a `normal` flow can never consume, so it never waits behind a long-running `normal` job. Idle reserved slots are accepted as the price of the guarantee.
+_Avoid_: priority (implies mere ordering), preemption (we never kill a running job to reclaim a slot).
 
 **Piece Bundle**:
 The installable `.tgz` for a single piece `name@version`, addressed as a **link** — every piece type resolves to one downloadable URL, never to bytes over the worker socket. The Sandbox downloads the link directly and installs the tarball; it no longer branches on registry-vs-archive. The link is produced by an engine-token endpoint and can be backed by **whatever is available**: a signed-S3 object when present, the npm tarball for an official piece, or the app's **file store served directly** ("served from file") — so a working link always exists even with no S3 configured. S3 copies of official tarballs are populated **lazily**: a miss serves the piece another way (npm/file) and enqueues a per-piece job to cache it in S3 for next time.

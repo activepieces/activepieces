@@ -1,0 +1,184 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>Activepieces — worker-is-the-sandbox GKE benchmark</title>
+<style>
+ body{font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;color:#1a1a1a;max-width:980px;margin:40px auto;padding:0 20px}
+ h1{font-size:26px;margin-bottom:4px} h2{margin-top:38px;border-bottom:2px solid #eee;padding-bottom:6px}
+ h3{margin-top:26px;color:#222} .conc{color:#888;font-weight:400;font-size:13px}
+ .sub{color:#666;margin-top:0}
+ table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+ th,td{border:1px solid #e3e3e3;padding:7px 9px;text-align:center}
+ th{background:#fafafa;font-weight:600;font-size:12px}
+ td.kind{font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+ tr.warm td.kind{color:#0a7d28} tr.cold td.kind{color:#1763c7}
+ td.big{font-weight:700;font-size:15px}
+ .warm-c{color:#0a7d28;font-weight:700} .cold-c{color:#1763c7;font-weight:700}
+ .box{background:#f7f9fc;border:1px solid #e3e8f0;border-radius:8px;padding:14px 18px;margin:16px 0}
+ code{background:#f0f0f0;padding:1px 5px;border-radius:4px;font-size:12px}
+ .key{color:#b00} small{color:#999;font-weight:400}
+</style></head><body>
+<h1>Worker-is-the-sandbox — GKE benchmark: 1:10 vs 1:20 app:worker</h1>
+<p class="sub">Does a 1:10 app:worker ratio beat 1:20? · app = 1 vCPU / 1 GB · worker = 0.5 vCPU / 1 GB · -c matched to worker count · warm vs cold</p>
+
+<div class="box">
+<b>Setup.</b> GKE <code>e2-standard-4</code> × 14 nodes, <b>europe-west1-b</b>. Each worker = one sandbox,
+concurrency 1, in-process engine fork (<code>SANDBOX_CODE_ONLY</code>: node child + isolated-vm),
+hard-capped <b>0.5 vCPU / 1 GB</b>. App pods @ <b>1 vCPU / 1 GB</b>. Pairs: <b>1:20</b> = 2a/40w &amp;
+4a/80w; <b>1:10</b> = 4a/40w &amp; 8a/80w (ratio is the only variable). Object store = real same-region
+<b>GCS bucket (europe-west1)</b> over the S3-interop endpoint (<code>storage.googleapis.com</code>,
+path-style + SigV4 <b>presigned URLs</b>) — engine pulls flow bundle + piece archives via signed links.
+Postgres + Redis in-cluster. Load: <code>hey</code>, <b>-c = worker count</b> (40 or 80) so requests
+don't queue behind the concurrency-1 workers — latency reflects real service time, not backlog.
+<br><br>
+<b>warm</b> = <code>AP_REUSE_SANDBOX=true</code> (engine process reused between jobs).&nbsp;
+<b>cold</b> = <code>AP_REUSE_SANDBOX=false</code> (fresh engine fork + boot every job — the realistic
+isolation guarantee).
+</div>
+
+<div class="box">
+<b>Provisioning is cheap now — pieces are cached.</b> A worker is its own sandbox and fills its piece
+cache <b>lazily on first use</b> (the old <code>AP_PRE_WARM_CACHE</code> up-front install step is gone;
+it no longer exists). After first use the piece + flow bundle live on the worker's local disk, so warm
+runs do zero install work — in this benchmark <b>flow-bundle download ≈ 2 ms</b> and
+<b>piece install ≈ 3–13 ms</b>. On a cold/first install the archive is pulled from the
+<b>same-region S3 bucket via a signed link</b> (here: GCS europe-west1 over the S3-interop endpoint),
+so even the first install is a fast in-region fetch rather than a slow npm/registry round-trip. Cache
+warmth comes from running long-lived worker replicas, not a warm-up flag.
+</div>
+
+<h2>Headline — throughput by config</h2>
+<table>
+<thead><tr><th>config</th><th>warm req/s</th><th>cold req/s</th>
+<th>app CPU/pod (cold)</th><th>worker CPU/pod (cold)</th></tr></thead>
+<tbody><tr><td><b>2 app · 40 w</b></td><td class="warm-c">59.1</td><td class="cold-c">19.8</td><td>415m (42%)</td><td>346m (69%)</td></tr><tr><td><b>4 app · 40 w</b></td><td class="warm-c">93.5</td><td class="cold-c">19.6</td><td>257m (26%)</td><td>339m (68%)</td></tr><tr><td><b>4 app · 80 w</b></td><td class="warm-c">110.5</td><td class="cold-c">33.3</td><td>0m (0%)</td><td>0m (0%)</td></tr><tr><td><b>8 app · 80 w</b></td><td class="warm-c">148.9</td><td class="cold-c">33.5</td><td>235m (24%)</td><td>336m (67%)</td></tr></tbody>
+</table>
+<p><small>app limit 1000m · worker limit 500m. The bottleneck is whoever saturates its cap first.</small></p>
+
+<h2>Per-config detail</h2>
+
+    <h3>2 app · 40 workers &nbsp;<span class="conc">(-c 40)</span></h3>
+    <table class="data">
+      <thead><tr>
+        <th>boot</th><th>throughput</th><th>avg latency</th><th>p100</th>
+        <th>sandbox boot</th><th>flow run</th>
+        <th>app CPU/pod<br><small>(of 1000m)</small></th>
+        <th>worker CPU/pod<br><small>(of 500m)</small></th>
+        <th>req/s per worker</th>
+      </tr></thead>
+      <tbody>
+        <tr class="warm"><td class="kind">warm</td><td class="big">59.1</td><td>671 ms</td><td>4.34s</td><td>12 ms</td><td>477 ms</td><td>782m (78%)</td><td>63m (13%)</td><td>1.48</td></tr>
+        <tr class="cold"><td class="kind">cold</td><td class="big">19.8</td><td>1984 ms</td><td>4.82s</td><td>1167 ms</td><td>762 ms</td><td>415m (42%)</td><td>346m (69%)</td><td>0.49</td></tr>
+      </tbody>
+    </table>
+    <h3>4 app · 40 workers &nbsp;<span class="conc">(-c 40)</span></h3>
+    <table class="data">
+      <thead><tr>
+        <th>boot</th><th>throughput</th><th>avg latency</th><th>p100</th>
+        <th>sandbox boot</th><th>flow run</th>
+        <th>app CPU/pod<br><small>(of 1000m)</small></th>
+        <th>worker CPU/pod<br><small>(of 500m)</small></th>
+        <th>req/s per worker</th>
+      </tr></thead>
+      <tbody>
+        <tr class="warm"><td class="kind">warm</td><td class="big">93.5</td><td>413 ms</td><td>4.66s</td><td>12 ms</td><td>311 ms</td><td>335m (34%)</td><td>65m (13%)</td><td>2.34</td></tr>
+        <tr class="cold"><td class="kind">cold</td><td class="big">19.6</td><td>2003 ms</td><td>4.42s</td><td>1182 ms</td><td>766 ms</td><td>257m (26%)</td><td>339m (68%)</td><td>0.49</td></tr>
+      </tbody>
+    </table>
+    <h3>4 app · 80 workers &nbsp;<span class="conc">(-c 80)</span></h3>
+    <table class="data">
+      <thead><tr>
+        <th>boot</th><th>throughput</th><th>avg latency</th><th>p100</th>
+        <th>sandbox boot</th><th>flow run</th>
+        <th>app CPU/pod<br><small>(of 1000m)</small></th>
+        <th>worker CPU/pod<br><small>(of 500m)</small></th>
+        <th>req/s per worker</th>
+      </tr></thead>
+      <tbody>
+        <tr class="warm"><td class="kind">warm</td><td class="big">110.5</td><td>709 ms</td><td>6.66s</td><td>18 ms</td><td>505 ms</td><td>354m (35%)</td><td>65m (13%)</td><td>1.38</td></tr>
+        <tr class="cold"><td class="kind">cold</td><td class="big">33.3</td><td>2328 ms</td><td>6.22s</td><td>— ms</td><td>— ms</td><td>0m (0%)</td><td>0m (0%)</td><td>0.42</td></tr>
+      </tbody>
+    </table>
+    <h3>8 app · 80 workers &nbsp;<span class="conc">(-c 80)</span></h3>
+    <table class="data">
+      <thead><tr>
+        <th>boot</th><th>throughput</th><th>avg latency</th><th>p100</th>
+        <th>sandbox boot</th><th>flow run</th>
+        <th>app CPU/pod<br><small>(of 1000m)</small></th>
+        <th>worker CPU/pod<br><small>(of 500m)</small></th>
+        <th>req/s per worker</th>
+      </tr></thead>
+      <tbody>
+        <tr class="warm"><td class="kind">warm</td><td class="big">148.9</td><td>505 ms</td><td>6.43s</td><td>18 ms</td><td>372 ms</td><td>148m (15%)</td><td>34m (7%)</td><td>1.86</td></tr>
+        <tr class="cold"><td class="kind">cold</td><td class="big">33.5</td><td>2292 ms</td><td>5.41s</td><td>1345 ms</td><td>866 ms</td><td>235m (24%)</td><td>336m (67%)</td><td>0.42</td></tr>
+      </tbody>
+    </table>
+
+<h2>Latency anatomy — where the milliseconds go</h2>
+
+<p><b>The flow.</b> A 4-node synchronous webhook flow: <b>Webhook trigger</b>
+(<code>catch_webhook</code>, <code>/sync</code> — holds the HTTP connection until the flow returns) →
+<b>Math Helper</b> (<code>addition_math</code>, 2 + 3) → <b>Code step</b> in isolated-vm
+(<code>return { result: Number(inputs.sum) + 1 }</code>) → <b>Webhook response</b>
+(<code>sendFlowResponse</code>). The actual compute is sub-millisecond; everything below is orchestration.</p>
+
+<table>
+<thead><tr><th>layer</th><th class="warm-c">WARM (8a/80w)</th><th class="cold-c">COLD (2a/40w)</th><th>what it is</th></tr></thead>
+<tbody>
+<tr><td>app ingress + Redis + worker poll</td><td>~91 ms</td><td>~39 ms</td><td>webhook→app→Redis enqueue→worker dequeue, + response delivery back</td></tr>
+<tr><td>provision</td><td>24 ms</td><td>16 ms</td><td>flow-bundle + piece + engine install — all <b>disk-cache hits</b> (clean-cache=false)</td></tr>
+<tr><td><b>sandbox boot</b></td><td>18 ms</td><td><b>1167 ms</b></td><td>warm = engine process <b>reused</b>; cold = <b>fresh fork</b> + Node start + bundle parse + isolated-vm init + socket connect</td></tr>
+<tr><td>flow run (4 steps)</td><td>372 ms</td><td>762 ms</td><td>per-step engine→app callbacks + isolated-vm code + response handshake</td></tr>
+<tr><td><b>end-to-end avg</b></td><td><b>505 ms</b></td><td><b>1984 ms</b></td><td>p50 446/1957 · p95 648/2183 · p99 3817/2986 ms</td></tr>
+</tbody>
+</table>
+
+<div class="box">
+<b>Inside "sandbox boot" — the cold tax (1167 ms).</b> A fresh engine fork pays Node startup
+(incl. the ~80 ms <code>--no-node-snapshot</code> penalty forced by isolated-vm), 694 KB engine-bundle
+parse/compile (the bulk), and socket.io connect (~90 ms). In isolated profiling this is ~570 ms; under
+sustained cold load it inflates to ~1167 ms because ~40 workers fork at once, each capped at 0.5 CPU,
+and contend — boot is CPU-bound. Warm reuses the process and pays just 18 ms.
+</div>
+
+<div class="box">
+<b>Inside "flow run" (372 ms warm / 762 ms cold).</b> The logic is trivial, so this is orchestration,
+not compute: after each step the engine reports progress / persists output via an HTTP callback to the
+app (3 runnable steps ≈ 3 round-trips + flow load + final <code>sendFlowResponse</code>), plus the
+isolated-vm code call. <b>Direct evidence it's app-callback-bound:</b> adding apps cut warm flow-run
+from <b>477 ms (1:20) → 372 ms (1:10)</b> with identical steps — pure compute wouldn't move. The cold
+flow-run is ~2× warm because the just-forked engine runs on a cold V8 (no JIT warmup) while contending
+for CPU with 39 other booting engines — CPU contention + cold JIT, not extra work.
+</div>
+
+<p style="color:#888;font-size:12px">Layer numbers are measured (hey + engine timing logs). Per-<i>step</i>
+splits weren't captured — the engine logged flow-run as one aggregate — so the within-step attribution
+is structural, not timed.</p>
+
+<h2>What it says about the app : worker ratio</h2>
+<div class="box" id="verdict">
+<b>Question: at app = 1 vCPU, does halving the ratio from 1:20 to 1:10 (twice as many apps per worker)
+buy more throughput?</b><br><br>
+
+<table style="margin:6px 0">
+<thead><tr><th>workers</th><th>mode</th><th>1:20</th><th>1:10</th><th>Δ</th></tr></thead>
+<tbody>
+<tr><td rowspan=2>40 w</td><td class="warm-c">warm</td><td>59.1 (2a)</td><td>93.5 (4a)</td><td><b>+58%</b></td></tr>
+<tr><td class="cold-c">cold</td><td>19.8</td><td>19.6</td><td><b>-1%</b></td></tr>
+<tr><td rowspan=2>80 w</td><td class="warm-c">warm</td><td>110.5 (4a)</td><td>148.9 (8a)</td><td><b>+35%</b></td></tr>
+<tr><td class="cold-c">cold</td><td>33.3</td><td>33.5</td><td><b>+1%</b></td></tr>
+</tbody></table>
+<br>
+<b>WARM:</b> going to 1:10 <b>does</b> add throughput
+— at 80 workers 111 → 149 req/s (+35%). The app is still the warm
+bottleneck (workers idle ~11–14%), so more apps = more callback capacity = lower flow-run latency =
+higher throughput. The 40-worker pair shows +58% — smaller, because 40 workers can't push
+enough warm load to fully use even the 1:20 apps.<br><br>
+<b>COLD:</b> 1:10 makes essentially no difference (-1% / +1%) — cold is
+worker-bound (each job pays the ~1.1–1.3 s fork+boot; workers at 64–68%), so extra apps sit idle.<br><br>
+<b>Verdict:</b> 1:10 helps <i>only</i> warm/burst traffic and only where workers can saturate the apps;
+for cold (the realistic isolation path) it's wasted apps. Since apps at 1 vCPU are cheap relative to the
+worker fleet, <b>1:10 is a reasonable safety margin for warm-heavy workloads, but 1:20 is the efficient
+default</b> — the extra apps in 1:10 buy headroom, not a proportional throughput gain.</div>
+
+<p style="color:#999;font-size:12px;margin-top:30px">Generated from raw <code>hey</code> + <code>kubectl top</code>
+samples and worker-pod timing logs. Cluster + GCS bucket torn down after the run.</p>
+</body></html>

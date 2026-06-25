@@ -40,9 +40,6 @@ export function createResolver({ apiClient, basePath, getSettings, log }: Create
             }
 
             const uniquePieces = unique(pieces)
-            if (uniquePieces.length > 0) {
-                void tryCatch(() => apiClient.markPieceAsUsed({ pieces: uniquePieces }))
-            }
 
             const provision: ProvisionInput = {
                 platformId: input.platformId,

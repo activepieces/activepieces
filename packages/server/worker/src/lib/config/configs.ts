@@ -57,8 +57,9 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
-    // One job per worker; scale out with more replicas, not up with concurrency.
-    [WorkerSystemProp.WORKER_CONCURRENCY]: '1',
+    // Transitional default (ADR 0004): N boxes per worker preserves main's historical behavior.
+    // The destination is concurrency 1 + horizontal replicas (ADR 0003).
+    [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
     [WorkerSystemProp.CACHE_BASE_PATH]: 'cache',
 }
 

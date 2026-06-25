@@ -15,9 +15,15 @@ Log fields are now grouped under the entity they belong to, so each thing has on
 #### Pieces are now self-contained bundles
 Each piece is now built into a single self-contained bundle — its own code, the Activepieces framework, and its third-party dependencies are inlined into one artifact, so the engine provisions a piece by downloading one file instead of installing a dependency tree at runtime. As part of this, the shared libraries (`@activepieces/shared`, `@activepieces/pieces-framework`, `@activepieces/pieces-common`, `@activepieces/core-*`) are no longer published to npm, and pieces import only from `@activepieces/pieces-framework` (which re-exports the foundation symbols that used to come from `@activepieces/shared`). Built-in pieces are unaffected — this only matters for custom pieces.
 
+#### `AP_PRE_WARM_CACHE` removed
+The `AP_PRE_WARM_CACHE` environment variable no longer exists. It used to make a worker install pieces into its cache on startup. The worker is now its own sandbox and fills its cache lazily on first use, so the flag has no effect and setting it does nothing. Cache warmth now comes from running long-lived worker replicas rather than an up-front install step.
+
+The up-front install is no longer needed because piece installs are now fast: each piece is a self-contained bundle fetched as a single file. If you have S3 enabled, official piece bundles are cached to your S3 bucket on first use and served from there via signed links — so when your bucket is co-located in the same region as your workers, subsequent installs are a low-latency download from a nearby object store instead of a registry round-trip.
+
 ### Do you need to take action?
 - Only if you build dashboards or alerts on Activepieces logs. Update them to the new grouped names, e.g. `runId` → `flowRun.id` and `err` → `error`.
 - Only if you maintain **custom pieces** (in a fork or built outside the repo). Migrate each one to the bundle model — run `npm run cli -- pieces migrate <piece-name>` (or `--all`), or follow the [migration guide](/build-pieces/misc/migrate-pieces-to-bundles). Pieces that still import `@activepieces/shared` or depend on the now-unpublished libraries will fail to build.
+- Only if your deployment sets `AP_PRE_WARM_CACHE`. Remove it from your environment — it is no longer read. Nothing else is required.
 
 ## 0.85.4
 ### What has changed?

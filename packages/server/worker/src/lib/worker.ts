@@ -109,19 +109,30 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         runtime = null
     }
 
-    // One worker = one sandbox = one job at a time. Parallelism is horizontal: run more worker
-    // replicas, each its own container capped at 0.5 CPU / 1 GB. So there is a single poll loop and a
-    // single in-process box; an OOM kills only this worker and the orchestrator restarts it. See ADR 0003.
+    // The destination is one box per worker (concurrency 1), scaling out with replicas (ADR 0003).
+    // Transitional compatibility mode (ADR 0004): honor AP_WORKER_CONCURRENCY=N by running N poll
+    // loops over N in-process boxes, each routed by its workerIndex. Default is 5 (main's historical
+    // value) to preserve old behavior; at N>1 an OOM takes down all N in-flight jobs, so the operator
+    // must size the container accordingly.
+    const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
+    const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
+    if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
+        logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
+    }
     runtime = createSandboxRuntime({
+        concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
         cleanCacheAfterRun: system.get(WorkerSystemProp.SANDBOX_CLEAN_CACHE) === 'true',
         log: logger,
     })
 
-    logger.info('Starting poll loop (concurrency 1)')
+    logger.info({ concurrency }, 'Starting poll loops')
 
-    await pollAndExecute(apiClient, runtime, 0, generation)
+    const activeRuntime = runtime
+    await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
+        pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
+    ))
 }
 
 async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, workerIndex: number, generation: number): Promise<void> {

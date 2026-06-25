@@ -121,6 +121,10 @@ export const workerSocket = {
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {
     const base: Partial<ManagerOptions & SocketOptions> = {
         path: '/worker/ws',
+        // Connect straight over websocket to the localhost worker. The socket.io default starts with
+        // HTTP long-polling then upgrades, adding ~75ms to a cold-fork handshake — pure waste for a
+        // same-host control channel.
+        transports: ['websocket'],
         auth: {
             sandboxId,
             connectionToken: process.env.AP_SANDBOX_WS_TOKEN,

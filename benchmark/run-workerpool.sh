@@ -58,8 +58,26 @@ hey -n "$TOTAL_REQUESTS" -c "$WORKER_REPLICAS" -t 120 \
     "$WEBHOOK" | tee /tmp/hey-workerpool.txt
 
 echo ""
+echo "=== PER-RUN BREAKDOWN (avg ms across all flow runs, from worker timings) ==="
+# Each EXECUTE_FLOW log line carries a `timings` object. Average the key phases across every run.
+$COMPOSE logs --no-log-prefix worker 2>/dev/null \
+  | jq -rR 'fromjson? | select(.event=="job.execute" and .timings)
+            | [.timings.flowBundleDownloadMs, .timings.installPiecesMs, .timings.installEngineMs, .timings.executionMs, .timings.provisionMs] | @tsv' 2>/dev/null \
+  | awk 'BEGIN{FS="\t"}
+         {for(i=1;i<=5;i++){if($i!=""){s[i]+=$i;n[i]++}} runs++}
+         END{
+           if(runs==0){print "  (no timing samples found)"; exit}
+           printf "  samples            : %d runs\n", runs
+           printf "  flow bundle download: %.1f ms\n", (n[1]?s[1]/n[1]:0)
+           printf "  pieces install     : %.1f ms\n", (n[2]?s[2]/n[2]:0)
+           printf "  engine install     : %.1f ms  (kept across runs -> cache hit)\n", (n[3]?s[3]/n[3]:0)
+           printf "  execution          : %.1f ms\n", (n[4]?s[4]/n[4]:0)
+           printf "  provision (total)  : %.1f ms\n", (n[5]?s[5]/n[5]:0)
+         }'
+
+echo ""
 echo "=== SUMMARY ==="
-echo "Model: worker-is-the-sandbox | replicas=$WORKER_REPLICAS @ 0.5cpu/1G | concurrency=1 | REUSE_SANDBOX=false | clean-cache=true | SANDBOX_CODE_ONLY"
+echo "Model: worker-is-the-sandbox | replicas=$WORKER_REPLICAS @ 0.5cpu/1G | concurrency=1 | REUSE_SANDBOX=false | clean-cache=true (engine kept) | SANDBOX_CODE_ONLY"
 echo "Cold boot latency : ${COLD_MS} ms"
 echo -n "Warm throughput   : "; awk '/Requests\/sec/{print $2" req/s"}' /tmp/hey-workerpool.txt
 awk '/Total:|Average:|Slowest:|Fastest:/{print "  "$0}' /tmp/hey-workerpool.txt
