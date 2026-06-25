@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
 import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { distributedLock } from '../../../database/redis-connections'
@@ -45,6 +45,13 @@ type AssignProjectParams = {
     pieceSetId: string
     platformId: string
     projectId: string
+    entityManager?: EntityManager
+}
+
+type AssignProjectsParams = {
+    pieceSetId: string
+    platformId: string
+    projectIds: string[]
     entityManager?: EntityManager
 }
 
@@ -185,6 +192,18 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
             : pieceSetRepo().manager.getRepository('project')
 
         await repo.update({ id: projectId, platformId }, { pieceSetId })
+    },
+
+    async assignProjects({ pieceSetId, platformId, projectIds, entityManager }: AssignProjectsParams): Promise<void> {
+        if (projectIds.length === 0) return
+
+        await this.getOne({ id: pieceSetId, platformId })
+
+        const repo = entityManager
+            ? entityManager.getRepository('project')
+            : pieceSetRepo().manager.getRepository('project')
+
+        await repo.update({ id: In(projectIds), platformId }, { pieceSetId })
     },
 
     async removeProjectAssignment({ pieceSetId, platformId, projectId }: { pieceSetId: string, platformId: string, projectId: string }): Promise<void> {

@@ -49,10 +49,11 @@ export const pieceSetController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/:id/projects', AssignProjects, async (req, reply) => {
-        const platformId = req.principal.platform.id
-        for (const projectId of req.body.projectIds) {
-            await service.assignProject({ pieceSetId: req.params.id, platformId, projectId })
-        }
+        await service.assignProjects({
+            pieceSetId: req.params.id,
+            platformId: req.principal.platform.id,
+            projectIds: req.body.projectIds,
+        })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
