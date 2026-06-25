@@ -178,7 +178,7 @@ const TAG_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
 
 async function getQueueName({ platformId, projectId, jobType }: GetQueueNameParams, log: FastifyBaseLogger): Promise<string> {
     if (!isNil(projectId) && !isNil(jobType) && TAG_ROUTABLE_JOB_TYPES.has(jobType)) {
-        const workerTag = await projectWorkerTagService(log).getProjectWorkerTag({ projectId })
+        const workerTag = await projectWorkerTagService(log).getProjectWorkerTag({ projectId, platformId })
         if (!isNil(workerTag)) {
             return getWorkerTagQueueName(workerTag)
         }

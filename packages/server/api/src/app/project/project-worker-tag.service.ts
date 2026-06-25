@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../database/redis-connections'
@@ -9,7 +9,7 @@ const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
 const getProjectWorkerTagCacheKey = (projectId: string): string => `project:${projectId}:worker_tag`
 
 export const projectWorkerTagService = (_log: FastifyBaseLogger) => ({
-    async getProjectWorkerTag({ projectId }: { projectId: string }): Promise<string | null> {
+    async getProjectWorkerTag({ projectId, platformId }: { projectId: string, platformId?: string | null }): Promise<string | null> {
         const cached = await distributedStore.get<string>(getProjectWorkerTagCacheKey(projectId))
         if (!isNil(cached)) {
             return cached === NO_WORKER_TAG_SENTINEL ? null : cached
@@ -17,7 +17,7 @@ export const projectWorkerTagService = (_log: FastifyBaseLogger) => ({
 
         const project = await projectRepo().findOne({
             select: ['workerTag'],
-            where: { id: projectId },
+            where: { id: projectId, ...spreadIfDefined('platformId', platformId ?? undefined) },
         })
 
         const workerTag = project?.workerTag ?? null

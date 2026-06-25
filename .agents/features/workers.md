@@ -4,19 +4,21 @@
 Workers are separate Node processes that poll the app for jobs and execute flows/triggers. *Where* each job's engine step runs is behind a pluggable **Runtime** seam (`AP_RUNTIME`, default `LOCAL` — the original long-lived worker + sandbox model; `GCP_CLOUD_RUN` is a stub). They connect to the app over a Socket.IO channel: on connect a worker fetches its runtime settings (`WorkerSettingsResponse`) and the app registers an RPC server (`WorkerToApiContract`) for that socket. Jobs are pulled by the worker via `poll()` rather than pushed. A worker advertises liveness and config through `MachineInformation` (heartbeat), whose `workerProps` carry its identity including `version`. In the default Docker image both `activepieces-app` and `activepieces-worker` run under PM2 from `WORKDIR /usr/src/app`; `AP_CONTAINER_TYPE` (`APP` / `WORKER` / `WORKER_AND_APP`) selects which start.
 
 ## Key Files
-- `packages/server/api/src/app/workers/machine/machine-controller.ts` — Socket.IO listeners (`FETCH_WORKER_SETTINGS`, `DISCONNECT`); registers the RPC server per connection
-- `packages/server/api/src/app/workers/machine/machine-service.ts` — `onConnection` / `onDisconnect`, `buildSettingsResponse` (emits `APP_VERSION`), worker listing
-- `packages/server/api/src/app/workers/rpc/worker-rpc-service.ts` — `createHandlers()`: `poll` (with version gate), `completeJob`, `extendLock`, progress/log RPCs, `getFlowBundle`, `prepareFlowBundleUpload`, `uploadFlowBundle`
-- `packages/server/worker/src/lib/worker.ts` — worker lifecycle (`worker.start/stop`), `pollAndExecute` loop (with version gate), `getWorkerProps`; holds the selected `Runtime` and drives the per-job lifecycle through it
+- `packages/server/api/src/app/workers/machine/machine-controller.ts` — Socket.IO listeners (`FETCH_WORKER_SETTINGS`, `DISCONNECT`); reads `workerGroupId` + `workerTag` from the handshake auth and passes them to `onConnection` / `createHandlers`; registers the RPC server per connection
+- `packages/server/api/src/app/workers/machine/machine-service.ts` — `onConnection` (`OnConnectionScope` = `{ workerGroupId, workerTag }`, stored in the worker cache) / `onDisconnect`, `buildSettingsResponse` (emits `APP_VERSION`), worker listing, `listWorkerTags()` (distinct online tags for the assignment UI)
+- `packages/server/api/src/app/workers/rpc/worker-rpc-service.ts` — `createHandlers()`: `poll` (with version gate; `getPollQueueName` routes by `workerTag` → `workerGroupId` → shared), `completeJob`, `extendLock`, progress/log RPCs, `getFlowBundle`, `prepareFlowBundleUpload`, `uploadFlowBundle`
+- `packages/server/api/src/app/workers/job-queue/job-queue.ts` — producer-side `getQueueName` (resolves `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` to the project's tag queue via `projectWorkerTagService`); `getWorkerTagQueueName` lives in `../job`
+- `packages/server/worker/src/lib/worker.ts` — worker lifecycle (`worker.start/stop`), `pollAndExecute` loop (with version gate), `getWorkerProps`; reads `AP_WORKER_TAG` and includes it in the socket auth; enforces process-sandbox mode + `AP_REUSE_SANDBOX` for tagged/grouped workers; holds the selected `Runtime` and drives the per-job lifecycle through it
 - `packages/server/worker/src/lib/runtime/` — the pluggable Runtime seam: `runtime-factory.ts` (picks the impl from `AP_RUNTIME`), `local-runtime.ts` (the `LOCAL` host), `cloud-run-runtime.ts` (the `GCP_CLOUD_RUN` stub), `sandbox-config.ts` (bridges worker settings → `SandboxPoolSettings` + cache base path)
 - `packages/server/sandbox-pool/` — standalone `@activepieces/sandbox-pool` library holding the pool logic, cache/piece installation, and the `Runtime` / `RuntimeExecution` / `ProvisionResult` type contracts (`src/lib/types.ts`)
-- `packages/server/worker/src/lib/config/configs.ts` — worker env vars incl. `AP_RUNTIME` (`WorkerSystemProp.RUNTIME`, default `LOCAL`)
+- `packages/server/worker/src/lib/config/configs.ts` — worker env vars incl. `AP_RUNTIME` (`WorkerSystemProp.RUNTIME`, default `LOCAL`) and `AP_WORKER_TAG` (`WorkerSystemProp.WORKER_TAG`)
 - `packages/server/worker/src/lib/config/worker-settings.ts` — caches the `WorkerSettingsResponse` fetched on connect
 - `packages/server/utils/src/ap-version.ts` — `apVersionUtil.getCurrentRelease()`; both sides read the deploy-root `package.json` version
 - `packages/core/shared/src/lib/automation/workers/index.ts` — `WorkerProps`, `MachineInformation`, `WorkerSettingsResponse`, `WorkerToApiContract` contracts
 
 ## Edition Availability
 - Community / Enterprise / Cloud: all editions run workers; topology differs (embedded `WORKER_AND_APP` for self-host single-container vs dedicated worker fleets on Cloud).
+- **Per-project worker routing (`workerTag`)** is an enterprise feature gated behind `platform_plan.isolatedWorkersEnabled`. The routing itself (queue resolution) is edition-agnostic, but assigning a project's `workerTag` and listing available tags (`GET /v1/projects/worker-tags`) require the flag; untagged projects always use the shared/platform queue.
 
 ## Domain Terms
 - **`Runtime` / `RuntimeKind`** — the seam deciding *where* a job's engine step executes. `RuntimeKind` is `LOCAL` (default) or `GCP_CLOUD_RUN` (NOT_IMPLEMENTED stub), selected via `AP_RUNTIME` and resolved by `runtime-factory`. `Runtime` exposes `createExecution` / `getActiveExecutors` / `shutdown`.
@@ -25,11 +27,12 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 - **`WorkerSettingsResponse`** — runtime config the app hands a worker on connect; now includes `APP_VERSION` (the app's release).
 - **`connectionGeneration`** — worker-side counter bumped on every disconnect; in-flight poll loops exit when their captured generation goes stale, so a reconnect starts fresh loops.
 - **version gate** — both sides refuse to exchange jobs when worker release ≠ app release (see below).
+- **`workerTag`** — an arbitrary string label a worker advertises via `AP_WORKER_TAG` (`WorkerSystemProp.WORKER_TAG`), sent in the Socket.IO handshake auth and stored on the worker's cache entry. It is matched against a project's `workerTag` column: when a project is tagged, its `EXECUTE_FLOW` and `EXECUTE_WEBHOOK` jobs are routed to the tag-specific BullMQ queue `tag-<workerTag>-jobs` (via `getWorkerTagQueueName`) instead of the shared or platform-group queue. All other job types (UI/builder, polling, webhook-renewal) ignore the tag. A worker that sets `AP_WORKER_TAG` (like a worker-group worker) must run a process sandbox mode and set `AP_REUSE_SANDBOX`. The `usedPieces` Redis warm-set is keyed by `workerTag` when present.
 
 ## Connection & Poll Flow
 1. Worker connects → emits `FETCH_WORKER_SETTINGS`; app's `machineService.onConnection` returns `WorkerSettingsResponse` (incl. `APP_VERSION`) and registers `createHandlers` for the socket.
 2. Worker caches settings and spawns `concurrency` `pollAndExecute` loops.
-3. Each loop calls `apiClient.poll(machineInfo)`; the app's `poll` handler returns the next job for the worker's queue, or `null`.
+3. Each loop calls `apiClient.poll(machineInfo)`; the app's `poll` handler resolves which queue to read from — first by `workerTag` (`tag-<workerTag>-jobs`), then by `workerGroupId` (`platform-<groupId>-jobs`), else the shared `WORKER_JOBS` queue (`getPollQueueName`) — and returns the next job or `null`.
 4. On job: worker executes in a sandbox, periodically `extendLock`, then `completeJob`.
 5. On disconnect, `connectionGeneration++` stops the loops; Socket.IO auto-reconnects and the cycle repeats.
 
