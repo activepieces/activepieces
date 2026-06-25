@@ -186,10 +186,11 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const generatedProject = await db.findOneBy('project_plan', { projectId: responseBody?.projectId })
+            const project = await db.findOneBy<{ pieceSetId: string }>('project', { id: responseBody?.projectId })
+            const pieceSet = await db.findOneBy<{ generatedForProjectId: string, config: { disabledPieces: string[] } }>('piece_set', { id: project?.pieceSetId })
 
-            expect(generatedProject?.piecesFilterType).toBe('ALLOWED')
-            expect(generatedProject?.pieces).toStrictEqual(['@ap/a'])
+            expect(pieceSet?.generatedForProjectId).toBe(responseBody?.projectId)
+            expect(pieceSet?.config.disabledPieces).not.toContain('@ap/a')
         })
 
         it('Adds new user as a member in new project', async () => {
