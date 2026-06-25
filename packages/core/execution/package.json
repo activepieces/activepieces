@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/core-execution",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "scripts": {
