@@ -20,7 +20,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        includedAiCredits: {
+        includedCredits: {
             type: Number,
         },
         environmentsEnabled: {

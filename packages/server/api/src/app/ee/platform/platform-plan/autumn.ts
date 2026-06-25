@@ -2,7 +2,6 @@ import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core
 import { apDayjs, apVersionUtil, safeHttp } from '@activepieces/server-utils'
 import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, TOPPABLE_FEATURE_IDS, ToppableFeature, ToppableFeatureId } from '@activepieces/shared'
 import {
-    type AttachParams,
     Autumn,
     AutumnError,
     type Balance,
@@ -12,11 +11,8 @@ import {
     type GetCustomerResponse,
     type GetEntityParams,
     type ListPlansParams,
-    type OpenCustomerPortalParams,
     PlanBillingMethod,
-    type SetupPaymentParams,
     type TrackParams,
-    type UpdateCustomerParams,
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
@@ -81,18 +77,6 @@ export const autumnUtils = {
             },
             getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
                 return client.customers.get({ customerId, expand: params?.expand })
-            },
-            updateCustomer(params: WithoutCustomerId<UpdateCustomerParams>) {
-                return client.customers.update({ customerId, ...params })
-            },
-            attach(params: WithoutCustomerId<AttachParams>) {
-                return client.billing.attach({ customerId, ...params })
-            },
-            openCustomerPortal(params?: WithoutCustomerId<OpenCustomerPortalParams>) {
-                return client.billing.openCustomerPortal({ customerId, ...params })
-            },
-            setupPayment(params: WithoutCustomerId<SetupPaymentParams>) {
-                return client.billing.setupPayment({ customerId, ...params })
             },
             createEntity(params: WithoutCustomerId<CreateEntityParams>) {
                 return client.entities.create({ customerId, ...params })
@@ -171,7 +155,7 @@ export const autumnUtils = {
             teamProjectsLimit: toProjectedLimit(teamProjects, 0),
             usersLimit: toProjectedLimit(users, null),
             activeFlowsLimit: toProjectedLimit(activeFlows, null),
-            includedAiCredits: credits?.granted ?? 0,
+            includedCredits: credits?.granted ?? 0,
             billingEnforced: entitlements.flags[AutumnFeatureId.BILLING_ENFORCED] ?? false,
         }
     },
@@ -223,24 +207,17 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return { autoTopUps, topUpFeatures: getToppableFeatures(customer) }
     },
     createCheckoutSession: async ({ platformId, planId, successUrl }) => {
-        // Enroll first so a customer-scoped client exists (mints a FREE Autumn customer via the console for
-        // a brand-new platform), then attach the paid plan. PAY-FIRST: never enablePlanImmediately — the plan
-        // activates only once payment completes; the frontend polls refreshEntitlements after redirect.
         await autumnUtils.ensureEnrolled(log, platformId)
-        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-        if (isNil(client)) {
-            return { checkoutUrl: null }
-        }
-        const result = await client.attach({ planId, successUrl })
-        return { checkoutUrl: result.paymentUrl }
+        const { paymentUrl } = await checkoutOnConsole({ platformId, planId, successUrl })
+        return { checkoutUrl: paymentUrl }
     },
     getBillingPortalUrl: async ({ platformId, returnUrl }) => {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
             return { url: '' }
         }
-        const result = await client.openCustomerPortal({ returnUrl })
-        return { url: result.url }
+        const { url } = await portalOnConsole({ platformId, returnUrl })
+        return { url: url ?? '' }
     },
     getBillingInfo: async (platformId) => {
         const monthStart = apDayjs().startOf('month').unix()
@@ -264,21 +241,14 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (isNil(client)) {
             return { checkoutUrl: null }
         }
-        // The prepaid one-off item lives ON the customer's plan (alongside the included allotment), so a
-        // manual purchase re-attaches that same plan with the prepaid featureQuantity — no separate top-up
-        // product. Feature-generic: any prepaid item on the plan (credits today; users/flows/projects later).
         const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
         assertFeatureIsToppable({ customer, featureId })
         const basePlanId = customer.subscriptions.find((subscription) => !subscription.addOn)?.planId
         if (isNil(basePlanId)) {
             return { checkoutUrl: null }
         }
-        const result = await client.attach({
-            planId: basePlanId,
-            featureQuantities: [{ featureId, quantity }],
-            successUrl,
-        })
-        return { checkoutUrl: result.paymentUrl }
+        const { paymentUrl } = await topUpOnConsole({ platformId, planId: basePlanId, featureId, quantity, successUrl })
+        return { checkoutUrl: paymentUrl }
     },
     configureAutoTopUp: async ({ platformId, featureId, enabled, threshold, quantity, maxMonthlyTopUps, returnUrl }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
@@ -286,31 +256,15 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (isNil(client)) {
             return {}
         }
-        // Enabling requires the plan to offer a top-up for this feature; disabling is always allowed. Only
-        // fetch the customer when enabling (needed for both the plan gate and the saved-card check), and
-        // expand the plan so the gate can read its prepaid items.
         const customer = enabled ? await client.getCustomer({ expand: ['subscriptions.plan'] }) : null
         if (!isNil(customer)) {
             assertFeatureIsToppable({ customer, featureId })
         }
-        await client.updateCustomer({
-            billingControls: {
-                autoTopups: [{
-                    featureId,
-                    enabled,
-                    threshold,
-                    quantity,
-                    ...(isNil(maxMonthlyTopUps) ? {} : { purchaseLimit: { interval: 'month', limit: maxMonthlyTopUps } }),
-                }],
-            },
+        const setupPaymentReturnUrl = enabled && isNil(customer?.paymentMethod) ? returnUrl : undefined
+        const { setupPaymentUrl } = await configureAutoTopUpOnConsole({
+            platformId, featureId, enabled, threshold, quantity, maxMonthlyTopUps, setupPaymentReturnUrl,
         })
-        // Native auto-top-up requires a saved card; redirect the user to add one only when enabling and
-        // none is on file.
-        if (!enabled || !isNil(customer?.paymentMethod)) {
-            return {}
-        }
-        const setup = await client.setupPayment({ successUrl: returnUrl })
-        return { setupPaymentUrl: setup.url }
+        return isNil(setupPaymentUrl) ? {} : { setupPaymentUrl }
     },
     trackCredits: async (params: TrackCreditsParams) => {
         const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
@@ -529,6 +483,42 @@ async function activateOnConsole({ licenseKey, platformId }: { licenseKey: strin
             timeout: CONSOLE_REQUEST_TIMEOUT_MS,
             headers: { Authorization: `Bearer ${licenseKey}` },
         },
+    )
+    return response.data.data
+}
+
+async function checkoutOnConsole({ platformId, planId, successUrl }: { platformId: string, planId: string, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
+    const response = await safeHttp.axios.post<{ data: { paymentUrl: string | null } }>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/checkout`,
+        { platformId, planId, successUrl },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+    )
+    return response.data.data
+}
+
+async function topUpOnConsole({ platformId, planId, featureId, quantity, successUrl }: { platformId: string, planId: string, featureId: string, quantity: number, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
+    const response = await safeHttp.axios.post<{ data: { paymentUrl: string | null } }>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/topup`,
+        { platformId, planId, featureId, quantity, successUrl },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+    )
+    return response.data.data
+}
+
+async function portalOnConsole({ platformId, returnUrl }: { platformId: string, returnUrl?: string }): Promise<{ url: string | null }> {
+    const response = await safeHttp.axios.post<{ data: { url: string | null } }>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/portal`,
+        { platformId, returnUrl },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+    )
+    return response.data.data
+}
+
+async function configureAutoTopUpOnConsole(params: { platformId: string, featureId: string, enabled: boolean, threshold: number, quantity: number, maxMonthlyTopUps?: number | null, setupPaymentReturnUrl?: string }): Promise<{ setupPaymentUrl?: string }> {
+    const response = await safeHttp.axios.post<{ data: { setupPaymentUrl?: string } }>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/auto-topup`,
+        params,
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
     )
     return response.data.data
 }

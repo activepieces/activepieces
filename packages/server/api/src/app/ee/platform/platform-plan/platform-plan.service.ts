@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getBillingEnforcedKey, getEnrollAttemptKey, getEntitlementsRefreshKey, getForcedEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
@@ -196,7 +196,7 @@ function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
         case ApEdition.ENTERPRISE:
             return OPEN_SOURCE_PLAN
         case ApEdition.CLOUD:
-            return STANDARD_CLOUD_PLAN
+            return AUTUMN_FREE_PLAN
     }
 }
 

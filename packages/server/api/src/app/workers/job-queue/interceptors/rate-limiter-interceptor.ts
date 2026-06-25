@@ -11,17 +11,9 @@ import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-in
 
 const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 
-const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
-    [PlanName.FREE]: 5,
-    [PlanName.STANDARD]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 10,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 15,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 20,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 25,
-    [PlanName.ENTERPRISE]: 30,
-}
+const FREE_CONCURRENT_JOBS_LIMIT = 5
+const APPSUMO_CONCURRENT_JOBS_LIMIT = 15
+const ENTERPRISE_CONCURRENT_JOBS_LIMIT = 30
 
 function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
     if (!system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)) {
@@ -43,13 +35,17 @@ async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId:
         return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
     }
     const platformPlanName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
-    // A platform with no stored plan name yet (not-yet-enrolled) is treated as the standard tier rather than
-    // falling through to DEFAULT, preserving the pre-Autumn free concurrency (free was effectively standard).
-    // Enrolled free platforms store the 'free' plan name, which maps to the same limit via the table above.
-    const limit = isNil(platformPlanName)
-        ? PLAN_CONCURRENT_JOBS_LIMITS[PlanName.STANDARD]
-        : PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName]
-    return limit ?? system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
+    return concurrencyLimitForCloudPlan(platformPlanName)
+}
+
+function concurrencyLimitForCloudPlan(planName: string | null): number {
+    if (isNil(planName) || planName === PlanName.FREE) {
+        return FREE_CONCURRENT_JOBS_LIMIT
+    }
+    if (planName === PlanName.APPSUMO) {
+        return APPSUMO_CONCURRENT_JOBS_LIMIT
+    }
+    return ENTERPRISE_CONCURRENT_JOBS_LIMIT
 }
 
 async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: string | null, platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {

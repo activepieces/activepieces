@@ -351,8 +351,8 @@ describe('rateLimiterInterceptor', () => {
             const platformId = `plat-${crypto.randomUUID()}`
             const jobData = createFlowJobData({ platformId })
 
-            // Set plan to STANDARD (limit=5)
-            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.STANDARD)
+            // Set plan to FREE (limit=5)
+            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.FREE)
 
             // Fill 5 slots
             for (let i = 0; i < 5; i++) {
@@ -375,8 +375,8 @@ describe('rateLimiterInterceptor', () => {
             const platformId = `plat-${crypto.randomUUID()}`
             const jobData = createFlowJobData({ platformId })
 
-            // Set plan to STANDARD — should be ignored on COMMUNITY
-            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.STANDARD)
+            // Set plan to FREE — should be ignored on COMMUNITY
+            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.FREE)
 
             // Should use default (100), so 6 jobs should all pass
             for (let i = 0; i < 6; i++) {

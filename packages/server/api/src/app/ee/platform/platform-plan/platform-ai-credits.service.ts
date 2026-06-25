@@ -31,9 +31,9 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
             return {
                 usage: 0,
-                limit: platformPlan.includedAiCredits,
+                limit: platformPlan.includedCredits,
                 usageMonthly: 0,
-                usageRemaining: platformPlan.includedAiCredits,
+                usageRemaining: platformPlan.includedCredits,
             }
         }
 

@@ -24,14 +24,8 @@ export type PlatformUsage = z.infer<typeof PlatformUsage>
 
 export enum PlanName {
     FREE = 'free',
-    STANDARD = 'standard',
     ENTERPRISE = 'enterprise',
-    APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
-    APPSUMO_ACTIVEPIECES_TIER2 = 'appsumo_activepieces_tier2',
-    APPSUMO_ACTIVEPIECES_TIER3 = 'appsumo_activepieces_tier3',
-    APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
-    APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
-    APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
+    APPSUMO = 'appsumo',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -87,7 +81,7 @@ export const PlatformPlan = z.object({
     // TODO: We have to use the enum when we finalize the plan names
     plan: Nullable(z.string()),
     platformId: z.string(),
-    includedAiCredits: z.number(),
+    includedCredits: z.number(),
 
     tablesEnabled: z.boolean(),
     eventStreamingEnabled: z.boolean(),

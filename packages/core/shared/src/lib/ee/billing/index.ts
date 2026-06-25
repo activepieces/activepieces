@@ -52,12 +52,12 @@ export const ConsumableProductAutoTopupParams = z.union([
 ])
 export type ConsumableProductAutoTopupParams = z.infer<typeof ConsumableProductAutoTopupParams>
 
-export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
-    plan: 'standard',
+export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'free',
     tablesEnabled: true,
     eventStreamingEnabled: false,
-    includedAiCredits: 200,
-    activeFlowsLimit: 10,
+    includedCredits: 100,
+    activeFlowsLimit: undefined,
     projectsLimit: 1,
     embeddingEnabled: false,
     aiProvidersEnabled: false,
@@ -83,14 +83,6 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     customDomainsEnabled: false,
 }
 
-export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
-    ...STANDARD_CLOUD_PLAN,
-    plan: 'free',
-    includedAiCredits: 100,
-    activeFlowsLimit: undefined,
-    projectsLimit: 1,
-}
-
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     embeddingEnabled: false,
@@ -99,7 +91,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     dataManipulationEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
-    includedAiCredits: 0,
+    includedCredits: 0,
     environmentsEnabled: false,
     eventStreamingEnabled: false,
     analyticsEnabled: true,
@@ -119,17 +111,10 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     customDomainsEnabled: false,
 }
 
-export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({
-    ...STANDARD_CLOUD_PLAN,
-    plan: planName,
-    eventStreamingEnabled: false,
-    activeFlowsLimit: undefined,
-})
-
 export const isCloudPlanButNotEnterprise = (plan?: string | null): boolean => {
     if (isNil(plan)) {
         return false
     }
 
-    return plan === PlanName.STANDARD
+    return plan === PlanName.FREE || plan === PlanName.APPSUMO
 }

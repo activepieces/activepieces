@@ -157,7 +157,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
         platformId: platformPlan?.platformId ?? apId(),
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
-        includedAiCredits: platformPlan?.includedAiCredits ?? 0,
+        includedCredits: platformPlan?.includedCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         eventStreamingEnabled: platformPlan?.eventStreamingEnabled ?? false,
@@ -614,7 +614,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             apiKeysEnabled: true,
             customRolesEnabled: true,
             teamProjectsLimit: null,
-            includedAiCredits: 1000,
+            includedCredits: 1000,
             ...params?.plan,
         })
         await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])

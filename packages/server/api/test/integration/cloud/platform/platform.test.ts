@@ -708,13 +708,13 @@ describe('Platform API', () => {
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD,
+                    plan: PlanName.FREE,
                 },
             })
             const secondAccount = await mockAndSaveBasicSetup(
                 {
                     plan: {
-                        plan: PlanName.STANDARD,
+                        plan: PlanName.FREE,
                     },
                 },
             )
@@ -776,13 +776,13 @@ describe('Platform API', () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD,
+                    plan: PlanName.FREE,
                 },
             })
             const secondAccount = await mockAndSaveBasicSetup(
                 {
                     plan: {
-                        plan: PlanName.STANDARD,
+                        plan: PlanName.FREE,
                     },
                 },
             )
@@ -809,7 +809,7 @@ describe('Platform API', () => {
             if (!isCloud) return
 
             const account = await mockAndSaveBasicSetup({
-                plan: { plan: PlanName.STANDARD },
+                plan: { plan: PlanName.FREE },
             })
 
             const connection = createMockConnection(
@@ -853,7 +853,7 @@ describe('Platform API', () => {
             if (!isCloud) return
 
             const account = await mockAndSaveBasicSetup({
-                plan: { plan: PlanName.STANDARD },
+                plan: { plan: PlanName.FREE },
             })
 
             const flowVersionId = apId()
@@ -926,12 +926,12 @@ describe('Platform API', () => {
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD,
+                    plan: PlanName.FREE,
                 },
             })
             const secondPlatform = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD,
+                    plan: PlanName.FREE,
                 },
             })
             const secondUser = createMockUser({
