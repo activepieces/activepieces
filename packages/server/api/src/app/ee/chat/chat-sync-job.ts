@@ -281,9 +281,13 @@ async function emitMessageBillingEvent({ conversation, log }: {
     const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
     const model = resolveModelId({ tierId: conversation.modelName ?? null, provider })
 
+    const isManagedProvider = provider === AIProviderName.ACTIVEPIECES
+    const tier = chatHelpers.resolveTier({ tierId: conversation.modelName ?? null })
+    const creditValue = isManagedProvider ? tier.creditWeight + toolsUsed : 1 + toolsUsed
+
     await billingProvider.get(log).trackCredits({
         platformId: conversation.platformId,
-        value: 1 + toolsUsed,
+        value: creditValue,
         source: CreditUsageSource.CHAT,
         idempotencyKey: `${conversation.id}:chat:${turnIndex}`,
         properties: {
@@ -296,19 +300,21 @@ async function emitMessageBillingEvent({ conversation, log }: {
             toolCalls: toolsUsed,
             provider,
             model,
+            tier: tier.id,
         },
     })
 
     if (provider === AIProviderName.ACTIVEPIECES) {
         await billingProvider.get(log).trackAppSumoAiUsage({
             platformId: conversation.platformId,
-            value: 1 + toolsUsed,
+            value: creditValue,
             idempotencyKey: `${conversation.id}:appSumoAi:${turnIndex}`,
             properties: {
                 platformId: conversation.platformId,
                 projectId: conversation.projectId,
                 conversationId: conversation.id,
                 turnIndex,
+                tier: tier.id,
             },
         })
     }
