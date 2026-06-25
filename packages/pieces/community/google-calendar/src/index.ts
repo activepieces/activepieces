@@ -13,6 +13,10 @@ import { calendarEventChanged } from './lib/triggers/calendar-event';
 import { addAttendeesToEventAction } from './lib/actions/add-attendees.action';
 import { findFreeBusy } from './lib/actions/find-busy-free-periods';
 import { getEventById } from './lib/actions/get-event-by-id';
+import { searchEventsAllCalendars } from './lib/actions/search-events-all-calendars';
+import { findFreeSlots } from './lib/actions/find-free-slots';
+import { listRecurringEventInstances } from './lib/actions/list-recurring-event-instances';
+import { moveEvent } from './lib/actions/move-event';
 import { newEvent } from './lib/triggers/new-event';
 import { eventEnds } from './lib/triggers/event-ends';
 import { eventStartTimeBefore } from './lib/triggers/event-start-time-before';
@@ -53,6 +57,10 @@ export const googleCalendar = createPiece({
     deleteEventAction,
     findFreeBusy,
     getEventById,
+    searchEventsAllCalendars,
+    findFreeSlots,
+    listRecurringEventInstances,
+    moveEvent,
     // TODO: add action after calendarList scope is verified
     // addCalendarToCalendarlist,
     createCustomApiCallAction({
