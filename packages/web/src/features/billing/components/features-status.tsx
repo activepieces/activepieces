@@ -32,9 +32,6 @@ const LICENSE_PROPS_MAP = {
   customAppearanceEnabled: {
     label: 'Brand Activepieces',
   },
-  teamProjectsLimit: {
-    label: 'Team Projects Limit',
-  },
   projectRolesEnabled: {
     label: 'Project Roles',
   },

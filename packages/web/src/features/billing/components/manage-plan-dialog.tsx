@@ -20,7 +20,7 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
-import { useManagePlanDialogStore } from '../stores/active-flows-addon-dialog-state';
+import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 
 export function ManagePlanDialog() {
   const { isOpen, closeDialog } = useManagePlanDialogStore();

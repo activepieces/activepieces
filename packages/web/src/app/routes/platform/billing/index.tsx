@@ -7,12 +7,12 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
-  ActiveFlowAddon,
-  AICreditUsage,
+  FeatureUsageCards,
   LicenseKey,
   SubscriptionInfo,
   billingMutations,
   billingQueries,
+  useManagePlanDialogStore,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -47,6 +47,7 @@ function BillingPageDetails() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
+  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
   const hasPaidPlan =
     !isNil(platformPlanInfo?.plan?.plan) &&
     platformPlanInfo.plan.plan !== PlanName.FREE;
@@ -75,24 +76,33 @@ function BillingPageDetails() {
       )}
     >
       <div className="flex flex-col gap-6">
-        {hasPaidPlan && <SubscriptionInfo info={platformPlanInfo} />}
+        {!isCommunity && <SubscriptionInfo info={platformPlanInfo} />}
 
-        {hasPaidPlan && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-fit"
-            onClick={() => redirectToPortalSession()}
-          >
-            {t('Access Billing Portal')}
-          </Button>
+        {!isCommunity && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              onClick={() => openManagePlanDialog()}
+            >
+              {t('Manage Plan')}
+            </Button>
+            {hasPaidPlan && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() => redirectToPortalSession()}
+              >
+                {t('Access Billing Portal')}
+              </Button>
+            )}
+          </div>
         )}
 
         {!isCommunity && (
-          <>
-            <ActiveFlowAddon platformSubscription={platformPlanInfo} />
-            <AICreditUsage platformSubscription={platformPlanInfo} />
-          </>
+          <FeatureUsageCards platformSubscription={platformPlanInfo} />
         )}
         <LicenseKey platform={platform} />
       </div>

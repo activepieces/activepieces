@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core-utils'
 import { apDayjs, apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, TOPPABLE_FEATURE_IDS, ToppableFeature, ToppableFeatureId } from '@activepieces/shared'
+import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import {
     Autumn,
     AutumnError,
@@ -31,13 +31,9 @@ const CREDENTIALS_CACHE_MAX_ENTRIES = 10000
 const credentialsCache: LRU<ResolvedAutumnCredentials> = lru(CREDENTIALS_CACHE_MAX_ENTRIES, CREDENTIALS_CACHE_TTL_MS)
 
 const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
-// Assumed FREE plan id — NOT yet verified against the Autumn dashboard. The free plan id auto-enrolled new
-// platforms attach via the console; update here once confirmed.
 const AUTUMN_FREE_PLAN_ID = 'free'
 
-// The boolean-flag feature ids, used when projecting Autumn flags onto platform-plan limits. The `satisfies`
-// pins each entry to a column that is BOTH a PlatformPlanLimits key AND an AutumnFeatureId value, so this
-// list can't drift from the canonical enum.
+
 const AUTUMN_FLAG_FEATURE_IDS = [
     'tablesEnabled',
     'eventStreamingEnabled',
@@ -189,8 +185,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (isNil(client)) {
             return { autoTopUps: [], topUpFeatures: [] }
         }
-        // Expand the subscribed plan so we can read its items: top-up availability is plan-driven (a feature
-        // is toppable iff the plan carries a prepaid item for it), not a blanket paid/free check.
+   
         const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
         const autoTopUps: AutoTopUpConfig[] = (customer.billingControls?.autoTopups ?? []).flatMap((autoTopUp) => {
             if (!isAutumnFeatureId(autoTopUp.featureId)) {
@@ -363,21 +358,13 @@ function isAutumnFeatureId(value: string): value is AutumnFeatureId {
     return Object.values(AutumnFeatureId).some((id) => id === value)
 }
 
-function isToppableFeatureId(value: string): value is ToppableFeatureId {
-    return TOPPABLE_FEATURE_IDS.some((id) => id === value)
-}
-
-// Top-up availability is plan-driven and per-feature: a feature is toppable iff the customer's base plan
-// carries a prepaid item for it (credits today; users/projects/active-flows can be added by configuring a
-// prepaid item on the plan). Each prepaid item also carries the pricing the UI uses (`pricePerUnit` per
-// `billingUnits`). Requires the customer to be fetched with `expand: ['subscriptions.plan']`.
 function getToppableFeatures(customer: GetCustomerResponse): ToppableFeature[] {
     const basePlan = customer.subscriptions.find((subscription) => !subscription.addOn)?.plan
     if (isNil(basePlan)) {
         return []
     }
     return basePlan.items.flatMap((item) => {
-        if (item.price?.billingMethod !== PlanBillingMethod.Prepaid || !isToppableFeatureId(item.featureId)) {
+        if (item.price?.billingMethod !== PlanBillingMethod.Prepaid || !isAutumnFeatureId(item.featureId)) {
             return []
         }
         return [{
@@ -397,8 +384,7 @@ function assertFeatureIsToppable({ customer, featureId }: { customer: GetCustome
     }
 }
 
-// Projects a numeric non-consumable limit from an Autumn balance: `null` = unlimited; an absent feature
-// falls back to `whenAbsent` (0 = none for team projects, null = unlimited for users/active flows).
+
 function toProjectedLimit(balance: AutumnFeatureBalance | undefined, whenAbsent: number | null): number | null {
     if (isNil(balance)) {
         return whenAbsent
@@ -409,8 +395,7 @@ function toProjectedLimit(balance: AutumnFeatureBalance | undefined, whenAbsent:
     return balance.granted ?? whenAbsent
 }
 
-// Autumn dedupes a repeated Idempotency-Key with a 409 within its 24h window; the usage is already
-// recorded, so a duplicate track is a successful no-op rather than an error to retry.
+
 function isDuplicateTrack(error: unknown): boolean {
     return error instanceof AutumnError && error.statusCode === 409
 }

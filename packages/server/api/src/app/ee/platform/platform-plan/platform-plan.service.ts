@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getBillingEnforcedKey, getEnrollAttemptKey, getEntitlementsRefreshKey, getForcedEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
@@ -9,6 +9,7 @@ import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { billingProvider } from '../../../platform/billing-provider'
+import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { PlatformPlanEntity } from './platform-plan.entity'
@@ -100,8 +101,12 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             .getCount()
         const aiCreditsUsage = await platformAiCreditsService(log).getUsage(platformId)
         const appSumoAiCredits = await billingProvider.get(log).getAppSumoAiCreditsUsage(platformId)
+        const teamProjectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
+        const usersCount = await userService(log).countByPlatformId(platformId)
         return {
             activeFlows: activeFlowsCount,
+            teamProjects: teamProjectsCount,
+            users: usersCount,
             aiCreditsLimit: aiCreditsUsage.limit,
             aiCreditsRemaining: aiCreditsUsage.usageRemaining,
             totalAiCreditsUsed: aiCreditsUsage.usage,

@@ -58,11 +58,6 @@ const SidebarUsageLimits = React.memo(() => {
             'Used when running AI pieces with Activepieces as the provider instead of your own API keys.',
           )}
         />
-        <UsageRow
-          name={t('Active Flows')}
-          value={platform.usage?.activeFlows ?? 0}
-          max={platform?.plan.activeFlowsLimit}
-        />
         {isPlatformAdmin && (
           <Link
             to="/platform/setup/billing"

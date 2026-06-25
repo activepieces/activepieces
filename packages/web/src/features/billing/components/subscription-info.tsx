@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { PlanName, PlatformBillingInformation } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { CalendarDays } from 'lucide-react';
@@ -11,6 +11,8 @@ type SubscriptionInfoProps = {
 };
 
 export const SubscriptionInfo = ({ info }: SubscriptionInfoProps) => {
+  const isPaid = !isNil(info.plan.plan) && info.plan.plan !== PlanName.FREE;
+
   return (
     <div className="space-y-4">
       <Badge variant="accent" className="rounded-sm text-sm">
@@ -18,14 +20,17 @@ export const SubscriptionInfo = ({ info }: SubscriptionInfoProps) => {
           ? t('Free')
           : info?.plan.plan.charAt(0).toUpperCase() + info?.plan.plan.slice(1)}
       </Badge>
-      <div className="flex items-baseline gap-2">
-        <div className="text-5xl font-semibold">
-          ${info.nextBillingAmount || Number(0).toFixed(2)}
-        </div>
-        <div className="text-xl text-muted-foreground">{t('/month')}</div>
-      </div>
 
-      {info?.nextBillingDate && isNil(info.cancelAt) && (
+      {isPaid && (
+        <div className="flex items-baseline gap-2">
+          <div className="text-5xl font-semibold">
+            ${info.nextBillingAmount || Number(0).toFixed(2)}
+          </div>
+          <div className="text-xl text-muted-foreground">{t('/month')}</div>
+        </div>
+      )}
+
+      {isPaid && info?.nextBillingDate && isNil(info.cancelAt) && (
         <div className="text-sm text-muted-foreground flex items-center gap-2">
           <CalendarDays className="w-4 h-4" />
           <span>

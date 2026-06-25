@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 
-interface ActiveFlowsAddonDialogStore {
+interface ManagePlanDialogStore {
   isOpen: boolean;
   openDialog: () => void;
   closeDialog: () => void;
 }
 
-export const useManagePlanDialogStore = create<ActiveFlowsAddonDialogStore>(
+export const useManagePlanDialogStore = create<ManagePlanDialogStore>(
   (set) => ({
     isOpen: false,
     openDialog: () => set({ isOpen: true }),

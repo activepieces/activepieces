@@ -14,6 +14,8 @@ export const PlatformUsage = z.object({
     aiCreditsRemaining: z.number(),
     aiCreditsLimit: z.number(),
     activeFlows: z.number(),
+    teamProjects: z.number(),
+    users: z.number(),
     appSumoAiCredits: Nullable(z.object({
         usage: z.number(),
         limit: z.number(),
@@ -65,16 +67,6 @@ export enum AutumnFeatureId {
     SCIM_ENABLED = 'scimEnabled',
 }
 
-// The subset of feature ids a customer can purchase as a top-up. apCredits/appSumoAiCredits (consumable)
-// today; the non-consumable one-time limits (users/projects/active-flows) can join later. A strict subset of
-// AutumnFeatureId by construction; whether a given plan actually offers a top-up for one of these is decided
-// per-plan at runtime.
-export const TOPPABLE_FEATURE_IDS = [
-    AutumnFeatureId.AP_CREDITS,
-    AutumnFeatureId.APP_SUMO_AI_CREDITS,
-] as const
-export const ToppableFeatureId = z.enum(TOPPABLE_FEATURE_IDS)
-export type ToppableFeatureId = z.infer<typeof ToppableFeatureId>
 
 export const PlatformPlan = z.object({
     ...BaseModelSchema,
@@ -254,11 +246,8 @@ export const AutoTopUpConfig = z.object({
 })
 export type AutoTopUpConfig = z.infer<typeof AutoTopUpConfig>
 
-// A feature the current plan lets the customer top up, with the plan's prepaid pricing for it: each
-// `billingUnits` of the feature costs `pricePerUnit`. The UI derives the total cost from these — pricing is
-// plan-driven, never hardcoded client-side.
 export const ToppableFeature = z.object({
-    featureId: ToppableFeatureId,
+    featureId: z.enum(AutumnFeatureId),
     pricePerUnit: z.number(),
     billingUnits: z.number(),
 })
