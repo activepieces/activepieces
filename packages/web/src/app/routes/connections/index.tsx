@@ -342,7 +342,13 @@ function AppConnectionsPage() {
                   )}
                   warning={<DeleteConnectionWarning />}
                   mutationFn={async () => {
-                    await deleteConnections(selectedRows.map((row) => row.id));
+                    await deleteConnections(
+                      selectedRows
+                        .filter(
+                          (row) => row.scope === AppConnectionScope.PROJECT,
+                        )
+                        .map((row) => row.id),
+                    );
                     refetch();
                     resetSelection();
                     setSelectedRows([]);
