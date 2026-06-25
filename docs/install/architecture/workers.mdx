@@ -14,7 +14,7 @@ Each worker pulls jobs off the BullMQ queue in Redis, hands them to a sandboxed 
 
 Workers scale **horizontally**: add replicas behind any orchestrator (Docker Compose, Kubernetes, Nomad). The recommended model is **one flow per worker** — concurrency 1, one worker per concurrent flow — so you size the fleet from a single number.
 
-For the full sizing recommendation (worker/app sizes, the 1:10 app:worker ratio, the slot-based capacity formula, and database sizing), see [Recommended Setup](./recommended-setup).
+For the full sizing recommendation (worker/app sizes, the 1:10 app:worker ratio, the slot-based capacity formula, and database sizing), see [Production Setup](../configure-operate/production-setup).
 
 <Warning>
 The shipped default `AP_WORKER_CONCURRENCY=5` runs multiple sandboxes in one container as a transitional compatibility mode. It widens the OOM blast radius to all in-flight jobs in that container. Prefer `AP_WORKER_CONCURRENCY=1` and scale by replicas.

@@ -1,5 +1,5 @@
 ---
-title: "Technical Limits"
+title: "Limits"
 icon: "ban"
 description: "Limits enforced on Activepieces Cloud, with self-hosted overrides"
 ---
@@ -12,45 +12,61 @@ shown in the table — the **Self-hosted default** column lists the value applie
 when the variable is unset.
 </Note>
 
+<CardGroup cols={2}>
+  <Card title="Execution" icon="bolt" href="#execution">
+    Run timeout, worker memory, retention.
+  </Card>
+  <Card title="Files & flow run logs" icon="file" href="#files-&-flow-run-logs">
+    File sizes, log size, slicing thresholds.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="#webhooks">
+    Response timeout, payload size, inline threshold.
+  </Card>
+  <Card title="Key / value storage" icon="database" href="#key-/-value-storage">
+    Store piece key length and value size.
+  </Card>
+</CardGroup>
+
 ---
 
 ### Execution
+
+Limits on how long a flow runs, how much memory and concurrency a worker gets,
+and how long run data is kept. The run timeout counts only active execution
+time — flows paused by **Wait for Approval** or **Delay** don't count against
+it.
 
 | Limit | Cloud | Env var | Self-hosted default |
 |---|---|---|---|
 | Flow run timeout | 10 min | `AP_FLOW_TIMEOUT_SECONDS` | `600` |
 | Worker process memory | 1 GB | the worker container's memory cap | `1 GB` |
 | Paused flow lifetime | 30 days | `AP_PAUSED_FLOW_TIMEOUT_DAYS` | `30` |
-| Worker concurrency (per worker) | 1 | `AP_WORKER_CONCURRENCY` | `5` (set to `1` — see [Recommended Setup](/install/architecture/recommended-setup)) |
+| Execution data retention | 30 days | `AP_EXECUTION_DATA_RETENTION_DAYS` | `30` |
+| Worker concurrency (per worker) | 1 | `AP_WORKER_CONCURRENCY` | `5` (set to `1` — see [Production Setup](/install/configure-operate/production-setup)) |
 
 <Tip>
-Flows paused by **Wait for Approval** or **Delay** do **not** count toward the
-flow run timeout — the timeout only counts active execution time.
+Run logs, step files, and execution events are deleted after the retention
+window. `AP_PAUSED_FLOW_TIMEOUT_DAYS` **cannot exceed**
+`AP_EXECUTION_DATA_RETENTION_DAYS` — a paused flow can't outlive the data it
+needs to resume.
 </Tip>
 
 <Tip>
-At the recommended concurrency of 1, the worker container's memory cap (1 GB)
-is the memory limit for the flow. If a flow exhausts it, that one worker is
-OOM-killed and the job is requeued. About 300 MB of the budget is overhead for a
-warm process with pieces loaded.
-</Tip>
-
-<Tip>
-To handle longer processes, split them into multiple flows — e.g. one flow calls
-another via webhook, or each flow processes a smaller batch of items.
+At the recommended concurrency of 1, the worker container's memory cap (1 GB) is
+the memory limit for the flow. If a flow exhausts it, that one worker is
+OOM-killed and the job is requeued (about 300 MB of the budget is overhead for a
+warm process with pieces loaded). To handle larger or longer processes, split
+them into multiple flows — e.g. one flow calls another via webhook, or each flow
+processes a smaller batch of items.
 </Tip>
 
 ---
 
 ### Files & flow run logs
 
-<Info>
-Files emitted by actions or triggers are persisted to the database or S3 so the
-flow can retry from a later step. The log size limit applies to the combined
-inputs and outputs of every step in a single run; step outputs above the slice
-threshold are offloaded to object storage and re-hydrated on demand instead of
-sitting in worker memory.
-</Info>
+Files emitted by actions or triggers are persisted to the database or S3 so a
+flow can retry from a later step. The log-size limit covers the combined inputs
+and outputs of every step in a single run.
 
 | Limit | Cloud | Env var | Self-hosted default |
 |---|---|---|---|
@@ -59,7 +75,7 @@ sitting in worker memory.
 | Step output slice threshold | 32 KB | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | `32` |
 | Step input truncate threshold | 2 KB | `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | `2` |
 
-#### How it works
+**How it works**
 
 - **Input** — values above `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` are
   replaced with a placeholder in the log; the step still receives the full
@@ -70,19 +86,16 @@ sitting in worker memory.
 - **Total** — the cumulative size of inputs and outputs (counting the
   **original** size of offloaded outputs) is capped by
   `AP_MAX_FLOW_RUN_LOG_SIZE_MB`. Runs that exceed it end with status
-  `LOG_SIZE_EXCEEDED`.
-
-<Warning>
-A run that produces enough cumulative output to exceed
-`AP_MAX_FLOW_RUN_LOG_SIZE_MB` ends with status `LOG_SIZE_EXCEEDED`, regardless
-of how many individual outputs were offloaded to object storage. Lowering
-`AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` will not buy more log headroom — only
-raising `AP_MAX_FLOW_RUN_LOG_SIZE_MB` does.
-</Warning>
+  `LOG_SIZE_EXCEEDED` — regardless of how many outputs were offloaded to object
+  storage. Lowering `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` will **not** buy more
+  log headroom; only raising `AP_MAX_FLOW_RUN_LOG_SIZE_MB` does.
 
 ---
 
 ### Webhooks
+
+Limits on how long a synchronous webhook waits for a response and how large an
+incoming payload can be.
 
 | Limit | Cloud | Env var | Self-hosted default |
 |---|---|---|---|

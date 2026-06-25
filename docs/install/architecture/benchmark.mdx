@@ -1,50 +1,115 @@
 ---
 title: "Benchmark"
-icon: "chart-line"
+description: "Warm and cold throughput of the worker-is-the-sandbox model on GKE, and whether the 1:10 app-to-worker ratio earns its extra apps"
+icon: "gauge-high"
 ---
 
-## What's Measured
+This benchmark answers one question for the recommended production shape: **as you add workers, where does throughput come from, and does the 1:10 app-to-worker ratio earn its extra apps?** It runs the [worker-is-the-sandbox](/install/architecture/workers) model on a real GKE cluster, against a same-region object store with signed URLs.
 
-The benchmark tests end-to-end webhook flow execution: an HTTP request hits a **Catch Webhook** trigger, runs a **Code** action, and returns a response via **Return Response**. This measures the full request lifecycle including routing, execution, and response delivery.
+<img src="/resources/diagrams/activepieces-architecture.png" alt="Activepieces production architecture: client, app, Redis job queue, Postgres, S3, and one-flow-per-worker execution tier" />
+
+_The shape under test: app tier, Redis job queue, Postgres, S3, and a one-flow-per-worker execution tier._
+
+## What's measured
+
+A 4-node **synchronous** webhook flow that holds the HTTP connection open until the flow returns:
+
+<Steps>
+  <Step title="Webhook trigger">
+    Catches the request on a `/sync` URL and holds the connection until the flow finishes.
+  </Step>
+  <Step title="Math Helper">
+    Adds `2 + 3`.
+  </Step>
+  <Step title="Code step">
+    Runs `return inputs.sum + 1` inside an `isolated-vm` context.
+  </Step>
+  <Step title="Webhook response">
+    Returns the result, closing the held connection.
+  </Step>
+</Steps>
+
+The compute is sub-millisecond by design — everything measured below is orchestration (queueing, callbacks, sandbox boot), which is what actually shapes production latency.
+
+Each configuration is run two ways:
+
+- **Warm** (`AP_REUSE_SANDBOX=true`) — the engine process is reused between jobs.
+- **Cold** (`AP_REUSE_SANDBOX=false`) — a fresh engine fork per job, the realistic isolation path.
 
 ## Results
 
-| Configuration | Throughput (req/s) | Mean Latency | P50 | P99 |
+<CardGroup cols={3}>
+  <Card title="148.9 req/s" icon="gauge-high">
+    Peak warm throughput — 8 apps, 80 workers.
+  </Card>
+  <Card title="+58% / +35%" icon="arrow-trend-up">
+    Warm gain from halving the ratio to 1:10.
+  </Card>
+  <Card title="~1.1 s" icon="snowflake">
+    Cold-start boot tax paid per job.
+  </Card>
+</CardGroup>
+
+Each worker is one sandbox at concurrency 1, hard-capped at 0.5 vCPU / 1 GB. Apps are 1 vCPU / 1 GB.
+
+| Config | Ratio | Warm req/s | Cold req/s |
+|---|---|---|---|
+| 2 app · 40 workers | 1:20 | 59.1 | 19.8 |
+| 4 app · 40 workers | 1:10 | 93.5 | 19.6 |
+| 4 app · 80 workers | 1:20 | 110.5 | 33.3 |
+| 8 app · 80 workers | 1:10 | 148.9 | 33.5 |
+
+## The 1:10 vs 1:20 ratio
+
+Holding worker count fixed and doubling the apps (1:20 to 1:10):
+
+| Workers | Mode | 1:20 | 1:10 | Δ |
 |---|---|---|---|---|
-| 1 App, 2 Workers | 95.1 | 20.8 ms | 15.4 ms | 62.7 ms |
-| 2 Apps, 4 Workers | 167.6 | 23.4 ms | 20.0 ms | 65.1 ms |
-| 3 Apps, 6 Workers | 231.8 | 24.8 ms | 21.2 ms | 71.5 ms |
-| 1 App, 4 Workers | 174.5 | 22.4 ms | 19.0 ms | 56.7 ms |
-| 2 Apps, 8 Workers | 286.5 | 26.0 ms | 22.3 ms | 89.5 ms |
-| 3 Apps, 12 Workers | 336.6 | 35.1 ms | 34.8 ms | 51.5 ms |
+| 40 | warm | 59.1 | 93.5 | **+58%** |
+| 40 | cold | 19.8 | 19.6 | −1% |
+| 80 | warm | 110.5 | 148.9 | **+35%** |
+| 80 | cold | 33.3 | 33.5 | +1% |
 
-## Test Environment
+- **Warm is app-bound.** Every step posts a callback to the app, so under warm load the app tier saturates first (workers sit 11–14% idle). More apps means more callback capacity, lower flow-run latency, and higher throughput.
+- **Cold is worker-bound.** Each job pays a 1.1–1.3 s fork-and-boot, so workers are the wall and extra apps sit idle — the ratio barely moves the number.
 
-- **Runner**: `depot-ubuntu-24.04-16` (16 cores)
-- **App container**: 2 CPU / 4 GB memory
-- **Worker container**: 0.5 CPU / 1 GB memory
-- **Execution mode**: `SANDBOX_CODE_ONLY`
-- **Rate limiter**: Disabled (`AP_PROJECT_RATE_LIMITER_ENABLED=false`)
-- **Total requests**: 500 per configuration
+<Note>
+**Why Production Setup recommends 1:10.** Apps at 1 vCPU are cheap relative to the worker fleet, and 1:10 is the warm-headroom margin that keeps the app tier from becoming the wall during bursts. 1:20 is the lean floor that still works; 1:10 buys safety, not a proportional throughput gain. See [Production Setup](/install/configure-operate/production-setup).
+</Note>
 
-## How to Reproduce
+## Latency anatomy
 
-### Via GitHub Actions UI
+Where the milliseconds go — warm (8 app · 80 w) vs cold (2 app · 40 w):
 
-1. Go to the **Actions** tab in the repository
-2. Select the **Benchmark** workflow
-3. Click **Run workflow**
-4. Optionally adjust `total_requests` (default: 500)
-5. All 6 configurations (1:2 and 1:4 ratios at 1x/2x/3x scale) run in parallel automatically
+| Layer | Warm | Cold |
+|---|---|---|
+| App ingress + Redis enqueue + worker poll + response | ~91 ms | ~39 ms |
+| Provision (flow bundle + piece + engine, all disk-cache hits) | 24 ms | 16 ms |
+| Sandbox boot | 18 ms | 1167 ms |
+| Flow run (4 steps, engine to app callbacks) | 372 ms | 762 ms |
+| **End-to-end avg** | **505 ms** | **1984 ms** |
 
-### Via CLI
+<Accordion title="Inside the cold boot tax">
+A fresh engine fork pays Node startup (including the ~80 ms `--no-node-snapshot` penalty that `isolated-vm` forces), engine-bundle parse and compile, and a socket connect. In isolation that's ~570 ms; under sustained cold load it inflates to ~1167 ms because ~40 workers fork at once, each capped at 0.5 CPU, and contend for it — boot is CPU-bound. Warm reuses the process and pays just 18 ms.
+</Accordion>
+
+## Test environment
+
+- **Cluster**: GKE `e2-standard-4` × 14 nodes, `europe-west1-b`
+- **Worker**: 0.5 vCPU / 1 GB, concurrency 1, `SANDBOX_CODE_ONLY` (Node fork + `isolated-vm`)
+- **App**: 1 vCPU / 1 GB
+- **Object store**: same-region S3-compatible bucket over the S3-interop endpoint, path-style SigV4 presigned URLs
+- **Postgres + Redis**: in-cluster
+- **Load**: `hey`, concurrency matched to worker count (40 or 80) so requests don't queue behind the concurrency-1 workers — latency reflects real service time, not backlog
+
+## How to reproduce
 
 ```bash
-gh workflow run benchmark.yml
+benchmark/run-gke.sh [total_requests] [concurrency]
 ```
 
-After the workflow completes, check the **summary** job for a combined comparison table.
+The script mints a worker token, deploys `benchmark/k8s-sandbox.yaml` to the cluster, runs the load test against the app LoadBalancer, and reports cold-boot latency, warm throughput, and the per-run breakdown from worker-pod logs. Set `REUSE_SANDBOX`, `APP_REPLICAS`, and `WORKER_REPLICAS` to reproduce any row in the results table.
 
 <Tip>
-  These benchmarks run in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/sandboxing).
+This benchmark runs in `SANDBOX_CODE_ONLY` mode. It does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism for multi-tenancy. See [Sandboxing](/install/architecture/sandboxing).
 </Tip>
