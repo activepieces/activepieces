@@ -91,6 +91,9 @@ function ChatBoxContent({
   });
 
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
+  const offerRecurringAutomation = useChatStoreContext(
+    (s) => s.offerRecurringAutomation,
+  );
 
   useEffect(() => {
     if (initialConversationId) {
@@ -225,10 +228,11 @@ function ChatBoxContent({
                 {!isAwaitingResponse &&
                   !wasCancelled &&
                   !hasBlockingCard &&
-                  quickReplies.length > 0 && (
+                  (quickReplies.length > 0 || offerRecurringAutomation) && (
                     <div className="mt-auto pt-2">
                       <QuickReplies
                         replies={quickReplies}
+                        offerRecurringAutomation={offerRecurringAutomation}
                         onSend={handleSend}
                       />
                     </div>

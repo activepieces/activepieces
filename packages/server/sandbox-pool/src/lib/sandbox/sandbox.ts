@@ -3,7 +3,7 @@ import { randomBytes, timingSafeEqual } from 'crypto'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
+import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
@@ -60,7 +60,6 @@ export function createSandbox(
     sandboxId: string,
     options: SandboxInitOptions,
     processMaker: SandboxProcessMaker,
-    workerHandlers: WorkerContract,
 ): Sandbox {
     let childProcess: ChildProcess | null = null
     let httpServer: HttpServer | null = null
@@ -89,8 +88,6 @@ export function createSandbox(
             }
             connectedSocket = socket
             log.info({ sandbox: { id: sandboxId }, socketId: socket.id }, '[WebSocket] Sandbox connected')
-
-            createRpcServer<WorkerContract>(socket, workerHandlers)
 
             socket.on('disconnect', (reason) => {
                 log.info({ sandbox: { id: sandboxId }, reason, socketId: socket.id }, '[WebSocket] Sandbox disconnected')

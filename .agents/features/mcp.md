@@ -102,6 +102,8 @@ OAuth 2.0 PKCE flow is supported for AI clients that require OAuth. The MCP OAut
 
 **RFC 9728 §5.1** — MCP `401` responses include a `WWW-Authenticate: Bearer resource_metadata="…"` header pointing at the prefixed protected-resource metadata URL (`/.well-known/oauth-protected-resource/mcp` for project, `/mcp/platform` for platform), so clients can locate discovery without guessing host-root well-known paths. Clients that ignore the header and probe host-root well-known paths still require the operator to forward `host/.well-known/oauth-*` to AP (that namespace is host-root-anchored by RFC 8414/9728).
 
+**Conversation-project scoping** — The optional `x-ap-conversation-id` request header (sent by the EE chat path) switches the built server to the project a prior conversation is bound to. The override is scoped to the token so it can never widen the grant: a project-scoped token resolves the header only when the conversation's project equals the token's own project, otherwise the header is ignored; a platform-scoped token requires the conversation's `platformId` to match the token's and re-validates the user's current project membership (`chatHelpers.getUserProjects`) before honoring it. A conversation with no `projectId` is ignored.
+
 ## Server Building
 
 `mcpServerService.buildServer()` — built per-request:

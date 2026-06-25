@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { EngineResponseStatus, WorkerContract } from '@activepieces/shared'
+import { EngineResponseStatus } from '@activepieces/shared'
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
 import { Sandbox, SandboxLogger, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 
@@ -29,15 +29,6 @@ function createMockLogger(): SandboxLogger {
         debug: vi.fn(),
         error: vi.fn(),
         warn: vi.fn(),
-    }
-}
-
-function createMockWorkerHandlers(): WorkerContract {
-    return {
-        updateRunProgress: vi.fn().mockResolvedValue(undefined),
-        uploadRunLog: vi.fn().mockResolvedValue(undefined),
-        sendFlowResponse: vi.fn().mockResolvedValue(undefined),
-        updateStepProgress: vi.fn().mockResolvedValue(undefined),
     }
 }
 
@@ -106,9 +97,8 @@ describe('createSandbox', () => {
     describe('start', () => {
         it('creates socket server and calls processMaker.create with correct params', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-1', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-1', defaultOptions, testPM.maker)
 
             await sandbox.start(startOptions)
 
@@ -137,9 +127,8 @@ describe('createSandbox', () => {
 
         it('does not add custom piece mount when platformId is empty', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-no-mount', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-no-mount', defaultOptions, testPM.maker)
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
@@ -151,9 +140,8 @@ describe('createSandbox', () => {
 
         it('scopes code mount to flowVersionId when non-reusable', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-scoped', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-scoped', { ...defaultOptions, reusable: false }, testPM.maker)
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
@@ -168,9 +156,8 @@ describe('createSandbox', () => {
 
         it('mounts full codes directory when reusable even with flowVersionId', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-reuse', { ...defaultOptions, reusable: true }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-reuse', { ...defaultOptions, reusable: true }, testPM.maker)
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
@@ -185,9 +172,8 @@ describe('createSandbox', () => {
 
         it('omits code mount when non-reusable without flowVersionId', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-no-fv', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-no-fv', { ...defaultOptions, reusable: false }, testPM.maker)
 
             await sandbox.start({ flowVersionId: undefined, platformId: '', mounts: [] })
 
@@ -198,9 +184,8 @@ describe('createSandbox', () => {
 
         it('resolves custom_pieces hostPath to cache/custom_pieces/<platformId>', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-plat', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-plat', defaultOptions, testPM.maker)
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: 'plat-xyz', mounts: [] })
 
@@ -223,9 +208,8 @@ describe('createSandbox', () => {
             [''],
         ])('rejects path traversal in flowVersionId: %s', async (flowVersionId) => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker)
 
             let caughtErr: unknown
             try {
@@ -248,9 +232,8 @@ describe('createSandbox', () => {
             ['plat\0null'],
         ])('rejects path traversal in platformId: %s', async (platformId) => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-plat-trav', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-plat-trav', defaultOptions, testPM.maker)
 
             let caughtErr: unknown
             try {
@@ -266,9 +249,8 @@ describe('createSandbox', () => {
 
         it('rejects caller-supplied mount whose sandboxPath escapes /root/', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-escape', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-escape', defaultOptions, testPM.maker)
 
             const maliciousMount: SandboxMount = { hostPath: '/host/evil', sandboxPath: '/root/../etc' }
 
@@ -280,10 +262,9 @@ describe('createSandbox', () => {
 
         it('rejects baseMount whose sandboxPath escapes /root/', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
             const baseMounts: SandboxMount[] = [{ hostPath: '/host/secret', sandboxPath: '/etc/passwd-evil' }]
-            sandbox = createSandbox(log, 'sb-base-escape', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-base-escape', { ...defaultOptions, baseMounts }, testPM.maker)
 
             await expect(
                 sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] }),
@@ -293,10 +274,9 @@ describe('createSandbox', () => {
 
         it('composes mounts in order: baseMounts, codeMount, callerMounts, customPieceMounts', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
             const baseMounts: SandboxMount[] = [{ hostPath: '/host/common', sandboxPath: '/root/common' }]
-            sandbox = createSandbox(log, 'sb-order', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-order', { ...defaultOptions, baseMounts }, testPM.maker)
 
             const callerMount: SandboxMount = { hostPath: '/host/x', sandboxPath: '/root/x' }
             await sandbox.start({ flowVersionId: 'fv-1', platformId: 'plat-1', mounts: [callerMount] })
@@ -312,9 +292,8 @@ describe('createSandbox', () => {
 
         it('never exposes host /etc, /root, or / as a sandbox mount', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-no-host-leak', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-no-host-leak', defaultOptions, testPM.maker)
 
             await sandbox.start(startOptions)
 
@@ -329,9 +308,8 @@ describe('createSandbox', () => {
 
         it('does not inject AP_CUSTOM_PIECES_PATHS when platformId is undefined', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-no-plat-env', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-no-plat-env', defaultOptions, testPM.maker)
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
@@ -341,9 +319,8 @@ describe('createSandbox', () => {
 
         it('is idempotent when already connected', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-2', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-2', defaultOptions, testPM.maker)
 
             await sandbox.start(startOptions)
             await sandbox.start(startOptions)
@@ -352,9 +329,8 @@ describe('createSandbox', () => {
 
         it('passes a per-start AP_SANDBOX_WS_TOKEN to the child', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-token', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-token', defaultOptions, testPM.maker)
 
             await sandbox.start(startOptions)
 
@@ -364,10 +340,9 @@ describe('createSandbox', () => {
 
         it('rotates AP_SANDBOX_WS_TOKEN between successive start() calls on a reusable sandbox', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             const reusableOptions = { ...defaultOptions, reusable: true }
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rotate', reusableOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-rotate', reusableOptions, testPM.maker)
 
             await sandbox.start(startOptions)
             const firstToken = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_TOKEN
@@ -382,9 +357,8 @@ describe('createSandbox', () => {
 
         it('rejects an unauthenticated Socket.IO connection', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-noauth', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-rej-noauth', defaultOptions, testPM.maker)
 
             await sandbox.start(startOptions)
             const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
@@ -407,9 +381,8 @@ describe('createSandbox', () => {
 
         it('rejects a Socket.IO connection that presents the wrong token', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-wrong', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-rej-wrong', defaultOptions, testPM.maker)
 
             await sandbox.start(startOptions)
             const port = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0].env.AP_SANDBOX_WS_PORT
@@ -433,9 +406,8 @@ describe('createSandbox', () => {
 
         it('disconnects a second authenticated connection while keeping the first active', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-rej-second', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-rej-second', defaultOptions, testPM.maker)
 
             await sandbox.start(startOptions)
             const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -462,11 +434,10 @@ describe('createSandbox', () => {
     describe('execute', () => {
         async function startSandbox() {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-exec', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-exec', defaultOptions, testPM.maker)
             await sandbox.start(startOptions)
-            return { sandbox, log, workerHandlers }
+            return { sandbox, log }
         }
 
         it('sends RPC executeOperation and resolves on response', async () => {
@@ -551,28 +522,6 @@ describe('createSandbox', () => {
             )
 
             expect(result).toEqual({ ...engineResponse, logs: 'stdout:\nline1\nline2\n\nstderr:\nerr1\n' })
-        })
-
-        it('delegates worker contract calls to handlers', async () => {
-            const { sandbox, workerHandlers } = await startSandbox()
-            const client = testPM.getClient()
-
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
-                if (msg.method === 'executeOperation') {
-                    // Simulate calling back to worker via RPC
-                    client.timeout(5000).emitWithAck('rpc', { method: 'updateRunProgress', payload: { progress: 50 } }).then(() => {
-                        ack({ status: 200 })
-                    })
-                }
-            })
-
-            await sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
-
-            expect(workerHandlers.updateRunProgress).toHaveBeenCalledWith({ progress: 50 })
         })
 
         it('rejects with SANDBOX_EXECUTION_TIMEOUT on real timeout', async () => {
@@ -701,9 +650,8 @@ describe('createSandbox', () => {
     describe('shutdown', () => {
         it('kills process, disconnects socket, closes io server', async () => {
             const log = createMockLogger()
-            const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
-            sandbox = createSandbox(log, 'sb-shutdown', defaultOptions, testPM.maker, workerHandlers)
+            sandbox = createSandbox(log, 'sb-shutdown', defaultOptions, testPM.maker)
             await sandbox.start(startOptions)
 
             await sandbox.shutdown()

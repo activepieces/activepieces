@@ -1,5 +1,5 @@
 import path from 'path'
-import { isNil } from '@activepieces/core-utils'
+import { ensureTrailingSlash, isNil } from '@activepieces/core-utils'
 import {
     DropdownProperty,
     DynamicProperties,

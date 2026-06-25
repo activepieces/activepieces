@@ -12,7 +12,7 @@ let testWorkspace = ''
 
 const mockInstall = vi.fn()
 
-vi.mock('../../../src/lib/cache/code/bun-runner', () => ({
+vi.mock('../../../src/lib/utils/bun-runner', () => ({
     bunRunner: () => ({
         install: mockInstall,
     }),
@@ -26,7 +26,7 @@ vi.mock('../../../src/lib/cache/cache-paths', () => ({
 }))
 
 // Import after mocks are registered
-const { pieceInstaller } = await import('../../../src/lib/cache/pieces/piece-installer')
+const { pieceInstaller, isValidPackageName } = await import('../../../src/lib/cache/pieces/piece-installer')
 
 function makePiece(name: string, version = '1.0.0'): OfficialPiecePackage {
     return {
@@ -72,8 +72,8 @@ const fakeLog = {
     child: vi.fn().mockReturnThis(),
 } as unknown as ApLogger
 
-// REGISTRY pieces don't call apiClient.getPieceArchive so an empty object suffices
-const fakeApiClient = {} as never
+// Every piece is installed from its bundle link; the dependency value is the engine bundle endpoint.
+const bundleSource = { publicApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' }
 
 const fakeGetSettings = () => ({
     EXECUTION_MODE: 'UNSANDBOXED',
@@ -93,6 +93,15 @@ beforeEach(async () => {
     testWorkspace = join(tmpdir(), `piece-installer-test-${randomUUID()}`)
     await mkdir(testWorkspace, { recursive: true })
     vi.clearAllMocks()
+    // The installer downloads each piece tarball from the bundle endpoint via fetch.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: async () => new TextEncoder().encode('tgz').buffer,
+    }))
+})
+
+afterEach(() => {
+    vi.unstubAllGlobals()
 })
 
 afterEach(async () => {
@@ -104,11 +113,11 @@ describe('pieceInstaller', () => {
     it('batch install succeeds — all pieces marked ready', async () => {
         const piece1 = makePiece('@activepieces/piece-a')
         const piece2 = makePiece('@activepieces/piece-b')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
         mockInstall.mockResolvedValueOnce({ output: '' })
 
-        await installer.install({ pieces: [piece1, piece2], includeFilters: true })
+        await installer.install({ pieces: [piece1, piece2], includeFilters: true, ...bundleSource })
 
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(readyFilePath(piece1))).toBe(true)
@@ -118,14 +127,14 @@ describe('pieceInstaller', () => {
     it('batch fails with good and bad piece — good piece marked ready, bad piece rolled back', async () => {
         const good = makePiece('@activepieces/piece-good')
         const bad = makePiece('@activepieces/piece-bad')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
         mockInstall
             .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // batch attempt
             .mockResolvedValueOnce({ output: '' })                           // good individual
             .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // bad individual
 
-        const error = await installer.install({ pieces: [good, bad], includeFilters: false }).catch(e => e as Error)
+        const error = await installer.install({ pieces: [good, bad], includeFilters: false, ...bundleSource }).catch(e => e as Error)
 
         expect(error).toBeInstanceOf(Error)
         expect(error.message).toContain('@activepieces/piece-bad@1.0.0')
@@ -139,14 +148,14 @@ describe('pieceInstaller', () => {
     it('batch fails with both pieces bad — both rolled back, error names both', async () => {
         const piece1 = makePiece('@activepieces/piece-x')
         const piece2 = makePiece('@activepieces/piece-y')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
         mockInstall
             .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // batch
             .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-x individual
             .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-y individual
 
-        const error = await installer.install({ pieces: [piece1, piece2], includeFilters: false }).catch(e => e as Error)
+        const error = await installer.install({ pieces: [piece1, piece2], includeFilters: false, ...bundleSource }).catch(e => e as Error)
 
         expect(error).toBeInstanceOf(Error)
         expect(error.message).toContain('@activepieces/piece-x@1.0.0')
@@ -159,11 +168,11 @@ describe('pieceInstaller', () => {
 
     it('single piece fails — rolled back immediately, no individual retry', async () => {
         const piece = makePiece('@activepieces/piece-solo')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
         mockInstall.mockRejectedValueOnce(new Error('install failure'))
 
-        await expect(installer.install({ pieces: [piece], includeFilters: true })).rejects.toThrow('install failure')
+        await expect(installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })).rejects.toThrow('install failure')
 
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(pieceDirPath(piece))).toBe(false)
@@ -176,38 +185,83 @@ describe('pieceInstaller', () => {
         await mkdir(join(pieceDir, 'node_modules'), { recursive: true })
         await writeFile(join(pieceDir, 'ready'), 'true')
 
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
-        await installer.install({ pieces: [piece], includeFilters: true })
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
 
         expect(mockInstall).not.toHaveBeenCalled()
     })
 
-    it('archive piece installs through bun with a unique suffixed workspace name pointing at its tgz', async () => {
+    it('archive piece installs through bun with a unique suffixed workspace name pointing at its bundle link', async () => {
         const piece = makeArchivePiece('@acme/piece-sample', '0.3.3')
-        const getPieceArchive = vi.fn().mockResolvedValue(Buffer.from('tgz'))
-        const installer = pieceInstaller(fakeLog, { getPieceArchive } as never, testWorkspace, fakeGetSettings)
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
         mockInstall.mockResolvedValueOnce({ output: '' })
 
-        await installer.install({ pieces: [piece], includeFilters: true })
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
 
-        // The archive is downloaded once and installed through the shared bun workspace.
-        expect(getPieceArchive).toHaveBeenCalledOnce()
         expect(mockInstall).toHaveBeenCalledOnce()
         expect(await pathExists(readyFilePath(piece))).toBe(true)
 
         // The folder's package.json carries the unique `<pieceName>-<pieceVersion>` workspace name
-        // (never the raw piece name) and depends on the saved .tgz — so multiple cached versions of
-        // the same piece can never collide on a bun workspace name.
+        // (never the raw piece name) and depends on the locally downloaded bundle.tgz — so multiple
+        // cached versions of the same piece can never collide on a bun workspace name.
         const manifest = JSON.parse(await readFile(join(pieceDirPath(piece), 'package.json'), 'utf8'))
         expect(manifest.name).toBe('@acme/piece-sample-0.3.3')
-        expect(manifest.dependencies['@acme/piece-sample']).toContain('.tgz')
+        expect(manifest.dependencies['@acme/piece-sample']).toContain('bundle.tgz')
+    })
+
+    it('skips pieces whose name is a relative path — they never reach the shared bun workspace', async () => {
+        const good = makePiece('@activepieces/piece-good')
+        // Stale `usedPieces` data from a since-reverted build can carry a relative path as the
+        // pieceName. Writing it as a workspace member corrupts the shared bun.lock and breaks every
+        // other piece (and cache pre-warm / deploy), so it must be dropped before any member is built.
+        const poison = makePiece('../../../common/pieces/@activepieces/piece-algolia', '0.0.3')
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [good, poison], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).toHaveBeenCalledOnce()
+        expect(mockInstall.mock.calls[0]?.[0].filtersPath).toEqual([
+            expect.stringContaining('@activepieces/piece-good-1.0.0'),
+        ])
+        expect(await pathExists(readyFilePath(good))).toBe(true)
+    })
+
+    it('install made up only of invalid-named pieces is a no-op — bun never runs', async () => {
+        const poison = makePiece('../../../common/pieces/@activepieces/piece-algolia', '0.0.3')
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+
+        await installer.install({ pieces: [poison], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).not.toHaveBeenCalled()
+    })
+
+    it('mixes valid and invalid pieces — only valid ones reach bun, both filters present for valid', async () => {
+        const goodA = makePiece('@activepieces/piece-a')
+        const goodB = makePiece('piece-b-unscoped')
+        const poison1 = makePiece('../../../common/pieces/@activepieces/piece-x', '0.0.3')
+        const poison2 = makePiece('@activepieces/piece-y/extra', '1.2.3')
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [goodA, poison1, goodB, poison2], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).toHaveBeenCalledOnce()
+        const filtersPath = mockInstall.mock.calls[0]?.[0].filtersPath as string[]
+        expect(filtersPath).toHaveLength(2)
+        expect(filtersPath.some(f => f.includes('@activepieces/piece-a-1.0.0'))).toBe(true)
+        expect(filtersPath.some(f => f.includes('piece-b-unscoped-1.0.0'))).toBe(true)
+        expect(filtersPath.some(f => f.includes('piece-x'))).toBe(false)
+        expect(filtersPath.some(f => f.includes('piece-y'))).toBe(false)
     })
 
     it('individual fallback always passes --filter path regardless of includeFilters', async () => {
         const piece1 = makePiece('@activepieces/piece-filter-a')
         const piece2 = makePiece('@activepieces/piece-filter-b')
-        const installer = pieceInstaller(fakeLog, fakeApiClient, testWorkspace, fakeGetSettings)
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
         mockInstall
             .mockRejectedValueOnce(new Error('batch error'))
@@ -215,7 +269,7 @@ describe('pieceInstaller', () => {
             .mockResolvedValueOnce({ output: '' })
 
         // Use includeFilters: false so the batch call has no filters
-        await installer.install({ pieces: [piece1, piece2], includeFilters: false })
+        await installer.install({ pieces: [piece1, piece2], includeFilters: false, ...bundleSource })
 
         expect(mockInstall).toHaveBeenCalledTimes(3)
 
@@ -229,5 +283,44 @@ describe('pieceInstaller', () => {
         expect(mockInstall.mock.calls[2]?.[0]).toMatchObject({
             filtersPath: [expect.stringContaining(`${piece2.pieceName}-${piece2.pieceVersion}`)],
         })
+    })
+})
+
+describe('isValidPackageName', () => {
+    it.each([
+        '@activepieces/piece-algolia',
+        '@activepieces/piece-add-event',
+        '@acme/piece-sample',
+        // the `<name>-<version>` workspace-member form is itself a single-slash scoped name
+        '@activepieces/piece-algolia-0.0.3',
+        'tslib',
+        'piece-b-unscoped',
+        'lodash.merge',
+        '@a/b',
+        'a',
+    ])('accepts valid package name %j', (name) => {
+        expect(isValidPackageName(name)).toBe(true)
+    })
+
+    it.each([
+        // the production poison: a relative path masquerading as a piece name
+        '../../../common/pieces/@activepieces/piece-algolia',
+        '../../../common/pieces/@activepieces/piece-algolia-0.0.3',
+        '..',
+        '../foo',
+        './foo',
+        'foo/..',
+        '@activepieces/..',
+        // more than one path segment (scoped names allow exactly one slash)
+        '@activepieces/piece-y/extra',
+        'a/b/c',
+        'foo/bar',
+        // malformed scopes
+        '@/name',
+        '@scope/',
+        // empty
+        '',
+    ])('rejects invalid package name %j', (name) => {
+        expect(isValidPackageName(name)).toBe(false)
     })
 })
