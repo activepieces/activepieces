@@ -1,10 +1,10 @@
 import { PieceSelectorConfig } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
-import { piecesApi } from '@/features/pieces';
+import { pieceCacheUtils, piecesApi } from '@/features/pieces';
 
 export const platformPiecesMutations = {
   useTogglePieceVisibility: ({
@@ -16,6 +16,7 @@ export const platformPiecesMutations = {
     filteredPieceNames: string[];
     refetch: () => Promise<void>;
   }) => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async (pieceName: string) => {
         const newFilteredPieceNames = filteredPieceNames.includes(pieceName)
@@ -28,6 +29,7 @@ export const platformPiecesMutations = {
         await refetch();
       },
       onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
     });
@@ -41,6 +43,7 @@ export const platformPiecesMutations = {
     pinnedPieces: string[];
     refetch: () => Promise<void>;
   }) => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async (pieceName: string) => {
         const newPinnedPieces = pinnedPieces.includes(pieceName)
@@ -50,6 +53,7 @@ export const platformPiecesMutations = {
         await refetch();
       },
       onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
     });
@@ -61,12 +65,14 @@ export const platformPiecesMutations = {
     platformId: string;
     refetch: () => Promise<void>;
   }) => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async (pieceSelectorConfig: PieceSelectorConfig | null) => {
         await platformApi.update({ pieceSelectorConfig }, platformId);
         await refetch();
       },
       onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
       onError: () => {
@@ -75,11 +81,13 @@ export const platformPiecesMutations = {
     });
   },
   useSyncPieces: () => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async () => {
         await piecesApi.syncFromCloud();
       },
       onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Pieces synced'), {
           description: t(
             'Pieces have been synced from the activepieces cloud.',
@@ -99,6 +107,7 @@ export const platformPiecesMutations = {
     filteredTriggerNames: Record<string, string[]>;
     refetch: () => Promise<void>;
   }) => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async ({
         pieceName,
@@ -141,6 +150,7 @@ export const platformPiecesMutations = {
         await refetch();
       },
       onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
     });
@@ -156,6 +166,7 @@ export const platformPiecesMutations = {
     filteredTriggerNames: Record<string, string[]>;
     refetch: () => Promise<void>;
   }) => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async ({
         pieceName,
@@ -190,6 +201,7 @@ export const platformPiecesMutations = {
         await refetch();
       },
       onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
     });
@@ -205,6 +217,7 @@ export const platformPiecesMutations = {
     filteredTriggerNames: Record<string, string[]>;
     refetch: () => Promise<void>;
   }) => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async ({
         pieceName,
@@ -239,6 +252,50 @@ export const platformPiecesMutations = {
         await refetch();
       },
       onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+    });
+  },
+  useSetPieceComponentVisibility: ({
+    platformId,
+    filteredActionNames,
+    filteredTriggerNames,
+    refetch,
+  }: {
+    platformId: string;
+    filteredActionNames: Record<string, string[]>;
+    filteredTriggerNames: Record<string, string[]>;
+    refetch: () => Promise<void>;
+  }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: async ({
+        pieceName,
+        hiddenActions,
+        hiddenTriggers,
+      }: {
+        pieceName: string;
+        hiddenActions: string[];
+        hiddenTriggers: string[];
+      }) => {
+        await platformApi.update(
+          {
+            filteredActionNames: {
+              ...filteredActionNames,
+              [pieceName]: hiddenActions,
+            },
+            filteredTriggerNames: {
+              ...filteredTriggerNames,
+              [pieceName]: hiddenTriggers,
+            },
+          },
+          platformId,
+        );
+        await refetch();
+      },
+      onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
     });
@@ -252,6 +309,7 @@ export const platformPiecesMutations = {
     filteredPieceNames: string[];
     refetch: () => Promise<void>;
   }) => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async ({
         pieceNames,
@@ -267,6 +325,7 @@ export const platformPiecesMutations = {
         await refetch();
       },
       onSuccess: () => {
+        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
       onError: () => {

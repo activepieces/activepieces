@@ -385,6 +385,9 @@ import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migrati
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddFilteredComponentNamesToPlatform1796000000000 } from './migration/postgres/1796000000000-AddFilteredComponentNamesToPlatform'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
+import { AddPieceSetTable1797000000000 } from './migration/postgres/1797000000000-AddPieceSetTable'
+import { MigratePieceSetConfig1798000000000 } from './migration/postgres/1798000000000-MigratePieceSetConfig'
+import { BackfillPieceSets1799000000000 } from './migration/postgres/1799000000000-BackfillPieceSets'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -785,6 +788,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
         AddFilteredComponentNamesToPlatform1796000000000,
+        AddPieceSetTable1797000000000,
+        MigratePieceSetConfig1798000000000,
+        BackfillPieceSets1799000000000,
     ]
     return migrations
 }

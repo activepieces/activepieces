@@ -45,6 +45,8 @@ import { globalConnectionModule } from './ee/global-connections/global-connectio
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
+import { enterprisePieceHooks } from './ee/pieces/ee-piece-hooks'
+import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
@@ -89,6 +91,7 @@ import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
+import { pieceHooks } from './pieces/piece-hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { tagsModule } from './pieces/tags/tags-module'
 import { platformBackgroundJobs } from './platform/platform-jobs'
@@ -287,6 +290,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
+            await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
@@ -305,6 +309,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(chatEvalModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
+            pieceHooks.set(enterprisePieceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
@@ -319,6 +324,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
+            await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
@@ -337,6 +343,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(chatEvalModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
+            pieceHooks.set(enterprisePieceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             break
         case ApEdition.COMMUNITY:

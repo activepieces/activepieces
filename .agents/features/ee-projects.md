@@ -39,6 +39,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Git Sync**: Configuration of an SSH-backed git repo + branch used as a release source or push target.
 - **RBAC**: Role-Based Access Control — enforced per-request via `rbacService.assertPrincipalAccessToProject()`.
 - **Release Type**: GIT_BRANCH (from git), MANUAL (from another project), ROLLBACK (revert to a previous release).
+- **Piece Set assignment**: a project references a piece set via the nullable `project.pieceSetId` column (FK `SET NULL`). When `managePiecesEnabled`, new EE projects are assigned the platform Default set on creation (`ee-project-hooks.ts`), and an unassigned project resolves to Default at filter time. This supersedes the legacy project-plan piece allow/block list. See [piece-sets.md](./piece-sets.md).
 
 ## Project Members
 

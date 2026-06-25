@@ -10,6 +10,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
+import { pieceHooks } from '../piece-hooks'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
@@ -37,7 +38,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             })
 
             const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
-            return enterpriseFilteringUtils(log).filterComponents({ platformId: params.platformId, summaries })
+            return enterpriseFilteringUtils(log).filterComponents({ platformId: params.platformId, projectId: params.projectId, summaries })
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const registry = filterRegistry(await loadRegistry(log), {
@@ -136,6 +137,14 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
+            const previousVersion = await pieceRepos().findOne({
+                where: { name: pieceMetadata.name, platformId: platformId ?? IsNull() },
+                order: { created: 'DESC' },
+                select: ['actions', 'triggers'],
+            })
+            const previousActionNames = Object.keys(previousVersion?.actions ?? {})
+            const previousTriggerNames = Object.keys(previousVersion?.triggers ?? {})
+
             const createdDate = await findOldestCreatedDate({
                 name: pieceMetadata.name,
                 platformId,
@@ -151,6 +160,18 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             })
             if (publishCacheRefresh) {
                 await pieceCache(log).invalidate()
+            }
+            const isNewPiece = isNil(previousVersion)
+            const newActionNames = Object.keys(pieceMetadata.actions ?? {}).filter((a) => !previousActionNames.includes(a))
+            const newTriggerNames = Object.keys(pieceMetadata.triggers ?? {}).filter((t) => !previousTriggerNames.includes(t))
+            if (isNewPiece || newActionNames.length > 0 || newTriggerNames.length > 0) {
+                await pieceHooks.get(log).onPieceCreated({
+                    platformId,
+                    pieceName: pieceMetadata.name,
+                    isNewPiece,
+                    newActionNames,
+                    newTriggerNames,
+                })
             }
             return savedPiece
         },

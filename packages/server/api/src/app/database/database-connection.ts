@@ -17,6 +17,7 @@ import { ChatConversationEntity } from '../ee/chat/chat-conversation-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
+import { PieceSetEntity } from '../ee/pieces/piece-set/piece-set.entity'
 import { ConcurrencyPoolEntity } from '../ee/platform/concurrency-pool/concurrency-pool.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
 import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
@@ -108,6 +109,7 @@ function getEntities(): EntitySchema<unknown>[] {
         UserBadgeEntity,
         WaitpointEntity,
         // Enterprise
+        PieceSetEntity,
         ConcurrencyPoolEntity,
         ProjectMemberEntity,
         ProjectPlanEntity,

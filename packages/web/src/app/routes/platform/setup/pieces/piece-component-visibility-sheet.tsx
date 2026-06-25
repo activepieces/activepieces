@@ -1,4 +1,5 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
+import { PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -20,6 +21,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
+import { pieceSetMutations } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -30,6 +32,7 @@ type PieceComponentVisibilitySheetProps = {
   pieceDisplayName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  pieceSet?: PieceSet;
 };
 
 type ComponentItem =
@@ -47,6 +50,7 @@ export const PieceComponentVisibilitySheet = ({
   pieceDisplayName,
   open,
   onOpenChange,
+  pieceSet,
 }: PieceComponentVisibilitySheetProps) => {
   const [search, setSearch] = useState('');
   const [selectedKeys, setSelectedKeys] = useState<Set<ItemKey>>(new Set());
@@ -59,24 +63,135 @@ export const PieceComponentVisibilitySheet = ({
     enabled: open,
   });
 
-  const mutationArgs = {
-    platformId: platform.id,
-    filteredActionNames: platform.filteredActionNames,
-    filteredTriggerNames: platform.filteredTriggerNames,
-    refetch,
+  const originalHiddenActions = pieceSet
+    ? pieceSet.config.disabledActions[pieceName] ?? []
+    : platform.filteredActionNames[pieceName] ?? [];
+  const originalHiddenTriggers = pieceSet
+    ? pieceSet.config.disabledTriggers[pieceName] ?? []
+    : platform.filteredTriggerNames[pieceName] ?? [];
+
+  const [localHiddenActions, setLocalHiddenActions] = useState<string[]>(
+    () => originalHiddenActions,
+  );
+  const [localHiddenTriggers, setLocalHiddenTriggers] = useState<string[]>(
+    () => originalHiddenTriggers,
+  );
+
+  const isDirty =
+    JSON.stringify([...localHiddenActions].sort()) !==
+      JSON.stringify([...originalHiddenActions].sort()) ||
+    JSON.stringify([...localHiddenTriggers].sort()) !==
+      JSON.stringify([...originalHiddenTriggers].sort());
+
+  const { mutate: setPieceComponentVisibility, isPending: isPlatformSaving } =
+    platformPiecesMutations.useSetPieceComponentVisibility({
+      platformId: platform.id,
+      filteredActionNames: platform.filteredActionNames,
+      filteredTriggerNames: platform.filteredTriggerNames,
+      refetch,
+    });
+
+  const { mutate: updatePieceSet, isPending: isPieceSetPending } =
+    pieceSetMutations.useUpdatePieceSet();
+
+  const isMutating = isPlatformSaving || isPieceSetPending;
+
+  const toggleComponent = ({
+    componentName,
+    isAction,
+  }: {
+    pieceName: string;
+    componentName: string;
+    isAction: boolean;
+  }) => {
+    if (isAction) {
+      setLocalHiddenActions((prev) =>
+        prev.includes(componentName)
+          ? prev.filter((n) => n !== componentName)
+          : [...prev, componentName],
+      );
+    } else {
+      setLocalHiddenTriggers((prev) =>
+        prev.includes(componentName)
+          ? prev.filter((n) => n !== componentName)
+          : [...prev, componentName],
+      );
+    }
   };
 
-  const { mutate: toggleComponent, isPending: isToggling } =
-    platformPiecesMutations.useToggleComponentVisibility(mutationArgs);
+  const batchHide = ({
+    actionNames,
+    triggerNames,
+  }: {
+    pieceName: string;
+    actionNames: string[];
+    triggerNames: string[];
+  }) => {
+    setLocalHiddenActions((prev) => [...new Set([...prev, ...actionNames])]);
+    setLocalHiddenTriggers((prev) => [...new Set([...prev, ...triggerNames])]);
+  };
 
-  const { mutate: batchHide, isPending: isBatchHiding } =
-    platformPiecesMutations.useBatchHideComponents(mutationArgs);
+  const batchShow = ({
+    actionNames,
+    triggerNames,
+  }: {
+    pieceName: string;
+    actionNames: string[];
+    triggerNames: string[];
+  }) => {
+    setLocalHiddenActions((prev) =>
+      prev.filter((n) => !actionNames.includes(n)),
+    );
+    setLocalHiddenTriggers((prev) =>
+      prev.filter((n) => !triggerNames.includes(n)),
+    );
+  };
 
-  const { mutate: batchShow, isPending: isBatchShowing } =
-    platformPiecesMutations.useBatchShowComponents(mutationArgs);
-
-  const hiddenActions = platform.filteredActionNames[pieceName] ?? [];
-  const hiddenTriggers = platform.filteredTriggerNames[pieceName] ?? [];
+  const handleSave = () => {
+    if (pieceSet) {
+      const newlyDisabledActions = localHiddenActions.filter(
+        (n) => !originalHiddenActions.includes(n),
+      );
+      const newlyEnabledActions = originalHiddenActions.filter(
+        (n) => !localHiddenActions.includes(n),
+      );
+      const newlyDisabledTriggers = localHiddenTriggers.filter(
+        (n) => !originalHiddenTriggers.includes(n),
+      );
+      const newlyEnabledTriggers = originalHiddenTriggers.filter(
+        (n) => !localHiddenTriggers.includes(n),
+      );
+      updatePieceSet(
+        {
+          id: pieceSet.id,
+          request: {
+            ...(newlyDisabledActions.length > 0 && {
+              disableActions: { [pieceName]: newlyDisabledActions },
+            }),
+            ...(newlyEnabledActions.length > 0 && {
+              enableActions: { [pieceName]: newlyEnabledActions },
+            }),
+            ...(newlyDisabledTriggers.length > 0 && {
+              disableTriggers: { [pieceName]: newlyDisabledTriggers },
+            }),
+            ...(newlyEnabledTriggers.length > 0 && {
+              enableTriggers: { [pieceName]: newlyEnabledTriggers },
+            }),
+          },
+        },
+        { onSuccess: () => onOpenChange(false) },
+      );
+    } else {
+      setPieceComponentVisibility(
+        {
+          pieceName,
+          hiddenActions: localHiddenActions,
+          hiddenTriggers: localHiddenTriggers,
+        },
+        { onSuccess: () => onOpenChange(false) },
+      );
+    }
+  };
 
   const allActions = useMemo<ComponentItem[]>(() => {
     if (!pieceModel) return [];
@@ -113,14 +228,12 @@ export const PieceComponentVisibilitySheet = ({
     [filteredActions, filteredTriggers],
   );
 
-  const isMutating = isToggling || isBatchHiding || isBatchShowing;
-
   const visibleActionCount = allActions.filter(
-    (item) => !hiddenActions.includes(item.data.name),
+    (item) => !localHiddenActions.includes(item.data.name),
   ).length;
 
   const visibleTriggerCount = allTriggers.filter(
-    (item) => !hiddenTriggers.includes(item.data.name),
+    (item) => !localHiddenTriggers.includes(item.data.name),
   ).length;
 
   const allVisibleSelected =
@@ -197,9 +310,13 @@ export const PieceComponentVisibilitySheet = ({
             {t('Manage visibility')}
           </SheetTitle>
           <SheetDescription>
-            {t(
-              'Control which actions and triggers are available in the flow builder for',
-            )}{' '}
+            {pieceSet
+              ? t(
+                  'Select which actions and triggers to include in this piece set for',
+                )
+              : t(
+                  'Control which actions and triggers are available in the flow builder for',
+                )}{' '}
             <span className="font-medium text-foreground">
               {pieceDisplayName}
             </span>
@@ -228,7 +345,7 @@ export const PieceComponentVisibilitySheet = ({
             <Button
               variant="outline"
               size="sm"
-              disabled={!hasSelection || isMutating || isLoading}
+              disabled={!hasSelection || isLoading}
               onClick={handleHideSelected}
             >
               <EyeOff className="size-4" />
@@ -237,7 +354,7 @@ export const PieceComponentVisibilitySheet = ({
             <Button
               variant="outline"
               size="sm"
-              disabled={!hasSelection || isMutating || isLoading}
+              disabled={!hasSelection || isLoading}
               onClick={handleShowSelected}
             >
               <Eye className="size-4" />
@@ -266,10 +383,10 @@ export const PieceComponentVisibilitySheet = ({
                   expanded={actionsExpanded}
                   onExpandedChange={setActionsExpanded}
                   selectedKeys={selectedKeys}
-                  hiddenNames={hiddenActions}
-                  isMutating={isMutating}
+                  hiddenNames={localHiddenActions}
                   onToggleGroupSelection={toggleGroupSelection}
                   onToggleItemSelection={toggleItemSelection}
+                  chevronAtEnd={true}
                   onToggleComponentVisibility={(componentName) =>
                     toggleComponent({
                       pieceName,
@@ -288,10 +405,10 @@ export const PieceComponentVisibilitySheet = ({
                   expanded={triggersExpanded}
                   onExpandedChange={setTriggersExpanded}
                   selectedKeys={selectedKeys}
-                  hiddenNames={hiddenTriggers}
-                  isMutating={isMutating}
+                  hiddenNames={localHiddenTriggers}
                   onToggleGroupSelection={toggleGroupSelection}
                   onToggleItemSelection={toggleItemSelection}
+                  chevronAtEnd={true}
                   onToggleComponentVisibility={(componentName) =>
                     toggleComponent({
                       pieceName,
@@ -303,6 +420,20 @@ export const PieceComponentVisibilitySheet = ({
               )}
             </div>
           )}
+        </div>
+
+        <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isMutating}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button disabled={!isDirty || isMutating} onClick={handleSave}>
+            {isMutating && <Loader2 className="size-4 animate-spin" />}
+            {t('Save changes')}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>
@@ -320,10 +451,10 @@ type ComponentGroupProps = {
   onExpandedChange: (expanded: boolean) => void;
   selectedKeys: Set<ItemKey>;
   hiddenNames: string[];
-  isMutating: boolean;
   onToggleGroupSelection: (items: ComponentItem[]) => void;
   onToggleItemSelection: (item: ComponentItem) => void;
   onToggleComponentVisibility: (componentName: string) => void;
+  chevronAtEnd?: boolean;
 };
 
 function ComponentGroup({
@@ -335,38 +466,56 @@ function ComponentGroup({
   onExpandedChange,
   selectedKeys,
   hiddenNames,
-  isMutating,
   onToggleGroupSelection,
   onToggleItemSelection,
   onToggleComponentVisibility,
+  chevronAtEnd = false,
 }: ComponentGroupProps) {
   const allGroupSelected =
     items.length > 0 && items.every((item) => selectedKeys.has(makeKey(item)));
   const someGroupSelected =
     !allGroupSelected && items.some((item) => selectedKeys.has(makeKey(item)));
 
+  const chevron = expanded ? (
+    <ChevronDown
+      className={cn(
+        'size-4 text-muted-foreground shrink-0',
+        chevronAtEnd && 'ml-auto',
+      )}
+    />
+  ) : (
+    <ChevronRight
+      className={cn(
+        'size-4 text-muted-foreground shrink-0',
+        chevronAtEnd && 'ml-auto',
+      )}
+    />
+  );
+
+  const groupCheckbox = (
+    <Checkbox
+      checked={
+        allGroupSelected || (someGroupSelected ? 'indeterminate' : false)
+      }
+      onCheckedChange={() => onToggleGroupSelection(items)}
+    />
+  );
+
   return (
     <Collapsible open={expanded} onOpenChange={onExpandedChange}>
-      <div className="flex items-center gap-2 px-4 py-2 hover:bg-muted/30 transition-colors">
+      <div className="flex items-center gap-2 px-4 py-2 hover:bg-muted/30 transition-colors bg-muted/50 border-t border-b border-border">
+        {chevronAtEnd && groupCheckbox}
         <CollapsibleTrigger className="flex items-center gap-2 flex-1 min-w-0">
-          {expanded ? (
-            <ChevronDown className="size-4 text-muted-foreground shrink-0" />
-          ) : (
-            <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-          )}
+          {!chevronAtEnd && chevron}
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {label}
           </span>
-          <Badge variant="secondary" className="text-xs shrink-0">
+          <Badge variant="inverted" className="text-xs shrink-0 font-bold">
             {visibleCount}/{totalCount}
           </Badge>
+          {chevronAtEnd && chevron}
         </CollapsibleTrigger>
-        <Checkbox
-          checked={
-            allGroupSelected || (someGroupSelected ? 'indeterminate' : false)
-          }
-          onCheckedChange={() => onToggleGroupSelection(items)}
-        />
+        {!chevronAtEnd && groupCheckbox}
       </div>
 
       <CollapsibleContent>
@@ -380,7 +529,6 @@ function ComponentGroup({
                 key={makeKey(item)}
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors',
-                  isMutating && 'opacity-50 pointer-events-none',
                 )}
               >
                 <Checkbox

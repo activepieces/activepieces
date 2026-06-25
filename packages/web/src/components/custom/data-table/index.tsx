@@ -5,6 +5,7 @@ import {
   ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
@@ -87,6 +88,7 @@ interface DataTableProps<
   selectColumn?: boolean;
   initialSorting?: SortingState;
   clientPagination?: boolean;
+  clientFiltering?: boolean;
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
   virtualizeRows?: boolean;
 }
@@ -124,6 +126,7 @@ export function DataTable<
   selectColumn = false,
   initialSorting = [],
   clientPagination = false,
+  clientFiltering = false,
   getRowClassName,
   virtualizeRows = false,
 }: DataTableProps<TData, TValue, Keys>) {
@@ -235,8 +238,10 @@ export function DataTable<
     data: tableData,
     columns,
     manualPagination: virtualizeRows ? false : !clientPagination,
+    manualFiltering: !clientFiltering,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    ...(clientFiltering && { getFilteredRowModel: getFilteredRowModel() }),
     ...((clientPagination || virtualizeRows) && {
       getPaginationRowModel: getPaginationRowModel(),
     }),
@@ -255,9 +260,13 @@ export function DataTable<
   useEffect(() => {
     filters?.forEach((filter) => {
       const column = table.getColumn(filter.accessorKey);
-      const values = searchParams.getAll(filter.accessorKey);
-      if (column && values) {
-        column.setFilterValue(values);
+      if (!column) return;
+      if (filter.type === 'input') {
+        const value = searchParams.get(filter.accessorKey);
+        if (value) column.setFilterValue(value);
+      } else {
+        const values = searchParams.getAll(filter.accessorKey);
+        if (values.length) column.setFilterValue(values);
       }
     });
   }, []);

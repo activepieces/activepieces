@@ -124,6 +124,7 @@ export const projectCollectionUtils = {
   delete: (projectIds: string[]) => {
     projectCollection.delete(projectIds);
   },
+  refetchProjects: () => projectCollection.utils.refetch(),
   setCurrentProject: (projectId: string, pathName?: string) => {
     authenticationSession.switchToProject(projectId);
     if (pathName) {

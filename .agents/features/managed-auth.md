@@ -42,10 +42,12 @@ The extractor supports three token versions:
 
 **v3** (explicit `version: "v3"` field):
 ```
-{ version: "v3", externalUserId, externalProjectId, firstName, lastName, role?, piecesFilterType?, piecesTags?, concurrencyPoolKey?, concurrencyPoolLimit? }
+{ version: "v3", externalUserId, externalProjectId, firstName, lastName, role?, piecesFilterType?, piecesTags?, pieceSet?, concurrencyPoolKey?, concurrencyPoolLimit? }
 ```
 
 The JWT header must include `kid` set to the Signing Key ID.
+
+The optional `pieceSet` claim (all payload versions) is a piece-set **externalId**: when present and matching a set on the platform, the provisioned project is assigned that set; if it does not match, the project falls back to the platform Default set. When `pieceSet` is absent, the legacy `piecesTags` / `piecesFilterType` claims auto-generate a per-project set (`generatedForProjectId`). Applies only when `managePiecesEnabled`. See [piece-sets.md](./piece-sets.md).
 
 ## Service Flow (`externalToken`)
 
@@ -53,7 +55,7 @@ The JWT header must include `kid` set to the Signing Key ID.
 2. Call `getOrCreateProject` — looks up project by `(platformId, externalProjectId)`; if absent, creates a new `TEAM` type project owned by the platform owner.
 3. Optionally update the project's `displayName` from `projectDisplayName` claim.
 4. Optionally upsert a concurrency pool and assign it to the project.
-5. Call `updateProjectLimits` — resolves allowed pieces from tags/filter type and upserts the project plan.
+5. Call `updateProjectLimits` — resolves allowed pieces from tags/filter type and upserts the project plan. Under `managePiecesEnabled`, also assigns the project's piece set: by `pieceSet` externalId, else an auto-generated per-project set from the legacy tags/filter claims, else the Default set.
 6. Call `getOrCreateUser` — finds user by `(platformId, externalUserId)`; if absent, creates a user identity using a deterministic hashed email (`managed_<platformId>_<externalUserId>` SHA-256), then creates the platform user.
 7. Upsert project membership with the specified role (defaults to `EDITOR`).
 8. Generate a 7-day Activepieces access token and return the full `AuthenticationResponse`.
