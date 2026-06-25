@@ -137,17 +137,17 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
                 },
             })
         }
-        applicationEvents(request.log).sendUserEvent(request, {
-            action: ApplicationEventName.CONNECTION_DELETED,
-            data: {
-                connection,
-            },
-        })
         await appConnectionService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PROJECT,
             projectId: request.projectId,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.CONNECTION_DELETED,
+            data: {
+                connection,
+            },
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
