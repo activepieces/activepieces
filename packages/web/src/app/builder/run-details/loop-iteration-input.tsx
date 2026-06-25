@@ -1,5 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
-import { FlowActionType, flowStructureUtil } from '@activepieces/shared';
+import {
+  FlowActionType,
+  StepOutput,
+  StepOutputStatus,
+  flowStructureUtil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,6 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -46,12 +52,17 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     }
   }, [currentIndex]);
 
-  const totalIterations =
-    stepOutput &&
-    stepOutput.output &&
-    stepOutput.type === FlowActionType.LOOP_ON_ITEMS
-      ? stepOutput.output.iterations.length
-      : 0;
+  const iterationStatuses = useMemo<StepOutputStatus[]>(() => {
+    if (
+      !stepOutput ||
+      stepOutput.type !== FlowActionType.LOOP_ON_ITEMS ||
+      !stepOutput.output
+    ) {
+      return [];
+    }
+    return stepOutput.output.iterations.map(getIterationStatus);
+  }, [stepOutput]);
+  const totalIterations = iterationStatuses.length;
 
   function onChange(value: string) {
     const parsedValue = Math.max(
@@ -113,6 +124,36 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           isIncreasing={false}
           currentIndex={currentIndex}
         />
+        {totalIterations > 1 && (
+          <div className="mt-1 flex max-h-[120px] w-9 flex-wrap content-start justify-center gap-0.5 overflow-y-auto">
+            {iterationStatuses.map((status, index) => (
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={t('Iteration {index}', { index: index + 1 })}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setLoopIndex(stepName, index);
+                    }}
+                    className={cn(
+                      'size-2.5 shrink-0 rounded-full border border-background transition-transform hover:scale-125',
+                      getIterationDotClassName(status),
+                      index === currentIndex &&
+                        'ring-1 ring-primary ring-offset-1',
+                    )}
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  {`${t('Iteration {index}', {
+                    index: index + 1,
+                  })} · ${getIterationStatusLabel(status)}`}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -120,6 +161,52 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
 
 LoopIterationInput.displayName = 'LoopIterationInput';
 export { LoopIterationInput };
+
+function getIterationStatus(
+  iteration: Record<string, StepOutput>,
+): StepOutputStatus {
+  const statuses = Object.values(iteration).map(
+    (stepOutput) => stepOutput.status,
+  );
+  if (statuses.includes(StepOutputStatus.FAILED)) {
+    return StepOutputStatus.FAILED;
+  }
+  if (statuses.includes(StepOutputStatus.RUNNING)) {
+    return StepOutputStatus.RUNNING;
+  }
+  if (statuses.includes(StepOutputStatus.PAUSED)) {
+    return StepOutputStatus.PAUSED;
+  }
+  return StepOutputStatus.SUCCEEDED;
+}
+
+function getIterationDotClassName(status: StepOutputStatus): string {
+  switch (status) {
+    case StepOutputStatus.FAILED:
+      return 'bg-destructive';
+    case StepOutputStatus.RUNNING:
+      return 'bg-primary animate-pulse';
+    case StepOutputStatus.PAUSED:
+      return 'bg-warning';
+    default:
+      return 'bg-success';
+  }
+}
+
+function getIterationStatusLabel(status: StepOutputStatus): string {
+  switch (status) {
+    case StepOutputStatus.FAILED:
+      return t('Failed');
+    case StepOutputStatus.RUNNING:
+      return t('Running');
+    case StepOutputStatus.PAUSED:
+      return t('Paused');
+    case StepOutputStatus.STOPPED:
+      return t('Stopped');
+    default:
+      return t('Succeeded');
+  }
+}
 
 const LoopIterationInputButton = ({
   onChange,

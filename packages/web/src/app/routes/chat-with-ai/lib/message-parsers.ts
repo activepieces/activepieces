@@ -20,7 +20,23 @@ export function getTextFromParts(parts: ChatUIMessage['parts']): string {
     .join('');
 }
 
+export function parseAnswerPairs(text: string): AnswerPair[] {
+  return text
+    .split('\n')
+    .filter((line) => line.startsWith('- **'))
+    .map((line) => {
+      const match = line.match(/^- \*\*(.+?)\*\*\s*(.*)$/);
+      return match ? { question: match[1], answer: match[2] } : null;
+    })
+    .filter((p): p is AnswerPair => p !== null);
+}
+
 export type { MultiQuestion } from '@/features/chat/lib/chat-store-types';
+
+export type AnswerPair = {
+  question: string;
+  answer: string;
+};
 
 export type ConnectionPickerData = {
   piece: string;
@@ -35,6 +51,7 @@ export type ConnectionPickerData = {
 };
 
 export type ProjectPickerData = {
+  question?: string;
   suggestedProjects: Array<{
     name: string;
     id: string;

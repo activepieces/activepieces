@@ -12,6 +12,8 @@ import { LanguageModel, ModelMessage, SystemModelMessage, ToolSet } from 'ai'
 
 const MAX_WEB_SEARCH_RESULTS = 5
 
+const MIN_ANTHROPIC_THINKING_BUDGET = 1024
+
 type WebSearchSupport = {
     nativeTools?: (auth: BaseAIProviderAuthConfig) => ToolSet
     plugin?: boolean
@@ -195,14 +197,21 @@ function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[]
     return steps.flatMap((step) => step.response.messages)
 }
 
-function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
+function buildProviderOptions({ provider, thinkingBudget }: { provider: AIProviderName, thinkingBudget: number }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
         case AIProviderName.BEDROCK:
-            return { anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
+            return thinkingBudget >= MIN_ANTHROPIC_THINKING_BUDGET
+                ? { anthropic: { thinking: { type: 'enabled', budgetTokens: thinkingBudget } } }
+                : { anthropic: { thinking: { type: 'disabled' } } }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { max_tokens: tier.thinkingBudget } } }
+            return {
+                openrouter: {
+                    cache_control: { type: 'ephemeral' },
+                    ...spreadIfDefined('reasoning', thinkingBudget > 0 ? { max_tokens: thinkingBudget } : undefined),
+                },
+            }
         default:
             return {}
     }
