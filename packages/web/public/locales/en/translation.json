@@ -1735,6 +1735,7 @@
   "Connection has been renamed.": "Connection has been renamed.",
   "Connections replaced successfully": "Connections replaced successfully",
   "Failed to replace connections": "Failed to replace connections",
+  "Can't delete this connection because other projects still have flows using it": "Can't delete this connection because other projects still have flows using it",
   "Connection has been updated.": "Connection has been updated.",
   "OAuth2 Credentials Deleted": "OAuth2 Credentials Deleted",
   "OAuth2 Credentials Updated": "OAuth2 Credentials Updated",

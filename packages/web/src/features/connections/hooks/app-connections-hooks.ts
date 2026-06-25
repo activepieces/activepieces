@@ -265,7 +265,15 @@ export const appConnectionsMutations = {
         setDialogOpen(false);
         refetch();
       },
-      onError: () => {
+      onError: (error) => {
+        if (api.isApError(error, ErrorCode.VALIDATION)) {
+          toast.error(t('Error'), {
+            description: t(
+              "Can't delete this connection because other projects still have flows using it",
+            ),
+          });
+          return;
+        }
         toast.error(t('Error'), {
           description: t('Failed to replace connections'),
         });

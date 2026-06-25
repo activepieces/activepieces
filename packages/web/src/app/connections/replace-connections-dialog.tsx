@@ -331,15 +331,10 @@ const ReplaceConnectionsDialog = ({
                               externalId: '',
                             });
                           }}
-                          options={filteredConnections
-                            .filter(
-                              (conn) =>
-                                conn.scope === AppConnectionScope.PROJECT,
-                            )
-                            .map((conn) => ({
-                              label: conn.displayName,
-                              value: conn.id,
-                            }))}
+                          options={filteredConnections.map((conn) => ({
+                            label: conn.displayName,
+                            value: conn.id,
+                          }))}
                           placeholder={t('Choose connection to replace')}
                           valuesRendering={(value) => {
                             const conn = filteredConnections.find(
@@ -352,6 +347,10 @@ const ReplaceConnectionsDialog = ({
                                   size="xs"
                                   border={false}
                                 />
+                                {conn?.scope ===
+                                  AppConnectionScope.PLATFORM && (
+                                  <GlobeIcon className="w-4 h-4" />
+                                )}
                                 <span>{conn!.displayName}</span>
                               </div>
                             );

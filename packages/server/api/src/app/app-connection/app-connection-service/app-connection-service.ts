@@ -233,6 +233,25 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
 
+        // Replace only repoints flows in this project. A platform connection shared
+        // with other projects whose flows still reference it must not be deleted, or
+        // those flows would be orphaned.
+        if (deleteSourceConnection && sourceAppConnection.scope === AppConnectionScope.PLATFORM) {
+            const usedByOtherProjects = await appConnectionHandler(log).hasOtherProjectFlowsReferencingConnection({
+                platformId,
+                projectId,
+                externalId: sourceAppConnection.externalId,
+            })
+            if (usedByOtherProjects) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Cannot delete the old connection because other projects still have flows using it',
+                    },
+                })
+            }
+        }
+
         await appConnectionHandler(log).updateFlowsWithAppConnection(flows.data, {
             appConnection: sourceAppConnection,
             newAppConnection: targetAppConnection,
