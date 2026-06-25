@@ -1,0 +1,11 @@
+# runtime working dirs + state (regenerated each run)
+.work/
+.gate/
+.local-s3/
+.local-s3-dest/
+retro-state.jsonl
+# large regenerable intermediate (publish-targets.* is the kept deliverable)
+targets/target-list.json
+
+# local esbuild for running the tool standalone
+node_modules/

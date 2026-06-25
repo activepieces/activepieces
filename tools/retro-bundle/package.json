@@ -1,0 +1,15 @@
+{
+  "name": "@activepieces/retro-bundle",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Path-2 retro-bundling pipeline — re-bundle published piece versions with their own pinned deps and pre-seed them as S3 bundles. Runs/tests fully local (no S3) by default.",
+  "scripts": {
+    "e2e": "node e2e.cjs",
+    "orchestrate": "node orchestrator.cjs",
+    "seed": "node seed.cjs",
+    "rollback": "node rollback.cjs",
+    "verify-served": "node verify-served.cjs",
+    "gen-targets": "node targets/target-list.cjs && node targets/emit-flat.cjs && node targets/emit-links-csv.cjs"
+  },
+  "note": "Uses the monorepo's esbuild + a global `bun`. Run `npm install` (or `bun install`) at the repo root once so esbuild resolves from the hoisted node_modules."
+}
