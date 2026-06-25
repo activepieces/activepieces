@@ -63,14 +63,13 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        const mockApiClient = {} as never
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
 
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(2)
     })
 
@@ -81,12 +80,11 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        const mockApiClient = {} as never
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(2)
     })
 
@@ -97,12 +95,11 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        const mockApiClient = {} as never
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
     })
 
@@ -113,12 +110,11 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        const mockApiClient = {} as never
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
     })
 
@@ -129,12 +125,11 @@ describe('sandbox-manager canReuseSandbox', () => {
         })
 
         const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
-        const mockApiClient = {} as never
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
-        manager.acquire({ log, apiClient: mockApiClient })
+        manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
     })
 })

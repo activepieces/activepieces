@@ -24,12 +24,14 @@ import { cn } from '@/lib/utils';
 import {
   ConnectionPickerData,
   getTextFromParts,
+  parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
 
 import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
+import { AnsweredQuestionsCard } from './chat-card-primitives';
 import { ConnectionPickerCard } from './connection-picker-card';
 import {
   ConnectionRequiredData,
@@ -553,12 +555,17 @@ function DisplayToolCard({
         typeof toolOutput?.['projectId'] === 'string'
           ? (toolOutput['projectId'] as string)
           : undefined;
+      const selectedProjectName =
+        typeof toolOutput?.['projectName'] === 'string'
+          ? (toolOutput['projectName'] as string)
+          : undefined;
       return (
         <ProjectPickerCard
           picker={data as unknown as ProjectPickerData}
           isInteractive={isInteractive}
           onResolve={(payload) => onResolve(toolCallId, payload)}
           selectedProjectId={selectedProjectId}
+          selectedProjectName={selectedProjectName}
         />
       );
     }
@@ -568,41 +575,11 @@ function DisplayToolCard({
           ? (toolOutput['answers'] as string)
           : undefined;
       if (!answersText) return null;
-      return <AnsweredQuestionsCard answersText={answersText} />;
+      return <AnsweredQuestionsCard pairs={parseAnswerPairs(answersText)} />;
     }
     default:
       return null;
   }
-}
-
-function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
-  const pairs = useMemo(() => parseAnswerPairs(answersText), [answersText]);
-  if (pairs.length === 0) return null;
-
-  return (
-    <motion.div
-      className="flex justify-end my-2"
-      initial={{ opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <div className="max-w-[80%] bg-muted rounded-2xl rounded-br-md px-4 py-3 space-y-3">
-        {pairs.map((pair, i) => (
-          <div key={i} className="space-y-0.5">
-            <p className="text-sm font-semibold">
-              {t('Q{number}. {question}', {
-                number: i + 1,
-                question: pair.question,
-              })}
-            </p>
-            <p className="text-sm">
-              {t('→ {answer}', { answer: pair.answer })}
-            </p>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
 }
 
 function StreamingCursor() {
@@ -612,20 +589,6 @@ function StreamingCursor() {
       style={{ animationDuration: '3s' }}
     />
   );
-}
-
-function parseAnswerPairs(
-  text: string,
-): Array<{ question: string; answer: string }> {
-  return text
-    .split('\n')
-    .filter((line) => line.startsWith('- **'))
-    .map((line) => {
-      const match = line.match(/^- \*\*(.+?)\*\*\s*(.*)$/);
-      if (!match) return null;
-      return { question: match[1], answer: match[2] };
-    })
-    .filter((p): p is { question: string; answer: string } => p !== null);
 }
 
 type MessageBlock =

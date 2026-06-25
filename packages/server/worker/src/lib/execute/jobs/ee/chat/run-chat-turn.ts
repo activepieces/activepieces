@@ -4,6 +4,7 @@ import { ChatPhase, chatToolPhases, PersistedChatPart } from '@activepieces/shar
 import { generateText, isLoopFinished, LanguageModel, LanguageModelUsage, ModelMessage, StopCondition, streamText, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
+const DISCOVERY_THINKING_BUDGET = 2_048
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
 const MAX_STREAM_RETRIES = 1
@@ -37,6 +38,10 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const loopStopCondition = stopWhen ?? isLoopFinished()
+    const baseStopConditions: StopCondition<ToolSet>[] = Array.isArray(loopStopCondition)
+        ? loopStopCondition
+        : [loopStopCondition]
+    const buildPhaseReached: StopCondition<ToolSet> = () => phaseState.phase === 'build'
 
     const uiParts: PersistedChatPart[] = []
     const toolCalls: ChatTurnToolCall[] = []
@@ -54,64 +59,73 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
     let totalInputTokens = 0
     let totalOutputTokens = 0
     let lastFinishReason = ''
+    let attemptStartPhase: ChatPhase = phaseState.phase
 
-    const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => streamText({
-        model,
-        maxRetries: 3,
-        maxOutputTokens: tier.thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS,
-        abortSignal,
-        system: chatAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider }),
-        messages: chatAiUtils.stripThinkingBlocks(attemptMessages, provider),
-        tools,
-        providerOptions: chatAiUtils.buildProviderOptions({ provider, tier }),
-        stopWhen: loopStopCondition,
-        prepareStep: ({ steps }) => {
-            const lastStep = steps[steps.length - 1]
-            const widened = lastStep?.toolCalls?.some((c) => chatToolPhases.isBuildOnlyTool(c.toolName))
-            if (widened) {
-                phaseState.phase = 'build'
-            }
-            return { activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }) }
-        },
-        experimental_repairToolCall: async ({ toolCall, error }) => {
-            log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
-            const { data: repaired } = await tryCatch(async () => {
-                const { text } = await generateText({
-                    model,
-                    abortSignal,
-                    prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+    const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => {
+        attemptStartPhase = phaseState.phase
+        const startedInBuild = attemptStartPhase === 'build'
+        const thinkingBudget = startedInBuild ? tier.thinkingBudget : DISCOVERY_THINKING_BUDGET
+        const stopWhenConditions = startedInBuild
+            ? baseStopConditions
+            : [...baseStopConditions, buildPhaseReached]
+        return streamText({
+            model,
+            maxRetries: 3,
+            maxOutputTokens: thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS,
+            abortSignal,
+            system: chatAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider }),
+            messages: chatAiUtils.stripThinkingBlocks(attemptMessages, provider),
+            tools,
+            providerOptions: chatAiUtils.buildProviderOptions({ provider, thinkingBudget }),
+            stopWhen: stopWhenConditions,
+            prepareStep: ({ steps }) => {
+                const lastStep = steps[steps.length - 1]
+                const widened = lastStep?.toolCalls?.some((c) => chatToolPhases.isBuildOnlyTool(c.toolName))
+                if (widened) {
+                    phaseState.phase = 'build'
+                }
+                return { activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }) }
+            },
+            experimental_repairToolCall: async ({ toolCall, error }) => {
+                log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
+                const { data: repaired } = await tryCatch(async () => {
+                    const { text } = await generateText({
+                        model,
+                        abortSignal,
+                        prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+                    })
+                    return { ...toolCall, input: text }
                 })
-                return { ...toolCall, input: text }
-            })
-            return repaired ?? null
-        },
-        experimental_onToolCallFinish: (result) => {
-            toolCalls.push({
-                toolName: result.toolCall.toolName,
-                toolCallId: result.toolCall.toolCallId,
-                input: result.toolCall.input,
-                order: toolCallOrder++,
-                phase: phaseState.phase,
-            })
-            if (result.success) {
-                log.info({ toolName: result.toolCall.toolName, durationMs: result.durationMs }, 'Tool call completed')
-            }
-            else {
-                log.warn({ toolName: result.toolCall.toolName, durationMs: result.durationMs, error: result.error }, 'Tool call failed')
-            }
-        },
-        onAbort: ({ steps }) => {
-            abortedStepMessages = chatAiUtils.collectStepMessages(steps)
-        },
-        onStepFinish: ({ content }) => {
-            uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
-            onProgress([...uiParts])
-        },
-        onError: ({ error }) => {
-            log.error({ error }, 'Chat streamText error')
-            streamError = error instanceof Error ? error : new Error(String(error))
-        },
-    })
+                return repaired ?? null
+            },
+            experimental_onToolCallFinish: (result) => {
+                toolCalls.push({
+                    toolName: result.toolCall.toolName,
+                    toolCallId: result.toolCall.toolCallId,
+                    input: result.toolCall.input,
+                    order: toolCallOrder++,
+                    phase: phaseState.phase,
+                })
+                if (result.success) {
+                    log.info({ toolName: result.toolCall.toolName, durationMs: result.durationMs }, 'Tool call completed')
+                }
+                else {
+                    log.warn({ toolName: result.toolCall.toolName, durationMs: result.durationMs, error: result.error }, 'Tool call failed')
+                }
+            },
+            onAbort: ({ steps }) => {
+                abortedStepMessages = chatAiUtils.collectStepMessages(steps)
+            },
+            onStepFinish: ({ content }) => {
+                uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
+                onProgress([...uiParts])
+            },
+            onError: ({ error }) => {
+                log.error({ error }, 'Chat streamText error')
+                streamError = error instanceof Error ? error : new Error(String(error))
+            },
+        })
+    }
 
     for (;;) {
         const uiPartsCountBefore = uiParts.length
@@ -143,6 +157,12 @@ export async function runChatTurn({ model, provider, systemPrompt, messages, too
         totalInputTokens += attemptUsage.inputTokens ?? 0
         totalOutputTokens += attemptUsage.outputTokens ?? 0
         lastFinishReason = finishReason
+
+        if (attemptStartPhase === 'discovery' && phaseState.phase === 'build') {
+            accumulatedResponseMessages.push(...stepMessages)
+            llmMessages = [...llmMessages, ...stepMessages]
+            continue
+        }
 
         const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
 

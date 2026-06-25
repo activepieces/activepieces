@@ -1,36 +1,44 @@
 import { ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, Ellipsis } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useMemo, useState } from 'react';
+import { AlignJustify } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useId, useMemo, useState } from 'react';
 
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { SearchInput } from '@/components/custom/search-input';
 import {
   ApProjectDisplay,
   getProjectName,
   projectCollectionUtils,
 } from '@/features/projects';
 import { userHooks } from '@/hooks/user-hooks';
-import { cn } from '@/lib/utils';
 
 import { ProjectPickerData } from '../lib/message-parsers';
+
+import {
+  AnsweredQuestionsCard,
+  ChatAnswerInputRow,
+  ChatCard,
+  ChatCardHeader,
+  ChatOptionBadge,
+  ChatOptionRow,
+} from './chat-card-primitives';
+
+const MAX_COLLAPSED = 3;
+
+const VIEW_TRANSITION = {
+  initial: { opacity: 0, x: 12 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -12 },
+  transition: { duration: 0.2 },
+};
 
 export function ProjectPickerCard({
   picker,
   onResolve,
+  onDismiss,
   isInteractive = true,
   selectedProjectId,
+  selectedProjectName,
 }: ProjectPickerCardProps) {
   const { data: allProjects } = projectCollectionUtils.useAll();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -41,160 +49,258 @@ export function ProjectPickerCard({
       (p) => p.type !== ProjectType.PERSONAL || p.ownerId === currentUser.id,
     );
   }, [allProjects, currentUser]);
+
   const [selected, setSelected] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [typedAnswer, setTypedAnswer] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'all'>('list');
+  const [search, setSearch] = useState('');
+  const [answer, setAnswer] = useState('');
+  const fieldId = useId();
 
   const suggestedProjects = picker.suggestedProjects ?? [];
+  const title = picker.question ?? t('Which project should I work in?');
+
+  const accessibleSuggested = useMemo(
+    () =>
+      (picker.suggestedProjects ?? [])
+        .map((s) => projects.find((p) => p.id === s.id))
+        .filter((p): p is ProjectItem => p !== undefined),
+    [picker.suggestedProjects, projects],
+  );
+  const collapsedSuggested = accessibleSuggested.slice(0, MAX_COLLAPSED);
+  const hasMore = projects.length > collapsedSuggested.length;
+  const showAll = view === 'all' || accessibleSuggested.length === 0;
 
   function handleSelect(projectId: string, name: string) {
     setSelected(projectId);
     onResolve({ projectId, projectName: name });
   }
 
-  if (selected || !isInteractive) {
-    const projectId = selected ?? selectedProjectId;
+  function handleTyped() {
+    const value = answer.trim();
+    if (!value) return;
+    setTypedAnswer(value);
+    onResolve({ projectName: value });
+  }
+
+  if (selected || typedAnswer || !isInteractive) {
+    const projectId = selected ?? selectedProjectId ?? null;
     const resolvedProject = projectId
-      ? projects.find((p) => p.id === projectId)
+      ? projects.find((p) => p.id === projectId) ?? null
       : null;
-    const displayName = resolvedProject
-      ? getProjectName(resolvedProject)
-      : projectId
-      ? suggestedProjects.find((p) => p.id === projectId)?.name ?? ''
-      : suggestedProjects[0]?.name ?? '';
+    const displayName = resolveDisplayName({
+      resolvedProject,
+      projectId,
+      typedAnswer,
+      selectedProjectName,
+      suggestedProjects,
+    });
     return (
-      <motion.div
-        className="rounded-xl border bg-background overflow-hidden my-2"
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2 }}
-      >
-        <div className="p-4 flex items-center gap-3">
-          <div className="relative">
-            {resolvedProject ? (
-              <ApProjectDisplay
-                title={getProjectName(resolvedProject)}
-                icon={resolvedProject.icon}
-                projectType={resolvedProject.type}
-                iconClassName="size-5"
-                titleClassName="text-sm font-semibold"
+      <AnsweredQuestionsCard
+        pairs={[
+          { question: title, answer: displayName || t('Project selected') },
+        ]}
+      />
+    );
+  }
+
+  const titleNode = (
+    <span className="block text-base font-semibold leading-snug text-foreground">
+      {title}
+    </span>
+  );
+
+  const answerRow = (
+    <div className="mt-4 border-t border-border/60 pt-3">
+      <ChatAnswerInputRow
+        fieldId={fieldId}
+        value={answer}
+        placeholder={t('Type your answer...')}
+        onChange={setAnswer}
+        onSubmit={handleTyped}
+        onSkip={() => onDismiss?.()}
+      />
+    </div>
+  );
+
+  return (
+    <ChatCard>
+      <ChatCardHeader
+        title={titleNode}
+        onBack={
+          showAll && accessibleSuggested.length > 0
+            ? () => setView('list')
+            : undefined
+        }
+        onClose={onDismiss}
+      />
+
+      <AnimatePresence mode="wait">
+        {showAll ? (
+          <motion.div key="all" {...VIEW_TRANSITION}>
+            <div className="mt-2.5">
+              <SearchInput
+                value={search}
+                onChange={setSearch}
+                placeholder={t('Search projects...')}
               />
-            ) : (
-              displayName && (
-                <span className="text-sm font-semibold">{displayName}</span>
-              )
-            )}
-          </div>
-          <div className="ml-auto">
-            <div className="bg-green-100 dark:bg-green-500/20 rounded-full p-1">
-              <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
             </div>
-          </div>
-        </div>
-      </motion.div>
+
+            <ProjectGrid
+              projects={projects}
+              search={search}
+              onSelect={handleSelect}
+            />
+
+            {answerRow}
+          </motion.div>
+        ) : (
+          <motion.div key="list" {...VIEW_TRANSITION}>
+            <div className="mt-2.5 space-y-0.5">
+              {collapsedSuggested.map((project) => {
+                const name = getProjectName(project);
+                return (
+                  <ChatOptionRow
+                    key={project.id}
+                    tabIndex={0}
+                    ariaLabel={name}
+                    onClick={() => handleSelect(project.id, name)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelect(project.id, name);
+                      }
+                    }}
+                  >
+                    <ApProjectDisplay
+                      title={name}
+                      icon={project.icon}
+                      projectType={project.type}
+                      iconClassName="size-7 rounded-md"
+                      titleClassName="flex-1 text-sm"
+                      framePersonalIcon
+                    />
+                  </ChatOptionRow>
+                );
+              })}
+
+              {hasMore && (
+                <ChatOptionRow
+                  role="button"
+                  tabIndex={0}
+                  ariaLabel={t('Show all {num} projects', {
+                    num: projects.length,
+                  })}
+                  onClick={() => setView('all')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setView('all');
+                    }
+                  }}
+                >
+                  <ChatOptionBadge>
+                    <AlignJustify className="size-4" />
+                  </ChatOptionBadge>
+                  <span className="flex-1 leading-snug">
+                    {t('Show all {num} projects', { num: projects.length })}
+                  </span>
+                </ChatOptionRow>
+              )}
+            </div>
+
+            {answerRow}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </ChatCard>
+  );
+}
+
+function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
+  const named = useMemo(
+    () =>
+      projects.map((project) => ({ project, name: getProjectName(project) })),
+    [projects],
+  );
+  const query = search.trim().toLowerCase();
+  const filtered = query
+    ? named.filter(({ name }) => name.toLowerCase().includes(query))
+    : named;
+
+  if (filtered.length === 0) {
+    return (
+      <div className="mt-3 py-8 text-center text-sm text-muted-foreground">
+        {t('No project found.')}
+      </div>
     );
   }
 
   return (
-    <motion.div
-      className="flex flex-wrap gap-2 my-2"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      {suggestedProjects
-        .filter((s) => projects.some((p) => p.id === s.id))
-        .map((suggested, i) => {
-          const resolvedProject = projects.find((p) => p.id === suggested.id);
-          return (
-            <motion.button
-              key={suggested.id}
-              type="button"
-              onClick={() =>
-                handleSelect(
-                  suggested.id,
-                  resolvedProject
-                    ? getProjectName(resolvedProject)
-                    : suggested.name,
-                )
-              }
-              className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm hover:bg-muted transition-colors cursor-pointer"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: i * 0.04 }}
-            >
-              {resolvedProject ? (
-                <ApProjectDisplay
-                  title={getProjectName(resolvedProject)}
-                  icon={resolvedProject.icon}
-                  projectType={resolvedProject.type}
-                  iconClassName="size-4"
-                  titleClassName="text-sm"
-                />
-              ) : (
-                <span>{suggested.name}</span>
-              )}
-            </motion.button>
-          );
-        })}
-
-      <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
-        <PopoverTrigger asChild>
-          <motion.button
+    <div className="mt-4 grid max-h-72 grid-cols-1 gap-3 overflow-auto pr-1 sm:grid-cols-2">
+      {filtered.map(({ project, name }) => {
+        return (
+          <button
+            key={project.id}
             type="button"
-            className="inline-flex items-center gap-1.5 rounded-full border border-dashed bg-background px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.2,
-              delay: suggestedProjects.length * 0.04,
-            }}
+            onClick={() => onSelect(project.id, name)}
+            className="group flex items-center justify-between gap-3 rounded-xl border bg-background px-5 py-4 text-left transition-colors hover:border-foreground/30"
           >
-            <Ellipsis className="size-3.5" />
-            {t('Another project')}
-          </motion.button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-72" align="start">
-          <Command>
-            <CommandInput placeholder={t('Search projects...')} />
-            <CommandEmpty>{t('No project found.')}</CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto">
-              {projects.map((project) => (
-                <CommandItem
-                  key={project.id}
-                  value={getProjectName(project)}
-                  onSelect={() => {
-                    handleSelect(project.id, getProjectName(project));
-                    setDropdownOpen(false);
-                  }}
-                  className="cursor-pointer gap-2"
-                >
-                  <ApProjectDisplay
-                    title={getProjectName(project)}
-                    icon={project.icon}
-                    projectType={project.type}
-                    iconClassName="size-4"
-                  />
-                  <Check
-                    className={cn(
-                      'ml-auto size-4',
-                      selectedProjectId === project.id
-                        ? 'opacity-100'
-                        : 'opacity-0',
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </motion.div>
+            <ApProjectDisplay
+              title={name}
+              icon={project.icon}
+              projectType={project.type}
+              iconClassName="size-7 rounded-md"
+              titleClassName="text-sm"
+              framePersonalIcon
+            />
+            <span className="inline-flex h-7 min-w-12 shrink-0 items-center justify-center rounded-lg bg-muted px-3 text-sm font-medium text-foreground transition-colors group-hover:bg-muted-foreground/15">
+              {t('Use')}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
+
+function resolveDisplayName({
+  resolvedProject,
+  projectId,
+  typedAnswer,
+  selectedProjectName,
+  suggestedProjects,
+}: {
+  resolvedProject: ProjectItem | null;
+  projectId: string | null;
+  typedAnswer: string | null;
+  selectedProjectName?: string | null;
+  suggestedProjects: Array<{ id: string; name: string }>;
+}): string {
+  if (resolvedProject) return getProjectName(resolvedProject);
+  if (typedAnswer) return typedAnswer;
+  if (selectedProjectName) return selectedProjectName;
+  if (projectId) {
+    return suggestedProjects.find((p) => p.id === projectId)?.name ?? '';
+  }
+  return suggestedProjects[0]?.name ?? '';
+}
+
+type ProjectItem = NonNullable<
+  ReturnType<typeof projectCollectionUtils.useAll>['data']
+>[number];
+
+type ProjectGridProps = {
+  projects: ProjectItem[];
+  search: string;
+  onSelect: (projectId: string, name: string) => void;
+};
 
 type ProjectPickerCardProps = {
   picker: ProjectPickerData;
   onResolve: (payload: Record<string, unknown>) => void;
+  onDismiss?: () => void;
   isInteractive?: boolean;
   selectedProjectId?: string | null;
+  selectedProjectName?: string | null;
 };

@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { RequestTrial } from '@/app/components/request-trial';
 import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
+import { BulkVisibilityActions } from '@/app/routes/platform/setup/pieces/bulk-visibility-actions';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
@@ -234,6 +235,16 @@ const PlatformPiecesPage = () => {
                 <ApplyTags
                   selectedPieces={selectedRows}
                   onApplyTags={() => refetchPieces()}
+                />
+              ),
+            },
+            {
+              render: (selectedRows, resetSelection) => (
+                <BulkVisibilityActions
+                  selectedPieces={selectedRows}
+                  onComplete={() => refetchPieces()}
+                  resetSelection={resetSelection}
+                  isEnabled={isEnabled}
                 />
               ),
             },

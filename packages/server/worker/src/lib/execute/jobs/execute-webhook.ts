@@ -26,30 +26,30 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         const settings = workerSettings.getSettings()
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        const p = await execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionIdToRun, projectId: data.projectId } })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionIdToRun, projectId: data.projectId } })
 
-        if (p.kind === 'flow-not-found') {
+        if (resolved.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionIdToRun } }, 'Flow version not found for webhook, skipping')
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        if (p.kind === 'disabled') {
+        if (resolved.kind === 'disabled') {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        // p.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to provision
-        if (isNil(p.flowVersion)) {
-            await execution.dispose({ invalidate: true })
+        // resolved.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to resolve
+        if (isNil(resolved.flowVersion)) {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
-        const flowVersion: FlowVersion = p.flowVersion
+        const flowVersion: FlowVersion = resolved.flowVersion
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
         const { data: execResult, error } = await tryCatch(async () => {
             if (data.saveSampleData) {
-                const sampleResult = await execution.run({
+                const sampleResult = await ctx.runtime.execute({
+                    workerIndex: ctx.workerIndex,
+                    log: ctx.log,
                     operationType: EngineOperationType.EXECUTE_TRIGGER_HOOK,
                     operation: {
                         hookType: TriggerHookType.RUN,
@@ -67,6 +67,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                         webhookSecret,
                     },
                     timeoutInSeconds,
+                    provision: resolved.provision,
                 })
 
                 if (sampleResult.status === EngineResponseStatus.OK) {
@@ -86,7 +87,9 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 return null
             }
 
-            const result = await execution.run({
+            const result = await ctx.runtime.execute({
+                workerIndex: ctx.workerIndex,
+                log: ctx.log,
                 operationType: EngineOperationType.EXECUTE_TRIGGER_HOOK,
                 operation: {
                     hookType: TriggerHookType.RUN,
@@ -104,14 +107,13 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     webhookSecret,
                 },
                 timeoutInSeconds,
+                provision: resolved.provision,
             })
 
             return result
         })
-        await execution.dispose({ invalidate: false })
 
         if (error) {
-            await execution.dispose({ invalidate: true })
             if (isSandboxTimeout(error)) {
                 ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
