@@ -1,7 +1,4 @@
-import {
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   AppConnectionValueForAuthProperty,
   PieceAuth,
@@ -49,6 +46,20 @@ const selfHostedAuth = PieceAuth.CustomAuth({
       };
     }
   },
+  refresh: {
+    generate: async ({ auth }) => {
+      const baseUrl = auth.baseUrl.replace(/\/+$/, '');
+      const response = await httpClient.sendRequest<{ token: string }>({
+        method: HttpMethod.POST,
+        url: `${baseUrl}/api/auth/login`,
+        body: { username: auth.username, password: auth.password },
+      });
+      return { access_token: response.body.token };
+    },
+    // Umami does not return expires_in; default to 55 min so the token refreshes
+    // well before a typical 1-hour server-side JWT expiry.
+    defaultExpiresIn: 3300,
+  },
 });
 
 const cloudAuth = PieceAuth.SecretText({
@@ -91,17 +102,9 @@ export function getBaseUrl(auth: UmamiAuthValue): string {
   return auth.props.baseUrl.replace(/\/+$/, '') + '/api';
 }
 
-export async function getAuthHeaders(
-  auth: UmamiAuthValue,
-): Promise<Record<string, string>> {
+export function getAuthHeaders(auth: UmamiAuthValue): Record<string, string> {
   if (auth.type === AppConnectionType.SECRET_TEXT) {
     return { 'x-umami-api-key': auth.secret_text };
   }
-  const baseUrl = auth.props.baseUrl.replace(/\/+$/, '');
-  const loginResponse = await httpClient.sendRequest<{ token: string }>({
-    method: HttpMethod.POST,
-    url: `${baseUrl}/api/auth/login`,
-    body: { username: auth.props.username, password: auth.props.password },
-  });
-  return { Authorization: `Bearer ${loginResponse.body.token}` };
+  return { Authorization: `Bearer ${auth.access_token}` };
 }
