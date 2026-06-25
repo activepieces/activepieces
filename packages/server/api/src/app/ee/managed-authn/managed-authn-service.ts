@@ -5,6 +5,7 @@ import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, 
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { distributedLock } from '../../database/redis-connections'
 import { pieceRepos } from '../../pieces/metadata/piece-metadata-service'
 import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
@@ -215,24 +216,29 @@ const upsertTagManagedSet = async ({ platformId, projectId, piecesTags, log }: U
     const disabledPieces = allPieceNames.filter((name) => !taggedSet.has(name))
     const config = { disabledPieces, disabledActions: {}, disabledTriggers: {} }
 
-    const existing = await pieceSetRepo().findOneBy({ platformId, generatedForProjectId: projectId })
-    if (!isNil(existing)) {
-        await pieceSetRepo().update({ id: existing.id }, { config })
-        await pieceSetService(log).assignProject({ pieceSetId: existing.id, platformId, projectId })
-    }
-    else {
-        const created = await pieceSetService(log).create({
-            platformId,
-            name: `Managed (${projectId})`,
-            externalId: undefined,
-            isDefault: false,
-            includeNewPieces: false,
-            includeNewActions: false,
-            generatedForProjectId: projectId,
-            config,
-        })
-        await pieceSetService(log).assignProject({ pieceSetId: created.id, platformId, projectId })
-    }
+    await distributedLock(log).runExclusive({
+        key: `piece_set_managed_${platformId}_${projectId}`,
+        timeoutInSeconds: 60,
+        fn: async () => {
+            const existing = await pieceSetRepo().findOneBy({ platformId, generatedForProjectId: projectId })
+            if (!isNil(existing)) {
+                await pieceSetRepo().update({ id: existing.id }, { config })
+                await pieceSetService(log).assignProject({ pieceSetId: existing.id, platformId, projectId })
+                return
+            }
+            const created = await pieceSetService(log).create({
+                platformId,
+                name: `Managed (${projectId})`,
+                externalId: undefined,
+                isDefault: false,
+                includeNewPieces: false,
+                includeNewActions: false,
+                generatedForProjectId: projectId,
+                config,
+            })
+            await pieceSetService(log).assignProject({ pieceSetId: created.id, platformId, projectId })
+        },
+    })
 }
 
 async function fetchAllPieceNamesForPlatform(platformId: string): Promise<string[]> {
