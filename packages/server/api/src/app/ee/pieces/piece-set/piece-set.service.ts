@@ -86,10 +86,14 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('ps')
             .where('ps.platformId = :platformId', { platformId })
             .orderBy('ps.created', 'ASC')
+            .addOrderBy('ps.id', 'ASC')
             .take(limit + 1)
 
         if (cursor) {
-            qb.andWhere('ps.created > (SELECT created FROM piece_set WHERE id = :cursorId)', { cursorId: cursor })
+            qb.andWhere(
+                '(ps.created, ps.id) > (SELECT created, id FROM piece_set WHERE id = :cursorId)',
+                { cursorId: cursor },
+            )
         }
 
         const rows = await qb.getMany()
