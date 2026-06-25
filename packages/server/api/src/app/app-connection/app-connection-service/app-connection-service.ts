@@ -354,7 +354,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         log: FastifyBaseLogger,
     ): Promise<AppConnection | null> {
         const appConnection = await appConnectionHandler(log).decryptConnection(encryptedAppConnection)
-        if (!appConnectionHandler(log).needRefresh(appConnection, log)) {
+        if (!await appConnectionHandler(log).needRefresh(appConnection, log)) {
             return oauth2Util(log).removeRefreshTokenAndClientSecret(appConnection)
         }
 

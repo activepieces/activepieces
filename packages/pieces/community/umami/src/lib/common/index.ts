@@ -27,7 +27,7 @@ export async function umamiApiCall<T extends HttpMessageBody>({
   body?: unknown;
 }): Promise<HttpResponse<T>> {
   const baseUrl = getBaseUrl(auth);
-  const headers = await getAuthHeaders(auth);
+  const headers = getAuthHeaders(auth);
 
   return await httpClient.sendRequest<T>({
     method,
