@@ -14,7 +14,7 @@ import { newSession } from './lib/triggers/new-session';
 export const umami = createPiece({
   displayName: 'Umami',
   description: 'Privacy-focused, open-source web analytics.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/umami.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: umamiAuth,
