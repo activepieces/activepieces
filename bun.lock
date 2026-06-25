@@ -358,7 +358,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.2.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -377,7 +377,7 @@
     },
     "packages/core/formula": {
       "name": "@activepieces/core-formula",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "expr-eval": "2.0.2",
@@ -403,7 +403,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.100.0",
+      "version": "0.106.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -3899,7 +3899,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.12.5",
+      "version": "0.12.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4525,7 +4525,7 @@
     },
     "packages/pieces/community/hubspot": {
       "name": "@activepieces/piece-hubspot",
-      "version": "0.8.5",
+      "version": "0.8.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9004,7 +9004,7 @@
     },
     "packages/pieces/community/telegram-bot": {
       "name": "@activepieces/piece-telegram-bot",
-      "version": "0.6.2",
+      "version": "0.6.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

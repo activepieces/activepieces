@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "@activepieces/core-formula": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@codemirror/commands": "6.10.3",
@@ -107,9 +109,7 @@
     "use-stick-to-bottom": "1.1.3",
     "vaul": "1.1.2",
     "zod": "4.3.6",
-    "zustand": "4.5.4",
-    "@activepieces/core-utils": "workspace:*",
-    "@activepieces/core-formula": "workspace:*"
+    "zustand": "4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
