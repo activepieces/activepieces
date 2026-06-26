@@ -84,14 +84,24 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
+        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
+        const runLog = log.child({ run: { id: runId } })
+
+        // Hand the run fence to the new run before releasing the old one. Otherwise a late save
+        // from the preempted run would still see itself as the active run and clobber the history
+        // the new run is about to load.
+        const preemptedRunId = conversation.status === ChatConversationStatus.STREAMING
+            ? await chatApprovalGate.getActiveRunId({ conversationId })
+            : null
+        await chatApprovalGate.storeActiveRunId({ conversationId, runId })
+
         if (conversation.status === ChatConversationStatus.STREAMING) {
-            const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
-            log.info({ ...spreadIfDefined('preemptedRunId', activeRunId ?? undefined) }, '[chatController] Cancelling in-flight run before new message')
+            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[chatController] Cancelling in-flight run before new message')
             const cancelPromises = [
                 chatApprovalGate.requestCancel({ conversationId }),
             ]
-            if (activeRunId) {
-                cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
+            if (preemptedRunId) {
+                cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
             }
             await Promise.all(cancelPromises)
             await chatHelpers.conversationRepo().update(conversationId, {
@@ -102,9 +112,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         await assertAiCreditsNotExhausted({ platformId, log })
 
-        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
-        const runLog = log.child({ run: { id: runId } })
-        await chatApprovalGate.storeActiveRunId({ conversationId, runId })
         await jobQueue(runLog).add({
             id: apId(),
             type: JobType.ONE_TIME,
