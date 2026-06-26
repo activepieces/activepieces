@@ -1,5 +1,7 @@
 import { DynamicToolUIPart, UIMessageChunk } from 'ai';
 
+import { chatDebug } from '@/lib/chat-debug-logger';
+
 import { ChatUIMessage } from './chat-types';
 
 function createStreamingState({
@@ -62,6 +64,7 @@ function applyChunk({
   state: StreamingState;
   chunk: UIMessageChunk;
 }): void {
+  chatDebug.debug({ chunk: { type: chunk.type } }, 'applied stream chunk');
   switch (chunk.type) {
     case 'start': {
       if (chunk.messageId) {
