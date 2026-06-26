@@ -238,7 +238,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
-    await app.register(aiToolConfigModule)
     await app.register(licenseKeysModule)
     await app.register(flowRunTrackingModule)
     await app.register(tablesModule)

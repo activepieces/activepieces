@@ -704,12 +704,15 @@ async function resolveTransitively({ props, componentProps, auth, providedInput,
             else if (result.status === 'options') {
                 prop.options = result.options
                 prop.note = undefined
-                // Seed the first option so dependent dropdowns unlock next iteration and the example
-                // input stays runnable. Never override a value the caller actually provided.
-                if (accumulated[prop.name] === undefined && result.options.length > 0) {
+                // Seed the first option with a real value so dependent dropdowns unlock next
+                // iteration and the example input stays runnable. Skip empty/placeholder options
+                // (e.g. a "Select…" sentinel) so dependents don't resolve against a blank value.
+                // Never override a value the caller actually provided.
+                const seedOption = result.options.find((option) => option.value !== undefined && option.value !== null && option.value !== '')
+                if (accumulated[prop.name] === undefined && seedOption !== undefined) {
                     accumulated[prop.name] = prop.type === PropertyType.MULTI_SELECT_DROPDOWN
-                        ? [result.options[0].value]
-                        : result.options[0].value
+                        ? [seedOption.value]
+                        : seedOption.value
                 }
             }
         }))

@@ -436,7 +436,9 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
     const inputFiles: { name: string, mimeType: string, base64: string }[] = []
     for (const fileId of inputFileIds) {
         const { data: file, error: lookupError } = await tryCatch(() => fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE }))
-        if (lookupError || isNil(file) || file.platformId !== platformId) {
+        // Confine to the current conversation's project, not just the platform — otherwise a
+        // model-supplied fileId from another project on the same platform could be read.
+        if (lookupError || isNil(file) || file.platformId !== platformId || file.projectId !== projectId) {
             return { text: `❌ Couldn't load attachment ${fileId}. If this is an image you generated, pass its URL into the code and fetch() it instead of using inputFileIds.`, producedFiles: [] }
         }
         const { data: fileData, error: dataError } = await tryCatch(() => fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE }))
