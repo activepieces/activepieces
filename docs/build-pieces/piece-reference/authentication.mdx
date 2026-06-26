@@ -113,9 +113,11 @@ PieceAuth.CustomAuth({
 
 #### Token Refresh (Server-Side Caching)
 
-Some APIs require exchanging credentials for a short-lived token on every request (e.g. username/password → JWT). Without caching, this causes a login call before each action and can trigger **429 rate limit errors** from the third-party API.
+Some APIs require a login call to exchange credentials for a short-lived token. Without caching, this login happens before every action and can trigger **429 rate limit errors** from the third-party API.
 
 Add an optional `refresh` callback to have Activepieces fetch the token once, cache it server-side, and inject it into every action/trigger as `context.auth.access_token`. The token is automatically renewed up to 15 minutes before it expires (clamped to half the token lifetime for short-lived tokens).
+
+**Example:**
 
 ```typescript
 PieceAuth.CustomAuth({
@@ -135,7 +137,8 @@ PieceAuth.CustomAuth({
         }),
     },
     validate: async ({ auth }) => {
-        // validate credentials as usual
+        // validate credentials here and return { valid: true } or { valid: false, error: '...' }
+        return { valid: true }
     },
     // Optional: cache the token server-side to avoid a login call per action
     refresh: {
@@ -157,11 +160,11 @@ PieceAuth.CustomAuth({
 })
 ```
 
-**Inside actions/triggers**, read the cached token from `context.auth.access_token`:
+Inside actions and triggers, read the cached token from `context.auth.access_token`:
 
 ```typescript
 async run(context) {
-    const token = context.auth.access_token; // cached by the server
+    const token = context.auth.access_token; // injected by the server after refresh
     const baseUrl = context.auth.props.baseUrl;
 
     await httpClient.sendRequest({
