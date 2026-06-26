@@ -111,6 +111,12 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
 
     const generation = connectionGeneration
 
+    // The destination is one box per worker (concurrency 1), scaling out with replicas (ADR 0003).
+    // Transitional compatibility mode (ADR 0004): honor AP_WORKER_CONCURRENCY=N by running N poll
+    // loops over N in-process boxes, each routed by its workerIndex. The default (5, main's historical
+    // value) is registered in configs.ts to preserve old behavior, so system.get always returns it; the
+    // '1' below is an unreachable belt-and-suspenders fallback. At N>1 an OOM takes down all N in-flight
+    // jobs, so the operator must size the container accordingly.
     const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
     const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
