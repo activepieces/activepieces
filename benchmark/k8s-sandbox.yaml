@@ -99,7 +99,7 @@ spec:
         - name: app
           # App image lives in the EU AR repo (built by the team); GKE pulls it cross-region once at
           # provisioning. The runtime data path (webhook -> app -> redis -> worker -> MinIO) stays in US.
-          image: europe-west1-docker.pkg.dev/activepieces-b3803/poolserver/ap-app:latest
+          image: __APP_IMAGE__
           envFrom: [{ configMapRef: { name: ap-config } }, { secretRef: { name: ap-s3-secret } }]
           env:
             - { name: AP_CONTAINER_TYPE, value: APP }

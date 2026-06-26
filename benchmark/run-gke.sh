@@ -17,6 +17,7 @@ REUSE_SANDBOX=${REUSE_SANDBOX:-false}
 CLEAN_CACHE=${CLEAN_CACHE:-true}
 APP_REPLICAS=${APP_REPLICAS:-2}
 APP_CPU=${APP_CPU:-1500m}
+APP_IMAGE=${APP_IMAGE:-europe-west1-docker.pkg.dev/activepieces-b3803/poolserver/ap-app:latest}
 CLUSTER=${CLUSTER:-ap-sandbox-bench}
 ZONE=${ZONE:-us-central1-a}
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -35,7 +36,8 @@ MANIFEST=$(mktemp)
 sed -e "s|__AP_WORKER_TOKEN__|${TOKEN}|" -e "s|__WORKER_CPU__|${WORKER_CPU}|g" -e "s|__WORKER_REPLICAS__|${WORKER_REPLICAS}|" \
     -e "s|__AP_JWT_SECRET__|${JWT_SECRET}|" \
     -e "s|__REUSE_SANDBOX__|${REUSE_SANDBOX}|" -e "s|__CLEAN_CACHE__|${CLEAN_CACHE}|" \
-    -e "s|__APP_REPLICAS__|${APP_REPLICAS}|" -e "s|__APP_CPU__|${APP_CPU}|" "$ROOT/benchmark/k8s-sandbox.yaml" > "$MANIFEST"
+    -e "s|__APP_REPLICAS__|${APP_REPLICAS}|" -e "s|__APP_CPU__|${APP_CPU}|" \
+    -e "s|__APP_IMAGE__|${APP_IMAGE}|" "$ROOT/benchmark/k8s-sandbox.yaml" > "$MANIFEST"
 echo "Worker: ${WORKER_REPLICAS}x @ ${WORKER_CPU} | App: ${APP_REPLICAS}x @ ${APP_CPU} | REUSE=${REUSE_SANDBOX} | clean-cache=${CLEAN_CACHE}"
 
 echo "=== Applying manifest ==="
@@ -93,10 +95,16 @@ echo "=== COLD BOOT: first request (cold process + cold cache) ==="
 COLD_MS=$(curl -s -o /dev/null -w '%{time_total}' -m 120 -X POST -H 'Content-Type: application/json' -d '{"test":true}' "$WEBHOOK" | awk '{printf "%.0f", $1 * 1000}')
 echo "Cold boot latency: ${COLD_MS} ms"
 
+# Warmup so the engine processes are hot before the measured pass (warm = AP_REUSE_SANDBOX=true).
+# Without it the first ~CONCURRENCY cold forks drag the average down and muddy the warm number.
+WARMUP_REQUESTS=${WARMUP_REQUESTS:-500}
+echo "=== WARMUP: $WARMUP_REQUESTS requests @ concurrency $CONCURRENCY (not measured) ==="
+hey -n "$WARMUP_REQUESTS" -c "$CONCURRENCY" -t 120 -m POST -H 'Content-Type: application/json' -d '{"test":true}' "$WEBHOOK" 2>&1 | awk '/Requests\/sec/{print "  warmup "$0}'
+
 echo "=== WARM THROUGHPUT: $TOTAL_REQUESTS requests @ concurrency $CONCURRENCY ==="
 # Sample app vs worker CPU during the load test to find the app:worker ratio (is the app the bottleneck?).
 ( for _ in $(seq 1 40); do
-    kubectl top pods --no-headers 2>/dev/null | awk '{role=($1 ~ /^app-/)?"app":($1 ~ /^worker-/)?"worker":"other"; cpu=$2+0; print role, cpu}'
+    kubectl top pods --no-headers 2>/dev/null | awk '{role=($1 ~ /^app-/)?"app":($1 ~ /^worker-/)?"worker":($1 ~ /^postgres-/)?"postgres":($1 ~ /^redis-/)?"redis":"other"; cpu=$2+0; print role, cpu}'
     sleep 3
   done > /tmp/topsamples.txt ) &
 SAMPLER=$!
@@ -105,10 +113,12 @@ kill "$SAMPLER" 2>/dev/null || true
 
 echo ""
 echo "=== RESOURCE USAGE during load (app vs worker) — for the ratio ==="
-awk '$1=="app"{as+=$2;an++} $1=="worker"{ws+=$2;wn++}
+awk '$1=="app"{as+=$2;an++} $1=="worker"{ws+=$2;wn++} $1=="postgres"{ps+=$2;pn++} $1=="redis"{rs+=$2;rn++}
      END{
-       printf "  app    : %d samples, avg %.0f m/pod (limit %s)\n", an, (an?as/an:0), "'"$APP_CPU"'"
-       printf "  worker : %d samples, avg %.0f m/pod (limit %s)\n", wn, (wn?ws/wn:0), "'"$WORKER_CPU"'"
+       printf "  app      : %d samples, avg %.0f m/pod (limit %s)\n", an, (an?as/an:0), "'"$APP_CPU"'"
+       printf "  worker   : %d samples, avg %.0f m/pod (limit %s)\n", wn, (wn?ws/wn:0), "'"$WORKER_CPU"'"
+       printf "  postgres : %d samples, avg %.0f m   (single pod, the shared singleton)\n", pn, (pn?ps/pn:0)
+       printf "  redis    : %d samples, avg %.0f m   (single pod, the shared singleton)\n", rn, (rn?rs/rn:0)
      }' /tmp/topsamples.txt 2>/dev/null || echo "  (no samples)"
 
 echo ""

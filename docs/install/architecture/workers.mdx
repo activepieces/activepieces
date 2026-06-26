@@ -4,17 +4,17 @@ description: "Run, scale, and tune the container that executes your flows"
 icon: "gears"
 ---
 
-The **worker** is the container that actually runs flows. It pulls jobs from Redis, executes each one inside a sandbox, and streams results back to the app. This page is about operating it: how many to run, how to size them, and what happens when one dies mid-flow.
+The **worker** is the container that runs flows. It pulls jobs from Redis, runs each one inside a sandbox, and streams results back to the app. This page covers operating it: how many to run, how to size them, and what happens when one dies mid-flow.
 
 ## What a Worker Does
 
-Each worker pulls jobs off the BullMQ queue in Redis, hands them to a sandboxed engine process, and posts progress and results back to the app over HTTP. Workers are **stateless** — they hold no per-flow memory, which is what makes horizontal scaling and crash recovery straightforward.
+Each worker pulls jobs off the BullMQ queue in Redis, hands them to a sandboxed engine process, and posts progress and results back to the app over HTTP. Workers are **stateless**: they hold no per-flow memory, which is what makes horizontal scaling and crash recovery simple.
 
 ## Scaling
 
-Workers scale **horizontally**: add replicas behind any orchestrator (Docker Compose, Kubernetes, Nomad). The recommended model is **one flow per worker** — concurrency 1, one worker per concurrent flow — so you size the fleet from a single number.
+Workers scale **horizontally**: add replicas behind any orchestrator (Docker Compose, Kubernetes, Nomad). The recommended model is **one flow per worker** (concurrency 1, one worker per concurrent flow), so you size the fleet from a single number.
 
-For the full sizing recommendation (worker/app sizes, the 1:10 app:worker ratio, the slot-based capacity formula, and database sizing), see [Production Setup](../configure-operate/production-setup).
+For the full sizing recommendation (worker and app sizes, the 1:10 app-to-worker ratio, the slot-based capacity formula, and database sizing), see [Production Setup](../configure-operate/production-setup).
 
 <Warning>
 The shipped default `AP_WORKER_CONCURRENCY=5` runs multiple sandboxes in one container as a transitional compatibility mode. It widens the OOM blast radius to all in-flight jobs in that container. Prefer `AP_WORKER_CONCURRENCY=1` and scale by replicas.
@@ -22,13 +22,13 @@ The shipped default `AP_WORKER_CONCURRENCY=5` runs multiple sandboxes in one con
 
 ## Failure Behaviour
 
-A worker that crashes, is evicted, or loses its Redis lease mid-run is survivable: BullMQ requeues the job, another worker picks it up, and durable replay skips every already-completed step. You do not need to drain traffic before rolling workers.
+A worker that crashes, is evicted, or loses its Redis lease mid-run survives the failure: BullMQ requeues the job, another worker picks it up, and durable replay skips every completed step. You do not need to drain traffic before rolling workers.
 
-For the exact promises — what re-runs, what runs at-least-once, and where each boundary is — see [Guarantees](../guarantees/crash-recovery). For how replay is persisted, see [Durable Execution](./durable-execution).
+For the exact promises (what re-runs, what runs at-least-once, and where each boundary is), see [Guarantees](../guarantees/crash-recovery). For how replay is persisted, see [Durable Execution](./durable-execution).
 
 ## Sandbox & Network Isolation
 
 How flows are isolated from the worker container and the outside world is two independent choices:
 
-- [**Sandboxing**](./sandboxing) — `AP_EXECUTION_MODE` decides how user code is isolated from the host kernel. This is the most important security decision for multi-tenant deployments.
-- [**Network Security**](./network-security) — `AP_NETWORK_MODE` decides what the sandbox is allowed to reach on the network.
+- [**Sandboxing**](./sandboxing): `AP_EXECUTION_MODE` decides how user code is isolated from the host kernel. This is the most important security decision for multi-tenant deployments.
+- [**Network Security**](./network-security): `AP_NETWORK_MODE` decides what the sandbox is allowed to reach on the network.
