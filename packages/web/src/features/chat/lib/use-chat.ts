@@ -8,6 +8,7 @@ import {
   ImageGeneratedEvent,
   ChatConversationStatus,
   ChatHistoryMessage,
+  ChatMention,
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
   PersistedChatMessage,
@@ -550,7 +551,7 @@ export function useAgentChat({
   );
 
   const sendMessage = useCallback(
-    async (content: string, files?: File[]) => {
+    async (content: string, files?: File[], mentions?: ChatMention[]) => {
       updateSendStatus({ type: 'submitting' });
 
       const fileNames = files?.map((f) => f.name) ?? [];
@@ -651,6 +652,7 @@ export function useAgentChat({
           content,
           runId,
           files: pendingFilesRef.current,
+          mentions,
         }),
       );
       if (sendError) {

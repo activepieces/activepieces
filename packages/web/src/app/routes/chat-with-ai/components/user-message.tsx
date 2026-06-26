@@ -1,5 +1,6 @@
+import { ChatMention, ChatMentionType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Paperclip } from 'lucide-react';
+import { Blocks, Paperclip, Table2, Workflow } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
@@ -15,6 +16,50 @@ import { cn } from '@/lib/utils';
 import { getTextFromParts } from '../lib/message-parsers';
 
 import { CopyIconButton } from './copy-icon-button';
+import { mentionSerialization } from './mention-composer/mention-serialization';
+
+function MentionChip({ mention }: { mention: ChatMention }) {
+  const Icon =
+    mention.type === ChatMentionType.FLOW
+      ? Workflow
+      : mention.type === ChatMentionType.TABLE
+      ? Table2
+      : Blocks;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-px font-medium text-primary align-baseline">
+      <Icon className="size-3 shrink-0" />
+      {mention.label}
+    </span>
+  );
+}
+
+function UserMessageBody({ content }: { content: string }) {
+  const segments = mentionSerialization.parseTokens(content);
+  const hasMention = segments.some((s) => s.kind === 'mention');
+  if (!hasMention) {
+    return (
+      <PromptKitMessageContent markdown>{content}</PromptKitMessageContent>
+    );
+  }
+  return (
+    <div className="whitespace-pre-wrap break-words leading-relaxed">
+      {segments.map((segment, i) =>
+        segment.kind === 'text' ? (
+          <span key={i}>{segment.value}</span>
+        ) : (
+          <MentionChip key={i} mention={segment.mention} />
+        ),
+      )}
+    </div>
+  );
+}
+
+function toDisplayText(content: string): string {
+  return mentionSerialization
+    .parseTokens(content)
+    .map((s) => (s.kind === 'text' ? s.value : `@${s.mention.label}`))
+    .join('');
+}
 
 export const UserMessage = memo(function UserMessage({
   message,
@@ -63,9 +108,7 @@ export const UserMessage = memo(function UserMessage({
                 ))}
               </div>
             )}
-            <PromptKitMessageContent markdown>
-              {content}
-            </PromptKitMessageContent>
+            <UserMessageBody content={content} />
           </div>
         </Message>
         <MessageActions
@@ -77,7 +120,10 @@ export const UserMessage = memo(function UserMessage({
           )}
         >
           <MessageAction tooltip={t('Copy')}>
-            <CopyIconButton textToCopy={content} className="h-6 w-6" />
+            <CopyIconButton
+              textToCopy={toDisplayText(content)}
+              className="h-6 w-6"
+            />
           </MessageAction>
         </MessageActions>
       </div>

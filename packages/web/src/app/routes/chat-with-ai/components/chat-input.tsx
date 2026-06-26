@@ -1,5 +1,6 @@
+import { ChatMention } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
+import { ArrowUp, AtSign, Mic, Paperclip, Square, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -13,11 +14,17 @@ import {
   PromptInput,
   PromptInputAction,
   PromptInputActions,
-  PromptInputTextarea,
 } from '@/components/prompt-kit/prompt-input';
 import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
+
+import {
+  ChatMentionEditor,
+  ChatMentionEditorHandle,
+  ChatMentionEditorValue,
+} from './mention-composer/chat-mention-editor';
+import { mentionSearch } from './mention-composer/use-mention-search';
 
 export function ChatInput({
   isStreaming,
@@ -29,22 +36,32 @@ export function ChatInput({
   rightActions,
 }: {
   isStreaming: boolean;
-  onSend: (text: string, files?: File[]) => void;
+  onSend: (text: string, files?: File[], mentions?: ChatMention[]) => void;
   onStop?: () => void;
   onInputChange?: (hasInput: boolean) => void;
   placeholder?: string;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
 }) {
-  const [value, setValue] = useState('');
+  const [content, setContent] = useState('');
+  const [mentions, setMentions] = useState<ChatMention[]>([]);
+  const [isEmpty, setIsEmpty] = useState(true);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [interimText, setInterimText] = useState('');
   const lastHasInputRef = useRef(false);
+  const editorRef = useRef<ChatMentionEditorHandle>(null);
+  const prefetchMentions = mentionSearch.usePrefetchMentionData();
 
-  const handleValueChange = useCallback(
-    (v: string) => {
-      setValue(v);
-      const hasInput = v.trim().length > 0;
+  useEffect(() => {
+    prefetchMentions();
+  }, [prefetchMentions]);
+
+  const handleEditorChange = useCallback(
+    (value: ChatMentionEditorValue) => {
+      setContent(value.content);
+      setMentions(value.mentions);
+      setIsEmpty(value.isEmpty);
+      const hasInput = !value.isEmpty;
       if (hasInput !== lastHasInputRef.current) {
         lastHasInputRef.current = hasInput;
         onInputChange?.(hasInput);
@@ -54,10 +71,7 @@ export function ChatInput({
   );
 
   const handleTranscript = useCallback((text: string) => {
-    setValue((prev) => {
-      const separator = prev.length > 0 ? ' ' : '';
-      return prev + separator + text;
-    });
+    editorRef.current?.insertText(text);
     setInterimText('');
   }, []);
 
@@ -94,29 +108,29 @@ export function ChatInput({
   }, [isRecording, cancelRecording]);
 
   const handleSubmit = useCallback(() => {
-    if (!isStreaming && (value.trim() || attachedFiles.length > 0)) {
+    if (!isStreaming && (!isEmpty || attachedFiles.length > 0)) {
       onSend(
-        value.trim(),
+        content.trim(),
         attachedFiles.length > 0 ? attachedFiles : undefined,
+        mentions.length > 0 ? mentions : undefined,
       );
-      setValue('');
+      editorRef.current?.clear();
       setAttachedFiles([]);
     }
-  }, [isStreaming, value, attachedFiles, onSend]);
+  }, [isStreaming, isEmpty, content, mentions, attachedFiles, onSend]);
 
   const handleFilesAdded = useCallback((files: File[]) => {
     setAttachedFiles((prev) => [...prev, ...files]);
   }, []);
 
-  const canSend = value.trim().length > 0 || attachedFiles.length > 0;
+  const canSend = !isEmpty || attachedFiles.length > 0;
 
   return (
     <FileUpload onFilesAdded={handleFilesAdded} multiple>
       <PromptInput
         isLoading={isStreaming}
-        value={value}
-        onValueChange={handleValueChange}
         onSubmit={handleSubmit}
+        onClick={() => editorRef.current?.focus()}
         className="border-0 rounded-none shadow-none"
       >
         <AnimatePresence>
@@ -166,10 +180,15 @@ export function ChatInput({
             )}
           </div>
         ) : (
-          <PromptInputTextarea
+          <ChatMentionEditor
+            ref={editorRef}
             autoFocus
-            placeholder={placeholder ?? t('Tell me what you need...')}
-            className="min-h-[44px] text-base sm:text-sm"
+            placeholder={
+              placeholder ?? t('Tell me what you need... (@ to mention)')
+            }
+            onChange={handleEditorChange}
+            onSubmit={handleSubmit}
+            className="max-h-60 overflow-y-auto"
           />
         )}
         <PromptInputActions className="flex items-center justify-between">
@@ -180,6 +199,16 @@ export function ChatInput({
                   <Paperclip className="size-4" />
                 </div>
               </FileUploadTrigger>
+            </PromptInputAction>
+            <PromptInputAction tooltip={t('Mention a flow, table, or app')}>
+              <button
+                type="button"
+                onMouseEnter={prefetchMentions}
+                onClick={() => editorRef.current?.insertText('@')}
+                className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <AtSign className="size-4" />
+              </button>
             </PromptInputAction>
             {leftActions}
           </div>

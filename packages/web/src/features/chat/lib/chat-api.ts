@@ -3,6 +3,7 @@ import {
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
+  ChatMention,
   ConnectionOption,
   CreateChatConversationRequest,
   UpdateChatConversationRequest,
@@ -57,15 +58,17 @@ async function sendMessage({
   content,
   runId,
   files,
+  mentions,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
+  mentions?: ChatMention[];
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/chat/conversations/${conversationId}/messages`,
-    { content, runId, files },
+    { content, runId, files, mentions },
   );
 }
 
