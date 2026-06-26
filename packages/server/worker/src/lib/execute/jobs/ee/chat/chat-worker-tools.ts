@@ -938,7 +938,7 @@ function createImageTools({ imageGeneration, saveFile, emitImage }: {
 }
 
 function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval, onGateOpened }: {
-    sendEmail: (params: { to: string[], subject: string, body: string }) => Promise<SendChatEmailResponse>
+    sendEmail: (params: { to: string[], subject: string, body: string, gateId?: string }) => Promise<SendChatEmailResponse>
     eventEmitter: ChatEventEmitter
     userEmail: string
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
@@ -985,7 +985,9 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
                     }
                 }
 
-                const { data: result, error } = await tryCatch(() => sendEmail({ to: toolInput.to, subject: toolInput.subject, body: toolInput.body }))
+                // Pass the gate id so the server can independently verify the approval for external
+                // recipients — the worker-side wait above is the UX; the server check is the boundary.
+                const { data: result, error } = await tryCatch(() => sendEmail({ to: toolInput.to, subject: toolInput.subject, body: toolInput.body, gateId: options.toolCallId }))
                 const sent = isNil(error) && result?.sent === true
                 const message = isNil(error)
                     ? (result?.message ?? 'Email sent.')

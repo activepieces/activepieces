@@ -160,6 +160,7 @@ async function clearPendingGate({ conversationId }: { conversationId: string }):
 
 export const chatApprovalGate = {
     resolveGate,
+    checkDecision,
     waitForDecision,
     requestCancel,
     isCancelled,

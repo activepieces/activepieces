@@ -584,6 +584,19 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const sender = await userService(log).getMetaInformation({ id: userId })
         const selfEmail = sender.email.toLowerCase().trim()
 
+        // Defense in depth at the SMTP boundary: a recipient other than the user's own address may
+        // only be emailed after the user approved this exact tool call. The worker shows an approval
+        // card and waits, but the server independently verifies the recorded (user-authenticated)
+        // decision, so a prompt-injected or buggy caller can't exfiltrate externally without it.
+        const externalRecipients = recipients.filter((email) => email !== selfEmail)
+        if (externalRecipients.length > 0) {
+            const decision = isNil(input.gateId) ? 'pending' : await chatApprovalGate.checkDecision({ gateId: input.gateId })
+            if (decision === 'pending' || !decision.approved) {
+                log.warn({ conversation: { id: conversationId }, user: { id: userId }, recipientCount: externalRecipients.length }, '[chatRpc#sendChatEmail] Blocked external send without an approved confirmation')
+                return { sent: false, message: 'Sending to anyone other than your own address needs your explicit approval first.', blockedRecipients: externalRecipients }
+            }
+        }
+
         const conversationLimit = await incrementAndCheckLimit({ key: `chat-email-count:conv:${platformId}:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
         const hourlyLimit = await incrementAndCheckLimit({ key: `chat-email-count:user:${platformId}:${userId}`, limit: EMAILS_PER_USER_PER_HOUR, ttlSeconds: HOURLY_LIMIT_TTL_SECONDS })
         if (!conversationLimit.allowed || !hourlyLimit.allowed) {

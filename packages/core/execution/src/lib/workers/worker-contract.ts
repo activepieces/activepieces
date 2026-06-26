@@ -193,6 +193,7 @@ export type SendChatEmailRequest = {
     to: string[]
     subject: string
     body: string
+    gateId?: string
 }
 
 export type SendChatEmailResponse = {
