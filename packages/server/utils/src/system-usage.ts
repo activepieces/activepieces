@@ -46,7 +46,8 @@ async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: n
         const totalRamInBytes = parseInt(limitStr)
         const rawUsedBytes = parseInt(usageStr)
         if (isNaN(totalRamInBytes) || isNaN(rawUsedBytes) || totalRamInBytes <= 0 || totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES) continue
-        const inactiveFileBytes = await readCgroupStatValue(stat, inactiveFileKey) ?? 0
+        const inactiveFileBytes = await readCgroupStatValue(stat, inactiveFileKey)
+        if (inactiveFileBytes === null) continue
         const usedBytes = Math.max(0, rawUsedBytes - inactiveFileBytes)
         return {
             totalRamInBytes,
