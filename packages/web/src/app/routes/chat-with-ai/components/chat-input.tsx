@@ -204,7 +204,10 @@ export function ChatInput({
               <button
                 type="button"
                 onMouseEnter={prefetchMentions}
-                onClick={() => editorRef.current?.insertText('@')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  editorRef.current?.triggerMention();
+                }}
                 className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <AtSign className="size-4" />

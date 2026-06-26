@@ -1,5 +1,10 @@
 {
   "Tell me what you need... (@ to mention)": "Tell me what you need... (@ to mention)",
+  "Disabled": "Disabled",
+  "{{count}} actions": "{{count}} actions",
+  "{{count}} triggers": "{{count}} triggers",
+  "Showing {{rows}} of {{total}} sample rows": "Showing {{rows}} of {{total}} sample rows",
+  "No accounts connected yet": "No accounts connected yet",
   "Mention a flow, table, or app": "Mention a flow, table, or app",
   "Searching...": "Searching...",
   "No flows, tables, or apps match": "No flows, tables, or apps match",

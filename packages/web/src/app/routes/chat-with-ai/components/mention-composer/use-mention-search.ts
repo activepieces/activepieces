@@ -21,6 +21,14 @@ const FUSE_OPTIONS = {
   minMatchCharLength: 1,
 };
 
+function isInternalFlowName(name: string): boolean {
+  const n = name.trim();
+  if (n.startsWith('__')) {
+    return true;
+  }
+  return /^[A-Za-z0-9_-]{16,}$/.test(n) && /[0-9]/.test(n);
+}
+
 function flowsQueryOptions(projectId: string) {
   return {
     queryKey: ['mention-search', 'flows', projectId],
@@ -30,13 +38,15 @@ function flowsQueryOptions(projectId: string) {
         limit: BASE_LIMIT,
         cursor: undefined,
       });
-      return page.data.map((flow) => ({
-        type: ChatMentionType.FLOW,
-        id: flow.id,
-        label: flow.version.displayName,
-        secondary: flow.status,
-        updated: flow.updated,
-      }));
+      return page.data
+        .filter((flow) => !isInternalFlowName(flow.version.displayName))
+        .map((flow) => ({
+          type: ChatMentionType.FLOW,
+          id: flow.id,
+          label: flow.version.displayName,
+          secondary: flow.status,
+          updated: flow.updated,
+        }));
     },
     staleTime: 30_000,
   };

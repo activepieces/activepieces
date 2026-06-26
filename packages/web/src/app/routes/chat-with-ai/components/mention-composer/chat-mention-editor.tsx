@@ -101,11 +101,19 @@ export const ChatMentionEditor = forwardRef<
     [editor],
   );
 
-  useImperativeHandle(ref, () => ({ clear, focus, insertText }), [
-    clear,
-    focus,
-    insertText,
-  ]);
+  const triggerMention = useCallback(() => {
+    if (!editor || suggestionOpenRef.current) {
+      editor?.commands.focus('end');
+      return;
+    }
+    insertText('@');
+  }, [editor, insertText]);
+
+  useImperativeHandle(
+    ref,
+    () => ({ clear, focus, insertText, triggerMention }),
+    [clear, focus, insertText, triggerMention],
+  );
 
   return <EditorContent editor={editor} />;
 });
@@ -121,6 +129,7 @@ export type ChatMentionEditorHandle = {
   clear: () => void;
   focus: () => void;
   insertText: (text: string) => void;
+  triggerMention: () => void;
 };
 
 export type ChatMentionEditorProps = {
