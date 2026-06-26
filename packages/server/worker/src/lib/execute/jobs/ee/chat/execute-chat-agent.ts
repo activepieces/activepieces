@@ -129,7 +129,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, phaseState, mcpToolSet, webTools,
-                projects: config.projects, projectId, conversationId, platformId, userId,
+                projects: config.projects, projectId, conversationId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
@@ -306,7 +306,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -318,6 +318,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     conversationId: string
     platformId: string
     userId: string
+    userEmail: string
     guides: Record<string, string>
     dryRun: boolean
     discoveryOnly: boolean
@@ -456,6 +457,9 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         ? chatWorkerTools.createEmailTools({
             sendEmail: ({ to, subject, body }) => ctx.apiClient.sendChatEmail({ conversationId, platformId, userId, to, subject, body }),
             eventEmitter,
+            userEmail,
+            waitForApproval,
+            onGateOpened: storePendingGate,
         })
         : {}
 
