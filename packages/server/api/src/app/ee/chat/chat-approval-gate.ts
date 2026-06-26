@@ -1,3 +1,4 @@
+import { FastifyBaseLogger } from 'fastify'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
@@ -21,7 +22,7 @@ function channelName(gateId: string): string {
     return `${CHANNEL_PREFIX}${gateId}`
 }
 
-async function resolveGate({ gateId, approved, payload }: { gateId: string, approved: boolean, payload?: Record<string, unknown> }): Promise<void> {
+async function resolveGate({ gateId, approved, payload, log }: { gateId: string, approved: boolean, payload?: Record<string, unknown>, log?: FastifyBaseLogger }): Promise<void> {
     const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload }, GATE_TTL_SECONDS)
     if (wasSet) {
         await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
@@ -30,6 +31,10 @@ async function resolveGate({ gateId, approved, payload }: { gateId: string, appr
             await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
             await distributedStore.delete(`${PENDING_GATE_PREFIX}gate:${gateId}`)
         }
+        log?.info({ gate: { id: gateId }, decision: approved ? 'approved' : 'denied' }, '[chatApprovalGate] Gate decided')
+    }
+    else {
+        log?.info({ gate: { id: gateId } }, '[chatApprovalGate] Gate decision ignored (already decided)')
     }
 }
 

@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, spreadIfDefined } from '@activepieces/core-utils'
 import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -71,10 +71,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
         const { content, runId: clientRunId, files } = request.body
-        const log = request.log
         const conversationId = request.params.id
         const userId = request.principal.id
         const platformId = request.principal.platform.id
+        const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
+
+        log.info({ filesCount: files?.length ?? 0, contentLength: content.length }, '[chatController] Chat message received')
 
         const conversation = await chatService(log).getConversationOrThrow({
             id: conversationId,
@@ -84,6 +86,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         if (conversation.status === ChatConversationStatus.STREAMING) {
             const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+            log.info({ ...spreadIfDefined('preemptedRunId', activeRunId ?? undefined) }, '[chatController] Cancelling in-flight run before new message')
             const cancelPromises = [
                 chatApprovalGate.requestCancel({ conversationId }),
             ]
@@ -94,13 +97,15 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             await chatHelpers.conversationRepo().update(conversationId, {
                 status: ChatConversationStatus.IDLE,
             })
+            await chatApprovalGate.clearPendingGate({ conversationId })
         }
 
         await assertAiCreditsNotExhausted({ platformId, log })
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
+        const runLog = log.child({ run: { id: runId } })
         await chatApprovalGate.storeActiveRunId({ conversationId, runId })
-        await jobQueue(log).add({
+        await jobQueue(runLog).add({
             id: apId(),
             type: JobType.ONE_TIME,
             data: {
@@ -116,15 +121,18 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 files,
             },
         })
+        runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
 
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
+        request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[chatController] Tool approval received')
         await chatApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
             payload: request.body.payload,
+            log: request.log,
         })
         return reply.status(StatusCodes.OK).send({ success: true })
     })
@@ -133,8 +141,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const conversationId = request.params.id
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
+        await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+        log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[chatController] Cancel requested')
         const cancelPromises = [
             chatApprovalGate.requestCancel({ conversationId }),
         ]
@@ -145,6 +155,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         await chatHelpers.conversationRepo().update(conversationId, {
             status: ChatConversationStatus.IDLE,
         })
+        await chatApprovalGate.clearPendingGate({ conversationId })
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
@@ -185,6 +196,7 @@ async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: st
     }
     const usage = await platformAiCreditsService(log).getUsage(platformId)
     if (usage.usageRemaining <= 0) {
+        log.warn({ usage: usage.usage, limit: usage.limit }, '[chatController] AI credits exhausted, rejecting message')
         throw new ActivepiecesError({
             code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
             params: {

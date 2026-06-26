@@ -30,6 +30,7 @@ export enum WorkerSystemProp {
     CONTAINER_TYPE = 'AP_CONTAINER_TYPE',
     WORKER_TOKEN = 'AP_WORKER_TOKEN',
     PORT = 'AP_PORT',
+    LOG_FILE = 'AP_LOG_FILE',
     LOG_LEVEL = 'AP_LOG_LEVEL',
     LOG_PRETTY = 'AP_LOG_PRETTY',
     LOG_SAMPLE_RATE_INFO = 'AP_LOG_SAMPLE_RATE_INFO',
@@ -55,6 +56,7 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.PORT]: '3000',
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
+    [WorkerSystemProp.LOG_FILE]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
     // Transitional default (ADR 0004): N boxes per worker preserves main's historical behavior.
     // The destination is concurrency 1 + horizontal replicas (ADR 0003).
