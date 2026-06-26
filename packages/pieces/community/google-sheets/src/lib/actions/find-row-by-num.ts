@@ -9,7 +9,7 @@ export const findRowByNumAction = createAction({
 	name: 'find_row_by_num',
 	displayName: 'Get Single Row by ID',
 	description: 'Retrieve a specific row using its unique ID.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Reads a single row from a worksheet by its row number, optionally keyed by header names instead of column letters. Use when an agent already knows the exact row to fetch. Read-only and idempotent.',

@@ -24,7 +24,7 @@ export const updateMultipleRowsAction = createAction({
   name: 'update-multiple-rows',
   displayName: 'Update Multiple Rows',
   description: 'Updates multiple rows in a specific spreadsheet.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Overwrites several existing rows in one batch call, each targeted by its own row id. Use when an agent needs to apply edits to multiple known rows efficiently rather than calling Update Row repeatedly. Idempotent — re-running with the same row ids and values produces the same sheet state; rows without a row id are skipped.',

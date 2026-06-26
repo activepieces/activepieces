@@ -6,6 +6,7 @@ import { commonProps } from '../common/props';
 export const deleteMultipleRowsAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'delete-multiple-rows',
+	audience: 'human',
 	displayName: 'Delete Multiple Rows',
 	description:
 		'Deletes a contiguous range of rows, or a list of specific row numbers. Row numbers are 1-based.',

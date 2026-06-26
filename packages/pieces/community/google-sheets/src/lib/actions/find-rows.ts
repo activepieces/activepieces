@@ -14,7 +14,7 @@ export const findRowsAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find_rows',
 description: 'Look up rows in a worksheet based on a column value.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Searches a worksheet for rows whose value in a chosen column matches a search value (exact or contains), returning up to a requested number of matches. Use to locate rows before reading, updating, or deleting them; leave the search value empty to fetch rows sequentially. Read-only and idempotent.',

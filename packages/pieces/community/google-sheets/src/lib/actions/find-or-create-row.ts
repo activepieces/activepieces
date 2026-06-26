@@ -19,6 +19,7 @@ import { getWorkSheetName, mapRowsToColumnLabels } from '../triggers/helpers';
 export const findOrCreateRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find-or-create-row',
+	audience: 'human',
 	displayName: 'Find or Create Row',
 	description: 'Look up a row by column value; if no match is found, create a new row with the provided values.',
 	props: {

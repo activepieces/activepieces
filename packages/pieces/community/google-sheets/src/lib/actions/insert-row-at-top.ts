@@ -16,6 +16,7 @@ import { getWorkSheetName } from '../triggers/helpers';
 export const insertRowAtTopAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'insert-row-at-top',
+	audience: 'human',
 	displayName: 'Add Row at Top',
 	description: 'Inserts a new row at the top of a worksheet, just below the header row.',
 	props: {

@@ -9,7 +9,7 @@ export const deleteWorksheetAction = createAction({
     name: 'delete-worksheet',
     displayName: 'Delete Worksheet',
     description: 'Permanently delete a specific worksheet.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: {
         description:
             'Permanently removes one worksheet (tab) from a spreadsheet, identified by its stable sheet id. Use when an agent needs to drop an entire tab and its data. Idempotent on the stable sheet id — the tab ends up absent; this is destructive and cannot be undone.',

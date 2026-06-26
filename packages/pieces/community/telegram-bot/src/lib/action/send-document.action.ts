@@ -17,7 +17,7 @@ export const telegramSendDocumentAction = createAction({
   name: 'send_document',
   displayName: 'Send Document',
   description: 'Send a generic file (document) to a Telegram chat',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Uploads and sends a generic file (up to 50 MB) as a document to a Telegram chat, supplied as a file or a previously uploaded Telegram file_id. Use for arbitrary attachments (PDFs, archives, spreadsheets) rather than media shown inline. Not idempotent: each call sends a new document.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),

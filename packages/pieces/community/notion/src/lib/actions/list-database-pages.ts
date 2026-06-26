@@ -12,7 +12,7 @@ export const listDatabasePages = createAction({
   displayName: 'List Pages',
   description:
     'Lists pages in a Notion database with optional field filters and pagination.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Queries pages in a specific Notion database, optionally filtering by property values (combined with AND), and returns paginated results. Use when an agent needs to browse or enumerate database records rather than find a single item; requires database_id. Idempotent read-only lookup.',

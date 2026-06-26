@@ -14,7 +14,7 @@ export const getPageOrBlockChildren = createAction({
   name: 'getPageOrBlockChildren',
   displayName: 'Get block content',
   description: 'Retrieve the actual content of a page (represented by blocks).',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Reads the body content of a Notion page or block by recursively listing its child blocks, optionally rendered as markdown. Use when an agent needs to read what is actually written inside a page (text, nested blocks) rather than its metadata; requires the page or parent block id. Idempotent read-only fetch.',

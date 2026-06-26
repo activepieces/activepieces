@@ -9,7 +9,7 @@ export const findPage = createAction({
   displayName: 'Find Page',
   description:
     'Search for Notion pages by title with flexible matching options. Perfect for finding specific pages, building page references, or creating automated workflows based on page discovery.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Searches the workspace for pages whose title matches a query, supporting exact or partial matching. Use when an agent needs to locate a page id by name before reading or modifying it; requires a title query and only searches pages shared with the integration. Idempotent read-only search.',
