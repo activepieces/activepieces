@@ -37,12 +37,14 @@ function create({ baseUrl, apiKey }: { baseUrl?: string, apiKey: string }): Eval
 
     async function pollState({ conversationId, priorAssistantTurns, timeoutMs }: { conversationId: string, priorAssistantTurns: number, timeoutMs: number }): Promise<{ status: string, uiMessages: unknown[] }> {
         const deadline = Date.now() + timeoutMs
+        let latestUiMessages: unknown[] = []
         while (Date.now() < deadline) {
             await delay(POLL_INTERVAL_MS)
             const res = await fetch(`${base}/v1/chat/eval/conversations/${conversationId}/state`, { headers })
             if (!res.ok) continue
             const body = await res.json() as { status: ChatConversationStatus, uiMessages: unknown[] }
             const uiMessages = body.uiMessages ?? []
+            latestUiMessages = uiMessages
             if (body.status === ChatConversationStatus.ERROR) {
                 return { status: body.status, uiMessages }
             }
@@ -50,7 +52,9 @@ function create({ baseUrl, apiKey }: { baseUrl?: string, apiKey: string }): Eval
                 return { status: body.status, uiMessages }
             }
         }
-        return { status: TIMEOUT_STATUS, uiMessages: [] }
+        // Keep whatever streamed so far so a timed-out turn still has a transcript to score/debug,
+        // instead of reporting a false "stuck, zero tool calls" run.
+        return { status: TIMEOUT_STATUS, uiMessages: latestUiMessages }
     }
 
     return { getSandboxPlatformId, runTurn }
