@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-image-helper",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -9,7 +9,7 @@
     "exifreader": "4.39.0",
     "heic-convert": "2.1.0",
     "jimp": "^0.22.12",
-    "sharp": "^0.33.0",
+    "sharp": "^0.35.2",
     "mime-types": "2.1.35",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
