@@ -1,5 +1,5 @@
 import { StreamStepProgress } from '../engine/engine-operation'
-import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '../engine/requests'
+import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '@activepieces/core-piece-types'
@@ -31,18 +31,46 @@ export type GetPieceRequest = {
     platformId?: string
 }
 
+export type GetFlowBundleRequest = {
+    flowVersionId: string
+    projectId: string
+}
+
+export type GetFlowBundleResponse =
+    | { kind: 'inline', data: Buffer }
+    | { kind: 'url', url: string }
+
+export type PrepareFlowBundleUploadRequest = {
+    flowVersionId: string
+    projectId: string
+    platformId: string
+    size: number
+}
+
+export type PrepareFlowBundleUploadResponse =
+    | { kind: 'url', url: string }
+    | { kind: 'inline' }
+    | { kind: 'skip' }
+
+export type UploadFlowBundleRequest = {
+    flowVersionId: string
+    projectId: string
+    platformId: string
+    data: Buffer
+}
+
 export type WorkerToApiContract = {
     poll(input: WorkerMachineHealthcheckRequest): Promise<ConsumeJobRequest | null>
     completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void>
-    updateRunProgress(input: UpdateRunProgressRequest): Promise<void>
     uploadRunLog(input: UploadRunLogsRequest): Promise<void>
-    sendFlowResponse(input: SendFlowResponseRequest): Promise<void>
-    updateStepProgress(input: UpdateStepProgressRequest): Promise<void>
     submitPayloads(input: SubmitPayloadsRequest): Promise<FlowRun[]>
     savePayloads(input: SavePayloadRequest): Promise<void>
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
+    getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
+    prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
+    uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
@@ -126,6 +154,7 @@ export type GetChatConfigRequest = {
     modelName: string | null
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: ChatPromptOverride
+    dryRun?: boolean
 }
 
 export type ChatConfigResponse = {

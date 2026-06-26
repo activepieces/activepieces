@@ -191,8 +191,20 @@ function extractToolTitles(part: AnyToolPart): {
   return { title, activeTitle, doneTitle };
 }
 
-function extractQuickRepliesFromParts(message: ChatUIMessage | null): string[] {
-  if (!message || message.role !== 'assistant') return [];
+function readQuickRepliesInput(input: unknown): QuickRepliesData {
+  const typed = input as
+    | { replies?: string[]; offerRecurringAutomation?: boolean }
+    | undefined;
+  return {
+    replies: typed?.replies ?? [],
+    offerRecurringAutomation: typed?.offerRecurringAutomation === true,
+  };
+}
+
+function extractQuickRepliesFromParts(
+  message: ChatUIMessage | null,
+): QuickRepliesData {
+  if (!message || message.role !== 'assistant') return EMPTY_QUICK_REPLIES_DATA;
   for (let i = message.parts.length - 1; i >= 0; i--) {
     const p = message.parts[i];
     if (
@@ -200,11 +212,10 @@ function extractQuickRepliesFromParts(message: ChatUIMessage | null): string[] {
       getToolPartName(p) === 'ap_show_quick_replies' &&
       (p.state === 'output-available' || p.state === 'input-available')
     ) {
-      const input = p.input as { replies?: string[] } | undefined;
-      return input?.replies ?? [];
+      return readQuickRepliesInput(p.input);
     }
   }
-  return [];
+  return EMPTY_QUICK_REPLIES_DATA;
 }
 
 export const chatPartUtils = {
@@ -223,6 +234,7 @@ export const chatPartUtils = {
   findLastToolPart,
   extractBatchProgressFromOutput,
   extractQuickRepliesFromParts,
+  readQuickRepliesInput,
   HIDDEN_TOOL_NAMES,
   DISPLAY_TOOL_NAMES,
 };
@@ -246,4 +258,14 @@ export type TypedToolOutput<T> =
 
 export type CreditsWarning = {
   percentage: number;
+};
+
+export type QuickRepliesData = {
+  replies: string[];
+  offerRecurringAutomation: boolean;
+};
+
+export const EMPTY_QUICK_REPLIES_DATA: QuickRepliesData = {
+  replies: [],
+  offerRecurringAutomation: false,
 };

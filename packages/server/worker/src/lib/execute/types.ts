@@ -1,4 +1,4 @@
-import { Runtime } from '@activepieces/sandbox-pool'
+import { Resolver, Runtime } from '@activepieces/sandbox-pool'
 import { type ApLogger } from '@activepieces/server-utils'
 import { EngineResponseStatus, JobData, WorkerJobType, WorkerToApiContract } from '@activepieces/shared'
 
@@ -10,6 +10,7 @@ export enum JobResultKind {
 export type JobContext = {
     apiClient: WorkerToApiContract
     runtime: Runtime
+    resolver: Resolver
     workerIndex: number
     jobId: string
     engineToken: string

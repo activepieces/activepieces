@@ -289,7 +289,7 @@ function normalizeTypeFilter(type: FileType | FileType[] | undefined) {
 
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
-    if (isExecutionDataFileThatExpires(type)) {
+    if (type === FileType.FLOW_BUNDLE || isExecutionDataFileThatExpires(type)) {
         return FILE_LOCATION
     }
     return FileLocation.DB

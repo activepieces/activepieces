@@ -208,25 +208,28 @@ async function traverseAllParentFoldersToFindPiece(packageName: string): Promise
     return null
 }
 
-// Bundled pieces are a single self-contained file at the install-folder root.
-// Registry/dev installs keep the package nested in node_modules; honor its main entry.
+// A piece entry is resolved from its package.json "main" (defaulting to src/index.js).
+// Registry/dev installs keep the package nested in node_modules; a packed-archive bundle is
+// extracted straight to the install-folder root. Try the nested package first, then the root.
 async function resolveInstalledPieceEntry(pieceFolder: string, trimmedName: string): Promise<string | null> {
-    const bundlePath = path.join(pieceFolder, PIECE_BUNDLE_FILENAME)
-    if (await utils.folderExists(bundlePath)) {
-        return bundlePath
-    }
     const packageDir = path.join(pieceFolder, 'node_modules', trimmedName)
     if (await utils.folderExists(packageDir)) {
         return resolveEntryFromPackageDir(packageDir)
+    }
+    // Only return an entry that actually exists: a half-installed registry folder also has a
+    // stub package.json (no "main") at this point, for which resolveEntryFromPackageDir would
+    // otherwise return a non-existent src/index.js — fall through to a clean PieceNotFoundError.
+    const rootManifest = path.join(pieceFolder, 'package.json')
+    if (await utils.folderExists(rootManifest)) {
+        const rootEntry = await resolveEntryFromPackageDir(pieceFolder)
+        if (await utils.folderExists(rootEntry)) {
+            return rootEntry
+        }
     }
     return null
 }
 
 async function resolveEntryFromPackageDir(packageDir: string): Promise<string> {
-    const nestedBundle = path.join(packageDir, PIECE_BUNDLE_FILENAME)
-    if (await utils.folderExists(nestedBundle)) {
-        return nestedBundle
-    }
     const { data: mainEntry } = await utils.tryCatchAndThrowOnEngineError(async () => {
         const packageJson = JSON.parse(await fs.readFile(path.join(packageDir, 'package.json'), 'utf-8'))
         if (isNil(packageJson.main)) {
@@ -237,8 +240,6 @@ async function resolveEntryFromPackageDir(packageDir: string): Promise<string> {
     })
     return mainEntry ?? path.join(packageDir, 'src', 'index.js')
 }
-
-const PIECE_BUNDLE_FILENAME = 'index.bundle.js'
 
 type GetPiecePathParams = {
     packageName: string

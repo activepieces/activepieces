@@ -1,7 +1,7 @@
 import { tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration, fileSystemUtils } from '@activepieces/server-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { CommandOutput, spawnWithKill } from '../../exec'
+import { CommandOutput, spawnWithKill } from './exec'
 
 export const bunRunner = (log: ApLogger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {

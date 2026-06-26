@@ -88,7 +88,6 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
 }
 
 const log = { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() } as never
-const apiClient = {} as never
 
 describe('createSandboxForJob', () => {
     beforeEach(() => {
@@ -99,7 +98,7 @@ describe('createSandboxForJob', () => {
     describe('baseMounts', () => {
         it('contains exactly /root/common → getGlobalCacheCommonPath()', () => {
             const settings = buildSettings()
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             const options = createSandboxMock.mock.calls[0][2]
             expect(options.baseMounts).toEqual([
@@ -109,7 +108,7 @@ describe('createSandboxForJob', () => {
 
         it('never leaks host / or /etc into baseMounts', () => {
             const settings = buildSettings()
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             const options = createSandboxMock.mock.calls[0][2]
             for (const mount of options.baseMounts) {
@@ -126,7 +125,7 @@ describe('createSandboxForJob', () => {
             [ExecutionMode.SANDBOX_CODE_AND_PROCESS, 'isolate'],
         ])('uses isolateProcess for %s', (executionMode) => {
             const settings = buildSettings({ EXECUTION_MODE: executionMode })
-            createSandboxForJob({ log, apiClient, boxId: 7, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 7, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             expect(isolateProcessMock).toHaveBeenCalledTimes(1)
             expect(simpleProcessMock).not.toHaveBeenCalled()
@@ -138,7 +137,7 @@ describe('createSandboxForJob', () => {
             [ExecutionMode.SANDBOX_CODE_ONLY, 'simple'],
         ])('uses simpleProcess for %s', (executionMode) => {
             const settings = buildSettings({ EXECUTION_MODE: executionMode })
-            createSandboxForJob({ log, apiClient, boxId: 3, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 3, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             expect(simpleProcessMock).toHaveBeenCalledTimes(1)
             expect(isolateProcessMock).not.toHaveBeenCalled()
@@ -154,7 +153,7 @@ describe('createSandboxForJob', () => {
                 MAX_FILE_SIZE_MB: 50,
                 NETWORK_MODE: NetworkMode.STRICT,
             })
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env).toMatchObject({
@@ -170,7 +169,7 @@ describe('createSandboxForJob', () => {
 
         it('omits AP_DEV_PIECES when DEV_PIECES is empty', () => {
             const settings = buildSettings({ DEV_PIECES: [] })
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_DEV_PIECES).toBeUndefined()
@@ -178,7 +177,7 @@ describe('createSandboxForJob', () => {
 
         it('joins DEV_PIECES with comma', () => {
             const settings = buildSettings({ DEV_PIECES: ['a', 'b', 'c'] })
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_DEV_PIECES).toBe('a,b,c')
@@ -192,7 +191,7 @@ describe('createSandboxForJob', () => {
                 const settings = buildSettings({
                     SANDBOX_PROPAGATED_ENV_VARS: ['PROPAGATED_YES', 'PROPAGATED_NO'],
                 })
-                createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+                createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
                 const env = createSandboxMock.mock.calls[0][2].env
                 expect(env.PROPAGATED_YES).toBe('forwarded')
@@ -207,14 +206,14 @@ describe('createSandboxForJob', () => {
     describe('parseMemoryLimit', () => {
         it('converts KB string to MB', () => {
             const settings = buildSettings({ SANDBOX_MEMORY_LIMIT: '524288' })
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             expect(createSandboxMock.mock.calls[0][2].memoryLimitMb).toBe(512)
         })
 
         it('defaults to 1024 MB on invalid input', () => {
             const settings = buildSettings({ SANDBOX_MEMORY_LIMIT: 'not-a-number' })
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             expect(createSandboxMock.mock.calls[0][2].memoryLimitMb).toBe(1024)
         })
@@ -222,7 +221,7 @@ describe('createSandboxForJob', () => {
 
     it('forwards reusable flag into createSandbox options', () => {
         const settings = buildSettings()
-        createSandboxForJob({ log, apiClient, boxId: 1, reusable: true, basePath: '/tmp', getSettings: () => settings })
+        createSandboxForJob({ log, boxId: 1, reusable: true, basePath: '/tmp', getSettings: () => settings })
 
         expect(createSandboxMock.mock.calls[0][2].reusable).toBe(true)
     })
@@ -234,7 +233,7 @@ describe('createSandboxForJob', () => {
     describe('sandbox network mode mirrors settings', () => {
         it('NETWORK_MODE=STRICT in settings → engine sees STRICT, no proxy URL', () => {
             const settings = buildSettings({ NETWORK_MODE: NetworkMode.STRICT })
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_NETWORK_MODE).toBe(NetworkMode.STRICT)
@@ -243,7 +242,7 @@ describe('createSandboxForJob', () => {
 
         it('NETWORK_MODE=UNRESTRICTED in settings → engine sees UNRESTRICTED', () => {
             const settings = buildSettings({ NETWORK_MODE: NetworkMode.UNRESTRICTED })
-            createSandboxForJob({ log, apiClient, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env.AP_NETWORK_MODE).toBe(NetworkMode.UNRESTRICTED)

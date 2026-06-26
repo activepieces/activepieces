@@ -15,6 +15,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+    EXECUTE_REFRESH_TOKEN_AUTH = 'EXECUTE_REFRESH_TOKEN_AUTH',
 }
 
 export enum TriggerHookType {
@@ -33,6 +34,7 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
+    | ExecuteRefreshTokenAuthOperation
 
 
 export const EngineStdout = z.object({
@@ -61,6 +63,12 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
     piece: PiecePackage
     auth: AppConnectionValue
 }
+
+export type ExecuteRefreshTokenAuthOperation = ExecuteValidateAuthOperation
+
+export type ExecuteRefreshTokenAuthResponse =
+    | { skipped: true }
+    | { skipped: false, access_token: string, expires_in: number }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
@@ -134,6 +142,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
 export const TriggerPayload = z.object({
     body: z.unknown(),
     rawBody: z.unknown().optional(),
+    method: z.string().optional(),
     headers: z.record(z.string(), z.string()),
     queryParams: z.record(z.string(), z.string()),
 })
@@ -141,6 +150,7 @@ export const TriggerPayload = z.object({
 export type TriggerPayload<T = unknown> = {
     body: T
     rawBody?: unknown
+    method?: string
     headers: Record<string, string>
     queryParams: Record<string, string>
 }

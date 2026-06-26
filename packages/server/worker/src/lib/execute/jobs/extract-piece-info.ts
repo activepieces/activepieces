@@ -11,34 +11,30 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData,
     async execute(ctx: JobContext, data: ExecuteExtractPieceMetadataJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, pieces: [data.piece] })
+        if (resolved.kind !== 'ready') {
+            throw new Error(`Unexpected resolve outcome "${resolved.kind}" for piece-only job`)
+        }
 
-        try {
-            const result = await execution.run({
-                operationType: EngineOperationType.EXTRACT_PIECE_METADATA,
-                operation: {
-                    ...data.piece,
-                    platformId: data.platformId,
-                    timeoutInSeconds,
-                },
+        const result = await ctx.runtime.execute({
+            workerIndex: ctx.workerIndex,
+            log: ctx.log,
+            operationType: EngineOperationType.EXTRACT_PIECE_METADATA,
+            operation: {
+                ...data.piece,
+                platformId: data.platformId,
                 timeoutInSeconds,
-            })
+            },
+            timeoutInSeconds,
+            provision: resolved.provision,
+        })
 
-            return {
-                kind: JobResultKind.SYNCHRONOUS,
-                status: result.status,
-                response: result.response,
-                errorMessage: result.error,
-                logs: result.logs,
-            }
-        }
-        catch (e) {
-            await execution.dispose({ invalidate: true })
-            throw e
-        }
-        finally {
-            await execution.dispose({ invalidate: false })
+        return {
+            kind: JobResultKind.SYNCHRONOUS,
+            status: result.status,
+            response: result.response,
+            errorMessage: result.error,
+            logs: result.logs,
         }
     },
 }

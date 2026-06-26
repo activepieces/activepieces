@@ -77,7 +77,7 @@ const StepDataPanelHost = ({
     <div
       ref={drawerRef}
       className={cn(
-        'h-full w-full bg-background flex flex-col overflow-hidden border border-border',
+        'group relative h-full w-full bg-background flex flex-col overflow-hidden border border-border',
         mode === 'drawer' && 'rounded-t-xl shadow-lg border-b-0 border-x-0',
         mode === 'split' && 'rounded-t-xl border-b-0',
       )}

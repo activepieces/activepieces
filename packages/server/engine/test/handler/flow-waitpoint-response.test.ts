@@ -2,7 +2,6 @@ import { FlowRunStatus } from '@activepieces/shared'
 import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { workerSocket } from '../../src/lib/worker-socket'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 const { mockSendFlowResponse } = vi.hoisted(() => ({
@@ -15,11 +14,9 @@ vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
     },
 }))
 
-vi.mock('../../src/lib/worker-socket', () => ({
-    workerSocket: {
-        getWorkerClient: vi.fn().mockReturnValue({
-            sendFlowResponse: mockSendFlowResponse,
-        }),
+vi.mock('../../src/lib/api/engine-run-api', () => ({
+    engineRunApi: {
+        sendFlowResponse: mockSendFlowResponse,
     },
 }))
 
@@ -61,14 +58,17 @@ describe('flow waitpoint response propagation', () => {
             status: FlowRunStatus.PAUSED,
         })
 
-        expect(workerSocket.getWorkerClient).toHaveBeenCalled()
         expect(mockSendFlowResponse).toHaveBeenCalledWith({
-            workerHandlerId: 'test-handler-id',
-            httpRequestId: 'test-request-id',
-            runResponse: {
-                status: 200,
-                body: responseBody,
-                headers: expect.objectContaining(responseHeaders),
+            apiUrl: expect.any(String),
+            engineToken: expect.any(String),
+            request: {
+                workerHandlerId: 'test-handler-id',
+                httpRequestId: 'test-request-id',
+                runResponse: {
+                    status: 200,
+                    body: responseBody,
+                    headers: expect.objectContaining(responseHeaders),
+                },
             },
         })
     })

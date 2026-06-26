@@ -22,7 +22,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - `packages/web/src/features/connections/components/edit-global-connection-dialog.tsx` — edit global connection dialog
 - `packages/web/src/features/connections/components/rename-connection-dialog.tsx` — rename connection dialog
 - `packages/web/src/app/connections/oidc-connection-settings.tsx` — OIDC connection form component
-- `packages/server/api/src/app/core/security/oidc/oidc-key-manager.ts` — RSA key lifecycle: mutex-protected caching, auto-generation (CE), RFC 7638 kid fingerprint
+- `packages/server/api/src/app/core/security/oidc/oidc-key-manager.ts` — RSA key lifecycle: mutex-protected caching, auto-generation persisted (encrypted) to the shared `flag` table, RFC 7638 kid fingerprint
 - `packages/server/api/src/app/core/security/oidc/oidc.module.ts` — module wrapper that registers the OIDC token controller under `/v1/worker`
 - `packages/server/api/src/app/core/security/oidc/oidc-token.controller.ts` — engine-only endpoint that issues RS256 JWTs (`POST /api/v1/worker/oidc-token`)
 - `packages/server/api/src/app/core/security/oidc/oidc-discovery.controller.ts` — public OIDC discovery endpoints (`GET /.well-known/openid-configuration`, `GET /.well-known/jwks.json`)
@@ -57,7 +57,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 | PLATFORM_OAUTH2 | Same but uses platform-managed OAuth app credentials | Auto-refresh |
 | SECRET_TEXT | token | None |
 | BASIC_AUTH | username, password | None |
-| CUSTOM_AUTH | piece-defined custom fields | None |
+| CUSTOM_AUTH | piece-defined custom fields + optional `access_token`, `token_refresh_at` | Optional — piece opts in via `refresh` callback; server caches token with 15-min early-refresh buffer (clamped to half the token lifetime) |
 | NO_AUTH | (empty) | None |
 | OIDC | piece-defined props (e.g. role ARN, audience) — token fetched at runtime | None (short-lived JWT issued per-request) |
 
@@ -90,8 +90,8 @@ const { token } = await response.json()
 - `GET /.well-known/jwks.json` — RSA public key set; `kid` is an RFC 7638 SHA-256 thumbprint
 
 **Key management** (`oidcKeyManager`):
-- Production: key provided via `AP_OIDC_RSA_PRIVATE_KEY` env var (base64-encoded PEM)
-- CE / dev: key auto-generated and persisted to local file store on first use
+- The signing key is read from the shared `flag` table (encrypted with the platform encryption key)
+- If absent it is generated on first use and persisted there via `INSERT ... ON CONFLICT DO NOTHING` + re-read, giving first-writer-wins convergence across all nodes (single- and multi-node alike — no env var or manual provisioning required)
 - Concurrent access is safe: `privateKeyMutex` and `publicKeyMutex` guard caching independently to avoid deadlocks
 
 ## Scope
@@ -102,12 +102,43 @@ const { token } = await response.json()
 ## OAuth2 Token Refresh
 
 Automatic on connection retrieval:
-1. `decryptAndRefreshConnection()` checks if OAuth token expired (15-min early refresh threshold)
+1. `lockAndRefreshConnection()` checks if OAuth token expired (15-min early refresh threshold)
 2. If expired: acquires distributed Redis lock (`key = ${projectId}_${externalId}`, 60s timeout)
 3. Calls OAuth2 handler's `refresh()` method (different per type: cloud/platform/credentials)
 4. Re-encrypts updated tokens, stores in DB, sets status=ACTIVE
 5. On error (invalid refresh token): sets status=ERROR
 6. Always strips refresh_token and client_secret from API responses
+
+## Custom Auth Token Refresh
+
+Opt-in on connection retrieval — piece authors define a `refresh` callback in `CustomAuthProperty`:
+
+```ts
+PieceAuth.CustomAuth({
+  props: { ... },
+  refresh: {
+    generate: async ({ auth }) => {
+      const res = await httpClient.sendRequest({ ... })
+      return { access_token: res.body.token, expires_in: 3300 }
+    },
+    defaultExpiresIn: 3300, // seconds; used when generate() omits expires_in
+  },
+})
+```
+
+**Runtime flow:**
+1. `needRefresh()` checks `connection.value.access_token`:
+   - Present → stale once `now >= token_refresh_at` (the precomputed refresh instant)
+   - Absent → consult `pieceRefreshSupportCache` (in-process LRU, 500 entries, 5-min TTL keyed by `pieceName@pieceVersion`); on cache miss, load piece metadata and check for `refresh` callback; result cached for future executions
+2. If refresh needed: acquires the same distributed Redis lock (`key = ${projectId}_${externalId}`, 60s)
+3. Dispatches `EXECUTE_TOKEN_REFRESH` worker job (user-interaction queue, same pattern as `EXECUTE_VALIDATION`)
+4. Engine calls the piece's `refresh.generate()` callback, returns `{ access_token, expires_in? }`
+5. `access_token` and `token_refresh_at` stored encrypted in `CustomAuthConnectionValue`, status=ACTIVE. `token_refresh_at = now + expiresIn - min(15 min, expiresIn / 2)` so the 15-min early-refresh buffer never exceeds half the token's lifetime (a short-lived token would otherwise be stale the instant it is minted); `expiresIn <= 0` means "never expires" → `token_refresh_at` is left unset
+6. On **timeout**: uses existing credentials unchanged — does NOT mark connection ERROR
+7. On **engine error** (non-OK status): throws `CustomAuthRefreshError` → sets status=ERROR
+8. If piece has no `refresh` callback (returns `skipped: true`): clears stale `access_token`/`token_refresh_at` and sets cache to `false` so no further jobs fire
+
+Inside piece actions/triggers, `context.auth.access_token` holds the cached token alongside the raw `props`.
 
 ## Endpoints
 

@@ -3,9 +3,10 @@ import path from 'node:path'
 import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode } from '@activepieces/shared'
-import { CodeArtifact, SandboxPoolSettings } from '../../types'
-import { cacheState, NO_SAVE_GUARD } from '../cache-state'
-import { bunRunner } from './bun-runner'
+import { CodeArtifact, SandboxPoolSettings } from '../../../types'
+import { bunRunner } from '../../../utils/bun-runner'
+import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
+import { codeCache } from './code-cache'
 
 const TS_CONFIG_CONTENT = `
 {
@@ -40,23 +41,12 @@ const INVALID_ARTIFACT_TEMPLATE = `
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = (log: ApLogger, getSettings: () => SandboxPoolSettings) => ({
-    getCodesFolder({
-        codesFolderPath,
-        flowVersionId,
-    }: {
-        codesFolderPath: string
-        flowVersionId: string
-    }): string {
-        return path.join(codesFolderPath, flowVersionId)
-    },
-
     async processCodeStep({
         artifact,
         codesFolderPath,
     }: ProcessCodeStepParams): Promise<void> {
         const { sourceCode, flowVersionId, name } = artifact
-        const flowVersionPath = path.join(codesFolderPath, flowVersionId)
-        const codePath = path.join(flowVersionPath, name)
+        const codePath = codeCache(codesFolderPath).stepDir({ flowVersionId, stepName: name })
         log.debug({ sourceCode, name, codePath }, 'Processing code step')
 
         const currentHash = await cryptoUtils.hashObject(sourceCode)
