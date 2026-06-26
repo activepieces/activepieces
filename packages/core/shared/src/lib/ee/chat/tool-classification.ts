@@ -14,12 +14,18 @@ function actionNameMatchesPatterns({ actionName, patterns }: { actionName: strin
     return patterns.some((pattern) => words.includes(pattern))
 }
 
-function requiresActionPreview({ actionName, needsConfirmation }: {
+function requiresActionPreview({ actionName, input, needsConfirmation }: {
     actionName: string
+    input?: Record<string, unknown>
     needsConfirmation?: boolean
 }): boolean {
-    // Raw HTTP requests never gate on approval — confirming every call is noise.
-    if (actionName === 'custom_api_call') return false
+    // Raw HTTP: skip the gate only for a provably read-only method (GET/HEAD/OPTIONS). A mutating
+    // method (POST/PUT/PATCH/DELETE) — or an unknown/unspecified one — must be confirmed, so chat
+    // can't silently change external systems via custom_api_call.
+    if (actionName === 'custom_api_call') {
+        const method = typeof input?.['method'] === 'string' ? input['method'].toUpperCase() : undefined
+        return method === undefined || !READ_ONLY_HTTP_METHODS.includes(method)
+    }
 
     const isRead = actionNameMatchesPatterns({ actionName, patterns: READ_ACTION_PATTERNS })
     const isWrite = actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
