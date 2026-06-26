@@ -13,8 +13,6 @@ Each experiment records: the question, the rig, how to reproduce it, and the mea
 1:10 (twice as many app pods per worker) buy proportionally more throughput — for warm and for cold
 traffic?
 
-![Worker-is-the-sandbox request path](./diagram-architecture.png)
-
 ### Rig
 
 | Component | Configuration |
@@ -72,8 +70,6 @@ saturates its cap first):
 
 ¹ `kubectl top` sampling missed this cold run; CPU not captured.
 
-![1:10 vs 1:20 warm throughput](./diagram-throughput.png)
-
 **Latency anatomy** — where the milliseconds go (warm 8a/80w vs cold 2a/40w):
 
 | Layer | Warm | Cold | What it is |
@@ -83,8 +79,6 @@ saturates its cap first):
 | sandbox boot | 18 ms | 1167 ms | warm = process reused; cold = fresh fork + Node start + bundle parse + isolated-vm init + socket connect |
 | flow run (4 steps) | 372 ms | 762 ms | per-step engine→app callbacks + isolated-vm code + response handshake |
 | **end-to-end avg** | **505 ms** | **1984 ms** | p50 446/1957 · p95 648/2183 · p99 3817/2986 ms |
-
-![Warm vs cold latency anatomy](./diagram-latency.png)
 
 - **The cold "sandbox boot" tax (1167 ms).** A fresh engine fork pays Node startup (incl. the
   ~80 ms `--no-node-snapshot` penalty forced by isolated-vm), 694 KB engine-bundle parse/compile
@@ -106,8 +100,6 @@ saturates its cap first):
 | 40 w | cold | 19.8 | 19.6 | −1% |
 | 80 w | warm | 110.5 (4a) | 148.9 (8a) | +35% |
 | 80 w | cold | 33.3 | 33.5 | +1% |
-
-![Bottleneck flips: warm app-bound, cold worker-bound](./diagram-bottleneck.png)
 
 - **Warm: 1:10 does add throughput** — at 80 workers 111 → 149 req/s (+35%). The app is the warm
   bottleneck (workers idle ~11–14%), so more apps = more callback capacity = lower flow-run latency =
