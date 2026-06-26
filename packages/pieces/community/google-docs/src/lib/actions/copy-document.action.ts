@@ -26,10 +26,9 @@ export const copyDocument = createAction({
 			description: 'The name to give the copied document.',
 			required: true,
 		}),
-		// Destination folder is sourced directly from the native Drive files.copy
-		// endpoint (the requestBody.parents field). This goes beyond the cited
-		// Composio GOOGLEDOCS_COPY_DOCUMENT, which exposes only title +
-		// include_shared_drives and no arbitrary parents.
+		// Destination folder maps directly to the native Drive files.copy
+		// endpoint (the requestBody.parents field), letting the copy be placed in
+		// a chosen folder instead of defaulting to the source document's location.
 		parents: folderIdProp,
 	},
 	async run(context) {
