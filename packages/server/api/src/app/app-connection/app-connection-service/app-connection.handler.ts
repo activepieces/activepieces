@@ -2,7 +2,7 @@ import { assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId, 
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains, In } from 'typeorm'
+import { ArrayContains, Brackets, In } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -49,21 +49,30 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     // referencing the same externalId resolves to that project's own connection (a
     // different credential), so deleting this one would not orphan it. Within the
     // connection's projects the externalId is unique, so it unambiguously refers here.
+    // Both the latest draft and the published version are checked, since a published
+    // flow can still use the connection even after a newer draft dropped it.
     async hasOtherProjectFlowsReferencingConnection({ projectId, externalId, connectionProjectIds }: HasOtherProjectFlowsParams): Promise<boolean> {
         const otherProjectIds = connectionProjectIds.filter((id) => id !== projectId)
         if (otherProjectIds.length === 0) {
             return false
         }
-        const flows = await flowService(log).list({
-            projectIds: otherProjectIds,
-            cursorRequest: null,
-            limit: 1,
-            folderId: undefined,
-            name: undefined,
-            status: undefined,
-            connectionExternalIds: [externalId],
-        })
-        return flows.data.length > 0
+        const latestVersionSubquery = flowVersionRepo()
+            .createQueryBuilder('fv_latest')
+            .select('fv_latest.id')
+            .where('fv_latest."flowId" = flow.id')
+            .orderBy('fv_latest.created', 'DESC')
+            .limit(1)
+        const count = await flowVersionRepo()
+            .createQueryBuilder('flow_version')
+            .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
+            .where('flow."projectId" IN (:...otherProjectIds)', { otherProjectIds })
+            .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
+            .andWhere(new Brackets((qb) => {
+                qb.where(`flow_version.id = (${latestVersionSubquery.getQuery()})`)
+                    .orWhere('flow_version.id = flow."publishedVersionId"')
+            }))
+            .getCount()
+        return count > 0
     },
 
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
