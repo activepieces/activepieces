@@ -238,9 +238,9 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         // those flows would be orphaned.
         if (deleteSourceConnection && sourceAppConnection.scope === AppConnectionScope.PLATFORM) {
             const usedByOtherProjects = await appConnectionHandler(log).hasOtherProjectFlowsReferencingConnection({
-                platformId,
                 projectId,
                 externalId: sourceAppConnection.externalId,
+                connectionProjectIds: sourceAppConnection.projectIds,
             })
             if (usedByOtherProjects) {
                 throw new ActivepiecesError({

@@ -266,13 +266,14 @@ export const appConnectionsMutations = {
         refetch();
       },
       onError: (error) => {
-        if (api.isApError(error, ErrorCode.VALIDATION)) {
-          toast.error(t('Error'), {
-            description: t(
-              "Can't delete this connection because other projects still have flows using it",
-            ),
-          });
-          return;
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (apError?.code === ErrorCode.VALIDATION) {
+            toast.error(t('Error'), {
+              description: t(apError.params.message),
+            });
+            return;
+          }
         }
         toast.error(t('Error'), {
           description: t('Failed to replace connections'),

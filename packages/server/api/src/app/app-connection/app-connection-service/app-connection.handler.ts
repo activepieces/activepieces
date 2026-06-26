@@ -45,9 +45,12 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     // Replace only repoints flows in the source project, so a platform connection
     // can still be referenced by flows in other projects. Deleting it would orphan
     // those references, so callers must check this before deleting a platform source.
-    async hasOtherProjectFlowsReferencingConnection({ platformId, projectId, externalId }: HasOtherProjectFlowsParams): Promise<boolean> {
-        const otherProjectIds = (await projectService(log).getProjectIdsByPlatform(platformId))
-            .filter((id) => id !== projectId)
+    // Only the connection's own projects are considered: a flow in some other project
+    // referencing the same externalId resolves to that project's own connection (a
+    // different credential), so deleting this one would not orphan it. Within the
+    // connection's projects the externalId is unique, so it unambiguously refers here.
+    async hasOtherProjectFlowsReferencingConnection({ projectId, externalId, connectionProjectIds }: HasOtherProjectFlowsParams): Promise<boolean> {
+        const otherProjectIds = connectionProjectIds.filter((id) => id !== projectId)
         if (otherProjectIds.length === 0) {
             return false
         }
@@ -264,7 +267,7 @@ type UpdateFlowsWithAppConnectionParams = {
 }
 
 type HasOtherProjectFlowsParams = {
-    platformId: PlatformId
     projectId: ProjectId
     externalId: string
+    connectionProjectIds: ProjectId[]
 }
