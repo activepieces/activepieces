@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetActiveRunId, mockUpdate, mockFindOneBy } = vi.hoisted(() => ({
+const { mockGetActiveRunId, mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy } = vi.hoisted(() => ({
     mockGetActiveRunId: vi.fn(),
-    mockUpdate: vi.fn().mockResolvedValue({ affected: 1 }),
+    mockSet: vi.fn(),
+    mockWhere: vi.fn(),
+    mockAndWhere: vi.fn(),
+    mockExecute: vi.fn().mockResolvedValue({ affected: 1 }),
     mockFindOneBy: vi.fn().mockResolvedValue(null),
 }))
 
@@ -12,9 +15,29 @@ vi.mock('../../../../../src/app/ee/chat/chat-approval-gate', () => ({
     },
 }))
 
+type QueryBuilderMock = {
+    update: () => QueryBuilderMock
+    set: (values: unknown) => QueryBuilderMock
+    where: (sql: string, params: unknown) => QueryBuilderMock
+    andWhere: (sql: string, params: unknown) => QueryBuilderMock
+    execute: () => Promise<{ affected: number }>
+}
+
 vi.mock('../../../../../src/app/ee/chat/chat-helpers', () => ({
     chatHelpers: {
-        conversationRepo: () => ({ update: mockUpdate, findOneBy: mockFindOneBy }),
+        conversationRepo: () => ({
+            findOneBy: mockFindOneBy,
+            createQueryBuilder: (): QueryBuilderMock => {
+                const builder: QueryBuilderMock = {
+                    update: () => builder,
+                    set: (values) => { mockSet(values); return builder },
+                    where: (_sql, params) => { mockWhere(params); return builder },
+                    andWhere: (_sql, params) => { mockAndWhere(params); return builder },
+                    execute: mockExecute,
+                }
+                return builder
+            },
+        }),
     },
 }))
 
@@ -31,7 +54,9 @@ async function callUpdateChatProgress(input: { conversationId: string, runId?: s
 
 describe('chatRpcHandlers.updateChatProgress — incremental LLM message persistence', () => {
     beforeEach(() => {
-        mockUpdate.mockClear()
+        mockSet.mockClear()
+        mockWhere.mockClear()
+        mockAndWhere.mockClear()
         mockGetActiveRunId.mockReset()
     })
 
@@ -41,9 +66,10 @@ describe('chatRpcHandlers.updateChatProgress — incremental LLM message persist
 
         await callUpdateChatProgress({ conversationId: 'conv-1', runId: 'run-1', uiMessages: [{ role: 'assistant', parts: [] }], messages })
 
-        expect(mockUpdate).toHaveBeenCalledTimes(1)
-        const [conversationId, updates] = mockUpdate.mock.calls[0]
-        expect(conversationId).toBe('conv-1')
+        expect(mockSet).toHaveBeenCalledTimes(1)
+        const updates = mockSet.mock.calls[0][0]
+        expect(mockWhere.mock.calls[0][0]).toEqual({ id: 'conv-1' })
+        expect(mockAndWhere.mock.calls[0][0]).toEqual({ runId: 'run-1' })
         expect(updates.messages).toEqual(messages)
         expect(updates.uiMessages).toBeDefined()
     })
@@ -53,8 +79,8 @@ describe('chatRpcHandlers.updateChatProgress — incremental LLM message persist
 
         await callUpdateChatProgress({ conversationId: 'conv-1', runId: 'run-1', uiMessages: [{ role: 'assistant', parts: [] }] })
 
-        expect(mockUpdate).toHaveBeenCalledTimes(1)
-        const [, updates] = mockUpdate.mock.calls[0]
+        expect(mockSet).toHaveBeenCalledTimes(1)
+        const updates = mockSet.mock.calls[0][0]
         expect(updates).not.toHaveProperty('messages')
         expect(updates.uiMessages).toBeDefined()
     })
@@ -64,7 +90,7 @@ describe('chatRpcHandlers.updateChatProgress — incremental LLM message persist
 
         await callUpdateChatProgress({ conversationId: 'conv-1', runId: 'run-1', uiMessages: [{ role: 'assistant', parts: [] }], messages: [{ role: 'assistant', content: 'x' }] })
 
-        expect(mockUpdate).not.toHaveBeenCalled()
+        expect(mockSet).not.toHaveBeenCalled()
     })
 })
 
@@ -75,7 +101,7 @@ async function callSaveChatMessages(input: { conversationId: string, runId?: str
 
 describe('chatRpcHandlers.saveChatMessages — no-shrink guard against context loss', () => {
     beforeEach(() => {
-        mockUpdate.mockClear()
+        mockSet.mockClear()
         mockGetActiveRunId.mockReset()
         mockFindOneBy.mockReset()
     })
@@ -88,8 +114,8 @@ describe('chatRpcHandlers.saveChatMessages — no-shrink guard against context l
         // ...and an aborted final save arrives with only the base user message.
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user', content: 'Close my deals' }], uiMessages: [{ role: 'user' }, { role: 'assistant' }] })
 
-        expect(mockUpdate).toHaveBeenCalledTimes(1)
-        const [, updates] = mockUpdate.mock.calls[0]
+        expect(mockSet).toHaveBeenCalledTimes(1)
+        const updates = mockSet.mock.calls[0][0]
         // Content is preserved (not shrunk); only status is written.
         expect(updates).not.toHaveProperty('messages')
         expect(updates).not.toHaveProperty('uiMessages')
@@ -102,7 +128,7 @@ describe('chatRpcHandlers.saveChatMessages — no-shrink guard against context l
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: fullMessages, uiMessages: [{ role: 'user' }, { role: 'assistant' }] })
 
-        const [, updates] = mockUpdate.mock.calls[0]
+        const updates = mockSet.mock.calls[0][0]
         expect(updates.messages).toEqual(fullMessages)
         expect(updates.uiMessages).toBeDefined()
     })
@@ -113,7 +139,7 @@ describe('chatRpcHandlers.saveChatMessages — no-shrink guard against context l
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [], uiMessages: [] })
 
-        const [, updates] = mockUpdate.mock.calls[0]
+        const updates = mockSet.mock.calls[0][0]
         expect(updates).not.toHaveProperty('messages')
         expect(updates).not.toHaveProperty('uiMessages')
         expect(updates.status).toBe('ERROR')

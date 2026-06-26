@@ -94,6 +94,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             ? await chatApprovalGate.getActiveRunId({ conversationId })
             : null
         await chatApprovalGate.storeActiveRunId({ conversationId, runId })
+        // Persist the owning run so saveChatMessages/updateChatProgress can fence a stale run inside
+        // their UPDATE, closing the check-then-write race the Redis-only fence leaves open.
+        await chatHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
 
         if (conversation.status === ChatConversationStatus.STREAMING) {
             log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[chatController] Cancelling in-flight run before new message')

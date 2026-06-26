@@ -51,6 +51,25 @@ async function isStaleRun({ conversationId, runId }: { conversationId: string, r
     return activeRunId !== runId
 }
 
+// Gate the UPDATE on the owning run so a run preempted between the isStaleRun check and the write
+// matches zero rows once a newer run has claimed the conversation. A nil runId or an unclaimed row
+// (activeRunId IS NULL) writes unconditionally, for backward compatibility.
+async function updateConversationForRun({ conversationId, runId, updates }: {
+    conversationId: string
+    runId?: string
+    updates: Record<string, unknown>
+}) {
+    const builder = chatHelpers.conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set(updates)
+        .where('id = :id', { id: conversationId })
+    if (!isNil(runId)) {
+        builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
+    }
+    return builder.execute()
+}
+
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
     currentDate: string
     searchAvailable: boolean
@@ -367,9 +386,9 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             }, '[chatRpc#saveChatMessages] Refused shrinking save — kept incrementally-persisted history')
         }
 
-        const saveResult = await chatHelpers.conversationRepo().update(input.conversationId, updates)
+        const saveResult = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
         if (saveResult.affected === 0) {
-            log.warn({ conversation: { id: input.conversationId } }, 'saveChatMessages: conversation not found, may have been deleted')
+            log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveChatMessages: no row updated — conversation deleted or superseded by a newer run')
         }
         log.info({
             conversation: { id: input.conversationId },
@@ -400,7 +419,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         if (!isNil(input.messages)) {
             updates.messages = input.messages
         }
-        await chatHelpers.conversationRepo().update(input.conversationId, updates)
+        await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
         log.debug({ conversation: { id: input.conversationId }, uiMessageCount: input.uiMessages.length, messageCount: input.messages?.length }, '[chatRpc#updateChatProgress] Progress persisted')
     },
 
