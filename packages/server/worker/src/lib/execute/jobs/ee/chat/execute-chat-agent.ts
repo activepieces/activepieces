@@ -24,7 +24,6 @@ const STREAM_IDLE_TIMEOUT_MS = 90_000
 // can't see (runaway continuations, watchdog mis-detection). Must exceed the longest
 // legitimate single wait — the approval/display-tool timeout is 15m — so set well above it.
 const MAX_TURN_WALL_CLOCK_MS = 20 * 60 * 1_000
-// The single side-effecting piece-execution tool, neutralized under discovery-only eval runs.
 // Discovery-only eval must not touch the environment: neutralize every side-effecting execute
 // tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
 // `chat-evals` run could still execute ap_run_code against the developer's project.

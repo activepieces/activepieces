@@ -523,13 +523,14 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         return { result }
     },
 
-    // Security boundary for the chat agent's ap_send_email tool. Recipients may be any
-    // valid address (incl. external), but the abuse controls are re-enforced here so a
-    // manipulated LLM (e.g. via prompt injection) can't quietly fan out mail on the
-    // platform's SMTP reputation: recipient addresses are format-validated, recipient
-    // count and per-conversation/per-hour volume are capped, the email is rendered through
-    // a branded template with Reply-To set to the real user, and the worker still puts any
-    // non-self recipient behind an explicit user confirmation before this is ever called.
+    // Security boundary for the chat agent's ap_send_email tool. Recipients may be any valid
+    // address (incl. external), but the abuse controls are re-enforced here so a manipulated LLM
+    // (e.g. via prompt injection) can't quietly fan out mail on the platform's SMTP reputation:
+    // recipient addresses are format-validated, recipient count and per-platform/per-conversation/
+    // per-hour volume are capped, and the email is rendered through a branded template with
+    // Reply-To set to the real user. The system prompt further constrains the agent to send only
+    // on the user's direct request — never because an email instruction appeared in fetched page
+    // or tool content.
     async sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse> {
         const { conversationId, platformId, userId, to, subject, body } = input
 
@@ -564,8 +565,8 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const sender = await userService(log).getMetaInformation({ id: userId })
         const selfEmail = sender.email.toLowerCase().trim()
 
-        const conversationLimit = await incrementAndCheckLimit({ key: `chat-email-count:conv:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
-        const hourlyLimit = await incrementAndCheckLimit({ key: `chat-email-count:user:${userId}`, limit: EMAILS_PER_USER_PER_HOUR, ttlSeconds: HOURLY_LIMIT_TTL_SECONDS })
+        const conversationLimit = await incrementAndCheckLimit({ key: `chat-email-count:conv:${platformId}:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
+        const hourlyLimit = await incrementAndCheckLimit({ key: `chat-email-count:user:${platformId}:${userId}`, limit: EMAILS_PER_USER_PER_HOUR, ttlSeconds: HOURLY_LIMIT_TTL_SECONDS })
         if (!conversationLimit.allowed || !hourlyLimit.allowed) {
             log.warn({ conversation: { id: conversationId }, user: { id: userId }, conversationCount: conversationLimit.count, hourlyCount: hourlyLimit.count }, '[chatRpc#sendChatEmail] Email rate limit reached')
             return { sent: false, message: 'You have reached the email sending limit for now. Please try again later.' }
