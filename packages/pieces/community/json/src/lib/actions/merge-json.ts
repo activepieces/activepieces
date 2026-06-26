@@ -150,7 +150,7 @@ function collectValues({
   field: string;
 }): unknown[] {
   return objects
-    .filter((object) => field in object && !isNil(object[field]))
+    .filter((object) => field in object && object[field] !== undefined)
     .map((object) => object[field]);
 }
 
