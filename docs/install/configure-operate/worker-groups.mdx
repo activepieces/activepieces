@@ -1,0 +1,22 @@
+---
+title: "Worker Groups"
+description: "Reserve dedicated worker capacity for specific projects (coming soon)"
+icon: "users-gear"
+---
+
+<Note>
+**Coming soon.** Per-project worker groups are not yet available. This page describes how they will work.
+</Note>
+
+Today every worker serves every project from one shared queue. When one busy project floods it, everyone else waits.
+
+**Worker groups** fix that. A group is a named pool of workers with its own dedicated queue. Assign a project to a group and its runs get reserved workers no other project can take.
+
+<img src="/resources/diagrams/worker-groups.png" alt="Worker groups: projects map to dedicated queues, each backed by its own reserved worker pool, while ungrouped projects share a best-effort queue" />
+
+## Floor vs. ceiling
+
+- A **worker group** is a **floor**: capacity reserved for a project that nobody else can use.
+- A **soft cap** is a **ceiling**: an optional per-project limit on how much a project can use. It exists today, see [Manage Concurrency](/admin-guide/guides/manage-concurrency).
+
+Use both together to guarantee capacity for busy projects and cap the rest.

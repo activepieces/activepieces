@@ -1,9 +1,8 @@
 import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, PiecePackage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
-import { distributedStore } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
@@ -235,22 +234,6 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 size: input.data.length,
                 compression: FileCompression.NONE,
             })
-        },
-
-        async getUsedPieces() {
-            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
-            const pieces = await distributedStore.get<PiecePackage[]>(redisKey)
-            return pieces ?? []
-        },
-
-        async markPieceAsUsed(input) {
-            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
-            const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
-            const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
-            const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))
-            if (newPieces.length > 0) {
-                await distributedStore.put(redisKey, [...existing, ...newPieces])
-            }
         },
 
         async disableFlow(input) {

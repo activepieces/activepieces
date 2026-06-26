@@ -1,7 +1,7 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { createResolver, Runtime } from '@activepieces/sandbox-pool'
+import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
@@ -12,7 +12,6 @@ import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
-import { selectRuntime } from './runtime/runtime-factory'
 import { sandboxConfig } from './runtime/sandbox-config'
 
 
@@ -110,20 +109,28 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         runtime = null
     }
 
+    // The destination is one box per worker (concurrency 1), scaling out with replicas (ADR 0003).
+    // Transitional compatibility mode (ADR 0004): honor AP_WORKER_CONCURRENCY=N by running N poll
+    // loops over N in-process boxes, each routed by its workerIndex. Default is 5 (main's historical
+    // value) to preserve old behavior; at N>1 an OOM takes down all N in-flight jobs, so the operator
+    // must size the container accordingly.
     const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
     const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    runtime = selectRuntime({ concurrency, log: logger })
+    runtime = createSandboxRuntime({
+        concurrency,
+        basePath: sandboxConfig.getCacheBasePath(),
+        getSettings: () => sandboxConfig.getSandboxSettings(),
+    })
 
-    logger.info({ concurrency }, 'Starting polling workers')
+    logger.info({ concurrency }, 'Starting poll loops')
 
     const activeRuntime = runtime
-    const workers = Array.from({ length: concurrency }, (_, workerIndex) =>
+    await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
         pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
-    )
-    await Promise.all(workers)
+    ))
 }
 
 async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, workerIndex: number, generation: number): Promise<void> {
@@ -223,24 +230,28 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             const apiUrl = getApiUrl()
             const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
             log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
+            const publicApiUrl = ensurePublicApiUrl(publicUrl)
+            // The engine forks in-process inside this worker, so it reaches the app over the worker's own
+            // app URL (cluster-internal when co-located with the app, the public URL for a standalone worker).
+            const internalApiUrl = apiUrl
             const ctx: JobContext = {
                 apiClient,
                 runtime,
                 resolver: createResolver({
                     apiClient,
                     basePath: sandboxConfig.getCacheBasePath(),
-                    getSettings: () => sandboxConfig.getSandboxPoolSettings(),
+                    getSettings: () => sandboxConfig.getSandboxSettings(),
                     log,
                 }),
                 workerIndex,
                 jobId: job.jobId,
                 engineToken: job.engineToken,
-                internalApiUrl: apiUrl,
-                publicApiUrl: ensurePublicApiUrl(publicUrl),
+                internalApiUrl,
+                publicApiUrl,
                 log,
             }
             try {
-                const handler = getHandler(jobData.jobType)
+                const handler = await getHandler(jobData.jobType)
                 log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
                 const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
                 if (error) {

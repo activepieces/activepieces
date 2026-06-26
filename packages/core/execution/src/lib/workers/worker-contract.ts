@@ -2,7 +2,6 @@ import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PiecePackage } from '@activepieces/core-piece-types'
 import { ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
@@ -72,8 +71,6 @@ export type WorkerToApiContract = {
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
-    getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
-    markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendChatEvent(input: SendChatEventRequest): Promise<void>
     getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse>
