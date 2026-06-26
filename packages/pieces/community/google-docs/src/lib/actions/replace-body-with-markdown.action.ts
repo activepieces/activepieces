@@ -11,7 +11,7 @@ export const replaceBodyWithMarkdown = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Clears the entire body of an existing Google Docs document and repopulates it from Markdown text, converting headings (#, ##, ###), bullet lists (-, *, +), and paragraphs into native Google Docs formatting. Use when an agent wants to overwrite a document wholesale with freshly generated Markdown (the format LLMs produce natively) in one call. Inline styling such as bold/italic is inserted as plain text. Destructive and not idempotent: the previous body content is deleted.',
+      'Clears the entire body of an existing Google Docs document and repopulates it from Markdown text, converting headings (#, ##, ###), bullet lists (-, *, +), and paragraphs into native Google Docs formatting. Use when an agent wants to overwrite a document wholesale with freshly generated Markdown (the format LLMs produce natively) in one call. Inline styling such as bold/italic is inserted as plain text. Not supported when the body contains a table or table of contents — the action errors clearly instead of partially failing. Destructive and not idempotent: the previous body content is deleted.',
     idempotent: false,
   },
   props: {
@@ -32,13 +32,23 @@ export const replaceBodyWithMarkdown = createAction({
     const docs = googleDocs({ version: 'v1', auth: authClient });
 
     let bodyEnd: number;
+    let hasStructuralElement = false;
     try {
       const response = await docs.documents.get({ documentId });
       const content = response.data.body?.content ?? [];
       const lastElement = content[content.length - 1];
       bodyEnd = lastElement?.endIndex ?? 1;
+      // A single deleteContentRange cannot remove a table or table of contents
+      // that the range crosses, so a wholesale body replace is unsupported then.
+      hasStructuralElement = content.some((element) => element.table || element.tableOfContents);
     } catch (error) {
       throw new Error(docsCommon.formatError(error, 'read'));
+    }
+
+    if (hasStructuralElement) {
+      throw new Error(
+        'Cannot replace the body wholesale because it contains a table or table of contents, which deleteContentRange cannot remove. Remove those elements first, or edit the document with the targeted table/section atomics.'
+      );
     }
 
     const requests: docs_v1.Schema$Request[] = [];

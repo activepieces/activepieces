@@ -11,7 +11,7 @@ export const createAndPopulateTable = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Inserts a new table sized to the supplied 2D array of strings and writes each value into its cell in one operation, so an agent can drop a fully-populated table without manually computing cell indices. Use when you have tabular data (rows of columns) to add; the table dimensions are inferred from the data. If "index" is omitted the table is appended to the end of the body, otherwise inserted at that character index — obtain a valid index from Get Document End Index. Not idempotent: each call adds another table.',
+      'Inserts a new table at the end of a Google Docs document, sized to the supplied 2D array of strings, and writes each value into its cell in one operation — so an agent can drop a fully-populated table without computing cell indices. The column count is the width of the widest row; shorter rows leave their trailing cells empty. Not idempotent: each call adds another table.',
     idempotent: false,
   },
   props: {
@@ -23,26 +23,20 @@ export const createAndPopulateTable = createAction({
     data: Property.Json({
       displayName: 'Table Data',
       description:
-        'A 2D array of strings (rows of columns), e.g. [["Name","Age"],["Alice","30"]]. The table is sized to these dimensions; each string is written into the matching cell. All rows should have the same number of columns.',
+        'A 2D array of strings (rows of columns), e.g. [["Name","Age"],["Alice","30"]]. Each string is written into its matching cell. The table width is the widest row; shorter rows leave trailing cells empty.',
       required: true,
-    }),
-    index: Property.Number({
-      displayName: 'Index',
-      description:
-        'Character index at which to insert the table. Leave empty to append at the end of the document. Obtain a valid index from Get Document End Index.',
-      required: false,
     }),
   },
   async run(context) {
-    const { documentId, data, index } = context.propsValue;
+    const { documentId, data } = context.propsValue;
 
     const rowsData = data as unknown;
-    if (!Array.isArray(rowsData) || rowsData.length === 0 || !Array.isArray(rowsData[0])) {
+    if (!Array.isArray(rowsData) || rowsData.length === 0 || !rowsData.every((row) => Array.isArray(row))) {
       throw new Error('Table Data must be a non-empty 2D array of strings (rows of columns).');
     }
     const tableData = rowsData as string[][];
     const rows = tableData.length;
-    const columns = tableData[0].length;
+    const columns = Math.max(...tableData.map((row) => row.length));
     if (columns === 0) {
       throw new Error('Table Data rows must contain at least one column.');
     }
@@ -50,10 +44,11 @@ export const createAndPopulateTable = createAction({
     const authClient = await createGoogleClient(context.auth);
     const docs = googleDocs({ version: 'v1', auth: authClient });
 
-    const insertTableRequest: docs_v1.Schema$Request =
-      index === undefined || index === null
-        ? { insertTable: { rows, columns, endOfSegmentLocation: {} } }
-        : { insertTable: { rows, columns, location: { index } } };
+    // Append at the end of the body so the new table is unambiguously the last
+    // one in the document when we read back to resolve its cell indices.
+    const insertTableRequest: docs_v1.Schema$Request = {
+      insertTable: { rows, columns, endOfSegmentLocation: {} },
+    };
 
     try {
       await docs.documents.batchUpdate({
@@ -73,8 +68,7 @@ export const createAndPopulateTable = createAction({
     }
 
     const content = reloaded.body?.content ?? [];
-    const tableStartThreshold = index === undefined || index === null ? -1 : index;
-    const tableElement = findTargetTable(content, tableStartThreshold);
+    const tableElement = findLastTable(content);
     if (!tableElement?.table) {
       throw new Error('Could not locate the inserted table when reading the document back.');
     }
@@ -123,15 +117,14 @@ export const createAndPopulateTable = createAction({
   },
 });
 
-// Returns the last table at or after the given start index (the most recently
-// inserted one when appending, or the one inserted at an explicit index).
-function findTargetTable(
-  content: docs_v1.Schema$StructuralElement[],
-  startThreshold: number
+// The table appended at end-of-body has the greatest startIndex, so the last
+// table element in document order is unambiguously the one just inserted.
+function findLastTable(
+  content: docs_v1.Schema$StructuralElement[]
 ): docs_v1.Schema$StructuralElement | undefined {
   let match: docs_v1.Schema$StructuralElement | undefined;
   for (const element of content) {
-    if (element.table && (element.startIndex ?? 0) >= startThreshold) {
+    if (element.table) {
       match = element;
     }
   }
