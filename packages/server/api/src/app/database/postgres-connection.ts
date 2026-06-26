@@ -383,12 +383,12 @@ import { AddVariableTable1793000000000 } from './migration/postgres/179300000000
 import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
-import { AddFilteredComponentNamesToPlatform1796000000000 } from './migration/postgres/1796000000000-AddFilteredComponentNamesToPlatform'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
-import { AddPieceSetTable1797000000000 } from './migration/postgres/1797000000000-AddPieceSetTable'
-import { MigratePieceSetConfig1798000000000 } from './migration/postgres/1798000000000-MigratePieceSetConfig'
-import { BackfillPieceSets1799000000000 } from './migration/postgres/1799000000000-BackfillPieceSets'
+import { AddFilteredComponentNamesToPlatform1798000000000 } from './migration/postgres/1798000000000-AddFilteredComponentNamesToPlatform'
+import { AddPieceSetTable1799000000000 } from './migration/postgres/1799000000000-AddPieceSetTable'
+import { MigratePieceSetConfig1800000000000 } from './migration/postgres/1800000000000-MigratePieceSetConfig'
+import { BackfillPieceSets1801000000000 } from './migration/postgres/1801000000000-BackfillPieceSets'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -788,11 +788,11 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddThemeColorsToPlatform1781206955649,
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
-        AddFilteredComponentNamesToPlatform1796000000000,
-        AddPieceSetTable1797000000000,
-        MigratePieceSetConfig1798000000000,
-        BackfillPieceSets1799000000000,
         AddAiToolConfigTable1797000000000,
+        AddFilteredComponentNamesToPlatform1798000000000,
+        AddPieceSetTable1799000000000,
+        MigratePieceSetConfig1800000000000,
+        BackfillPieceSets1801000000000,
     ]
     return migrations
 }
