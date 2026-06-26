@@ -20,19 +20,34 @@ async function readCgroupFile(path: string): Promise<string | null> {
     return data
 }
 
+async function readCgroupStatValue(path: string, key: string): Promise<number | null> {
+    const content = await readCgroupFile(path)
+    if (!content) return null
+    for (const line of content.split('\n')) {
+        const [name, rawValue] = line.split(' ')
+        if (name === key) {
+            const value = parseInt(rawValue)
+            return isNaN(value) ? null : value
+        }
+    }
+    return null
+}
+
 async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: number } | null> {
     const paths = [
-        { limit: '/sys/fs/cgroup/memory.max', usage: '/sys/fs/cgroup/memory.current' },
-        { limit: '/sys/fs/cgroup/memory/memory.limit_in_bytes', usage: '/sys/fs/cgroup/memory/memory.usage_in_bytes' },
+        { limit: '/sys/fs/cgroup/memory.max', usage: '/sys/fs/cgroup/memory.current', stat: '/sys/fs/cgroup/memory.stat', inactiveFileKey: 'inactive_file' },
+        { limit: '/sys/fs/cgroup/memory/memory.limit_in_bytes', usage: '/sys/fs/cgroup/memory/memory.usage_in_bytes', stat: '/sys/fs/cgroup/memory/memory.stat', inactiveFileKey: 'total_inactive_file' },
     ]
-    for (const { limit, usage } of paths) {
+    for (const { limit, usage, stat, inactiveFileKey } of paths) {
         const limitStr = await readCgroupFile(limit)
         if (!limitStr || limitStr === 'max') continue
         const usageStr = await readCgroupFile(usage)
         if (!usageStr) continue
         const totalRamInBytes = parseInt(limitStr)
-        const usedBytes = parseInt(usageStr)
-        if (isNaN(totalRamInBytes) || isNaN(usedBytes) || totalRamInBytes <= 0 || totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES) continue
+        const rawUsedBytes = parseInt(usageStr)
+        if (isNaN(totalRamInBytes) || isNaN(rawUsedBytes) || totalRamInBytes <= 0 || totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES) continue
+        const inactiveFileBytes = await readCgroupStatValue(stat, inactiveFileKey) ?? 0
+        const usedBytes = Math.max(0, rawUsedBytes - inactiveFileBytes)
         return {
             totalRamInBytes,
             ramUsage: (usedBytes / totalRamInBytes) * 100,
