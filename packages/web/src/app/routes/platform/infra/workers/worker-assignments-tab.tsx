@@ -33,14 +33,14 @@ export function WorkerAssignmentsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { data: workerTags } = workersQueries.useWorkerTags(
-    platform.plan.isolatedWorkersEnabled
+    platform.plan.isolatedWorkersEnabled,
   );
 
   return (
     <div className="flex flex-col gap-4 pt-4">
       <p className="text-sm text-muted-foreground">
         {t(
-          'Assigning a project to a worker routes its flow and webhook runs to that worker pool. The concurrency limit caps how many jobs run simultaneously.'
+          'Assigning a project to a worker routes its flow and webhook runs to that worker pool. The concurrency limit caps how many jobs run simultaneously.',
         )}
       </p>
       <Table>
@@ -73,7 +73,7 @@ function ProjectAssignmentRow({
   workerTags: string[];
 }) {
   const [concurrencyInput, setConcurrencyInput] = useState(
-    project.maxConcurrentJobs != null ? String(project.maxConcurrentJobs) : ''
+    project.maxConcurrentJobs != null ? String(project.maxConcurrentJobs) : '',
   );
 
   const saveUpdate = (update: UpdateProjectPlatformRequest) => {
@@ -93,7 +93,7 @@ function ProjectAssignmentRow({
       setConcurrencyInput(
         project.maxConcurrentJobs != null
           ? String(project.maxConcurrentJobs)
-          : ''
+          : '',
       );
       return;
     }
@@ -101,7 +101,7 @@ function ProjectAssignmentRow({
   };
 
   const handleConcurrencyKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>
+    e: React.KeyboardEvent<HTMLInputElement>,
   ) => {
     if (e.key === 'Enter') {
       e.currentTarget.blur();
