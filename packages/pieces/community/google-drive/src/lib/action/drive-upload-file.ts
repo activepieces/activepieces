@@ -7,17 +7,20 @@ import {
 import FormData from 'form-data';
 import { googleDriveAuth, getAccessToken } from '../auth';
 import mime from 'mime-types';
-import { common } from '../common';
 
-export const googleDriveUploadFile = createAction({
+export const driveUploadFile = createAction({
   auth: googleDriveAuth,
-  name: 'upload_gdrive_file',
+  name: 'drive_upload_file',
+  displayName: 'Upload File',
   description: 'Upload a file in your Google Drive',
-  audience: 'human',
-  aiMetadata: { description: 'Uploads a binary file (from a URL or base64 input) into Google Drive, optionally inside a parent folder. Use to store an existing file or attachment in Drive; the MIME type is inferred from the file extension. Not idempotent: each call creates a new file.', idempotent: false },
-  displayName: 'Upload file',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Uploads a binary file (from a URL or base64 input) into Drive; MIME type is inferred from the extension. Use to store an existing file or attachment; for plain generated text use `drive_create_file_from_text`, and to fetch a remote URL server-side use `drive_upload_from_url`. Each call creates a new file.',
+    idempotent: false,
+  },
   props: {
-    fileName: Property.ShortText({
+    file_name: Property.ShortText({
       displayName: 'File name',
       description: 'The name of the file',
       required: true,
@@ -27,8 +30,19 @@ export const googleDriveUploadFile = createAction({
       description: 'The file URL or base64 to upload',
       required: true,
     }),
-    parentFolder: common.properties.parentFolder,
-    include_team_drives: common.properties.include_team_drives,
+    parent_folder_id: Property.ShortText({
+      displayName: 'Parent Folder ID',
+      description:
+        'The ID of the folder to upload the file into. Leave empty to upload to the root of My Drive. Resolve a folder ID with `drive_search_files`.',
+      required: false,
+    }),
+    include_team_drives: Property.Checkbox({
+      displayName: 'Include Team Drives',
+      description:
+        'Determines if folders from Team Drives should be included in the results.',
+      defaultValue: false,
+      required: false,
+    }),
   },
   async run(context) {
     const fileData = context.propsValue.file;
@@ -36,9 +50,9 @@ export const googleDriveUploadFile = createAction({
 
     const meta = {
       mimeType: mimeType,
-      name: context.propsValue.fileName,
-      ...(context.propsValue.parentFolder
-        ? { parents: [context.propsValue.parentFolder] }
+      name: context.propsValue.file_name,
+      ...(context.propsValue.parent_folder_id
+        ? { parents: [context.propsValue.parent_folder_id] }
         : {}),
     };
 

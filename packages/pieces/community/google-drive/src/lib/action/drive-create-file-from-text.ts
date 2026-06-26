@@ -6,17 +6,20 @@ import {
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
 import { googleDriveAuth, getAccessToken } from '../auth';
-import { common } from '../common';
 
-export const googleDriveCreateNewTextFile = createAction({
+export const driveCreateFileFromText = createAction({
   auth: googleDriveAuth,
-  name: 'create_new_gdrive_file',
+  name: 'drive_create_file_from_text',
+  displayName: 'Create File from Text',
   description: 'Create a new text file in your Google Drive from text',
-  audience: 'human',
-  aiMetadata: { description: 'Creates a new file in Google Drive from inline text content as plain text, CSV, or XML, optionally inside a parent folder. Use when an agent has generated text it needs to persist as a Drive file. Not idempotent: each call creates a new file.', idempotent: false },
-  displayName: 'Create new file',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Creates a new Drive file from inline text content as plain text, CSV, or XML. Use when an agent has generated text it needs to persist as a Drive file; for binary or existing files use `drive_upload_file` instead. Each call creates a new file.',
+    idempotent: false,
+  },
   props: {
-    fileName: Property.ShortText({
+    file_name: Property.ShortText({
       displayName: 'File name',
       description: 'The name of the new text file',
       required: true,
@@ -26,7 +29,7 @@ export const googleDriveCreateNewTextFile = createAction({
       description: 'The text content to add to file',
       required: true,
     }),
-    fileType: Property.StaticDropdown({
+    content_type: Property.StaticDropdown({
       displayName: 'Content type',
       description: 'Select file type',
       required: true,
@@ -48,15 +51,26 @@ export const googleDriveCreateNewTextFile = createAction({
         ],
       },
     }),
-    parentFolder: common.properties.parentFolder,
-    include_team_drives: common.properties.include_team_drives,
+    parent_folder_id: Property.ShortText({
+      displayName: 'Parent Folder ID',
+      description:
+        'The ID of the folder to create the file inside. Leave empty to create it in the root of My Drive. Resolve a folder ID with `drive_search_files`.',
+      required: false,
+    }),
+    include_team_drives: Property.Checkbox({
+      displayName: 'Include Team Drives',
+      description:
+        'Determines if folders from Team Drives should be included in the results.',
+      defaultValue: false,
+      required: false,
+    }),
   },
   async run(context) {
     const meta = {
-      mimeType: context.propsValue.fileType,
-      name: context.propsValue.fileName,
-      ...(context.propsValue.parentFolder
-        ? { parents: [context.propsValue.parentFolder] }
+      mimeType: context.propsValue.content_type,
+      name: context.propsValue.file_name,
+      ...(context.propsValue.parent_folder_id
+        ? { parents: [context.propsValue.parent_folder_id] }
         : {}),
     };
 
@@ -66,7 +80,7 @@ export const googleDriveCreateNewTextFile = createAction({
     const form = new FormData();
     form.append('Metadata', metaBuffer, { contentType: 'application/json' });
     form.append('Media', textBuffer, {
-      contentType: context.propsValue.fileType,
+      contentType: context.propsValue.content_type,
     });
 
     const result = await httpClient.sendRequest({

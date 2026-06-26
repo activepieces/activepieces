@@ -3,17 +3,22 @@ import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
 
-export const googleDriveTrashFile = createAction({
+export const driveTrashFile = createAction({
   auth: googleDriveAuth,
-  name: 'trash_gdrive_file',
-  description: 'Move a file to the trash in your Google Drive',
-  audience: 'human',
-  aiMetadata: { description: 'Moves a Drive file to the trash by its ID, a reversible deletion that can be restored from Drive. Use for safe removal instead of permanent deletion. Requires the file ID. Idempotent: re-trashing an already-trashed file leaves it in the same state.', idempotent: true },
-  displayName: 'Trash file',
+  name: 'drive_trash_file',
+  displayName: 'Trash File',
+  description: 'Move a Drive file to the trash by ID (reversible deletion).',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Moves a file to the trash by ID — a reversible deletion restorable from Drive. Use for safe removal; for irreversible removal use drive_delete_file, and to restore use drive_untrash_file. Safe to retry — re-trashing leaves it trashed.',
+    idempotent: true,
+  },
   props: {
-    fileId: Property.ShortText({
+    file_id: Property.ShortText({
       displayName: 'File ID',
-      description: 'The ID of the file to trash',
+      description:
+        'The ID of the file to trash. Resolve it via drive_search_files or drive_get_file.',
       required: true,
     }),
     include_team_drives: common.properties.include_team_drives,
@@ -26,7 +31,7 @@ export const googleDriveTrashFile = createAction({
       trashed: true,
     };
     const response = await drive.files.update({
-      fileId: context.propsValue.fileId,
+      fileId: context.propsValue.file_id,
       supportsAllDrives: context.propsValue.include_team_drives,
       requestBody: body_value,
     });
