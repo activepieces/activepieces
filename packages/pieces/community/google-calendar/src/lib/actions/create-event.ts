@@ -1,165 +1,171 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ActionContext, createAction, Property } from '@activepieces/pieces-framework';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
 import { calendar as googleCalendar } from '@googleapis/calendar';
 import { randomUUID } from 'crypto';
 
+export const createEventProps = {
+  calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+  title: Property.ShortText({
+    displayName: 'Title of the event',
+    required: true,
+  }),
+  start_date_time: Property.DateTime({
+    displayName: 'Start date time of the event',
+    required: true,
+  }),
+  end_date_time: Property.DateTime({
+    displayName: 'End date time of the event',
+    description: "By default it'll be 30 min post start time",
+    required: false,
+  }),
+  location: Property.ShortText({
+    displayName: 'Location',
+    required: false,
+  }),
+  /*attachment: Property.ShortText({
+    displayName: 'Attachment',
+    description: 'URL of the file to be attached',
+    required: false,
+  }),*/
+  description: Property.LongText({
+    displayName: 'Description',
+    description: 'Description of the event. You can use HTML tags here.',
+    required: false,
+  }),
+  colorId: googleCalendarCommon.colorId,
+  attendees: Property.Array({
+    displayName: 'Attendees',
+    description: 'Emails of the attendees (guests)',
+    required: false,
+  }),
+  guests_can_modify: Property.Checkbox({
+    displayName: 'Guests can modify',
+    defaultValue: false,
+    required: false,
+  }),
+  guests_can_invite_others: Property.Checkbox({
+    displayName: 'Guests can invite others',
+    defaultValue: false,
+    required: false,
+  }),
+  guests_can_see_other_guests: Property.Checkbox({
+    displayName: 'Guests can see other guests',
+    defaultValue: false,
+    required: false,
+  }),
+  send_notifications: Property.StaticDropdown({
+    displayName: 'Send Notifications',
+    defaultValue: 'all',
+    options: {
+      options: [
+        { label: 'Yes, to everyone', value: 'all' },
+        {
+          label: 'To non-Google Calendar guests only',
+          value: 'externalOnly',
+        },
+        { label: 'To no one', value: 'none' },
+      ],
+    },
+    required: true,
+  }),
+  create_meet_link: Property.Checkbox({
+    displayName: 'Create Google Meet Link',
+    description: 'Automatically create a Google Meet video conference link for this event',
+    defaultValue: false,
+    required: false,
+  }),
+};
+
+export async function runCreateEvent(
+  context: ActionContext<typeof googleCalendarAuth, typeof createEventProps>
+) {
+  // docs: https://developers.google.com/calendar/api/v3/reference/events/insert
+  const {
+    calendar_id: calendarId,
+    title: summary,
+    start_date_time,
+    end_date_time,
+    location,
+    description,
+    colorId,
+    guests_can_modify: guestsCanModify,
+    guests_can_invite_others: guestsCanInviteOthers,
+    guests_can_see_other_guests: guestsCanSeeOtherGuests,
+    create_meet_link: createMeetLink,
+  } = context.propsValue;
+
+  const start = {
+    dateTime: dayjs(start_date_time).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
+  };
+  const endTime = end_date_time
+    ? end_date_time
+    : dayjs(start_date_time).add(30, 'm');
+  const end = {
+    dateTime: dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
+  };
+
+  /*const attachment = {
+    fileUrl: context.propsValue.attachment,
+  };*/
+
+  const attendeesArray = context.propsValue.attendees as string[];
+
+  const sendNotifications = context.propsValue.send_notifications;
+
+  const attendeesObject = [];
+  if (attendeesArray) {
+    for (const attendee of attendeesArray) {
+      attendeesObject.push({ email: attendee });
+    }
+  }
+
+  const authClient = await createGoogleClient(context.auth);
+
+  const calendar = googleCalendar({ version: 'v3', auth: authClient });
+
+  const requestBody: any = {
+    summary,
+    start,
+    end,
+    colorId,
+    //attachments: context.propsValue.attachment ? [attachment] : [],
+    location: location ?? '',
+    description: description ?? '',
+    attendees: attendeesObject,
+    guestsCanInviteOthers,
+    guestsCanModify,
+    guestsCanSeeOtherGuests,
+  };
+
+  if (createMeetLink) {
+    requestBody.conferenceData = {
+      createRequest: {
+        conferenceSolutionKey: {
+          type: 'hangoutsMeet',
+        },
+        requestId: randomUUID(),
+      },
+    };
+  }
+
+  const response = await calendar.events.insert({
+    calendarId,
+    sendUpdates: sendNotifications,
+    conferenceDataVersion: createMeetLink ? 1 : 0,
+    requestBody,
+  });
+
+  return response.data;
+}
+
 export const createEvent = createAction({
   auth: googleCalendarAuth,
   name: 'create_google_calendar_event',
   description: 'Add Event',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a Google Calendar event with structured fields (title, start/end times, location, description, attendees, color, guest permissions) and can optionally attach a Google Meet link. Use this when you have explicit event details; choose Create Quick Event instead when working from a single natural-language phrase. Requires a title and start time (end defaults to 30 minutes after start). Not idempotent: each call creates a new event.', idempotent: false },
   displayName: 'Create Event',
-  props: {
-    calendar_id: googleCalendarCommon.calendarDropdown('writer'),
-    title: Property.ShortText({
-      displayName: 'Title of the event',
-      required: true,
-    }),
-    start_date_time: Property.DateTime({
-      displayName: 'Start date time of the event',
-      required: true,
-    }),
-    end_date_time: Property.DateTime({
-      displayName: 'End date time of the event',
-      description: "By default it'll be 30 min post start time",
-      required: false,
-    }),
-    location: Property.ShortText({
-      displayName: 'Location',
-      required: false,
-    }),
-    /*attachment: Property.ShortText({
-      displayName: 'Attachment',
-      description: 'URL of the file to be attached',
-      required: false,
-    }),*/
-    description: Property.LongText({
-      displayName: 'Description',
-      description: 'Description of the event. You can use HTML tags here.',
-      required: false,
-    }),
-    colorId: googleCalendarCommon.colorId,
-    attendees: Property.Array({
-      displayName: 'Attendees',
-      description: 'Emails of the attendees (guests)',
-      required: false,
-    }),
-    guests_can_modify: Property.Checkbox({
-      displayName: 'Guests can modify',
-      defaultValue: false,
-      required: false,
-    }),
-    guests_can_invite_others: Property.Checkbox({
-      displayName: 'Guests can invite others',
-      defaultValue: false,
-      required: false,
-    }),
-    guests_can_see_other_guests: Property.Checkbox({
-      displayName: 'Guests can see other guests',
-      defaultValue: false,
-      required: false,
-    }),
-    send_notifications: Property.StaticDropdown({
-      displayName: 'Send Notifications',
-      defaultValue: 'all',
-      options: {
-        options: [
-          { label: 'Yes, to everyone', value: 'all' },
-          {
-            label: 'To non-Google Calendar guests only',
-            value: 'externalOnly',
-          },
-          { label: 'To no one', value: 'none' },
-        ],
-      },
-      required: true,
-    }),
-    create_meet_link: Property.Checkbox({
-      displayName: 'Create Google Meet Link',
-      description: 'Automatically create a Google Meet video conference link for this event',
-      defaultValue: false,
-      required: false,
-    }),
-  },
-  async run(configValue) {
-    // docs: https://developers.google.com/calendar/api/v3/reference/events/insert
-    const {
-      calendar_id: calendarId,
-      title: summary,
-      start_date_time,
-      end_date_time,
-      location,
-      description,
-      colorId,
-      guests_can_modify: guestsCanModify,
-      guests_can_invite_others: guestsCanInviteOthers,
-      guests_can_see_other_guests: guestsCanSeeOtherGuests,
-      create_meet_link: createMeetLink,
-    } = configValue.propsValue;
-
-    const start = {
-      dateTime: dayjs(start_date_time).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
-    };
-    const endTime = end_date_time
-      ? end_date_time
-      : dayjs(start_date_time).add(30, 'm');
-    const end = {
-      dateTime: dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
-    };
-
-    /*const attachment = {
-      fileUrl: configValue.propsValue.attachment,
-    };*/
-
-    const attendeesArray = configValue.propsValue.attendees as string[];
-
-    const sendNotifications = configValue.propsValue.send_notifications;
-
-    const attendeesObject = [];
-    if (attendeesArray) {
-      for (const attendee of attendeesArray) {
-        attendeesObject.push({ email: attendee });
-      }
-    }
-
-    const authClient = await createGoogleClient(configValue.auth);
-
-    const calendar = googleCalendar({ version: 'v3', auth: authClient });
-
-    const requestBody: any = {
-      summary,
-      start,
-      end,
-      colorId,
-      //attachments: configValue.propsValue.attachment ? [attachment] : [],
-      location: location ?? '',
-      description: description ?? '',
-      attendees: attendeesObject,
-      guestsCanInviteOthers,
-      guestsCanModify,
-      guestsCanSeeOtherGuests,
-    };
-
-    if (createMeetLink) {
-      requestBody.conferenceData = {
-        createRequest: {
-          conferenceSolutionKey: {
-            type: 'hangoutsMeet',
-          },
-          requestId: randomUUID(),
-        },
-      };
-    }
-
-    const response = await calendar.events.insert({
-      calendarId,
-      sendUpdates: sendNotifications,
-      conferenceDataVersion: createMeetLink ? 1 : 0,
-      requestBody,
-    });
-
-    return response.data;
-  },
+  props: createEventProps,
+  run: runCreateEvent,
 });
