@@ -11,6 +11,8 @@ import { getDocumentPlaintext } from './lib/actions/get-document-plaintext.actio
 import { replaceAllText } from './lib/actions/replace-all-text.action';
 import { searchDocuments } from './lib/actions/search-documents.action';
 import { copyDocument } from './lib/actions/copy-document.action';
+import { getDocument } from './lib/actions/get-document.action';
+import { createTextDocument } from './lib/actions/create-text-document.action';
 import { getDocumentEndIndex } from './lib/actions/get-document-end-index.action';
 import { insertText } from './lib/actions/insert-text.action';
 import { deleteContentRange } from './lib/actions/delete-content-range.action';
@@ -76,6 +78,8 @@ export const googleDocs = createPiece({
 		insertText,
 		deleteContentRange,
 		createDocumentFromMarkdown,
+		getDocument,
+		createTextDocument,
 		createFooter,
 		createFootnote,
 		createHeader,

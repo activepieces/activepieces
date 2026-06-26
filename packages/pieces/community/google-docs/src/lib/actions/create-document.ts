@@ -6,7 +6,7 @@ export const createDocument = createAction({
   auth: googleDocsAuth,
   name: 'create_document',
   description: 'Create a document on Google Docs',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a brand-new Google Docs document with the given title and writes the provided text into it. Use when an agent needs to generate a fresh document from content it has produced; to add to an existing document use Append Text instead. Not idempotent: every call creates a separate new document.',
