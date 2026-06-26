@@ -72,17 +72,20 @@ describe('getContainerMemoryUsage', () => {
         expect(result.ramUsage).toBeCloseTo(50)
     })
 
-    it('should fall back to si.mem() when memory.stat is unreadable, not raw cgroup usage', async () => {
+    it('should keep container-scoped cgroup usage when memory.stat is unreadable, never host memory', async () => {
+        const totalBytes = 1024 * 1024 * 1024 // 1 GiB cap
+        const currentBytes = 1024 * 1024 * 760 // 760 MiB
         mockCgroupFiles({
-            '/sys/fs/cgroup/memory.max': String(1024 * 1024 * 1024),
-            '/sys/fs/cgroup/memory.current': String(1024 * 1024 * 760),
+            '/sys/fs/cgroup/memory.max': String(totalBytes),
+            '/sys/fs/cgroup/memory.current': String(currentBytes),
         })
 
-        mockMem.mockResolvedValue({ total: 4_000_000_000, used: 1_000_000_000 } as never)
+        // si.mem() would report a much larger host total; it must not be used here.
+        mockMem.mockResolvedValue({ total: 32_000_000_000, used: 1_000_000_000 } as never)
 
         const result = await systemUsage.getContainerMemoryUsage()
-        expect(result.totalRamInBytes).toBe(4_000_000_000)
-        expect(result.ramUsage).toBeCloseTo(25)
+        expect(result.totalRamInBytes).toBe(totalBytes)
+        expect(result.ramUsage).toBeCloseTo((currentBytes / totalBytes) * 100)
     })
 
     it('should subtract inactive_file (reclaimable cache) from cgroup v2 usage, matching docker stats', async () => {

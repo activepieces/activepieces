@@ -46,8 +46,10 @@ async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: n
         const totalRamInBytes = parseInt(limitStr)
         const rawUsedBytes = parseInt(usageStr)
         if (isNaN(totalRamInBytes) || isNaN(rawUsedBytes) || totalRamInBytes <= 0 || totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES) continue
-        const inactiveFileBytes = await readCgroupStatValue(stat, inactiveFileKey)
-        if (inactiveFileBytes === null) continue
+        // When memory.stat is unreadable we keep the container-scoped cgroup usage
+        // (slightly over-reported, includes cache) rather than skipping to host memory,
+        // which would make a capped worker look far emptier than it is.
+        const inactiveFileBytes = await readCgroupStatValue(stat, inactiveFileKey) ?? 0
         const usedBytes = Math.max(0, rawUsedBytes - inactiveFileBytes)
         return {
             totalRamInBytes,
