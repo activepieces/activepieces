@@ -2,6 +2,7 @@ import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
+import { ChatAgentEvent } from './chat-agent-events'
 import { ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
@@ -86,61 +87,6 @@ export type SendChatEventRequest = {
     runId?: string
     event: ChatAgentEvent
 }
-
-export enum ChatAgentEventType {
-    CHUNK = 'CHUNK',
-    FINISHED = 'FINISHED',
-    ERROR = 'ERROR',
-    TITLE_UPDATE = 'TITLE_UPDATE',
-    TOOL_PROGRESS = 'TOOL_PROGRESS',
-    ACTION_PREVIEW = 'ACTION_PREVIEW',
-    ACTION_RECEIPT = 'ACTION_RECEIPT',
-}
-
-export type ToolProgressEvent = {
-    toolCallId: string
-    data: {
-        label: string
-        total: number
-        completed: number
-        succeeded: number
-        failed: number
-        done: boolean
-        results: { index: number, success: boolean, output?: unknown, error?: string }[]
-    }
-}
-
-export type ActionPreviewEvent = {
-    toolCallId: string
-    pieceName: string
-    actionName: string
-    actionDisplayName: string
-    connectionLabel?: string
-    input: Record<string, unknown>
-    isBatch: boolean
-    batchCount?: number
-    batchSamples?: Record<string, unknown>[]
-}
-
-export type ActionReceiptEvent = {
-    toolCallId: string
-    actionDisplayName: string
-    pieceName: string
-    connectionLabel?: string
-    status: 'success' | 'failed'
-    output: unknown
-    errorMessage?: string
-    timestamp: string
-}
-
-export type ChatAgentEvent =
-    | { type: ChatAgentEventType.CHUNK, data: unknown }
-    | { type: ChatAgentEventType.FINISHED, data: { conversationId: string } }
-    | { type: ChatAgentEventType.ERROR, data: { message: string, code?: string } }
-    | { type: ChatAgentEventType.TITLE_UPDATE, data: { title: string } }
-    | { type: ChatAgentEventType.TOOL_PROGRESS, data: ToolProgressEvent }
-    | { type: ChatAgentEventType.ACTION_PREVIEW, data: ActionPreviewEvent }
-    | { type: ChatAgentEventType.ACTION_RECEIPT, data: ActionReceiptEvent }
 
 export type GetChatConfigRequest = {
     conversationId: string

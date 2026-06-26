@@ -1,5 +1,6 @@
 const READ_ACTION_PATTERNS = ['list', 'get', 'search', 'find', 'fetch', 'read', 'count', 'check', 'verify', 'lookup']
 const WRITE_ACTION_PATTERNS = ['delete', 'remove', 'send', 'post', 'publish', 'create', 'update', 'write', 'insert', 'reply', 'forward']
+const READ_ONLY_HTTP_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
 // Pieces without a structured success flag signal failure with a leading status glyph.
 const FAILURE_TEXT_PREFIXES = ['❌', '⏳']
@@ -17,6 +18,9 @@ function requiresActionPreview({ actionName, needsConfirmation }: {
     actionName: string
     needsConfirmation?: boolean
 }): boolean {
+    // Raw HTTP requests never gate on approval — confirming every call is noise.
+    if (actionName === 'custom_api_call') return false
+
     const isRead = actionNameMatchesPatterns({ actionName, patterns: READ_ACTION_PATTERNS })
     const isWrite = actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
 
@@ -28,6 +32,19 @@ function requiresActionPreview({ actionName, needsConfirmation }: {
 function isReadActionName(actionName: string): boolean {
     return actionNameMatchesPatterns({ actionName, patterns: READ_ACTION_PATTERNS })
         && !actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
+}
+
+// custom_api_call carries no read/write verb in its name, so name-based classification
+// wrongly blocks a read-only GET. Treat it as read-only when its HTTP method is safe.
+function isReadOnlyActionCall({ actionName, input }: { actionName: string, input?: Record<string, unknown> }): boolean {
+    if (isReadActionName(actionName)) {
+        return true
+    }
+    if (actionName === 'custom_api_call') {
+        const method = typeof input?.['method'] === 'string' ? input['method'].toUpperCase() : undefined
+        return method === undefined || READ_ONLY_HTTP_METHODS.includes(method)
+    }
+    return false
 }
 
 function isWriteActionName(actionName: string): boolean {
@@ -44,6 +61,7 @@ function readOnlyRejection(actionName: string): { success: false, error: string 
 export const chatToolClassification = {
     requiresActionPreview,
     isReadActionName,
+    isReadOnlyActionCall,
     isWriteActionName,
     readOnlyRejection,
     hasFailureTextPrefix,

@@ -3,11 +3,18 @@ import {
   ActionPreviewEvent,
   ActionReceiptEvent,
   BatchProgressData,
+  BuildPlanEvent,
+  FileProducedEvent,
+  ImageGeneratedEvent,
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 
 import { chatApi } from './chat-api';
-import { MultiQuestion } from './chat-store-types';
+import {
+  MultiQuestion,
+  RawMultiQuestion,
+  normalizeQuestion,
+} from './chat-store-types';
 import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
 
 function sendApprovalDecision({
@@ -24,8 +31,8 @@ function sendApprovalDecision({
 
 function extractQuestionsFromInput(part: AnyToolPart | null): MultiQuestion[] {
   if (!part) return [];
-  const input = part.input as { questions?: MultiQuestion[] } | undefined;
-  return input?.questions ?? [];
+  const input = part.input as { questions?: RawMultiQuestion[] } | undefined;
+  return (input?.questions ?? []).map(normalizeQuestion);
 }
 
 function isNotDismissed(
@@ -40,12 +47,17 @@ export type ToolCallMeta = {
   batchProgress?: BatchProgressData;
   actionPreview?: ActionPreviewEvent;
   actionReceipt?: ActionReceiptEvent;
+  image?: ImageGeneratedEvent;
+  files?: FileProducedEvent[];
 };
+
+export type BuildState = BuildPlanEvent;
 
 export type ChatStoreState = {
   quickReplies: string[];
   offerRecurringAutomation: boolean;
   toolCallMeta: Record<string, ToolCallMeta>;
+  builds: Record<string, BuildState>;
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
 
@@ -54,6 +66,7 @@ export type ChatStoreState = {
   dismissGate: (gateId: string) => void;
   dismissForm: (messageId: string) => void;
   resetInteractions: () => void;
+  resetBuilds: () => void;
 };
 
 export type ChatStore = ReturnType<typeof createChatStore>;
@@ -73,6 +86,7 @@ export const createChatStore = () =>
     quickReplies: [],
     offerRecurringAutomation: false,
     toolCallMeta: {},
+    builds: {},
     dismissedGateIds: {},
     lastDismissedFormId: null,
 
@@ -98,6 +112,9 @@ export const createChatStore = () =>
         dismissedGateIds: {},
         lastDismissedFormId: null,
       });
+    },
+    resetBuilds: () => {
+      set({ builds: {} });
     },
   }));
 
@@ -213,6 +230,33 @@ function selectBatchProgress({
   return state.toolCallMeta[toolCallId]?.batchProgress;
 }
 
+function selectBuildById({
+  state,
+  buildId,
+}: {
+  state: ChatStoreState;
+  buildId: string;
+}): BuildState | undefined {
+  return state.builds[buildId];
+}
+
+function mergeBuildPlan({
+  builds,
+  event,
+}: {
+  builds: Record<string, BuildState>;
+  event: BuildPlanEvent;
+}): Record<string, BuildState> {
+  const existing = builds[event.buildId];
+  if (existing && existing.updatedAt > event.updatedAt) {
+    return builds;
+  }
+  return {
+    ...builds,
+    [event.buildId]: event,
+  };
+}
+
 export const chatStoreSelectors = {
   activeDisplayTool: selectActiveDisplayTool,
   pendingActionPreview: selectPendingActionPreview,
@@ -220,6 +264,11 @@ export const chatStoreSelectors = {
   hasActiveForm: selectHasActiveForm,
   hasBlockingCard: selectHasBlockingCard,
   batchProgress: selectBatchProgress,
+  buildById: selectBuildById,
+};
+
+export const chatBuildUtils = {
+  mergeBuildPlan,
 };
 
 export type SetChatStore = StoreApi<ChatStoreState>['setState'];

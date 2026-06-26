@@ -11,12 +11,17 @@ import {
 } from '@/components/ui/tooltip';
 
 export const ApSidebarToggle = () => {
-  const { open, setOpen } = useSidebar();
+  const { open, isHoverExpanded, setOpen } = useSidebar();
+  const pinnedOpen = open && !isHoverExpanded;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
-          {open ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(!pinnedOpen)}
+        >
+          {pinnedOpen ? (
             <PanelLeftCloseIcon size={16} />
           ) : (
             <PanelLeftOpenIcon size={16} />
@@ -24,7 +29,7 @@ export const ApSidebarToggle = () => {
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        {open ? t('Close Sidebar') : t('Open Sidebar')}
+        {pinnedOpen ? t('Close Sidebar') : t('Open Sidebar')}
       </TooltipContent>
     </Tooltip>
   );
