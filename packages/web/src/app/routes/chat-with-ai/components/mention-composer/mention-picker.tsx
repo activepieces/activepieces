@@ -101,7 +101,16 @@ export const MentionPicker = forwardRef<
   }, [visibleGroups]);
 
   useEffect(() => {
-    itemRefs.current.get(activeIndex)?.scrollIntoView({ block: 'nearest' });
+    const el = itemRefs.current.get(activeIndex);
+    const container = listRef.current;
+    if (!el || !container) return;
+    const top = el.offsetTop;
+    const bottom = top + el.offsetHeight;
+    if (top < container.scrollTop) {
+      container.scrollTop = top - 8;
+    } else if (bottom > container.scrollTop + container.clientHeight) {
+      container.scrollTop = bottom - container.clientHeight + 8;
+    }
   }, [activeIndex]);
 
   const selectItem = useCallback(

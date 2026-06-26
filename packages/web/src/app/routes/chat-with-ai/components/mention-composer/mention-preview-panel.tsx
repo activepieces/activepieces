@@ -8,21 +8,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Blocks, Plug, Table2, Workflow, Zap } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { Fragment } from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { flowsApi } from '@/features/flows/api/flows-api';
-import { piecesApi } from '@/features/pieces/api/pieces-api';
 import { fieldsApi } from '@/features/tables/api/fields-api';
 import { recordsApi } from '@/features/tables/api/records-api';
 import { cn } from '@/lib/utils';
 
 import { MentionItem, mentionSearch } from './use-mention-search';
 
-const MAX_PREVIEW_STEPS = 7;
-const MAX_PREVIEW_ROWS = 5;
-const MAX_PREVIEW_FIELDS = 5;
-const MAX_PREVIEW_ACTIONS = 4;
-const CELL_MAX_CHARS = 22;
+const MAX_PREVIEW_STEPS = 6;
+const MAX_PREVIEW_ROWS = 4;
+const MAX_PREVIEW_FIELDS = 4;
+const CELL_MAX_CHARS = 20;
 
 function usePieceLogoMap(): Map<string, string> {
   const client = useQueryClient();
@@ -36,6 +35,34 @@ function usePieceLogoMap(): Map<string, string> {
 
 function pieceShort(name?: string): string | undefined {
   return name?.replace('@activepieces/piece-', '').replace(/-/g, ' ');
+}
+
+function PreviewHeader({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-background text-primary shadow-sm ring-1 ring-black/5">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[15px] font-semibold leading-tight text-foreground">
+          {title}
+        </div>
+        {subtitle && (
+          <div className="mt-1 text-[12px] text-muted-foreground">
+            {subtitle}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function FlowPreview({ id, label }: { id: string; label: string }) {
@@ -52,16 +79,12 @@ function FlowPreview({ id, label }: { id: string; label: string }) {
   const enabled = flow.status === FlowStatus.ENABLED;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-start gap-2.5">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Workflow className="size-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold leading-tight">
-            {flow.version.displayName}
-          </div>
-          <div className="mt-1 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+    <div className="flex flex-col gap-4">
+      <PreviewHeader
+        icon={<Workflow className="size-[18px]" />}
+        title={flow.version.displayName}
+        subtitle={
+          <span className="inline-flex items-center gap-1.5">
             <span
               className={cn(
                 'size-1.5 rounded-full',
@@ -69,11 +92,11 @@ function FlowPreview({ id, label }: { id: string; label: string }) {
               )}
             />
             {enabled ? t('Enabled') : t('Disabled')}
-            <span>·</span>
+            <span className="text-muted-foreground/50">·</span>
             {t('{{count}} steps', { count: steps.length })}
-          </div>
-        </div>
-      </div>
+          </span>
+        }
+      />
 
       <div className="flex flex-col">
         {shown.map((step, i) => {
@@ -83,37 +106,37 @@ function FlowPreview({ id, label }: { id: string; label: string }) {
           const isTrigger = i === 0;
           const last = i === shown.length - 1;
           return (
-            <div key={step.name} className="flex gap-2.5">
-              <div className="flex flex-col items-center">
-                <span
-                  className={cn(
-                    'flex size-7 shrink-0 items-center justify-center rounded-lg border bg-background',
-                    isTrigger && 'border-primary/40 ring-2 ring-primary/10',
-                  )}
-                >
+            <Fragment key={step.name}>
+              <div className="flex items-center gap-3 rounded-xl border bg-background p-2.5 shadow-sm">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
                   {logo ? (
-                    <img src={logo} alt="" className="size-4 object-contain" />
+                    <img src={logo} alt="" className="size-5 object-contain" />
                   ) : (
-                    <span className="size-2 rounded-full bg-muted-foreground/40" />
+                    <Workflow className="size-4 text-muted-foreground" />
                   )}
                 </span>
-                {!last && <span className="my-0.5 w-px flex-1 bg-border" />}
-              </div>
-              <div className={cn('min-w-0 flex-1', !last && 'pb-2')}>
-                <div className="truncate text-[13px] font-medium leading-tight">
-                  {step.displayName}
-                </div>
-                {pieceShort(pieceName) && (
-                  <div className="truncate text-[11px] capitalize text-muted-foreground">
-                    {pieceShort(pieceName)}
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                    {isTrigger ? t('Trigger') : t('Step {{n}}', { n: i })}
                   </div>
-                )}
+                  <div className="truncate text-[13px] font-medium leading-tight text-foreground">
+                    {step.displayName}
+                  </div>
+                  {pieceShort(pieceName) && (
+                    <div className="truncate text-[11px] capitalize text-muted-foreground">
+                      {pieceShort(pieceName)}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+              {!last && (
+                <span className="ml-[26px] h-3 w-0.5 rounded-full bg-border" />
+              )}
+            </Fragment>
           );
         })}
         {steps.length > shown.length && (
-          <div className="pl-[38px] pt-0.5 text-[11px] text-muted-foreground">
+          <div className="ml-[26px] mt-2 text-[11px] text-muted-foreground">
             {t('+{{count}} more steps', { count: steps.length - shown.length })}
           </div>
         )}
@@ -144,22 +167,14 @@ function TablePreview({ id, label }: { id: string; label: string }) {
   const rows = records?.data ?? [];
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-start gap-2.5">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Table2 className="size-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold leading-tight">
-            {label}
-          </div>
-          <div className="mt-1 text-[12px] text-muted-foreground">
-            {t('{{count}} fields', { count: fields.length })}
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PreviewHeader
+        icon={<Table2 className="size-[18px]" />}
+        title={label}
+        subtitle={t('{{count}} fields', { count: fields.length })}
+      />
 
-      <div className="overflow-hidden rounded-xl border bg-background">
+      <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[12px]">
             <thead>
@@ -167,7 +182,7 @@ function TablePreview({ id, label }: { id: string; label: string }) {
                 {shownFields.map((field) => (
                   <th
                     key={field.id}
-                    className="max-w-[110px] truncate px-2.5 py-1.5 text-left font-semibold text-muted-foreground"
+                    className="max-w-[120px] truncate px-3 py-2 text-left font-semibold text-muted-foreground"
                   >
                     {field.name}
                   </th>
@@ -179,7 +194,7 @@ function TablePreview({ id, label }: { id: string; label: string }) {
                 <tr>
                   <td
                     colSpan={shownFields.length || 1}
-                    className="px-2.5 py-4 text-center text-muted-foreground"
+                    className="px-3 py-5 text-center text-muted-foreground"
                   >
                     {t('No records yet')}
                   </td>
@@ -190,13 +205,13 @@ function TablePreview({ id, label }: { id: string; label: string }) {
                     key={record.id}
                     className={cn(
                       'border-b last:border-0',
-                      i % 2 === 1 && 'bg-muted/20',
+                      i % 2 === 1 && 'bg-muted/15',
                     )}
                   >
                     {shownFields.map((field) => (
                       <td
                         key={field.id}
-                        className="max-w-[110px] truncate px-2.5 py-1.5 text-foreground/80"
+                        className="max-w-[120px] truncate px-3 py-2 text-foreground/80"
                       >
                         {cellValue(record, field.name)}
                       </td>
@@ -207,12 +222,6 @@ function TablePreview({ id, label }: { id: string; label: string }) {
             </tbody>
           </table>
         </div>
-      </div>
-      <div className="text-[11px] text-muted-foreground">
-        {t('Showing {{rows}} of {{total}} sample rows', {
-          rows: rows.length,
-          total: rows.length,
-        })}
       </div>
     </div>
   );
@@ -227,103 +236,87 @@ function AppPreview({
   label: string;
   logoUrl?: string;
 }) {
-  const { data: piece, isLoading } = useQuery({
-    queryKey: ['mention-preview', 'app', id],
-    queryFn: () => piecesApi.get({ name: id }),
-    staleTime: 5 * 60_000,
-  });
-  const { data: connections } = useQuery({
-    queryKey: ['mention-preview', 'app-connections', id],
-    queryFn: () => mentionSearch.fetchConnectionsForPiece(id),
+  const { data: connections, isLoading } = useQuery({
+    queryKey: ['mention-preview', 'app-connections-all', id],
+    queryFn: () => mentionSearch.fetchConnectionsAcrossProjects(id),
     staleTime: 30_000,
   });
-
-  if (isLoading || !piece) return <AppSkeleton title={label} />;
-  const actionCount = Object.keys(piece.actions).length;
-  const triggerCount = Object.keys(piece.triggers).length;
-  const topActions = Object.values(piece.actions)
-    .map((a) => a.displayName)
-    .slice(0, MAX_PREVIEW_ACTIONS);
-  const accounts = connections?.data ?? [];
+  const accounts = connections ?? [];
 
   return (
-    <div className="flex flex-col gap-3.5">
-      <div className="flex items-start gap-2.5">
-        {logoUrl ?? piece.logoUrl ? (
-          <img
-            src={logoUrl ?? piece.logoUrl}
-            alt=""
-            className="size-10 shrink-0 rounded-xl border bg-background object-contain p-1.5"
-          />
-        ) : (
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Blocks className="size-5" />
+    <div className="flex flex-col gap-4">
+      <PreviewHeader
+        icon={
+          logoUrl ? (
+            <img src={logoUrl} alt="" className="size-5 object-contain" />
+          ) : (
+            <Blocks className="size-[18px]" />
+          )
+        }
+        title={label}
+        subtitle={
+          <span className="inline-flex items-center gap-1.5">
+            <Plug className="size-3" />
+            {isLoading
+              ? t('Loading connections…')
+              : t('{{count}} connected accounts', { count: accounts.length })}
           </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold leading-tight">
-            {piece.displayName}
-          </div>
-          {piece.description && (
-            <div className="mt-0.5 line-clamp-2 text-[12px] text-muted-foreground">
-              {piece.description}
-            </div>
-          )}
-        </div>
-      </div>
+        }
+      />
 
-      <div className="flex flex-wrap gap-1.5">
-        <CapabilityPill
-          icon={<Zap className="size-3" />}
-          label={t('{{count}} actions', { count: actionCount })}
-        />
-        <CapabilityPill
-          icon={<Workflow className="size-3" />}
-          label={t('{{count}} triggers', { count: triggerCount })}
-        />
-      </div>
-      {topActions.length > 0 && (
-        <div className="text-[12px] leading-relaxed text-muted-foreground">
-          {topActions.join(' · ')}
-          {actionCount > topActions.length &&
-            ` · +${actionCount - topActions.length}`}
+      {isLoading ? (
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-11 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : accounts.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed bg-background/50 px-4 py-8 text-center">
+          <Plug className="size-6 text-muted-foreground/40" />
+          <span className="text-[13px] font-medium text-foreground/80">
+            {t('No connected accounts')}
+          </span>
+          <span className="text-[12px] text-muted-foreground">
+            {t('Connect this app to use it here.')}
+          </span>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {accounts.map((conn) => (
+            <div
+              key={conn.id}
+              className="flex items-center gap-3 rounded-xl border bg-background p-2.5 shadow-sm"
+            >
+              <span
+                className={cn(
+                  'flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/60',
+                )}
+              >
+                {logoUrl ? (
+                  <img src={logoUrl} alt="" className="size-4 object-contain" />
+                ) : (
+                  <Plug className="size-4 text-muted-foreground" />
+                )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[13px] font-medium leading-tight text-foreground">
+                  {conn.displayName}
+                </div>
+                <div className="truncate text-[11px] text-muted-foreground">
+                  {conn.projectName}
+                </div>
+              </div>
+              <span
+                className={cn(
+                  'size-2 shrink-0 rounded-full',
+                  connectionTone(conn.status),
+                )}
+                title={conn.status}
+              />
+            </div>
+          ))}
         </div>
       )}
-
-      <div className="rounded-xl border bg-background p-2.5">
-        <div className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold">
-          <Plug className="size-3.5 text-primary" />
-          {t('Connected accounts')}
-          <span className="text-muted-foreground">({accounts.length})</span>
-        </div>
-        {accounts.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-2.5 py-3 text-center text-[12px] text-muted-foreground">
-            {t('No accounts connected yet')}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {accounts.map((conn) => (
-              <div
-                key={conn.id}
-                className="flex items-center gap-2 rounded-lg bg-muted/30 px-2.5 py-1.5"
-              >
-                <span
-                  className={cn(
-                    'size-2 shrink-0 rounded-full',
-                    connectionTone(conn.status),
-                  )}
-                />
-                <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
-                  {conn.displayName}
-                </span>
-                <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {conn.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -331,20 +324,22 @@ function AppPreview({
 export function MentionPreviewPanel({ item }: { item?: MentionItem }) {
   const reduce = useReducedMotion();
   return (
-    <div className="hidden w-[380px] shrink-0 flex-col border-l bg-muted/30 sm:flex">
-      <div className="px-4 pt-3.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
+    <div className="hidden w-[380px] shrink-0 flex-col border-l border-border/60 bg-[#F6F2EA] dark:bg-stone-900/40 sm:flex">
+      <div className="px-5 pt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60">
         {t('Preview')}
       </div>
-      <div className="flex-1 overflow-y-auto p-4 pt-2.5">
+      <div className="flex-1 overflow-y-auto px-5 pb-5 pt-3">
         <AnimatePresence mode="wait">
           {!item ? (
             <motion.div
               key="empty"
               initial={reduce ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex h-full min-h-[180px] flex-col items-center justify-center gap-2 text-center"
+              className="flex h-full min-h-[200px] flex-col items-center justify-center gap-2.5 text-center"
             >
-              <Blocks className="size-7 text-muted-foreground/30" />
+              <span className="flex size-11 items-center justify-center rounded-2xl bg-background/70 text-muted-foreground/40 shadow-sm">
+                <Zap className="size-5" />
+              </span>
               <span className="text-[12px] text-muted-foreground">
                 {t('Hover an item to preview it')}
               </span>
@@ -378,21 +373,6 @@ export function MentionPreviewPanel({ item }: { item?: MentionItem }) {
   );
 }
 
-function CapabilityPill({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground/80">
-      {icon}
-      {label}
-    </span>
-  );
-}
-
 function PreviewTitle({ title }: { title: string }) {
   return (
     <div className="truncate text-[15px] font-semibold leading-tight">
@@ -403,13 +383,10 @@ function PreviewTitle({ title }: { title: string }) {
 
 function RailSkeleton({ title }: { title: string }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <PreviewTitle title={title} />
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2.5">
-          <Skeleton className="size-7 rounded-lg" />
-          <Skeleton className="h-3.5 flex-1" />
-        </div>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton key={i} className="h-14 w-full rounded-xl" />
       ))}
     </div>
   );
@@ -417,24 +394,9 @@ function RailSkeleton({ title }: { title: string }) {
 
 function GridSkeleton({ title }: { title: string }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <PreviewTitle title={title} />
       <Skeleton className="h-28 w-full rounded-xl" />
-    </div>
-  );
-}
-
-function AppSkeleton({ title }: { title: string }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2.5">
-        <Skeleton className="size-10 rounded-xl" />
-        <div className="flex-1 space-y-1.5">
-          <PreviewTitle title={title} />
-          <Skeleton className="h-2.5 w-full" />
-        </div>
-      </div>
-      <Skeleton className="h-20 w-full rounded-xl" />
     </div>
   );
 }

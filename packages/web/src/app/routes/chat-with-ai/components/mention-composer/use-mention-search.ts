@@ -1,4 +1,5 @@
-import { ChatMentionType } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { AppConnectionStatus, ChatMentionType } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Fuse from 'fuse.js';
 import { useCallback, useMemo } from 'react';
@@ -8,6 +9,7 @@ import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { piecesApi } from '@/features/pieces/api/pieces-api';
 import { tablesApi } from '@/features/tables/api/tables-api';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 const BASE_LIMIT = 100;
@@ -171,20 +173,46 @@ function useMentionSearch(query: string): MentionSearchResult {
   return { groups, isLoading, totalCount };
 }
 
-function fetchConnectionsForPiece(pieceName: string) {
-  const projectId = authenticationSession.getProjectId() ?? undefined;
-  return appConnectionsApi.list({
-    projectId: projectId ?? '',
-    pieceName,
-    limit: 10,
-    cursor: undefined,
-  });
+async function fetchConnectionsAcrossProjects(
+  pieceName: string,
+): Promise<MentionConnection[]> {
+  const projects = await api.get<SeekPage<{ id: string; displayName: string }>>(
+    '/v1/projects',
+    { limit: 100 },
+  );
+  const perProject = await Promise.all(
+    projects.data.map(async (project) => {
+      const page = await appConnectionsApi
+        .list({
+          projectId: project.id,
+          pieceName,
+          limit: 50,
+          cursor: undefined,
+        })
+        .catch(() => null);
+      return (page?.data ?? []).map((conn) => ({
+        id: conn.id,
+        displayName: conn.displayName,
+        status: conn.status,
+        projectName: project.displayName,
+      }));
+    }),
+  );
+  const seen = new Set<string>();
+  const result: MentionConnection[] = [];
+  for (const conn of perProject.flat()) {
+    if (!seen.has(conn.id)) {
+      seen.add(conn.id);
+      result.push(conn);
+    }
+  }
+  return result;
 }
 
 export const mentionSearch = {
   useMentionSearch,
   usePrefetchMentionData,
-  fetchConnectionsForPiece,
+  fetchConnectionsAcrossProjects,
 };
 
 export type MentionItem = {
@@ -211,4 +239,11 @@ export type MentionSearchResult = {
   groups: MentionGroup[];
   isLoading: boolean;
   totalCount: number;
+};
+
+export type MentionConnection = {
+  id: string;
+  displayName: string;
+  status: AppConnectionStatus;
+  projectName: string;
 };
