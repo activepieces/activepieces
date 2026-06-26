@@ -220,7 +220,13 @@ const ListWorkerTagsRequest = {
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
-            [StatusCodes.OK]: z.array(z.string()),
+            [StatusCodes.OK]: z.object({
+                tags: z.array(z.object({
+                    tag: z.string(),
+                    slots: z.number(),
+                })),
+                sharedSlots: z.number(),
+            }),
         },
     },
 }

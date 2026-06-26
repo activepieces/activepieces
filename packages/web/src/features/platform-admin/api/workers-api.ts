@@ -7,6 +7,16 @@ export const workersApi = {
     return api.get<WorkerMachineWithStatus[]>('/v1/worker-machines');
   },
   listWorkerTags() {
-    return api.get<string[]>('/v1/projects/worker-tags');
+    return api.get<WorkerPoolCapacity>('/v1/projects/worker-tags');
   },
+};
+
+export type WorkerTagInfo = {
+  tag: string;
+  slots: number;
+};
+
+export type WorkerPoolCapacity = {
+  tags: WorkerTagInfo[];
+  sharedSlots: number;
 };

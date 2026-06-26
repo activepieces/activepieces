@@ -1,4 +1,4 @@
-import { isNil, partition, unique } from '@activepieces/core-utils'
+import { isNil, partition } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
 import { ExecutionMode, NetworkMode, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
@@ -106,16 +106,44 @@ export const machineService = (log: FastifyBaseLogger) => {
                     workerTag: worker.workerTag,
                 }))
         },
-        async listWorkerTags(): Promise<string[]> {
+        async listWorkerTags(): Promise<WorkerPoolCapacity> {
             const allWorkers = await workerMachineCache().find()
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
-            const onlineTags = allWorkers
-                .filter(worker => dayjs(worker.updated).isAfter(offlineThreshold))
-                .map(worker => worker.workerTag)
-                .filter((tag): tag is string => !isNil(tag) && tag.length > 0)
-            return unique(onlineTags)
+            const slotsByTag = new Map<string, number>()
+            let sharedSlots = 0
+            for (const worker of allWorkers) {
+                const isOnline = dayjs(worker.updated).isAfter(offlineThreshold)
+                if (!isOnline) {
+                    continue
+                }
+                const slots = parseWorkerConcurrency(worker.information.workerProps.WORKER_CONCURRENCY)
+                if (isNil(worker.workerTag) || worker.workerTag.length === 0) {
+                    sharedSlots += slots
+                    continue
+                }
+                slotsByTag.set(worker.workerTag, (slotsByTag.get(worker.workerTag) ?? 0) + slots)
+            }
+            return {
+                tags: [...slotsByTag.entries()].map(([tag, slots]) => ({ tag, slots })),
+                sharedSlots,
+            }
         },
     }
+}
+
+function parseWorkerConcurrency(value: string | undefined): number {
+    const parsed = Number(value)
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
+}
+
+type WorkerTagInfo = {
+    tag: string
+    slots: number
+}
+
+type WorkerPoolCapacity = {
+    tags: WorkerTagInfo[]
+    sharedSlots: number
 }
 
 type OnConnectionScope = {
