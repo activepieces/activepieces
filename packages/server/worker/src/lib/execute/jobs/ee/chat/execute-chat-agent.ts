@@ -25,7 +25,10 @@ const STREAM_IDLE_TIMEOUT_MS = 90_000
 // legitimate single wait — the approval/display-tool timeout is 15m — so set well above it.
 const MAX_TURN_WALL_CLOCK_MS = 20 * 60 * 1_000
 // The single side-effecting piece-execution tool, neutralized under discovery-only eval runs.
-const DISCOVERY_ONLY_NEUTRALIZED_TOOL = 'ap_execute_action'
+// Discovery-only eval must not touch the environment: neutralize every side-effecting execute
+// tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
+// `chat-evals` run could still execute ap_run_code against the developer's project.
+const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
@@ -330,7 +333,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         }
         // Discovery-only eval: real discovery/reads still run, but neutralize the side-effecting
         // execute so we can measure how the agent reaches a runnable call without firing it.
-        if (discoveryOnly && toolName === DISCOVERY_ONLY_NEUTRALIZED_TOOL) {
+        if (discoveryOnly && DISCOVERY_ONLY_NEUTRALIZED_TOOLS.has(toolName)) {
             return { content: [{ type: 'text', text: `🧪 Discovery-only run — ${toolName} was not executed. The agent reached a runnable call.` }] }
         }
         const response = await ctx.apiClient.executeChatTool({ toolName, toolInput, platformId, userId, conversationId })
