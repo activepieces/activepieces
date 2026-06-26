@@ -22,9 +22,9 @@ The shipped default `AP_WORKER_CONCURRENCY=5` runs multiple sandboxes in one con
 
 ## Failure Behaviour
 
-If a worker crashes, is evicted, or loses its Redis lease mid-run, BullMQ requeues the job and another worker picks it up. The engine's durable-execution layer replays already-completed steps from persisted state rather than re-running them, so side effects are not duplicated. This means a worker restart or OOM kill during a flow is survivable — you do not need to drain traffic before rolling workers.
+A worker that crashes, is evicted, or loses its Redis lease mid-run is survivable: BullMQ requeues the job, another worker picks it up, and durable replay skips every already-completed step. You do not need to drain traffic before rolling workers.
 
-See [Durable Execution](./durable-execution) for exactly what is persisted and how replay works.
+For the exact promises — what re-runs, what runs at-least-once, and where each boundary is — see [Guarantees](../guarantees/crash-recovery). For how replay is persisted, see [Durable Execution](./durable-execution).
 
 ## Sandbox & Network Isolation
 

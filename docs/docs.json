@@ -234,6 +234,7 @@
                         "group": "Production Essentials",
                         "icon": "rocket",
                         "pages": [
+                           "install/configure-operate/separate-workers",
                            "install/configure-operate/sandboxing",
                            "install/configure-operate/enterprise-license",
                            "install/configure-operate/setup-ssl",
@@ -244,7 +245,6 @@
                         "group": "Operations",
                         "icon": "screwdriver-wrench",
                         "pages": [
-                           "install/configure-operate/separate-workers",
                            "install/configure-operate/worker-groups",
                            "install/configure-operate/setup-app-webhooks",
                            "install/configure-operate/setup-opentelemetry",
@@ -269,6 +269,15 @@
                      "install/reference/environment-variables",
                      "install/reference/limits",
                      "install/reference/breaking-changes"
+                  ]
+               },
+               {
+                  "group": "Guarantees",
+                  "icon": "shield-check",
+                  "pages": [
+                     "install/guarantees/crash-recovery",
+                     "install/guarantees/reserved-resources",
+                     "install/guarantees/execution-isolation"
                   ]
                },
                {

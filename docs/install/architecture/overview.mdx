@@ -30,16 +30,9 @@ This page focuses on describing the main components of Activepieces and focus ma
 Postgres and Redis availability is outside the scope of this documentation, as many cloud providers already implement best practices to ensure their availability.
 </Tip>
 
-- **Webhooks**:
-  All webhooks are sent to the Activepieces app, which performs basic validation and adds them to the queue. In case of a spike, webhooks will be added to the queue.
+Everything is queue-backed: webhooks and recurring jobs land on Redis, and workers poll them off it. A spike doesn't drop work — it queues and drains as slots free. For exactly what survives a crash, what runs at-least-once, and where each promise stops, see [Guarantees](../guarantees/crash-recovery).
 
-- **Polling Trigger**:
-  All recurring jobs are added to Redis. In case of a failure, the missed jobs will be executed again.
-
-- **Flow Execution**:
-  Workers poll jobs from the queue. In the event of a spike, the flow execution will still work but may be delayed depending on the size of the spike.
-
-To scale Activepieces, you typically need to increase the replicas of either workers, the app, or the Postgres database. A small Redis instance is sufficient as it can handle thousands of jobs per second and rarely acts as a bottleneck.
+To scale Activepieces, you typically need to increase the replicas of either workers, the app, or the Postgres database. A small Redis instance is sufficient as it can handle thousands of jobs per second and rarely acts as a bottleneck. For the concrete sizing model, see [Production Setup](../configure-operate/production-setup).
 
 ## Repository Structure
 

@@ -32,27 +32,7 @@ Resume is not a special path. Every time a worker starts executing a run, it wal
 
 The first time a run is scheduled the log is empty, so every step runs. After a resume the log is full up to the interruption, so the engine fast-forwards through all of it and only executes whatever came next.
 
-```mermaid
-sequenceDiagram
-    participant Worker
-    participant Log as Run log
-    participant Flow as Flow graph
-
-    Worker->>Log: load checkpoint
-    Worker->>Flow: walk from trigger
-    Flow-->>Worker: step A
-    Worker->>Log: output for A?
-    Log-->>Worker: yes (cached)
-    Note over Worker: skip A, reuse output
-    Flow-->>Worker: step B
-    Worker->>Log: output for B?
-    Log-->>Worker: yes (cached)
-    Note over Worker: skip B, reuse output
-    Flow-->>Worker: step C
-    Worker->>Log: output for C?
-    Log-->>Worker: no
-    Note over Worker: execute C, append to log
-```
+<Snippet file="replay-and-skip.mdx" />
 
 Worst-case data loss on an abrupt crash is the single step that was executing when the worker died. It is re-run from the last checkpoint; everything before it is skipped.
 
