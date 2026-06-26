@@ -50,6 +50,14 @@ Authenticate to OroCommerce APIs using OAuth 2.0 Client Credentials.
         'Example: {"Content-Type": "application/vnd.api+json", "X-Custom": "value"}',
       required: false
     }),
+    isInternalInfrastructure: Property.Checkbox({
+      displayName: 'Internal infrastructure',
+      description:
+        'Setting this option allows to rewrite network-related connection options' +
+        ' with values provied in ENV variables.',
+      required: true,
+      defaultValue: false,
+    })
   },
 
   validate: async ({ auth }): Promise<{ valid: true } | { valid: false; error: string }> => {

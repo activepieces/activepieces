@@ -1,13 +1,13 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { tryCatchSync } from '@activepieces/shared';
-import { oroAuth, getOroBaseUrl, getAccessToken } from '../common';
+import { oroAuth, getOroAdminApiBaseUrl, getAccessToken } from '../common';
 
 export const customApiCallAction = createCustomApiCallAction({
   auth: oroAuth,
   name: 'custom_api_call',
   displayName: 'Custom API Call',
   description: 'Make a direct authenticated call to the OroCommerce JSON:API.',
-  baseUrl: (auth) => auth ? getOroBaseUrl({ auth }) : '',
+  baseUrl: (auth) => auth ? getOroAdminApiBaseUrl({ auth }) : '',
   authMapping: async (auth) => {
     const { data } = tryCatchSync(() => JSON.parse(auth.props.headers ?? '{}') as unknown);
     const connectionHeaders =

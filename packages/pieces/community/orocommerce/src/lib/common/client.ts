@@ -21,7 +21,7 @@ import { jsonApiBodyUtils } from './jsonapi-body-utils';
 const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
 function buildCacheKey({ auth }: { auth: OroAuth }): string {
-  return `${auth.props.serverUrl}::${auth.props.clientId}`;
+  return `${getOroServerUrl(auth)}::${auth.props.clientId}`;
 }
 
 function formatError({ error }: { error: unknown }): string {
@@ -39,8 +39,33 @@ function formatError({ error }: { error: unknown }): string {
   return `OroCommerce API Error: ${String(error)}`;
 }
 
-export function getOroBaseUrl({ auth }: { auth: OroAuth }): string {
-  const serverUrl = auth.props.serverUrl.replace(/\/*$/, '');
+function getOroServerUrl(auth: OroAuth): string {
+  const envUrl = isInternalInfrastructure({ auth })
+    ? process.env['ORO_SERVER_URL']?.trim()
+    : undefined;
+  const url = envUrl || auth.props.serverUrl;
+
+  return url.replace(/\/*$/, '');
+}
+
+function isInternalInfrastructure({ auth }: { auth: OroAuth }): boolean {
+  return auth.props.isInternalInfrastructure;
+}
+
+function getInternalInfrastructureHeaders({ auth }: { auth: OroAuth }): Record<string, string> {
+  if (!isInternalInfrastructure({ auth })) {
+    return {};
+  }
+  const userAgent = process.env['ORO_SERVER_USER_AGENT']?.trim();
+  if (!userAgent) {
+    return {};
+  }
+
+  return { 'User-Agent': userAgent };
+}
+
+export function getOroAdminApiBaseUrl({ auth }: { auth: OroAuth }): string {
+  const serverUrl = getOroServerUrl(auth);
   const adminPrefix = auth.props.adminPrefix.replace(/^\/+|\/+$/g, '');
   return `${serverUrl}/${adminPrefix}/api`;
 }
@@ -53,12 +78,13 @@ export async function getAccessToken({ auth }: { auth: OroAuth }): Promise<strin
     return cached.token;
   }
 
-  const baseUrl = auth.props.serverUrl.replace(/\/*$/, '');
+  const baseUrl = getOroServerUrl(auth);
   const response = await httpClient.sendRequest<OroAuthResponseType>({
     method: HttpMethod.POST,
     url: `${baseUrl}/oauth2-token`,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      ...getInternalInfrastructureHeaders({ auth }),
     },
     body: new URLSearchParams({
       grant_type: 'client_credentials',
@@ -91,10 +117,11 @@ export async function oroApiCall({
 
     return await httpClient.sendRequest({
       method,
-      url: `${getOroBaseUrl({ auth })}/${resource}`,
+      url: `${getOroAdminApiBaseUrl({ auth })}/${resource}`,
       headers: {
         'Content-Type': 'application/vnd.api+json',
         ...connectionHeaders,
+        ...getInternalInfrastructureHeaders({ auth }),
         ...extraHeaders,
       },
       authentication: {
