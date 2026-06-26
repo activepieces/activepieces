@@ -29,6 +29,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '../../..')
 const OUT_ROOT = path.join(REPO_ROOT, 'packages/web/public/chat-suggestions/cards')
 
+let optimizerWarned = false
+
 const MODEL = 'fal-ai/recraft-v3'
 const STYLE =
     'Bold high-contrast graphic cinematic illustration, dramatic simplified shapes, striking negative space.'
@@ -164,7 +166,13 @@ function optimizeWebp(rawBytes, extension) {
         execFileSync('cwebp', ['-q', '82', pngPath, '-o', outPath], { stdio: 'ignore' })
         return fs.readFileSync(outPath)
     }
-    catch {
+    catch (err) {
+        // dwebp/cwebp/sips missing (non-macOS or webp tools not installed): emit unoptimized bytes,
+        // but warn loudly once so a generated image isn't silently shipped at full size.
+        if (!optimizerWarned) {
+            optimizerWarned = true
+            console.warn(`[generate-usecase-images] image optimizer unavailable (${err instanceof Error ? err.message : String(err)}); shipping unoptimized images. Install dwebp/cwebp (and run on macOS for sips) for optimized output.`)
+        }
         return rawBytes
     }
     finally {
