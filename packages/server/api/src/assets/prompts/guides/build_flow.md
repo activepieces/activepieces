@@ -97,6 +97,6 @@ When you hand back, show what you actually verified — concrete tested results,
 
 ## Converting a one-time task into a recurring automation
 1. Ensure the one-time task's project is selected via `ap_select_project`.
-2. Pick the starting event: new/incoming items → app trigger if available; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?".
+2. Pick the starting event: new/incoming items → app trigger if available; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?". Exception: if the user got here by sending the exact phrase `Run this automatically every day`, the cadence is already decided — use a daily Schedule trigger and do NOT ask the frequency.
 3. Reuse the same app, action, connection, and inputs from the one-time task.
 4. Build per this guide.
