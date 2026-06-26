@@ -121,13 +121,16 @@ function coerceEmptyContainerInputs({ props, input }: { props: PiecePropertyMap,
         }
         const value = coerced[propName]
         const valueProvided = value !== undefined && value !== null && value !== ''
-        // The model often passes an empty container of the wrong shape — e.g. `[]` for an
-        // OBJECT prop like custom_api_call's headers/queryParams, or `{}` for an ARRAY prop.
-        // An empty bag means "none" regardless of shape, so normalize it to the prop's type
-        // instead of letting validation bounce a harmless empty value.
+        // An empty free-form bag means "none", so normalize a wrong-shape empty container
+        // (`[]` for an OBJECT prop, `{}` for an ARRAY prop) to the prop's type rather than
+        // letting validation bounce it.
         const emptyWrongShapeContainer = (prop.type === PropertyType.OBJECT && Array.isArray(value) && value.length === 0)
             || (prop.type === PropertyType.ARRAY && isObject(value) && !Array.isArray(value) && Object.keys(value).length === 0)
-        if (!valueProvided || emptyWrongShapeContainer) {
+        // But a structured ARRAY (one with sub-`properties`) is genuine required data: defaulting an
+        // absent one to [] would mask the missing-required diagnosis and run the action with no rows.
+        const isStructuredArray = prop.type === PropertyType.ARRAY
+            && isObject(prop.properties) && Object.keys(prop.properties).length > 0
+        if (emptyWrongShapeContainer || (!valueProvided && !isStructuredArray)) {
             coerced[propName] = makeDefault()
         }
     }
