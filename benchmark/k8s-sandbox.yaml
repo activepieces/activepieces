@@ -141,7 +141,6 @@ spec:
             - { name: AP_CONTAINER_TYPE, value: WORKER }
             - { name: AP_WORKER_CONCURRENCY, value: "1" }
             - { name: AP_REUSE_SANDBOX, value: "__REUSE_SANDBOX__" }
-            - { name: AP_SANDBOX_CLEAN_CACHE, value: "__CLEAN_CACHE__" }
             - { name: AP_CACHE_BASE_PATH, value: /tmp/cache }
             # Minimal image has no entrypoint to mint the worker token; injected by run-gke.sh.
             - { name: AP_WORKER_TOKEN, value: __AP_WORKER_TOKEN__ }

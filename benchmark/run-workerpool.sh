@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Benchmark the "worker is the sandbox" model (ADR 0003): N worker replicas, each 0.5 CPU / 1 GB,
-# concurrency 1, SANDBOX_CODE_ONLY, REUSE_SANDBOX=false, cache wiped after every run. Reports:
+# concurrency 1, SANDBOX_CODE_ONLY, REUSE_SANDBOX=false (box invalidated after each run). Reports:
 #   - COLD BOOT latency: the first request after the stack is up (cold process + cold cache).
-#   - WARM THROUGHPUT: sustained req/s once the worker processes are warm (cache still wiped per run).
+#   - WARM THROUGHPUT: sustained req/s once the worker processes are warm.
 #
 # Usage: benchmark/run-workerpool.sh [total_requests]
 #   WORKER_REPLICAS (default 5)   WORKER_IMAGE (default ap-worker:local; set to
@@ -79,7 +79,7 @@ $COMPOSE logs --no-log-prefix worker 2>/dev/null \
 
 echo ""
 echo "=== SUMMARY ==="
-echo "Model: worker-is-the-sandbox | replicas=$WORKER_REPLICAS @ 0.5cpu/1G | concurrency=1 | REUSE_SANDBOX=false | clean-cache=true (engine kept) | SANDBOX_CODE_ONLY"
+echo "Model: worker-is-the-sandbox | replicas=$WORKER_REPLICAS @ 0.5cpu/1G | concurrency=1 | REUSE_SANDBOX=false | SANDBOX_CODE_ONLY"
 echo "Cold boot latency : ${COLD_MS} ms"
 echo -n "Warm throughput   : "; awk '/Requests\/sec/{print $2" req/s"}' /tmp/hey-workerpool.txt
 awk '/Total:|Average:|Slowest:|Fastest:/{print "  "$0}' /tmp/hey-workerpool.txt

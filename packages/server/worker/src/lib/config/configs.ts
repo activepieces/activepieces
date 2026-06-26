@@ -49,7 +49,6 @@ export enum WorkerSystemProp {
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
     CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
-    SANDBOX_CLEAN_CACHE = 'AP_SANDBOX_CLEAN_CACHE',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {

@@ -14,7 +14,6 @@ CONCURRENCY=${2:-32}
 WORKER_CPU=${WORKER_CPU:-500m}
 WORKER_REPLICAS=${WORKER_REPLICAS:-16}
 REUSE_SANDBOX=${REUSE_SANDBOX:-false}
-CLEAN_CACHE=${CLEAN_CACHE:-true}
 APP_REPLICAS=${APP_REPLICAS:-2}
 APP_CPU=${APP_CPU:-1500m}
 APP_IMAGE=${APP_IMAGE:-europe-west1-docker.pkg.dev/activepieces-b3803/poolserver/ap-app:latest}
@@ -35,10 +34,10 @@ TOKEN=$(JWT_SECRET="$JWT_SECRET" node -e "const jwt=require('jsonwebtoken'),cryp
 MANIFEST=$(mktemp)
 sed -e "s|__AP_WORKER_TOKEN__|${TOKEN}|" -e "s|__WORKER_CPU__|${WORKER_CPU}|g" -e "s|__WORKER_REPLICAS__|${WORKER_REPLICAS}|" \
     -e "s|__AP_JWT_SECRET__|${JWT_SECRET}|" \
-    -e "s|__REUSE_SANDBOX__|${REUSE_SANDBOX}|" -e "s|__CLEAN_CACHE__|${CLEAN_CACHE}|" \
+    -e "s|__REUSE_SANDBOX__|${REUSE_SANDBOX}|" \
     -e "s|__APP_REPLICAS__|${APP_REPLICAS}|" -e "s|__APP_CPU__|${APP_CPU}|" \
     -e "s|__APP_IMAGE__|${APP_IMAGE}|" "$ROOT/benchmark/k8s-sandbox.yaml" > "$MANIFEST"
-echo "Worker: ${WORKER_REPLICAS}x @ ${WORKER_CPU} | App: ${APP_REPLICAS}x @ ${APP_CPU} | REUSE=${REUSE_SANDBOX} | clean-cache=${CLEAN_CACHE}"
+echo "Worker: ${WORKER_REPLICAS}x @ ${WORKER_CPU} | App: ${APP_REPLICAS}x @ ${APP_CPU} | REUSE=${REUSE_SANDBOX}"
 
 echo "=== Applying manifest ==="
 kubectl apply -f "$MANIFEST"
@@ -144,7 +143,7 @@ kubectl logs -l app=worker --tail=-1 --prefix=false --since=20m 2>/dev/null \
 
 echo ""
 echo "=== SUMMARY ==="
-echo "Model: worker-is-the-sandbox on GKE | $CLUSTER | workers=${WORKERS_READY} @ ${WORKER_CPU}/1G | concurrency=1 | REUSE_SANDBOX=${REUSE_SANDBOX} | clean-cache=${CLEAN_CACHE} | SANDBOX_CODE_ONLY | S3=GCS-europe-west1+signed-urls"
+echo "Model: worker-is-the-sandbox on GKE | $CLUSTER | workers=${WORKERS_READY} @ ${WORKER_CPU}/1G | concurrency=1 | REUSE_SANDBOX=${REUSE_SANDBOX} | SANDBOX_CODE_ONLY | S3=GCS-europe-west1+signed-urls"
 echo "Cold boot latency : ${COLD_MS} ms"
 echo -n "Warm throughput   : "; awk '/Requests\/sec/{print $2" req/s"}' /tmp/hey-gke.txt
 awk '/Total:|Average:|Slowest:|Fastest:/{print "  "$0}' /tmp/hey-gke.txt

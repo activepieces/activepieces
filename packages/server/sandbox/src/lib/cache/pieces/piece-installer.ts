@@ -28,15 +28,6 @@ export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () 
     },
 })
 
-// Forget the in-memory "piece already installed" markers so a wiped-from-disk piece is reinstalled.
-// Pairs with cleanExceptEngine() under AP_SANDBOX_CLEAN_CACHE — otherwise a stale marker skips the
-// reinstall of pieces whose node_modules were just deleted.
-export function clearPieceMemoryCache(): void {
-    for (const key of Object.keys(usedPiecesMemoryCache)) {
-        usedPiecesMemoryCache[key] = false
-    }
-}
-
 function getCustomPiecesPath(basePath: string, platformId: string, getSettings: () => SandboxSettings): string {
     const paths = cacheUtils(basePath)
     switch (getSettings().EXECUTION_MODE) {

@@ -123,8 +123,6 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
-        cleanCacheAfterRun: system.get(WorkerSystemProp.SANDBOX_CLEAN_CACHE) === 'true',
-        log: logger,
     })
 
     logger.info({ concurrency }, 'Starting poll loops')

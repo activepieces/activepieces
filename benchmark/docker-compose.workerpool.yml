@@ -1,7 +1,7 @@
 # Worker-is-the-sandbox benchmark (ADR 0003): N worker replicas, each its own container capped at
 # 0.5 CPU / 1 GB, concurrency 1, running the engine in-process (SANDBOX_CODE_ONLY). REUSE_SANDBOX=false
-# + AP_SANDBOX_CLEAN_CACHE=true make every run cold (box invalidated + disk cache wiped after each
-# execute), so this isolates worst-case per-run provisioning. Scale = WORKER_REPLICAS.
+# invalidates the box after each execute, so this isolates worst-case per-run provisioning. Scale =
+# WORKER_REPLICAS.
 #
 # Run with the runner (builds images, enforces caps, measures):  benchmark/run-workerpool.sh
 # The deploy.resources caps only bite under `docker compose --compatibility up` (the runner does this).
@@ -14,7 +14,6 @@ services:
     environment:
       AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
       AP_REUSE_SANDBOX: 'false'
-      AP_SANDBOX_CLEAN_CACHE: 'true'
       AP_WORKER_CONCURRENCY: '1'
       # The all-in-one image's entrypoint auto-generates this from AP_JWT_SECRET; the minimal worker
       # image has no entrypoint, so the runner pre-generates and injects it.
