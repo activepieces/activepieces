@@ -957,9 +957,8 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
             execute: async (toolInput, options) => {
                 const displayName = toolInput.title ?? 'Send email'
 
-                // A model can be steered by injected content (a fetched page, a tool result) into
-                // emailing data to an attacker. Require explicit user approval whenever a recipient
-                // isn't the user's own address, so external sends can't happen behind their back.
+                // Require user approval for any non-self recipient — injected content (a fetched page
+                // or tool result) could otherwise steer the model into emailing data to an attacker.
                 const hasExternalRecipient = toolInput.to.some((email) => email.toLowerCase().trim() !== normalizedSelf)
                 if (hasExternalRecipient) {
                     const previewData: ActionPreviewEvent = {
@@ -985,8 +984,6 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
                     }
                 }
 
-                // Pass the gate id so the server can independently verify the approval for external
-                // recipients — the worker-side wait above is the UX; the server check is the boundary.
                 const { data: result, error } = await tryCatch(() => sendEmail({ to: toolInput.to, subject: toolInput.subject, body: toolInput.body, gateId: options.toolCallId }))
                 const sent = isNil(error) && result?.sent === true
                 const message = isNil(error)
