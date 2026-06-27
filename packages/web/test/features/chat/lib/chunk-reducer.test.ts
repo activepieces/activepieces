@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { UIMessageChunk } from 'ai';
 import { describe, expect, it } from 'vitest';
 
