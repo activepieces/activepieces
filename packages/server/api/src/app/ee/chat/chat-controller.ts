@@ -13,6 +13,7 @@ import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
+import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -140,10 +141,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
-        rejectedPromiseHandler(chatRolloutService.recordLanding({
-            userId: request.principal.id,
+        chatAnalyticsTelemetry(request.log).sendLandingEvent({
             platformId: request.principal.platform.id,
-        }), request.log)
+            userId: request.principal.id,
+        })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 

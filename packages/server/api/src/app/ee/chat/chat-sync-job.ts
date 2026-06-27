@@ -13,6 +13,7 @@ import { chatHelpers } from './chat-helpers'
 import { chatHistory } from './history/chat-history'
 
 const CONSOLE_TELEMETRY_URL = 'https://console.activepieces.com/api/chat-analytics/external/sync'
+const CONSOLE_LANDING_URL = 'https://console.activepieces.com/api/chat-analytics/external/landing'
 const BATCH_SIZE = 50
 const REQUEST_TIMEOUT_MS = 30000
 
@@ -26,6 +27,15 @@ export const chatAnalyticsTelemetry = (log: FastifyBaseLogger) => ({
         conversation: ChatConversation
     }): void {
         rejectedPromiseHandler(emitMessageBillingEvent({ conversation, log }), log)
+    },
+    // Real-time chat-page landing, same channel/auth as sendConversationUpdate (cloud-only,
+    // license-key Bearer, fire-and-forget). Console derives "chatted" from synced conversations;
+    // this supplies the "landed" half of the funnel.
+    sendLandingEvent({ platformId, userId }: {
+        platformId: string
+        userId: string
+    }): void {
+        rejectedPromiseHandler(pushLanding({ platformId, userId, log }), log)
     },
 })
 
@@ -298,6 +308,37 @@ function countToolCallsInLatestTurn(messages: PersistedChatMessage[]): number {
     const lastUserIndex = messages.map((message) => message.role).lastIndexOf(PersistedChatRole.USER)
     const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
     return turn.reduce((sum, message) => sum + message.parts.filter((part) => part.type === PersistedChatPartType.TOOL_CALL).length, 0)
+}
+
+async function pushLanding({ platformId, userId, log }: {
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<void> {
+    if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
+        return
+    }
+    const licenseKeyByPlatform = await resolveLicenseKeysByPlatform({ platformIds: [platformId] })
+    const licenseKey = licenseKeyByPlatform.get(platformId)
+    if (isNil(licenseKey)) {
+        return
+    }
+    const result = await tryCatch(() => fetch(CONSOLE_LANDING_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${licenseKey}`,
+        },
+        body: JSON.stringify({ platformId, userId }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    }))
+    if (result.error) {
+        log.error({ error: result.error }, 'Failed to push chat landing telemetry')
+        return
+    }
+    if (!result.data.ok) {
+        log.error({ status: result.data.status }, 'Failed to push chat landing telemetry: non-2xx response')
+    }
 }
 
 async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
