@@ -1,5 +1,5 @@
 import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
-import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, TriggerRunStatus, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
@@ -42,6 +42,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
         const flowVersion: FlowVersion = resolved.flowVersion
+        const pieceName = (flowVersion.trigger as PieceTrigger).settings.pieceName
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
@@ -139,6 +140,18 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     failParentOnFailure: data.failParentOnFailure,
                 })
             }
+            await ctx.apiClient.saveTriggerRunStats({
+                platformId: data.platformId,
+                pieceName,
+                status: TriggerRunStatus.COMPLETED,
+            })
+        }
+        else {
+            await ctx.apiClient.saveTriggerRunStats({
+                platformId: data.platformId,
+                pieceName,
+                status: TriggerRunStatus.FAILED,
+            })
         }
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }
