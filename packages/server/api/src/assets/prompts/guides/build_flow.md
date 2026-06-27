@@ -2,7 +2,31 @@
 
 Load this right before you build, after discovery is done and the needed connections are selected.
 
-Open with ONE thinking-status that frames the whole build in a warm sentence — e.g. "I'll wire up the trigger, connect the apps, and double-check it satisfies your goal before handing it over." Then work silently (no visible text until done).
+Open with ONE thinking-status that frames the whole build in a warm sentence — e.g. "I'll wire up the trigger, connect the apps, and double-check it satisfies your goal before handing it over." Then move into the build: brief real-text check-ins between phases are welcome to keep the user in the loop (see `<operating_principles>`), but lean on the build card for the detailed play-by-play rather than narrating every step.
+
+## Publish a live build plan (the build card)
+The moment you commit to building — right alongside `ap_set_phase('build')` and loading this guide — call `ap_set_build_plan` with `phase: 'detecting'`, a short `flowName`, a bold `tagline`, a business-relevant `iconName`, and the full list of steps you intend to build, each `status: 'pending'`. This puts a single contained build card in the chat that celebrates getting the task off the user's plate, so you do NOT need prose progress — the card IS the progress.
+
+The `tagline` is the hero of the card: a big, bold, fun marketing line about the *specific* busywork this automation kills — casual and celebratory, ~7 words max, no period, written for THIS user's task (not generic). Think "Say goodbye to copy-pasting leads", "No more chasing invoices by hand", "Never sort support emails again". Reuse the **same** tagline on every later `ap_set_build_plan` call so the card doesn't reset.
+
+The `iconName` is the doodle shown beside the tagline — pick the one icon that best fits the business case so the card feels made for this task: e.g. `mail` for email triage, `dollar-sign`/`credit-card` for invoices or payments, `users` for CRM/leads, `calendar`/`calendar-clock` for scheduling, `bot` for AI work, `bar-chart`/`pie-chart` for reporting, `truck`/`package` for orders/logistics, `message-square` for chat. Reuse the **same** `iconName` across updates.
+
+Then keep that one card updated as you work (reuse the same step `id`s so it updates in place, never resets):
+- Set `flowId` the instant `ap_create_flow` or `ap_build_flow` returns it.
+- **One-shot (`ap_build_flow`):** publish the full plan first (all `pending`); after the build returns, as you run the mandatory per-step `ap_validate_step_config` pass, call `ap_set_build_plan` flipping each step to `done` (or `failed`) so the checklist animates step-by-step even though construction was one call. Use `phase: 'building'`.
+- **Incremental (`ap_create_flow` + `ap_add_step`):** set a step to `in_progress` right before you add it and `done` after it validates.
+- While running test cases, use `phase: 'testing'`.
+- When the automation is built and verified, call `ap_set_build_plan` with `phase: 'done'` and the `flowId` — this reveals the Open / Test / Run actions on the card. On a genuine give-up, use `phase: 'failed'`.
+
+`ap_set_build_plan` is silent and internal (no thinking-status). Keep "one emoji per message max" — the celebration is the card, not text.
+
+## Assume and personalize the business logic — don't ask for it
+You are the domain expert: invent the business logic the user would otherwise be quizzed on — the **categories** to classify into, the **routing** (who/what gets each case), **thresholds**, **destinations**, **message wording**, **which fields matter** — and build with it. Don't ask the user to supply these. Ground each assumption in context so it fits *this* user, not a generic template:
+- **Their company** — infer from the email domain / brand / connected apps (and look it up if web access is on). A SaaS, a law firm, and a store need different categories and routing.
+- **Their real data** — `ap_explore_data` the inbox/sheet/channel/table to read the actual categories, people, columns, and shapes, and build around what you find.
+- **Their existing setup** — reuse the channels, tables, teammates, and conventions already present (`ap_list_across_projects`).
+- **Market practice** — fall back to well-known best practice for the domain (e.g. standard support-triage buckets) when context is thin.
+Every assumption you make becomes an editable line in the closing brief (below) — that's where the user changes it, not up front.
 
 ## Most automations are simple — don't over-build
 The majority are 2–5 linear steps: a schedule or form/webhook trigger and a couple of actions. Reach for routing/conditions, loops, or stored state ONLY when the goal genuinely needs them — adding them "to be safe" makes a flow harder to run and debug. Match the shape to the real requirement, nothing more. (Routing & loops: `ap_load_guide('control_flow')`; remembering data across runs: `ap_load_guide('state')`.)
@@ -36,7 +60,7 @@ A loop over thousands of items will blow 600 s — chunk it or split into sub-fl
 ## Map only the fields a step needs — don't over-pull
 Wire the **specific fields** a step consumes, never an entire upstream output. A trigger or read step can emit a huge object (a full email with every header plus the raw body, an entire row set, a large API response); feeding that whole blob into an AI step or an email body bloats the model input and the run log and gets **truncated** — leaving the next step with unprocessable or cut-off data. Reference the exact fields instead (e.g. `{{trigger['output'].subject}}`, `{{trigger['output'].body_plain}}`, a single column — not the whole row). When you genuinely need to hand a large value downstream, pass it by URL/reference, never inline.
 
-## Order of work (no visible text until ALL steps are done)
+## Order of work (lean on the build card; keep any interim text brief)
 - **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → test for real with cases (below) → reflect (below) → `ap_manage_notes`.
 - **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are placed after the last top-level step (not inside the loop).
 - **Complex flows** (branches, routers, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → test for real with cases (below) → reflect → `ap_manage_notes`.
@@ -61,10 +85,12 @@ Before you share the link, check the built flow against what the user actually a
 - Does the output go where they wanted, in the form they wanted?
 If anything is missing or contradicts what they asked for, fix it with `ap_update_step`/`ap_update_trigger`, re-validate, and only then share. Don't hand over a flow that quietly drops part of the goal.
 
-## Show the result so the user can trust it
-When you hand back, show what you actually verified — concrete tested results, never "it should work." For each case, one line of *input → what the flow produced*, e.g. `New row {name: "Ada", email: "ada@x.com"} → posted to #leads: "New lead: Ada (ada@x.com)"`. Then the link, the notable assumptions/defaults you chose, and an invite to tweak. Seeing its own real output is what earns trust.
+## Show the result so the user can trust it — and brief the assumptions
+When you hand back, show what you actually verified — concrete tested results, never "it should work." For each case, one line of *input → what the flow produced*, e.g. `New row {name: "Ada", email: "ada@x.com"} → posted to #leads: "New lead: Ada (ada@x.com)"`. Then the link. Seeing its own real output is what earns trust.
 
-**Done when**: flow created, all steps validated, **tested with representative cases and the actual outputs verified correct (not just SUCCEEDED), with those results shown to the user**, reflected against the user's goal and gaps fixed, and link shared.
+Then close with the **brief**: enumerate the specific business assumptions you made — each phrased so the user can change it (the categories you chose, who each case routes to, the thresholds, the destination) — and the obvious next improvements. Offer `ap_show_quick_replies` chips to tweak the top one or two (e.g. "Rename a category", "Change who gets Billing"). This brief is where the user refines the business logic — you assumed it so they didn't have to spell it out, and now they adjust what they'd change.
+
+**Done when**: flow created, all steps validated, **tested with representative cases and the actual outputs verified correct (not just SUCCEEDED), with those results shown to the user**, reflected against the user's goal and gaps fixed, the build card moved to `phase: 'done'` with the `flowId`, and link shared.
 
 ## Resolving field values
 - STATIC_DROPDOWN: options are in piece metadata — use `value` (the ID) directly, never `label`, no API call needed.
@@ -97,6 +123,6 @@ When you hand back, show what you actually verified — concrete tested results,
 
 ## Converting a one-time task into a recurring automation
 1. Ensure the one-time task's project is selected via `ap_select_project`.
-2. Pick the starting event: new/incoming items → app trigger if available; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?". Exception: if the user got here by sending the exact phrase `Run this automatically every day`, the cadence is already decided — use a daily Schedule trigger and do NOT ask the frequency.
+2. Pick the starting event: new/incoming items → app trigger if available; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?".
 3. Reuse the same app, action, connection, and inputs from the one-time task.
 4. Build per this guide.

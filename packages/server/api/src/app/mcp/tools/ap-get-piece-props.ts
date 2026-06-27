@@ -1,5 +1,5 @@
-import { isNil, isObject } from '@activepieces/core-utils'
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { PiecePropertyMap } from '@activepieces/pieces-framework'
 import { AppConnectionStatus, EngineResponse, EngineResponseStatus, FlowVersion, McpToolDefinition, ProjectScopedMcpServer, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -8,7 +8,8 @@ import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { getPiecePackageWithoutArchive } from '../../pieces/metadata/piece-metadata-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
-import { mcpUtils, PropSummary } from './mcp-utils'
+import { mcpUtils, PropertyResolutionResult, PropSummary } from './mcp-utils'
+import { pieceExpertise } from './piece-expertise'
 
 export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
@@ -72,6 +73,9 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     })
                 }
 
+                const requiredInputs = mcpUtils.buildRequiredInputs(props)
+                const exampleInput = mcpUtils.buildExampleInput(props)
+
                 const aiMetadata = component.aiMetadata
                 const declaredOutputFields = component.outputSchema?.fields
                     ? mcpUtils.flattenOutputSchemaFields(component.outputSchema.fields)
@@ -97,10 +101,14 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     displayName: component.displayName,
                     description: component.description,
                     requiresAuth,
+                    cardinality: mcpUtils.classifyActionCardinality(component.name),
+                    ...spreadIfDefined('expertNotes', pieceExpertise.getNotes({ pieceName: normalized, actionName: component.name })),
                     ...(aiMetadata && { aiMetadata }),
                     ...(component.outputSchema && { outputSchema: component.outputSchema }),
                     ...(outputFields.length > 0 && { outputFields, outputFieldsSource }),
                     props,
+                    requiredInputs,
+                    exampleInput,
                 }
 
                 const descLine = component.description ? `\nDescription: ${component.description}\n` : ''
@@ -114,8 +122,12 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const outputSection = outputFields.length > 0
                     ? `\n\n${outputHeader} — reference them directly as {{<stepName>['output'].<path>}}:\n${outputFields.map(p => `- ${p}`).join('\n')}`
                     : ''
+                const requiredLine = requiredInputs.provideNow.length > 0 || requiredInputs.needsResolution.length > 0
+                    ? `\nRequired now: ${requiredInputs.provideNow.join(', ') || '(none)'}.${requiredInputs.needsResolution.length > 0 ? ` Resolve first (ap_resolve_property_options): ${requiredInputs.needsResolution.join(', ')}.` : ''}`
+                    : '\nNo required inputs.'
+                const exampleSection = `\n\n🧪 Example input (fill the placeholders, then pass to ap_execute_action):\n${JSON.stringify(exampleInput, null, 2)}`
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}${aiHintLine}${idempotentLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}${aiHintLine}${idempotentLine}${requiredLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}${exampleSection}` }],
                     structuredContent: structured,
                 }
             }
@@ -142,50 +154,40 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
     ])
     const flowVersion: FlowVersion | undefined = flow?.version
 
-    const input: Record<string, unknown> = {
-        ...providedInput,
-        ...(auth ? { auth: `{{connections['${auth}']}}` } : {}),
+    // Resolve the full dependent chain in one pass (base → table → fields), seeding each result so
+    // dependent dropdowns unlock — instead of one round-trip per field. The engine call is the
+    // injected resolveOne; the loop itself lives in mcpUtils (unit-tested without the engine).
+    const resolveOne = async ({ prop, input }: { prop: { name: string }, input: Record<string, unknown> }): Promise<PropertyResolutionResult> => {
+        const engineInput: Record<string, unknown> = { ...input, ...(auth ? { auth: `{{connections['${auth}']}}` } : {}) }
+        const { data: result, error } = await tryCatch(() => withTimeout({
+            promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
+                options: Array<{ label: string, value: unknown }> | PiecePropertyMap
+                disabled?: boolean
+            }>>({
+                jobType: WorkerJobType.EXECUTE_PROPERTY,
+                platformId,
+                projectId,
+                flowVersion,
+                propertyName: prop.name,
+                actionOrTriggerName,
+                input: engineInput,
+                sampleData,
+                searchValue: undefined,
+                piece: piecePackage,
+            }, log),
+            ms: PROPERTY_TIMEOUT_MS,
+        }))
+        if (error || result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
+            return { status: 'failed', message: error instanceof Error ? error.message : 'Could not resolve options' }
+        }
+        const { options } = result.response
+        if (isObject(options) && !Array.isArray(options)) {
+            return { status: 'dynamic', props: options }
+        }
+        return { status: 'options', options: options.map((o) => ({ label: o.label, value: o.value })) }
     }
 
-    await Promise.all(resolvableProps.map(async (prop) => {
-        try {
-            const result = await withTimeout({
-                promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
-                    options: Array<{ label: string, value: unknown }> | PiecePropertyMap
-                    disabled?: boolean
-                }>>({
-                    jobType: WorkerJobType.EXECUTE_PROPERTY,
-                    platformId,
-                    projectId,
-                    flowVersion,
-                    propertyName: prop.name,
-                    actionOrTriggerName,
-                    input,
-                    sampleData,
-                    searchValue: undefined,
-                    piece: piecePackage,
-                }, log),
-                ms: PROPERTY_TIMEOUT_MS,
-            })
-
-            if (result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
-                return
-            }
-
-            const { options } = result.response
-            if (prop.type === PropertyType.DYNAMIC && isObject(options) && !Array.isArray(options)) {
-                prop.dynamicFields = mcpUtils.buildPropSummaries(options)
-                prop.note = undefined
-            }
-            else if (Array.isArray(options)) {
-                prop.options = options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
-                prop.note = undefined
-            }
-        }
-        catch (err) {
-            log.warn({ error: err, propertyName: prop.name }, 'Failed to resolve property options — dropdown will be empty. Try calling ap_get_piece_props again with auth.')
-        }
-    }))
+    await mcpUtils.resolveTransitively({ props, componentProps, auth, providedInput, resolveOne })
 }
 
 async function discoverAvailableConnections({ pieceName, projectId, platformId, log }: {

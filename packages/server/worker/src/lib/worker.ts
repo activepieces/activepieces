@@ -3,7 +3,7 @@ import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -71,6 +71,14 @@ export const worker = {
             connectionGeneration++
             polling = false
             logger.warn({ reason }, 'Disconnected from API server')
+            // Socket.IO does NOT auto-reconnect when the server initiates the disconnect
+            // (reason 'io server disconnect' — e.g. the API process restarts/hot-reloads).
+            // Without a manual reconnect the worker stays dead and silently stops consuming
+            // jobs. 'io client disconnect' is our own shutdown, so leave that alone; every
+            // other reason already triggers Socket.IO's built-in reconnection.
+            if (reason === 'io server disconnect') {
+                socket?.connect()
+            }
         })
 
         socket.on('connect_error', (error) => {
@@ -103,12 +111,6 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
 
     const generation = connectionGeneration
 
-    if (runtime) {
-        logger.info('Shutting down old runtime before creating a new one')
-        await runtime.shutdown(logger)
-        runtime = null
-    }
-
     // The destination is one box per worker (concurrency 1), scaling out with replicas (ADR 0003).
     // Transitional compatibility mode (ADR 0004): honor AP_WORKER_CONCURRENCY=N by running N poll
     // loops over N in-process boxes, each routed by its workerIndex. The default (5, main's historical
@@ -120,15 +122,19 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    runtime = createSandboxRuntime({
+    // Reuse the runtime across reconnects instead of shutting it down and recreating it: the old
+    // shutdown-before-recreate path deadlocked when a prior-generation job was still in-flight on
+    // that runtime (e.g. a long chat turn) — the await never resolved, polling never restarted, and
+    // the worker silently stopped consuming jobs after any transient Socket.IO disconnect.
+    const activeRuntime = runtime ?? createSandboxRuntime({
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
     })
+    runtime = activeRuntime
 
     logger.info({ concurrency }, 'Starting poll loops')
 
-    const activeRuntime = runtime
     await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
         pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
     ))
@@ -214,6 +220,9 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
 async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
     const rawData = job.jobData
     const jobData = JobData.parse(rawData)
+    // Chat jobs reuse `runId` as the per-message chat run id (NOT a flow run);
+    // map it to the `run`/`conversation` groups so chat logs correlate correctly.
+    const isChatJob = jobData.jobType === WorkerJobType.EXECUTE_CHAT_AGENT
     const jobLogger = createLogger({
         event: 'job.execute',
         job: { id: job.jobId, type: jobData.jobType },
@@ -221,7 +230,9 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('project', 'projectId' in jobData && jobData.projectId != null ? { id: jobData.projectId } : undefined),
         ...spreadIfDefined('platform', 'platformId' in jobData ? { id: jobData.platformId } : undefined),
         ...spreadIfDefined('flow', 'flowId' in jobData ? { id: jobData.flowId } : undefined),
-        ...spreadIfDefined('flowRun', 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('flowRun', !isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('run', isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
     })
     return wideEvent.run({

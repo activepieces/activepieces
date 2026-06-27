@@ -1,4 +1,4 @@
-import { ApEdition, ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
+import { ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication.service'
 import { FlagEntity } from '../../flags/flag.entity'
 import { system } from '../../helper/system/system'
@@ -12,8 +12,7 @@ const log = system.globalLogger()
 
 const currentEnvIsNotDev = (): boolean => {
     const env = system.get(AppSystemProp.ENVIRONMENT)
-    const edition = system.get(AppSystemProp.EDITION)
-    return env !== ApEnvironment.DEVELOPMENT  || edition === ApEdition.ENTERPRISE
+    return env !== ApEnvironment.DEVELOPMENT
 }
 
 const devDataAlreadySeeded = async (): Promise<boolean> => {
@@ -39,7 +38,7 @@ const seedDevUser = async (): Promise<void> => {
     const response = await authenticationService(log).signUp({
         email: DEV_EMAIL,
         password: DEV_PASSWORD,
-        firstName: 'Dev',
+        firstName: 'Ash',
         lastName: 'User',
         trackEvents: false,
         platformId: null,
