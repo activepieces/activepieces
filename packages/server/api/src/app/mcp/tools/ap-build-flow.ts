@@ -1,7 +1,11 @@
-import { Permission } from '@activepieces/core-utils'
+import { parseToJsonIfPossible, Permission } from '@activepieces/core-utils'
 import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+
+function parseJsonStringArg(value: unknown): unknown {
+    return typeof value === 'string' ? parseToJsonIfPossible(value) : value
+}
 import { flowService } from '../../flows/flow/flow.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { projectService } from '../../project/project-service'
@@ -45,13 +49,13 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
         description: 'Create a NEW flow from scratch in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP. ROUTER steps are NOT supported here (branches and conditions cannot be configured in one call) — build the rest of the flow first, then add the router with ap_add_step and configure branches with ap_add_branch / ap_update_branch. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead.',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
-            trigger: z.object({
+            trigger: z.preprocess(parseJsonStringArg, z.object({
                 pieceName: z.string().describe('Trigger piece name (e.g. "@activepieces/piece-webhook")'),
                 triggerName: z.string().describe('Trigger name (e.g. "catch_webhook")'),
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
-            }).describe('Trigger configuration'),
-            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.'),
+            }).describe('Trigger configuration')),
+            steps: z.preprocess(parseJsonStringArg, z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.')),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
