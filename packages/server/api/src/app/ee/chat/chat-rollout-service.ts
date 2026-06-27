@@ -47,8 +47,9 @@ export const chatRolloutService = {
         if (!isCloud()) {
             return false
         }
-        const row = await rolloutRepo().findOne({ where: { userId, chattedAt: Not(IsNull()) }, select: ['id'] })
-        return !isNil(row)
+        // Pure lookup on the unique userId index (at most one row), then read chattedAt.
+        const row = await rolloutRepo().findOne({ where: { userId }, select: ['chattedAt'] })
+        return !isNil(row) && !isNil(row.chattedAt)
     },
 
     async recordLanding({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
@@ -81,13 +82,12 @@ export const chatRolloutService = {
 
     async getFunnelAggregate(): Promise<ChatFunnelAggregate> {
         const cap = getCap()
-        const raw = await rolloutRepo()
-            .createQueryBuilder('r')
-            .select('COUNT(*) FILTER (WHERE r."landedAt" IS NOT NULL)', 'landed')
-            .addSelect('COUNT(*) FILTER (WHERE r."chattedAt" IS NOT NULL)', 'chatted')
-            .getRawOne<{ landed: string, chatted: string }>()
-        const landed = Number(raw?.landed ?? 0)
-        const chatted = Number(raw?.chatted ?? 0)
+        // Two index-backed counts (partial indexes on landedAt / chattedAt) rather than a
+        // single full-table FILTER aggregate.
+        const [landed, chatted] = await Promise.all([
+            rolloutRepo().count({ where: { landedAt: Not(IsNull()) } }),
+            rolloutRepo().count({ where: { chattedAt: Not(IsNull()) } }),
+        ])
         return { landed, chatted, cap, closed: chatted >= cap }
     },
 }

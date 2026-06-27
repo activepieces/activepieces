@@ -26,6 +26,9 @@ export class AddChatRolloutUserTable1799000000000 implements Migration {
             CREATE INDEX "idx_chat_rollout_user_chatted" ON "chat_rollout_user" ("chattedAt") WHERE "chattedAt" IS NOT NULL
         `)
         await queryRunner.query(`
+            CREATE INDEX "idx_chat_rollout_user_landed" ON "chat_rollout_user" ("landedAt") WHERE "landedAt" IS NOT NULL
+        `)
+        await queryRunner.query(`
             ALTER TABLE "chat_rollout_user"
             ADD CONSTRAINT "fk_chat_rollout_user_user_id" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
@@ -41,6 +44,9 @@ export class AddChatRolloutUserTable1799000000000 implements Migration {
         `)
         await queryRunner.query(`
             ALTER TABLE "chat_rollout_user" DROP CONSTRAINT "fk_chat_rollout_user_user_id"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "idx_chat_rollout_user_landed"
         `)
         await queryRunner.query(`
             DROP INDEX "idx_chat_rollout_user_chatted"

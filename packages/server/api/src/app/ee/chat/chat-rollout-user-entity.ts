@@ -43,5 +43,10 @@ export const ChatRolloutUserEntity = new EntitySchema<ChatRolloutUser>({
             columns: ['chattedAt'],
             where: '"chattedAt" IS NOT NULL',
         },
+        {
+            name: 'idx_chat_rollout_user_landed',
+            columns: ['landedAt'],
+            where: '"landedAt" IS NOT NULL',
+        },
     ],
 })
