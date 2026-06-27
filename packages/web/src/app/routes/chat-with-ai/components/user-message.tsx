@@ -1,9 +1,10 @@
 import { ChatMention, ChatMentionType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Blocks, Paperclip, Table2, Workflow } from 'lucide-react';
+import { ArrowUpRight, Blocks, Paperclip, Table2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
+import { VerticalFlowIcon } from '@/components/icons/vertical-flow';
 import {
   Message,
   MessageAction,
@@ -11,6 +12,8 @@ import {
   MessageContent as PromptKitMessageContent,
 } from '@/components/prompt-kit/message';
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
+import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
@@ -19,18 +22,64 @@ import { CopyIconButton } from './copy-icon-button';
 import { mentionSerialization } from './mention-composer/mention-serialization';
 
 function MentionChip({ mention }: { mention: ChatMention }) {
+  const openNewWindow = useNewWindow();
   const Icon =
     mention.type === ChatMentionType.FLOW
-      ? Workflow
+      ? VerticalFlowIcon
       : mention.type === ChatMentionType.TABLE
       ? Table2
       : Blocks;
+
+  const route = mentionRoute(mention);
+  const baseClass =
+    'mx-px inline-flex items-center gap-1 rounded-[5px] bg-foreground/[0.07] px-1.5 py-px font-medium text-foreground align-baseline';
+
+  if (!route) {
+    return (
+      <span className={baseClass}>
+        <Icon className="size-3 shrink-0 text-muted-foreground" />
+        {mention.label}
+      </span>
+    );
+  }
+
+  const open = () => openNewWindow(route);
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-px font-medium text-primary align-baseline">
-      <Icon className="size-3 shrink-0" />
+    <span
+      role="button"
+      tabIndex={0}
+      title={t('Open')}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open();
+        }
+      }}
+      className={cn(
+        baseClass,
+        'group/chip cursor-pointer transition-colors hover:bg-foreground/[0.12]',
+      )}
+    >
+      <Icon className="size-3 shrink-0 text-muted-foreground" />
       {mention.label}
+      <ArrowUpRight className="size-3 shrink-0 text-muted-foreground/60 transition-colors group-hover/chip:text-foreground" />
     </span>
   );
+}
+
+function mentionRoute(mention: ChatMention): string | null {
+  if (mention.type === ChatMentionType.FLOW) {
+    return authenticationSession.appendProjectRoutePrefix(
+      `/flows/${mention.id}`,
+    );
+  }
+  if (mention.type === ChatMentionType.TABLE) {
+    return authenticationSession.appendProjectRoutePrefix(
+      `/tables/${mention.id}`,
+    );
+  }
+  return null;
 }
 
 function UserMessageBody({ content }: { content: string }) {

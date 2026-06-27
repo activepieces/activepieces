@@ -16,7 +16,10 @@ import {
 
 import { cn } from '@/lib/utils';
 
+import { emojiSuggestion } from '../emoji/emoji-suggestion';
+
 import { mentionExtension } from './mention-extension';
+import { MentionCommandAttrs } from './mention-picker';
 import { mentionSerialization } from './mention-serialization';
 import { mentionSuggestion } from './mention-suggestion';
 
@@ -49,6 +52,11 @@ export const ChatMentionEditor = forwardRef<
           },
         }),
       ),
+      emojiSuggestion.buildEmojiSuggestionExtension({
+        onOpenChange: (open) => {
+          suggestionOpenRef.current = open;
+        },
+      }),
     ],
     [placeholder],
   );
@@ -101,18 +109,34 @@ export const ChatMentionEditor = forwardRef<
     [editor],
   );
 
-  const triggerMention = useCallback(() => {
-    if (!editor || suggestionOpenRef.current) {
-      editor?.commands.focus('end');
-      return;
-    }
-    insertText('@');
-  }, [editor, insertText]);
+  const insertMentionAtCaret = useCallback(
+    (attrs: MentionCommandAttrs) => {
+      if (!editor) {
+        return;
+      }
+      editor
+        .chain()
+        .focus()
+        .insertContent([
+          { type: 'mention', attrs },
+          { type: 'text', text: ' ' },
+        ])
+        .run();
+    },
+    [editor],
+  );
+
+  const insertEmoji = useCallback(
+    (emoji: string) => {
+      editor?.chain().focus().insertContent(emoji).run();
+    },
+    [editor],
+  );
 
   useImperativeHandle(
     ref,
-    () => ({ clear, focus, insertText, triggerMention }),
-    [clear, focus, insertText, triggerMention],
+    () => ({ clear, focus, insertText, insertMentionAtCaret, insertEmoji }),
+    [clear, focus, insertText, insertMentionAtCaret, insertEmoji],
   );
 
   return <EditorContent editor={editor} />;
@@ -129,7 +153,8 @@ export type ChatMentionEditorHandle = {
   clear: () => void;
   focus: () => void;
   insertText: (text: string) => void;
-  triggerMention: () => void;
+  insertMentionAtCaret: (attrs: MentionCommandAttrs) => void;
+  insertEmoji: (emoji: string) => void;
 };
 
 export type ChatMentionEditorProps = {

@@ -1,7 +1,6 @@
 import { ChatMentionType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Blocks, Table2, Workflow } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Blocks, Table2 } from 'lucide-react';
 import {
   forwardRef,
   useCallback,
@@ -12,6 +11,7 @@ import {
   useState,
 } from 'react';
 
+import { VerticalFlowIcon } from '@/components/icons/vertical-flow';
 import { cn } from '@/lib/utils';
 
 import { MentionPreviewPanel } from './mention-preview-panel';
@@ -30,7 +30,7 @@ const GROUP_LABEL: Record<ChatMentionType, string> = {
 };
 
 function groupIcon(type: ChatMentionType) {
-  if (type === ChatMentionType.FLOW) return Workflow;
+  if (type === ChatMentionType.FLOW) return VerticalFlowIcon;
   if (type === ChatMentionType.TABLE) return Table2;
   return Blocks;
 }
@@ -67,7 +67,7 @@ function HighlightedLabel({
 export const MentionPicker = forwardRef<
   MentionPickerHandle,
   MentionPickerProps
->(({ query, onCommand }, ref) => {
+>(({ query, onCommand, embedded = false }, ref) => {
   const { groups, isLoading } = mentionSearch.useMentionSearch(query);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<ChatMentionType>(GROUP_ORDER[0]);
@@ -178,9 +178,16 @@ export const MentionPicker = forwardRef<
   const empty = !isLoading && flatItems.length === 0;
 
   return (
-    <div className="flex h-[400px] w-[680px] max-w-[94vw] overflow-hidden rounded-2xl border bg-popover shadow-2xl">
-      <div className="flex w-[300px] shrink-0 flex-col">
-        <div className="relative flex items-center gap-1 px-3 pt-3">
+    <div
+      className={cn(
+        'flex h-[340px] max-w-[94vw] overflow-hidden',
+        embedded
+          ? 'w-full'
+          : 'w-[520px] rounded-2xl border bg-popover shadow-2xl',
+      )}
+    >
+      <div className="flex w-[240px] shrink-0 flex-col">
+        <div className="flex items-center gap-1 px-2 pb-2 pt-2.5">
           {GROUP_ORDER.map((type) => {
             const g = groups.find((gr) => gr.type === type);
             const count = g?.items.length ?? 0;
@@ -195,25 +202,19 @@ export const MentionPicker = forwardRef<
                   scrollToSection(type);
                 }}
                 className={cn(
-                  'relative rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors',
+                  'flex items-center gap-1 rounded-md px-1.5 py-1 text-xs transition-colors',
                   count === 0
-                    ? 'cursor-default text-muted-foreground/40'
+                    ? 'cursor-default text-muted-foreground/30'
                     : isActive
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground',
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground/70 hover:text-foreground',
                 )}
               >
                 {t(GROUP_LABEL[type])}
                 {count > 0 && (
-                  <span className="ml-1 text-[11px] text-muted-foreground">
+                  <span className="rounded-full bg-muted px-1 text-[10px] font-medium leading-[1.45] tabular-nums text-muted-foreground/80">
                     {count}
                   </span>
-                )}
-                {isActive && count > 0 && (
-                  <motion.div
-                    layoutId="mention-tab-underline"
-                    className="absolute inset-x-1.5 -bottom-px h-0.5 rounded-full bg-primary"
-                  />
                 )}
               </button>
             );
@@ -262,7 +263,7 @@ export const MentionPicker = forwardRef<
                       }}
                       type="button"
                       className={cn(
-                        'flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left text-[14px] transition-colors',
+                        'flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors',
                         isActive
                           ? 'bg-accent text-accent-foreground'
                           : 'hover:bg-accent/50',
@@ -297,11 +298,11 @@ MentionPicker.displayName = 'MentionPicker';
 function ItemIcon({ item, active }: { item: MentionItem; active: boolean }) {
   if (item.type === ChatMentionType.APP && item.logoUrl) {
     return (
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-lg border bg-background">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-md border bg-background">
         <img
           src={item.logoUrl}
           alt=""
-          className="size-4 object-contain"
+          className="size-3.5 object-contain"
           loading="lazy"
         />
       </span>
@@ -311,13 +312,13 @@ function ItemIcon({ item, active }: { item: MentionItem; active: boolean }) {
   return (
     <span
       className={cn(
-        'flex size-7 shrink-0 items-center justify-center rounded-lg border',
+        'flex size-6 shrink-0 items-center justify-center rounded-md border',
         active
           ? 'bg-primary/10 text-primary'
           : 'bg-muted/40 text-muted-foreground',
       )}
     >
-      <Icon className="size-4" />
+      <Icon className="size-3.5" />
     </span>
   );
 }
@@ -336,4 +337,5 @@ export type MentionPickerHandle = {
 export type MentionPickerProps = {
   query: string;
   onCommand: (attrs: MentionCommandAttrs) => void;
+  embedded?: boolean;
 };

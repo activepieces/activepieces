@@ -1,25 +1,22 @@
 import { ChatMentionType } from '@activepieces/shared';
 import { Mention, MentionOptions } from '@tiptap/extension-mention';
-import { Blocks, Table2, Workflow } from 'lucide-react';
-import { createElement } from 'react';
+import { Blocks, Table2 } from 'lucide-react';
+import { ComponentType, createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+
+import { VerticalFlowIcon } from '@/components/icons/vertical-flow';
 
 import { mentionSerialization, MentionDraft } from './mention-serialization';
 
 function iconMarkup(type: ChatMentionType): string {
-  const icon =
+  const icon: ComponentType<{ className?: string; size?: number }> =
     type === ChatMentionType.FLOW
-      ? Workflow
+      ? VerticalFlowIcon
       : type === ChatMentionType.TABLE
       ? Table2
       : Blocks;
   return renderToStaticMarkup(
-    createElement(icon, {
-      width: 13,
-      height: 13,
-      className: 'shrink-0',
-      'aria-hidden': true,
-    }),
+    createElement(icon, { size: 13, className: 'shrink-0' }),
   );
 }
 
@@ -30,7 +27,7 @@ function buildChipElement(attrs: Record<string, unknown>): HTMLElement {
 
   const chip = document.createElement('span');
   chip.className =
-    'ap-chat-mention inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-px text-[0.92em] font-medium text-primary align-baseline whitespace-nowrap';
+    'ap-chat-mention inline-flex items-center gap-1 rounded-[5px] bg-foreground/[0.07] px-1.5 py-px text-[0.92em] font-medium text-foreground align-baseline whitespace-nowrap';
   chip.contentEditable = 'false';
   chip.dataset.mentionType = typeof type === 'string' ? type : '';
   chip.dataset.entityId =
@@ -44,7 +41,7 @@ function buildChipElement(attrs: Record<string, unknown>): HTMLElement {
     chip.appendChild(img);
   } else if (isMentionType(type)) {
     const iconWrap = document.createElement('span');
-    iconWrap.className = 'inline-flex shrink-0';
+    iconWrap.className = 'inline-flex shrink-0 text-muted-foreground';
     iconWrap.innerHTML = iconMarkup(type);
     chip.appendChild(iconWrap);
   }

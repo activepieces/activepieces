@@ -10,7 +10,7 @@ import {
 } from './mention-picker';
 
 const POPUP_GAP = 8;
-const POPUP_WIDTH = 560;
+const POPUP_WIDTH = 520;
 
 function positionContainer(
   container: HTMLElement,

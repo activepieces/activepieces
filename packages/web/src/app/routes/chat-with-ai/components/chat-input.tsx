@@ -1,6 +1,6 @@
 import { ChatMention } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowUp, AtSign, Mic, Paperclip, Square, X } from 'lucide-react';
+import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -19,11 +19,13 @@ import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
 
+import { EmojiButtonPopover } from './emoji/emoji-picker-popover';
 import {
   ChatMentionEditor,
   ChatMentionEditorHandle,
   ChatMentionEditorValue,
 } from './mention-composer/chat-mention-editor';
+import { MentionButtonPopover } from './mention-composer/mention-button-popover';
 import { mentionSearch } from './mention-composer/use-mention-search';
 
 export function ChatInput({
@@ -184,7 +186,8 @@ export function ChatInput({
             ref={editorRef}
             autoFocus
             placeholder={
-              placeholder ?? t('Tell me what you need... (@ to mention)')
+              placeholder ??
+              t('Tell me what you need... (@ to mention, : for emoji)')
             }
             onChange={handleEditorChange}
             onSubmit={handleSubmit}
@@ -200,19 +203,10 @@ export function ChatInput({
                 </div>
               </FileUploadTrigger>
             </PromptInputAction>
-            <PromptInputAction tooltip={t('Mention a flow, table, or app')}>
-              <button
-                type="button"
-                onMouseEnter={prefetchMentions}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  editorRef.current?.triggerMention();
-                }}
-                className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <AtSign className="size-4" />
-              </button>
-            </PromptInputAction>
+            <MentionButtonPopover editorRef={editorRef} />
+            <EmojiButtonPopover
+              onSelect={(emoji) => editorRef.current?.insertEmoji(emoji)}
+            />
             {leftActions}
           </div>
           <div className="flex items-center gap-1">

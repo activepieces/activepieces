@@ -6,22 +6,25 @@ import {
 } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Blocks, Plug, Table2, Workflow, Zap } from 'lucide-react';
+import { ArrowUpRight, Blocks, Plug, Table2, Zap } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Fragment } from 'react';
 
+import { VerticalFlowIcon } from '@/components/icons/vertical-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { fieldsApi } from '@/features/tables/api/fields-api';
 import { recordsApi } from '@/features/tables/api/records-api';
+import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
 import { MentionItem, mentionSearch } from './use-mention-search';
 
-const MAX_PREVIEW_STEPS = 6;
-const MAX_PREVIEW_ROWS = 4;
+const MAX_PREVIEW_STEPS = 5;
+const MAX_PREVIEW_ROWS = 3;
 const MAX_PREVIEW_FIELDS = 4;
-const CELL_MAX_CHARS = 20;
+const CELL_MAX_CHARS = 18;
 
 function usePieceLogoMap(): Map<string, string> {
   const client = useQueryClient();
@@ -33,18 +36,16 @@ function usePieceLogoMap(): Map<string, string> {
   return map;
 }
 
-function pieceShort(name?: string): string | undefined {
-  return name?.replace('@activepieces/piece-', '').replace(/-/g, ' ');
-}
-
 function PreviewHeader({
   icon,
   title,
   subtitle,
+  action,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle?: React.ReactNode;
+  action?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -61,7 +62,22 @@ function PreviewHeader({
           </div>
         )}
       </div>
+      {action}
     </div>
+  );
+}
+
+function OpenButton({ route }: { route: string }) {
+  const openNewWindow = useNewWindow();
+  return (
+    <button
+      type="button"
+      onClick={() => openNewWindow(route)}
+      className="inline-flex shrink-0 items-center gap-1 self-start rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+    >
+      {t('Open')}
+      <ArrowUpRight className="size-3.5" />
+    </button>
   );
 }
 
@@ -79,10 +95,17 @@ function FlowPreview({ id, label }: { id: string; label: string }) {
   const enabled = flow.status === FlowStatus.ENABLED;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PreviewHeader
-        icon={<Workflow className="size-[18px]" />}
+        icon={<VerticalFlowIcon className="size-[18px]" />}
         title={flow.version.displayName}
+        action={
+          <OpenButton
+            route={authenticationSession.appendProjectRoutePrefix(
+              `/flows/${id}`,
+            )}
+          />
+        }
         subtitle={
           <span className="inline-flex items-center gap-1.5">
             <span
@@ -93,7 +116,7 @@ function FlowPreview({ id, label }: { id: string; label: string }) {
             />
             {enabled ? t('Enabled') : t('Disabled')}
             <span className="text-muted-foreground/50">·</span>
-            {t('{{count}} steps', { count: steps.length })}
+            {t('{count} steps', { count: steps.length })}
           </span>
         }
       />
@@ -103,41 +126,30 @@ function FlowPreview({ id, label }: { id: string; label: string }) {
           const pieceName =
             'pieceName' in step.settings ? step.settings.pieceName : undefined;
           const logo = pieceName ? logoMap.get(pieceName) : undefined;
-          const isTrigger = i === 0;
           const last = i === shown.length - 1;
           return (
             <Fragment key={step.name}>
-              <div className="flex items-center gap-3 rounded-xl border bg-background p-2.5 shadow-sm">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg border bg-background shadow-sm">
                   {logo ? (
-                    <img src={logo} alt="" className="size-5 object-contain" />
+                    <img src={logo} alt="" className="size-4 object-contain" />
                   ) : (
-                    <Workflow className="size-4 text-muted-foreground" />
+                    <VerticalFlowIcon className="size-3.5 text-muted-foreground" />
                   )}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">
-                    {isTrigger ? t('Trigger') : t('Step {{n}}', { n: i })}
-                  </div>
-                  <div className="truncate text-[13px] font-medium leading-tight text-foreground">
-                    {step.displayName}
-                  </div>
-                  {pieceShort(pieceName) && (
-                    <div className="truncate text-[11px] capitalize text-muted-foreground">
-                      {pieceShort(pieceName)}
-                    </div>
-                  )}
-                </div>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">
+                  {step.displayName}
+                </span>
               </div>
               {!last && (
-                <span className="ml-[26px] h-3 w-0.5 rounded-full bg-border" />
+                <span className="my-0.5 ml-[13px] h-3 w-0.5 rounded-full bg-border" />
               )}
             </Fragment>
           );
         })}
         {steps.length > shown.length && (
-          <div className="ml-[26px] mt-2 text-[11px] text-muted-foreground">
-            {t('+{{count}} more steps', { count: steps.length - shown.length })}
+          <div className="ml-[13px] mt-1.5 text-[11px] text-muted-foreground">
+            {t('+{count} more steps', { count: steps.length - shown.length })}
           </div>
         )}
       </div>
@@ -171,7 +183,14 @@ function TablePreview({ id, label }: { id: string; label: string }) {
       <PreviewHeader
         icon={<Table2 className="size-[18px]" />}
         title={label}
-        subtitle={t('{{count}} fields', { count: fields.length })}
+        action={
+          <OpenButton
+            route={authenticationSession.appendProjectRoutePrefix(
+              `/tables/${id}`,
+            )}
+          />
+        }
+        subtitle={t('{count} fields', { count: fields.length })}
       />
 
       <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
@@ -259,27 +278,23 @@ function AppPreview({
             <Plug className="size-3" />
             {isLoading
               ? t('Loading connections…')
-              : t('{{count}} connected accounts', { count: accounts.length })}
+              : t('{count} connected accounts', { count: accounts.length })}
           </span>
         }
       />
 
       {isLoading ? (
         <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
+          {Array.from({ length: 2 }).map((_, i) => (
             <Skeleton key={i} className="h-11 w-full rounded-xl" />
           ))}
         </div>
       ) : accounts.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed bg-background/50 px-4 py-8 text-center">
-          <Plug className="size-6 text-muted-foreground/40" />
-          <span className="text-[13px] font-medium text-foreground/80">
-            {t('No connected accounts')}
-          </span>
-          <span className="text-[12px] text-muted-foreground">
-            {t('Connect this app to use it here.')}
-          </span>
-        </div>
+        <p className="text-[12px] leading-relaxed text-muted-foreground">
+          {t(
+            'No accounts connected yet — you can connect one right here while we chat.',
+          )}
+        </p>
       ) : (
         <div className="flex flex-col gap-2">
           {accounts.map((conn) => (
@@ -324,11 +339,11 @@ function AppPreview({
 export function MentionPreviewPanel({ item }: { item?: MentionItem }) {
   const reduce = useReducedMotion();
   return (
-    <div className="hidden w-[380px] shrink-0 flex-col border-l border-border/60 bg-[#F6F2EA] dark:bg-stone-900/40 sm:flex">
-      <div className="px-5 pt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60">
+    <div className="hidden min-w-0 flex-1 flex-col border-l border-border/60 bg-[#FBFAF7] dark:bg-stone-900/40 sm:flex">
+      <div className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60">
         {t('Preview')}
       </div>
-      <div className="flex-1 overflow-y-auto px-5 pb-5 pt-3">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2.5">
         <AnimatePresence mode="wait">
           {!item ? (
             <motion.div
