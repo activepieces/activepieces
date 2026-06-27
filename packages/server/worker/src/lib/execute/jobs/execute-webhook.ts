@@ -140,18 +140,32 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     failParentOnFailure: data.failParentOnFailure,
                 })
             }
-            await ctx.apiClient.saveTriggerRunStats({
-                platformId: data.platformId,
-                pieceName,
-                status: TriggerRunStatus.COMPLETED,
-            })
+            if (!isNil(pieceName)) {
+                const { error: statsError } = await tryCatch(() =>
+                    ctx.apiClient.saveTriggerRunStats({
+                        platformId: data.platformId,
+                        pieceName,
+                        status: TriggerRunStatus.COMPLETED,
+                    }),
+                )
+                if (statsError) {
+                    ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+                }
+            }
         }
         else {
-            await ctx.apiClient.saveTriggerRunStats({
-                platformId: data.platformId,
-                pieceName,
-                status: TriggerRunStatus.FAILED,
-            })
+            if (!isNil(pieceName)) {
+                const { error: statsError } = await tryCatch(() =>
+                    ctx.apiClient.saveTriggerRunStats({
+                        platformId: data.platformId,
+                        pieceName,
+                        status: TriggerRunStatus.FAILED,
+                    }),
+                )
+                if (statsError) {
+                    ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+                }
+            }
         }
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }

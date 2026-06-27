@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, TriggerRunStatus, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
@@ -60,29 +60,45 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                     })
                 }
 
-                await ctx.apiClient.saveTriggerRunStats({
-                    platformId: data.platformId,
-                    pieceName,
-                    status: TriggerRunStatus.COMPLETED,
-                })
+                const { error: statsError } = await tryCatch(() =>
+                    ctx.apiClient.saveTriggerRunStats({
+                        platformId: data.platformId,
+                        pieceName,
+                        status: TriggerRunStatus.COMPLETED,
+                    }),
+                )
+                if (statsError) {
+                    ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+                }
             }
             else {
-                await ctx.apiClient.saveTriggerRunStats({
-                    platformId: data.platformId,
-                    pieceName,
-                    status: TriggerRunStatus.FAILED,
-                })
+                const { error: statsError } = await tryCatch(() =>
+                    ctx.apiClient.saveTriggerRunStats({
+                        platformId: data.platformId,
+                        pieceName,
+                        status: TriggerRunStatus.FAILED,
+                    }),
+                )
+                if (statsError) {
+                    ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+                }
             }
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
-            await ctx.apiClient.saveTriggerRunStats({
-                platformId: data.platformId,
-                pieceName,
-                status: TriggerRunStatus.FAILED,
-            })
+            const { error: statsError } = await tryCatch(() =>
+                ctx.apiClient.saveTriggerRunStats({
+                    platformId: data.platformId,
+                    pieceName,
+                    status: TriggerRunStatus.FAILED,
+                }),
+            )
+            if (statsError) {
+                ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+            }
+
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
     },

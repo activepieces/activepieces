@@ -6,7 +6,7 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 ## Key Files
 - `packages/server/api/src/app/workers/machine/machine-controller.ts` — Socket.IO listeners (`FETCH_WORKER_SETTINGS`, `DISCONNECT`); registers the RPC server per connection
 - `packages/server/api/src/app/workers/machine/machine-service.ts` — `onConnection` / `onDisconnect`, `buildSettingsResponse` (emits `APP_VERSION`), worker listing
-- `packages/server/api/src/app/workers/rpc/worker-rpc-service.ts` — `createHandlers()`: `poll` (with version gate), `completeJob`, `extendLock`, progress/log RPCs, `getFlowBundle`, `prepareFlowBundleUpload`, `uploadFlowBundle`
+- `packages/server/api/src/app/workers/rpc/worker-rpc-service.ts` — `createHandlers()`: `poll` (with version gate), `completeJob`, `extendLock`, progress/log RPCs, `getFlowBundle`, `prepareFlowBundleUpload`, `uploadFlowBundle`, `saveTriggerRunStats` (records per-piece COMPLETED/FAILED counters in Redis for the Triggers Health page)
 - `packages/server/worker/src/lib/worker.ts` — worker lifecycle (`worker.start/stop`), `pollAndExecute` loop (with version gate), `getWorkerProps`; builds the `Runtime` via `createSandboxRuntime` and a per-job `Resolver` via `createResolver`, and drives the per-job lifecycle through them
 - `packages/server/worker/src/lib/runtime/sandbox-config.ts` — bridges worker settings → `SandboxSettings` + cache base path (merges the env-only `AP_REUSE_SANDBOX` override into the fetched `WorkerSettings`)
 - `packages/server/sandbox/` — standalone `@activepieces/sandbox` library holding the in-process sandbox (`createSandboxRuntime`, `sandbox-manager`, isolate/fork process makers), cache/piece installation, the worker-side `createResolver`, and the `Runtime` / `Resolver` / `ProvisionInput` type contracts (`src/lib/types.ts`)
@@ -29,7 +29,7 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 1. Worker connects → emits `FETCH_WORKER_SETTINGS`; app's `machineService.onConnection` returns `WorkerSettingsResponse` (incl. `APP_VERSION`) and registers `createHandlers` for the socket.
 2. Worker caches settings and spawns `concurrency` `pollAndExecute` loops.
 3. Each loop calls `apiClient.poll(machineInfo)`; the app's `poll` handler returns the next job for the worker's queue, or `null`.
-4. On job: worker executes in a sandbox, periodically `extendLock`, then `completeJob`.
+4. On job: worker executes in a sandbox, periodically `extendLock`, then `completeJob`. For polling and webhook trigger jobs specifically, the worker also calls `saveTriggerRunStats` (best-effort, non-fatal on failure) after execution to record a COMPLETED/FAILED run for that piece, powering the Platform Admin Triggers Health page.
 5. On disconnect, `connectionGeneration++` stops the loops; Socket.IO auto-reconnects and the cycle repeats.
 
 > **Payload resolution is engine-side, not worker-side.** Jobs carry a `JobPayload` (`inline` value or `ref` `fileId`). The worker forwards it unchanged into the engine operation; the engine hydrates a `ref` via the file-download path (direct bytes or an S3 signed-link redirect). There is no worker→API payload-fetch RPC — the contract exposes no `getPayloadFile`.
