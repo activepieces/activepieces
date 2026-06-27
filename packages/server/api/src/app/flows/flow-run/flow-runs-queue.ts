@@ -170,7 +170,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
 })
 
-async function markParentRunAsFailed({
+export async function markParentRunAsFailed({
     parentRunId,
     childRunId,
     projectId,
@@ -178,6 +178,7 @@ async function markParentRunAsFailed({
 }: MarkParentRunAsFailedParams): Promise<void> {
     const flowRun = await flowRunRepo().findOneBy({
         id: parentRunId,
+        projectId,
     })
 
     if (isNil(flowRun) || isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
@@ -214,7 +215,7 @@ async function markParentRunAsFailed({
     }
 }
 
-type MarkParentRunAsFailedParams = {
+export type MarkParentRunAsFailedParams = {
     parentRunId: string
     childRunId: string
     projectId: string

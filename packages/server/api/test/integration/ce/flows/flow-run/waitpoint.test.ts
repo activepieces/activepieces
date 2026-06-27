@@ -1,10 +1,11 @@
 import { apId } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { markParentRunAsFailed } from '../../../../../src/app/flows/flow-run/flow-runs-queue'
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { db } from '../../../../helpers/db'
-import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion, createMockProject } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
@@ -686,6 +687,80 @@ describe('Waitpoint service', () => {
 
             const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
             expect(result).toBeNull()
+        })
+    })
+
+    describe('markParentRunAsFailed isolation', () => {
+        it('should NOT fail or complete the parent run waitpoint if project ID does not match child project ID', async () => {
+            const { flowRun: parentRun } = await createFlowRun({ status: FlowRunStatus.PAUSED })
+            
+            const parentWaitpoint = await waitpointService(app.log).createForPause({
+                flowRunId: parentRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+            expect(parentWaitpoint.inserted).toBe(true)
+
+            const otherProject = createMockProject({
+                ownerId: ctx.user.id,
+                platformId: ctx.project.platformId,
+            })
+            await db.save('project', otherProject)
+            const otherProjectId = otherProject.id
+
+            const childRun = createMockFlowRun({
+                projectId: otherProjectId,
+                flowId: parentRun.flowId,
+                flowVersionId: parentRun.flowVersionId,
+                status: FlowRunStatus.FAILED,
+                environment: RunEnvironment.PRODUCTION,
+            })
+            await db.save('flow_run', childRun)
+
+            await markParentRunAsFailed({
+                parentRunId: parentRun.id,
+                childRunId: childRun.id,
+                projectId: otherProjectId,
+                log: app.log,
+            })
+
+            const updatedParentRun = await db.findOneByOrFail('flow_run', { id: parentRun.id })
+            expect(updatedParentRun.status).toBe(FlowRunStatus.PAUSED)
+
+            const updatedWaitpoint = await db.findOneByOrFail('waitpoint', { id: parentWaitpoint.waitpoint.id })
+            expect(updatedWaitpoint.status).toBe(WaitpointStatus.PENDING)
+        })
+
+        it('should fail and complete the parent run waitpoint if project ID matches child project ID', async () => {
+            const { flowRun: parentRun } = await createFlowRun({ status: FlowRunStatus.PAUSED })
+            
+            const parentWaitpoint = await waitpointService(app.log).createForPause({
+                flowRunId: parentRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+            expect(parentWaitpoint.inserted).toBe(true)
+
+            const childRun = createMockFlowRun({
+                projectId: ctx.project.id,
+                flowId: parentRun.flowId,
+                flowVersionId: parentRun.flowVersionId,
+                status: FlowRunStatus.FAILED,
+                environment: RunEnvironment.PRODUCTION,
+            })
+            await db.save('flow_run', childRun)
+
+            await markParentRunAsFailed({
+                parentRunId: parentRun.id,
+                childRunId: childRun.id,
+                projectId: ctx.project.id,
+                log: app.log,
+            })
+
+            const updatedWaitpoint = await db.findOneBy('waitpoint', { id: parentWaitpoint.waitpoint.id })
+            expect(updatedWaitpoint).toBeNull()
         })
     })
 })
