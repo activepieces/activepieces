@@ -74,6 +74,7 @@ import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
 import { exceptionHandler } from './helper/exception-handler'
+import { clientLogsModule } from './helper/logs/client-logs.module'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
@@ -245,6 +246,14 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(templateModule)
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
+
+    // Dev-only: accept browser debug logs into the shared evlog fs drain so a
+    // chat run can be reconstructed end-to-end (web + api + worker). Never in cloud/prod.
+    const clientLogsEnabled = system.get(AppSystemProp.LOG_FILE) === 'true' && system.getEdition() !== ApEdition.CLOUD
+    if (clientLogsEnabled) {
+        await app.register(clientLogsModule)
+    }
+
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
