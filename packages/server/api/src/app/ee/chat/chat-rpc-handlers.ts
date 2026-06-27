@@ -526,7 +526,14 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             return { sent: false, message: 'Email is not configured on this instance.' }
         }
 
-        await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+
+        // Fence the send by the owning run: a preempted/cancelled run that was parked on an email
+        // approval must not resume and send once a newer run owns the conversation.
+        if (!isNil(input.runId) && !isNil(conversation.activeRunId) && input.runId !== conversation.activeRunId) {
+            log.warn({ conversation: { id: conversationId }, run: { id: input.runId } }, '[chatRpc#sendChatEmail] Blocked send from a superseded run')
+            return { sent: false, message: 'This turn was superseded by a newer message, so the email was not sent.' }
+        }
 
         const recipients = unique(to.map((email) => email.toLowerCase().trim()).filter((email) => email.length > 0))
         if (recipients.length === 0) {

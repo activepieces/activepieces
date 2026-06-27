@@ -189,6 +189,7 @@ export type ExecuteChatToolResponse = {
 
 export type SendChatEmailRequest = {
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
     to: string[]

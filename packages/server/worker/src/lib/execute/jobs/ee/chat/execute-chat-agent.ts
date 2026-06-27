@@ -456,7 +456,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     })
     const emailTools = emailEnabled && !dryRun && !discoveryOnly
         ? chatWorkerTools.createEmailTools({
-            sendEmail: ({ to, subject, body, gateId }) => ctx.apiClient.sendChatEmail({ conversationId, platformId, userId, to, subject, body, gateId }),
+            sendEmail: ({ to, subject, body, gateId }) => ctx.apiClient.sendChatEmail({ conversationId, runId, platformId, userId, to, subject, body, gateId }),
             eventEmitter,
             userEmail,
             waitForApproval,
