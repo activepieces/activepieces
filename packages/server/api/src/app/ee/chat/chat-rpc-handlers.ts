@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, ProjectType, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -167,11 +167,15 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const validCandidateProjectId = candidateProjectId && userProjects.some((p) => p.id === candidateProjectId)
             ? candidateProjectId
             : null
-        // Default to the user's first project when none is chosen so the agent never hits a cold
-        // "No project selected" on the first data tool. The chat MCP server resolves its project
-        // from conversation.projectId per request, so persist it (the user can switch via the
-        // dropdown / ap_select_project, which overwrites this).
-        const selectedProjectId = validCandidateProjectId ?? userProjects[0]?.id ?? null
+        // Default to the user's own personal project when none is chosen (falling back to their
+        // first accessible one) so the agent never hits a cold "No project selected" on the first
+        // data tool. The chat MCP server resolves its project from conversation.projectId per
+        // request, so persist it (the user can switch via the dropdown / ap_select_project, which
+        // overwrites this).
+        const defaultProjectId = userProjects.find((p) => p.ownerId === userId && p.type === ProjectType.PERSONAL)?.id
+            ?? userProjects[0]?.id
+            ?? null
+        const selectedProjectId = validCandidateProjectId ?? defaultProjectId
         if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
             await chatHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
