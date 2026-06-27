@@ -9,9 +9,19 @@ import { chatWorkerTools } from './chat-worker-tools'
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
 const PIECE_PROPS_TOOL_NAME = 'ap_get_piece_props'
+const RESOLVE_OPTIONS_TOOL_NAME = 'ap_resolve_property_options'
+const RESOLVE_CHAIN_TOOL_NAME = 'ap_resolve_property_chain'
+const CACHEABLE_TOOL_NAMES = new Set<string>([PIECE_PROPS_TOOL_NAME, RESOLVE_OPTIONS_TOOL_NAME, RESOLVE_CHAIN_TOOL_NAME])
+const RESOLVE_TOOL_NAMES = new Set<string>([RESOLVE_OPTIONS_TOOL_NAME, RESOLVE_CHAIN_TOOL_NAME])
+const RESOLVE_FAILED_PREFIX = '⚠️ Options could not be loaded'
+const TRANSIENT_RESOLVE_MARKERS = ['Could not resolve', 'Timed out', RESOLVE_FAILED_PREFIX]
 const PROP_VERBOSE_KEYS = new Set<string>(['description', 'defaultValue', 'sampleData', 'examples', 'sampleOutput'])
 const PROP_RECURSE_KEYS = new Set<string>(['items', 'dynamicFields', 'children', 'listItems'])
 const SCHEMA_ROOT_VERBOSE_KEYS = new Set<string>(['sampleData', 'examples', 'sampleOutput'])
+
+const TOOL_RESULT_CACHE_TTL_MS = 10 * 60 * 1_000
+const TOOL_RESULT_CACHE_MAX_ENTRIES = 200
+const toolResultCache = new Map<string, { result: unknown, expiresAt: number }>()
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
 // High-precision: matched against tool RESULT text (which can contain user/CRM data), so it
@@ -183,8 +193,9 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text: chatAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
 }
 
-function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult }: {
+function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSelectedAuth, saveLargeResult }: {
     mcpToolSet: Record<string, unknown>
+    conversationId: string
     brokenConnectors: Set<string>
     getSelectedAuth?: (params: { pieceName: string }) => string | undefined
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
@@ -206,6 +217,15 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
                 }
+                const cacheKey = CACHEABLE_TOOL_NAMES.has(name)
+                    ? buildToolCacheKey({ conversationId, toolName: name, args })
+                    : null
+                if (cacheKey !== null) {
+                    const cached = readToolResultCache(cacheKey)
+                    if (cached.hit) {
+                        return cached.result
+                    }
+                }
                 const { data: toolResult, error } = await tryCatch(() => chatWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
                     timeoutMs: chatWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
@@ -219,6 +239,9 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                         }
                         return buildReconnectGuidance({ connectorUuid })
                     }
+                    if (RESOLVE_TOOL_NAMES.has(name)) {
+                        return buildResolveFailFastResult({ args })
+                    }
                     throw error
                 }
                 const { isAuthError, connectorUuid } = classifyMcpAuthError({ result: toolResult, toolName: name })
@@ -230,15 +253,96 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                 }
                 const digested = digestMcpResult({ toolName: name, result: toolResult })
                 const offloaded = await maybeOffloadMcpResult({ result: digested, toolName: name, saveLargeResult })
-                if (offloaded !== null) {
-                    return offloaded
+                const finalResult = offloaded !== null ? offloaded : chatWorkerTools.truncateLargeResult(digested)
+                if (cacheKey !== null) {
+                    writeToolResultCache({ key: cacheKey, result: finalResult })
                 }
-                return chatWorkerTools.truncateLargeResult(digested)
+                return finalResult
             },
         })
     }
 
     return result
+}
+
+function buildToolCacheKey({ conversationId, toolName, args }: { conversationId: string, toolName: string, args: unknown }): string | null {
+    if (!isObject(args)) {
+        return null
+    }
+    const pieceName = typeof args['pieceName'] === 'string' ? args['pieceName'] : null
+    const actionOrTriggerName = typeof args['actionOrTriggerName'] === 'string' ? args['actionOrTriggerName'] : null
+    const type = typeof args['type'] === 'string' ? args['type'] : null
+    if (pieceName === null || actionOrTriggerName === null || type === null) {
+        return null
+    }
+    const keyParts = {
+        pieceName,
+        actionOrTriggerName,
+        type,
+        auth: typeof args['auth'] === 'string' && args['auth'].length > 0,
+        flowId: typeof args['flowId'] === 'string' ? args['flowId'] : null,
+        propertyName: typeof args['propertyName'] === 'string' ? args['propertyName'] : null,
+        propertyChain: Array.isArray(args['propertyChain']) ? JSON.stringify(args['propertyChain']) : null,
+        searchValue: typeof args['searchValue'] === 'string' ? args['searchValue'] : null,
+        input: isObject(args['input']) ? JSON.stringify(args['input']) : null,
+        currentInput: isObject(args['currentInput']) ? JSON.stringify(args['currentInput']) : null,
+    }
+    return `${conversationId}::${toolName}::${JSON.stringify(keyParts)}`
+}
+
+function readToolResultCache(key: string): { hit: boolean, result: unknown } {
+    const entry = toolResultCache.get(key)
+    if (!entry) {
+        return { hit: false, result: undefined }
+    }
+    if (entry.expiresAt <= Date.now()) {
+        toolResultCache.delete(key)
+        return { hit: false, result: undefined }
+    }
+    toolResultCache.delete(key)
+    toolResultCache.set(key, entry)
+    return { hit: true, result: entry.result }
+}
+
+function writeToolResultCache({ key, result }: { key: string, result: unknown }): void {
+    if (isResultUncacheable(result)) {
+        return
+    }
+    toolResultCache.set(key, { result, expiresAt: Date.now() + TOOL_RESULT_CACHE_TTL_MS })
+    while (toolResultCache.size > TOOL_RESULT_CACHE_MAX_ENTRIES) {
+        const oldestKey = toolResultCache.keys().next().value
+        if (oldestKey === undefined) {
+            break
+        }
+        toolResultCache.delete(oldestKey)
+    }
+}
+
+function isResultUncacheable(result: unknown): boolean {
+    if (!isObject(result)) {
+        return false
+    }
+    if (result['isError'] === true) {
+        return true
+    }
+    if (!Array.isArray(result['content'])) {
+        return false
+    }
+    const combinedText = result['content']
+        .map((entry) => isObject(entry) && typeof entry['text'] === 'string' ? entry['text'] : '')
+        .join('\n')
+    return TRANSIENT_RESOLVE_MARKERS.some((marker) => combinedText.includes(marker))
+}
+
+function buildResolveFailFastResult({ args }: { args: unknown }): unknown {
+    const propertyName = isObject(args) && typeof args['propertyName'] === 'string' ? args['propertyName'] : null
+    const target = propertyName ? `for "${propertyName}" ` : ''
+    return {
+        content: [{
+            type: 'text',
+            text: `${RESOLVE_FAILED_PREFIX} ${target}(the resolver is slow right now). Do not keep retrying — proceed by setting a manual value the user provided, or retry this once at most. The flow-editor dropdown may appear unset; mention that to the user if relevant.`,
+        }],
+    }
 }
 
 function digestMcpResult({ toolName, result }: {

@@ -435,6 +435,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     const mcpTools = chatWorkerTools.wrapTestFlowGate({
         mcpTools: chatMcpClient.withToolTimeouts({
             mcpToolSet,
+            conversationId,
             brokenConnectors,
             getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
             saveLargeResult: async ({ json, fileName }) => {
