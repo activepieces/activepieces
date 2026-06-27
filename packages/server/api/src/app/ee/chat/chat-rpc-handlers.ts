@@ -439,7 +439,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             return { result: decision }
         }
         if (input.toolName === '__store_pending_gate') {
-            const { conversationId: convId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
+            const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
             if (typeof convId === 'string' && typeof gateId === 'string' && typeof gateTool === 'string') {
                 await chatApprovalGate.storePendingGate({
                     conversationId: convId,
@@ -448,6 +448,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                         toolName: gateTool,
                         displayName: typeof displayName === 'string' ? displayName : gateTool,
                         toolInput: typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {},
+                        ...(typeof gateRunId === 'string' ? { runId: gateRunId } : {}),
                     },
                 })
             }
@@ -559,8 +560,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const externalRecipients = recipients.filter((email) => email !== selfEmail)
         if (externalRecipients.length > 0) {
             const decision = isNil(input.gateId) ? 'pending' : await chatApprovalGate.checkDecision({ gateId: input.gateId })
-            if (decision === 'pending' || !decision.approved) {
-                log.warn({ conversation: { id: conversationId }, user: { id: userId }, recipientCount: externalRecipients.length }, '[chatRpc#sendChatEmail] Blocked external send without an approved confirmation')
+            const approved = decision !== 'pending' && decision.approved
+                && emailApprovalMatches({ approvedInput: decision.approvedInput, recipients, subject, body })
+            if (!approved) {
+                log.warn({ conversation: { id: conversationId }, user: { id: userId }, recipientCount: externalRecipients.length }, '[chatRpc#sendChatEmail] Blocked external send without an approval matching the current recipients/content')
                 return { sent: false, message: 'Sending to anyone other than your own address needs your explicit approval first.', blockedRecipients: externalRecipients }
             }
         }
@@ -594,6 +597,24 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
 
 function isLikelyEmailAddress(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+// The approval is only valid for the exact recipients/subject/body the user saw in the preview.
+// A different payload reusing an approved gate id (stale/replayed within the TTL) must not pass.
+function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
+    approvedInput?: Record<string, unknown>
+    recipients: string[]
+    subject: string
+    body: string
+}): boolean {
+    if (isNil(approvedInput)) {
+        return false
+    }
+    const approvedRecipients = Array.isArray(approvedInput.to)
+        ? unique(approvedInput.to.filter((email): email is string => typeof email === 'string').map((email) => email.toLowerCase().trim()))
+        : []
+    const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
+    return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
 }
 
 async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {

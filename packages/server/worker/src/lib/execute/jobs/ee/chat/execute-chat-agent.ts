@@ -129,7 +129,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, phaseState, mcpToolSet, webTools,
-                projects: config.projects, projectId, conversationId, platformId, userId, userEmail: config.userEmail,
+                projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
@@ -306,7 +306,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -316,6 +316,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     projects: Array<{ id: string, displayName: string, type: string }>
     projectId: string | null
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
     userEmail: string
@@ -403,7 +404,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     }) => {
         await tryCatch(() => ctx.apiClient.executeChatTool({
             toolName: '__store_pending_gate',
-            toolInput: { conversationId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
+            toolInput: { conversationId, runId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
             platformId, userId, conversationId,
         }))
     }
