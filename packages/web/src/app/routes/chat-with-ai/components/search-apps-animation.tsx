@@ -1,4 +1,3 @@
-import { t } from 'i18next';
 import { Search } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
@@ -9,7 +8,11 @@ import { cn } from '@/lib/utils';
 const MAX_LOGOS = 24;
 const MS_PER_LOGO = 200;
 
-export const SearchAppsAnimation = memo(function SearchAppsAnimation() {
+export const SearchAppsAnimation = memo(function SearchAppsAnimation({
+  label,
+}: {
+  label: string;
+}) {
   const { pieces } = piecesHooks.usePieces({});
 
   const pool = useMemo(() => {
@@ -32,7 +35,7 @@ export const SearchAppsAnimation = memo(function SearchAppsAnimation() {
     <div className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-1.5">
       <Search className="size-4 shrink-0 text-muted-foreground" />
       <TextShimmer as="span" className="text-sm" duration={2}>
-        {t('Search apps')}
+        {label}
       </TextShimmer>
       {pool.length > 0 && (
         <div className="flex items-center gap-0.5">

@@ -99,11 +99,16 @@ describe('worker integration', () => {
         })
         process.env.AP_FRONTEND_URL = `http://127.0.0.1:${port}`
         process.env.AP_CONTAINER_TYPE = 'WORKER'
+        // These integration tests assert strict per-job ordering, which only holds with a single
+        // poll loop. Pin concurrency to 1 so the multi-box transitional default (5) doesn't drain
+        // the queued poll sequence out of order. See ADR 0004.
+        process.env.AP_WORKER_CONCURRENCY = '1'
     })
 
     afterEach(async () => {
         await worker.stop()
         mockGetHandler.mockReset()
+        delete process.env.AP_WORKER_CONCURRENCY
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
         })
@@ -168,8 +173,6 @@ describe('worker integration', () => {
                     getPiece: vi.fn(),
                     getPieceArchive: vi.fn(),
                     extendLock: vi.fn(),
-                    getUsedPieces: vi.fn().mockResolvedValue([]),
-                    markPieceAsUsed: vi.fn(),
                     disableFlow: vi.fn(),
                 }
                 createRpcServer<WorkerToApiContract>(serverSocket, handlers)

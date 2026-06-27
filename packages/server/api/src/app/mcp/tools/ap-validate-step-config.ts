@@ -86,7 +86,7 @@ async function validatePieceComponent({ pieceName, componentName, componentType,
         componentType,
     })
 
-    if (diagnosis.missing.length === 0) {
+    if (diagnosis.missing.length === 0 && diagnosis.invalidEnums.length === 0) {
         const uiHint = diagnosis.uiRequired.length > 0
             ? `\nNote: these fields require configuration in the Activepieces UI: ${diagnosis.uiRequired.join(', ')}.`
             : ''

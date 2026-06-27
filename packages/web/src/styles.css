@@ -269,10 +269,10 @@
 
   @keyframes slot-spin {
     0% {
-      transform: translateY(0);
+      transform: translate3d(0, 0, 0);
     }
     100% {
-      transform: translateY(-50%);
+      transform: translate3d(0, calc(-1 * var(--marquee-loop, 50%)), 0);
     }
   }
 
@@ -354,6 +354,58 @@
     to {
       stroke-dashoffset: -20;
     }
+  }
+}
+
+/*
+  Per-block entrance fade for streaming chat markdown. While a message is actively
+  streaming (`data-stream-animate` set), each top-level markdown block
+  (paragraph/heading/list/code) fades + slides in once as it mounts. Completed
+  blocks are content-memoized so they never re-render → the animation never
+  replays (no flicker); historical/settled messages omit the attribute and render
+  static. Kept top-level (outside @theme) so Tailwind v4 always emits it.
+*/
+@keyframes chat-stream-block-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-stream-animate] > * {
+  animation: chat-stream-block-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+  Per-word entrance fade (Gemini-style) for the active streaming text block.
+  StreamingText injects `<span class="chat-word">` per word and paces the reveal,
+  so each word mounts once and fades via this keyframe; React's append-only
+  reconciliation keeps already-shown words from re-animating. Top-level (outside
+  @theme) so Tailwind v4 always emits it.
+*/
+@keyframes chat-word-in {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.chat-word {
+  animation: chat-word-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-stream-animate] > *,
+  .chat-word {
+    animation: none;
   }
 }
 
@@ -660,6 +712,14 @@
   [data-slot='sheet-content'][data-state='closed'] {
     --tw-exit-translate-x: 100% !important;
   }
+
+  /* Left-anchored sheets must slide in from the left, not the default right */
+  [data-slot='sheet-content'][data-side='left'][data-state='open'] {
+    --tw-enter-translate-x: -100% !important;
+  }
+  [data-slot='sheet-content'][data-side='left'][data-state='closed'] {
+    --tw-exit-translate-x: -100% !important;
+  }
 }
 
 @layer base {
@@ -809,6 +869,32 @@
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+/* Animated gradient ring for the chat question card */
+.chat-question-gradient-border {
+  position: relative;
+}
+.chat-question-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(90deg, #8142e3, #a855f7, #d946ef, #a855f7, #8142e3);
+  background-size: 300% 100%;
+  animation: auth-anim-gradient-flow 4s ease-in-out infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-question-gradient-border::before {
+    animation: none;
+  }
 }
 
 /* Particle dots with percentage-based animation */

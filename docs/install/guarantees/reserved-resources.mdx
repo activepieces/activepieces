@@ -1,0 +1,40 @@
+---
+title: "Reserved Resources"
+description: "Every flow gets its own guaranteed CPU and memory slice. No flow can starve or crash another."
+icon: "memory"
+---
+
+Every flow runs alone in its own worker, with a guaranteed slice of CPU and memory that nothing else can take. There is no noisy neighbour: one flow can't starve another by pegging the CPU, and one flow's memory blow-up can't take down anyone else's run.
+
+We chose this: **isolation over density**. You pay for one worker per concurrent flow rather than packing many flows into one box, and in return every flow's resources are predictable and its blast radius is itself.
+
+<Note>
+This is one of the Activepieces execution guarantees for the [recommended production setup](/install/configure-operate/production-setup). For the full scope and Cloud parity, see [Crash Recovery](./crash-recovery).
+</Note>
+
+Two promises follow from one mechanism:
+
+## A flow can't be starved
+
+A flow that pegs the CPU or hangs cannot degrade any other flow's latency. Each flow has its own reserved CPU and memory, enforced by the orchestrator, so contention between flows simply doesn't exist.
+
+## An OOM kills one job, not its neighbours
+
+A flow that exhausts memory takes down only its own run. The worker is OOM-killed with `MEMORY_LIMIT_EXCEEDED`, the run is requeued and retried elsewhere (see [Crash Recovery](./crash-recovery)), and no other in-flight work is touched.
+
+## How it's enforced
+
+At `AP_WORKER_CONCURRENCY=1`, each worker container runs exactly **one flow at a time**, hard-capped at its own CPU and memory by the orchestrator (e.g. 0.5 vCPU / 1 GB). One flow's CPU spin is bounded by *its* container's CPU limit; one flow's memory growth is bounded by *its* container's memory cap, and the kernel OOM-killer's blast radius is that single job. Nothing reaches into another worker. See [Workers](/install/architecture/workers).
+
+About 300 MB of a 1 GB budget is overhead for a warm process with pieces loaded; the rest is the flow's. To handle larger work, split it into multiple flows (one flow calls another via webhook, or each processes a smaller batch).
+
+## Where it stops
+
+The guarantee holds at concurrency 1. Running `AP_WORKER_CONCURRENCY` higher packs multiple flows into one container and **reintroduces** the shared fate it removes: they contend for the same CPU and memory cap, and a single OOM takes down *all* in-flight jobs in that container. The shipped default is `5`; concurrency 1 is what keeps this promise, and is becoming the default. The cost of concurrency 1 is density: one worker per concurrent flow (size the fleet from peak concurrent flows, see [Production Setup](/install/configure-operate/production-setup)).
+
+## Governing configuration
+
+| Variable | Recommended | Effect |
+|---|---|---|
+| `AP_WORKER_CONCURRENCY` | `1` | One flow per container, the isolation boundary and OOM blast radius |
+| Container CPU / memory cap | 0.5 vCPU / 1 GB | The per-flow reserved slice, enforced by the orchestrator |

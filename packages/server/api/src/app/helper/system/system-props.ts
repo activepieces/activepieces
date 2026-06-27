@@ -4,6 +4,7 @@ import { environmentMigrations } from '@activepieces/server-utils'
 export type SystemProp = AppSystemProp
 
 export enum AppSystemProp {
+    ALLOW_OPEN_SIGN_UP = 'ALLOW_OPEN_SIGN_UP',
     ALLOWED_EMBED_ORIGINS = 'ALLOWED_EMBED_ORIGINS',
     API_KEY = 'API_KEY',
     TEMPLATES_API_KEY = 'TEMPLATES_API_KEY',
@@ -45,6 +46,7 @@ export enum AppSystemProp {
     ISSUE_ARCHIVE_DAYS = 'ISSUE_ARCHIVE_DAYS',
     JWT_SECRET = 'JWT_SECRET',
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'LOAD_TRANSLATIONS_FOR_DEV_PIECES',
+    LOG_FILE = 'LOG_FILE',
     LOG_LEVEL = 'LOG_LEVEL',
     LOG_PRETTY = 'LOG_PRETTY',
     LOKI_PASSWORD = 'LOKI_PASSWORD',
