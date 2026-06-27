@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation } from '@activepieces/shared';
+import { ChatConversation, ChatMention } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
@@ -151,10 +151,10 @@ function ChatBoxContent({
   const [hasSentMessage, setHasSentMessage] = useState(false);
 
   const handleSend = useCallback(
-    async (text: string, files?: File[]) => {
+    async (text: string, files?: File[], mentions?: ChatMention[]) => {
       if (!text.trim() && (!files || files.length === 0)) return;
       setHasSentMessage(true);
-      await sendMessage(text.trim(), files);
+      await sendMessage(text.trim(), files, mentions);
     },
     [sendMessage],
   );

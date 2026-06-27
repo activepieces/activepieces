@@ -22,6 +22,7 @@ import { buildAttachmentNote, buildUserContentWithFiles, persistChatAttachments 
 import { chatHelpers } from './chat-helpers'
 import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatMcp } from './mcp/chat-mcp'
+import { mentionContext } from './mention-context'
 import { chatPrompt } from './prompt/chat-prompt'
 import { executeCrossProjectTool } from './tools/chat-tools'
 
@@ -217,7 +218,7 @@ function normalizeCommittedContext({ activeContext, projectDisplayName }: {
 
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, activeContext, dryRun } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, mentions, promptOverride, activeContext, dryRun } = input
 
         const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
@@ -306,6 +307,15 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
         const previousCommittedContext = findLastCommittedContext({ uiMessages: previousUiMessages })
 
+        // Resolve @-mentioned resources (flows/tables/apps) to compact, project-scoped context
+        // the agent can act on directly. Strictly scoped to selectedProjectId/platformId — a
+        // foreign or deleted id resolves to "no longer available", so it can never leak another
+        // project's data. Best-effort: a resolution failure must not block the turn.
+        const mentionsNoteResult = (!isNil(mentions) && mentions.length > 0 && !isNil(selectedProjectId))
+            ? await tryCatch(() => mentionContext.resolveMentionsNote({ mentions, projectId: selectedProjectId, platformId, log }))
+            : null
+        const mentionedResourcesNote = mentionsNoteResult && !mentionsNoteResult.error ? mentionsNoteResult.data : ''
+
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         const systemPromptText = chatPrompt.buildSystemPrompt({
             projects: userProjects,
@@ -320,7 +330,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
             userEmail: userMeta.email,
-        }) + inventoryNote + buildActiveContextNote({ activeContext, previousContext: previousCommittedContext })
+        }) + inventoryNote + mentionedResourcesNote + buildActiveContextNote({ activeContext, previousContext: previousCommittedContext })
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides

@@ -1,8 +1,10 @@
+import { ChatMention, ChatMentionType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Paperclip } from 'lucide-react';
+import { ArrowUpRight, Blocks, Paperclip, Table2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
+import { VerticalFlowIcon } from '@/components/icons/vertical-flow';
 import {
   Message,
   MessageAction,
@@ -13,12 +15,104 @@ import {
   ActiveChatContext,
   ChatUIMessage,
 } from '@/features/chat/lib/chat-types';
+import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
 
 import { CopyIconButton } from './copy-icon-button';
+import { mentionSerialization } from './mention-composer/mention-serialization';
 import { StageContextChip } from './stage-context-chip';
+
+function MentionChip({ mention }: { mention: ChatMention }) {
+  const openNewWindow = useNewWindow();
+  const Icon =
+    mention.type === ChatMentionType.FLOW
+      ? VerticalFlowIcon
+      : mention.type === ChatMentionType.TABLE
+      ? Table2
+      : Blocks;
+
+  const route = mentionRoute(mention);
+  const baseClass =
+    'mx-px inline-flex items-center gap-1 rounded-[5px] bg-foreground/[0.07] px-1.5 py-px font-medium text-foreground align-baseline';
+
+  if (!route) {
+    return (
+      <span className={baseClass}>
+        <Icon className="size-3 shrink-0 text-muted-foreground" />
+        {mention.label}
+      </span>
+    );
+  }
+
+  const open = () => openNewWindow(route);
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      title={t('Open')}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open();
+        }
+      }}
+      className={cn(
+        baseClass,
+        'group/chip cursor-pointer transition-colors hover:bg-foreground/[0.12]',
+      )}
+    >
+      <Icon className="size-3 shrink-0 text-muted-foreground" />
+      {mention.label}
+      <ArrowUpRight className="size-3 shrink-0 text-muted-foreground/60 transition-colors group-hover/chip:text-foreground" />
+    </span>
+  );
+}
+
+function mentionRoute(mention: ChatMention): string | null {
+  if (mention.type === ChatMentionType.FLOW) {
+    return authenticationSession.appendProjectRoutePrefix(
+      `/flows/${mention.id}`,
+    );
+  }
+  if (mention.type === ChatMentionType.TABLE) {
+    return authenticationSession.appendProjectRoutePrefix(
+      `/tables/${mention.id}`,
+    );
+  }
+  return null;
+}
+
+function UserMessageBody({ content }: { content: string }) {
+  const segments = mentionSerialization.parseTokens(content);
+  const hasMention = segments.some((s) => s.kind === 'mention');
+  if (!hasMention) {
+    return (
+      <PromptKitMessageContent markdown>{content}</PromptKitMessageContent>
+    );
+  }
+  return (
+    <div className="whitespace-pre-wrap break-words leading-relaxed">
+      {segments.map((segment, i) =>
+        segment.kind === 'text' ? (
+          <span key={i}>{segment.value}</span>
+        ) : (
+          <MentionChip key={i} mention={segment.mention} />
+        ),
+      )}
+    </div>
+  );
+}
+
+function toDisplayText(content: string): string {
+  return mentionSerialization
+    .parseTokens(content)
+    .map((s) => (s.kind === 'text' ? s.value : `@${s.mention.label}`))
+    .join('');
+}
 
 export const UserMessage = memo(function UserMessage({
   message,
@@ -69,9 +163,7 @@ export const UserMessage = memo(function UserMessage({
                 ))}
               </div>
             )}
-            <PromptKitMessageContent markdown>
-              {content}
-            </PromptKitMessageContent>
+            <UserMessageBody content={content} />
           </div>
         </Message>
         {contextMarker && (
@@ -90,7 +182,10 @@ export const UserMessage = memo(function UserMessage({
           )}
         >
           <MessageAction tooltip={t('Copy')}>
-            <CopyIconButton textToCopy={content} className="h-6 w-6" />
+            <CopyIconButton
+              textToCopy={toDisplayText(content)}
+              className="h-6 w-6"
+            />
           </MessageAction>
         </MessageActions>
       </div>

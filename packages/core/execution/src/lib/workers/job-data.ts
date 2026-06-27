@@ -262,6 +262,19 @@ export const ActiveStageContext = z.object({
 })
 export type ActiveStageContext = z.infer<typeof ActiveStageContext>
 
+export enum ChatMentionType {
+    FLOW = 'flow',
+    TABLE = 'table',
+    APP = 'app',
+}
+
+export const ChatMention = z.object({
+    type: z.enum(ChatMentionType),
+    id: z.string().min(1).max(255),
+    label: z.string().max(255),
+})
+export type ChatMention = z.infer<typeof ChatMention>
+
 export const ExecuteChatAgentJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
@@ -277,6 +290,7 @@ export const ExecuteChatAgentJobData = z.object({
         mimeType: z.string(),
         data: z.string(),
     })).optional(),
+    mentions: z.array(ChatMention).max(10).optional(),
     promptOverride: ChatPromptOverride.optional(),
     activeContext: ActiveStageContext.optional(),
     dryRun: z.boolean().optional(),

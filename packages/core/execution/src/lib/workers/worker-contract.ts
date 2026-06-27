@@ -3,7 +3,7 @@ import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgr
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '@activepieces/core-piece-types'
-import { ActiveStageContext, ChatPromptOverride } from './job-data'
+import { ActiveStageContext, ChatMention, ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -218,6 +218,7 @@ export type GetChatConfigRequest = {
     userMessage: string
     modelName: string | null
     files?: Array<{ name: string, mimeType: string, data: string }>
+    mentions?: ChatMention[]
     promptOverride?: ChatPromptOverride
     activeContext?: ActiveStageContext
     dryRun?: boolean

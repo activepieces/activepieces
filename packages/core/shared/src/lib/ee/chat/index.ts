@@ -1,4 +1,4 @@
-import { ActiveStageContext, ChatPromptOverride } from '@activepieces/core-execution'
+import { ActiveStageContext, ChatMention, ChatPromptOverride } from '@activepieces/core-execution'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -209,6 +209,7 @@ export const SendChatMessageRequest = z.object({
     runId: z.string().optional(),
     files: z.array(ChatMessageFile).max(10).optional(),
     activeContext: ActiveStageContext.optional(),
+    mentions: z.array(ChatMention).max(10).optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
     { message: formErrors.messageRequiresContentOrFiles },
@@ -303,5 +304,6 @@ export type BatchProgressData = {
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
+export { ChatMention, ChatMentionType } from '@activepieces/core-execution'
 export { chatToolClassification } from './tool-classification'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
