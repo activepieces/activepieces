@@ -1,13 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  SecretsManagerClient,
   CreateSecretCommand,
-  type Tag,
 } from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
 
 export const createSecret = createAction({
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   name: 'createSecret',
   displayName: 'Create Secret',
   description: 'Creates a new secret.',
@@ -51,14 +50,8 @@ export const createSecret = createAction({
       },
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
-    });
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 
     try {
       const command = new CreateSecretCommand({
