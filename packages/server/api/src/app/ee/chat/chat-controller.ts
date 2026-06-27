@@ -6,10 +6,12 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
+import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
@@ -84,6 +86,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
+        // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
+        rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
+
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 
@@ -132,6 +137,14 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
 
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
+    })
+
+    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
+        rejectedPromiseHandler(chatRolloutService.recordLanding({
+            userId: request.principal.id,
+            platformId: request.principal.platform.id,
+        }), request.log)
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
@@ -323,6 +336,16 @@ const GetPendingGateRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
+    },
+}
+
+const FunnelLandingRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
