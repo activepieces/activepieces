@@ -1,3 +1,4 @@
+import { Platform, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
@@ -11,7 +12,12 @@ type ChatRolloutUser = {
     chattedAt: string | null
 }
 
-export const ChatRolloutUserEntity = new EntitySchema<ChatRolloutUser>({
+type ChatRolloutUserWithRelations = ChatRolloutUser & {
+    user: User
+    platform: Platform
+}
+
+export const ChatRolloutUserEntity = new EntitySchema<ChatRolloutUserWithRelations>({
     name: 'chat_rollout_user',
     columns: {
         ...BaseColumnSchemaPart,
@@ -49,4 +55,26 @@ export const ChatRolloutUserEntity = new EntitySchema<ChatRolloutUser>({
             where: '"landedAt" IS NOT NULL',
         },
     ],
+    relations: {
+        user: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'userId',
+                foreignKeyConstraintName: 'fk_chat_rollout_user_user_id',
+            },
+        },
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_chat_rollout_user_platform_id',
+            },
+        },
+    },
 })
