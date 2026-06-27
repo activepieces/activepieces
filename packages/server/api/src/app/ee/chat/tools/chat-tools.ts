@@ -375,6 +375,26 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
             parsedInput = parsed as Record<string, unknown>
         }
     }
+
+    // Resolve + validate the action before running it, so the agent self-corrects a
+    // wrong action name (with a "did you mean" hint), a bad input shape, or a missing
+    // connection — instead of guessing and crashing at runtime.
+    const lookup = await mcpUtils.lookupPieceComponent({ pieceName, componentName: actionName, componentType: 'action', projectId: resolvedProjectId, log })
+    if (lookup.error) {
+        return { success: false, error: lookup.error.content[0]?.text ?? `Action "${actionName}" not found on "${normalizedPiece}".` }
+    }
+    const baseInput = isObject(parsedInput) ? parsedInput : {}
+    const diagnosis = mcpUtils.diagnosePieceProps({
+        props: lookup.component.props,
+        input: connectionExternalId ? { ...baseInput, auth: connectionExternalId } : baseInput,
+        pieceAuth: lookup.piece.auth,
+        requireAuth: lookup.component.requireAuth,
+        componentType: 'action',
+    })
+    if (diagnosis.missing.length > 0 || diagnosis.unknownKeys.length > 0) {
+        return { success: false, error: `Fix the input for "${normalizedPiece}/${actionName}" before running:\n${diagnosis.parts.join('\n')}` }
+    }
+
     const result = await executeAdhocAction({
         projectId: resolvedProjectId,
         pieceName,
