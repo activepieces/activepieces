@@ -1,4 +1,4 @@
-import { tryCatch } from '@activepieces/core-utils'
+import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { chatToolPhases } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
@@ -8,6 +8,10 @@ import { chatWorkerTools } from './chat-worker-tools'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
+const PIECE_PROPS_TOOL_NAME = 'ap_get_piece_props'
+const PROP_VERBOSE_KEYS = new Set<string>(['description', 'defaultValue', 'sampleData', 'examples', 'sampleOutput'])
+const PROP_RECURSE_KEYS = new Set<string>(['items', 'dynamicFields', 'children', 'listItems'])
+const SCHEMA_ROOT_VERBOSE_KEYS = new Set<string>(['sampleData', 'examples', 'sampleOutput'])
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
 // High-precision: matched against tool RESULT text (which can contain user/CRM data), so it
@@ -224,16 +228,100 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                     }
                     return buildReconnectGuidance({ connectorUuid })
                 }
-                const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
+                const digested = digestMcpResult({ toolName: name, result: toolResult })
+                const offloaded = await maybeOffloadMcpResult({ result: digested, toolName: name, saveLargeResult })
                 if (offloaded !== null) {
                     return offloaded
                 }
-                return chatWorkerTools.truncateLargeResult(toolResult)
+                return chatWorkerTools.truncateLargeResult(digested)
             },
         })
     }
 
     return result
+}
+
+function digestMcpResult({ toolName, result }: {
+    toolName: string
+    result: unknown
+}): unknown {
+    return toolName === PIECE_PROPS_TOOL_NAME ? condensePiecePropsResult(result) : result
+}
+
+function condensePiecePropsResult(result: unknown): unknown {
+    if (!isObject(result)) {
+        return result
+    }
+    const structuredContent = isObject(result['structuredContent'])
+        ? condenseSchemaObject(result['structuredContent'])
+        : result['structuredContent']
+    const content = Array.isArray(result['content'])
+        ? result['content'].map(condenseContentEntry)
+        : result['content']
+    return { ...result, content, structuredContent }
+}
+
+function condenseContentEntry(entry: unknown): unknown {
+    if (!isObject(entry) || entry['type'] !== 'text' || typeof entry['text'] !== 'string') {
+        return entry
+    }
+    return { ...entry, text: condenseEmbeddedSchemaJson(entry['text']) }
+}
+
+function condenseEmbeddedSchemaJson(text: string): string {
+    const start = text.indexOf('{')
+    const end = text.lastIndexOf('}')
+    if (start === -1 || end <= start) {
+        return text
+    }
+    const before = text.slice(0, start)
+    const jsonBlock = text.slice(start, end + 1)
+    const after = text.slice(end + 1)
+    const { data: parsed, error } = tryCatchSync(() => JSON.parse(jsonBlock))
+    if (error || !isObject(parsed)) {
+        return text
+    }
+    return `${before}${JSON.stringify(condenseSchemaObject(parsed), null, 2)}${after}`
+}
+
+function condenseSchemaObject(schema: Record<string, unknown>): Record<string, unknown> {
+    const condensed: Record<string, unknown> = { ...schema }
+    if (Array.isArray(schema['props'])) {
+        condensed['props'] = schema['props'].map(condensePropSummary)
+    }
+    if (isObject(schema['outputSchema'])) {
+        condensed['outputSchema'] = condenseOutputSchema(schema['outputSchema'])
+    }
+    for (const key of Object.keys(condensed)) {
+        if (SCHEMA_ROOT_VERBOSE_KEYS.has(key)) {
+            delete condensed[key]
+        }
+    }
+    return condensed
+}
+
+function condensePropSummary(prop: unknown): unknown {
+    if (!isObject(prop)) {
+        return prop
+    }
+    const kept: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(prop)) {
+        if (PROP_VERBOSE_KEYS.has(key)) {
+            continue
+        }
+        kept[key] = PROP_RECURSE_KEYS.has(key) && Array.isArray(value)
+            ? value.map(condensePropSummary)
+            : value
+    }
+    return kept
+}
+
+function condenseOutputSchema(outputSchema: Record<string, unknown>): Record<string, unknown> {
+    const condensed: Record<string, unknown> = { ...outputSchema }
+    if (Array.isArray(outputSchema['fields'])) {
+        condensed['fields'] = outputSchema['fields'].map(condensePropSummary)
+    }
+    return condensed
 }
 
 type McpConnection = {
