@@ -528,11 +528,15 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
 
-        // Fence the send by the owning run: a preempted/cancelled run that was parked on an email
-        // approval must not resume and send once a newer run owns the conversation.
-        if (!isNil(input.runId) && !isNil(conversation.activeRunId) && input.runId !== conversation.activeRunId) {
-            log.warn({ conversation: { id: conversationId }, run: { id: input.runId } }, '[chatRpc#sendChatEmail] Blocked send from a superseded run')
-            return { sent: false, message: 'This turn was superseded by a newer message, so the email was not sent.' }
+        // Fence the send to the active streaming owner. A run parked on an email approval must not
+        // resume and send once it's been superseded (activeRunId changed) OR cancelled/finished
+        // (status left STREAMING). Cancellation flips status to IDLE without touching activeRunId,
+        // so the status check is what rejects an approved-then-cancelled send.
+        const ownsActiveTurn = conversation.status === ChatConversationStatus.STREAMING
+            && (isNil(conversation.activeRunId) || conversation.activeRunId === input.runId)
+        if (!isNil(input.runId) && !ownsActiveTurn) {
+            log.warn({ conversation: { id: conversationId }, run: { id: input.runId }, status: conversation.status }, '[chatRpc#sendChatEmail] Blocked send from a superseded or cancelled run')
+            return { sent: false, message: 'This turn is no longer active, so the email was not sent.' }
         }
 
         const recipients = unique(to.map((email) => email.toLowerCase().trim()).filter((email) => email.length > 0))
