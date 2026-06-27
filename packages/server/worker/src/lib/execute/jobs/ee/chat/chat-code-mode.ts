@@ -79,6 +79,52 @@ function byteLengthOf(value: unknown): number {
     return isNil(serialized) ? 0 : Buffer.byteLength(serialized, 'utf8')
 }
 
+// Turn a tool's raw return into clean, directly-usable data for the in-code `tools.x()` caller, so
+// the model's scripts don't have to reach into the MCP content-wrapper and JSON.parse a
+// status-prefixed string (see the comment at the call site). Priority:
+//   1. structuredContent (an object) → return it as-is;
+//   2. content[0].text → strip a leading status/emoji line, then JSON.parse the rest if it parses
+//      (else return the stripped text);
+//   3. anything else → return the raw result untouched.
+function unwrapToolResult(result: unknown): unknown {
+    if (!isObject(result)) return result
+    const structured = (result as { structuredContent?: unknown }).structuredContent
+    if (isObject(structured)) return structured
+    const text = readFirstContentText(result)
+    if (isNil(text)) return result
+    const stripped = stripStatusPrefix(text)
+    const { data: parsed, error } = tryCatchSync(() => JSON.parse(stripped) as unknown)
+    return isNil(error) ? parsed : stripped
+}
+
+function readFirstContentText(result: unknown): string | null {
+    if (!isObject(result)) return null
+    const content = (result as { content?: unknown }).content
+    if (!Array.isArray(content) || content.length === 0) return null
+    const first = content[0]
+    const text = isObject(first) ? (first as { text?: unknown }).text : undefined
+    return typeof text === 'string' ? text : null
+}
+
+// Drop a leading status line so the JSON payload underneath can be parsed. Handles the two shapes
+// the result builders emit: a first line beginning with a status emoji (✅/❌/⚠️), and a leading
+// "✅ … :" status-prefix on the same line as the data. No-prefix text is returned unchanged.
+function stripStatusPrefix(text: string): string {
+    const trimmed = text.replace(/^﻿/, '').trimStart()
+    const newlineIndex = trimmed.indexOf('\n')
+    if (newlineIndex !== -1) {
+        const firstLine = trimmed.slice(0, newlineIndex)
+        if (/^[✅❌⚠️]/u.test(firstLine)) {
+            return trimmed.slice(newlineIndex + 1).trimStart()
+        }
+    }
+    const inlinePrefix = trimmed.match(/^[✅❌⚠️][^\n:]*:\s*/u)
+    if (inlinePrefix) {
+        return trimmed.slice(inlinePrefix[0].length)
+    }
+    return trimmed
+}
+
 // Compact, model-facing signature for one tool: name(arg1, arg2?) — first line of its description.
 // Best-effort schema introspection: zod `.shape` first, then a JSON-schema `properties` fallback,
 // then a bare `(input)` so an exotic schema still lists the tool rather than dropping it.
@@ -171,7 +217,13 @@ function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
         const result = await Promise.resolve(entry.execute(isNil(args) ? {} : args, options))
         serverSideBytes += byteLengthOf(result)
         log.debug({ tool: { name: entry.realName }, resultBytes: byteLengthOf(result) }, '[chat][code-mode] bridged tool call')
-        return result
+        // Hand the CODE clean, directly-usable data — not the raw MCP content-wrapper. The model's
+        // Code Mode scripts naturally do `JSON.parse(result.content[0].text)`, but `content[0].text`
+        // is prefixed with a status line (e.g. "✅ Research …\n{json}"), so that parse throws and
+        // burns a self-correcting retry. Unwrap to the most useful value here so the script gets a
+        // parsed object straight away. (The unwrapped value is still server-side — only the script's
+        // final `return` reaches the model.)
+        return unwrapToolResult(result)
     }
 
     return {
@@ -354,12 +406,12 @@ function createCodeModeTools({ getTools, log }: {
             description: [
                 'Code Mode — write a small async JavaScript module that ORCHESTRATES your other tools (calls them, loops over results, aggregates) and runs server-side. PREFER this over calling tools one-by-one whenever you need to: call several tools in sequence or in a loop, fan a tool across many items, or chain a large read into a transform. It saves round-trips (the loop runs server-side, not turn-by-turn) AND context (large tool results stay server-side — only your final `return` value comes back, capped at 64KB).',
                 '',
-                'Shape: export an async `run`: `export const run = async (tools, data) => { /* ... */ return result }`. Call any tool as `await tools.<name>({ ...args })` — args are the SAME inputs that tool takes normally. Each bridged call inherits connections, conversation context, and approval gates (a gated tool like ap_send_email will still pop its confirmation card and block until the user approves). `data`/`inputs` holds any offloaded results passed in. Return a COMPACT summary, not raw data. `fetch`, `require`, `process`, and file/network access are disabled — reach external systems only through bridged tools.',
+                'Shape: export an async `run`: `export const run = async (tools, data) => { /* ... */ return result }`. Call any tool as `await tools.<name>({ ...args })` — args are the SAME inputs that tool takes normally. Each call RETURNS THE PARSED RESULT DIRECTLY — a plain object (or, for non-JSON tools, a string) you can use right away. Do NOT reach for `.content[0].text` or `JSON.parse` the result; the bridge already unwraps and parses it for you. Each bridged call inherits connections, conversation context, and approval gates (a gated tool like ap_send_email will still pop its confirmation card and block until the user approves). `data`/`inputs` holds any offloaded results passed in. Return a COMPACT summary, not raw data. `fetch`, `require`, `process`, and file/network access are disabled — reach external systems only through bridged tools.',
                 '',
                 'Example — score every open deal and return just the summary, without paging each batch through your context:',
                 'export const run = async (tools) => {',
                 '  const res = await tools.ap_execute_action({ pieceName: "@activepieces/piece-hubspot", actionName: "list_deals", input: { limit: 100 } })',
-                '  const deals = JSON.parse(res.content[0].text).results',
+                '  const deals = res.results',
                 '  const stalled = deals.filter(d => d.daysSinceActivity > 30)',
                 '  return { total: deals.length, stalled: stalled.length, topStalled: stalled.slice(0, 5).map(d => d.name) }',
                 '}',
