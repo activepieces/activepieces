@@ -1,6 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { createBedrockClient } from './common';
-import { ListFoundationModelsCommand } from '@aws-sdk/client-bedrock';
+import { BedrockClient, ListFoundationModelsCommand } from '@aws-sdk/client-bedrock';
 
 const bedrockOidcDescription = `
 Connect your AWS account using an IAM Role via OIDC — no permanent keys required.
@@ -90,7 +89,10 @@ export const awsBedrockAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const client = createBedrockClient(auth);
+      const client = new BedrockClient({
+        credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+        region: auth.region,
+      });
       await client.send(new ListFoundationModelsCommand({}));
       return { valid: true };
     } catch (e) {
