@@ -171,6 +171,7 @@ export type HeartbeatChatConversationRequest = {
 
 export type UpdateProjectContextRequest = {
     conversationId: string
+    runId?: string
     projectId: string | null
 }
 

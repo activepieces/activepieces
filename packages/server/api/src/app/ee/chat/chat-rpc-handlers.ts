@@ -414,7 +414,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async updateProjectContext(input: UpdateProjectContextRequest): Promise<void> {
-        await chatHelpers.conversationRepo().update(input.conversationId, { projectId: input.projectId })
+        await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates: { projectId: input.projectId } })
         log.info({ conversation: { id: input.conversationId }, project: input.projectId ? { id: input.projectId } : undefined }, '[chatRpc#updateProjectContext] Project context updated')
     },
 

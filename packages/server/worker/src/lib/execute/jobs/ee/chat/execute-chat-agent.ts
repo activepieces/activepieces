@@ -392,7 +392,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     const localTools = chatWorkerTools.createLocalTools({
         onSetProjectContext: async (projectId) => {
             projectState.projectId = projectId
-            await ctx.apiClient.updateProjectContext({ conversationId, projectId })
+            await ctx.apiClient.updateProjectContext({ conversationId, runId, projectId })
         },
         projects,
     })
