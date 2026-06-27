@@ -8,7 +8,7 @@ export const todoistUpdateTaskAction = createAction({
   name: 'update_task',
   displayName: 'Update Task',
   description: 'Updates an existing task.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates fields (content, description, labels, priority, due date) on an existing Todoist task identified by task_id. Use to edit a task you already know the ID of; only the fields you pass are changed. Idempotent: re-sending the same values overwrites to the same end state with no extra effect.', idempotent: true },
   props: {
     task_id: Property.ShortText({
