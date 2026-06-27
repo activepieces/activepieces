@@ -243,6 +243,25 @@ export const ChatPromptOverride = z.object({
 })
 export type ChatPromptOverride = z.infer<typeof ChatPromptOverride>
 
+export const ActiveStageContextFocus = z.object({
+    kind: z.string(),
+    label: z.string(),
+    ref: z.string().optional(),
+    detail: z.string().optional(),
+})
+export type ActiveStageContextFocus = z.infer<typeof ActiveStageContextFocus>
+
+export const ActiveStageContext = z.object({
+    type: z.string(),
+    id: z.string().optional(),
+    name: z.string().optional(),
+    projectId: z.string().optional(),
+    projectName: z.string().optional(),
+    excerpt: z.string().optional(),
+    focus: ActiveStageContextFocus.optional(),
+})
+export type ActiveStageContext = z.infer<typeof ActiveStageContext>
+
 export const ExecuteChatAgentJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
@@ -259,6 +278,7 @@ export const ExecuteChatAgentJobData = z.object({
         data: z.string(),
     })).optional(),
     promptOverride: ChatPromptOverride.optional(),
+    activeContext: ActiveStageContext.optional(),
     dryRun: z.boolean().optional(),
     // Measurement mode: run real discovery (research/get-props/resolve/reads) but neutralize
     // ap_execute_action and auto-resolve approval gates, so the eval harness can measure how the

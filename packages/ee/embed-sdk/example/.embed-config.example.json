@@ -1,0 +1,17 @@
+{
+  "instanceUrl": "http://localhost:4210",
+  "prefix": "/automations",
+  "signingKeyId": "PASTE_SIGNING_KEY_ID",
+  "privateKey": "-----BEGIN RSA PRIVATE KEY-----\n...paste the downloaded private key (newlines as \\n)...\n-----END RSA PRIVATE KEY-----\n",
+  "user": {
+    "externalUserId": "helio-user-1001",
+    "externalProjectId": "helio-workspace-42",
+    "projectDisplayName": "Acme Corp Workspace",
+    "firstName": "Dana",
+    "lastName": "Operator",
+    "role": "ADMIN",
+    "piecesFilterType": "NONE",
+    "tasks": 50000,
+    "aiCredits": 250
+  }
+}

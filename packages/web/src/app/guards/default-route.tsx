@@ -1,9 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { determineDefaultRoute } from '@/lib/route-utils';
+import { CHAT_ROUTE, determineDefaultRoute } from '@/lib/route-utils';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
@@ -26,14 +25,11 @@ export const DefaultRoute = () => {
 
 const AuthenticatedDefaultRoute = () => {
   const { checkAccess } = useAuthorization();
-  const { platform } = platformHooks.useCurrentPlatform();
-  return (
-    <Navigate
-      to={determineDefaultRoute({
-        checkAccess,
-        chatEnabled: platform.plan.chatEnabled,
-      })}
-      replace
-    ></Navigate>
-  );
+  // Open the app on the project-agnostic chat landing (Stage closed); the user
+  // opens a flow/table from there via Browse (⌘K) or the chat itself.
+  const projectId = authenticationSession.getProjectId();
+  if (projectId) {
+    return <Navigate to={CHAT_ROUTE} replace />;
+  }
+  return <Navigate to={determineDefaultRoute({ checkAccess })} replace />;
 };

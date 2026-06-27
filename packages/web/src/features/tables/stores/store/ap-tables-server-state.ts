@@ -129,6 +129,43 @@ export const createServerState = (
     setRecords: (records: PopulatedRecord[]) => {
       clonedRecords = JSON.parse(JSON.stringify(records));
     },
+    // Server-originated deltas (e.g. the chat agent editing the table): keep the
+    // mirror in sync WITHOUT enqueuing an API write, so a later user edit resolves
+    // the correct record id by index. Mutates in place to keep exposed refs valid.
+    applyServerRecord: (record: PopulatedRecord) => {
+      const index = clonedRecords.findIndex((r) => r.id === record.id);
+      if (index === -1) {
+        clonedRecords.push(record);
+      } else {
+        clonedRecords[index] = record;
+      }
+    },
+    removeServerRecord: (recordId: string) => {
+      const index = clonedRecords.findIndex((r) => r.id === recordId);
+      if (index !== -1) {
+        clonedRecords.splice(index, 1);
+      }
+    },
+    applyServerField: (field: Field) => {
+      const index = clonedFields.findIndex((f) => f.id === field.id);
+      if (index === -1) {
+        clonedFields.push(field);
+      } else {
+        clonedFields[index] = field;
+      }
+    },
+    removeServerField: (fieldId: string) => {
+      const index = clonedFields.findIndex((f) => f.id === fieldId);
+      if (index !== -1) {
+        clonedFields.splice(index, 1);
+      }
+      clonedRecords = clonedRecords.map((record) => ({
+        ...record,
+        cells: Object.fromEntries(
+          Object.entries(record.cells).filter(([key]) => key !== fieldId),
+        ),
+      }));
+    },
     fields: clonedFields,
     records: clonedRecords,
   };

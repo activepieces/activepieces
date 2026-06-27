@@ -88,14 +88,18 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
             // Round one of the loop runs on the fast model with native thinking OFF, so the
             // opener ("Lead with text") + first discovery stream out in ~400ms instead of
             // waiting behind the smart model's slower first token and silent thinking budget.
-            // From round two we switch to the smart model with thinking ON for planning depth.
+            // From round two we switch to the smart model (thinking still gated below).
             // It's one continuous turn (no second call), so there's no double-greeting.
             const isFirstStep = steps.length === 0
-            // Thinking stays OFF for the whole discovery phase, not just round one: extended
-            // thinking makes the model deliberate and fire ONE tool per step, serializing the
-            // read-only lookups that should run as one parallel burst. Once a build-only tool
-            // flips the phase to 'build', thinking comes back on for planning depth.
-            const disableThinking = isFirstStep || phaseState.phase === 'discovery'
+            // Thinking is gated on whether the agent has started genuine flow construction —
+            // NOT on the build phase. The build phase only governs tool VISIBILITY; table/data
+            // writes and one-time actions are build-phase tools that need no deep reasoning, so
+            // keeping thinking on for them made every row add/delete cost tens of seconds of
+            // reasoning on a large context. Once a deep-reasoning tool (flow construction/test/
+            // publish, or ap_set_build_plan one step before it) has fired in any prior step, the
+            // latch stays on so the multi-step build keeps its planning depth.
+            const deepReasoningStarted = steps.some((s) => s.toolCalls?.some((c) => chatToolPhases.isDeepReasoningTool(c.toolName)))
+            const disableThinking = isFirstStep || !deepReasoningStarted
             return {
                 ...(isFirstStep && fastModel ? { model: fastModel } : {}),
                 activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }),

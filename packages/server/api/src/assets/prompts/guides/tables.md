@@ -29,9 +29,9 @@ Tables belong to a project, so a project must be selected before you create or w
 | `ap_create_table` | Create a table with an initial set of fields. Types: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`. |
 | `ap_manage_fields` | Add, rename, or delete fields (max 100 fields per table). |
 | `ap_find_records` | Query records with optional filters. |
-| `ap_insert_records` | Insert one or more records (max 50 per call). |
+| `ap_insert_records` | Insert rows — pass an array (max 50 per call). The ONLY way to add rows. |
 | `ap_update_record` | Update specific cells of a single record. |
-| `ap_delete_records` | Delete records by id. |
+| `ap_delete_records` | Delete records by id — pass the whole id array in one call (no cap). Always pass `tableId` (from `ap_find_records`) so an open Stage shows the deletions live. The ONLY way to delete rows. |
 | `ap_delete_table` | Permanently delete a table and all its data. |
 
 ### Filter operators (`ap_find_records`)
@@ -54,4 +54,6 @@ The agent tools above are for setup and inspection. To read/write a Table from i
 - **Resolve the table and its fields with `ap_list_tables` first** — don't assume a table or field exists.
 - Only call `ap_create_table` after confirming the table isn't already there.
 - `STATIC_DROPDOWN` values must match one of the field's configured options.
-- Inserts are capped at 50 records per call — chunk larger writes.
+- **Never read or write a Table with `ap_run_code`/`fetch`.** The sandbox can't reach the AP API. Use the `ap_*` table tools for every read/write. (Using `ap_run_code` to *generate* the row data, then handing that array to `ap_insert_records`, is fine — only the write must be native.)
+- **Insert in waves so the open Stage looks alive.** Even under the 50-cap, add many rows in modest chunks (~10 per `ap_insert_records` call) rather than one giant payload — each call streams its rows into the table as a visible burst, so the user watches it fill instead of staring at a long pause then a dump. Chunk larger writes via **repeated `ap_insert_records` calls**, never a code/fetch loop.
+- **For bulk/synthetic data ("add N test rows"), generate the array with `ap_run_code` (~2s) and pass it to `ap_insert_records`** — far faster than hand-typing every row, which makes the user wait while you generate tokens. Generate, then insert in ~10-row waves.

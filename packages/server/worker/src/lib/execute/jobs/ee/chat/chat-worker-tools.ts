@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StageOpenEvent, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -242,6 +242,12 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
         emitBuildPlan(data: BuildPlanEvent): void {
             void sendWithRetry({
                 event: { type: ChatAgentEventType.BUILD_PLAN, data },
+                maxAttempts: 2,
+            })
+        },
+        emitStageOpen(data: StageOpenEvent): void {
+            void sendWithRetry({
+                event: { type: ChatAgentEventType.STAGE_OPEN, data },
                 maxAttempts: 2,
             })
         },
@@ -688,7 +694,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
         }),
 
         ap_run_code: tool({
-            description: 'Write and run JavaScript/TypeScript in a secure sandbox to compute, transform data, parse content, or manipulate files/images when no piece fits or code is simpler. Reach for this when a task is best solved with code (e.g. resize/convert an image, parse a CSV, do a calculation, reformat JSON) and there is no suitable piece action. Your code MUST export a function named `code`: `export const code = async (inputs) => { ... }`. The value you return becomes the result. To use npm packages, pass a `packageJson` string with a `dependencies` map — pure-JS packages only (e.g. "papaparse", "jimp"); native/binary modules like "sharp" or "canvas" will NOT load. To create an image/graphic from scratch, build an SVG string and return it as a `.svg` file (no dependency needed). To read user attachments OR an offloaded large tool result, pass their fileIds in `inputFileIds` — each becomes `inputs.files[i]` as `{ name, mimeType, base64 }`, and any JSON file is ALSO parsed for you as `inputs.data` (the object/array directly — no decoding needed; if you pass several JSON files it is an array in order). This is how you process a big result that came back as a preview + fileId: pass that fileId, read `inputs.data`, pull just the fields you need, and return a compact summary. For an image you generated earlier, pass its URL into `input` and `fetch()` it instead. To return files/images to the user, return an object with a `files` array of `{ name, mimeType, base64 }`; those are shown to the user automatically (do not also paste them into your reply). Prefer dedicated pieces for third-party integrations and authenticated API calls.',
+            description: 'Write and run JavaScript/TypeScript in a secure sandbox to compute, transform data, parse content, or manipulate files/images when no piece fits or code is simpler. Reach for this when a task is best solved with code (e.g. resize/convert an image, parse a CSV, do a calculation, reformat JSON) and there is no suitable piece action. Your code MUST export a function named `code`: `export const code = async (inputs) => { ... }`. The value you return becomes the result. To use npm packages, pass a `packageJson` string with a `dependencies` map — pure-JS packages only (e.g. "papaparse", "jimp"); native/binary modules like "sharp" or "canvas" will NOT load. To create an image/graphic from scratch, build an SVG string and return it as a `.svg` file (no dependency needed). To read user attachments OR an offloaded large tool result, pass their fileIds in `inputFileIds` — each becomes `inputs.files[i]` as `{ name, mimeType, base64 }`, and any JSON file is ALSO parsed for you as `inputs.data` (the object/array directly — no decoding needed; if you pass several JSON files it is an array in order). This is how you process a big result that came back as a preview + fileId: pass that fileId, read `inputs.data`, pull just the fields you need, and return a compact summary. For an image you generated earlier, pass its URL into `input` and `fetch()` it instead. To return files/images to the user, return an object with a `files` array of `{ name, mimeType, base64 }`; those are shown to the user automatically (do not also paste them into your reply). Prefer dedicated pieces for third-party integrations and authenticated API calls. The sandbox has NO network access to the Activepieces API — never `fetch()` `/api/v1/...` or any AP REST endpoint (it will fail). Read/write AP Tables, flows, and connections ONLY through the native ap_* tools (ap_find_records / ap_insert_records / ap_update_record / ap_delete_records). Code is for computing, generating, and transforming data — e.g. it is great for GENERATING the rows to insert, but the insert itself is always ap_insert_records, not code.',
             inputSchema: z.object({
                 title: z.string().optional().describe('Short human-friendly label for the tool card, e.g. "Resize image", "Parse CSV", "Compute totals"'),
                 recipe: z.array(z.string()).optional().describe('Plain-English lines describing what the code does, written for a non-technical user. 3-6 short lines, no numbering, no code/syntax/variable names — each line is one human step of the logic (what it does and why) at a high altitude, NOT a line-by-line translation. E.g. ["Open up your spreadsheet", "Add together every value in the Amount column", "Round the total to two decimal places", "Hand back the final number"].'),
@@ -1327,6 +1333,23 @@ function createBuildPlanTools({ eventEmitter, getProjectId }: {
                 return { ok: true, buildId }
             },
         }),
+        ap_open_in_stage: tool({
+            description: 'Open a flow, table, or run in the side panel the user is looking at, so they can SEE it — not just read about it (silent, internal — no thinking status). Use this when seeing the thing visually is the point: you found or are about to discuss a specific table (show it instead of pasting its rows into chat), you just built or edited a flow (open it so they watch it come together), or you want them to inspect a particular run. Do NOT call it for things you only mention or explain, do not reopen what is already the active context the user is viewing, and open each relevant resource at most once per turn. Restraint matters — when in doubt, do not open.',
+            inputSchema: z.object({
+                resourceType: z.enum(['flow', 'table', 'run']),
+                resourceId: z.string().describe('The id of the flow, table, or run to open'),
+                displayName: z.string().optional().describe('Human-readable name shown on the inline chip, e.g. the table or flow name'),
+            }),
+            execute: async (input) => {
+                eventEmitter.emitStageOpen({
+                    resourceType: input.resourceType,
+                    resourceId: input.resourceId,
+                    ...spreadIfDefined('projectId', getProjectId() ?? undefined),
+                    ...spreadIfDefined('displayName', input.displayName),
+                })
+                return { ok: true }
+            },
+        }),
     }
 }
 
@@ -1359,6 +1382,7 @@ export type ChatEventEmitter = {
     emitImageGenerated(data: ImageGeneratedEvent): void
     emitFileProduced(data: FileProducedEvent): void
     emitBuildPlan(data: BuildPlanEvent): void
+    emitStageOpen(data: StageOpenEvent): void
 }
 
 export const chatWorkerTools = {

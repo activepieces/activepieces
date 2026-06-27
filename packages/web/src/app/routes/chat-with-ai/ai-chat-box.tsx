@@ -4,8 +4,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -18,7 +19,12 @@ import {
   ChatStoreProvider,
   useChatStoreContext,
 } from '@/features/chat/lib/chat-store-context';
-import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
+import {
+  ActiveChatContext,
+  ChatUIMessage,
+  activeContextUtils,
+  chatPartUtils,
+} from '@/features/chat/lib/chat-types';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { aiProviderQueries } from '@/features/platform-admin';
@@ -32,8 +38,10 @@ import {
 } from './components/chat-empty-state';
 import { CreditsBanner } from './components/credits-banner';
 import { QuickReplies } from './components/quick-replies';
+import { StageContextChip } from './components/stage-context-chip';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
+import { useStageContext } from './lib/use-stage-context';
 
 export function AIChatBox({
   incognito,
@@ -72,6 +80,13 @@ function ChatBoxContent({
   const queryClient = useQueryClient();
   const credits = useCreditsState();
 
+  const activeContext = useStageContext();
+  const activeContextRef = useRef(activeContext);
+  activeContextRef.current = activeContext;
+  const getActiveContext = useCallback(() => activeContextRef.current, []);
+
+  const stage = useStageOptional();
+
   const {
     messages,
     modelName,
@@ -89,6 +104,18 @@ function ChatBoxContent({
     onTitleUpdate,
     onConversationCreated,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
+    onStageOpen: (event) => {
+      if (!stage) return;
+      if (
+        event.projectId &&
+        stage.activeProjectId &&
+        event.projectId !== stage.activeProjectId
+      ) {
+        return;
+      }
+      stage.open({ type: event.resourceType, id: event.resourceId });
+    },
+    getActiveContext,
   });
 
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
@@ -140,6 +167,16 @@ function ChatBoxContent({
   const lastMessage = messages[messages.length - 1];
   const lastAssistantMessage = useMemo(
     () => messages.findLast((m) => m.role === 'assistant'),
+    [messages],
+  );
+
+  // Each user message stores a snapshot of what was open in the Stage. We render a
+  // subtle context tag below a message only when its context differs from the
+  // previous committed one — the first/baseline context shows nothing. The live
+  // chip above the composer carries the "current location" signal, so there's no
+  // separate pending/"switched" indicator.
+  const contextMarkers = useMemo(
+    () => computeContextMarkers(messages),
     [messages],
   );
 
@@ -209,6 +246,7 @@ function ChatBoxContent({
                         key={msg.id}
                         message={msg}
                         isLastMessage={idx === messages.length - 1}
+                        contextMarker={contextMarkers.get(msg.id)}
                       />
                     );
                   }
@@ -293,6 +331,9 @@ function ChatBoxContent({
             placeholder={
               isEmpty ? t('Ask, build, or run a task...') : undefined
             }
+            contextChip={
+              <StageContextChip context={activeContext} variant="live" />
+            }
             banner={
               showBanner ? (
                 <CreditsBanner
@@ -308,6 +349,34 @@ function ChatBoxContent({
       </div>
     </div>
   );
+}
+
+function getMessageContext(msg: ChatUIMessage): ActiveChatContext | undefined {
+  return (msg as ChatUIMessage & { context?: ActiveChatContext }).context;
+}
+
+// A user message's stored context renders as a subtle context tag only when it
+// differs from the previous committed context — so the baseline and repeats are
+// silent. "Differs" includes the selected item (focus): two messages on the same
+// flow but different steps each show their own step, instead of being de-duped to
+// silence. isSameForMarker adds focus on top of isSame; isSame itself stays
+// focus-blind because it mirrors the server's switch-line semantics (selecting a
+// step must not read as a "Switched to" event).
+function computeContextMarkers(
+  messages: ChatUIMessage[],
+): Map<string, ActiveChatContext> {
+  const markers = new Map<string, ActiveChatContext>();
+  let prev: ActiveChatContext | undefined;
+  for (const msg of messages) {
+    if (msg.role !== 'user') continue;
+    const ctx = getMessageContext(msg);
+    if (!ctx) continue;
+    if (prev !== undefined && !activeContextUtils.isSameForMarker(ctx, prev)) {
+      markers.set(msg.id, ctx);
+    }
+    prev = ctx;
+  }
+  return markers;
 }
 
 // A build's plan is replayed across many messages; assign each build to the

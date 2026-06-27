@@ -30,12 +30,13 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOL = 'ap_execute_action'
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
     async execute(ctx: JobContext, data: ExecuteChatAgentJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly } = data
+        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, activeContext, dryRun, discoveryOnly } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
         const config = await ctx.apiClient.getChatConfig({
             conversationId, runId, platformId, userId, userMessage, modelName, files,
             ...spreadIfDefined('promptOverride', promptOverride),
+            ...spreadIfDefined('activeContext', activeContext),
             ...spreadIfDefined('dryRun', dryRun),
         })
 
@@ -75,6 +76,11 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         const abortController = new AbortController()
 
+        // Flow/table ids the agent has locked this turn so any open Stage shows a calm
+        // "Chat is working on this" state. Renewed on each heartbeat (60s TTL would else
+        // drop mid-build) and released in finally (covers completion, abort, and error).
+        const lockedResources = new Set<string>()
+
         // Absolute backstop: guarantees the turn tears down even if every finer-grained
         // signal misses. Routes through the same abortController as user-cancel and the
         // idle watchdog, so it lands in the existing cancel-save branch (status → IDLE).
@@ -107,6 +113,11 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 event: { type: ChatAgentEventType.CHUNK, data: [] },
             }))
             void tryCatch(() => ctx.apiClient.heartbeatChatConversation({ conversationId, runId }))
+            for (const resourceId of lockedResources) {
+                void tryCatch(() => ctx.apiClient.executeChatTool({
+                    toolName: '__lock_resource', toolInput: { resourceId, conversationId, reason: 'Chat is working on this' }, platformId, userId, conversationId,
+                }))
+            }
         }
         const heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
 
@@ -131,6 +142,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
+                lockedResources,
             })
 
             const thinkingStartTime = Date.now()
@@ -293,6 +305,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             clearTimeout(turnWallClockTimer)
             clearInterval(cancelCheckInterval)
             clearInterval(heartbeatInterval)
+            // Release every Stage lock the agent took this turn (completion/abort/error all
+            // land here). A worker crash skips this, but the 60s Redis TTL auto-expires it.
+            for (const resourceId of lockedResources) {
+                await tryCatch(() => ctx.apiClient.executeChatTool({
+                    toolName: '__unlock_resource', toolInput: { resourceId, conversationId }, platformId, userId, conversationId,
+                }))
+            }
             if (mcpClient) {
                 await mcpClient.close().catch((closeErr: unknown) => {
                     log.warn({ error: closeErr }, 'Failed to close MCP client')
@@ -304,7 +323,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, lockedResources }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -321,6 +340,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     discoveryOnly: boolean
     emailEnabled: boolean
     abortSignal: AbortSignal
+    lockedResources: Set<string>
 }) {
     const brokenConnectors = new Set<string>()
 
@@ -439,6 +459,15 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
                     ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
                 }))
                 return saved?.fileId ?? null
+            },
+            onEditResource: async (resourceId) => {
+                if (lockedResources.has(resourceId)) {
+                    return
+                }
+                lockedResources.add(resourceId)
+                await tryCatch(() => ctx.apiClient.executeChatTool({
+                    toolName: '__lock_resource', toolInput: { resourceId, conversationId, reason: 'Chat is working on this' }, platformId, userId, conversationId,
+                }))
             },
         }),
         checkFlowWrites: async (flowId) => {

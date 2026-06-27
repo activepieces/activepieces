@@ -151,6 +151,7 @@ function VariablesPage() {
       {
         accessorKey: 'updated',
         size: 180,
+        meta: { responsivePriority: 'tertiary' },
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={t('Last updated')} />
         ),

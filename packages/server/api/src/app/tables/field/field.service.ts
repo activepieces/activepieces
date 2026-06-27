@@ -4,6 +4,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { tableRealtime } from '../table-realtime'
 import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
@@ -17,6 +18,7 @@ export const fieldService = {
             id: apId(),
             externalId: request.externalId ?? apId(),
         })
+        tableRealtime.fieldCreated({ projectId, tableId: request.tableId, field })
         return field
     },
 
@@ -104,10 +106,14 @@ export const fieldService = {
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
+        const field = await fieldRepo().findOne({ where: { id, projectId } })
         await fieldRepo().delete({
             id,
             projectId,
         })
+        if (!isNil(field)) {
+            tableRealtime.fieldDeleted({ projectId, tableId: field.tableId, fieldId: id })
+        }
     },
 
     async update({ id, projectId, request }: UpdateParams): Promise<Field> {
@@ -117,7 +123,9 @@ export const fieldService = {
         }, {
             name: request.name,
         })
-        return this.getById({ id, projectId })
+        const field = await this.getById({ id, projectId })
+        tableRealtime.fieldUpdated({ projectId, tableId: field.tableId, field })
+        return field
     },
 
     async count({ projectId, tableId }: CountParams): Promise<number> {

@@ -184,6 +184,27 @@ export function buildMessageBlocks({
         }
         continue;
       }
+      if (toolName === 'ap_open_in_stage') {
+        const input = p.input as
+          | { resourceType?: string; resourceId?: string; displayName?: string }
+          | undefined;
+        const resourceType = input?.resourceType;
+        const resourceId = input?.resourceId;
+        if (
+          (resourceType === 'flow' ||
+            resourceType === 'table' ||
+            resourceType === 'run') &&
+          resourceId
+        ) {
+          result.push({
+            kind: 'stage-open',
+            resourceType,
+            resourceId,
+            displayName: input?.displayName,
+          });
+        }
+        continue;
+      }
       if (chatPartUtils.HIDDEN_TOOL_NAMES.has(toolName)) {
         continue;
       }
@@ -350,6 +371,12 @@ export type MessageBlock =
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
+  | {
+      kind: 'stage-open';
+      resourceType: 'flow' | 'table' | 'run';
+      resourceId: string;
+      displayName?: string;
+    }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }

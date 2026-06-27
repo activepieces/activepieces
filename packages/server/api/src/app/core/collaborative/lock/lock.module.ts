@@ -1,4 +1,4 @@
-import { LockResourceRequest, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { LockerKind, LockResourceRequest, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { userService } from '../../../user/user-service'
@@ -18,6 +18,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                     userId: principal.id,
                     userDisplayName: displayName,
                     force: data.force,
+                    lockerKind: LockerKind.USER,
                 })
 
                 if (result.acquired) {
@@ -28,6 +29,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                         resourceId: data.resourceId,
                         userId: principal.id,
                         userDisplayName: displayName,
+                        lockerKind: LockerKind.USER,
                     })
                 }
 

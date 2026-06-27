@@ -31,6 +31,7 @@ function useOwnerColumn<T extends HasOwner | HasOwnerId>(
   const ownerColumn: ColumnDef<RowDataWithActions<T>, unknown> = {
     accessorKey: 'owner',
     size: 180,
+    meta: { responsivePriority: 'secondary' },
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
     ),

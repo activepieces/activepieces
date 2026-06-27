@@ -17,6 +17,7 @@ export type ClientCellData = {
 
 export type ClientRecordData = {
   uuid: string;
+  recordId: string | null;
   agentRunId: string | null;
   values: ClientCellData[];
 };
@@ -41,6 +42,7 @@ const mapRecorddToClientRecordsData = (
 ): ClientRecordData[] => {
   return records.map((record) => ({
     uuid: nanoid(),
+    recordId: record.id,
     agentRunId: null,
     values: Object.entries(record.cells).map(([fieldId, cell]) => ({
       fieldIndex: fields.findIndex((field) => field.id === fieldId),
@@ -82,6 +84,13 @@ export type TableState = {
   setLockedByOtherUser: (locked: boolean) => void;
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
+  recentlyChanged: RecentlyChanged;
+  applyServerDelta: (delta: TableServerDelta) => void;
+  reconcileServerSnapshot: (snapshot: {
+    fields: Field[];
+    records: PopulatedRecord[];
+  }) => void;
+  clearExpiredHighlights: () => void;
 };
 
 export const createApTableStore = (
@@ -257,8 +266,258 @@ export const createApTableStore = (
         set({ lockedByOtherUser: locked }),
       serverFields: serverState.fields,
       serverRecords: serverState.records,
+      recentlyChanged: { records: {}, cells: {} },
+      applyServerDelta: (delta: TableServerDelta) => {
+        mirrorDeltaToServerState(serverState, delta);
+        set((state) => computeDeltaState(state, delta, true));
+      },
+      reconcileServerSnapshot: ({
+        fields: snapshotFields,
+        records: snapshotRecords,
+      }) => {
+        snapshotFields.forEach((field) => {
+          mirrorDeltaToServerState(serverState, {
+            kind: 'field-created',
+            field,
+          });
+          set((state) =>
+            computeDeltaState(state, { kind: 'field-created', field }, false),
+          );
+        });
+        snapshotRecords.forEach((record) => {
+          mirrorDeltaToServerState(serverState, {
+            kind: 'record-updated',
+            record,
+          });
+          set((state) =>
+            computeDeltaState(state, { kind: 'record-updated', record }, false),
+          );
+        });
+      },
+      clearExpiredHighlights: () =>
+        set((state) => {
+          const now = Date.now();
+          const records = filterExpired(state.recentlyChanged.records, now);
+          const cells = filterExpired(state.recentlyChanged.cells, now);
+          if (
+            records === state.recentlyChanged.records &&
+            cells === state.recentlyChanged.cells
+          ) {
+            return {};
+          }
+          return { recentlyChanged: { records, cells } };
+        }),
     };
   });
 };
+
+function mapFieldToClientField(field: Field): ClientField {
+  if (field.type === FieldType.STATIC_DROPDOWN) {
+    return {
+      uuid: field.id,
+      name: field.name,
+      type: field.type,
+      data: field.data,
+    };
+  }
+  return { uuid: field.id, name: field.name, type: field.type };
+}
+
+function buildClientValues(
+  record: PopulatedRecord,
+  fields: ClientField[],
+): ClientCellData[] {
+  return Object.entries(record.cells).flatMap(([fieldId, cell]) => {
+    const fieldIndex = fields.findIndex((field) => field.uuid === fieldId);
+    if (fieldIndex === -1) {
+      return [];
+    }
+    return [{ fieldIndex, value: cell.value }];
+  });
+}
+
+function markChanged(
+  prev: RecentlyChanged,
+  recordIds: string[],
+  cellKeys: string[],
+): RecentlyChanged {
+  if (recordIds.length === 0 && cellKeys.length === 0) {
+    return prev;
+  }
+  const expiry = Date.now() + HIGHLIGHT_MS;
+  const records = { ...prev.records };
+  recordIds.forEach((id) => {
+    records[id] = expiry;
+  });
+  const cells = { ...prev.cells };
+  cellKeys.forEach((key) => {
+    cells[key] = expiry;
+  });
+  return { records, cells };
+}
+
+function clearKeysForRecord(
+  prev: RecentlyChanged,
+  recordId: string,
+): RecentlyChanged {
+  const records = { ...prev.records };
+  delete records[recordId];
+  const cells = Object.fromEntries(
+    Object.entries(prev.cells).filter(
+      ([key]) => !key.startsWith(recordId + '_'),
+    ),
+  );
+  return { records, cells };
+}
+
+function filterExpired(
+  map: Record<string, number>,
+  now: number,
+): Record<string, number> {
+  const entries = Object.entries(map).filter(([, expiry]) => expiry > now);
+  if (entries.length === Object.keys(map).length) {
+    return map;
+  }
+  return Object.fromEntries(entries);
+}
+
+function computeDeltaState(
+  state: Pick<TableState, 'fields' | 'records' | 'recentlyChanged'>,
+  delta: TableServerDelta,
+  highlight: boolean,
+): Partial<TableState> {
+  switch (delta.kind) {
+    case 'record-created':
+    case 'record-updated': {
+      const { record } = delta;
+      const values = buildClientValues(record, state.fields);
+      const index = state.records.findIndex((r) => r.recordId === record.id);
+      const cellKey = (fieldIndex: number) =>
+        record.id + '_' + state.fields[fieldIndex].uuid;
+      if (index === -1) {
+        const records = [
+          ...state.records,
+          { uuid: nanoid(), recordId: record.id, agentRunId: null, values },
+        ];
+        const recentlyChanged = highlight
+          ? markChanged(
+              state.recentlyChanged,
+              [record.id],
+              values.map((value) => cellKey(value.fieldIndex)),
+            )
+          : state.recentlyChanged;
+        return { records, recentlyChanged };
+      }
+      const existing = state.records[index];
+      const changedCellKeys = values
+        .filter((value) => {
+          const prev = existing.values.find(
+            (pv) => pv.fieldIndex === value.fieldIndex,
+          );
+          return !prev || prev.value !== value.value;
+        })
+        .map((value) => cellKey(value.fieldIndex));
+      const records = state.records.map((r, i) =>
+        i === index ? { ...r, recordId: record.id, values } : r,
+      );
+      const recentlyChanged = highlight
+        ? markChanged(state.recentlyChanged, [], changedCellKeys)
+        : state.recentlyChanged;
+      return { records, recentlyChanged };
+    }
+    case 'record-deleted': {
+      const records = state.records.filter(
+        (r) => r.recordId !== delta.recordId,
+      );
+      if (records.length === state.records.length) {
+        return {};
+      }
+      return {
+        records,
+        recentlyChanged: clearKeysForRecord(
+          state.recentlyChanged,
+          delta.recordId,
+        ),
+      };
+    }
+    case 'field-created': {
+      if (state.fields.some((field) => field.uuid === delta.field.id)) {
+        return {};
+      }
+      const newIndex = state.fields.length;
+      const fields = [...state.fields, mapFieldToClientField(delta.field)];
+      const records = state.records.map((record) => ({
+        ...record,
+        values: [...record.values, { fieldIndex: newIndex, value: '' }],
+      }));
+      return { fields, records };
+    }
+    case 'field-updated': {
+      const fields = state.fields.map((field) =>
+        field.uuid === delta.field.id
+          ? mapFieldToClientField(delta.field)
+          : field,
+      );
+      return { fields };
+    }
+    case 'field-deleted': {
+      const removeIndex = state.fields.findIndex(
+        (field) => field.uuid === delta.fieldId,
+      );
+      if (removeIndex === -1) {
+        return {};
+      }
+      const fields = state.fields.filter((_, i) => i !== removeIndex);
+      const records = state.records.map((record) => ({
+        ...record,
+        values: record.values
+          .filter((value) => value.fieldIndex !== removeIndex)
+          .map((value) =>
+            value.fieldIndex > removeIndex
+              ? { ...value, fieldIndex: value.fieldIndex - 1 }
+              : value,
+          ),
+      }));
+      return { fields, records };
+    }
+  }
+}
+
+function mirrorDeltaToServerState(
+  serverState: ReturnType<typeof createServerState>,
+  delta: TableServerDelta,
+): void {
+  switch (delta.kind) {
+    case 'record-created':
+    case 'record-updated':
+      serverState.applyServerRecord(delta.record);
+      break;
+    case 'record-deleted':
+      serverState.removeServerRecord(delta.recordId);
+      break;
+    case 'field-created':
+    case 'field-updated':
+      serverState.applyServerField(delta.field);
+      break;
+    case 'field-deleted':
+      serverState.removeServerField(delta.fieldId);
+      break;
+  }
+}
+
+const HIGHLIGHT_MS = 1500;
+
+export type RecentlyChanged = {
+  records: Record<string, number>;
+  cells: Record<string, number>;
+};
+
+export type TableServerDelta =
+  | { kind: 'record-created'; record: PopulatedRecord }
+  | { kind: 'record-updated'; record: PopulatedRecord }
+  | { kind: 'record-deleted'; recordId: string }
+  | { kind: 'field-created'; field: Field }
+  | { kind: 'field-updated'; field: Field }
+  | { kind: 'field-deleted'; fieldId: string };
 
 export type ApTableStore = ReturnType<typeof createApTableStore>;

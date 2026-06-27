@@ -10,6 +10,11 @@ import {
 } from 'lucide-react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
+import {
+  stageResourceKey,
+  useReportStageResourceTitle,
+  useStageHeaderTitle,
+} from '@/components/custom/stage-header-slot';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -53,6 +58,17 @@ const ViewRelease = () => {
     releaseId || '',
     !!releaseId,
   );
+  const stageTitle = useStageHeaderTitle(
+    release?.name ? (
+      <span className="min-w-0 truncate text-sm font-semibold">
+        {release.name}
+      </span>
+    ) : null,
+  );
+  useReportStageResourceTitle(
+    release?.id ? stageResourceKey('release', release.id) : null,
+    release?.name,
+  );
 
   if (!releaseId) {
     return <Navigate to="/releases" replace />;
@@ -67,6 +83,7 @@ const ViewRelease = () => {
 
   return (
     <div className="space-y-6 w-full">
+      {stageTitle}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Button

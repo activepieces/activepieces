@@ -253,6 +253,34 @@ function extractQuickRepliesFromParts(message: ChatUIMessage | null): string[] {
   return [];
 }
 
+function isSameActiveContext(
+  a: ActiveChatContext | undefined,
+  b: ActiveChatContext | undefined,
+): boolean {
+  if (!a || !b) return a === b;
+  return a.type === b.type && a.id === b.id && a.projectId === b.projectId;
+}
+
+// Like isSame, but also distinguishes the selected item (focus). Used by the
+// scrollback marker so two messages on the same page but different steps/rows each
+// surface their own item. isSame stays focus-blind on purpose — it mirrors the
+// server's "Switched to" semantics, where selecting a step must NOT read as a switch.
+function isSameActiveContextForMarker(
+  a: ActiveChatContext | undefined,
+  b: ActiveChatContext | undefined,
+): boolean {
+  if (!isSameActiveContext(a, b)) return false;
+  return (
+    (a?.focus?.ref ?? '') === (b?.focus?.ref ?? '') &&
+    (a?.focus?.label ?? '') === (b?.focus?.label ?? '')
+  );
+}
+
+export const activeContextUtils = {
+  isSame: isSameActiveContext,
+  isSameForMarker: isSameActiveContextForMarker,
+};
+
 export const chatPartUtils = {
   isAnyToolPart,
   getToolPartName,
@@ -299,4 +327,21 @@ export type TypedToolOutput<T> =
 
 export type CreditsWarning = {
   percentage: number;
+};
+
+export type ActiveChatContext = {
+  type: string;
+  id?: string;
+  name?: string;
+  projectId?: string;
+  projectName?: string;
+  excerpt?: string;
+  focus?: ActiveChatContextFocus;
+};
+
+export type ActiveChatContextFocus = {
+  kind: string;
+  label: string;
+  ref?: string;
+  detail?: string;
 };

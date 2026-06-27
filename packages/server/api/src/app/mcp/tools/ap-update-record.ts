@@ -16,7 +16,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
     return {
         title: 'ap_update_record',
         permission: Permission.WRITE_TABLE,
-        description: 'Update specific cells in a record. Only specified fields are changed.',
+        description: 'Update specific cells in a record. Only specified fields are changed. This is the ONLY way to edit a table row — never via ap_run_code or fetch().',
         inputSchema: updateRecordInput.shape,
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {

@@ -11,6 +11,7 @@ import {
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
   PersistedChatMessage,
+  StageOpenEvent,
   ToolProgressEvent,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -28,7 +29,7 @@ import {
   ToolCallMeta,
 } from './chat-store';
 import { useChatStoreApi } from './chat-store-context';
-import { ChatUIMessage, chatPartUtils } from './chat-types';
+import { ActiveChatContext, ChatUIMessage, chatPartUtils } from './chat-types';
 import { chatUtils } from './chat-utils';
 import { useStreamingReducer } from './use-streaming-reducer';
 
@@ -192,10 +193,14 @@ export function useAgentChat({
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
+  onStageOpen,
+  getActiveContext,
 }: {
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
+  onStageOpen?: (event: StageOpenEvent) => void;
+  getActiveContext?: () => ActiveChatContext | undefined;
 } = {}) {
   const store = useChatStoreApi();
 
@@ -211,6 +216,8 @@ export function useAgentChat({
   const sendStatusRef = useRef<SendStatus>({ type: 'idle' });
   const onCreditsExhaustedRef = useRef(onCreditsExhausted);
   onCreditsExhaustedRef.current = onCreditsExhausted;
+  const onStageOpenRef = useRef(onStageOpen);
+  onStageOpenRef.current = onStageOpen;
 
   const [persistedMessages, setPersistedMessages] = useState<ChatUIMessage[]>(
     [],
@@ -232,6 +239,8 @@ export function useAgentChat({
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
+  const getActiveContextRef = useRef(getActiveContext);
+  getActiveContextRef.current = getActiveContext;
 
   const handleTitleUpdate = useCallback((title: string) => {
     onTitleUpdateRef.current?.(title);
@@ -334,6 +343,10 @@ export function useAgentChat({
     [store],
   );
 
+  const handleStageOpen = useCallback((event: StageOpenEvent) => {
+    onStageOpenRef.current?.(event);
+  }, []);
+
   const updateSendStatus = useCallback((next: SendStatus) => {
     sendStatusRef.current = next;
     setSendStatus(next);
@@ -386,6 +399,7 @@ export function useAgentChat({
     onImageGenerated: handleImageGenerated,
     onFileProduced: handleFileProduced,
     onBuildPlan: handleBuildPlan,
+    onStageOpen: handleStageOpen,
     onStreamFinished: (convId) => {
       chatDebug.info({ conversation: { id: convId } }, 'stream finished');
       settleStreamRef.current(convId);
@@ -556,6 +570,12 @@ export function useAgentChat({
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
 
+      // Snapshot of what the user had open in the Stage when they hit send. Stored
+      // on the message and shipped over the wire (the server uses it for the prompt
+      // + working project). Whether it renders as a "Switched to …" marker is decided
+      // at render time by comparing against the previous committed context.
+      const activeContext = getActiveContextRef.current?.();
+
       const optimisticUser: ChatUIMessage = {
         id: `optimistic-${Date.now()}`,
         role: 'user',
@@ -563,6 +583,7 @@ export function useAgentChat({
           { type: 'text', text: content },
           ...fileNamesToFileParts(fileNames),
         ],
+        ...(activeContext ? { context: activeContext } : {}),
       };
 
       // Preempting an in-flight turn: keep its messages on screen by folding them
@@ -641,6 +662,15 @@ export function useAgentChat({
           run: { id: runId },
           contentLength: content.length,
           filesCount: pendingFilesRef.current?.length ?? 0,
+          activeContext: activeContext
+            ? {
+                type: activeContext.type,
+                id: activeContext.id,
+                projectId: activeContext.projectId,
+                hasExcerpt: !isNil(activeContext.excerpt),
+                focus: activeContext.focus?.label,
+              }
+            : undefined,
         },
         'sending chat message',
       );
@@ -651,6 +681,7 @@ export function useAgentChat({
           content,
           runId,
           files: pendingFilesRef.current,
+          activeContext,
         }),
       );
       if (sendError) {
@@ -688,6 +719,7 @@ export function useAgentChat({
 
   const setConversationId = useCallback(
     async (id: string) => {
+      if (conversationIdRef.current === id) return;
       stopStream();
       setIsPollingForAgentReply(false);
       updateSendStatus({ type: 'idle' });

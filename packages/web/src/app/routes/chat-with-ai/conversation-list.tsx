@@ -5,8 +5,8 @@ import {
   ArrowUpRight,
   ChevronDown,
   MessageSquare,
-  Plus,
   Search,
+  SquarePen,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
@@ -220,7 +220,7 @@ export function ConversationList({
           }}
         >
           <span className="flex items-center gap-1.5">
-            <Plus size={mobile ? 16 : 14} />
+            <SquarePen size={mobile ? 16 : 14} />
             {t('New chat')}
           </span>
           {!mobile && <span className="text-[11px] opacity-50">⇧⌘O</span>}

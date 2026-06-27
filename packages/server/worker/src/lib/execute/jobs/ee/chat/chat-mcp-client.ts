@@ -179,11 +179,36 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text: chatAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
 }
 
-function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult }: {
+// Flow/table edit tools whose args carry the id of an existing resource that may
+// be open in the Stage. Locking these (not the read-only ap_list_*/ap_find_*/
+// validate/test tools, and not the create tools whose id is only known after) is
+// what flips the open Stage into a calm "Chat is working on this" read-only state.
+const MUTATING_FLOW_TABLE_TOOLS = new Set([
+    'ap_add_step', 'ap_update_step', 'ap_update_trigger', 'ap_add_branch', 'ap_update_branch',
+    'ap_delete_branch', 'ap_delete_step', 'ap_build_flow', 'ap_change_flow_status', 'ap_rename_flow',
+    'ap_lock_and_publish', 'ap_manage_notes', 'ap_duplicate_flow',
+    'ap_insert_records', 'ap_update_record', 'ap_manage_fields', 'ap_delete_table', 'ap_delete_records',
+])
+
+function readResourceId(args: unknown): string | undefined {
+    if (typeof args !== 'object' || args === null) {
+        return undefined
+    }
+    if ('flowId' in args && typeof args.flowId === 'string') {
+        return args.flowId
+    }
+    if ('tableId' in args && typeof args.tableId === 'string') {
+        return args.tableId
+    }
+    return undefined
+}
+
+function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult, onEditResource }: {
     mcpToolSet: Record<string, unknown>
     brokenConnectors: Set<string>
     getSelectedAuth?: (params: { pieceName: string }) => string | undefined
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
+    onEditResource?: (resourceId: string) => Promise<void>
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
 
@@ -201,6 +226,12 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                 const args = injectSelectedAuth({ name, args: rawArgs, getSelectedAuth })
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
+                }
+                if (onEditResource && MUTATING_FLOW_TABLE_TOOLS.has(name)) {
+                    const resourceId = readResourceId(args)
+                    if (resourceId !== undefined) {
+                        await onEditResource(resourceId)
+                    }
                 }
                 const { data: toolResult, error } = await tryCatch(() => chatWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),

@@ -11,6 +11,7 @@ import {
 import { motion, useReducedMotion } from 'motion/react';
 import { ReactNode, useId } from 'react';
 
+import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
@@ -123,12 +124,20 @@ function OpenInBuilderButton({
   flowId: string;
 }) {
   const openNewWindow = useNewWindow();
+  const stage = useStageOptional();
+  const openInBuilder = () => {
+    if (stage) {
+      stage.open({ type: 'flow', id: flowId });
+    } else {
+      openNewWindow(`/projects/${projectId}/flows/${flowId}`);
+    }
+  };
   return (
     <Button
       size="sm"
       variant="ghost"
       className="h-8 gap-1.5 rounded-lg px-3 text-xs font-medium text-muted-foreground shadow-none transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
-      onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
+      onClick={openInBuilder}
     >
       <ExternalLink className="h-3.5 w-3.5" />
       {t('Open in builder')}

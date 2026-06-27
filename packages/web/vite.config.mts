@@ -14,6 +14,12 @@ export default defineConfig(({ command, mode }) => {
   const AP_TITLE = 'Activepieces';
   const AP_FAVICON = 'https://activepieces.com/favicon.ico';
 
+  // Dev port overrides so multiple worktrees can run side by side (defaults match prod/CI).
+  const WEB_PORT = Number(process.env.AP_DEV_WEB_PORT) || 4200;
+  const API_TARGET = `http://127.0.0.1:${process.env.AP_DEV_API_PORT || 3000}`;
+  const WEB_PROXY_HOST = `127.0.0.1:${WEB_PORT}`;
+  const WEB_ORIGIN_HOST = `localhost:${WEB_PORT}`;
+
   return {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/packages/web',
@@ -21,70 +27,70 @@ export default defineConfig(({ command, mode }) => {
       // allowedHosts: ['wozcsvaint.loclx.io'],
       proxy: {
         '/api': {
-          target: 'http://127.0.0.1:3000',
+          target: API_TARGET,
           secure: false,
           changeOrigin: true,
           headers: {
-            Host: '127.0.0.1:4200',
+            Host: WEB_PROXY_HOST,
           },
           ws: true,
         },
         '/ingest': {
-          target: 'http://127.0.0.1:3000',
+          target: API_TARGET,
           secure: false,
           changeOrigin: true,
         },
         '^/mcp(/|$)': {
-          target: 'http://127.0.0.1:3000',
+          target: API_TARGET,
           secure: false,
           changeOrigin: true,
           headers: {
-            'X-Forwarded-Host': 'localhost:4200',
+            'X-Forwarded-Host': WEB_ORIGIN_HOST,
           },
           rewrite: (p: string) => p,
         },
         '/.well-known': {
-          target: 'http://127.0.0.1:3000',
+          target: API_TARGET,
           secure: false,
           changeOrigin: true,
           headers: {
-            'X-Forwarded-Host': 'localhost:4200',
+            'X-Forwarded-Host': WEB_ORIGIN_HOST,
           },
         },
         '/register': {
-          target: 'http://127.0.0.1:3000',
+          target: API_TARGET,
           secure: false,
           changeOrigin: true,
           headers: {
-            'X-Forwarded-Host': 'localhost:4200',
+            'X-Forwarded-Host': WEB_ORIGIN_HOST,
           },
         },
         '/authorize': {
-          target: 'http://127.0.0.1:3000',
+          target: API_TARGET,
           secure: false,
           changeOrigin: true,
           headers: {
-            'X-Forwarded-Host': 'localhost:4200',
+            'X-Forwarded-Host': WEB_ORIGIN_HOST,
           },
         },
         '/token': {
-          target: 'http://127.0.0.1:3000',
+          target: API_TARGET,
           secure: false,
           changeOrigin: true,
           headers: {
-            'X-Forwarded-Host': 'localhost:4200',
+            'X-Forwarded-Host': WEB_ORIGIN_HOST,
           },
         },
         '/revoke': {
-          target: 'http://127.0.0.1:3000',
+          target: API_TARGET,
           secure: false,
           changeOrigin: true,
           headers: {
-            'X-Forwarded-Host': 'localhost:4200',
+            'X-Forwarded-Host': WEB_ORIGIN_HOST,
           },
         },
       },
-      port: 4200,
+      port: WEB_PORT,
       host: '0.0.0.0',
     },
 

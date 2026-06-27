@@ -10,6 +10,8 @@ import {
 
 import { api } from '@/lib/api';
 
+import { ActiveChatContext } from './chat-types';
+
 async function createConversation(
   request: CreateChatConversationRequest,
 ): Promise<ChatConversation> {
@@ -57,15 +59,17 @@ async function sendMessage({
   content,
   runId,
   files,
+  activeContext,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
+  activeContext?: ActiveChatContext;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/chat/conversations/${conversationId}/messages`,
-    { content, runId, files },
+    { content, runId, files, activeContext },
   );
 }
 

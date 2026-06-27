@@ -263,7 +263,7 @@ export const createFlowState = (
       shouldReselectInitialStep: boolean = true,
     ) => {
       const initiallySelectedStep =
-        flowCanvasUtils.determineInitiallySelectedStep(null, flowVersion);
+        flowCanvasUtils.determineInitiallySelectedStep(null);
       const isEmptyTriggerInitiallySelected =
         initiallySelectedStep === 'trigger' &&
         flowVersion.trigger.type === FlowTriggerType.EMPTY;

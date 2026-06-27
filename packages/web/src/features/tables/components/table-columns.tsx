@@ -122,6 +122,7 @@ export function mapRecordsToRows(
   return records.map((record: ClientRecordData) => {
     const row: Row = {
       id: record.uuid,
+      recordId: record.recordId ?? null,
       agentRunId: record.agentRunId ?? null,
       locked: !isNil(record.agentRunId),
     };

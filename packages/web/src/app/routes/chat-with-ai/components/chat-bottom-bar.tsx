@@ -34,6 +34,7 @@ export function ChatBottomBar({
   lastMessageId,
   placeholder,
   banner,
+  contextChip,
 }: ChatBottomBarProps) {
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
@@ -116,6 +117,7 @@ export function ChatBottomBar({
   return (
     <div className="flex flex-col gap-2">
       {activeCard}
+      {contextChip}
       <div className="overflow-hidden rounded-2xl border border-foreground/20 transition-colors hover:border-foreground/40 focus-within:border-foreground/40">
         {banner}
         <ChatInput
@@ -207,4 +209,5 @@ type ChatBottomBarProps = {
   lastMessageId: string | undefined;
   placeholder?: string;
   banner?: ReactNode;
+  contextChip?: ReactNode;
 };

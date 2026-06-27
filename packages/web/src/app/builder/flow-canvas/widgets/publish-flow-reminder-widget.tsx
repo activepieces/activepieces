@@ -95,23 +95,23 @@ const PublishFlowReminderWidget = () => {
     isSaving,
   });
   return (
-    <LargeWidgetWrapper>
-      <div className="flex items-center gap-2">
-        <Info className="size-5" />
+    <LargeWidgetWrapper containerClassName="w-auto min-h-0 gap-3 rounded-full border-warning/40 bg-warning/10 py-1 pl-3.5 pr-1.5 shadow-sm">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <Info className="size-4 shrink-0 text-warning" />
         {showLoading ? loadingText : t('You have unpublished changes')}
       </div>
       {showLoading ? (
-        <LoadingSpinner className="size-5 stroke-foreground" />
+        <LoadingSpinner className="size-4 stroke-foreground" />
       ) : (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {!isNil(flow.publishedVersionId) && !isSaving && (
             <Button
               size="sm"
               variant="ghost"
-              className="hover:bg-gray-300/10 text-foreground"
+              className="h-7 px-2.5 text-foreground hover:bg-warning/15"
               onClick={() => discardChange()}
             >
-              {t('Discard changes')}
+              {t('Discard')}
             </Button>
           )}
 
@@ -121,7 +121,7 @@ const PublishFlowReminderWidget = () => {
                 <Button
                   size="sm"
                   variant="default"
-                  className="z-50"
+                  className="z-50 h-7 rounded-full px-3.5"
                   loading={isSaving}
                   //for e2e tests
                   name="Publish"

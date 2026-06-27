@@ -3,7 +3,7 @@ import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgr
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '@activepieces/core-piece-types'
-import { ChatPromptOverride } from './job-data'
+import { ActiveStageContext, ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -107,6 +107,7 @@ export enum ChatAgentEventType {
     IMAGE = 'IMAGE',
     FILE = 'FILE',
     BUILD_PLAN = 'BUILD_PLAN',
+    STAGE_OPEN = 'STAGE_OPEN',
 }
 
 export type ToolProgressEvent = {
@@ -189,6 +190,13 @@ export type BuildPlanEvent = {
     updatedAt: string
 }
 
+export type StageOpenEvent = {
+    resourceType: 'flow' | 'table' | 'run'
+    resourceId: string
+    projectId?: string
+    displayName?: string
+}
+
 export type ChatAgentEvent =
     | { type: ChatAgentEventType.CHUNK, data: unknown }
     | { type: ChatAgentEventType.FINISHED, data: { conversationId: string } }
@@ -200,6 +208,7 @@ export type ChatAgentEvent =
     | { type: ChatAgentEventType.IMAGE, data: ImageGeneratedEvent }
     | { type: ChatAgentEventType.FILE, data: FileProducedEvent }
     | { type: ChatAgentEventType.BUILD_PLAN, data: BuildPlanEvent }
+    | { type: ChatAgentEventType.STAGE_OPEN, data: StageOpenEvent }
 
 export type GetChatConfigRequest = {
     conversationId: string
@@ -210,6 +219,7 @@ export type GetChatConfigRequest = {
     modelName: string | null
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: ChatPromptOverride
+    activeContext?: ActiveStageContext
     dryRun?: boolean
 }
 

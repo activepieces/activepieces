@@ -13,6 +13,8 @@ export { createApTableStore } from './stores/store/ap-tables-client-state';
 export type {
   ApTableStore,
   TableState,
+  ClientField,
+  ClientRecordData,
 } from './stores/store/ap-tables-client-state';
 export { ROW_HEIGHT_MAP, RowHeight } from './types/types';
 export type { Row } from './types/types';

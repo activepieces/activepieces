@@ -244,6 +244,7 @@ export const runsTableColumns = ({
   },
   {
     accessorKey: 'created',
+    meta: { responsivePriority: 'tertiary' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -265,6 +266,7 @@ export const runsTableColumns = ({
   },
   {
     accessorKey: 'duration',
+    meta: { responsivePriority: 'tertiary' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -309,6 +311,7 @@ export const runsTableColumns = ({
   },
   {
     accessorKey: 'failedStep',
+    meta: { responsivePriority: 'secondary' },
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}

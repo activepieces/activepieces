@@ -48,6 +48,7 @@ import { markdownPreviewComponents } from './previews/markdown-preview-component
 import { previewUtils } from './previews/preview-utils';
 import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { StageOpenChip } from './stage-open-chip';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
 const PROSE_CLASSES = 'max-w-none break-words';
@@ -379,6 +380,16 @@ function MessageBlocks({
             }
             return null;
           }
+          case 'stage-open':
+            return (
+              <div key={`stage-open-${i}`} className="py-1.5">
+                <StageOpenChip
+                  resourceType={block.resourceType}
+                  resourceId={block.resourceId}
+                  displayName={block.displayName}
+                />
+              </div>
+            );
           case 'batch-progress':
             return (
               <div key={`batch-${i}`} className="py-2">

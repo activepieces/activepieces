@@ -5,6 +5,7 @@ import {
   ChatAgentEventType,
   FileProducedEvent,
   ImageGeneratedEvent,
+  StageOpenEvent,
   ToolProgressEvent,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -28,6 +29,7 @@ export function useStreamingReducer({
   onImageGenerated,
   onFileProduced,
   onBuildPlan,
+  onStageOpen,
   onStreamFinished,
   onStreamError,
   onStaleCheck,
@@ -39,6 +41,7 @@ export function useStreamingReducer({
   onImageGenerated: (event: ImageGeneratedEvent) => void;
   onFileProduced: (event: FileProducedEvent) => void;
   onBuildPlan: (event: BuildPlanEvent) => void;
+  onStageOpen: (event: StageOpenEvent) => void;
   onStreamFinished: (conversationId: string) => void;
   onStreamError: (params: {
     conversationId: string;
@@ -76,6 +79,8 @@ export function useStreamingReducer({
   onFileProducedRef.current = onFileProduced;
   const onBuildPlanRef = useRef(onBuildPlan);
   onBuildPlanRef.current = onBuildPlan;
+  const onStageOpenRef = useRef(onStageOpen);
+  onStageOpenRef.current = onStageOpen;
   const onStreamFinishedRef = useRef(onStreamFinished);
   onStreamFinishedRef.current = onStreamFinished;
   const onStreamErrorRef = useRef(onStreamError);
@@ -289,6 +294,9 @@ export function useStreamingReducer({
         } else if (event.type === ChatAgentEventType.BUILD_PLAN) {
           lastChunkTimeRef.current = Date.now();
           onBuildPlanRef.current(event.data as BuildPlanEvent);
+        } else if (event.type === ChatAgentEventType.STAGE_OPEN) {
+          lastChunkTimeRef.current = Date.now();
+          onStageOpenRef.current(event.data as StageOpenEvent);
         }
       };
 

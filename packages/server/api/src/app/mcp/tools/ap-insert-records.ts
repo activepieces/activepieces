@@ -15,7 +15,7 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
     return {
         title: 'ap_insert_records',
         permission: Permission.WRITE_TABLE,
-        description: 'Insert one or more records into a table. Max 50 records per call.',
+        description: 'Bulk-insert rows into an Activepieces Table — pass an array of records (1–50 per call; call again for the next batch). For many rows, insert in modest waves (~10 per call) so they stream into the open table as visible bursts instead of one delayed dump. This is the ONLY way to add table rows: never use ap_run_code or fetch() to write a table.',
         inputSchema: insertRecordsInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {

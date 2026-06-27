@@ -1,4 +1,4 @@
-import { ChatPromptOverride } from '@activepieces/core-execution'
+import { ActiveStageContext, ChatPromptOverride } from '@activepieces/core-execution'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -155,6 +155,7 @@ export const PersistedChatMessageSchema = z.object({
     role: z.enum([PersistedChatRole.USER, PersistedChatRole.ASSISTANT]),
     parts: z.array(PersistedChatPartSchema),
     thinkingDurationMs: z.number().optional(),
+    context: ActiveStageContext.optional(),
 })
 
 export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
@@ -207,6 +208,7 @@ export const SendChatMessageRequest = z.object({
     content: z.string().max(51200),
     runId: z.string().optional(),
     files: z.array(ChatMessageFile).max(10).optional(),
+    activeContext: ActiveStageContext.optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
     { message: formErrors.messageRequiresContentOrFiles },
@@ -254,6 +256,7 @@ export type ChatToolOutputs = {
     ap_show_questions: { displayed: boolean }
     ap_show_quick_replies: { displayed: boolean }
     ap_update_thinking_status: { success: boolean }
+    ap_open_in_stage: { ok: boolean }
 }
 
 export type ConnectionOption = {

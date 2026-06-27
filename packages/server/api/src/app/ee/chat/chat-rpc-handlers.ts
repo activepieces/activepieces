@@ -1,10 +1,12 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, LockerKind, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { lockService } from '../../core/collaborative/lock/lock.service'
+import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
@@ -119,9 +121,103 @@ function buildConnectionInventoryNote({ connections, truncated }: {
     return lines.join('\n')
 }
 
+function stageContextLabel(context: StageContext): string {
+    return context.name ? `**${context.name}**` : `the ${context.type} page`
+}
+
+function isSameStageContext(a: StageContext, b: StageContext): boolean {
+    return a.type === b.type && a.id === b.id && a.projectId === b.projectId
+}
+
+function findLastCommittedContext({ uiMessages }: {
+    uiMessages: PersistedChatMessage[]
+}): StageContext | undefined {
+    for (let i = uiMessages.length - 1; i >= 0; i--) {
+        const message = uiMessages[i]
+        if (message.role === PersistedChatRole.USER && !isNil(message.context)) {
+            return message.context
+        }
+    }
+    return undefined
+}
+
+function readGuidanceForType(type: string): { tool: string, note: string } {
+    switch (type) {
+        case 'flow':
+            return { tool: '`ap_flow_structure`', note: '' }
+        case 'table':
+            return {
+                tool: '`ap_find_records`',
+                note: ' This is a **native Activepieces table**, NOT an external app — read it with `ap_find_records` (its schema via `ap_list_tables` / `ap_manage_fields`). Never use the Airtable, Google Sheets, or any third-party piece to read an Activepieces table.',
+            }
+        case 'run':
+            return { tool: '`ap_get_run`', note: '' }
+        case 'connections':
+            return {
+                tool: '`ap_list_connections`',
+                note: ' This is the project\'s Connections list (each row: connection name, app, status, and how many flows use it — the "Flows" count). Read it with `ap_list_connections`.',
+            }
+        default:
+            return { tool: 'the matching Activepieces tool', note: '' }
+    }
+}
+
+function buildActiveContextNote({ activeContext, previousContext }: {
+    activeContext?: StageContext
+    previousContext?: StageContext
+}): string {
+    if (!activeContext) {
+        return ''
+    }
+    const { type, id, excerpt, focus } = activeContext
+    const label = stageContextLabel(activeContext)
+    const idNote = id ? ` (${type} id \`${id}\`)` : ''
+    const focusTarget = focus ? `**${focus.label}**` : null
+    const resolveHint = focusTarget
+        ? ` When they say "this", "it", "here", "this step", "this row", "this field", or otherwise refer to something without naming it, resolve it to ${focusTarget} (inside ${label}) unless they clearly mean something else.`
+        : ` When they say "this", "it", "here", or otherwise refer to something without naming it, resolve it to ${label} unless they clearly mean something else.`
+    const read = readGuidanceForType(type)
+    const switched = !isNil(previousContext) && !isSameStageContext(previousContext, activeContext)
+    const previousLabel = previousContext ? stageContextLabel(previousContext) : ''
+    const switchedFrom = switched && previousLabel !== label
+        ? ` — they were previously viewing ${previousLabel}`
+        : switched
+            ? ` (a different ${type} from the one they were just viewing)`
+            : ''
+    const body = switched
+        ? `The user just switched the Stage to ${label}${idNote}${switchedFrom}. They navigated here themselves, so treat ${label} as the new focus. Anything you read or did before may no longer apply — re-read ${label} before reasoning about it; do not rely on what you fetched for the previous one.${resolveHint}`
+        : `The user currently has ${label}${idNote} open in the Stage panel beside this chat.${resolveHint}`
+    const groundHint = ` Default to assuming their message is about what's on this screen — especially a terse one (a bare number, a word, a status, a fragment like "17 0 0", "why is this red?", "what's this one"). Match it against ${label} first; don't treat it as a generic question or ask "what do you mean?" when the answer is almost certainly right in front of them. When the message is about ${label} or any part of it, READ it fully with ${read.tool} before researching other apps or building anything.${read.note} Never answer a question about what's already on their screen by going off to research something else.`
+    const focusNote = focus
+        ? `\n\nRight now their cursor/selection is on ${focusTarget}${focus.detail ? ` (${focus.detail})` : ''}${focus.ref ? ` [ref \`${focus.ref}\`]` : ''} inside ${label}. That's almost certainly what an unqualified "this" / "here" refers to — start there.`
+        : ''
+    const excerptNote = excerpt
+        ? `\n\nHere's a snapshot of what's on their screen right now — if their message is just numbers, a label, or a fragment, match it against these rows/values first (it's almost certainly what they're pointing at). It's **partial and may be slightly stale**, so confirm specifics with ${read.tool} before acting:\n${excerpt}`
+        : ''
+    return `\n\n## Active context (what the user is looking at)\n${body} They can watch the Stage update live as you work.${groundHint}${focusNote}${excerptNote}`
+}
+
+type StageFocus = { kind: string, label: string, ref?: string, detail?: string }
+type StageContext = { type: string, id?: string, name?: string, projectId?: string, projectName?: string, excerpt?: string, focus?: StageFocus }
+
+function normalizeCommittedContext({ activeContext, projectDisplayName }: {
+    activeContext: StageContext
+    projectDisplayName?: string
+}): StageContext {
+    const projectName = activeContext.projectName ?? projectDisplayName
+    // The excerpt and focus are live, per-turn state — they prime the system
+    // prompt for this turn only; they must not be persisted into message history
+    // (bloat + staleness — the cursor moves constantly).
+    const { excerpt: _excerpt, focus: _focus, ...rest } = activeContext
+    return {
+        ...rest,
+        ...(projectName ? { projectName } : {}),
+    }
+}
+
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, activeContext, dryRun } = input
 
         const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
@@ -161,16 +257,21 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const candidateProjectId = conversation.projectId ?? null
+        // The project the user is actively viewing in the Stage overrides the conversation's
+        // working project: their current location is the final decision for the turn (it also
+        // re-asserts over any earlier ap_select_project). Falls back to the conversation's
+        // stored project, then the user's first project, so the agent never hits a cold
+        // "No project selected" on the first data tool.
+        const viewedProjectId = activeContext?.projectId
+        const requestedProjectId = !isNil(viewedProjectId) && userProjects.some((p) => p.id === viewedProjectId)
+            ? viewedProjectId
+            : null
+        const candidateProjectId = requestedProjectId ?? conversation.projectId ?? null
         const validCandidateProjectId = candidateProjectId && userProjects.some((p) => p.id === candidateProjectId)
             ? candidateProjectId
             : null
-        // Default to the user's first project when none is chosen so the agent never hits a cold
-        // "No project selected" on the first data tool. The chat MCP server resolves its project
-        // from conversation.projectId per request, so persist it (the user can switch via the
-        // dropdown / ap_select_project, which overwrites this).
         const selectedProjectId = validCandidateProjectId ?? userProjects[0]?.id ?? null
-        if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
+        if (!dryRun && !isNil(selectedProjectId) && selectedProjectId !== conversation.projectId) {
             await chatHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
 
@@ -202,6 +303,9 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             })
             : ''
 
+        const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
+        const previousCommittedContext = findLastCommittedContext({ uiMessages: previousUiMessages })
+
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         const systemPromptText = chatPrompt.buildSystemPrompt({
             projects: userProjects,
@@ -216,7 +320,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
             userEmail: userMeta.email,
-        }) + inventoryNote
+        }) + inventoryNote + buildActiveContextNote({ activeContext, previousContext: previousCommittedContext })
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides
@@ -228,10 +332,22 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const allMessages = [...previousMessages, newUserMessage]
         const llmHistory = chatAiUtils.collapseStaleToolOutputs({ messages: allMessages })
 
-        const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
+        // Snapshot the active Stage context onto this message (when the Stage is open). The
+        // client decides whether to render a "Switched to …" marker by diffing against the
+        // previous committed context, so we always store the snapshot here.
+        const committedContext = !isNil(activeContext)
+            ? normalizeCommittedContext({
+                activeContext,
+                projectDisplayName: userProjects.find((p) => p.id === activeContext.projectId)?.displayName,
+            })
+            : undefined
         const uiMessagesWithUser: PersistedChatMessage[] = [
             ...previousUiMessages,
-            { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text: userMessage }] },
+            {
+                role: PersistedChatRole.USER,
+                parts: [{ type: PersistedChatPartType.TEXT, text: userMessage }],
+                ...(committedContext ? { context: committedContext } : {}),
+            },
         ]
         await chatHelpers.conversationRepo().update(conversationId, {
             messages: allMessages,
@@ -281,6 +397,15 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             tier: { id: tier.id },
             project: selectedProjectId ? { id: selectedProjectId } : undefined,
             webSearchAvailable,
+            activeContext: activeContext
+                ? {
+                    type: activeContext.type,
+                    id: activeContext.id,
+                    projectId: activeContext.projectId,
+                    hasExcerpt: !isNil(activeContext.excerpt),
+                    focus: activeContext.focus?.label,
+                }
+                : undefined,
         }, '[chatRpc#getChatConfig] Chat config resolved')
         log.debug({ systemPrompt: systemPromptText, guideNames: Object.keys(guides) }, '[chatRpc#getChatConfig] System prompt assembled')
 
@@ -507,6 +632,33 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 return { result: connections }
             }
             return { result: [] }
+        }
+        // The agent holds a soft lock on a flow/table it is editing so any open Stage
+        // shows a calm "Chat is working on this" state and goes read-only. Ownership is
+        // keyed on the conversation id so the agent never steals/clobbers a human's lock.
+        if (input.toolName === '__lock_resource' || input.toolName === '__unlock_resource') {
+            const resourceId = input.toolInput.resourceId
+            if (typeof resourceId !== 'string' || typeof input.conversationId !== 'string') {
+                return { result: { acquired: false } }
+            }
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            if (isNil(conversation.projectId)) {
+                return { result: { acquired: false } }
+            }
+            const aiLockerId = input.conversationId
+            if (input.toolName === '__lock_resource') {
+                const reason = typeof input.toolInput.reason === 'string' ? input.toolInput.reason : 'Chat is working on this'
+                const { announced } = await lockService(log).announceAi({ resourceId, conversationId: aiLockerId })
+                if (announced) {
+                    websocketService.to(conversation.projectId).emit(WebsocketClientEvent.RESOURCE_LOCKED, { resourceId, userId: aiLockerId, userDisplayName: 'Chat', lockerKind: LockerKind.AI, reason })
+                }
+                return { result: { acquired: true } }
+            }
+            const { cleared } = await lockService(log).clearAi({ resourceId })
+            if (cleared) {
+                websocketService.to(conversation.projectId).emit(WebsocketClientEvent.RESOURCE_UNLOCKED, { resourceId })
+            }
+            return { result: { released: cleared } }
         }
 
         log.debug({ tool: { name: input.toolName, input: input.toolInput } }, '[chatRpc#executeChatTool] Tool invoke')

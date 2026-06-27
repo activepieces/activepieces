@@ -38,6 +38,39 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
 ])
 
 /**
+ * Tools that genuinely need extended thinking — flow construction, testing,
+ * validation, and publishing. Thinking is gated on THIS set, not on the build
+ * phase: table/data writes and one-time action execution are build-phase tools
+ * (they need the same tool visibility) but require no deep reasoning, so paying
+ * for thinking on them just makes every row add/delete slow. Only the work that
+ * actually plans a multi-step automation turns thinking on. `ap_set_build_plan`
+ * is included because per the system prompt it precedes the first construction
+ * tool, switching thinking on one step early so the build steps keep their depth.
+ */
+const DEEP_REASONING_TOOL_NAMES = new Set<string>([
+    'ap_build_flow',
+    'ap_add_step',
+    'ap_update_step',
+    'ap_delete_step',
+    'ap_update_trigger',
+    'ap_add_branch',
+    'ap_update_branch',
+    'ap_delete_branch',
+    'ap_test_flow',
+    'ap_test_step',
+    'ap_validate_flow',
+    'ap_validate_step_config',
+    'ap_lock_and_publish',
+    'ap_change_flow_status',
+    'ap_delete_flow',
+    'ap_rename_flow',
+    'ap_duplicate_flow',
+    'ap_retry_run',
+    'ap_manage_notes',
+    'ap_set_build_plan',
+])
+
+/**
  * Tools the chat surface never exposes (the chat has a richer or safer
  * equivalent). Filtered out worker-side; the shared MCP registry is untouched
  * so non-chat MCP consumers still see them.
@@ -63,6 +96,10 @@ function isBuildOnlyTool(toolName: string): boolean {
     return BUILD_ONLY_TOOL_NAMES.has(toolName)
 }
 
+function isDeepReasoningTool(toolName: string): boolean {
+    return DEEP_REASONING_TOOL_NAMES.has(toolName)
+}
+
 function isChatHiddenTool(toolName: string): boolean {
     return CHAT_HIDDEN_TOOL_NAMES.has(toolName)
 }
@@ -72,5 +109,6 @@ export type ChatPhase = 'discovery' | 'build'
 export const chatToolPhases = {
     activeToolsForPhase,
     isBuildOnlyTool,
+    isDeepReasoningTool,
     isChatHiddenTool,
 }

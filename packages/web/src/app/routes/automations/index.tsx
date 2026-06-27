@@ -276,7 +276,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="@container flex flex-col w-full">
       <AutomationsFiltersComponent
         searchTerm={searchInput}
         onSearchChange={handleSearchChange}

@@ -49,6 +49,7 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { cn } from '@/lib/utils';
 
 import { TreeItem } from '../lib/types';
+import { automationsColumnClasses } from '../lib/utils';
 
 import { CreateNewMenu, CreateInFolderKind } from './create-new-menu';
 
@@ -163,7 +164,7 @@ export const AutomationsTableRow = ({
           </Tooltip>
         )}
       </div>
-      <div className="flex-1 min-w-[200px] pl-2 pr-2 flex items-center">
+      <div className="flex-1 min-w-[160px] pl-2 pr-2 flex items-center">
         <div
           className="relative flex items-center gap-2 min-w-0"
           style={{ paddingLeft: item.depth * 24 }}
@@ -185,10 +186,20 @@ export const AutomationsTableRow = ({
           </TextWithTooltip>
         </div>
       </div>
-      <div className="w-[230px] shrink-0 px-2 flex items-center">
+      <div
+        className={cn(
+          'w-[230px] shrink-0 px-2 flex items-center',
+          automationsColumnClasses.details,
+        )}
+      >
         <RowItemDetails item={item} />
       </div>
-      <div className="w-[200px] shrink-0 px-2 flex items-center">
+      <div
+        className={cn(
+          'w-[200px] shrink-0 px-2 flex items-center',
+          automationsColumnClasses.lastModified,
+        )}
+      >
         {item.data && (
           <FormattedDate
             date={new Date(item.data.updated)}
@@ -197,7 +208,12 @@ export const AutomationsTableRow = ({
         )}
       </div>
       {!embedState.isEmbedded && (
-        <div className="w-[250px] shrink-0 px-2 flex items-center overflow-hidden">
+        <div
+          className={cn(
+            'w-[250px] shrink-0 px-2 flex items-center overflow-hidden',
+            automationsColumnClasses.owner,
+          )}
+        >
           <RowItemOwner item={item} />
         </div>
       )}

@@ -10,6 +10,7 @@ import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
+import { tableRealtime } from '../table-realtime'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
 
@@ -63,7 +64,11 @@ export const recordService = {
                 created: 'ASC',
             },
         })
-        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
+        const populatedRecords = await formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
+        for (const record of populatedRecords) {
+            tableRealtime.recordCreated({ projectId, tableId: request.tableId, record })
+        }
+        return populatedRecords
     },
 
     async list({
@@ -158,7 +163,7 @@ export const recordService = {
         request,
     }: UpdateParams): Promise<PopulatedRecord> {
         const { tableId } = request
-        return transaction(async (entityManager: EntityManager) => {
+        const updatedRecord = await transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
                 where: { projectId, tableId, id },
             })
@@ -225,6 +230,8 @@ export const recordService = {
             const result = await formatRecordsAndFetchField({ records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId })
             return result[0]
         })
+        tableRealtime.recordUpdated({ projectId, tableId, record: updatedRecord })
+        return updatedRecord
     },
 
     async delete({
@@ -257,7 +264,11 @@ export const recordService = {
             return []
         }
 
-        return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
+        const populatedRecords = await formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
+        for (const record of populatedRecords) {
+            tableRealtime.recordDeleted({ projectId, tableId: firstRecord.tableId, recordId: record.id })
+        }
+        return populatedRecords
     },
 
     async deleteAll({
@@ -287,7 +298,11 @@ export const recordService = {
             return []
         }
 
-        return formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId })
+        const populatedRecords = await formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId })
+        for (const record of populatedRecords) {
+            tableRealtime.recordDeleted({ projectId, tableId, recordId: record.id })
+        }
+        return populatedRecords
     },
 
     async triggerWebhooks({

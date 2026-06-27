@@ -2,19 +2,24 @@ import { CornerDownRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { cn } from '@/lib/utils';
 
 export function QuickReplies({
   replies,
   onSend,
+  max = 3,
+  className,
 }: {
   replies: string[];
   onSend: (text: string, files?: File[]) => void;
+  max?: number;
+  className?: string;
 }) {
   if (replies.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-3 px-1 pb-3">
-      {replies.slice(0, 3).map((reply, i) => (
+    <div className={cn('flex flex-col gap-3 px-1 pb-3', className)}>
+      {replies.slice(0, max).map((reply, i) => (
         <motion.button
           key={`${i}-${reply}`}
           type="button"

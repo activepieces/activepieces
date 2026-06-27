@@ -65,10 +65,8 @@ export const createCanvasState = (
         initialState.run.steps,
       )
     : null;
-  const initiallySelectedStep = flowCanvasUtils.determineInitiallySelectedStep(
-    failedStepNameInRun,
-    initialState.flowVersion,
-  );
+  const initiallySelectedStep =
+    flowCanvasUtils.determineInitiallySelectedStep(failedStepNameInRun);
   const isEmptyTriggerInitiallySelected =
     initiallySelectedStep === 'trigger' &&
     initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;

@@ -79,3 +79,44 @@ div[role="gridcell"]:focus-within {
   color: #f97316 !important; /* orange-500 */
   margin-right: 0.5rem;
 }
+
+/* Realtime fill animations: a cell flashes brand-purple as its value lands, and
+   a freshly-created row fades in with the whole row sweeping the same highlight,
+   so the table visibly fills itself while the chat agent works. */
+@keyframes ap-cell-flash-kf {
+  0% {
+    background-color: rgba(129, 66, 227, 0.3); /* brand purple #8142E3 */
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes ap-row-fade-kf {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ap-cell-flash {
+  animation: ap-cell-flash-kf 1.4s ease-out;
+}
+
+.ap-row-enter {
+  animation: ap-row-fade-kf 0.4s ease-out;
+}
+
+.ap-row-enter .rdg-cell {
+  animation: ap-cell-flash-kf 1s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-cell-flash,
+  .ap-row-enter,
+  .ap-row-enter .rdg-cell {
+    animation: none;
+  }
+}

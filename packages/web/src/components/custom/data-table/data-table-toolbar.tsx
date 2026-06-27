@@ -8,7 +8,7 @@ const DataTableToolbar = (params: DataTableToolbarProps) => {
   return (
     <div
       className={cn(
-        'flex items-center justify-between py-3 overflow-auto',
+        'flex items-center justify-between py-3',
         DASHBOARD_CONTENT_PADDING_X,
       )}
     >

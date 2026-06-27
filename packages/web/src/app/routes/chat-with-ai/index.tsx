@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { PlusIcon } from '@/components/icons/plus';
+import { SquarePenIcon } from '@/components/icons/square-pen';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -246,7 +246,7 @@ export function ChatWithAIPage() {
                     className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
                     onClick={handleNewChat}
                   >
-                    <PlusIcon size={16} />
+                    <SquarePenIcon size={16} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="flex items-center gap-2">

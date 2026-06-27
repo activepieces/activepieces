@@ -59,6 +59,7 @@ export function EditableCell({
   locked = false,
   value,
   disabled = false,
+  row,
 }: EditableCellProps) {
   const [selectedCell, setSelectedCell, records, fields] = useTableState(
     (state) => [
@@ -68,6 +69,13 @@ export function EditableCell({
       state.fields,
     ],
   );
+  const isFlashing = useTableState((state) => {
+    if (!row.recordId) {
+      return false;
+    }
+    const expiry = state.recentlyChanged.cells[row.recordId + '_' + field.uuid];
+    return !!expiry && expiry > Date.now();
+  });
   const [isEditing, setIsEditing] = useState(false);
   const isSelected =
     selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
@@ -127,6 +135,7 @@ export function EditableCell({
               'group cursor-pointer border',
               isSelected && !locked ? 'border-primary' : 'border-transparent',
               locked && 'locked-row',
+              isFlashing && 'ap-cell-flash',
               !isDropdown && 'pl-2 py-2',
             )
       }

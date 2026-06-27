@@ -9,19 +9,25 @@ import {
   MessageActions,
   MessageContent as PromptKitMessageContent,
 } from '@/components/prompt-kit/message';
-import { ChatUIMessage } from '@/features/chat/lib/chat-types';
+import {
+  ActiveChatContext,
+  ChatUIMessage,
+} from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
 
 import { CopyIconButton } from './copy-icon-button';
+import { StageContextChip } from './stage-context-chip';
 
 export const UserMessage = memo(function UserMessage({
   message,
   isLastMessage = false,
+  contextMarker,
 }: {
   message: ChatUIMessage;
   isLastMessage?: boolean;
+  contextMarker?: ActiveChatContext;
 }) {
   const content = getTextFromParts(message.parts);
   const fileNames = message.parts
@@ -68,6 +74,13 @@ export const UserMessage = memo(function UserMessage({
             </PromptKitMessageContent>
           </div>
         </Message>
+        {contextMarker && (
+          <StageContextChip
+            context={contextMarker}
+            variant="committed"
+            className="mt-1.5"
+          />
+        )}
         <MessageActions
           className={cn(
             'justify-end mt-1 transition-opacity',
