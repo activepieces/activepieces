@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, WorkerJobType } from '@activepieces/shared'
+import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, TriggerRunStatus, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { getWebhookUrl } from '../utils/webhook-url'
@@ -25,6 +25,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
             throw new Error('flowVersion missing after resolve')
         }
         const flowVersion: FlowVersion = resolved.flowVersion
+        const pieceName = flowVersion.trigger.settings.pieceName as string
 
         try {
             const result = await ctx.runtime.execute({
@@ -58,12 +59,30 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                         streamStepProgress: StreamStepProgress.NONE,
                     })
                 }
+
+                await ctx.apiClient.saveTriggerRunStats({
+                    platformId: data.platformId,
+                    pieceName,
+                    status: TriggerRunStatus.COMPLETED,
+                })
+            }
+            else {
+                await ctx.apiClient.saveTriggerRunStats({
+                    platformId: data.platformId,
+                    pieceName,
+                    status: TriggerRunStatus.FAILED,
+                })
             }
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
+            await ctx.apiClient.saveTriggerRunStats({
+                platformId: data.platformId,
+                pieceName,
+                status: TriggerRunStatus.FAILED,
+            })
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
     },
