@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetActiveRunId, mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy } = vi.hoisted(() => ({
-    mockGetActiveRunId: vi.fn(),
+const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy } = vi.hoisted(() => ({
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
@@ -10,9 +9,7 @@ const { mockGetActiveRunId, mockSet, mockWhere, mockAndWhere, mockExecute, mockF
 }))
 
 vi.mock('../../../../../src/app/ee/chat/chat-approval-gate', () => ({
-    chatApprovalGate: {
-        getActiveRunId: mockGetActiveRunId,
-    },
+    chatApprovalGate: {},
 }))
 
 type QueryBuilderMock = {
@@ -57,26 +54,20 @@ describe('chatRpcHandlers.updateChatProgress — incremental LLM message persist
         mockSet.mockClear()
         mockWhere.mockClear()
         mockAndWhere.mockClear()
-        mockGetActiveRunId.mockReset()
     })
 
-    it('persists both uiMessages and the LLM messages when the run is active', async () => {
-        mockGetActiveRunId.mockResolvedValue('run-1')
+    it('persists both uiMessages and the LLM messages', async () => {
         const messages = [{ role: 'user', content: 'hi' }, { role: 'assistant', content: 'hello' }]
 
         await callUpdateChatProgress({ conversationId: 'conv-1', runId: 'run-1', uiMessages: [{ role: 'assistant', parts: [] }], messages })
 
         expect(mockSet).toHaveBeenCalledTimes(1)
         const updates = mockSet.mock.calls[0][0]
-        expect(mockWhere.mock.calls[0][0]).toEqual({ id: 'conv-1' })
-        expect(mockAndWhere.mock.calls[0][0]).toEqual({ runId: 'run-1' })
         expect(updates.messages).toEqual(messages)
         expect(updates.uiMessages).toBeDefined()
     })
 
     it('persists only uiMessages when no messages are provided (backward compatible)', async () => {
-        mockGetActiveRunId.mockResolvedValue('run-1')
-
         await callUpdateChatProgress({ conversationId: 'conv-1', runId: 'run-1', uiMessages: [{ role: 'assistant', parts: [] }] })
 
         expect(mockSet).toHaveBeenCalledTimes(1)
@@ -85,12 +76,11 @@ describe('chatRpcHandlers.updateChatProgress — incremental LLM message persist
         expect(updates.uiMessages).toBeDefined()
     })
 
-    it('skips the write entirely when the run is stale (superseded by a newer run)', async () => {
-        mockGetActiveRunId.mockResolvedValue('run-2')
-
+    it('fences the write on the owning run id so a superseded run is rejected by the DB', async () => {
         await callUpdateChatProgress({ conversationId: 'conv-1', runId: 'run-1', uiMessages: [{ role: 'assistant', parts: [] }], messages: [{ role: 'assistant', content: 'x' }] })
 
-        expect(mockSet).not.toHaveBeenCalled()
+        expect(mockWhere.mock.calls[0][0]).toEqual({ id: 'conv-1' })
+        expect(mockAndWhere.mock.calls[0][0]).toEqual({ runId: 'run-1' })
     })
 })
 
@@ -102,12 +92,10 @@ async function callSaveChatMessages(input: { conversationId: string, runId?: str
 describe('chatRpcHandlers.saveChatMessages — no-shrink guard against context loss', () => {
     beforeEach(() => {
         mockSet.mockClear()
-        mockGetActiveRunId.mockReset()
         mockFindOneBy.mockReset()
     })
 
     it('refuses to overwrite messages with a SHORTER history (the aborted-turn clobber)', async () => {
-        mockGetActiveRunId.mockResolvedValue('run-1')
         // The conversation already has a full turn persisted incrementally...
         mockFindOneBy.mockResolvedValue({ messages: [{ role: 'user' }, { role: 'assistant' }, { role: 'tool' }, { role: 'assistant' }] })
 
@@ -122,7 +110,6 @@ describe('chatRpcHandlers.saveChatMessages — no-shrink guard against context l
     })
 
     it('persists when the incoming history is at least as complete as what is stored', async () => {
-        mockGetActiveRunId.mockResolvedValue('run-1')
         mockFindOneBy.mockResolvedValue({ messages: [{ role: 'user' }, { role: 'assistant' }] })
         const fullMessages = [{ role: 'user' }, { role: 'assistant' }, { role: 'tool' }, { role: 'assistant' }]
 
@@ -134,7 +121,6 @@ describe('chatRpcHandlers.saveChatMessages — no-shrink guard against context l
     })
 
     it('an empty error-save flips status to ERROR without wiping stored history', async () => {
-        mockGetActiveRunId.mockResolvedValue('run-1')
         mockFindOneBy.mockResolvedValue({ messages: [{ role: 'user' }, { role: 'assistant' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [], uiMessages: [] })

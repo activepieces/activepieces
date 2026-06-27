@@ -34,26 +34,9 @@ const CONVERSATION_LIMIT_TTL_SECONDS = 24 * 60 * 60
 const HOURLY_LIMIT_TTL_SECONDS = 60 * 60
 const CONNECTION_INVENTORY_LIMIT = 200
 
-// A conversation row is owned by a single active run at a time. A turn that was
-// preempted by a newer message (or otherwise superseded) must never write back:
-// its in-flight snapshot is stale and would clobber the run that now owns the
-// row. Returns true only when both an active run and the caller's runId are
-// present and they differ — missing either side is treated as "not stale" so
-// older callers stay backward-compatible.
-async function isStaleRun({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<boolean> {
-    if (isNil(runId)) {
-        return false
-    }
-    const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
-    if (isNil(activeRunId)) {
-        return false
-    }
-    return activeRunId !== runId
-}
-
-// Gate the UPDATE on the owning run so a run preempted between the isStaleRun check and the write
-// matches zero rows once a newer run has claimed the conversation. A nil runId or an unclaimed row
-// (activeRunId IS NULL) writes unconditionally, for backward compatibility.
+// Gate the UPDATE on the persisted owning run (activeRunId, claimed at turn start) so a run
+// preempted by a newer message matches zero rows — the ownership check is part of the write, with
+// no check-then-write window. A nil runId or unclaimed row (activeRunId IS NULL) writes freely.
 async function updateConversationForRun({ conversationId, runId, updates }: {
     conversationId: string
     runId?: string
@@ -350,10 +333,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async saveChatMessages(input: SaveChatMessagesRequest): Promise<void> {
-        if (await isStaleRun({ conversationId: input.conversationId, runId: input.runId })) {
-            log.info({ conversation: { id: input.conversationId }, run: { id: input.runId } }, '[chatRpc#saveChatMessages] Skipped write from superseded run')
-            return
-        }
         const isSuccessfulCompletion = input.messages.length > 0
         const updates: Record<string, unknown> = {
             status: isSuccessfulCompletion ? ChatConversationStatus.IDLE : ChatConversationStatus.ERROR,
@@ -409,10 +388,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async updateChatProgress(input: UpdateChatProgressRequest): Promise<void> {
-        if (await isStaleRun({ conversationId: input.conversationId, runId: input.runId })) {
-            log.debug({ conversation: { id: input.conversationId }, run: { id: input.runId } }, '[chatRpc#updateChatProgress] Skipped write from superseded run')
-            return
-        }
         const updates: Record<string, unknown> = {
             uiMessages: JSON.parse(JSON.stringify(input.uiMessages)),
         }
@@ -424,19 +399,18 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void> {
-        if (await isStaleRun({ conversationId: input.conversationId, runId: input.runId })) {
-            return
-        }
-        // Liveness signal from the still-running worker. Bumping `updated` only while the row
-        // is STREAMING keeps the passive stale-recovery in getConversationOrThrow from flipping
-        // a genuinely-working long turn to IDLE; once the worker stops heartbeating (finished,
-        // cancelled, or dead) the row goes stale and recovery reclaims it within the timeout.
-        await chatHelpers.conversationRepo()
+        // Liveness signal: bump `updated` only while STREAMING so stale-recovery in
+        // getConversationOrThrow doesn't flip a genuinely-working long turn to IDLE. Gate on the
+        // owning run so a superseded run can't keep a row it no longer owns alive.
+        const builder = chatHelpers.conversationRepo()
             .createQueryBuilder()
             .update()
             .set({ updated: () => 'now()' })
             .where('id = :id AND status = :streaming', { id: input.conversationId, streaming: ChatConversationStatus.STREAMING })
-            .execute()
+        if (!isNil(input.runId)) {
+            builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId: input.runId })
+        }
+        await builder.execute()
     },
 
     async updateProjectContext(input: UpdateProjectContextRequest): Promise<void> {
@@ -451,12 +425,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 return { result: false }
             }
             const runId = typeof input.toolInput.runId === 'string' ? input.toolInput.runId : undefined
-            if (runId) {
-                const currentRunId = await chatApprovalGate.getActiveRunId({ conversationId })
-                if (currentRunId === runId) {
-                    await chatApprovalGate.storeActiveRunId({ conversationId, runId })
-                }
-            }
             const cancelled = await chatApprovalGate.isCancelled({ conversationId, runId })
             return { result: cancelled }
         }
