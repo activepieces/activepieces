@@ -25,7 +25,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
             throw new Error('flowVersion missing after resolve')
         }
         const flowVersion: FlowVersion = resolved.flowVersion
-        const pieceName = flowVersion.trigger.settings.pieceName as string
+        const pieceName = flowVersion.trigger.settings.pieceName as string | undefined
 
         try {
             const result = await ctx.runtime.execute({
@@ -60,18 +60,40 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                     })
                 }
 
-                const { error: statsError } = await tryCatch(() =>
-                    ctx.apiClient.saveTriggerRunStats({
-                        platformId: data.platformId,
-                        pieceName,
-                        status: TriggerRunStatus.COMPLETED,
-                    }),
-                )
-                if (statsError) {
-                    ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+                if (!isNil(pieceName)) {
+                    const { error: statsError } = await tryCatch(() =>
+                        ctx.apiClient.saveTriggerRunStats({
+                            platformId: data.platformId,
+                            pieceName,
+                            status: TriggerRunStatus.COMPLETED,
+                        }),
+                    )
+                    if (statsError) {
+                        ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+                    }
                 }
             }
             else {
+                if (!isNil(pieceName)) {
+                    const { error: statsError } = await tryCatch(() =>
+                        ctx.apiClient.saveTriggerRunStats({
+                            platformId: data.platformId,
+                            pieceName,
+                            status: TriggerRunStatus.FAILED,
+                        }),
+                    )
+                    if (statsError) {
+                        ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+                    }
+                }
+            }
+
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
+        }
+        catch (e) {
+            ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
+
+            if (!isNil(pieceName)) {
                 const { error: statsError } = await tryCatch(() =>
                     ctx.apiClient.saveTriggerRunStats({
                         platformId: data.platformId,
@@ -82,21 +104,6 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                 if (statsError) {
                     ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
                 }
-            }
-
-            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
-        }
-        catch (e) {
-            ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
-            const { error: statsError } = await tryCatch(() =>
-                ctx.apiClient.saveTriggerRunStats({
-                    platformId: data.platformId,
-                    pieceName,
-                    status: TriggerRunStatus.FAILED,
-                }),
-            )
-            if (statsError) {
-                ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
             }
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
