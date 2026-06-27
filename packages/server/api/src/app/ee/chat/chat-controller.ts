@@ -87,15 +87,13 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 
-        // Hand the run fence to the new run before releasing the old one. Otherwise a late save
-        // from the preempted run would still see itself as the active run and clobber the history
-        // the new run is about to load.
+        // Claim ownership atomically in the DB — the single source of truth that
+        // saveChatMessages/updateChatProgress/heartbeat fence against. A late write from the
+        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
+        // with no Redis/DB split to race through. The prior owner is read from the same row.
         const preemptedRunId = conversation.status === ChatConversationStatus.STREAMING
-            ? await chatApprovalGate.getActiveRunId({ conversationId })
+            ? conversation.activeRunId
             : null
-        await chatApprovalGate.storeActiveRunId({ conversationId, runId })
-        // Persist the owning run so saveChatMessages/updateChatProgress can fence a stale run inside
-        // their UPDATE, closing the check-then-write race the Redis-only fence leaves open.
         await chatHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
 
         if (conversation.status === ChatConversationStatus.STREAMING) {
@@ -152,8 +150,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
         const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
-        await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+        const conversation = await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const activeRunId = conversation.activeRunId
         log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[chatController] Cancel requested')
         const cancelPromises = [
             chatApprovalGate.requestCancel({ conversationId }),

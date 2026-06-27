@@ -9,7 +9,6 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
-import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
 import { chatService } from './chat-service'
 import { chatPrompt } from './prompt/chat-prompt'
@@ -73,7 +72,6 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         let priorAssistantTurns = 0
         for (const turn of turns) {
             lastRunId = apId()
-            await chatApprovalGate.storeActiveRunId({ conversationId: conversation.id, runId: lastRunId })
             await jobQueue(log).add({
                 id: apId(),
                 type: JobType.ONE_TIME,
@@ -150,7 +148,6 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         }
 
         const runId = apId()
-        await chatApprovalGate.storeActiveRunId({ conversationId: convId, runId })
         await jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,
