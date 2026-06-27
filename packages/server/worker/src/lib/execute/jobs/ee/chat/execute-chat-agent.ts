@@ -3,6 +3,7 @@ import { chatAiUtils } from '@activepieces/server-utils'
 import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
+import { chatCodeMode } from './chat-code-mode'
 import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools } from './chat-worker-tools'
 import { delayWithJitter, runChatTurn } from './run-chat-turn'
@@ -465,7 +466,18 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         })
         : {}
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    const baseTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+
+    // Code Mode: a model-agnostic tool that runs model-written JS which orchestrates the OTHER
+    // tools via a direct in-worker bridge over `baseTools` (their real execute() — so connections,
+    // context, and approval gates are inherited). Skipped in dry-run (no tool execution in the
+    // playground); in discovery-only its bridged side-effecting tools are already neutralized at
+    // their own layer, so no extra guard is needed here.
+    const codeModeTools = dryRun
+        ? {}
+        : chatCodeMode.createCodeModeTools({ getTools: () => baseTools, log })
+
+    return { ...baseTools, ...codeModeTools }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamStalled }: {
