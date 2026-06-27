@@ -15,7 +15,7 @@ import {
 } from '@aws-sdk/client-bedrock-runtime';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import { ApFile, ServerContext } from '@activepieces/pieces-framework';
-import { BedrockAuthProps, BedrockAccessKeyAuthProps, BedrockOidcAuthProps } from './auth';
+import { BedrockAuthProps, BedrockOidcAuthProps } from './auth';
 
 const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
 
