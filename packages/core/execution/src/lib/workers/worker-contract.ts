@@ -5,6 +5,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { ChatAgentEvent } from './chat-agent-events'
 import { ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
+import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 
 export type SubmitPayloadsRequest = {
     flowVersionId: string
@@ -82,6 +83,7 @@ export type WorkerToApiContract = {
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
     sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse>
+    saveTriggerRunStats(input: SaveTriggerRunStatsRequest): Promise<void>
 }
 
 export type SendChatEventRequest = {
@@ -207,4 +209,10 @@ export type SendChatEmailResponse = {
 export type DisableFlowRequest = {
     flowId: string
     projectId: string
+}
+
+export type SaveTriggerRunStatsRequest = {
+    platformId: string
+    pieceName: string
+    status: TriggerRunStatus
 }

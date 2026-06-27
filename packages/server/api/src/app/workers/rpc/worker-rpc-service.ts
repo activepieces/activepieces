@@ -3,6 +3,7 @@ import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/ser
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
@@ -18,6 +19,7 @@ import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-servi
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
+import { triggerRunStats } from '../../trigger/trigger-run/trigger-run-stats'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { getWorkerGroupQueueName, QueueName } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
@@ -298,6 +300,15 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         async sendChatEmail(input) {
             return chatRpcHandlers(chatRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendChatEmail(input)
         },
+
+        async saveTriggerRunStats(input) {
+            await triggerRunStats(log, await redisConnections.useExisting()).save({
+                platformId: input.platformId,
+                pieceName: input.pieceName,
+                status: input.status,
+            })
+        },
+
     }
 }
 
