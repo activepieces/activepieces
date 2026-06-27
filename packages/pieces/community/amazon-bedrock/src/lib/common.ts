@@ -19,23 +19,6 @@ import { BedrockAuthProps, BedrockOidcAuthProps } from './auth';
 
 const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
 
-export async function createBedrockClient({
-  auth,
-  server,
-}: {
-  auth: BedrockAuthProps;
-  server: ServerContext;
-}): Promise<BedrockClient> {
-  if (isOidcAuth(auth)) {
-    const credentials = await getTemporaryCredentials({ auth, server });
-    return new BedrockClient({ credentials, region: auth.region });
-  }
-  return new BedrockClient({
-    credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
-    region: auth.region,
-  });
-}
-
 export async function createBedrockRuntimeClient({
   auth,
   server,
