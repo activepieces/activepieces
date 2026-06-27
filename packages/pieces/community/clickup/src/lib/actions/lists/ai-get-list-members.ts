@@ -3,17 +3,20 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
 
-export const getClickupList = createAction({
+export const clickupGetListMembers = createAction({
   auth: clickupAuth,
-
-  name: 'get_list',
-  description: 'Gets a list in a ClickUp',
-  audience: 'human',
-  aiMetadata: { description: 'Read-only: fetch the details of a single ClickUp list by its list ID. Use when you already know the list ID; does not modify anything and is safe to call repeatedly.', idempotent: true },
-  displayName: 'Get List',
+  name: 'clickup_get_list_members',
+  description: 'List the members who have access to a ClickUp list',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Read-only: list the people who have access to a specific ClickUp list, returning their user IDs and names. Use to discover who can see or be assigned within a list. Safe to call repeatedly.',
+    idempotent: true,
+  },
+  displayName: 'Get List Members',
   props: {
     list_id: Property.ShortText({
-      description: 'The id of the list to get',
+      description: 'The ID of the list to read members for',
       displayName: 'List ID',
       required: true,
     }),
@@ -22,7 +25,7 @@ export const getClickupList = createAction({
     const { list_id } = configValue.propsValue;
     const response = await callClickUpApi(
       HttpMethod.GET,
-      `list/${list_id}`,
+      `list/${list_id}/member`,
       getAccessTokenOrThrow(configValue.auth),
       {}
     );

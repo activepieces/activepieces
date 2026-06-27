@@ -3,12 +3,16 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
 
-export const getClickupTaskComments = createAction({
+export const clickupGetTaskComments = createAction({
   auth: clickupAuth,
-  name: 'get_task_comments',
+  name: 'clickup_get_task_comments',
   description: 'Gets comments from a task in ClickUp',
-  audience: 'human',
-  aiMetadata: { description: 'Read-only: retrieve the existing comments on a ClickUp task by its task ID. Use to review discussion or activity on a known task; does not create or modify anything. Safe to call repeatedly.', idempotent: true },
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Read-only: retrieve the comments on a ClickUp task by its task ID. Use to review discussion or activity on a known task, or to obtain a comment ID to feed Update Comment, Delete Comment, or Create Threaded Comment. Does not modify anything and is safe to call repeatedly.',
+    idempotent: true,
+  },
   displayName: 'Get Task Comments',
   props: {
     task_id: Property.ShortText({
@@ -21,7 +25,7 @@ export const getClickupTaskComments = createAction({
     const { task_id } = configValue.propsValue;
     const response = await callClickUpApi(
       HttpMethod.GET,
-      `/task/${task_id}/comment`,
+      `task/${task_id}/comment`,
       getAccessTokenOrThrow(configValue.auth),
       {}
     );

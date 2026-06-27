@@ -3,19 +3,23 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
 
-export const createClickupFolderlessList = createAction({
+export const clickupCreateFolder = createAction({
   auth: clickupAuth,
-  name: 'create_folderless_list',
-  description: 'Create a new folderless list in a ClickUp workspace and space',
-  audience: 'human',
-  aiMetadata: { description: 'Create a new list directly under a ClickUp space (not inside a folder). Each call creates a separate list even with the same name, so it is not idempotent. Use when you need a top-level list in a space; to create a list inside a folder, use a folder-scoped list action instead.', idempotent: false },
-  displayName: 'Create Folderless List',
+  name: 'clickup_create_folder',
+  description: 'Create a new folder in a ClickUp space',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Create a new folder inside a ClickUp space to group lists. Pick this to add an organizational container under a space; to add a list directly, use Create Folderless List. Each call creates a new folder even with the same name, so retries duplicate it.',
+    idempotent: false,
+  },
+  displayName: 'Create Folder',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),
     name: Property.ShortText({
-      description: 'The name of the list to create',
-      displayName: 'List Name',
+      description: 'The name of the folder to create',
+      displayName: 'Folder Name',
       required: true,
     }),
   },
@@ -23,7 +27,7 @@ export const createClickupFolderlessList = createAction({
     const { space_id, name } = configValue.propsValue;
     const response = await callClickUpApi(
       HttpMethod.POST,
-      `space/${space_id}/list`,
+      `space/${space_id}/folder`,
       getAccessTokenOrThrow(configValue.auth),
       {
         name,

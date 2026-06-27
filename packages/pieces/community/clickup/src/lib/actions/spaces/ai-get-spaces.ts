@@ -1,14 +1,18 @@
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
-import { createAction } from '@activepieces/pieces-framework';
 
-export const getClickupSpaces = createAction({
+export const clickupGetSpaces = createAction({
   auth: clickupAuth,
-  name: 'get_spaces',
-  description: 'Gets spaces in a ClickUp workspace',
-  audience: 'human',
-  aiMetadata: { description: 'Read-only: list all spaces in a ClickUp workspace (team). Use to discover available spaces and their IDs before drilling into a specific space, folder, or list. Safe to call repeatedly.', idempotent: true },
+  name: 'clickup_get_spaces',
+  description: 'List all spaces in a ClickUp workspace',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Read-only: list all spaces in a ClickUp workspace (team), returning their IDs and names. Use to discover available spaces before drilling into a specific space, folder, or list. Safe to call repeatedly.',
+    idempotent: true,
+  },
   displayName: 'Get Spaces',
   props: {
     team_id: clickupCommon.workspace_id(),

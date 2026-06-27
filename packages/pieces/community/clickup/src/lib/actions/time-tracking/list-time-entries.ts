@@ -6,13 +6,17 @@ import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { ClickupTask } from '../../common/models';
 
-export const filterClickupWorkspaceTimeEntries = createAction({
+export const clickupListTimeEntries = createAction({
   auth: clickupAuth,
-  name: 'list_workspace_time_entries',
+  name: 'clickup_list_time_entries',
   displayName: 'List Time Entries',
   description: 'Retrieves time entries filtered by start and end date.',
-  audience: 'human',
-  aiMetadata: { description: 'List tracked time entries across a ClickUp workspace, optionally narrowed by date range, assignee, and a single scope (task, list, folder, or space). Pick this to report on or audit logged time; it is read-only and idempotent. Scope filters are mutually exclusive, with task taking precedence over list, folder, then space.', idempotent: true },
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'List tracked time entries across a ClickUp workspace, optionally narrowed by date range, assignee, and a single scope (task, list, folder, or space). Pick this to report on or audit logged time over a period; use Get Time Entry for one known entry ID or Get Running Time Entry for the timer in progress. Read-only and idempotent; scope filters are mutually exclusive (task takes precedence over list, folder, then space).',
+    idempotent: true,
+  },
   props: {
     workspace_id: clickupCommon.workspace_id(true),
 
@@ -57,8 +61,18 @@ export const filterClickupWorkspaceTimeEntries = createAction({
       context.propsValue;
     const auth = getAccessTokenOrThrow(context.auth);
 
+    // `assignee` is a multi-select (array), but an agent may pass a single
+    // scalar id. Normalize to an array before joining so a scalar input does
+    // not crash with `.join is not a function`.
+    const assigneeList =
+      params.assignee == null
+        ? undefined
+        : Array.isArray(params.assignee)
+        ? params.assignee
+        : [params.assignee];
+
     const query: Record<string, unknown> = {
-      assignee: params.assignee?.join(','),
+      assignee: assigneeList?.join(','),
       include_task_tags: params.include_task_tags,
       include_location_names: params.include_location_names,
     };

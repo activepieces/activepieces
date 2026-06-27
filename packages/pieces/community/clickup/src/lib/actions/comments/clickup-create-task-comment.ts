@@ -3,12 +3,16 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
 
-export const createClickupTaskComment = createAction({
+export const clickupCreateTaskComment = createAction({
   auth: clickupAuth,
-  name: 'create_task_comments',
+  name: 'clickup_create_task_comment',
   description: 'Creates a comment on a task in ClickUp',
-  audience: 'human',
-  aiMetadata: { description: 'Post a new comment on a ClickUp task and notify the workspace. Each call adds a distinct comment, so repeated calls create duplicates (not idempotent). If no assignee is given, the comment is attributed to the authenticated user.', idempotent: false },
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Post a new comment on a ClickUp task identified by its task ID. Use this to add a discussion note or @-style update to a task; to read existing comments use Get Task Comments, and to reply within a thread use Create Threaded Comment. Each call adds a distinct comment, so it is not idempotent; if no assignee is given the comment is attributed to the authenticated user.',
+    idempotent: false,
+  },
   displayName: 'Create Task Comment',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -34,7 +38,7 @@ export const createClickupTaskComment = createAction({
     if (!assignee_id) {
       const user_request = await callClickUpApi(
         HttpMethod.GET,
-        `/user`,
+        `user`,
         getAccessTokenOrThrow(configValue.auth),
         {}
       );
@@ -48,7 +52,7 @@ export const createClickupTaskComment = createAction({
 
     const response = await callClickUpApi(
       HttpMethod.POST,
-      `/task/${task_id}/comment`,
+      `task/${task_id}/comment`,
       getAccessTokenOrThrow(configValue.auth),
       {
         comment_text: comment,

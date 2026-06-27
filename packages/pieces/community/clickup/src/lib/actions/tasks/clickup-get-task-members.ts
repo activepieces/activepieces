@@ -1,19 +1,24 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
 
-export const getClickupTaskComments = createAction({
+export const clickupGetTaskMembersAi = createAction({
   auth: clickupAuth,
-  name: 'get_task_comments',
-  description: 'Gets comments from a task in ClickUp',
-  audience: 'human',
-  aiMetadata: { description: 'Read-only: retrieve the existing comments on a ClickUp task by its task ID. Use to review discussion or activity on a known task; does not create or modify anything. Safe to call repeatedly.', idempotent: true },
-  displayName: 'Get Task Comments',
+  name: 'clickup_get_task_members',
+  description: 'List the members who have access to a task',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'List the people who have access to a ClickUp task, identified by its task ID. Use this to discover member IDs (e.g. before assigning) or to check who can see a task. Read-only and idempotent.',
+    idempotent: true,
+  },
+  displayName: 'Get Task Members',
   props: {
     task_id: Property.ShortText({
-      description: 'The ID of the task to get',
       displayName: 'Task ID',
+      description: 'The ID of the task to list members for.',
       required: true,
     }),
   },
@@ -21,9 +26,9 @@ export const getClickupTaskComments = createAction({
     const { task_id } = configValue.propsValue;
     const response = await callClickUpApi(
       HttpMethod.GET,
-      `/task/${task_id}/comment`,
+      `task/${task_id}/member`,
       getAccessTokenOrThrow(configValue.auth),
-      {}
+      undefined
     );
 
     return response.body;

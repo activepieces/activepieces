@@ -3,17 +3,20 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
 
-export const getClickupList = createAction({
+export const clickupGetList = createAction({
   auth: clickupAuth,
-
-  name: 'get_list',
-  description: 'Gets a list in a ClickUp',
-  audience: 'human',
-  aiMetadata: { description: 'Read-only: fetch the details of a single ClickUp list by its list ID. Use when you already know the list ID; does not modify anything and is safe to call repeatedly.', idempotent: true },
+  name: 'clickup_get_list',
+  description: 'Get a single ClickUp list by its ID',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Read-only: fetch the details of one ClickUp list (including its available statuses) by list ID. Use when you already know the list ID; to discover list IDs first, use Get Folder Lists or Get Folderless Lists. Safe to call repeatedly.',
+    idempotent: true,
+  },
   displayName: 'Get List',
   props: {
     list_id: Property.ShortText({
-      description: 'The id of the list to get',
+      description: 'The ID of the list to get',
       displayName: 'List ID',
       required: true,
     }),
