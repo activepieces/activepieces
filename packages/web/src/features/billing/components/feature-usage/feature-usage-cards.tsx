@@ -123,9 +123,11 @@ function UsageSummary({
     return (
       <>
         <span className="font-medium text-foreground">
-          {Math.round(resolved.remaining ?? 0).toLocaleString()}
+          {isNil(resolved.remaining)
+            ? t('Unlimited')
+            : Math.round(resolved.remaining).toLocaleString()}
         </span>{' '}
-        {t('available')}
+        {!isNil(resolved.remaining) && <>{t('available')} </>}
         <span className="ml-2 text-xs">
           ({t('Total used')}: {Math.round(resolved.used).toLocaleString()})
         </span>
@@ -246,36 +248,37 @@ function resolveFeatureUsage({
   switch (featureId) {
     case AutumnFeatureId.AP_CREDITS:
       return {
-        used: usage.totalAiCreditsUsed,
-        limit: usage.aiCreditsLimit,
-        remaining: usage.aiCreditsRemaining,
+        used: usage.creditsUsed,
+        limit: null,
+        remaining: usage.creditsRemaining ?? null,
       };
     case AutumnFeatureId.APP_SUMO_AI_CREDITS:
       if (isNil(usage.appSumoAiCredits)) {
         return null;
       }
       return {
-        used: usage.appSumoAiCredits.usage,
-        limit: usage.appSumoAiCredits.limit,
-        remaining: Math.max(
-          0,
-          usage.appSumoAiCredits.limit - usage.appSumoAiCredits.usage,
-        ),
+        used: usage.appSumoAiCredits,
+        limit: null,
+        remaining: usage.appSumoAiCreditsRemaining ?? null,
       };
     case AutumnFeatureId.ACTIVE_FLOWS_LIMIT:
       return {
         used: usage.activeFlows,
-        limit: plan.activeFlowsLimit,
+        limit: plan.activeFlowsLimit ?? null,
         remaining: null,
       };
     case AutumnFeatureId.TEAM_PROJECTS_LIMIT:
       return {
         used: usage.teamProjects,
-        limit: plan.teamProjectsLimit,
+        limit: plan.teamProjectsLimit ?? null,
         remaining: null,
       };
     case AutumnFeatureId.USERS_LIMIT:
-      return { used: usage.users, limit: plan.usersLimit, remaining: null };
+      return {
+        used: usage.users,
+        limit: plan.usersLimit ?? null,
+        remaining: null,
+      };
     default:
       return null;
   }
@@ -301,9 +304,9 @@ const NUMERIC_FEATURES: FeatureDisplay[] = [
   {
     featureId: AutumnFeatureId.AP_CREDITS,
     kind: 'consumable',
-    label: 'AI Credits',
+    label: 'Credits',
     icon: Sparkles,
-    purchaseTitle: 'Purchase AI Credits',
+    purchaseTitle: 'Purchase Credits',
   },
   {
     featureId: AutumnFeatureId.APP_SUMO_AI_CREDITS,

@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils';
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import { useCallback, useState } from 'react';
 
 import { aiProviderQueries } from '@/features/platform-admin';
@@ -17,7 +17,7 @@ export function useCreditsState() {
 
   const creditsWarning = warningDismissed
     ? null
-    : computeCreditsWarning({ platform, providers });
+    : computeCreditsWarning({ platform: platform ?? {}, providers });
 
   const dismissCreditsWarning = useCallback(() => {
     setWarningDismissed(true);
@@ -37,7 +37,7 @@ function computeCreditsWarning({
   providers,
 }: {
   platform: {
-    usage?: { totalAiCreditsUsed: number; aiCreditsLimit: number };
+    usage?: { creditsUsed: number; creditsRemaining?: number | null };
   };
   providers?: { provider: string; enabledForChat?: boolean }[];
 }): CreditsWarning | null {
@@ -47,12 +47,16 @@ function computeCreditsWarning({
   if (
     !isActivepieces ||
     !platform.usage ||
-    platform.usage.aiCreditsLimit <= 0
+    isNil(platform.usage.creditsRemaining)
   ) {
     return null;
   }
-  const { totalAiCreditsUsed, aiCreditsLimit } = platform.usage;
-  const percentage = Math.round((totalAiCreditsUsed / aiCreditsLimit) * 100);
+  const { creditsUsed, creditsRemaining } = platform.usage;
+  const total = creditsUsed + creditsRemaining;
+  if (total <= 0) {
+    return null;
+  }
+  const percentage = Math.round((creditsUsed / total) * 100);
   if (percentage < CREDITS_WARNING_THRESHOLD) {
     return null;
   }

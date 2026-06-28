@@ -11,7 +11,6 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { billingProvider } from '../../../platform/billing-provider'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
-import { platformAiCreditsService } from './platform-ai-credits.service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 
 export const platformPlanRepo = repoFactory(PlatformPlanEntity)
@@ -99,19 +98,17 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             .where('project."platformId" = :platformId', { platformId })
             .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
             .getCount()
-        const aiCreditsUsage = await platformAiCreditsService(log).getUsage(platformId)
-        const appSumoAiCredits = await billingProvider.get(log).getAppSumoAiCreditsUsage(platformId)
+        const { credits, appSumo } = await billingProvider.get(log).getConsumablesUsage(platformId)
         const teamProjectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
         const usersCount = await userService(log).countByPlatformId(platformId)
         return {
             activeFlows: activeFlowsCount,
             teamProjects: teamProjectsCount,
             users: usersCount,
-            aiCreditsLimit: aiCreditsUsage.limit,
-            aiCreditsRemaining: aiCreditsUsage.usageRemaining,
-            totalAiCreditsUsed: aiCreditsUsage.usage,
-            totalAiCreditsUsedThisMonth: aiCreditsUsage.usageMonthly,
-            appSumoAiCredits,
+            creditsUsed: credits?.usage ?? 0,
+            creditsRemaining: isNil(credits) ? 0 : credits.remaining,
+            appSumoAiCredits: isNil(appSumo) ? null : appSumo.usage,
+            appSumoAiCreditsRemaining: isNil(appSumo) ? null : Math.max(0, appSumo.limit - appSumo.usage),
         }
     },
     checkActiveFlowsExceededLimit: async (platformId: string): Promise<void> => {

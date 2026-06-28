@@ -24,7 +24,9 @@ const SidebarUsageLimits = React.memo(() => {
   const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  if (edition !== ApEdition.CLOUD) {
+  // Billing/usage applies to both Cloud and EE self-hosting (plan management is gated EE+Cloud); only
+  // Community has no billing.
+  if (edition === ApEdition.COMMUNITY) {
     return null;
   }
 
@@ -49,13 +51,19 @@ const SidebarUsageLimits = React.memo(() => {
   return (
     <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
       <div className="flex flex-col gap-1.5">
-        <UsageRow name={t('Runs')} isUnlimited={true} />
         <UsageRow
-          name={t('AI Credits')}
-          value={Math.round(platform.usage?.aiCreditsRemaining ?? 0)}
-          suffix={t('remaining')}
+          name={t('Credits')}
+          value={Math.round(platform.usage?.creditsUsed ?? 0)}
+          max={
+            isNil(platform.usage?.creditsRemaining)
+              ? null
+              : Math.round(
+                  (platform.usage?.creditsUsed ?? 0) +
+                    platform.usage.creditsRemaining,
+                )
+          }
           tooltip={t(
-            'Used when running AI pieces with Activepieces as the provider instead of your own API keys.',
+            'Credits are consumed by flow runs, AI steps, and chat. Shown as used / total.',
           )}
         />
         {isPlatformAdmin && (

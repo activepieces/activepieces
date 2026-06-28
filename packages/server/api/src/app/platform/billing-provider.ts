@@ -53,13 +53,13 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
         return false
     },
     getAppSumoAiCreditsState: async () => {
-        return { blocked: false, usage: 0, limit: 0 }
+        return { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false }
     },
     getCreditsState: async () => {
-        return { blocked: false, usage: 0, limit: 0 }
+        return { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false }
     },
-    getAppSumoAiCreditsUsage: async () => {
-        return null
+    getConsumablesUsage: async () => {
+        return { credits: null, appSumo: null }
     },
 }))
 
@@ -84,15 +84,31 @@ export type TrackAppSumoAiUsageParams = {
     properties?: Record<string, unknown>
 }
 
+// Used both for the enforcement gate (blocked) and the billing-page display. `unlimited` plans (old/comped +
+// appsumo) carry unlimited apCredits — limit/remaining are meaningless there, so callers should treat them as
+// "Unlimited" via the flag rather than the numbers.
 export type CreditsGateState = {
     blocked: boolean
     usage: number
     limit: number
+    remaining: number
+    unlimited: boolean
 }
 
 export type AppSumoAiCreditsUsage = {
     usage: number
     limit: number
+}
+
+// Live (non-cached) consumable balances for the billing-page / sidebar display. `remaining: null` = unlimited.
+export type CreditsUsage = {
+    usage: number
+    remaining: number | null
+}
+
+export type ConsumablesUsage = {
+    credits: CreditsUsage | null
+    appSumo: AppSumoAiCreditsUsage | null
 }
 
 export type CreateCheckoutSessionParams = {
@@ -164,5 +180,5 @@ export type BillingProvider = {
     shouldBlockOnCredits(platformId: string): Promise<boolean>
     getAppSumoAiCreditsState(platformId: string): Promise<CreditsGateState>
     getCreditsState(platformId: string): Promise<CreditsGateState>
-    getAppSumoAiCreditsUsage(platformId: string): Promise<AppSumoAiCreditsUsage | null>
+    getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
 }

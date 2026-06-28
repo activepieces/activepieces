@@ -20,7 +20,7 @@ import { getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getCreditsBalance
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAction, BillingProvider, CreditsGateState, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAction, AppSumoAiCreditsUsage, BillingProvider, CreditsGateState, CreditsUsage, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../platform/billing-provider'
 import { platformPlanService } from './platform-plan.service'
 
 const CREDITS_CACHE_TTL_SECONDS = 180
@@ -336,23 +336,36 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     getAppSumoAiCreditsState: async (platformId: string) => {
         const balance = await autumnUtils.readAppSumoAiCreditsBalance(platformId)
         if (isNil(balance) || balance.unlimited) {
-            return { blocked: false, usage: balance?.usage ?? 0, limit: balance?.granted ?? 0 }
+            return { blocked: false, usage: balance?.usage ?? 0, limit: balance?.granted ?? 0, remaining: balance?.remaining ?? 0, unlimited: balance?.unlimited ?? false }
         }
-        return { blocked: balance.remaining <= 0, usage: balance.usage, limit: balance.granted }
+        return { blocked: balance.remaining <= 0, usage: balance.usage, limit: balance.granted, remaining: balance.remaining, unlimited: false }
     },
-    getAppSumoAiCreditsUsage: async (platformId: string) => {
+    getConsumablesUsage: async (platformId: string) => {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
-            return null
+            return { credits: null, appSumo: null }
         }
         const customer = await client.getCustomer()
-        const balance = customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]
-        if (isNil(balance) || balance.unlimited || isNil(balance.granted) || balance.granted <= 0) {
-            return null
+        return {
+            credits: toCreditsUsage(customer.balances[AutumnFeatureId.AP_CREDITS]),
+            appSumo: toAppSumoAiCreditsUsage(customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]),
         }
-        return { usage: balance.usage, limit: balance.granted }
     },
 })
+
+function toCreditsUsage(balance: Balance | undefined): CreditsUsage | null {
+    if (isNil(balance)) {
+        return null
+    }
+    return { usage: balance.usage, remaining: balance.unlimited ? null : balance.remaining }
+}
+
+function toAppSumoAiCreditsUsage(balance: Balance | undefined): AppSumoAiCreditsUsage | null {
+    if (isNil(balance) || balance.unlimited || isNil(balance.granted) || balance.granted <= 0) {
+        return null
+    }
+    return { usage: balance.usage, limit: balance.granted }
+}
 
 function isAutumnFeatureId(value: string): value is AutumnFeatureId {
     return Object.values(AutumnFeatureId).some((id) => id === value)
@@ -414,6 +427,8 @@ async function computeCreditsState(platformId: string): Promise<CreditsGateState
         blocked: billingEnforced && exhausted,
         usage: balance?.usage ?? 0,
         limit: balance?.granted ?? 0,
+        remaining: balance?.remaining ?? 0,
+        unlimited: balance?.unlimited ?? false,
     }
 }
 

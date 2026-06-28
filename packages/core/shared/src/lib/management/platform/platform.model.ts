@@ -9,17 +9,13 @@ export enum FilteredPieceBehavior {
 }
 
 export const PlatformUsage = z.object({
-    totalAiCreditsUsed: z.number(),
-    totalAiCreditsUsedThisMonth: z.number(),
-    aiCreditsRemaining: z.number(),
-    aiCreditsLimit: z.number(),
+    creditsUsed: z.number(),
+    creditsRemaining: Nullable(z.number()),
+    appSumoAiCredits: Nullable(z.number()),
+    appSumoAiCreditsRemaining: Nullable(z.number()),
     activeFlows: z.number(),
     teamProjects: z.number(),
     users: z.number(),
-    appSumoAiCredits: Nullable(z.object({
-        usage: z.number(),
-        limit: z.number(),
-    })),
 })
 
 export type PlatformUsage = z.infer<typeof PlatformUsage>
