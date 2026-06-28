@@ -6,7 +6,16 @@ import {
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Server, Clock, Cpu, MemoryStick, HardDrive, Zap } from 'lucide-react';
+import {
+  Server,
+  Clock,
+  Cpu,
+  MemoryStick,
+  HardDrive,
+  Zap,
+  Layers,
+  Activity,
+} from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -42,7 +51,7 @@ import { SandboxesPopover } from './sandboxes-popover';
 import { WorkerAssignmentsTab } from './worker-assignments-tab';
 import { WorkerConfigsPopover } from './worker-configs-popover';
 
-type TabValue = 'machines' | 'assignments';
+type TabValue = 'health' | 'worker-groups';
 
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -51,11 +60,11 @@ export default function WorkersPage() {
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab = (searchParams.get('tab') as TabValue) || 'machines';
+  const activeTab = (searchParams.get('tab') as TabValue) || 'health';
 
   const setTab = (tab: TabValue) => {
     const newParams = new URLSearchParams(searchParams);
-    if (tab === 'machines') {
+    if (tab === 'health') {
       newParams.delete('tab');
     } else {
       newParams.set('tab', tab);
@@ -78,17 +87,19 @@ export default function WorkersPage() {
         className="w-full"
       >
         <TabsList variant="outline" className="border-b w-full">
-          <TabsTrigger variant="outline" value="machines">
-            {t('Worker Machines')}
+          <TabsTrigger variant="outline" value="health">
+            <Activity className="w-4 h-4 mr-2" />
+            {t('Health')}
           </TabsTrigger>
           {platform.plan.isolatedWorkersEnabled && (
-            <TabsTrigger variant="outline" value="assignments">
-              {t('Assignments')}
+            <TabsTrigger variant="outline" value="worker-groups">
+              <Layers className="w-4 h-4 mr-2" />
+              {t('Worker groups')}
             </TabsTrigger>
           )}
         </TabsList>
 
-        <TabsContent value="machines">
+        <TabsContent value="health">
           <div className="flex flex-col gap-4 pt-4">
             {isCloud && fleetType === WorkerMachineType.SHARED && (
               <Alert variant="primary">
@@ -173,7 +184,7 @@ export default function WorkersPage() {
         </TabsContent>
 
         {platform.plan.isolatedWorkersEnabled && (
-          <TabsContent value="assignments">
+          <TabsContent value="worker-groups">
             <WorkerAssignmentsTab />
           </TabsContent>
         )}
@@ -254,7 +265,13 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+            {worker.workerGroupId && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                <Layers className="size-3.5 shrink-0" />
+                {worker.workerGroupId.replaceAll('_', ' ')}
+              </span>
+            )}
             {isCloud && (
               <Tooltip>
                 <TooltipTrigger asChild>
