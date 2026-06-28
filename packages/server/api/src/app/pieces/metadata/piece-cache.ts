@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
 import { ApEnvironment, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { lru, LRU } from 'tiny-lru'
 import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
@@ -15,6 +16,16 @@ const isTestingEnvironment = environment === ApEnvironment.TESTING
 let cachedRegistry: PieceRegistryEntry[] | null = null
 let registryGeneration = 0
 
+// An exact piece version (name:version:platformId) is immutable, so its full metadata can be cached
+// for the process lifetime. The only writers (create/delete/bulkDelete) call invalidate(), which clears
+// this cache locally and via pubsub on every instance — same invalidation path as the registry above.
+// Piece metadata rows are heavy (actions+triggers+props+i18n), so it's an LRU-capped cache: on a shared
+// multi-tenant pod touching many platforms' pieces an unbounded map would grow without limit; the LRU
+// keeps the hot working set resident (flows reuse the same few versions) and bounds worst-case footprint.
+// ttl 0 = no expiry (immutable data); eviction is purely by the entry cap.
+const MAX_CACHED_PIECE_VERSIONS = 1000
+const cachedVersions: LRU<PieceMetadataSchema> = lru(MAX_CACHED_PIECE_VERSIONS, 0)
+
 export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
@@ -22,6 +33,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
             if (!isTestingEnvironment) {
                 await pubsub.subscribe(PIECE_REGISTRY_INVALIDATION_CHANNEL, () => {
                     cachedRegistry = null
+                    cachedVersions.clear()
                     registryGeneration++
                     log.debug('[pieceCache] Registry invalidated via pubsub')
                 })
@@ -34,8 +46,17 @@ export const pieceCache = (log: FastifyBaseLogger) => {
             return [...persistedRegistry, ...devPieces]
         },
 
+        getCachedVersion(key: string): PieceMetadataSchema | undefined {
+            return cachedVersions.get(key)
+        },
+
+        setCachedVersion(key: string, value: PieceMetadataSchema): void {
+            cachedVersions.set(key, value)
+        },
+
         async invalidate(): Promise<void> {
             cachedRegistry = null
+            cachedVersions.clear()
             registryGeneration++
             if (!isTestingEnvironment) {
                 await pubsub.publish(PIECE_REGISTRY_INVALIDATION_CHANNEL, '1')

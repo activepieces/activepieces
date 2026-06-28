@@ -1,12 +1,20 @@
 import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { ColorName, Project, ProjectIcon, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { lru, LRU } from 'tiny-lru'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userService } from '../user/user-service'
 import { projectHooks, ProjectPostCreateContext } from './project-hooks'
 import { projectRepo } from './project-repo'
 
 export { projectRepo }
+
+// A project's platformId never changes, so this mapping is safe to memoize for the process lifetime.
+// getPlatformId is called several times per flow run (run creation + worker RPCs), each previously a
+// separate `project` SELECT on the single shared Postgres — one of the hottest reads on the exec path.
+// LRU-capped (entries are tiny, but the cap keeps it bounded on a shared multi-tenant pod); ttl 0 = no
+// expiry since the mapping is immutable, a deleted project simply ages out by LRU.
+const projectPlatformIdCache: LRU<string> = lru(50000, 0)
 
 export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
@@ -83,6 +91,10 @@ export const projectService = (log: FastifyBaseLogger) => ({
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
+        const cached = projectPlatformIdCache.get(projectId)
+        if (!isNil(cached)) {
+            return cached
+        }
         const result = await projectRepo().createQueryBuilder('project').withDeleted().select('"platformId"').where({
             id: projectId,
         }).getRawOne()
@@ -90,6 +102,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
         if (isNil(platformId)) {
             throw new Error(`Platform ID for project ${projectId} is undefined in webhook.`)
         }
+        projectPlatformIdCache.set(projectId, platformId)
         return platformId
     },
     async getOneOrThrow(projectId: ProjectId): Promise<Project> {

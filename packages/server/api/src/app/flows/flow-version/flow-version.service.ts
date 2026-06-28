@@ -2,6 +2,7 @@ import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowVersionId, isNi
 import { FlowOperationRequest, flowOperations, FlowOperationType, flowStructureUtil, FlowTriggerType, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, Note } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { lru, LRU } from 'tiny-lru'
 import { EntityManager, FindOneOptions } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -14,6 +15,16 @@ import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
 
 export const flowVersionRepo = repoFactory(FlowVersionEntity)
+
+// A LOCKED flow version is an immutable snapshot (republishing creates a new id), so its migrated form
+// is safe to memoize for the process lifetime. The engine fetches the running version once per run
+// (worker RPC getFlowVersion → getOne), each previously a `flow_version` SELECT (the large trigger
+// JSONB) plus a migration pass on the single shared Postgres. DRAFT versions are mutable, so only
+// LOCKED is cached. The value (full trigger graph) is heavy, so it's an LRU-capped cache to bound the
+// worst case on a shared pod that runs many distinct flows; hot versions stay resident. No invalidation
+// needed since LOCKED never changes. ttl 0 = no expiry (immutable); eviction is purely by the entry cap.
+const MAX_CACHED_FLOW_VERSIONS = 2000
+const lockedFlowVersionCache: LRU<FlowVersion> = lru(MAX_CACHED_FLOW_VERSIONS, 0)
 
 export const flowVersionService = (log: FastifyBaseLogger) => ({
     async applyOperation({
@@ -109,11 +120,19 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         if (isNil(id)) {
             return null
         }
-        return findOne(log, {
+        const cached = lockedFlowVersionCache.get(id)
+        if (!isNil(cached)) {
+            return cached
+        }
+        const flowVersion = await findOne(log, {
             where: {
                 id,
             },
         })
+        if (!isNil(flowVersion) && flowVersion.state === FlowVersionState.LOCKED) {
+            lockedFlowVersionCache.set(id, flowVersion)
+        }
+        return flowVersion
     },
 
     async exists(id: FlowVersionId): Promise<boolean> {

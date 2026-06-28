@@ -441,6 +441,12 @@ async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchP
         return devPiece
     }
 
+    const cacheKey = `${pieceName}:${version}:${platformId ?? ''}`
+    const cached = pieceCache(log).getCachedVersion(cacheKey)
+    if (!isNil(cached)) {
+        return cached
+    }
+
     const foundPiece = await pieceRepos().findOne({
         where: {
             name: pieceName,
@@ -448,6 +454,9 @@ async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchP
             platformId: platformId ?? IsNull(),
         },
     })
+    if (!isNil(foundPiece)) {
+        pieceCache(log).setCachedVersion(cacheKey, foundPiece)
+    }
     return foundPiece ?? null
 }
 
