@@ -37,6 +37,20 @@ export enum PieceAudienceFilter {
     ALL = 'all',
 }
 
+// Whether an action with the given `audience` tag is visible for the requested perspective.
+// `both` and untagged actions (untagged defaults to `both`) are visible everywhere; only the
+// opposite single audience is hidden. Takes the tag as a string to avoid a dependency on the
+// pieces-framework `Audience` type.
+export function isAudienceVisible(actionAudience: string | undefined, filter: PieceAudienceFilter): boolean {
+    if (filter === PieceAudienceFilter.ALL) {
+        return true
+    }
+    if (filter === PieceAudienceFilter.AI) {
+        return actionAudience !== 'human'
+    }
+    return actionAudience !== 'ai'
+}
+
 export const GetPieceRequestWithScopeParams = z.object({
     name: z.string(),
     scope: z.string(),

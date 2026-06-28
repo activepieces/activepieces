@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, LocalesEnum, PlatformId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
+import { EXACT_VERSION_REGEX, flowPieceUtil, isAudienceVisible, PackageType, PieceAudienceFilter, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
@@ -36,7 +36,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 suggestionType: params.suggestionType,
             })
 
-            return toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
+            return toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType, params.audience)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const registry = filterRegistry(await loadRegistry(log), {
@@ -280,16 +280,21 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
     pieceMetadataEntityList: T[],
     originalMetadataList: T[],
     suggestionType?: SuggestionType,
+    audience: PieceAudienceFilter = PieceAudienceFilter.ALL,
 ): PieceMetadataModelSummary[] {
     return pieceMetadataEntityList.map((pieceMetadataEntity) => {
         const originalMetadata = originalMetadataList.find((p) => p.name === pieceMetadataEntity.name)
         assertNotNullOrUndefined(originalMetadata, `Original metadata not found for ${pieceMetadataEntity.name}`)
+        // Filter actions by audience here (where the full action set is available) so the count
+        // and suggestedActions stay consistent — including the bare list with no suggestionType.
+        const visibleActions = Object.values(originalMetadata.actions).filter((action) => isAudienceVisible(action.audience, audience))
+        const visibleSuggestedActions = Object.values(pieceMetadataEntity.actions).filter((action) => isAudienceVisible(action.audience, audience))
         return {
             ...pieceMetadataEntity,
-            actions: Object.keys(originalMetadata.actions).length,
+            actions: visibleActions.length,
             triggers: Object.keys(originalMetadata.triggers).length,
             suggestedActions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
-                Object.values(pieceMetadataEntity.actions) : undefined,
+                visibleSuggestedActions : undefined,
             suggestedTriggers: suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
                 Object.values(pieceMetadataEntity.triggers) : undefined,
         }
@@ -528,6 +533,7 @@ type ListParams = {
     searchQuery?: string
     suggestionType?: SuggestionType
     locale?: LocalesEnum
+    audience?: PieceAudienceFilter
 }
 
 type GetOrThrowParams = {

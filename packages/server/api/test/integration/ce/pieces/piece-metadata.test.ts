@@ -716,5 +716,52 @@ describe('Piece Metadata CE API', () => {
             expect(suggestedNames).toEqual(['ai_action', 'both_action', 'human_only_action', 'untagged_action'])
             expect(entry.actions).toBe(4)
         })
+
+        it('GET /v1/pieces (no suggestionType) reports an audience-filtered action count by default', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'audience-bare-list-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: buildActions(),
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces',
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const entry = response?.json().find((p: { name: string }) => p.name === 'audience-bare-list-piece')
+            expect(entry).toBeDefined()
+            expect(entry.suggestedActions).toBeUndefined()
+            expect(entry.actions).toBe(3)
+        })
+
+        it('GET /v1/pieces?audience=all (no suggestionType) reports the full action count', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'audience-bare-list-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: buildActions(),
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces?audience=all',
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const entry = response?.json().find((p: { name: string }) => p.name === 'audience-bare-list-piece')
+            expect(entry).toBeDefined()
+            expect(entry.actions).toBe(4)
+        })
     })
 })

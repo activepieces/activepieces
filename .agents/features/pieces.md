@@ -76,7 +76,7 @@ Unique index on `(name, version, platformId)`.
 
 ## Audience filtering (human vs AI)
 
-Agent-only atomics are tagged `audience: 'ai'` so they surface to agents (MCP `ap_search_actions`) but not to the human flow-builder step picker. The human piece-metadata endpoints hide `audience: 'ai'` actions **by default**, filtered at the controller (`piece-metadata-controller.ts`) — not the service.
+Agent-only atomics are tagged `audience: 'ai'` so they surface to agents (MCP `ap_search_actions`) but not to the human flow-builder step picker. The human piece-metadata endpoints hide `audience: 'ai'` actions **by default**, filtered at the HTTP boundary — detail responses in the controller (`piece-metadata-controller.ts`), list summaries in the metadata service's `list()` (the only full-metadata path left unfiltered is `getOrThrow()`).
 
 Callers pick a perspective with the `audience` query param (`PieceAudienceFilter`: `human` (default) / `ai` / `all`). `both`-tagged and untagged actions (untagged defaults to `both`) are always included; only the opposite single audience is hidden:
 
@@ -86,10 +86,10 @@ Callers pick a perspective with the `audience` query param (`PieceAudienceFilter
 
 Where it applies:
 
-- `GET /v1/pieces/:name` and `GET /v1/pieces/:scope/:name` — filtered from the `actions` record.
-- `GET /v1/pieces` — filtered from `suggestedActions`; the `actions` count is recomputed when suggestions are requested (`suggestionType=ACTION` / `ACTION_AND_TRIGGER`), the path the picker uses (a piece with no actions for the perspective then reports 0 and drops out). The bare-list count (no `suggestionType`) stays the raw total — informational only; the human UI doesn't read per-piece counts there, and no action records are exposed.
+- `GET /v1/pieces/:name` and `GET /v1/pieces/:scope/:name` — filtered from the `actions` record (controller).
+- `GET /v1/pieces` — both `suggestedActions` and the `actions` **count** are filtered by audience in the service's `list()` (`toPieceMetadataModelSummary`), where the full action set is available — so the count stays consistent regardless of `suggestionType` (a piece with no actions for the perspective reports 0 and drops out of the picker).
 
-The metadata service (`list` / `getOrThrow`) is intentionally left unfiltered so internal callers — flow validation, MCP step editing, the tool-search reindex — keep seeing every action.
+`getOrThrow()` (the full per-action metadata used by flow validation, MCP step editing, and the tool-search reindex) is deliberately **not** filtered — internal callers keep seeing every action. `list()` is consumed only by the human list endpoint, so filtering its summaries there is safe (`audience` defaults to `all`, so any future internal caller is unaffected).
 
 ## Service Methods
 
