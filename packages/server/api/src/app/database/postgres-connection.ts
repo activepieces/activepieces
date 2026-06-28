@@ -385,12 +385,12 @@ import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migrati
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
+import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
+import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
 import { AddFilteredComponentNamesToPlatform1800000000000 } from './migration/postgres/1800000000000-AddFilteredComponentNamesToPlatform'
 import { AddPieceSetTable1801000000000 } from './migration/postgres/1801000000000-AddPieceSetTable'
 import { MigratePieceSetConfig1802000000000 } from './migration/postgres/1802000000000-MigratePieceSetConfig'
 import { BackfillPieceSets1803000000000 } from './migration/postgres/1803000000000-BackfillPieceSets'
-import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
-import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
