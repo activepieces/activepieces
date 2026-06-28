@@ -277,8 +277,36 @@ function unwrapToolOutput(output: unknown): unknown {
     return output
 }
 
+// Reads the context-compression metadata the worker attaches to a tool result's
+// `structuredContent` when it shrank a large output before returning it to the model.
+// Returns null when the field is absent or malformed, so the UI badge is fail-safe.
+function readContextCompression(structuredContent: unknown): ChatContextCompression | null {
+    if (typeof structuredContent !== 'object' || structuredContent === null) return null
+    const candidate = (structuredContent as Record<string, unknown>)['contextCompression']
+    if (typeof candidate !== 'object' || candidate === null) return null
+    const record = candidate as Record<string, unknown>
+    const method = record['method']
+    const originalBytes = record['originalBytes']
+    const returnedBytes = record['returnedBytes']
+    const methodIsValid = method === 'condensed' || method === 'offloaded' || method === 'truncated'
+    if (!methodIsValid || typeof originalBytes !== 'number' || typeof returnedBytes !== 'number') return null
+    return { method, originalBytes, returnedBytes }
+}
+
 export const chatPersistenceUtils = {
     unwrapToolOutput,
+    readContextCompression,
+}
+
+export type ChatContextCompressionMethod = 'condensed' | 'offloaded' | 'truncated'
+
+// Surfaced on a tool result's `structuredContent.contextCompression` so the chat UI can show a
+// "Context compression" badge on tool calls whose (often large) output was reduced before being
+// returned to the model. `originalBytes`/`returnedBytes` are the serialized sizes before/after.
+export type ChatContextCompression = {
+    method: ChatContextCompressionMethod
+    originalBytes: number
+    returnedBytes: number
 }
 
 export type BatchItemResult = {

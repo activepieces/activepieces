@@ -1,6 +1,12 @@
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Braces, ChevronDown, Code2, TriangleAlert, Zap } from 'lucide-react';
+import {
+  Archive,
+  Braces,
+  ChevronDown,
+  Code2,
+  TriangleAlert,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 
@@ -61,7 +67,7 @@ export function CodeModeCard({ part }: { part: AnyToolPart }) {
 
       {data.ok && (
         <div className="flex items-center gap-1.5 px-3.5 pb-2.5 text-xs text-muted-foreground">
-          <Zap className="size-3 shrink-0 text-primary/70" />
+          <Archive className="size-3 shrink-0 text-primary/70" />
           <span className="min-w-0">{savings}</span>
         </div>
       )}
@@ -164,7 +170,7 @@ function formatKb(bytes: number): string {
 
 function buildSavingsLine(data: CodeModeContent): string {
   return t(
-    'Ran {count, plural, =1 {1 tool call} other {# tool calls}} in code · ~{serverKb} processed server-side · ~{returnedKb} returned to context',
+    'Context compressed · ran {count, plural, =1 {1 tool call} other {# tool calls}} in code · ~{serverKb} processed server-side · ~{returnedKb} returned to context',
     {
       count: data.bridgedCallCount,
       serverKb: formatKb(data.serverSideBytes),

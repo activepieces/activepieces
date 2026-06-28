@@ -1,6 +1,6 @@
 import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { chatToolPhases } from '@activepieces/shared'
+import { ChatContextCompression, ChatContextCompressionMethod, chatToolPhases } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +8,10 @@ import { chatWorkerTools } from './chat-worker-tools'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
+// Only badge a reduction the user would actually care about: skip sub-512-byte savings and
+// reductions under ~10%, so a trivial trim never advertises itself as "Context compression".
+const COMPRESSION_MIN_SAVED_BYTES = 512
+const COMPRESSION_MIN_SAVED_RATIO = 0.1
 const PIECE_PROPS_TOOL_NAME = 'ap_get_piece_props'
 const RESOLVE_OPTIONS_TOOL_NAME = 'ap_resolve_property_options'
 const RESOLVE_CHAIN_TOOL_NAME = 'ap_resolve_property_chain'
@@ -193,6 +197,45 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text: chatAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
 }
 
+function serializedByteSize(value: unknown): number {
+    const { data: serialized } = tryCatchSync(() => JSON.stringify(value))
+    return typeof serialized === 'string' ? Buffer.byteLength(serialized, 'utf8') : 0
+}
+
+// Decide whether a before→after reduction is worth surfacing as a "Context compression" badge.
+// Returns null for no-ops and trivial trims so the UI only ever shows a genuine win.
+function measureCompression({ method, originalBytes, returnedBytes }: {
+    method: ChatContextCompressionMethod
+    originalBytes: number
+    returnedBytes: number
+}): ChatContextCompression | null {
+    if (originalBytes <= 0 || returnedBytes <= 0 || returnedBytes >= originalBytes) {
+        return null
+    }
+    const savedBytes = originalBytes - returnedBytes
+    if (savedBytes < COMPRESSION_MIN_SAVED_BYTES || savedBytes / originalBytes < COMPRESSION_MIN_SAVED_RATIO) {
+        return null
+    }
+    return { method, originalBytes, returnedBytes }
+}
+
+// Rides the compression metadata alongside the result on `structuredContent.contextCompression`,
+// mirroring how Code Mode threads its structured payload to the UI. The model still reads the
+// (already-reduced) content/text; this only adds a few numbers + a short method string.
+function attachCompressionMetadata({ result, compression }: {
+    result: unknown
+    compression: ChatContextCompression | null
+}): unknown {
+    if (compression === null || !isObject(result)) {
+        return result
+    }
+    const existingStructured = isObject(result['structuredContent']) ? result['structuredContent'] : {}
+    return {
+        ...result,
+        structuredContent: { ...existingStructured, contextCompression: compression },
+    }
+}
+
 function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSelectedAuth, saveLargeResult }: {
     mcpToolSet: Record<string, unknown>
     conversationId: string
@@ -251,9 +294,17 @@ function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSel
                     }
                     return buildReconnectGuidance({ connectorUuid })
                 }
+                const originalBytes = serializedByteSize(toolResult)
                 const digested = digestMcpResult({ toolName: name, result: toolResult })
                 const offloaded = await maybeOffloadMcpResult({ result: digested, toolName: name, saveLargeResult })
-                const finalResult = offloaded !== null ? offloaded : chatWorkerTools.truncateLargeResult(digested)
+                const reduced = offloaded !== null ? offloaded : chatWorkerTools.truncateLargeResult(digested)
+                const method: ChatContextCompressionMethod = offloaded !== null
+                    ? 'offloaded'
+                    : reduced !== digested
+                        ? 'truncated'
+                        : 'condensed'
+                const compression = measureCompression({ method, originalBytes, returnedBytes: serializedByteSize(reduced) })
+                const finalResult = attachCompressionMetadata({ result: reduced, compression })
                 if (cacheKey !== null) {
                     writeToolResultCache({ key: cacheKey, result: finalResult })
                 }

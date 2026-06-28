@@ -1,12 +1,14 @@
 import { isObject } from '@activepieces/core-utils';
+import { ChatContextCompression } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, Code } from 'lucide-react';
+import { Archive, ChevronDown, Code } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { TextShimmer } from '@/components/ui/text-shimmer';
+import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AnyToolPart,
   ThinkingStep,
@@ -17,6 +19,8 @@ import { toolIconUtils } from '@/features/chat/lib/tool-icons';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
+
+import { DelayedTooltip } from './delayed-tooltip';
 
 export function ThinkingBlock({
   thinkingSteps,
@@ -177,6 +181,13 @@ function ToolStepRow({
     () => (detailsOpen && output ? tryParseJson(output) : undefined),
     [detailsOpen, output],
   );
+  const compression = useMemo(
+    () =>
+      status === 'completed'
+        ? chatPartUtils.extractContextCompression(part)
+        : null,
+    [part, status],
+  );
   const pieceNames = useMemo(
     () => chatPartUtils.extractPieceNames(rawInput),
     [rawInput],
@@ -272,6 +283,9 @@ function ToolStepRow({
                 />
               ))}
             </div>
+            {compression && (
+              <ContextCompressionBadge compression={compression} />
+            )}
           </div>
         )}
         {hasDetails && (
@@ -330,6 +344,53 @@ function ToolStepRow({
       )}
     </div>
   );
+}
+
+function ContextCompressionBadge({
+  compression,
+}: {
+  compression: ChatContextCompression;
+}) {
+  const detail = compressionMethodLabel(compression.method);
+  const summary = t('{from} → {to}', {
+    from: formatCompressionBytes(compression.originalBytes),
+    to: formatCompressionBytes(compression.returnedBytes),
+  });
+  return (
+    <DelayedTooltip>
+      <TooltipTrigger asChild>
+        <span className="mt-1 inline-flex w-fit cursor-default items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+          <Archive className="size-3 shrink-0 text-primary/70" />
+          <span>{t('Context compressed')}</span>
+          <span className="text-muted-foreground/70">·</span>
+          <span className="tabular-nums">{summary}</span>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">{detail}</TooltipContent>
+    </DelayedTooltip>
+  );
+}
+
+function compressionMethodLabel(
+  method: ChatContextCompression['method'],
+): string {
+  switch (method) {
+    case 'condensed':
+      return t('Schema condensed before returning to the model');
+    case 'offloaded':
+      return t(
+        'Full result kept in the sandbox; only a preview returned to the model',
+      );
+    case 'truncated':
+      return t('Result truncated to fit the context budget');
+  }
+}
+
+function formatCompressionBytes(bytes: number): string {
+  if (bytes <= 0) return t('0 KB');
+  const kb = bytes / 1024;
+  if (kb < 1) return t('<1 KB');
+  return t('{kb} KB', { kb: Math.round(kb) });
 }
 
 function formatThinkingDuration(ms: number | undefined): string {
