@@ -238,7 +238,11 @@ function externalsInOutput(metafile) {
   const set = new Set()
   for (const out of Object.values(metafile.outputs || {})) {
     for (const imp of out.imports || []) {
-      if (imp.external && !NODE_BUILTINS.has(imp.path) && !imp.path.startsWith('node:')) {
+      if (imp.external
+        && !imp.path.startsWith('.')
+        && !path.isAbsolute(imp.path)
+        && !NODE_BUILTINS.has(imp.path)
+        && !imp.path.startsWith('node:')) {
         set.add(topLevelPkg(imp.path))
       }
     }
@@ -381,13 +385,17 @@ const HAZARD_IDS = new Set([
   'require-resolve-not-external', 'import-is-undefined', 'call-import-namespace',
   'commonjs-variable-in-esm',
 ])
-// Verbatim from packages/cli/src/lib/utils/bundle-piece-utils.ts NATIVE_EXTERNALS.
+// Mirrors packages/cli/src/lib/utils/bundle-piece-utils.ts NATIVE_EXTERNALS, plus packages whose
+// native binding is loaded via a RELATIVE path (e.g. ssh2's crypto/build/Release/sshcrypto.node):
+// esbuild inlines their JS but cannot inline the .node, so they must be externalized + pinned and
+// brought in by the runtime install instead of stranded as a dangling relative require.
 const NATIVE_EXTERNALS = new Set([
   'oracledb', 'duckdb', '@duckdb/node-api', '@duckdb/node-bindings',
   'better-sqlite3', 'sqlite3', 'cpu-features',
   'pg-native', 'mongodb-client-encryption', 'kerberos',
   'snappy', 'aws4', 'bson-ext', '@mongodb-js/zstd',
   'playwright', 'playwright-core', 'puppeteer', 'puppeteer-core',
+  'ssh2', 'ssh2-sftp-client',
 ])
 
 module.exports = { buildBundle, FAIL_BYTES }
