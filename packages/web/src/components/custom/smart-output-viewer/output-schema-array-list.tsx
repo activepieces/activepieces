@@ -3,6 +3,8 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { VirtualizedList } from '@/components/ui/virtualized-list';
+
 import { OutputFieldList } from './output-field-list';
 import { schemaUtils } from './resolve-schema';
 import { truncateValue } from './shared-value-rendering';
@@ -77,11 +79,14 @@ function OutputSchemaArrayList({ items, schema }: OutputSchemaArrayListProps) {
   }
 
   return (
-    <div>
-      {items.map((item, idx) => (
-        <SchemaArrayItemRow key={idx} item={item} index={idx} schema={schema} />
-      ))}
-    </div>
+    <VirtualizedList
+      items={items}
+      estimateSize={37}
+      className="max-h-[60vh]"
+      renderItem={(item, idx) => (
+        <SchemaArrayItemRow item={item} index={idx} schema={schema} />
+      )}
+    />
   );
 }
 

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { VirtualizedList } from '@/components/ui/virtualized-list';
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -37,6 +39,8 @@ const DataSelectorNode = ({
     return <TestStepSection stepName={node.data.stepName}></TestStepSection>;
   }
 
+  const children = node.children ?? [];
+
   return (
     <Collapsible className="w-full" open={expanded} onOpenChange={setExpanded}>
       <>
@@ -49,16 +53,21 @@ const DataSelectorNode = ({
           ></DataSelectorNodeContent>
         </CollapsibleTrigger>
         <CollapsibleContent className="w-full">
-          {node.children && node.children.length > 0 && (
+          {children.length > 0 && (
             <div className="flex flex-col ">
-              {node.children.map((node) => (
-                <DataSelectorNode
-                  depth={depth + 1}
-                  node={node}
-                  key={node.key}
-                  searchTerm={searchTerm}
-                ></DataSelectorNode>
-              ))}
+              <VirtualizedList
+                items={children}
+                estimateSize={32}
+                className="max-h-[340px]"
+                getItemKey={(index) => children[index].key}
+                renderItem={(child) => (
+                  <DataSelectorNode
+                    depth={depth + 1}
+                    node={child}
+                    searchTerm={searchTerm}
+                  ></DataSelectorNode>
+                )}
+              />
             </div>
           )}
         </CollapsibleContent>

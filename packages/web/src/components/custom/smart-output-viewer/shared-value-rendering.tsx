@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { stringUtils } from '@/lib/string-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
@@ -77,14 +78,19 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
         </button>
         {expanded && (
           <div>
-            {nestedEntries.map(([key, childValue]) => (
-              <ValueRow
-                key={key}
-                label={Array.isArray(value) ? key : formatKey(key)}
-                value={childValue}
-                depth={depth + 1}
-              />
-            ))}
+            <VirtualizedList
+              items={nestedEntries}
+              estimateSize={30}
+              className="max-h-[360px]"
+              getItemKey={(index) => nestedEntries[index][0]}
+              renderItem={([key, childValue]) => (
+                <ValueRow
+                  label={Array.isArray(value) ? key : formatKey(key)}
+                  value={childValue}
+                  depth={depth + 1}
+                />
+              )}
+            />
           </div>
         )}
       </div>

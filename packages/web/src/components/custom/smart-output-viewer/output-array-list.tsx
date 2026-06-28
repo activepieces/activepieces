@@ -3,6 +3,8 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { VirtualizedList } from '@/components/ui/virtualized-list';
+
 import { formatKey, truncateValue, ValueRow } from './shared-value-rendering';
 
 function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
@@ -84,11 +86,12 @@ function OutputArrayList({ items }: OutputArrayListProps) {
   }
 
   return (
-    <div>
-      {items.map((item, idx) => (
-        <ArrayItemRow key={idx} item={item} index={idx} />
-      ))}
-    </div>
+    <VirtualizedList
+      items={items}
+      estimateSize={37}
+      className="max-h-[60vh]"
+      renderItem={(item, idx) => <ArrayItemRow item={item} index={idx} />}
+    />
   );
 }
 
