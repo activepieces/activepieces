@@ -32,7 +32,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 })
             }
         },
-        async send({ emails, platformId, templateData }) {
+        async send({ emails, platformId, templateData, replyTo }) {
             try {
                 const platform = await getPlatform(platformId, log)
                 const emailSubject = getEmailSubject(templateData.name, templateData.vars)
@@ -60,6 +60,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                     to: emails.join(','),
                     subject: emailSubject,
                     html: emailBody,
+                    ...(replyTo ? { replyTo } : {}),
                 })
             }
             catch (e) {
@@ -132,6 +133,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'reset-password': 'Reset your password 🔑',
         'issue-created': `[${vars.projectName}] Flow has an issue "${vars.flowName}" ⚠️`,
         'scim-user-welcome': 'Welcome! Your account has been created 🎉',
+        'chat-notification': vars.subject,
     }
 
     return templateToSubject[templateName]

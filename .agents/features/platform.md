@@ -59,7 +59,7 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 
 | Method | Path | Security | Description |
 |---|---|---|---|
-| GET | `/v1/platforms/:id` | publicPlatform (USER, SERVICE) | Get platform with plan and usage (sensitive SSO data stripped) |
+| GET | `/v1/platforms/:id` | publicPlatform (USER, SERVICE) | Get platform with plan and usage (sensitive SSO data stripped). For USER principals, `plan.chatEnabled` is rewritten to the **effective per-user** chat visibility (`chatVisibilityHelper.resolveChatEnabledForUser` — edition + embed + cloud rollout/grandfather), and `licenseKey` is nulled for embedded users |
 | POST | `/v1/platforms/:id` | platformAdminOnly (USER) | Update branding, auth settings, piece filters |
 | DELETE | `/v1/platforms/:id` | platformAdminOnly (USER) | Cloud only: mark projects for deletion and schedule hard delete |
 | GET | `/v1/platforms/assets/:id` | public | Download a platform asset (logo/favicon) by file ID |

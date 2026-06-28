@@ -49,7 +49,7 @@ See the [Sandboxing](/install/architecture/sandboxing) documentation for details
 
 - `AP_TELEMETRY_ENABLED`: Enable/disable telemetry (default: `false`)
 
-For a complete list of all available environment variables, see the [Environment Variables](/install/configuration/environment-variables) documentation.
+For a complete list of all available environment variables, see the [Environment Variables](/install/reference/environment-variables) documentation.
 
 ## Custom Domain Setup
 
@@ -61,7 +61,7 @@ Railway supports custom domains with automatic SSL:
 4. Update `AP_FRONTEND_URL` environment variable to match your custom domain
 5. Railway will automatically provision SSL certificates
 
-For more details on SSL configuration, see the [Setup SSL](/install/guides/setup-ssl) guide.
+For more details on SSL configuration, see the [Setup SSL](/install/configure-operate/setup-ssl) guide.
 
 ## Production Considerations
 
@@ -86,7 +86,7 @@ To upgrade to a new version of Activepieces on Railway:
 4. Railway will pull the latest Activepieces image and redeploy
 
 <Warning>
-Before upgrading, review the [Breaking Changes](/install/configuration/breaking-changes) documentation to ensure compatibility with your flows and configuration.
+Before upgrading, review the [Breaking Changes](/install/reference/breaking-changes) documentation to ensure compatibility with your flows and configuration.
 </Warning>
 
 ## Next Steps
@@ -95,14 +95,14 @@ After deploying Activepieces on Railway:
 
 1. **Access your instance** using the Railway-provided URL
 2. **Create your first flow** - see [Building Flows](/flows/building-flows)
-3. **Configure webhooks** - see [Setup App Webhooks](/install/guides/setup-app-webhooks)
+3. **Configure webhooks** - see [Setup App Webhooks](/install/configure-operate/setup-app-webhooks)
 4. **Explore pieces** - browse available integrations in the piece library
 
 ## Additional Resources
 
 - [Troubleshooting](/install/troubleshooting/websocket-issues): Troubleshooting guide
-- [Configuration Guide](/install/configuration/overview): Comprehensive configuration documentation
-- [Environment Variables](/install/configuration/environment-variables): Complete list of configuration options
+- [Configuration Guide](/install/configure-operate/production-setup): Comprehensive configuration documentation
+- [Environment Variables](/install/reference/environment-variables): Complete list of configuration options
 - [Architecture Overview](/install/architecture/overview): Understand Activepieces architecture
 - [Railway Documentation](https://docs.railway.app/): Official Railway platform documentation
 

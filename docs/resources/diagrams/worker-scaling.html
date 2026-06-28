@@ -1,0 +1,83 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.stage{width:1000px;padding:42px 56px 30px;background:#fff}
+.head{text-align:center;margin-bottom:32px}
+.head h1{font-size:29px;font-weight:750;color:#0f172a;letter-spacing:-.025em}
+.head p{font-size:15px;color:#64748b;margin-top:9px;font-weight:450;line-height:1.45}
+.row{display:grid;grid-template-columns:1fr 96px 1fr;align-items:stretch;gap:0}
+.card{border:1px solid #e6eaf0;border-radius:18px;padding:24px 26px 26px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.card.hi{background:#f0fdf9;border-color:#cdeee0}
+.fleet{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.unit{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e6eaf0;border-radius:11px;padding:10px 13px}
+.card.hi .unit{border-color:#cdeee0}
+.unit .badge{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.unit .ut{font-size:14px;font-weight:700;color:#0f172a;line-height:1.1}
+.unit .us{font-size:11.5px;color:#94a3b8;margin-top:2px;font-weight:550;letter-spacing:.02em}
+svg.ic{width:18px;height:18px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dot{font-size:18px;color:#cbd5e1;font-weight:700}
+.metric{display:flex;align-items:baseline;gap:8px;margin-bottom:11px}
+.metric .num{font-size:34px;font-weight:780;color:#0f172a;letter-spacing:-.02em}
+.card.hi .metric .num{color:#047857}
+.metric .unit-l{font-size:14.5px;font-weight:600;color:#94a3b8}
+.bar{height:14px;border-radius:8px;background:#eef2f7;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#cbd5e1,#94a3b8)}
+.card.hi .bar{background:#d7f5e7}
+.card.hi .bar i{background:linear-gradient(90deg,#34d399,#059669)}
+.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px}
+.mid .x2{font-size:15px;font-weight:750;color:#475569;background:#f1f5f9;border-radius:999px;padding:7px 15px;white-space:nowrap}
+.mid svg{fill:none;stroke:#94a3b8;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.note{text-align:center;font-size:13px;color:#94a3b8;margin-top:26px;font-weight:500}
+.note b{color:#475569;font-weight:650}
+</style></head><body>
+<div class="stage">
+  <div class="head">
+    <h1>Scale by adding replicas</h1>
+    <p>Throughput grows as the fleet grows &mdash; and the 1:10 app-to-worker ratio keeps the app tier from becoming the wall.</p>
+  </div>
+
+  <div class="row">
+    <!-- LEFT -->
+    <div class="card">
+      <div class="fleet">
+        <div class="unit">
+          <div class="badge" style="background:#eef2f7"><svg class="ic" viewBox="0 0 24 24" stroke="#64748b"><rect x="3" y="4" width="18" height="8" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 8h.01M7 17h.01"/></svg></div>
+          <div><div class="ut">4 apps</div><div class="us">1 vCPU each</div></div>
+        </div>
+        <span class="dot">&middot;</span>
+        <div class="unit">
+          <div class="badge" style="background:#eef2f7"><svg class="ic" viewBox="0 0 24 24" stroke="#64748b"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+          <div><div class="ut">40 workers</div><div class="us">concurrency 1</div></div>
+        </div>
+      </div>
+      <div class="metric"><span class="num">93.5</span><span class="unit-l">req/s</span></div>
+      <div class="bar"><i style="width:63%"></i></div>
+    </div>
+
+    <!-- MIDDLE -->
+    <div class="mid">
+      <div class="x2">2&times; fleet</div>
+      <svg width="56" height="22" viewBox="0 0 56 22"><line x1="2" y1="11" x2="44" y2="11"/><path d="M42,5 L54,11 L42,17 Z" fill="#94a3b8" stroke="none"/></svg>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card hi">
+      <div class="fleet">
+        <div class="unit">
+          <div class="badge" style="background:#d1fae5"><svg class="ic" viewBox="0 0 24 24" stroke="#059669"><rect x="3" y="4" width="18" height="8" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 8h.01M7 17h.01"/></svg></div>
+          <div><div class="ut">8 apps</div><div class="us">1 vCPU each</div></div>
+        </div>
+        <span class="dot">&middot;</span>
+        <div class="unit">
+          <div class="badge" style="background:#d1fae5"><svg class="ic" viewBox="0 0 24 24" stroke="#059669"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+          <div><div class="ut">80 workers</div><div class="us">concurrency 1</div></div>
+        </div>
+      </div>
+      <div class="metric"><span class="num">148.9</span><span class="unit-l">req/s</span></div>
+      <div class="bar"><i style="width:100%"></i></div>
+    </div>
+  </div>
+
+  <div class="note">Measured on GKE &middot; same-region bucket &middot; warm (<b>AP_REUSE_SANDBOX=true</b>)</div>
+</div>
+</body></html>
