@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
+import { FIRECRAWL_API_BASE_URL } from '../common/common';
 
 export const getCrawlResults = createAction({
   auth: firecrawlAuth,
@@ -22,11 +23,9 @@ export const getCrawlResults = createAction({
   },
   async run({ auth, propsValue }) {
     try {
-      // NOTE: inherits the pre-existing hardcoded v1 path from the original crawlResults action
-      // (every other firecrawl action uses the v2 base). Aligned to v2 when the piece is next touched.
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `https://api.firecrawl.dev/v1/crawl/${propsValue.crawlId}`,
+        url: `${FIRECRAWL_API_BASE_URL}/crawl/${propsValue.crawlId}`,
         headers: {
           'Authorization': `Bearer ${auth.secret_text}`,
         },

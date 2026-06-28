@@ -69,7 +69,9 @@ export const apifyRunTask = createAction({
     try {
       return await handleRun({
         resourceClient,
-        body: (input ?? {}) as Record<string, unknown>,
+        // Pass undefined (not {}) when no override is given so Apify uses the
+        // task's saved input instead of overriding it with an empty object.
+        body: input as Record<string, unknown> | undefined,
         runOptions,
         waitForFinish: waitForFinish || false,
         client,
