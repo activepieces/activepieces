@@ -29,7 +29,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Community (CE)**: Single-user projects only. No project members, no roles, no releases, no git sync.
 - **Enterprise (EE, self-hosted)**: Full feature set behind `projectRolesEnabled` and `environmentsEnabled` plan flags.
 - **Cloud**: Members and invitations available on paid plans. Custom roles behind `customRolesEnabled`. Git sync and releases behind `environmentsEnabled`.
-- **`workerTag` assignment / per-project worker routing**: Enterprise feature gated behind `platform_plan.isolatedWorkersEnabled`. Both setting a project's `workerTag` (via the project update endpoint) and listing tags (`GET /v1/projects/worker-tags`) require the flag.
+- **`workerGroupId` assignment / per-project worker routing**: Enterprise feature gated behind `platform_plan.isolatedWorkersEnabled`. Both setting a project's `workerGroupId` (via the project update endpoint) and listing project worker groups (`GET /v1/projects/worker-groups`) require the flag.
 
 ## Domain Terms
 - **ProjectMember**: A user's membership in a project, carrying a role assignment.
@@ -40,7 +40,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Git Sync**: Configuration of an SSH-backed git repo + branch used as a release source or push target.
 - **RBAC**: Role-Based Access Control — enforced per-request via `rbacService.assertPrincipalAccessToProject()`.
 - **Release Type**: GIT_BRANCH (from git), MANUAL (from another project), ROLLBACK (revert to a previous release).
-- **workerTag**: Optional string on a project. When set (and `isolatedWorkersEnabled` is on for the platform), the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs are routed to the tag-specific worker queue (`tag-<workerTag>-jobs`); other job types are unaffected. Set via `POST /v1/projects/:id`. See the Workers feature doc for the routing/queue mechanics.
+- **workerGroupId**: Optional pool label on a project (bare, e.g. `1cpu_machine`). When set (and `isolatedWorkersEnabled` is on for the platform), the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs are routed to `project-<label>-jobs`; other job types are unaffected. The matching worker advertises `AP_WORKER_GROUP_ID=pr_<label>`. Set via `POST /v1/projects/:id`. See the Workers feature doc for the unified prefixed worker-group mechanics.
 
 ## Project Members
 
@@ -107,5 +107,5 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - Regular users: see own personal + team projects where member
 
 **Endpoints** (`platform-project-controller.ts`):
-- `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` now accepts `workerTag` (applied in `platformProjectService.update()` only when `platform_plan.isolatedWorkersEnabled` is on).
-- `GET /v1/projects/worker-tags` — platform-admin only; returns the distinct online worker tags (`machineService.listWorkerTags()`) for the assignment UI; returns 402 `FEATURE_DISABLED` when `isolatedWorkersEnabled` is off.
+- `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` accepts `workerGroupId` (validated against `^[a-z0-9_-]+$`, applied in `platformProjectService.update()` only when `platform_plan.isolatedWorkersEnabled` is on).
+- `GET /v1/projects/worker-groups` — platform-admin only; returns `{ groups: [{ label, slots }], sharedSlots }` from online project-scope (`pr_`) workers (`machineService.listProjectWorkerGroups()`) for the assignment UI; returns 402 `FEATURE_DISABLED` when `isolatedWorkersEnabled` is off.

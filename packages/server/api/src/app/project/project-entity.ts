@@ -81,7 +81,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             ...ApIdSchema,
             nullable: true,
         },
-        workerTag: {
+        workerGroupId: {
             type: String,
             nullable: true,
         },
@@ -109,8 +109,8 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             unique: false,
         },
         {
-            name: 'idx_project_worker_tag',
-            columns: ['workerTag'],
+            name: 'idx_project_worker_group',
+            columns: ['workerGroupId'],
             unique: false,
         },
     ],

@@ -1,6 +1,6 @@
 import { isNil, partition } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ExecutionMode, NetworkMode, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
+import { ExecutionMode, NetworkMode, WorkerGroupScope, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -9,6 +9,8 @@ import { workerGroupService } from '../../ee/platform/platform-plan/worker-group
 import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { projectWorkerGroupService } from '../../project/project-worker-group.service'
+import { WorkerGroupAssignment } from '../job'
 import { workerMachineCache } from './machine-cache'
 
 dayjs.extend(utc)
@@ -68,16 +70,16 @@ export const machineService = (log: FastifyBaseLogger) => {
             })
             await workerMachineCache().delete([request.workerId])
         },
-        async onConnection(request: WorkerMachineHealthcheckRequest, { workerGroupId, workerTag }: OnConnectionScope = {}): Promise<WorkerSettingsResponse> {
+        async onConnection(request: WorkerMachineHealthcheckRequest, assignment: WorkerGroupAssignment | null = null): Promise<WorkerSettingsResponse> {
             const existingWorker = await workerMachineCache().findOne(request.workerId)
 
-            const type = isNil(workerGroupId) ? 'SHARED' : 'DEDICATED'
+            const type = isNil(assignment) ? 'SHARED' : 'DEDICATED'
             await workerMachineCache().upsert({
                 id: request.workerId,
                 information: request,
                 type,
-                workerGroupId,
-                workerTag,
+                workerGroupId: assignment?.id,
+                workerGroupScope: assignment?.scope,
             }, existingWorker)
             return buildSettingsResponse(log)
         },
@@ -91,10 +93,14 @@ export const machineService = (log: FastifyBaseLogger) => {
             await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
 
             const platformWorkerGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
+            const projectGroupLabels = new Set(await projectWorkerGroupService(log).getPlatformWorkerGroups({ platformId }))
             return onlineWorkers
                 .filter(worker => {
-                    if (worker.type === WorkerMachineType.DEDICATED) {
+                    if (worker.workerGroupScope === WorkerGroupScope.PLATFORM) {
                         return !isNil(platformWorkerGroupId) && worker.workerGroupId === platformWorkerGroupId
+                    }
+                    if (worker.workerGroupScope === WorkerGroupScope.PROJECT) {
+                        return !isNil(worker.workerGroupId) && projectGroupLabels.has(worker.workerGroupId)
                     }
                     return isNil(platformWorkerGroupId)
                 })
@@ -103,28 +109,28 @@ export const machineService = (log: FastifyBaseLogger) => {
                     status: WorkerMachineStatus.ONLINE,
                     type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
                     workerGroupId: worker.workerGroupId,
-                    workerTag: worker.workerTag,
+                    workerGroupScope: worker.workerGroupScope,
                 }))
         },
-        async listWorkerTags(): Promise<WorkerPoolCapacity> {
+        async listProjectWorkerGroups(): Promise<WorkerPoolCapacity> {
             const allWorkers = await workerMachineCache().find()
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
-            const slotsByTag = new Map<string, number>()
+            const slotsByLabel = new Map<string, number>()
             let sharedSlots = 0
             for (const worker of allWorkers) {
-                const isOnline = dayjs(worker.updated).isAfter(offlineThreshold)
-                if (!isOnline) {
+                if (!dayjs(worker.updated).isAfter(offlineThreshold)) {
                     continue
                 }
                 const slots = parseWorkerConcurrency(worker.information.workerProps.WORKER_CONCURRENCY)
-                if (isNil(worker.workerTag) || worker.workerTag.length === 0) {
-                    sharedSlots += slots
-                    continue
+                if (worker.workerGroupScope === WorkerGroupScope.PROJECT && !isNil(worker.workerGroupId) && worker.workerGroupId.length > 0) {
+                    slotsByLabel.set(worker.workerGroupId, (slotsByLabel.get(worker.workerGroupId) ?? 0) + slots)
                 }
-                slotsByTag.set(worker.workerTag, (slotsByTag.get(worker.workerTag) ?? 0) + slots)
+                else if (isNil(worker.workerGroupScope)) {
+                    sharedSlots += slots
+                }
             }
             return {
-                tags: [...slotsByTag.entries()].map(([tag, slots]) => ({ tag, slots })),
+                groups: [...slotsByLabel.entries()].map(([label, slots]) => ({ label, slots })),
                 sharedSlots,
             }
         },
@@ -136,19 +142,14 @@ function parseWorkerConcurrency(value: string | undefined): number {
     return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
 }
 
-type WorkerTagInfo = {
-    tag: string
+type WorkerGroupInfo = {
+    label: string
     slots: number
 }
 
 type WorkerPoolCapacity = {
-    tags: WorkerTagInfo[]
+    groups: WorkerGroupInfo[]
     sharedSlots: number
-}
-
-type OnConnectionScope = {
-    workerGroupId?: string
-    workerTag?: string
 }
 
 type OnDisconnectParams = {

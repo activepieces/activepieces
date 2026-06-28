@@ -19,11 +19,16 @@ Use both together to guarantee capacity for busy projects and cap the rest.
 
 ## How it works
 
-A worker joins a group by setting its group ID at startup:
+A worker joins a group by setting its group ID at startup. The value **must be prefixed** with the group's scope:
+
+- `pr_<group-name>` — a **project** group (assign individual projects to it from the platform's Workers → Assignments page).
+- `pl_<group-name>` — a **platform** group (the whole platform's runs; used for dedicated/canary fleets).
 
 ```bash
-AP_WORKER_GROUP_ID=<group-name>
+AP_WORKER_GROUP_ID=pr_<group-name>   # project group, e.g. pr_1cpu_machine
 ```
+
+A worker started without a valid `pl_`/`pr_` prefix fails fast at startup.
 
 Grouped workers run in a process-isolated execution mode, so set:
 
@@ -32,4 +37,4 @@ AP_EXECUTION_MODE=SANDBOX_PROCESS   # or SANDBOX_CODE_AND_PROCESS
 AP_REUSE_SANDBOX=true               # or false, must be set explicitly
 ```
 
-Once a project is assigned to a group, its runs are routed to that group's dedicated queue and picked up only by workers carrying the matching `AP_WORKER_GROUP_ID`. Projects without a group keep drawing from the shared queue.
+Once a project is assigned to a group, its flow and webhook runs are routed to that group's dedicated queue (`project-<group-name>-jobs`) and picked up only by workers carrying the matching `AP_WORKER_GROUP_ID=pr_<group-name>`. Projects without a group keep drawing from the shared queue.

@@ -1,10 +1,6 @@
 {
   "name": "@activepieces/shared",
-<<<<<<< HEAD
-  "version": "0.103.0",
-=======
-  "version": "0.106.0",
->>>>>>> 4e3b08abe5a7aa7d7c9f4d0cc39758cc2f15ef3b
+  "version": "0.107.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",

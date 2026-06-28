@@ -1,10 +1,29 @@
 import {
     EngineOperationType,
+    isNil,
     JobData,
     RunEnvironment,
     StreamStepProgress,
+    WorkerGroupScope,
 } from '@activepieces/shared'
 import { z } from 'zod'
+
+const WORKER_GROUP_PREFIXES: { prefix: string, scope: WorkerGroupScope }[] = [
+    { prefix: 'pl_', scope: WorkerGroupScope.PLATFORM },
+    { prefix: 'pr_', scope: WorkerGroupScope.PROJECT },
+]
+
+export const parseWorkerGroupValue = (value: string | undefined): WorkerGroupAssignment | null => {
+    if (isNil(value)) {
+        return null
+    }
+    for (const { prefix, scope } of WORKER_GROUP_PREFIXES) {
+        if (value.startsWith(prefix) && value.length > prefix.length) {
+            return { scope, id: value.slice(prefix.length) }
+        }
+    }
+    return null
+}
 
 export * from './runs-metadata-queue-factory'
 
@@ -18,13 +37,13 @@ export enum QueueName {
     RUNS_METADATA = 'runsMetadata',
 }
 
-export const getWorkerGroupQueueName = (workerGroupId: string): string => {
+export const getPlatformGroupQueueName = (workerGroupId: string): string => {
     // TODO Rename this to workerGroups-workerGroupId-jobs in the future and migrate existings jobs there.
     return `platform-${workerGroupId}-jobs`
 }
 
-export const getWorkerTagQueueName = (workerTag: string): string => {
-    return `tag-${workerTag}-jobs`
+export const getProjectGroupQueueName = (workerGroupId: string): string => {
+    return `project-${workerGroupId}-jobs`
 }
 
 export const ApQueueJob = z.object({
@@ -77,4 +96,9 @@ export function getEngineTimeout(operationType: EngineOperationType, flowTimeout
         case EngineOperationType.EXECUTE_TRIGGER_HOOK:
             return triggerTimeoutSandbox
     }
+}
+
+export type WorkerGroupAssignment = {
+    scope: WorkerGroupScope
+    id: string
 }

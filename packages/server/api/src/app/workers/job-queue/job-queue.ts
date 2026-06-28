@@ -7,8 +7,8 @@ import { redisConnections } from '../../database/redis-connections'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { projectWorkerTagService } from '../../project/project-worker-tag.service'
-import { getWorkerGroupQueueName, getWorkerTagQueueName, QueueName } from '../job'
+import { projectWorkerGroupService } from '../../project/project-worker-group.service'
+import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName } from '../job'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -172,16 +172,16 @@ export function isUserInteractionJobData(jobData: JobData): jobData is UserInter
     return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
-const TAG_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
+const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
     WorkerJobType.EXECUTE_FLOW,
     WorkerJobType.EXECUTE_WEBHOOK,
 ])
 
 async function getQueueName({ platformId, projectId, jobType }: GetQueueNameParams, log: FastifyBaseLogger): Promise<string> {
-    if (!isNil(projectId) && !isNil(jobType) && TAG_ROUTABLE_JOB_TYPES.has(jobType)) {
-        const workerTag = await projectWorkerTagService(log).getProjectWorkerTag({ projectId, platformId })
-        if (!isNil(workerTag)) {
-            return getWorkerTagQueueName(workerTag)
+    if (!isNil(projectId) && !isNil(jobType) && PROJECT_GROUP_ROUTABLE_JOB_TYPES.has(jobType)) {
+        const projectGroupId = await projectWorkerGroupService(log).getProjectWorkerGroup({ projectId, platformId })
+        if (!isNil(projectGroupId)) {
+            return getProjectGroupQueueName(projectGroupId)
         }
     }
     if (!platformId) {
@@ -191,7 +191,7 @@ async function getQueueName({ platformId, projectId, jobType }: GetQueueNamePara
     if (isNil(groupId)) {
         return QueueName.WORKER_JOBS
     }
-    return getWorkerGroupQueueName(groupId)
+    return getPlatformGroupQueueName(groupId)
 }
 
 

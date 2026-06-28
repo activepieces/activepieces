@@ -5,7 +5,7 @@ import { workersApi, WorkerPoolCapacity } from '../api/workers-api';
 
 export const workersKeys = {
   all: ['worker-machines'] as const,
-  tags: ['worker-tags'] as const,
+  groups: ['worker-groups'] as const,
 };
 
 export const workersQueries = {
@@ -17,10 +17,10 @@ export const workersQueries = {
       refetchInterval: 5000,
       queryFn: () => workersApi.list(),
     }),
-  useWorkerTags: (enabled: boolean) =>
+  useWorkerGroups: (enabled: boolean) =>
     useQuery<WorkerPoolCapacity>({
-      queryKey: workersKeys.tags,
-      queryFn: () => workersApi.listWorkerTags(),
+      queryKey: workersKeys.groups,
+      queryFn: () => workersApi.listWorkerGroups(),
       enabled,
     }),
 };

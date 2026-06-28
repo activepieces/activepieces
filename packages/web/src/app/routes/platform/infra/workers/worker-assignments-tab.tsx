@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { workersQueries } from '@/features/platform-admin';
-import { WorkerTagInfo } from '@/features/platform-admin/api/workers-api';
+import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
@@ -37,10 +37,10 @@ const SHARED_SENTINEL = '__shared__';
 export function WorkerAssignmentsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
-  const { data: capacity } = workersQueries.useWorkerTags(
+  const { data: capacity } = workersQueries.useWorkerGroups(
     platform.plan.isolatedWorkersEnabled,
   );
-  const workerTags = capacity?.tags ?? [];
+  const workerGroups = capacity?.groups ?? [];
   const sharedSlots = capacity?.sharedSlots ?? 0;
 
   return (
@@ -79,7 +79,7 @@ export function WorkerAssignmentsTab() {
               <ProjectAssignmentRow
                 key={project.id}
                 project={project}
-                workerTags={workerTags}
+                workerGroups={workerGroups}
                 sharedSlots={sharedSlots}
               />
             ))}
@@ -108,28 +108,30 @@ function ProjectDot({ project }: { project: ProjectWithLimits }) {
 
 function ProjectAssignmentRow({
   project,
-  workerTags,
+  workerGroups,
   sharedSlots,
 }: {
   project: ProjectWithLimits;
-  workerTags: WorkerTagInfo[];
+  workerGroups: WorkerGroupInfo[];
   sharedSlots: number;
 }) {
   const [concurrencyInput, setConcurrencyInput] = useState(
     project.maxConcurrentJobs != null ? String(project.maxConcurrentJobs) : '',
   );
 
-  const assignedTag = workerTags.find((info) => info.tag === project.workerTag);
-  const poolSlots = assignedTag ? assignedTag.slots : sharedSlots;
+  const assignedGroup = workerGroups.find(
+    (info) => info.label === project.workerGroupId,
+  );
+  const poolSlots = assignedGroup ? assignedGroup.slots : sharedSlots;
   const concurrencyPlaceholder = t('Default {count}', { count: poolSlots });
 
   const saveUpdate = (update: UpdateProjectPlatformRequest) => {
     projectCollectionUtils.update(project.id, update);
   };
 
-  const handleWorkerTagChange = (value: string) => {
-    const tag = value === SHARED_SENTINEL ? null : value;
-    saveUpdate({ workerTag: tag });
+  const handleWorkerGroupChange = (value: string) => {
+    const workerGroupId = value === SHARED_SENTINEL ? null : value;
+    saveUpdate({ workerGroupId });
   };
 
   const commitConcurrency = () => {
@@ -155,7 +157,7 @@ function ProjectAssignmentRow({
     }
   };
 
-  const selectValue = project.workerTag ?? SHARED_SENTINEL;
+  const selectValue = project.workerGroupId ?? SHARED_SENTINEL;
   const isShared = selectValue === SHARED_SENTINEL;
 
   return (
@@ -171,7 +173,7 @@ function ProjectAssignmentRow({
         </div>
       </TableCell>
       <TableCell>
-        <Select value={selectValue} onValueChange={handleWorkerTagChange}>
+        <Select value={selectValue} onValueChange={handleWorkerGroupChange}>
           <SelectTrigger className="w-[200px]">
             <div className="flex items-center gap-2 min-w-0">
               <Cpu
@@ -187,9 +189,9 @@ function ProjectAssignmentRow({
             <SelectItem value={SHARED_SENTINEL}>
               <span className="text-muted-foreground">{t('Shared')}</span>
             </SelectItem>
-            {workerTags.map((info) => (
-              <SelectItem key={info.tag} value={info.tag}>
-                {info.tag.replaceAll('_', ' ')}
+            {workerGroups.map((info) => (
+              <SelectItem key={info.label} value={info.label}>
+                {info.label.replaceAll('_', ' ')}
               </SelectItem>
             ))}
           </SelectContent>

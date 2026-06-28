@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
@@ -19,18 +19,17 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getWorkerGroupQueueName, getWorkerTagQueueName, QueueName } from '../job'
+import { getProjectGroupQueueName, getWorkerGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-const getPollQueueName = ({ workerGroupId, workerTag }: WorkerScope): string => {
-    if (workerTag) {
-        return getWorkerTagQueueName(workerTag)
+const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
+    if (isNil(assignment)) {
+        return QueueName.WORKER_JOBS
     }
-    if (workerGroupId) {
-        return getWorkerGroupQueueName(workerGroupId)
-    }
-    return QueueName.WORKER_JOBS
+    return assignment.scope === WorkerGroupScope.PROJECT
+        ? getProjectGroupQueueName(assignment.id)
+        : getWorkerGroupQueueName(assignment.id)
 }
 
 let pagedForUnreadableAppVersion = false
@@ -49,12 +48,11 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
     })
 }
 
-export function createHandlers(log: FastifyBaseLogger, scope: WorkerScope = {}): WorkerToApiContract {
-    const { workerGroupId, workerTag } = scope
+export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ worker: { id: input.workerId }, workerGroupId, workerTag }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, { workerGroupId, workerTag })
+            log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection(input, assignment)
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
             if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
@@ -70,7 +68,7 @@ export function createHandlers(log: FastifyBaseLogger, scope: WorkerScope = {}):
                 }
                 return null
             }
-            const pollQueueName = getPollQueueName({ workerGroupId, workerTag })
+            const pollQueueName = getPollQueueName(assignment)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
@@ -319,7 +317,3 @@ function chatRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runI
     })
 }
 
-type WorkerScope = {
-    workerGroupId?: string
-    workerTag?: string
-}

@@ -37,7 +37,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
-    app.get('/worker-tags', ListWorkerTagsRequest, async (request) => {
+    app.get('/worker-groups', ListWorkerGroupsRequest, async (request) => {
         const platform = await platformService(request.log).getOneWithPlanOrThrow(request.principal.platform.id)
         if (!platform.plan.isolatedWorkersEnabled) {
             throw new ActivepiecesError({
@@ -47,7 +47,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return machineService(request.log).listWorkerTags()
+        return machineService(request.log).listProjectWorkerGroups()
     })
 
     app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {
@@ -212,7 +212,7 @@ const UpdateProjectRequest = {
     },
 }
 
-const ListWorkerTagsRequest = {
+const ListWorkerGroupsRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
@@ -221,8 +221,8 @@ const ListWorkerTagsRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.OK]: z.object({
-                tags: z.array(z.object({
-                    tag: z.string(),
+                groups: z.array(z.object({
+                    label: z.string(),
                     slots: z.number(),
                 })),
                 sharedSlots: z.number(),

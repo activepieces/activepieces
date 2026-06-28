@@ -13,6 +13,11 @@ export enum WorkerMachineType {
     DEDICATED = 'DEDICATED',
 }
 
+export enum WorkerGroupScope {
+    PLATFORM = 'platform',
+    PROJECT = 'project',
+}
+
 export enum NetworkMode {
     UNRESTRICTED = 'UNRESTRICTED',
     STRICT = 'STRICT',
@@ -67,7 +72,7 @@ export const WorkerMachineWithStatus = WorkerMachine.extend({
     status: z.nativeEnum(WorkerMachineStatus),
     type: z.nativeEnum(WorkerMachineType),
     workerGroupId: z.string().optional(),
-    workerTag: z.string().optional(),
+    workerGroupScope: z.nativeEnum(WorkerGroupScope).optional(),
 })
 
 export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>

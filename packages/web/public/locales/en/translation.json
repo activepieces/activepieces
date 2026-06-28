@@ -971,6 +971,7 @@
   "Concurrency limit": "Concurrency limit",
   "No projects yet": "No projects yet",
   "Default {count}": "Default {count}",
+  "invalidWorkerGroupId": "Worker group must contain only lowercase letters, numbers, underscores, or hyphens",
   "Assign a project to a worker to route its flow and webhook runs to that pool. Set a concurrency limit to cap how many of its runs execute at once.": "Assign a project to a worker to route its flow and webhook runs to that pool. Set a concurrency limit to cap how many of its runs execute at once.",
   "Concurrency limit must be a positive number": "Concurrency limit must be a positive number",
   "Sandboxes": "Sandboxes",

@@ -6,17 +6,17 @@ export const workersApi = {
   list() {
     return api.get<WorkerMachineWithStatus[]>('/v1/worker-machines');
   },
-  listWorkerTags() {
-    return api.get<WorkerPoolCapacity>('/v1/projects/worker-tags');
+  listWorkerGroups() {
+    return api.get<WorkerPoolCapacity>('/v1/projects/worker-groups');
   },
 };
 
-export type WorkerTagInfo = {
-  tag: string;
+export type WorkerGroupInfo = {
+  label: string;
   slots: number;
 };
 
 export type WorkerPoolCapacity = {
-  tags: WorkerTagInfo[];
+  groups: WorkerGroupInfo[];
   sharedSlots: number;
 };

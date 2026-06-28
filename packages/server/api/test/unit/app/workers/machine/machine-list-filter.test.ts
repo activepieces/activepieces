@@ -1,4 +1,4 @@
-import { MachineInformation, WorkerMachineStatus, WorkerMachineType } from '@activepieces/shared'
+import { MachineInformation, WorkerGroupScope, WorkerMachineStatus, WorkerMachineType } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorkerMachine, workerMachineCache } from '../../../../../src/app/workers/machine/machine-cache'
 import { machineService } from '../../../../../src/app/workers/machine/machine-service'
@@ -36,6 +36,14 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/worker-group.service',
     }),
 }))
 
+const mockGetPlatformWorkerGroups = vi.fn()
+
+vi.mock('../../../../../src/app/project/project-worker-group.service', () => ({
+    projectWorkerGroupService: () => ({
+        getPlatformWorkerGroups: (...args: unknown[]) => mockGetPlatformWorkerGroups(...args),
+    }),
+}))
+
 const mockLogger = {
     info: vi.fn(),
     warn: vi.fn(),
@@ -60,6 +68,8 @@ function fakeMachineInfo(workerId: string): MachineInformation {
 describe('machineService.list — platform filtering', () => {
     beforeEach(() => {
         mockGetWorkerGroupId.mockReset()
+        mockGetPlatformWorkerGroups.mockReset()
+        mockGetPlatformWorkerGroups.mockResolvedValue([])
         inMemoryStore = new Map()
     })
 
@@ -90,6 +100,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-A',
             information: fakeMachineInfo('dedicated-A'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-A',
         })
 
@@ -97,6 +108,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-B',
             information: fakeMachineInfo('dedicated-B'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-B',
         })
 
@@ -116,6 +128,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-other',
             information: fakeMachineInfo('dedicated-other'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-other',
         })
 
@@ -139,6 +152,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-mine',
             information: fakeMachineInfo('dedicated-mine'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-X',
         })
 
@@ -146,6 +160,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-other',
             information: fakeMachineInfo('dedicated-other'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-Y',
         })
 
@@ -168,6 +183,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-other',
             information: fakeMachineInfo('dedicated-other'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-Y',
         })
 
@@ -175,6 +191,30 @@ describe('machineService.list — platform filtering', () => {
         expect(result).toHaveLength(1)
         expect(result[0].id).toBe('shared-1')
         expect(result[0].type).toBe(WorkerMachineType.SHARED)
+    })
+
+    it('should return a project-scope worker only to a platform that has a project on its label', async () => {
+        mockGetWorkerGroupId.mockResolvedValue(null)
+        mockGetPlatformWorkerGroups.mockImplementation(({ platformId }: { platformId: string }) => {
+            if (platformId === 'platform-with-project') return Promise.resolve(['1cpu_machine'])
+            return Promise.resolve([])
+        })
+
+        await workerMachineCache().upsert({
+            id: 'project-worker',
+            information: fakeMachineInfo('project-worker'),
+            type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PROJECT,
+            workerGroupId: '1cpu_machine',
+        })
+
+        const visible = await machineService(mockLogger).list('platform-with-project')
+        expect(visible).toHaveLength(1)
+        expect(visible[0].id).toBe('project-worker')
+        expect(visible[0].workerGroupScope).toBe(WorkerGroupScope.PROJECT)
+
+        const hidden = await machineService(mockLogger).list('platform-without-project')
+        expect(hidden).toHaveLength(0)
     })
 
     it('should include legacy workers with no type as shared', async () => {
