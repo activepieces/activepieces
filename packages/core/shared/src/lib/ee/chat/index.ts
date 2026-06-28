@@ -293,9 +293,45 @@ function readContextCompression(structuredContent: unknown): ChatContextCompress
     return { method, originalBytes, returnedBytes }
 }
 
+// Reserved key the Code Mode bridge adds to a bridged tool call's args to mark "this result is
+// consumed by in-VM code, not the model — return the FULL, un-offloaded, un-truncated result".
+// It rides on the top-level args object (which becomes `toolInput` across the worker→API RPC), so
+// every offload layer can read it and skip its model-context protection. The piece's own input is
+// nested under `input`, so this top-level key never reaches the executed action. Each layer strips
+// it before handing args to the underlying tool / piece.
+const CODE_MODE_RAW_RESULT_KEY = '__apCodeModeRawResult'
+
+function markCodeModeRawArgs(args: unknown): Record<string, unknown> {
+    if (typeof args !== 'object' || args === null || Array.isArray(args)) {
+        return { [CODE_MODE_RAW_RESULT_KEY]: true }
+    }
+    return { ...args, [CODE_MODE_RAW_RESULT_KEY]: true }
+}
+
+function isCodeModeRawArgs(args: unknown): boolean {
+    return typeof args === 'object' && args !== null && (args as Record<string, unknown>)[CODE_MODE_RAW_RESULT_KEY] === true
+}
+
+function stripCodeModeRawArgs(args: unknown): unknown {
+    if (typeof args !== 'object' || args === null || Array.isArray(args) || !(CODE_MODE_RAW_RESULT_KEY in args)) {
+        return args
+    }
+    const { [CODE_MODE_RAW_RESULT_KEY]: _omit, ...rest } = args as Record<string, unknown>
+    return rest
+}
+
 export const chatPersistenceUtils = {
     unwrapToolOutput,
     readContextCompression,
+}
+
+// Marks/reads/strips the Code Mode "give me the raw, un-reduced result" flag on bridged tool-call
+// args. The bridge marks; each offload layer reads it to skip truncation/offload and strips it
+// before invoking the underlying tool. Keeps the magic-key in one place across worker + API.
+export const chatCodeModeUtils = {
+    markRawArgs: markCodeModeRawArgs,
+    isRawArgs: isCodeModeRawArgs,
+    stripRawArgs: stripCodeModeRawArgs,
 }
 
 export type ChatContextCompressionMethod = 'condensed' | 'offloaded' | 'truncated'

@@ -115,17 +115,9 @@ export async function executeAdhocAction({
     input,
     connectionExternalId,
     offload,
+    returnRawOutput = false,
     log,
-}: {
-    projectId: string
-    pieceName: string
-    pieceVersion?: string
-    actionName: string
-    input?: Record<string, unknown>
-    connectionExternalId?: string
-    offload?: AdhocOffload
-    log: FastifyBaseLogger
-}): Promise<McpToolResult> {
+}: ExecuteAdhocActionParams): Promise<McpToolResult | RawAdhocActionResult> {
     const { auth: inlineAuth, ...inputWithoutAuth } = input ?? {}
     const effectiveExternalId = connectionExternalId ?? (typeof inlineAuth === 'string' ? inlineAuth : undefined)
 
@@ -282,6 +274,18 @@ export async function executeAdhocAction({
                     text: `❌ ${action.displayName} failed with INTERNAL_ERROR (no step data) — the engine crashed while loading or executing the piece. Run ID: ${completedRun.id}.`,
                 }],
                 structuredContent: { errorSummary: 'The step couldn’t start — something went wrong loading it.' },
+            }
+        }
+
+        // Code Mode: hand back the action's raw output payload (not the prose/offloaded summary the
+        // model gets), so the in-VM code processes the FULL result in worker memory. The big payload
+        // crosses the worker↔API socket (whose buffer ceiling is ≥100MB) once and is then consumed
+        // server-side; only the code's small return value ever reaches the model. On a failed/empty
+        // run we fall through to the normal formatted result so the code still sees a clear status.
+        if (returnRawOutput) {
+            const outcome = getAdhocStepOutput(completedRun, stepName)
+            if (outcome !== null && outcome.status === StepOutputStatus.SUCCEEDED && outcome.output !== undefined) {
+                return { rawOutput: outcome.output }
             }
         }
 
@@ -707,5 +711,24 @@ export type AdhocCodeResult = {
 export type AdhocOffload = {
     thresholdBytes: number
     handle: (args: { payload: unknown, byteSize: number, label: string, statusNote: string }) => Promise<string | null>
+}
+
+// The raw action output payload returned (instead of a model-facing McpToolResult) when
+// executeAdhocAction is called with returnRawOutput — the full result Code Mode's in-VM code
+// consumes. Distinct shape so callers can tell it apart from a formatted/offloaded result.
+export type RawAdhocActionResult = {
+    rawOutput: unknown
+}
+
+type ExecuteAdhocActionParams = {
+    projectId: string
+    pieceName: string
+    pieceVersion?: string
+    actionName: string
+    input?: Record<string, unknown>
+    connectionExternalId?: string
+    offload?: AdhocOffload
+    returnRawOutput?: boolean
+    log: FastifyBaseLogger
 }
 

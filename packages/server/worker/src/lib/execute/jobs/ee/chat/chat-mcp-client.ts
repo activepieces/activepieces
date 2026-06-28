@@ -1,6 +1,6 @@
 import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatContextCompression, ChatContextCompressionMethod, chatToolPhases } from '@activepieces/shared'
+import { chatCodeModeUtils, ChatContextCompression, ChatContextCompressionMethod, chatToolPhases } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -256,11 +256,17 @@ function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSel
 
         result[name] = Object.assign({}, tool, {
             execute: async (rawArgs: unknown, options?: ToolExecutionOptions) => {
-                const args = injectSelectedAuth({ name, args: rawArgs, getSelectedAuth })
+                // Code Mode bridged call: the in-VM code consumes the FULL result, so the digest/
+                // offload/truncate reductions (which exist to keep the MODEL's context lean) must NOT
+                // run. Strip the marker so it never reaches the MCP tool's own input.
+                const wantsRawResult = chatCodeModeUtils.isRawArgs(rawArgs)
+                const args = injectSelectedAuth({ name, args: chatCodeModeUtils.stripRawArgs(rawArgs), getSelectedAuth })
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
                 }
-                const cacheKey = CACHEABLE_TOOL_NAMES.has(name)
+                // Raw (Code Mode) calls bypass the cache: it stores results already reduced for the
+                // model, and the raw path must never serve or seed a reduced entry.
+                const cacheKey = !wantsRawResult && CACHEABLE_TOOL_NAMES.has(name)
                     ? buildToolCacheKey({ conversationId, toolName: name, args })
                     : null
                 if (cacheKey !== null) {
@@ -293,6 +299,13 @@ function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSel
                         brokenConnectors.add(connectorUuid)
                     }
                     return buildReconnectGuidance({ connectorUuid })
+                }
+                // Hand Code Mode the FULL, un-reduced result by reference (the bridge injects it into
+                // the vm context as-is — no file, no JSON round-trip). The reductions below are only
+                // for the model's context. Caching is also skipped: the cacheable tools are small
+                // schema reads, not the big payloads Code Mode pulls, so there is nothing to gain.
+                if (wantsRawResult) {
+                    return toolResult
                 }
                 const originalBytes = serializedByteSize(toolResult)
                 const digested = digestMcpResult({ toolName: name, result: toolResult })

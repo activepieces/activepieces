@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatCodeModeUtils, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -633,6 +633,13 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     input: toolInput.input,
                     success: rawSuccess,
                 })
+                // Code Mode bridged call: the in-VM code consumes the FULL result and returns only a
+                // small value, so skip the context-lean truncation and the per-call receipt card
+                // (Code Mode renders its own card). The API already returned the raw, un-offloaded
+                // payload because the same flag rode through on toolInput.
+                if (chatCodeModeUtils.isRawArgs(toolInput)) {
+                    return rawResult
+                }
                 const result = truncateLargeResult(rawResult)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const meta = isObject(resultObj['_meta']) ? resultObj['_meta'] as Record<string, unknown> : undefined
@@ -685,6 +692,11 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     return chatToolClassification.readOnlyRejection(toolInput.actionName)
                 }
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
+                // Code Mode bridged call: hand the FULL raw result to the in-VM code (it returns only
+                // a small value). The API already skipped its file-offload via the same flag.
+                if (chatCodeModeUtils.isRawArgs(toolInput)) {
+                    return rawResult
+                }
                 return truncateLargeResult(rawResult)
             },
         }),
@@ -780,7 +792,8 @@ function createWebTools(): ToolSet {
                         if (parseError) {
                             return { content: [{ type: 'text', text: `Failed to parse the content of ${toolInput.url}.` }] }
                         }
-                        return truncateLargeResult({ url: toolInput.url, content: text })
+                        const fetched = { url: toolInput.url, content: text }
+                        return chatCodeModeUtils.isRawArgs(toolInput) ? fetched : truncateLargeResult(fetched)
                     },
                     timeoutMs: FETCH_URL_TIMEOUT_MS + 5_000,
                     toolName: 'ap_fetch_url',
@@ -843,11 +856,12 @@ function createSearchTools({ webSearch }: { webSearch: ResolvedToolConfig }): To
                             content: typeof item['content'] === 'string' ? item['content'] : '',
                         }
                     })
-                    return truncateLargeResult({
+                    const searchResult = {
                         query: toolInput.query,
                         answer: typeof body['answer'] === 'string' ? body['answer'] : undefined,
                         results,
-                    })
+                    }
+                    return chatCodeModeUtils.isRawArgs(toolInput) ? searchResult : truncateLargeResult(searchResult)
                 },
             }),
         }),
@@ -876,7 +890,8 @@ function createScrapeTools({ scraping }: { scraping: ResolvedToolConfig }): Tool
                         if (error) {
                             return { content: [{ type: 'text', text: `Failed to scrape ${toolInput.url}: ${error instanceof Error ? error.message : String(error)}` }] }
                         }
-                        return truncateLargeResult({ url: toolInput.url, markdown: scraped.markdown, metadata: scraped.metadata })
+                        const scrapeResult = { url: toolInput.url, markdown: scraped.markdown, metadata: scraped.metadata }
+                        return chatCodeModeUtils.isRawArgs(toolInput) ? scrapeResult : truncateLargeResult(scrapeResult)
                     },
                 })
             },

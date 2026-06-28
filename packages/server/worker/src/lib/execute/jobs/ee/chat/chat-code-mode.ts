@@ -1,6 +1,6 @@
 import vm from 'node:vm'
 import { ApLogger } from '@activepieces/server-utils'
-import { apId, isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/shared'
+import { apId, chatCodeModeUtils, isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
@@ -243,7 +243,16 @@ function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
         // model turn. execute() is the real implementation, so its result — however large —
         // stays here in the runner and never enters the model context.
         const options: ToolExecutionOptions = { toolCallId: apId(), messages: [] }
-        const result = await Promise.resolve(entry.execute(isNil(args) ? {} : args, options))
+        // Mark the args so every offload/truncate layer (the worker tool wrappers, the MCP
+        // wrapper, and the API's runChatAdhocAction across the RPC) returns the FULL, un-offloaded,
+        // un-truncated result. Those protections exist to keep the MODEL's context lean; the in-VM
+        // code needs the complete data (it processes it here and returns only a small value). The
+        // flag rides on the top-level args object — the piece's own input is nested under `input`,
+        // so it never reaches the executed action. Without this, a big read (e.g. a multi-MB Gmail
+        // list) would be offloaded to a FILE before the code ever saw it, collapsing Code Mode's
+        // entire advantage back into fetch→file→ap_run_code.
+        const rawArgs = chatCodeModeUtils.markRawArgs(isNil(args) ? {} : args)
+        const result = await Promise.resolve(entry.execute(rawArgs, options))
         serverSideBytes += byteLengthOf(result)
         log.debug({ tool: { name: entry.realName }, resultBytes: byteLengthOf(result) }, '[chat][code-mode] bridged tool call')
         // Hand the CODE clean, directly-usable data — not the raw MCP content-wrapper. The model's

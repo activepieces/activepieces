@@ -1,6 +1,6 @@
 import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, chatCodeModeUtils, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -465,15 +465,29 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
         return { success: false, error: `Fix the input for "${normalizedPiece}/${actionName}" before running:\n${diagnosis.parts.join('\n')}` }
     }
 
+    // Code Mode bridged call: return the action's FULL raw output payload and DO NOT offload it to a
+    // file. The offload (preview + fileId) exists to keep the MODEL's context lean; here the result
+    // is consumed by the in-VM code, which returns only a small value. Offloading it would collapse
+    // Code Mode back into fetch→file→ap_run_code with zero in-VM advantage.
+    const wantsRawResult = chatCodeModeUtils.isRawArgs(toolInput)
+
     const result = await executeAdhocAction({
         projectId: resolvedProjectId,
         pieceName,
         actionName,
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
-        ...spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
+        returnRawOutput: wantsRawResult,
+        ...(wantsRawResult ? {} : spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log }))),
         log,
     })
+
+    // Hand the bare payload to the bridge so the in-VM code gets the data directly (the bridge's
+    // unwrapToolResult passes a non-envelope value through untouched). On a failed/empty run
+    // executeAdhocAction returns its normal formatted result instead, so the code still sees status.
+    if (wantsRawResult && isObject(result) && 'rawOutput' in result) {
+        return result.rawOutput
+    }
 
     if (typeof result === 'object' && result !== null) {
         const resultObj = result as Record<string, unknown>
