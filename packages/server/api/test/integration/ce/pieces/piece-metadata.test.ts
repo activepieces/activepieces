@@ -1,4 +1,5 @@
 import { apId } from '@activepieces/core-utils'
+import { ActionBase } from '@activepieces/pieces-framework'
 import { DefaultProjectRole, FlowTriggerType, PackageType, PieceType, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -566,6 +567,129 @@ describe('Piece Metadata CE API', () => {
             })
             expect(result).toBeDefined()
             expect(result?.name).toBe('@custom/my-piece')
+        })
+    })
+
+    describe('audience filtering (canvas filter)', () => {
+        const buildActions = (): Record<string, ActionBase> => ({
+            human_action: { name: 'human_action', displayName: 'Human Action', description: 'human action', props: {}, requireAuth: false, audience: 'both' },
+            default_action: { name: 'default_action', displayName: 'Default Action', description: 'default action', props: {}, requireAuth: false },
+            ai_action: { name: 'ai_action', displayName: 'AI Action', description: 'ai only action', props: {}, requireAuth: false, audience: 'ai' },
+        })
+
+        it('GET /v1/pieces/:name hides audience:ai actions by default', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'audience-detail-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: buildActions(),
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces/audience-detail-piece',
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(Object.keys(body.actions).sort()).toEqual(['default_action', 'human_action'])
+            expect(body.actions).not.toHaveProperty('ai_action')
+        })
+
+        it('GET /v1/pieces/:name?includeAiAudience=true returns audience:ai actions', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'audience-detail-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: buildActions(),
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces/audience-detail-piece?includeAiAudience=true',
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(Object.keys(body.actions).sort()).toEqual(['ai_action', 'default_action', 'human_action'])
+            expect(body.actions).toHaveProperty('ai_action')
+        })
+
+        it('GET /v1/pieces/:scope/:name hides audience:ai actions by default', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@activepieces/audience-scoped-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: buildActions(),
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.get('/v1/pieces/@activepieces/audience-scoped-piece')
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(Object.keys(body.actions).sort()).toEqual(['default_action', 'human_action'])
+            expect(body.actions).not.toHaveProperty('ai_action')
+        })
+
+        it('GET /v1/pieces hides audience:ai from suggestedActions and recomputes the count by default', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'audience-list-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: buildActions(),
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces?suggestionType=ACTION',
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const entry = response?.json().find((p: { name: string }) => p.name === 'audience-list-piece')
+            expect(entry).toBeDefined()
+            const suggestedNames = entry.suggestedActions.map((a: { name: string }) => a.name).sort()
+            expect(suggestedNames).toEqual(['default_action', 'human_action'])
+            expect(entry.actions).toBe(2)
+        })
+
+        it('GET /v1/pieces?includeAiAudience=true keeps audience:ai in suggestedActions and the full count', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'audience-list-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: buildActions(),
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces?suggestionType=ACTION&includeAiAudience=true',
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const entry = response?.json().find((p: { name: string }) => p.name === 'audience-list-piece')
+            expect(entry).toBeDefined()
+            const suggestedNames = entry.suggestedActions.map((a: { name: string }) => a.name).sort()
+            expect(suggestedNames).toEqual(['ai_action', 'default_action', 'human_action'])
+            expect(entry.actions).toBe(3)
         })
     })
 })

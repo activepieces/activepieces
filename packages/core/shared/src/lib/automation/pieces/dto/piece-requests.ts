@@ -47,6 +47,7 @@ export const ListPiecesRequestQuery = z.object({
     release: ExactVersionType.optional(),
     includeTags: OptionalBooleanFromQuery,
     includeHidden: OptionalBooleanFromQuery,
+    includeAiAudience: OptionalBooleanFromQuery,
     edition: z.nativeEnum(ApEdition).optional(),
     searchQuery: z.string().optional(),
     sortBy: z.nativeEnum(PieceSortBy).optional(),
@@ -70,6 +71,7 @@ export const GetPieceRequestQuery = z.object({
     version: VersionType.optional(),
     projectId: z.string().optional(),
     locale: z.string().optional(),
+    includeAiAudience: OptionalBooleanFromQuery,
 })
 
 export type GetPieceRequestQuery = z.infer<typeof GetPieceRequestQuery>

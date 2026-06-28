@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, LocalesEnum } from '@activepieces/core-utils'
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { ActionBase, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -54,11 +54,13 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             suggestionType: query.suggestionType,
             locale: query.locale as LocalesEnum | undefined,
         })
+        const includeAiAudience = query.includeAiAudience ?? false
         return pieceMetadataSummary.map((piece) => {
-            return {
+            const summary: PieceMetadataModelSummary = {
                 ...piece,
                 i18n: undefined,
             }
+            return includeAiAudience ? summary : excludeAiActionsFromSummary(summary)
         })
     })
 
@@ -72,12 +74,13 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
-            return pieceMetadataService(req.log).getOrThrow({
+            const piece = await pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
+            return (req.query.includeAiAudience ?? false) ? piece : excludeAiActionsFromModel(piece)
         },
     )
 
@@ -89,12 +92,13 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
-            return pieceMetadataService(req.log).getOrThrow({
+            const piece = await pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: decodedName,
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
+            return (req.query.includeAiAudience ?? false) ? piece : excludeAiActionsFromModel(piece)
         },
     )
 
@@ -148,6 +152,33 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 
 function getPlatformId(principal: Principal): string | undefined {
     return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
+}
+
+const isAiOnlyAction = (action: ActionBase): boolean => action.audience === 'ai'
+
+// Hide AI-only actions from the human flow-builder responses. Applied strictly at the HTTP
+// boundary so internal callers (flow validation, MCP) that use the service directly still see
+// the full action set. Opt back in with ?includeAiAudience=true (AI surface / dev page).
+function excludeAiActionsFromModel(piece: PieceMetadataModel): PieceMetadataModel {
+    return {
+        ...piece,
+        actions: Object.fromEntries(
+            Object.entries(piece.actions).filter(([, action]) => !isAiOnlyAction(action)),
+        ),
+    }
+}
+
+function excludeAiActionsFromSummary(piece: PieceMetadataModelSummary): PieceMetadataModelSummary {
+    if (isNil(piece.suggestedActions)) {
+        return piece
+    }
+    const visibleSuggestedActions = piece.suggestedActions.filter((action) => !isAiOnlyAction(action))
+    const hiddenActionCount = piece.suggestedActions.length - visibleSuggestedActions.length
+    return {
+        ...piece,
+        suggestedActions: visibleSuggestedActions,
+        actions: piece.actions - hiddenActionCount,
+    }
 }
 
 const RegistryPiecesRequest = {
