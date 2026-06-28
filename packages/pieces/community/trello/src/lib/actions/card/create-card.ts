@@ -13,7 +13,7 @@ export const createCard = createAction({
   name: 'create_card',
   displayName: 'Create Card',
   description: 'Create a new card in Trello',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new Trello card in a specific list, optionally with a description, position, and labels. Use to add a task or item to a board. Requires the target list_id (and the board_id it belongs to); each call creates a distinct card, so it is not idempotent.', idempotent: false },
   props: {
     board_id: trelloCommon.board_id,
