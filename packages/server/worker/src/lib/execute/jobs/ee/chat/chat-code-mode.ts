@@ -18,7 +18,13 @@ import { z } from 'zod'
 // bridge is deliberately a narrow async interface (one method: callTool) so that swap is feasible
 // without touching the model-facing contract or the namespace generation.
 
-const CODE_MODE_TIMEOUT_MS = 10 * 60 * 1_000
+// Hard ceiling on one Code Mode run. Kept well below the old 10-minute value so a hung bridged call
+// (e.g. a raw custom_api_call HTTP that never responds — which can otherwise burn the 300s per-call
+// timeout twice for ~600s) fails the run in a couple of minutes instead. Still ample for the demo
+// tasks (~25-95s) and for a gated tool awaiting user approval inside code, the usual reason a run
+// legitimately runs long. The real cure for the hang is steering the model to named piece actions
+// over raw HTTP (see the tool description); this just bounds the worst case.
+const CODE_MODE_TIMEOUT_MS = 3 * 60 * 1_000
 const SYNC_COMPILE_TIMEOUT_MS = 5_000
 const MAX_RETURN_BYTES = 64 * 1024
 const MAX_CONSOLE_LINES = 200
@@ -57,7 +63,13 @@ type CodeModeRunResult = {
     bridgedCallCount: number
     serverSideBytes: number
     returnedBytes: number
+    resultShapes: { tool: string, shape: string }[]
 }
+
+// A large result was processed (a real read happened) above this, vs. a genuinely small/empty one.
+// Used to tell a degenerate (empty/zero) return apart from a real "no data" answer.
+const LARGE_RESULT_BYTES = 8 * 1_024
+const MAX_SHAPE_CHARS = 400
 
 function toJsName(toolName: string): string {
     const cleaned = toolName.replace(/[^a-zA-Z0-9_$]/g, '_')
@@ -77,6 +89,44 @@ function isToolLike(value: unknown): value is ToolLike {
 function byteLengthOf(value: unknown): number {
     const { data: serialized } = tryCatchSync(() => typeof value === 'string' ? value : JSON.stringify(value))
     return isNil(serialized) ? 0 : Buffer.byteLength(serialized, 'utf8')
+}
+
+// A compact STRUCTURE-ONLY summary of a value — keys, types, and array lengths, never the values
+// themselves — so the model can see where a bridged result actually keeps its data (e.g. that a list
+// lives at `results.messages`, not at the top level) WITHOUT the data entering its context. This is
+// the cure for the silent-empty bug: a model that guesses `Array.isArray(data.results)` and gets an
+// empty result has no error to learn from; the echoed shape shows it the real path. Depth/width-bounded.
+function shapeDigest(value: unknown, depth = 2): string {
+    if (value === null) return 'null'
+    if (value === undefined) return 'undefined'
+    if (Array.isArray(value)) {
+        if (value.length === 0) return 'array[0]'
+        return `array[${value.length}] of ${depth > 0 ? shapeDigest(value[0], depth - 1) : '…'}`
+    }
+    if (typeof value !== 'object') return typeof value
+    const keys = Object.keys(value as Record<string, unknown>)
+    if (keys.length === 0) return '{}'
+    if (depth <= 0) return `{ ${keys.slice(0, 8).join(', ')}${keys.length > 8 ? ', …' : ''} }`
+    const obj = value as Record<string, unknown>
+    const parts = keys.slice(0, 12).map((key) => `${key}: ${shapeDigest(obj[key], depth - 1)}`)
+    return `{ ${parts.join(', ')}${keys.length > 12 ? ', …' : ''} }`
+}
+
+// "The code ran but extracted nothing" — the signature of a wrong field access on a result that DID
+// contain data. An object/array counts as degenerate only when EVERY leaf is empty/zero, so a real
+// partial answer (one non-empty field) is not flagged. Only consulted when a large result was
+// processed, so a genuine "no data" read (small bytes) is never mistaken for a bug.
+function isDegenerate(value: unknown): boolean {
+    if (isNil(value)) return true
+    if (typeof value === 'number') return value === 0
+    if (typeof value === 'string') return value.trim().length === 0
+    if (typeof value === 'boolean') return false
+    if (Array.isArray(value)) return value.length === 0 || value.every(isDegenerate)
+    if (isObject(value)) {
+        const values = Object.values(value)
+        return values.length === 0 || values.every(isDegenerate)
+    }
+    return false
 }
 
 // Turn a tool's raw return into clean, directly-usable data for the in-code `tools.x()` caller, so
@@ -209,7 +259,7 @@ function readJsonSchemaProps(schema: unknown): { properties: Record<string, unkn
 
 function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
     bridge: BridgedTools
-    getStats: () => { bridgedCallCount: number, serverSideBytes: number }
+    getStats: () => { bridgedCallCount: number, serverSideBytes: number, resultShapes: { tool: string, shape: string }[] }
 } {
     // jsName → real tool execute. The same in-process tool implementation the model would call
     // directly, so conversation context (the conversationId threaded to the API) and approval GATES
@@ -228,6 +278,9 @@ function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
 
     let bridgedCallCount = 0
     let serverSideBytes = 0
+    // realName → compact structure of the value the code received. One entry per distinct tool
+    // (a looped call keeps the same shape), echoed back to the model so it reads correct field names.
+    const resultShapes = new Map<string, string>()
 
     const callTool = async (jsName: string, args: unknown): Promise<unknown> => {
         const entry = byJsName.get(jsName)
@@ -261,12 +314,20 @@ function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
         // burns a self-correcting retry. Unwrap to the most useful value here so the script gets a
         // parsed object straight away. (The unwrapped value is still server-side — only the script's
         // final `return` reaches the model.)
-        return unwrapToolResult(result)
+        const unwrapped = unwrapToolResult(result)
+        // Record the STRUCTURE (keys/types, no values) of what the code received, so the model can be
+        // shown the real field paths in the response — the fix for blind-guess loops over unknown
+        // per-piece shapes. Skip trivial scalars (a bare status string carries no shape worth echoing).
+        if (isObject(unwrapped) || Array.isArray(unwrapped)) {
+            const digest = shapeDigest(unwrapped)
+            resultShapes.set(entry.realName, digest.length > MAX_SHAPE_CHARS ? `${digest.slice(0, MAX_SHAPE_CHARS)}…` : digest)
+        }
+        return unwrapped
     }
 
     return {
         bridge: { callTool, jsNames: [...byJsName.keys()] },
-        getStats: () => ({ bridgedCallCount, serverSideBytes }),
+        getStats: () => ({ bridgedCallCount, serverSideBytes, resultShapes: [...resultShapes].map(([tool, shape]) => ({ tool, shape })) }),
     }
 }
 
@@ -377,7 +438,7 @@ async function runCodeMode({ code, tools, data, log }: {
 }): Promise<CodeModeRunResult> {
     const { bridge, getStats } = buildBridge({ tools, log })
     const { ok, returnValue, error, consoleLines } = await runCodeWithBridge({ code, data, bridge, log })
-    const { bridgedCallCount, serverSideBytes } = getStats()
+    const { bridgedCallCount, serverSideBytes, resultShapes } = getStats()
     const returnedBytes = ok ? byteLengthOf(returnValue) : 0
 
     // Round-trip + context-savings instrumentation for the demo: how many tool calls happened
@@ -391,7 +452,7 @@ async function runCodeMode({ code, tools, data, log }: {
         savedBytes: Math.max(0, serverSideBytes - returnedBytes),
     }, '[chat][code-mode] ap_run_tools finished')
 
-    return { ok, returnValue, error, consoleLines, bridgedCallCount, serverSideBytes, returnedBytes }
+    return { ok, returnValue, error, consoleLines, bridgedCallCount, serverSideBytes, returnedBytes, resultShapes }
 }
 
 function buildToolNamespaceListing(tools: ToolSet): string {
@@ -424,16 +485,34 @@ function formatReturnValue({ result }: { result: CodeModeRunResult }): { valueSt
     return { valueStr, truncated }
 }
 
+// The real structure of each tool result the code received — keys/types only, never the data. The
+// model writes its field access BLIND (the result never enters its context), so echoing the shape
+// back is what lets it correct a wrong path (e.g. discover the list is at `results.messages`) without
+// guessing. Costs a few hundred bytes; the multi-MB data stays server-side.
+function buildShapesNote(result: CodeModeRunResult): string {
+    if (result.resultShapes.length === 0) return ''
+    const lines = result.resultShapes.map(({ tool, shape }) => `  • ${tool} → ${shape}`)
+    return `\n\nResult shapes (structure only — the data stayed server-side; read your field names from here):\n${lines.join('\n')}`
+}
+
 function buildCodeModeResultText({ result }: { result: CodeModeRunResult }): string {
     const consoleNote = result.consoleLines.length > 0
         ? `\n\nConsole output:\n${result.consoleLines.join('\n')}`
         : ''
+    const shapesNote = buildShapesNote(result)
     if (!result.ok) {
-        return `❌ Code Mode failed: ${result.error ?? 'unknown error'}${consoleNote}`
+        return `❌ Code Mode failed: ${result.error ?? 'unknown error'}${shapesNote}${consoleNote}`
     }
     const { valueStr, truncated } = formatReturnValue({ result })
     const stats = `(${result.bridgedCallCount} tool call(s) ran inside the code; ${Math.round(result.serverSideBytes / 1024)}KB of tool output stayed server-side, ${Math.round((truncated ? MAX_RETURN_BYTES : result.returnedBytes) / 1024)}KB returned.)`
-    return `✅ Code Mode ran. ${stats}\n\n${valueStr}${consoleNote}`
+    // A non-empty read that yields an empty/zero return is almost always a wrong field access, not a
+    // real "no data" answer. Say so plainly and point at the shapes, so the model fixes the path and
+    // re-runs IN Code Mode instead of abandoning it for a direct call (which then offloads to a file).
+    const misread = result.serverSideBytes > LARGE_RESULT_BYTES && isDegenerate(result.returnValue)
+    const misreadWarning = misread
+        ? `\n\n⚠️ The code processed ${Math.round(result.serverSideBytes / 1024)}KB of tool data but returned an empty/zero result — this almost always means a field access missed the data (the list is often under a nested key like \`results.messages\`, not the top level). Fix the field path using the result shapes below and re-run in Code Mode; do NOT refetch or fall back to a one-by-one call.`
+        : ''
+    return `✅ Code Mode ran. ${stats}${misreadWarning}\n\n${valueStr}${shapesNote}${consoleNote}`
 }
 
 // The structured twin of the model-facing text. The chat UI renders a dedicated "Code Mode" card
@@ -489,9 +568,23 @@ function createCodeModeTools({ getTools, log }: {
                 '',
                 'Shape: export an async `run`: `export const run = async (tools, data) => { /* ... */ return result }`. Call any tool as `await tools.<name>({ ...args })` — args are the SAME inputs that tool takes normally. Each call RETURNS THE ALREADY-PARSED RESULT DIRECTLY — the tool\'s plain return value (an object, or for non-JSON tools a string), NOT an MCP envelope. Do NOT reach for `.content[0].text`, `.structuredContent`, or `JSON.parse` the result; the bridge already unwrapped and parsed it. Each bridged call inherits connections, conversation context, and approval gates (a gated tool like ap_send_email will still pop its confirmation card and block until the user approves). `data`/`inputs` holds any offloaded results passed in. Return a COMPACT summary, not raw data. `fetch`, `require`, `process`, and file/network access are disabled — reach external systems only through bridged tools.',
                 '',
-                'CONNECTIONS: a connection-gated tool (Gmail, Slack, HubSpot, Linear, Airtable, …) called from inside Code Mode automatically uses the user\'s connected account — you do NOT need to pass `auth` or call a connection picker first; the user\'s active connection for that piece is bound for you, and a real result comes back on the first call. The one exception: if the user has MORE than one active account for that piece, the call returns an error naming them and asking you to call ap_show_connection_picker (outside Code Mode) so the user chooses — do that, then re-run the code. An empty result from a connection-gated read is real "no data", not a missing connection.',
+                'CONNECTIONS: a connection-gated tool (Gmail, Slack, HubSpot, Linear, Airtable, …) called from inside Code Mode automatically uses the user\'s connected account — you do NOT need to pass `auth` or call a connection picker first; the user\'s active connection for that piece is bound for you, and a real result comes back on the first call. The one exception: if the user has MORE than one active account for that piece, the call returns an error naming them and asking you to call ap_show_connection_picker (outside Code Mode) so the user chooses — do that, then re-run the code. An empty result from a connection-gated read is real "no data", not a missing connection. NEVER call ap_list_connections, and never look up / construct / pass a connection object yourself inside the code — there is no `connections` array to filter, and doing `.find()` on a connections result throws `connections.find is not a function` and wastes turns; just call the action directly and the binding is automatic. And fetch each source ONCE: store a read\'s result in a const and reuse it for the rest of the run — never re-issue the same read (e.g. the Gmail search) in a later block.',
                 '',
-                'RESULT SHAPES: for the listed tools, the exact return shape is shown after `↳ returns` below — read your field names from there, do NOT guess (a wrong field like `result.actions` throws `Cannot read properties of undefined` and fails the run). The shape is the parsed return value itself, so access fields straight off it (e.g. `const { pieces } = await tools.ap_research_pieces({...})`). For any tool WITHOUT a documented shape, or any per-piece `ap_execute_action` output, treat the shape as unknown: never assume a field exists — guard with optional chaining / `??`, inspect via `Object.keys(result)`, or `console.log(result)` and branch defensively.',
+                'RESULT SHAPES: for the listed tools, the exact return shape is shown after `↳ returns` below — read your field names from there, do NOT guess (a wrong field like `result.actions` throws `Cannot read properties of undefined` and fails the run). The shape is the parsed return value itself, so access fields straight off it (e.g. `const { pieces } = await tools.ap_research_pieces({...})`). For any tool WITHOUT a documented shape, or any per-piece `ap_execute_action` output, treat the shape as unknown — but do NOT just guard-and-swallow it into an empty result (an over-defensive `Array.isArray(x) ? x : []` that silently yields `[]` is the #1 cause of a wrong answer with no error to learn from).',
+                '',
+                'UNKNOWN SHAPES — list data is usually NESTED, and you get the real shape back: a read like a Gmail/Slack/HubSpot search rarely puts its items at the top level — they sit under a nested key (e.g. `{ found, results: { messages: [...] } }`, so the array is `results.messages`, NOT `results`). After EVERY ap_run_tools run, the response includes a compact "Result shapes" section showing the exact structure (keys + types, no data) of each tool result your code received. So: write your best first attempt, and if the returned summary is empty/zero even though a read clearly returned data, your field PATH is wrong — read the echoed shapes, correct the path, and re-run IN Code Mode. Never respond to an empty result by refetching, falling back to one-by-one calls, or giving up on Code Mode.',
+                '',
+                'DISCOVER INSIDE THE CODE — one run, not many: do NOT spend separate ap_run_tools turns on "find the action", "get the props", "now execute". A run() can call MANY tools, so chain discovery and work in the SAME block. If unsure of a piece\'s exact actionName or its input keys, call `ap_research_pieces` / `ap_get_piece_props` at the top of the same run(), read the real names off the result, then call `ap_execute_action` and aggregate — all before you return. Guessing a name like `search_email` when it is `gmail_search_mail` wastes a whole turn; discovering it in-code costs zero extra round-trips.',
+                '',
+                'PICK THE RIGHT ACTION — find/search, not get-by-id, never raw HTTP: to LOOK UP a record by email / name / title (e.g. "is this sender a HubSpot contact?"), use the piece\'s find or search action (e.g. `find-contact`, `search_*`) — NOT an ID-based `get-*` action, which needs an internal record id you do not have and will reject your email. And do NOT fall back to `custom_api_call` or any raw HTTP when a named piece action exists: named actions are structured, authenticated, and time-bounded, whereas a raw `custom_api_call` can HANG with no response and stall the entire run. If your first action guess is rejected, `ap_research_pieces` the piece (its actions carry `aiDescription` + `cardinality` telling you which one searches vs fetches-by-id) and pick the search/find action — never escalate to raw HTTP. Example:',
+                'export const run = async (tools) => {',
+                '  const { pieces } = await tools.ap_research_pieces({ pieceNames: ["gmail"] })',
+                '  const actionName = (pieces[0].actions ?? []).find(a => /search|list/i.test(a.name))?.name',
+                '  const res = await tools.ap_execute_action({ pieceName: "gmail", actionName, input: { max_results: 100 } })',
+                '  const messages = res?.results?.messages ?? res?.messages ?? (Array.isArray(res) ? res : [])',
+                '  const bySender = {}; for (const m of messages) { const s = m.from?.value?.[0]?.address ?? "unknown"; bySender[s] = (bySender[s] ?? 0) + 1 }',
+                '  return Object.entries(bySender).sort((a,b) => b[1]-a[1]).slice(0,5).map(([sender,count]) => ({ sender, count }))',
+                '}',
                 '',
                 'Example — count actions for several pieces in ONE call, reading fields off the documented shape (note: pieces[].actions are OBJECTS, so use `.length` and `a.name`, not string assumptions):',
                 'export const run = async (tools) => {',
