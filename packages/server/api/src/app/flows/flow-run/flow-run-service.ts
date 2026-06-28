@@ -148,7 +148,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 })
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
-                await flowRunSideEffects(log).onRetry(updatedFlowRun)
+                await flowRunSideEffects(log).onRetry({ flowRun: updatedFlowRun, platformId })
                 if (triggerFailed) {
                     return addToQueue({
                         flowRun: updatedFlowRun,
@@ -302,7 +302,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             streamStepProgress,
         }, log)
 
-        await flowRunSideEffects(log).onStart(newFlowRun)
+        await flowRunSideEffects(log).onStart({ flowRun: newFlowRun, platformId })
         log.info({ flowRun: { id: newFlowRun.id }, flow: { id: flowId }, project: { id: projectId }, executionType }, 'Flow run started')
         return newFlowRun
     },
