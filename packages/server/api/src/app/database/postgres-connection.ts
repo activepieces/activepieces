@@ -384,10 +384,10 @@ import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
-import { AddIsolatedWorkersEnabledToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddIsolatedWorkersEnabledToPlatformPlan'
-import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/1798000000000-AddWorkerGroupIdToProject'
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
+import { AddIsolatedWorkersEnabledToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddIsolatedWorkersEnabledToPlatformPlan'
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
+import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/1798000000000-AddWorkerGroupIdToProject'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
