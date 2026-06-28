@@ -28,6 +28,12 @@ function VirtualizedList<T>({
     estimateSize: () => estimateSize,
     overscan,
     getItemKey,
+    // Seed a non-zero viewport so the first paint renders a window of rows even
+    // before the ResizeObserver reports the real height. Without this, a list
+    // mounted inside a still-animating container (e.g. a Collapsible opening for
+    // the first time) measures as 0px tall and flashes blank until the next
+    // frame. The ResizeObserver corrects this to the real height immediately.
+    initialRect: { width: 0, height: INITIAL_VIEWPORT_HEIGHT },
   });
 
   if (!shouldVirtualize) {
@@ -77,6 +83,7 @@ function VirtualizedList<T>({
 export { VirtualizedList };
 
 const DEFAULT_VIRTUALIZE_THRESHOLD = 100;
+const INITIAL_VIEWPORT_HEIGHT = 600;
 
 type VirtualizedListProps<T> = {
   items: T[];
@@ -85,5 +92,9 @@ type VirtualizedListProps<T> = {
   overscan?: number;
   getItemKey?: (index: number) => string | number;
   virtualizeThreshold?: number;
+  // Applied to the scroll container in the virtualized path only (it caps the
+  // viewport height, e.g. `max-h-[60vh]`). Lists at or below the threshold
+  // render inline as a fragment, matching their pre-virtualization layout, so
+  // the height cap intentionally does not apply to them.
   className?: string;
 };

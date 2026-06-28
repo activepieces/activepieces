@@ -12,7 +12,7 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
 
   if (!isObject(item)) {
     return (
-      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers last:border-b-0">
+      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers">
         <span className="text-sm font-medium text-muted-foreground shrink-0">
           {t('Item')} {index + 1}
         </span>

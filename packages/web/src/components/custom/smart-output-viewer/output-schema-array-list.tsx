@@ -35,7 +35,7 @@ function SchemaArrayItemRow({
   // static row instead of a clickable chevron that opens to nothing.
   if (!isObject(item)) {
     return (
-      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers last:border-b-0">
+      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers">
         <span className="text-sm font-medium text-muted-foreground shrink-0">
           {label}
         </span>
