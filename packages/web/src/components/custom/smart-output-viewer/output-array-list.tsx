@@ -89,7 +89,6 @@ function OutputArrayList({ items }: OutputArrayListProps) {
     <VirtualizedList
       items={items}
       estimateSize={37}
-      className="max-h-[60vh]"
       renderItem={(item, idx) => <ArrayItemRow item={item} index={idx} />}
     />
   );

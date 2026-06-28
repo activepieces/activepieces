@@ -81,7 +81,6 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
             <VirtualizedList
               items={nestedEntries}
               estimateSize={30}
-              className="max-h-[360px]"
               getItemKey={(index) => nestedEntries[index][0]}
               renderItem={([key, childValue]) => (
                 <ValueRow

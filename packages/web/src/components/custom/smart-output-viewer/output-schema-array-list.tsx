@@ -82,7 +82,6 @@ function OutputSchemaArrayList({ items, schema }: OutputSchemaArrayListProps) {
     <VirtualizedList
       items={items}
       estimateSize={37}
-      className="max-h-[60vh]"
       renderItem={(item, idx) => (
         <SchemaArrayItemRow item={item} index={idx} schema={schema} />
       )}

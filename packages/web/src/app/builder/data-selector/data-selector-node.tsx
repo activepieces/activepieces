@@ -58,7 +58,6 @@ const DataSelectorNode = ({
               <VirtualizedList
                 items={children}
                 estimateSize={32}
-                className="max-h-[340px]"
                 getItemKey={(index) => children[index].key}
                 renderItem={(child) => (
                   <DataSelectorNode

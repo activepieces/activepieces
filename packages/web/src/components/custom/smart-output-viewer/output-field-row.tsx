@@ -19,7 +19,6 @@ import { OutputSchemaField } from './types';
 
 const NESTED_BASE_PADDING = 40;
 const NESTED_PADDING_STEP = 24;
-const NESTED_LIST_MAX_HEIGHT = 'max-h-[360px]';
 
 function nestedPaddingLeft(depth: number): number {
   return NESTED_BASE_PADDING + (depth - 1) * NESTED_PADDING_STEP;
@@ -379,7 +378,6 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
           <VirtualizedList
             items={listItems}
             estimateSize={30}
-            className={NESTED_LIST_MAX_HEIGHT}
             renderItem={(item, idx) => (
               <SchemaListItemRow
                 item={item}
@@ -401,7 +399,6 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
           <VirtualizedList
             items={matrixRows}
             estimateSize={30}
-            className={NESTED_LIST_MAX_HEIGHT}
             renderItem={(row, idx) => (
               <SchemaMatrixRow
                 rowKey={`${path}_row_${idx}`}
@@ -421,7 +418,6 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
           <VirtualizedList
             items={genericArrayItems}
             estimateSize={30}
-            className={NESTED_LIST_MAX_HEIGHT}
             renderItem={(item, idx) => (
               <ValueRow
                 label={`${t('Item')} ${idx + 1}`}
@@ -451,7 +447,6 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
           <VirtualizedList
             items={primitiveItems}
             estimateSize={30}
-            className={NESTED_LIST_MAX_HEIGHT}
             renderItem={(item, idx) => (
               <div
                 className="flex items-start gap-3 py-1.5 pr-3 hover:bg-accent/50"
