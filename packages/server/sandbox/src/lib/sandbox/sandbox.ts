@@ -127,7 +127,11 @@ export function createSandbox(
             if (attempt === maxAttempts) {
                 throw new ActivepiecesError({
                     code: ErrorCode.SANDBOX_INTERNAL_ERROR,
-                    params: { reason: `Failed to bind sandbox ws port ${requestedPort} after ${maxAttempts} attempts: ${String(error)}` },
+                    params: {
+                        reason: `Failed to bind sandbox ws port ${requestedPort} after ${maxAttempts} attempts: ${String(error)}`,
+                        standardOutput: '',
+                        standardError: '',
+                    },
                 })
             }
             await delay(100)
