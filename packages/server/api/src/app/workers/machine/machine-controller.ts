@@ -3,6 +3,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { websocketService } from '../../core/websockets.service'
+import { jobBroker } from '../job-queue/job-broker'
 import { jobQueue } from '../job-queue/job-queue'
 import { createHandlers } from '../rpc/worker-rpc-service'
 import { machineService } from './machine-service'
@@ -21,9 +22,12 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.DISCONNECT, (socket) => {
         return async (_request: unknown, _principal) => {
-            await machineService(app.log).onDisconnect({
-                workerId: socket.handshake.auth.workerId,
-            })
+            const workerId = socket.handshake.auth.workerId
+            // Return jobs the app dispatched to this worker but that it never reported done — they
+            // sit orphaned in BullMQ `active` otherwise (graceful drain can't reach a job the worker
+            // never received), which is what inflated active past concurrency during deploys.
+            await jobBroker(app.log).releaseWorkerJobs(workerId)
+            await machineService(app.log).onDisconnect({ workerId })
         }
     })
 

@@ -47,6 +47,13 @@ let healthServerInstance: ReturnType<typeof createServer> | null = null
 
 let runtime: Runtime | null = null
 
+// Jobs executing across all poll loops. stop() waits for these to finish + report before tearing
+// down, so a deploy doesn't orphan them in the app's BullMQ `active` list. Abrupt death (OOM/SIGKILL)
+// still falls to the stalled-scan.
+let inFlightJobs = 0
+
+const DRAIN_TIMEOUT_MS = 25_000
+
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
@@ -93,6 +100,7 @@ export const worker = {
 
     async stop(): Promise<void> {
         polling = false
+        await drainInFlightJobs()
         if (runtime) {
             await runtime.shutdown(logger)
             runtime = null
@@ -198,38 +206,55 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
 
         workerLog.debug({ job: { id: job.jobId, type: job.jobData.jobType } }, 'Job received from poll')
 
-        const lockExtensionInterval = setInterval(() => {
-            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
-                if (error) {
-                    workerLog.warn({ error, job: { id: job.jobId } }, 'Failed to extend lock')
-                }
-            })
-        }, 30_000)
+        // Counted for the duration of execute + completeJob so a graceful shutdown can wait for
+        // the report to land before tearing down the socket (otherwise the job is orphaned in active).
+        inFlightJobs++
+        try {
+            const lockExtensionInterval = setInterval(() => {
+                void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
+                    if (error) {
+                        workerLog.warn({ error, job: { id: job.jobId } }, 'Failed to extend lock')
+                    }
+                })
+            }, 30_000)
 
-        const { data: result, error: execError } = await tryCatch(() =>
-            executeJob(apiClient, job, runtime, workerIndex),
-        )
+            const { data: result, error: execError } = await tryCatch(() =>
+                executeJob(apiClient, job, runtime, workerIndex),
+            )
 
+            const { error: completeError } = await tryCatch(() =>
+                apiClient.completeJob({
+                    jobId: job.jobId,
+                    token: job.token,
+                    queueName: job.queueName,
+                    status: execError
+                        ? EngineResponseStatus.INTERNAL_ERROR
+                        : result.status,
+                    errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
+                    logs: extractLogs(execError ?? undefined, result ?? undefined),
+                    response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
+                }),
+            )
 
-        const { error: completeError } = await tryCatch(() =>
-            apiClient.completeJob({
-                jobId: job.jobId,
-                token: job.token,
-                queueName: job.queueName,
-                status: execError
-                    ? EngineResponseStatus.INTERNAL_ERROR
-                    : result.status,
-                errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
-                logs: extractLogs(execError ?? undefined, result ?? undefined),
-                response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
-            }),
-        )
+            clearInterval(lockExtensionInterval)
 
-        clearInterval(lockExtensionInterval)
-
-        if (completeError) {
-            workerLog.error({ error: completeError, job: { id: job.jobId } }, 'Failed to complete job')
+            if (completeError) {
+                workerLog.error({ error: completeError, job: { id: job.jobId } }, 'Failed to complete job')
+            }
         }
+        finally {
+            inFlightJobs--
+        }
+    }
+}
+
+async function drainInFlightJobs(): Promise<void> {
+    const deadline = Date.now() + DRAIN_TIMEOUT_MS
+    while (inFlightJobs > 0 && Date.now() < deadline) {
+        await sleep(100)
+    }
+    if (inFlightJobs > 0) {
+        logger.warn({ inFlightJobs }, 'Drain timeout reached with jobs still in flight; leaving them for the stalled-scan to reclaim')
     }
 }
 

@@ -64,7 +64,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 return null
             }
             const pollQueueName = getPollQueueName(workerGroupId)
-            const job = await jobBroker(log).poll(pollQueueName)
+            const job = await jobBroker(log).poll(pollQueueName, input.workerId)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }
