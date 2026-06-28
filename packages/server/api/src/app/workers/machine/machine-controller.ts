@@ -16,18 +16,19 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
             const workerGroupId = typeof rawWorkerGroupId === 'string' ? rawWorkerGroupId : undefined
             const response = await machineService(app.log).onConnection(request, workerGroupId)
             callback?.(response)
-            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, workerGroupId))
+            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, workerGroupId, socket.id))
         }
     })
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.DISCONNECT, (socket) => {
         return async (_request: unknown, _principal) => {
-            const workerId = socket.handshake.auth.workerId
-            // Return jobs the app dispatched to this worker but that it never reported done — they
-            // sit orphaned in BullMQ `active` otherwise (graceful drain can't reach a job the worker
-            // never received), which is what inflated active past concurrency during deploys.
-            await jobBroker(app.log).releaseWorkerJobs(workerId)
-            await machineService(app.log).onDisconnect({ workerId })
+            // Return jobs dispatched to THIS connection that it never reported done — they sit
+            // orphaned in BullMQ `active` otherwise (graceful drain can't reach a job the worker never
+            // received), which inflated active past concurrency during deploys. Scoped to socket.id,
+            // not the stable workerId: a late disconnect for an old socket must not reclaim the jobs a
+            // reconnected socket (same workerId) has already polled.
+            await jobBroker(app.log).releaseConnectionJobs(socket.id)
+            await machineService(app.log).onDisconnect({ workerId: socket.handshake.auth.workerId })
         }
     })
 

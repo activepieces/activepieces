@@ -212,26 +212,26 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         log.info('[jobBroker] Job broker initialized')
     },
 
-    async poll(queueName: string = QueueName.WORKER_JOBS, workerId?: string): Promise<ConsumeJobRequest | null> {
+    async poll(queueName: string = QueueName.WORKER_JOBS, connectionId?: string): Promise<ConsumeJobRequest | null> {
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
         const job = await dispatcher.poll()
-        if (!isNil(job) && !isNil(workerId)) {
-            jobAssignmentTracker.record({ workerId, jobId: job.jobId, token: job.token, queueName: job.queueName })
+        if (!isNil(job) && !isNil(connectionId)) {
+            jobAssignmentTracker.record({ connectionId, jobId: job.jobId, token: job.token, queueName: job.queueName })
         }
         return job
     },
 
-    async releaseWorkerJobs(workerId: string): Promise<void> {
-        const jobs = jobAssignmentTracker.takeByWorker(workerId)
+    async releaseConnectionJobs(connectionId: string): Promise<void> {
+        const jobs = jobAssignmentTracker.takeByConnection(connectionId)
         if (jobs.length === 0) {
             return
         }
-        log.info({ worker: { id: workerId }, jobCount: jobs.length }, '[jobBroker] Worker disconnected with in-flight jobs — returning them to the queue')
+        log.info({ connection: { id: connectionId }, jobCount: jobs.length }, '[jobBroker] Worker connection closed with in-flight jobs — returning them to the queue')
         for (const { jobId, token, queueName } of jobs) {
             const { error } = await tryCatch(() => returnJobToQueue(jobId, token, queueName, log))
             if (error) {
-                log.error({ worker: { id: workerId }, job: { id: jobId }, error: String(error) }, '[jobBroker] Failed to return in-flight job on disconnect — leaving for stalled-scan recovery')
+                log.error({ connection: { id: connectionId }, job: { id: jobId }, error: String(error) }, '[jobBroker] Failed to return in-flight job on disconnect — leaving for stalled-scan recovery')
             }
         }
     },

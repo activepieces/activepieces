@@ -18,7 +18,7 @@ import { createQueueDispatcher } from '../../../../../src/app/workers/job-queue/
  * concurrency (the prod incident).
  *
  * The fix: the app tracks which jobs each worker holds and, on disconnect, returns them to the
- * queue (jobAssignmentTracker + releaseWorkerJobs). These tests drive the REAL tracker + REAL
+ * queue (jobAssignmentTracker + releaseConnectionJobs). These tests drive the REAL tracker + REAL
  * dispatcher + REAL BullMQ against the local test redis, contrasting abandon-on-stop vs reclaim.
  */
 
@@ -113,14 +113,14 @@ async function runSimulation(params: { queueName: string, workers: number, jobs:
                 continue
             }
             // Mirrors the server: jobBroker.poll records the assignment for this worker.
-            jobAssignmentTracker.record({ workerId, jobId: job.jobId, token: job.token, queueName: job.queueName })
+            jobAssignmentTracker.record({ connectionId: workerId, jobId: job.jobId, token: job.token, queueName: job.queueName })
             const stopMidJob = rand() < 0.5
             if (stopMidJob) {
                 stops++
                 if (reclaimOnStop) {
                     // The fix: the disconnect handler calls releaseWorkerJobs, which reads this
                     // worker's jobs from the real tracker and returns each to the queue.
-                    for (const held of jobAssignmentTracker.takeByWorker(workerId)) {
+                    for (const held of jobAssignmentTracker.takeByConnection(workerId)) {
                         await returnJobToQueue(held.jobId, held.token)
                     }
                 }
