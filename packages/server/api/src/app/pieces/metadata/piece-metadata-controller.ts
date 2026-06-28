@@ -168,6 +168,13 @@ function excludeAiActionsFromModel(piece: PieceMetadataModel): PieceMetadataMode
     }
 }
 
+// The summary carries the suggestedActions array only when the caller requests action
+// suggestions (suggestionType ACTION/ACTION_AND_TRIGGER) — the path the flow-builder picker
+// uses. There we hide AI-only entries and recompute the count, so an AI-only piece reports 0
+// actions and drops out of the picker. Without suggestedActions there is no per-action data to
+// filter, so the count is left as the raw total (informational — the bare list is not where the
+// human UI reads per-piece counts, and no action records are exposed). A fully audience-aware
+// count would have to live in the metadata service, which is intentionally left untouched.
 function excludeAiActionsFromSummary(piece: PieceMetadataModelSummary): PieceMetadataModelSummary {
     if (isNil(piece.suggestedActions)) {
         return piece

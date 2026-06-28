@@ -28,6 +28,7 @@ All editions. Piece filtering by allowed/blocked list and EE-specific filtering 
 - **pieceCache** — an in-memory map of piece metadata keyed by name+version+platformId, rebuilt from DB
 - **PieceCategory** — enum grouping pieces (AI, CORE, COMMUNICATION, etc.)
 - **SuggestionType** — AGENT or ACTION; changes ordering in piece selector
+- **audience** — optional per-action visibility on `ActionBase` (`human` / `ai` / `both`, default `both`), set by the piece author. `audience: 'ai'` actions are hidden from the human pieces API by default — see [Audience filtering](#audience-filtering-human-vs-ai). Triggers have no `audience`.
 - **OutputSchema** — optional, per-action / per-trigger structured description of how the step's output should be rendered. Shape: `{ fields: OutputSchemaField[], itemLabel?: string }`. Each `OutputSchemaField` carries `key`, optional `label` / `value` (path override) / `description`, an optional `format` (`email` / `url` / `date` / `datetime` / `number` / `boolean` / `image` / `html` / `currency` / `filesize` / `duration`), optional `currency` ISO code, optional `dynamicKey: true` for map-shaped values, optional `labelKey` (property within each map entry / list item to use as its display label — falls back to the raw key / `Item N`), and optional recursive `children` / `listItems` for nested objects and array-of-record shapes. `itemLabel` is a `{dotPath}` template (e.g. `{key}: {fields.summary}`) used when the step returns a top-level array; it labels each element in both the Smart Output Viewer and the Data Selector. Set by the piece author as the `outputSchema` of `createAction` / `createTrigger`. Consumed by the builder's `SmartOutputViewer` and the data selector — see [flows.md](./flows.md). Opt-in and non-breaking: pieces without an output schema render exactly as before.
 
 ## Entity
@@ -72,6 +73,15 @@ Unique index on `(name, version, platformId)`.
 | POST | `/v1/pieces/options` | project (USER, BODY) | Evaluate dynamic piece property options (dropdown values) |
 | POST | `/v1/pieces` | platformAdminOnly (USER, SERVICE) | Install a custom piece onto the platform |
 | DELETE | `/v1/pieces/:id` | platformAdminOnly (USER, SERVICE) | Delete all versions of a custom piece from the platform |
+
+## Audience filtering (human vs AI)
+
+Agent-only atomics are tagged `audience: 'ai'` so they surface to agents (MCP `ap_search_actions`) but not to the human flow-builder step picker. The human piece-metadata endpoints hide `audience: 'ai'` actions **by default**, filtered at the controller (`piece-metadata-controller.ts`) — not the service:
+
+- `GET /v1/pieces/:name` and `GET /v1/pieces/:scope/:name` — stripped from the `actions` record.
+- `GET /v1/pieces` — stripped from `suggestedActions`; the `actions` count is recomputed when suggestions are requested (`suggestionType=ACTION` / `ACTION_AND_TRIGGER`), which is the path the picker uses (an AI-only piece then reports 0 actions and drops out). The bare-list count (no `suggestionType`) stays the raw total — informational only; the human UI doesn't read per-piece counts there, and no action records are exposed.
+
+Pass `?includeAiAudience=true` (on the list and get requests) to receive the full set — used by the AI surface and the local dev page. The metadata service (`list` / `getOrThrow`) is intentionally left unfiltered so internal callers — flow validation, MCP step editing, the tool-search reindex — keep seeing every action.
 
 ## Service Methods
 
