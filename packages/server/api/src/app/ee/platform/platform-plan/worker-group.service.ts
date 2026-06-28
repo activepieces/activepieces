@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../../database/redis-connections'
-import { getWorkerGroupQueueName, QueueName } from '../../../workers/job'
+import { getPlatformGroupQueueName, QueueName } from '../../../workers/job'
 import { platformQueueMigrationService } from '../../../workers/platform-queue-migration.service'
 import { platformPlanRepo } from './platform-plan.service'
 
@@ -47,8 +47,8 @@ export const workerGroupService = (log: FastifyBaseLogger) => ({
 
     async moveJobsToTargetQueue({ platformId, workerGroupId }: { platformId: string, workerGroupId: string | null }): Promise<void> {
         const currentGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
-        const targetQueue = isNil(workerGroupId) ? QueueName.WORKER_JOBS : getWorkerGroupQueueName(workerGroupId)
-        const fromQueueName = isNil(currentGroupId) ? QueueName.WORKER_JOBS : getWorkerGroupQueueName(currentGroupId)
+        const targetQueue = isNil(workerGroupId) ? QueueName.WORKER_JOBS : getPlatformGroupQueueName(workerGroupId)
+        const fromQueueName = isNil(currentGroupId) ? QueueName.WORKER_JOBS : getPlatformGroupQueueName(currentGroupId)
         await platformQueueMigrationService(log).migrateJobs({ fromQueueName, toQueueName: targetQueue, platformId })
     },
 })

@@ -19,7 +19,7 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getProjectGroupQueueName, getWorkerGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
+import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
@@ -29,7 +29,7 @@ const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
     }
     return assignment.scope === WorkerGroupScope.PROJECT
         ? getProjectGroupQueueName(assignment.id)
-        : getWorkerGroupQueueName(assignment.id)
+        : getPlatformGroupQueueName(assignment.id)
 }
 
 let pagedForUnreadableAppVersion = false
