@@ -51,9 +51,12 @@ export const discordSendMessage = createAction({
   async run(configValue) {
     const channelId = configValue.propsValue.channel_id;
     const message = configValue.propsValue.content;
-    const files = (configValue.propsValue.files as FileObject[]) ?? [];
+    const rawFiles = (configValue.propsValue.files as FileObject[]) ?? [];
+    // Drop empty rows (e.g. files: [{}]) so an attachment placeholder doesn't
+    // make hasFiles true and then dereference an undefined file.
+    const files = rawFiles.filter((f) => f && f.file && f.file.data);
 
-    const hasFiles = Array.isArray(files) && files.length > 0;
+    const hasFiles = files.length > 0;
     if (!hasFiles && (message === undefined || message === null || message === '')) {
       throw new Error(
         'Provide message content or at least one attachment — Discord rejects an empty message.'

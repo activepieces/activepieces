@@ -53,7 +53,13 @@ export const discordListReactions = createAction({
     }),
   },
   async run(configValue) {
-    const emoji = encodeURIComponent(configValue.propsValue.emoji);
+    // Custom emoji must keep the name:id colon literal in the route segment;
+    // only unicode emoji (and the custom emoji's name part) are percent-encoded.
+    const rawEmoji = configValue.propsValue.emoji;
+    const customEmoji = /^(.+):(\d+)$/.exec(rawEmoji);
+    const emoji = customEmoji
+      ? `${encodeURIComponent(customEmoji[1])}:${customEmoji[2]}`
+      : encodeURIComponent(rawEmoji);
     let limit = configValue.propsValue.limit ?? 25;
     if (limit < 1) limit = 1;
     if (limit > 100) limit = 100;

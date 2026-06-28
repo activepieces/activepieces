@@ -36,7 +36,13 @@ export const discordAddReaction = createAction({
     }),
   },
   async run(configValue) {
-    const emoji = encodeURIComponent(configValue.propsValue.emoji);
+    // Custom emoji must keep the name:id colon literal in the route segment;
+    // only unicode emoji (and the custom emoji's name part) are percent-encoded.
+    const rawEmoji = configValue.propsValue.emoji;
+    const customEmoji = /^(.+):(\d+)$/.exec(rawEmoji);
+    const emoji = customEmoji
+      ? `${encodeURIComponent(customEmoji[1])}:${customEmoji[2]}`
+      : encodeURIComponent(rawEmoji);
     const request: HttpRequest<any> = {
       method: HttpMethod.PUT,
       url: `https://discord.com/api/v9/channels/${configValue.propsValue.channel_id}/messages/${configValue.propsValue.message_id}/reactions/${emoji}/@me`,

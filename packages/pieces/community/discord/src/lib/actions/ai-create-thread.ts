@@ -55,8 +55,23 @@ export const discordCreateThread = createAction({
         ],
       },
     }),
+    message: Property.LongText({
+      displayName: 'Starter Message',
+      description:
+        'Required when the parent is a Forum or Media channel: the content of the initial post that starts the thread. Leave empty for text/announcement channel threads.',
+      required: false,
+    }),
   },
   async run(configValue) {
+    const body: Record<string, unknown> = {
+      name: configValue.propsValue.name,
+      type: configValue.propsValue.type,
+      auto_archive_duration: configValue.propsValue.auto_archive_duration,
+    };
+    // Forum / media channels reject thread creation without a starter message.
+    if (configValue.propsValue.message) {
+      body['message'] = { content: configValue.propsValue.message };
+    }
     const request: HttpRequest<any> = {
       method: HttpMethod.POST,
       url: `https://discord.com/api/v9/channels/${configValue.propsValue.channel_id}/threads`,
@@ -64,11 +79,7 @@ export const discordCreateThread = createAction({
         authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
-      body: {
-        name: configValue.propsValue.name,
-        type: configValue.propsValue.type,
-        auto_archive_duration: configValue.propsValue.auto_archive_duration,
-      },
+      body,
     };
 
     try {
