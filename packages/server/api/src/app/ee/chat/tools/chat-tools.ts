@@ -113,6 +113,47 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     return { pickConnection: true, piece: shortName, displayName, connections: flat, requiredScopes }
 }
 
+// Auto-bind a connection for a connection-gated piece when none was picked and none was passed
+// inline — the case Code Mode always hits (its tool calls can't pop an interactive picker). Scans
+// the working project for ACTIVE connections of this piece: exactly one → use it; several → report
+// ambiguity so the caller can ask the user; none → fall through (let the normal missing-auth path
+// surface, e.g. the model shows the picker / offers to connect).
+async function autoResolveActiveConnection({ pieceName, projectId, platformId, log }: {
+    pieceName: string
+    projectId: string
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<AutoResolveConnectionResult> {
+    if (isNil(platformId)) {
+        return { kind: 'none' }
+    }
+    const { data: connections, error } = await tryCatch(() => appConnectionService(log).list({
+        projectId,
+        platformId,
+        pieceName,
+        status: [AppConnectionStatus.ACTIVE],
+        cursorRequest: null,
+        displayName: undefined,
+        scope: undefined,
+        externalIds: undefined,
+        limit: CROSS_PROJECT_CONNECTION_LIMIT,
+    }))
+    if (error || isNil(connections) || connections.data.length === 0) {
+        return { kind: 'none' }
+    }
+    if (connections.data.length === 1) {
+        const only = connections.data[0]
+        return { kind: 'single', externalId: only.externalId, label: only.displayName }
+    }
+    const shortName = pieceShortName(pieceName)
+    return {
+        kind: 'ambiguous',
+        piece: shortName,
+        displayName: pieceDisplayLabel(shortName),
+        labels: connections.data.map((c) => c.displayName),
+    }
+}
+
 async function listFlowsAcrossProjects({ projects, status, log }: {
     projects: Project[]
     status?: string
@@ -384,6 +425,35 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
         return { success: false, error: lookup.error.content[0]?.text ?? `Action "${actionName}" not found on "${normalizedPiece}".` }
     }
     const baseInput = isObject(parsedInput) ? parsedInput : {}
+
+    // No connection picked yet and none passed inline. The interactive picker can't fire from
+    // inside Code Mode (model-written JS calling tools.ap_execute_action can't show a UI card and
+    // wait), so a connection-gated call would otherwise run auth-less and come back empty. Auto-bind
+    // the project's single ACTIVE connection for this piece (and make it sticky so the rest of the
+    // turn — and any picker the model later shows — agrees). Multiple actives are genuinely
+    // ambiguous: return a corrective the model can act on instead of guessing an account.
+    const pieceRequiresAuth = lookup.component.requireAuth && !isNil(lookup.piece.auth)
+    const inlineAuth = typeof baseInput.auth === 'string' ? baseInput.auth : undefined
+    if (isNil(connectionExternalId) && isNil(inlineAuth) && pieceRequiresAuth) {
+        const auto = await autoResolveActiveConnection({ pieceName: normalizedPiece, projectId: resolvedProjectId, platformId, log })
+        if (auto.kind === 'ambiguous') {
+            return { success: false, error: `Multiple connected ${auto.displayName} accounts exist (${auto.labels.join(', ')}). I can't pick one for you from inside code — call ap_show_connection_picker for "${auto.piece}" first so the user chooses, then re-run.` }
+        }
+        if (auto.kind === 'single') {
+            connectionExternalId = auto.externalId
+            connectionLabel = auto.label
+            if (conversationId) {
+                await chatApprovalGate.storeSelectedConnection({
+                    conversationId,
+                    pieceName: normalizedPiece,
+                    externalId: auto.externalId,
+                    label: auto.label,
+                    projectId: resolvedProjectId,
+                })
+            }
+        }
+    }
+
     const diagnosis = mcpUtils.diagnosePieceProps({
         props: lookup.component.props,
         input: connectionExternalId ? { ...baseInput, auth: connectionExternalId } : baseInput,
@@ -587,6 +657,11 @@ type FindConnectionsResult =
     | { noAuthRequired: true, piece: string }
     | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
     | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
+
+type AutoResolveConnectionResult =
+    | { kind: 'none' }
+    | { kind: 'single', externalId: string, label: string }
+    | { kind: 'ambiguous', piece: string, displayName: string, labels: string[] }
 
 type RawProducedFile = {
     name: string

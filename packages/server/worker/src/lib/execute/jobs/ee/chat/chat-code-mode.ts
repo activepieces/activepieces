@@ -212,8 +212,13 @@ function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
     getStats: () => { bridgedCallCount: number, serverSideBytes: number }
 } {
     // jsName → real tool execute. The same in-process tool implementation the model would call
-    // directly, so connections, conversation context, and approval GATES are inherited
-    // automatically (the real execute() blocks on waitForApproval for gated tools like ap_send_email).
+    // directly, so conversation context (the conversationId threaded to the API) and approval GATES
+    // are inherited automatically (the real execute() blocks on waitForApproval for gated tools like
+    // ap_send_email). Connection auth is resolved server-side per conversation+piece: the action
+    // tools (ap_execute_action / ap_explore_data) reuse the conversation's sticky connection and, if
+    // none was picked yet, auto-bind the project's single ACTIVE connection — so a Code Mode call to
+    // a connection-gated piece gets real data without the model first showing an interactive picker
+    // (which it can't, mid-code). See runChatAdhocAction in chat-tools.ts.
     const byJsName = new Map<string, { realName: string, execute: ToolExecute }>()
     for (const [realName, value] of Object.entries(tools)) {
         if (NON_CALLABLE_TOOL_NAMES.has(realName)) continue
@@ -474,6 +479,8 @@ function createCodeModeTools({ getTools, log }: {
                 'Code Mode — write a small async JavaScript module that ORCHESTRATES your other tools (calls them, loops over results, aggregates) and runs server-side. PREFER this over calling tools one-by-one whenever you need to: call several tools in sequence or in a loop, fan a tool across many items, or chain a large read into a transform. It saves round-trips (the loop runs server-side, not turn-by-turn) AND context (large tool results stay server-side — only your final `return` value comes back, capped at 64KB).',
                 '',
                 'Shape: export an async `run`: `export const run = async (tools, data) => { /* ... */ return result }`. Call any tool as `await tools.<name>({ ...args })` — args are the SAME inputs that tool takes normally. Each call RETURNS THE ALREADY-PARSED RESULT DIRECTLY — the tool\'s plain return value (an object, or for non-JSON tools a string), NOT an MCP envelope. Do NOT reach for `.content[0].text`, `.structuredContent`, or `JSON.parse` the result; the bridge already unwrapped and parsed it. Each bridged call inherits connections, conversation context, and approval gates (a gated tool like ap_send_email will still pop its confirmation card and block until the user approves). `data`/`inputs` holds any offloaded results passed in. Return a COMPACT summary, not raw data. `fetch`, `require`, `process`, and file/network access are disabled — reach external systems only through bridged tools.',
+                '',
+                'CONNECTIONS: a connection-gated tool (Gmail, Slack, HubSpot, Linear, Airtable, …) called from inside Code Mode automatically uses the user\'s connected account — you do NOT need to pass `auth` or call a connection picker first; the user\'s active connection for that piece is bound for you, and a real result comes back on the first call. The one exception: if the user has MORE than one active account for that piece, the call returns an error naming them and asking you to call ap_show_connection_picker (outside Code Mode) so the user chooses — do that, then re-run the code. An empty result from a connection-gated read is real "no data", not a missing connection.',
                 '',
                 'RESULT SHAPES: for the listed tools, the exact return shape is shown after `↳ returns` below — read your field names from there, do NOT guess (a wrong field like `result.actions` throws `Cannot read properties of undefined` and fails the run). The shape is the parsed return value itself, so access fields straight off it (e.g. `const { pieces } = await tools.ap_research_pieces({...})`). For any tool WITHOUT a documented shape, or any per-piece `ap_execute_action` output, treat the shape as unknown: never assume a field exists — guard with optional chaining / `??`, inspect via `Object.keys(result)`, or `console.log(result)` and branch defensively.',
                 '',
