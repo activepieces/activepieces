@@ -66,7 +66,7 @@ export function BatchProgressCard({
                 </span>
               )}
               {progress.failed > 0 && (
-                <span className="flex items-center gap-1 text-destructive">
+                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
                   <AlertCircle className="h-3 w-3" />
                   {progress.failed} {t('failed')}
                 </span>
@@ -126,17 +126,17 @@ function FailureDetails({
   const remaining = results.length - 2;
 
   return (
-    <div className="rounded-lg bg-destructive/5 px-3 py-2 space-y-1.5">
-      <span className="text-xs font-medium text-destructive">
+    <div className="rounded-lg bg-amber-500/5 px-3 py-2 space-y-1.5">
+      <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
         {t('Failed items')}
       </span>
       <div className="space-y-1">
         {visible.map((r) => (
           <div
             key={r.index}
-            className="flex items-start gap-1.5 text-xs text-destructive/80"
+            className="flex items-start gap-1.5 text-xs text-amber-700/80 dark:text-amber-400/80"
           >
-            <span className="shrink-0 tabular-nums text-destructive/50">
+            <span className="shrink-0 tabular-nums text-amber-700/50 dark:text-amber-400/50">
               #{r.index + 1}
             </span>
             <span className="break-words min-w-0">
@@ -149,7 +149,7 @@ function FailureDetails({
         {!expanded && remaining > 0 && (
           <motion.button
             type="button"
-            className="flex items-center gap-1 text-xs text-destructive/60 hover:text-destructive transition-colors"
+            className="flex items-center gap-1 text-xs text-amber-700/60 dark:text-amber-400/60 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
             onClick={() => setExpanded(true)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -162,7 +162,7 @@ function FailureDetails({
         {expanded && results.length > 3 && (
           <motion.button
             type="button"
-            className="flex items-center gap-1 text-xs text-destructive/60 hover:text-destructive transition-colors"
+            className="flex items-center gap-1 text-xs text-amber-700/60 dark:text-amber-400/60 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
             onClick={() => setExpanded(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

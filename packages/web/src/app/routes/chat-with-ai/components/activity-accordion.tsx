@@ -1,6 +1,6 @@
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Code } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -13,6 +13,7 @@ import {
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { toolIconUtils } from '@/features/chat/lib/tool-icons';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
@@ -45,7 +46,7 @@ export function ThinkingBlock({
 
   if (!hasSteps && !hasReasoning && !isStreaming) return null;
 
-  const isExpandable = hasSteps || hasReasoning;
+  const isExpandable = hasSteps;
 
   const doneLabel = formatThinkingDuration(thinkingDurationMs);
 
@@ -103,14 +104,6 @@ export function ThinkingBlock({
 
 function StepRenderer({ step }: { step: ThinkingStep }) {
   switch (step.kind) {
-    case 'reasoning':
-      return (
-        <div className="py-0.5">
-          <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground leading-relaxed">
-            {step.text}
-          </p>
-        </div>
-      );
     case 'thinking-status':
       return (
         <div className="py-0.5">
@@ -134,6 +127,21 @@ function ToolStepRow({
   const activeFallback = chatUtils.formatToolActionName({ part });
   const doneFallback = chatUtils.formatToolDoneTitle({ part });
   const rawInput = isObject(part.input) ? part.input : undefined;
+  const isRunCode = chatPartUtils.getToolPartName(part) === 'ap_run_code';
+  const recipeLines = useMemo(() => {
+    if (!isRunCode || !Array.isArray(rawInput?.recipe)) return [];
+    return rawInput.recipe.filter(
+      (line): line is string => typeof line === 'string',
+    );
+  }, [isRunCode, rawInput]);
+  const codeSource = useMemo(() => {
+    if (!isRunCode || !rawInput) return null;
+    const code = typeof rawInput.code === 'string' ? rawInput.code : '';
+    const packageJson =
+      typeof rawInput.packageJson === 'string' ? rawInput.packageJson : '';
+    if (!code && !packageJson) return null;
+    return packageJson ? `${code}\n\n// package.json\n${packageJson}` : code;
+  }, [isRunCode, rawInput]);
   const resolvedDescription =
     description ??
     (rawInput &&
@@ -142,6 +150,7 @@ function ToolStepRow({
       ? rawInput.description
       : null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
   const input = useMemo(() => {
     if (!rawInput) return undefined;
     const {
@@ -151,8 +160,15 @@ function ToolStepRow({
       doneTitle: _dt,
       ...rest
     } = rawInput;
+    if (isRunCode) {
+      delete rest.code;
+      delete rest.packageJson;
+      delete rest.inputFileIds;
+      delete rest.input;
+      delete rest.recipe;
+    }
     return Object.keys(rest).length > 0 ? rest : undefined;
-  }, [rawInput]);
+  }, [rawInput, isRunCode]);
   const output = chatPartUtils.extractToolOutputText(part);
   const hasInput = input && Object.keys(input).length > 0;
   const hasOutput = Boolean(output);
@@ -170,6 +186,10 @@ function ToolStepRow({
   });
   const matchedPieces = pieceSummaries.filter((p) => p.logoUrl);
 
+  const ToolIcon = toolIconUtils.getToolIcon(
+    chatPartUtils.getToolPartName(part),
+  );
+
   const label =
     status === 'running'
       ? activeTitle ?? activeFallback
@@ -179,10 +199,32 @@ function ToolStepRow({
 
   return (
     <div className="py-1">
-      {resolvedDescription && (
-        <p className="text-sm text-muted-foreground mb-1.5">
-          {resolvedDescription}
-        </p>
+      {recipeLines.length > 0 ? (
+        <div className="mb-1.5 overflow-hidden rounded-lg border border-border bg-muted/20">
+          <div className="flex items-center gap-2 border-b border-border/60 px-3 py-1">
+            <Code className="size-3 shrink-0 text-primary/80" />
+            <span className="text-[11px] font-medium text-muted-foreground">
+              {t('What this code does')}
+            </span>
+          </div>
+          <div className="space-y-0.5 px-3 py-2 font-mono text-xs leading-relaxed">
+            {recipeLines.map((line, idx) => (
+              <div
+                key={`${idx}-${line}`}
+                className="flex items-start gap-2 text-foreground/75"
+              >
+                <span className="select-none pt-px text-primary/70">›</span>
+                <span>{line}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        resolvedDescription && (
+          <p className="text-sm text-muted-foreground mb-1.5">
+            {resolvedDescription}
+          </p>
+        )
       )}
       <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
         {status === 'running' ? (
@@ -195,6 +237,7 @@ function ToolStepRow({
             duration={2}
             onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
           >
+            <ToolIcon className="size-4 shrink-0 text-muted-foreground animate-pulse motion-reduce:animate-none" />
             {label}
             {matchedPieces.map((piece) => (
               <PieceIcon
@@ -211,22 +254,13 @@ function ToolStepRow({
           <div>
             <div
               className={cn(
-                'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm',
-                status === 'failed' ? 'border-destructive/30' : 'border-border',
+                'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm border-border',
                 hasDetails && 'cursor-pointer',
               )}
               onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
             >
-              <span
-                className={cn(
-                  'text-sm',
-                  status === 'failed'
-                    ? 'text-destructive'
-                    : 'text-muted-foreground',
-                )}
-              >
-                {label}
-              </span>
+              <ToolIcon className="size-4 shrink-0 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">{label}</span>
               {matchedPieces.map((piece) => (
                 <PieceIcon
                   key={piece.name}
@@ -273,6 +307,27 @@ function ToolStepRow({
           </CollapsibleContent>
         )}
       </Collapsible>
+      {codeSource && (
+        <Collapsible
+          open={codeOpen}
+          onOpenChange={setCodeOpen}
+          className="mt-1.5"
+        >
+          <button
+            type="button"
+            onClick={() => setCodeOpen(!codeOpen)}
+            className="flex items-center gap-1 text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            <Code className="size-3 shrink-0" />
+            {codeOpen ? t('Hide code') : t('View code')}
+          </button>
+          <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+            <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-muted/40 px-3 py-2 text-[11px] font-mono whitespace-pre-wrap break-words text-muted-foreground">
+              {codeSource}
+            </pre>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </div>
   );
 }
