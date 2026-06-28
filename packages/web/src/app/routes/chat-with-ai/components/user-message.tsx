@@ -63,7 +63,7 @@ export const UserMessage = memo(function UserMessage({
                 ))}
               </div>
             )}
-            <PromptKitMessageContent markdown className="prose-sm">
+            <PromptKitMessageContent markdown>
               {content}
             </PromptKitMessageContent>
           </div>
