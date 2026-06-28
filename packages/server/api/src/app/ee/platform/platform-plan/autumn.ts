@@ -1,4 +1,4 @@
-import { isEmpty, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core-utils'
 import { apDayjs, apVersionUtil, safeHttp } from '@activepieces/server-utils'
 import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import {
@@ -31,6 +31,11 @@ const credentialsCache: LRU<ResolvedAutumnCredentials> = lru(CREDENTIALS_CACHE_M
 
 const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
 const AUTUMN_FREE_PLAN_ID = 'free'
+
+// Consumable credit features are refilled by auto-top-up ONLY — never a manual one-off purchase (product
+// decision). Manual top-up is reserved for non-consumable limit features bought outright (e.g. usersLimit).
+// Keep in sync with the frontend feature `kind`.
+const AUTO_TOP_UP_ONLY_FEATURE_IDS: string[] = [AutumnFeatureId.AP_CREDITS, AutumnFeatureId.APP_SUMO_AI_CREDITS]
 
 
 const AUTUMN_FLAG_FEATURE_IDS = [
@@ -239,6 +244,12 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         }
     },
     topUpFeature: async ({ platformId, featureId, quantity, successUrl }) => {
+        if (AUTO_TOP_UP_ONLY_FEATURE_IDS.includes(featureId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS,
+                params: { message: 'Manual top-up is not available for consumable credits; use auto-top-up instead' },
+            })
+        }
         await autumnUtils.ensureEnrolled(log, platformId)
         const creds = await getConsoleCreds(log, platformId)
         if (isNil(creds)) {
