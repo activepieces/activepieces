@@ -111,16 +111,31 @@ async function buildBundle({ name, version, workDir, forceExternal = [], log = (
 
   const dist = path.join(root, 'dist')
   fs.mkdirSync(path.join(dist, 'src'), { recursive: true })
-  fs.copyFileSync(outfile, path.join(dist, 'src', 'index.js'))
+  fs.copyFileSync(outfile, path.join(dist, 'src', 'bundle.cjs'))
   const i18nSrc = path.join(pkgDir, 'src', 'i18n')
   if (fs.existsSync(i18nSrc)) {
     fs.cpSync(i18nSrc, path.join(dist, 'src', 'i18n'), { recursive: true })
   }
+
+  // The engine loads pieces with `await import()`. A CJS bundle imported as ESM exposes its members
+  // only under `.default`, but the engine's extractPieceFromModule scans the TOP level for a value
+  // whose constructor.name === 'Piece' — so a bare CJS bundle fails to load. Emit an ESM wrapper that
+  // re-exports the bundle's members BY NAME, surfacing the Piece at the top level. Names are read
+  // from the assembled bundle (externals resolve from pkgDir/node_modules, same as the gate).
+  log('[6b] emit ESM re-export wrapper (engine loads via import())')
+  const exportedNames = enumerateExportNames(outfile)
+  const wrapperLines = [
+    'import _b from \'./bundle.cjs\'',
+    'export default _b',
+    ...exportedNames.map((k) => `export const ${k} = _b[${JSON.stringify(k)}]`),
+  ]
+  fs.writeFileSync(path.join(dist, 'src', 'index.mjs'), wrapperLines.join('\n') + '\n')
+
   const manifest = {
     name: origManifest.name,
     version: origManifest.version,
-    main: './src/index.js',
-    files: ['src/index.js', 'package.json', 'src/i18n'],
+    main: './src/index.mjs',
+    files: ['src/index.mjs', 'src/bundle.cjs', 'package.json', 'src/i18n'],
     ...(Object.keys(deps).length ? { dependencies: deps } : {}),
   }
   fs.writeFileSync(path.join(dist, 'package.json'), JSON.stringify(manifest, null, 2))
@@ -150,6 +165,17 @@ async function buildBundle({ name, version, workDir, forceExternal = [], log = (
 
 function fail(root, name, version, reason) {
   return { ok: false, name, version, error: reason, root }
+}
+
+// Read the assembled bundle's named exports by requiring it (externals resolve from the adjacent
+// node_modules). Used to generate the ESM wrapper. Returns valid-identifier keys only; a bundle that
+// exports a bare value (module.exports = piece) yields no names and relies on the default export.
+function enumerateExportNames(bundleFile) {
+  const mod = require(bundleFile)
+  if (mod === null || typeof mod !== 'object') {
+    return []
+  }
+  return Object.keys(mod).filter((k) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k) && k !== 'default')
 }
 
 async function runEsbuild({ entry, outfile, external, externalAll = false }) {

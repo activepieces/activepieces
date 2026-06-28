@@ -37,7 +37,7 @@ async function main() {
     catch (e) {
       console.log(`FAIL  ${nv}  [fetch] ${e.message}`); fail++; continue
     }
-    const gate = gateBundle({ name, version, tarballPath: tarball, gateDir: cfg.gateDir })
+    const gate = await gateBundle({ name, version, tarballPath: tarball, gateDir: cfg.gateDir })
     const ok = gate.status === 'PASS'
     console.log(`${ok ? 'PASS ' : gate.status.padEnd(5)} ${nv}  load=${gate.loadsStandalone} actions=${gate.actionCount ?? '-'} leaks=${gate.sdkLeaks.join(',') || 'none'}${gate.loadError ? ' :: ' + gate.loadError : ''}`)
     ok ? pass++ : fail++

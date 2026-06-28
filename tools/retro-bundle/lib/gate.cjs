@@ -6,9 +6,10 @@ const { execSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
 const { createRequire } = require('node:module')
+const { pathToFileURL } = require('node:url')
 const { scanAssembledBundle } = require('./asset-detector.cjs')
 
-function gateBundle({ name, version, tarballPath, gateDir }) {
+async function gateBundle({ name, version, tarballPath, gateDir }) {
   const ws = path.join(gateDir, `${name.replace('/', '-')}-${version}`)
   fs.rmSync(ws, { recursive: true, force: true })
   const pieceDir = path.join(ws, 'pieces', `${name.replace('/', '-')}-${version}`)
@@ -33,12 +34,15 @@ function gateBundle({ name, version, tarballPath, gateDir }) {
   // (1) Self-containment: no @activepieces/* in the tree other than the piece itself.
   const sdkLeaks = findSdkLeaks(ws, name)
 
-  // (2) Standalone load + metadata() — NO node_modules symlink anywhere.
+  // (2) Standalone load + metadata() — NO node_modules symlink anywhere. Load via `import()` exactly
+  // as the engine does (piece-loader.ts), and scan the TOP level for a Piece exactly as the engine's
+  // extractPieceFromModule does — a CJS-only bundle that buries the Piece under `.default` FAILS here,
+  // matching real engine behavior (require() would have masked it).
   let loadsStandalone = false, metadataOk = false, actionCount = null, loadError = null, installedEntry = null
   try {
     const req = createRequire(path.resolve(pieceDir, 'package.json')) // createRequire requires an absolute path
     installedEntry = req.resolve(name)
-    const mod = req(installedEntry)
+    const mod = await import(pathToFileURL(installedEntry).href)
     const piece = Object.values(mod).find((v) => v && typeof v === 'object' && v.constructor?.name === 'Piece')
     const meta = piece?.metadata?.()
     loadsStandalone = !!piece
@@ -75,7 +79,11 @@ function runAssetFlush({ ws, installedEntry }) {
   if (!installedEntry || !fs.existsSync(installedEntry)) {
     return { orphans: [], fatal: [], skipped: true }
   }
-  const bundleSource = fs.readFileSync(installedEntry, 'utf8')
+  // installedEntry is the ESM wrapper (index.mjs); the real bundled source lives in bundle.cjs
+  // beside it. Scan the actual bundle so the orphan-asset detector sees the inlined code.
+  const sibling = path.join(path.dirname(installedEntry), 'bundle.cjs')
+  const bundleFile = fs.existsSync(sibling) ? sibling : installedEntry
+  const bundleSource = fs.readFileSync(bundleFile, 'utf8')
   const fatal = scanAssembledBundle({ bundleSource })
   return { orphans: fatal, fatal }
 }

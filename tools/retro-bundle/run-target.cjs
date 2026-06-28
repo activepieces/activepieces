@@ -41,7 +41,7 @@ async function main() {
     process.exit(1)
   }
 
-  const gate = gateBundle({ name, version, tarballPath: build.tarballPath, gateDir: cfg.gateDir })
+  const gate = await gateBundle({ name, version, tarballPath: build.tarballPath, gateDir: cfg.gateDir })
   if (gate.status !== 'PASS') {
     const status = gate.status === 'QUARANTINE' ? 'quarantined' : 'failed'
     const reason = gate.loadError || (gate.assetFlush.fatal || []).join('; ') || gate.installErr || `sdk leak: ${gate.sdkLeaks.join(',')}`

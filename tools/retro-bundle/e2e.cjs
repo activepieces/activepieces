@@ -72,7 +72,7 @@ async function main() {
     }
 
     // gate the built bundle
-    const gate = gateBundle({ name: t.name, version: t.version, tarballPath: build.tarballPath, gateDir })
+    const gate = await gateBundle({ name: t.name, version: t.version, tarballPath: build.tarballPath, gateDir })
     assert(gate.status === t.expect, `${tag} gate status == ${t.expect} (got ${gate.status}${gate.loadError ? ': ' + gate.loadError : ''})`, failures)
 
     // seed to the local store, then verify the SERVED bytes install + load
@@ -81,7 +81,7 @@ async function main() {
     assert(await store.head(key), `${tag} seeded to local store (${key})`, failures)
     const served = path.join(tmp, `served-${t.name.replace('/', '-')}-${t.version}.tgz`)
     await store.get(key, served)
-    const servedGate = gateBundle({ name: t.name, version: t.version, tarballPath: served, gateDir })
+    const servedGate = await gateBundle({ name: t.name, version: t.version, tarballPath: served, gateDir })
     assert(servedGate.status === 'PASS' && servedGate.loadsStandalone, `${tag} served copy installs & loads standalone (${servedGate.actionCount} actions)`, failures)
     fs.rmSync(build.root, { recursive: true, force: true })
     fs.rmSync(served, { force: true })
