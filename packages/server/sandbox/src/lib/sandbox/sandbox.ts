@@ -62,7 +62,6 @@ export function createSandbox(
     processMaker: SandboxProcessMaker,
 ): Sandbox {
     let childProcess: ChildProcess | null = null
-    let httpServer: HttpServer | null = null
     let io: SocketIOServer | null = null
     let connectedSocket: Socket | null = null
     let connectionResolve: (() => void) | null = null
@@ -116,7 +115,6 @@ export function createSandbox(
 
             const { error } = await tryCatch(() => listenOnce(server, requestedPort))
             if (isNil(error)) {
-                httpServer = server
                 io = ioServer
                 const address = server.address()
                 if (typeof address === 'object' && address !== null) {
@@ -323,7 +321,6 @@ export function createSandbox(
                 await io.close()
             }
             io = null
-            httpServer = null
             wsRpcToken = null
         },
     }
