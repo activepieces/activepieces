@@ -378,6 +378,14 @@ function clampReturnValue(value: unknown): { value: unknown, truncated: boolean 
     }
 }
 
+function formatReturnValue({ result }: { result: CodeModeRunResult }): { valueStr: string, truncated: boolean } {
+    const { value, truncated } = clampReturnValue(result.returnValue)
+    const valueStr = result.returnValue === undefined
+        ? '(the code returned nothing)'
+        : typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+    return { valueStr, truncated }
+}
+
 function buildCodeModeResultText({ result }: { result: CodeModeRunResult }): string {
     const consoleNote = result.consoleLines.length > 0
         ? `\n\nConsole output:\n${result.consoleLines.join('\n')}`
@@ -385,12 +393,47 @@ function buildCodeModeResultText({ result }: { result: CodeModeRunResult }): str
     if (!result.ok) {
         return `❌ Code Mode failed: ${result.error ?? 'unknown error'}${consoleNote}`
     }
-    const { value, truncated } = clampReturnValue(result.returnValue)
-    const valueStr = result.returnValue === undefined
-        ? '(the code returned nothing)'
-        : typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+    const { valueStr, truncated } = formatReturnValue({ result })
     const stats = `(${result.bridgedCallCount} tool call(s) ran inside the code; ${Math.round(result.serverSideBytes / 1024)}KB of tool output stayed server-side, ${Math.round((truncated ? MAX_RETURN_BYTES : result.returnedBytes) / 1024)}KB returned.)`
     return `✅ Code Mode ran. ${stats}\n\n${valueStr}${consoleNote}`
+}
+
+// The structured twin of the model-facing text. The chat UI renders a dedicated "Code Mode" card
+// from these fields instead of re-parsing the prose string, so the savings line, the code, and the
+// result each read from a typed field. `modelText` carries the EXACT string the model receives
+// (via toModelOutput), so the return-to-model contract is unchanged and stays model-agnostic — any
+// model still just sees the text. `resultText` is the formatted return value alone (no stats/status
+// preamble) for the card's result block.
+function buildCodeModeStructuredContent({ code, reason, result }: {
+    code: string
+    reason: string | undefined
+    result: CodeModeRunResult
+}): CodeModeStructuredContent {
+    const { valueStr, truncated } = formatReturnValue({ result })
+    return {
+        kind: 'code-mode',
+        ok: result.ok,
+        code,
+        reason,
+        bridgedCallCount: result.bridgedCallCount,
+        serverSideBytes: result.serverSideBytes,
+        returnedBytes: truncated ? MAX_RETURN_BYTES : result.returnedBytes,
+        savedBytes: Math.max(0, result.serverSideBytes - (truncated ? MAX_RETURN_BYTES : result.returnedBytes)),
+        resultText: result.ok ? valueStr : undefined,
+        error: result.ok ? undefined : (result.error ?? 'unknown error'),
+        consoleLines: result.consoleLines,
+        truncated,
+        modelText: buildCodeModeResultText({ result }),
+    }
+}
+
+function readModelText(output: unknown): string | undefined {
+    if (!isObject(output)) return undefined
+    const structured = (output as { structuredContent?: unknown }).structuredContent
+    if (isObject(structured) && typeof (structured as { modelText?: unknown }).modelText === 'string') {
+        return (structured as { modelText: string }).modelText
+    }
+    return readFirstContentText(output) ?? undefined
 }
 
 // allTools is the SAME assembled worker tool map the model calls directly; the bridge looks up and
@@ -425,13 +468,29 @@ function createCodeModeTools({ getTools, log }: {
             }),
             execute: async (input) => {
                 const code = typeof input.code === 'string' ? input.code : ''
+                const reason = typeof input.reason === 'string' && input.reason.length > 0 ? input.reason : undefined
                 if (code.trim().length === 0) {
-                    return { content: [{ type: 'text', text: '❌ `code` is required and must be a non-empty string.' }] }
+                    const text = '❌ `code` is required and must be a non-empty string.'
+                    return {
+                        content: [{ type: 'text', text }],
+                        structuredContent: { kind: 'code-mode', ok: false, code: '', reason, bridgedCallCount: 0, serverSideBytes: 0, returnedBytes: 0, savedBytes: 0, error: text, consoleLines: [], truncated: false, modelText: text },
+                    }
                 }
                 // Resolve the tool map at call time so the bridge sees the fully-assembled set.
                 const result = await runCodeMode({ code, tools: getTools(), data: {}, log })
-                return { content: [{ type: 'text', text: buildCodeModeResultText({ result }) }] }
+                const structuredContent = buildCodeModeStructuredContent({ code, reason, result })
+                // content[].text is the model-agnostic textual result (also used as the toModelOutput
+                // fallback); structuredContent is the typed twin the chat UI renders the Code Mode card
+                // from. The model still receives only the text — see toModelOutput below.
+                return {
+                    content: [{ type: 'text', text: structuredContent.modelText }],
+                    structuredContent,
+                }
             },
+            // Keep the model-facing result the plain text string (not the JSON-serialized object that
+            // would otherwise be sent), so attaching structuredContent for the UI doesn't leak the
+            // code/console/stats into the model's context or change behavior across models.
+            toModelOutput: ({ output }) => ({ type: 'text', value: readModelText(output) ?? '' }),
         }),
     }
 }
@@ -440,4 +499,23 @@ export const chatCodeMode = {
     createCodeModeTools,
     buildToolNamespaceListing,
     runCodeMode,
+}
+
+// Structured twin of ap_run_tools' textual result, surfaced as the tool result's `structuredContent`
+// so the chat UI's Code Mode card reads typed fields instead of re-parsing the prose. `modelText` is
+// the exact string the model receives (via toModelOutput); the rest drives the card.
+export type CodeModeStructuredContent = {
+    kind: 'code-mode'
+    ok: boolean
+    code: string
+    reason?: string
+    bridgedCallCount: number
+    serverSideBytes: number
+    returnedBytes: number
+    savedBytes: number
+    resultText?: string
+    error?: string
+    consoleLines: string[]
+    truncated: boolean
+    modelText: string
 }
