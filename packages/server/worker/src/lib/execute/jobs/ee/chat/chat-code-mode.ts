@@ -125,14 +125,38 @@ function stripStatusPrefix(text: string): string {
     return trimmed
 }
 
-// Compact, model-facing signature for one tool: name(arg1, arg2?) — first line of its description.
+// Documented return shapes for the tools the model orchestrates most in Code Mode, keyed by REAL
+// tool name. Kept verbatim from the tools' `structuredContent` builders (the value the bridge hands
+// back after unwrapToolResult). Without these the model guesses field names (`result.actions`) and
+// the first run throws `Cannot read properties of undefined` before self-correcting. Only the heavy/
+// common tools need a hint; the generic defensive note in the tool description covers the rest.
+const RETURN_SHAPE_HINTS: Record<string, string> = {
+    // bulkLookup (pieceNames) — the dominant path. searchQuery mode returns the same wrapper but
+    // pieces carry actions/triggers ONLY when includeActions/includeTriggers is set. actions/triggers
+    // are arrays of OBJECTS (use `.name`), never plain strings.
+    ap_research_pieces: '{ pieces: [{ name, displayName, description, actions: [{ name, displayName, description, requiresAuth, cardinality, aiDescription? }], triggers: [ …same shape ], recommendedActions?: [{ name, … }] }], missing: string[], count }',
+    ap_get_piece_props: '{ piece, name, displayName, description, requiresAuth, cardinality, aiMetadata?, outputSchema?, outputFields?: string[], props: [{ name, type, required, displayName, options?, note? }], requiredInputs: { provideNow: string[], needsResolution: string[] }, exampleInput }',
+    // The action\'s OWN output payload (piece-specific — e.g. an array of messages, or { id }), NOT a
+    // wrapper. Shape varies per piece/action, so inspect it (Object.keys) rather than assume. On
+    // failure / non-2xx / empty you may instead get a short status string.
+    ap_execute_action: 'the action\'s own output payload — shape depends on the piece/action (inspect with Object.keys); a status string on failure',
+}
+
+// Compact, model-facing signature for one tool: name(arg1, arg2?) — first line of its description,
+// then (for the heavy/common tools) the RETURN shape so the model writes correct field access
+// first-try instead of guessing (e.g. `result.actions` when the field is `result.pieces`). The
+// shapes below are the ACTUAL value the in-code `tools.x()` call receives — i.e. AFTER the bridge's
+// unwrapToolResult: for tools that emit `structuredContent` that object is returned verbatim, so the
+// shapes are taken from the real `structuredContent` builders, not the prose `content[0].text`.
 // Best-effort schema introspection: zod `.shape` first, then a JSON-schema `properties` fallback,
 // then a bare `(input)` so an exotic schema still lists the tool rather than dropping it.
-function describeToolSignature({ jsName, tool: toolDef }: { jsName: string, tool: ToolLike }): string {
+function describeToolSignature({ realName, jsName, tool: toolDef }: { realName: string, jsName: string, tool: ToolLike }): string {
     const argList = extractArgList(toolDef.inputSchema)
     const summary = firstLine(toolDef.description)
     const signature = `tools.${jsName}({ ${argList} })`
-    return summary.length > 0 ? `${signature} — ${summary}` : signature
+    const returns = RETURN_SHAPE_HINTS[realName]
+    const head = summary.length > 0 ? `${signature} — ${summary}` : signature
+    return returns ? `${head}\n    ↳ returns ${returns}` : head
 }
 
 function firstLine(text?: string): string {
@@ -361,7 +385,7 @@ function buildToolNamespaceListing(tools: ToolSet): string {
     for (const [realName, value] of Object.entries(tools)) {
         if (NON_CALLABLE_TOOL_NAMES.has(realName)) continue
         if (!isToolLike(value)) continue
-        lines.push(describeToolSignature({ jsName: toJsName(realName), tool: value }))
+        lines.push(describeToolSignature({ realName, jsName: toJsName(realName), tool: value }))
     }
     return lines.join('\n')
 }
@@ -449,17 +473,17 @@ function createCodeModeTools({ getTools, log }: {
             description: [
                 'Code Mode — write a small async JavaScript module that ORCHESTRATES your other tools (calls them, loops over results, aggregates) and runs server-side. PREFER this over calling tools one-by-one whenever you need to: call several tools in sequence or in a loop, fan a tool across many items, or chain a large read into a transform. It saves round-trips (the loop runs server-side, not turn-by-turn) AND context (large tool results stay server-side — only your final `return` value comes back, capped at 64KB).',
                 '',
-                'Shape: export an async `run`: `export const run = async (tools, data) => { /* ... */ return result }`. Call any tool as `await tools.<name>({ ...args })` — args are the SAME inputs that tool takes normally. Each call RETURNS THE PARSED RESULT DIRECTLY — a plain object (or, for non-JSON tools, a string) you can use right away. Do NOT reach for `.content[0].text` or `JSON.parse` the result; the bridge already unwraps and parses it for you. Each bridged call inherits connections, conversation context, and approval gates (a gated tool like ap_send_email will still pop its confirmation card and block until the user approves). `data`/`inputs` holds any offloaded results passed in. Return a COMPACT summary, not raw data. `fetch`, `require`, `process`, and file/network access are disabled — reach external systems only through bridged tools.',
+                'Shape: export an async `run`: `export const run = async (tools, data) => { /* ... */ return result }`. Call any tool as `await tools.<name>({ ...args })` — args are the SAME inputs that tool takes normally. Each call RETURNS THE ALREADY-PARSED RESULT DIRECTLY — the tool\'s plain return value (an object, or for non-JSON tools a string), NOT an MCP envelope. Do NOT reach for `.content[0].text`, `.structuredContent`, or `JSON.parse` the result; the bridge already unwrapped and parsed it. Each bridged call inherits connections, conversation context, and approval gates (a gated tool like ap_send_email will still pop its confirmation card and block until the user approves). `data`/`inputs` holds any offloaded results passed in. Return a COMPACT summary, not raw data. `fetch`, `require`, `process`, and file/network access are disabled — reach external systems only through bridged tools.',
                 '',
-                'Example — score every open deal and return just the summary, without paging each batch through your context:',
+                'RESULT SHAPES: for the listed tools, the exact return shape is shown after `↳ returns` below — read your field names from there, do NOT guess (a wrong field like `result.actions` throws `Cannot read properties of undefined` and fails the run). The shape is the parsed return value itself, so access fields straight off it (e.g. `const { pieces } = await tools.ap_research_pieces({...})`). For any tool WITHOUT a documented shape, or any per-piece `ap_execute_action` output, treat the shape as unknown: never assume a field exists — guard with optional chaining / `??`, inspect via `Object.keys(result)`, or `console.log(result)` and branch defensively.',
+                '',
+                'Example — count actions for several pieces in ONE call, reading fields off the documented shape (note: pieces[].actions are OBJECTS, so use `.length` and `a.name`, not string assumptions):',
                 'export const run = async (tools) => {',
-                '  const res = await tools.ap_execute_action({ pieceName: "@activepieces/piece-hubspot", actionName: "list_deals", input: { limit: 100 } })',
-                '  const deals = res.results',
-                '  const stalled = deals.filter(d => d.daysSinceActivity > 30)',
-                '  return { total: deals.length, stalled: stalled.length, topStalled: stalled.slice(0, 5).map(d => d.name) }',
+                '  const { pieces } = await tools.ap_research_pieces({ pieceNames: ["gmail", "slack", "linear"] })',
+                '  return pieces.map(p => ({ piece: p.name, actionCount: p.actions?.length ?? 0, sample: (p.actions ?? []).slice(0, 3).map(a => a.name) }))',
                 '}',
                 '',
-                'Callable tools (call as tools.<name>({ ... })):',
+                'Callable tools (call as tools.<name>({ ... }); `↳ returns` shows the shape your code receives):',
                 namespace,
             ].join('\n'),
             inputSchema: z.object({
