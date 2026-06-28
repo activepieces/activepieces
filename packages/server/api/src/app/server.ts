@@ -65,7 +65,6 @@ export const setupServer = async (): Promise<FastifyInstance> => {
                 .catch(() => next(new Error('Authentication error')))
         })
         app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app!.log), app!.log))
-        app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app!.log))
     }
 
     if (system.isApp()) {
