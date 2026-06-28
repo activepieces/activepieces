@@ -42,7 +42,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
         const flowVersion: FlowVersion = resolved.flowVersion
-        const pieceName = (flowVersion.trigger as PieceTrigger).settings.pieceName
+        const pieceName = (flowVersion.trigger as PieceTrigger).settings?.pieceName
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
