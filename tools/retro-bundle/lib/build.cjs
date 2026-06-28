@@ -42,7 +42,10 @@ async function buildBundle({ name, version, workDir, forceExternal = [], log = (
     || readDepVersion(nodeModulesDir, '@activepieces/framework')
 
   log('[3] pass-1 esbuild (inline all, externalize known natives)')
-  const outfile = path.join(pkgDir, '__bundle.js')
+  // .cjs (not .js): the assembled bundle is CommonJS, and some pieces ship package.json
+  // "type":"module" — a .js there would be treated as ESM and break the require() in
+  // enumerateExportNames (and the engine's CJS interop). .cjs forces CommonJS regardless.
+  const outfile = path.join(pkgDir, '__bundle.cjs')
   // Heal loop: a dependency can itself require a TRANSITIVE peer dep that npm won't auto-install
   // (e.g. @activepieces/shared peer-requires dayjs). esbuild surfaces these as "Could not resolve X".
   // Discover them from the error, install pinned to the requiring package's declared range, retry.
