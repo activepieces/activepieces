@@ -128,7 +128,7 @@ async function runSimulation(params: { queueName: string, workers: number, jobs:
             }
             else {
                 await completeJob(job.jobId, job.token)
-                jobAssignmentTracker.clear(job.jobId)
+                jobAssignmentTracker.clear({ jobId: job.jobId, queueName: job.queueName })
                 completed++
             }
         }

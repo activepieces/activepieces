@@ -280,7 +280,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
         }
 
-        jobAssignmentTracker.clear(input.jobId)
+        jobAssignmentTracker.clear({ jobId: input.jobId, queueName: input.queueName })
 
         const failed = input.status === EngineResponseStatus.INTERNAL_ERROR || !isNil(error)
         for (const interceptor of interceptors) {

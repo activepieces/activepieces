@@ -30,11 +30,22 @@ describe('jobAssignmentTracker', () => {
         expect(jobAssignmentTracker.takeByWorker('w2')).toEqual([{ jobId: 'j2', token: 't2', queueName: 'q' }])
     })
 
+    it('keeps the same job id in different queues separate (no token clobbering)', () => {
+        jobAssignmentTracker.record({ workerId: 'w1', jobId: 'shared', token: 'tA', queueName: 'qA' })
+        jobAssignmentTracker.record({ workerId: 'w2', jobId: 'shared', token: 'tB', queueName: 'qB' })
+
+        // completing it in qA must not touch the qB assignment
+        jobAssignmentTracker.clear({ jobId: 'shared', queueName: 'qA' })
+
+        expect(jobAssignmentTracker.takeByWorker('w1')).toEqual([])
+        expect(jobAssignmentTracker.takeByWorker('w2')).toEqual([{ jobId: 'shared', token: 'tB', queueName: 'qB' }])
+    })
+
     it('cleared (completed) jobs are not returned on disconnect', () => {
         jobAssignmentTracker.record({ workerId: 'w1', jobId: 'j1', token: 't1', queueName: 'q' })
         jobAssignmentTracker.record({ workerId: 'w1', jobId: 'j2', token: 't2', queueName: 'q' })
 
-        jobAssignmentTracker.clear('j1')
+        jobAssignmentTracker.clear({ jobId: 'j1', queueName: 'q' })
 
         expect(jobAssignmentTracker.takeByWorker('w1')).toEqual([{ jobId: 'j2', token: 't2', queueName: 'q' }])
     })
@@ -51,6 +62,6 @@ describe('jobAssignmentTracker', () => {
     })
 
     it('clear on an unknown job is a no-op', () => {
-        expect(() => jobAssignmentTracker.clear('ghost')).not.toThrow()
+        expect(() => jobAssignmentTracker.clear({ jobId: 'ghost', queueName: 'q' })).not.toThrow()
     })
 })
