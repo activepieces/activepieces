@@ -29,7 +29,6 @@ import {
   ItemActions,
 } from '@/components/custom/item';
 import { Button } from '@/components/ui/button';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
@@ -55,24 +54,21 @@ export function FeatureUsageCards({
   });
 
   return (
-    <ScrollArea>
-      <div className="flex gap-4 pb-3">
-        {cards.map(({ display, resolved }) => (
-          <FeatureUsageCard
-            key={display.featureId}
-            display={display}
-            resolved={resolved}
-            toppable={topUpFeatures.find(
-              (feature) => feature.featureId === display.featureId,
-            )}
-            autoTopUp={autoTopUps.find(
-              (config) => config.featureId === display.featureId,
-            )}
-          />
-        ))}
-      </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+    <div className="flex flex-wrap gap-4">
+      {cards.map(({ display, resolved }) => (
+        <FeatureUsageCard
+          key={display.featureId}
+          display={display}
+          resolved={resolved}
+          toppable={topUpFeatures.find(
+            (feature) => feature.featureId === display.featureId,
+          )}
+          autoTopUp={autoTopUps.find(
+            (config) => config.featureId === display.featureId,
+          )}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -104,6 +100,7 @@ function FeatureUsageCard({
           <TopUpControls
             feature={toppable}
             autoTopUp={autoTopUp}
+            kind={display.kind}
             purchaseTitle={display.purchaseTitle}
           />
         </ItemActions>
@@ -156,17 +153,62 @@ function UsageSummary({
   );
 }
 
+// Consumable features (credits) are refilled by AUTO top-up only — no manual one-off purchase (product
+// decision). Non-consumable/limit features (e.g. extra seats) you buy outright, so they get the MANUAL top-up
+// instead — you don't auto-buy seats. Branch on the feature kind.
 function TopUpControls({
   feature,
   autoTopUp,
+  kind,
   purchaseTitle,
 }: {
   feature: ToppableFeature;
   autoTopUp?: AutoTopUpConfig;
+  kind: FeatureKind;
   purchaseTitle: string;
 }) {
-  const queryClient = useQueryClient();
+  if (kind === 'consumable') {
+    return <AutoTopUpControl feature={feature} autoTopUp={autoTopUp} />;
+  }
+  return <ManualTopUpControl feature={feature} purchaseTitle={purchaseTitle} />;
+}
+
+function ManualTopUpControl({
+  feature,
+  purchaseTitle,
+}: {
+  feature: ToppableFeature;
+  purchaseTitle: string;
+}) {
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setIsPurchaseOpen(true)}
+      >
+        {t('Top up')}
+      </Button>
+      <ConsumableProductTopupsDialog
+        key={isPurchaseOpen ? 'open' : 'closed'}
+        isOpen={isPurchaseOpen}
+        onOpenChange={setIsPurchaseOpen}
+        feature={feature}
+        title={t(purchaseTitle)}
+      />
+    </div>
+  );
+}
+
+function AutoTopUpControl({
+  feature,
+  autoTopUp,
+}: {
+  feature: ToppableFeature;
+  autoTopUp?: AutoTopUpConfig;
+}) {
+  const queryClient = useQueryClient();
   const [isAutoTopUpOpen, setIsAutoTopUpOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { mutate: updateAutoTopUp, isPending } =
@@ -180,13 +222,6 @@ function TopUpControls({
 
   return (
     <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setIsPurchaseOpen(true)}
-      >
-        {t('Top up')}
-      </Button>
       {enabled && (
         <Button
           variant="ghost"
@@ -214,13 +249,6 @@ function TopUpControls({
             });
           }
         }}
-      />
-      <ConsumableProductTopupsDialog
-        key={isPurchaseOpen ? 'open' : 'closed'}
-        isOpen={isPurchaseOpen}
-        onOpenChange={setIsPurchaseOpen}
-        feature={feature}
-        title={t(purchaseTitle)}
       />
       <AutoTopUpConfigDialog
         key={isAutoTopUpOpen ? 'auto-open' : 'auto-closed'}
@@ -291,6 +319,7 @@ type FeatureDisplay = {
   kind: FeatureKind;
   label: string;
   icon: LucideIcon;
+  // Title for the manual top-up dialog (only used for non-consumable/limit features that you buy outright).
   purchaseTitle: string;
 };
 

@@ -19,6 +19,7 @@ export type ConsumableProductTopupParams = z.infer<typeof ConsumableProductTopup
 
 export const CheckoutPlanParamsSchema = z.object({
     planId: z.string(),
+    successUrl: z.string().optional(),
 })
 export type CheckoutPlanParams = z.infer<typeof CheckoutPlanParamsSchema>
 

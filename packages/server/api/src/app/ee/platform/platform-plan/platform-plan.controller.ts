@@ -20,11 +20,14 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
             billingProvider.get(request.log).getTopUpSettings(platform.id),
         ])
 
-        const { endDate: nextBillingDate, nextBillingAmount, cancelAt } = await billingProvider.get(request.log).getBillingInfo(platform.id)
+        const { endDate: nextBillingDate, nextBillingAmount, cancelAt, planId: currentPlanId, planName: currentPlanName, scheduledPlanName } = await billingProvider.get(request.log).getBillingInfo(platform.id)
 
         const response: PlatformBillingInformation = {
             plan: platformPlan,
             usage,
+            currentPlanId,
+            currentPlanName,
+            scheduledPlanName,
             nextBillingAmount,
             nextBillingDate,
             cancelAt,
@@ -42,6 +45,19 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return billingProvider.get(request.log).createCheckoutSession({
             platformId: request.principal.platform.id,
             planId: request.body.planId,
+            successUrl: request.body.successUrl,
+        })
+    })
+
+    fastify.post('/cancel', CancelRequest, async (request) => {
+        await billingProvider.get(request.log).cancelSubscription({
+            platformId: request.principal.platform.id,
+        })
+    })
+
+    fastify.post('/reactivate', ReactivateRequest, async (request) => {
+        await billingProvider.get(request.log).reactivateSubscription({
+            platformId: request.principal.platform.id,
         })
     })
 
@@ -112,6 +128,18 @@ const CheckoutRequest = {
             [StatusCodes.OK]: CheckoutSessionResponse,
         },
     },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const CancelRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const ReactivateRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },

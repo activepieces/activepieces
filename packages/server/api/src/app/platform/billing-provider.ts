@@ -3,7 +3,7 @@ import { AutoTopUpConfig, PurchasablePlan, ToppableFeature } from '@activepieces
 import { hooksFactory } from '../helper/hooks-factory'
 
 function defaultBillingInfo(): BillingInfo {
-    return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix(), nextBillingAmount: 0, cancelAt: null }
+    return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix(), nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null }
 }
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
@@ -27,6 +27,12 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     },
     configureAutoTopUp: async () => {
         return {}
+    },
+    cancelSubscription: async () => {
+        return
+    },
+    reactivateSubscription: async () => {
+        return
     },
     trackCredits: async () => {
         return
@@ -84,9 +90,7 @@ export type TrackAppSumoAiUsageParams = {
     properties?: Record<string, unknown>
 }
 
-// Used both for the enforcement gate (blocked) and the billing-page display. `unlimited` plans (old/comped +
-// appsumo) carry unlimited apCredits — limit/remaining are meaningless there, so callers should treat them as
-// "Unlimited" via the flag rather than the numbers.
+
 export type CreditsGateState = {
     blocked: boolean
     usage: number
@@ -100,7 +104,6 @@ export type AppSumoAiCreditsUsage = {
     limit: number
 }
 
-// Live (non-cached) consumable balances for the billing-page / sidebar display. `remaining: null` = unlimited.
 export type CreditsUsage = {
     usage: number
     remaining: number | null
@@ -127,6 +130,9 @@ export type BillingInfo = {
     endDate: number
     nextBillingAmount: number
     cancelAt: number | null
+    planId: string | null
+    planName: string | null
+    scheduledPlanName: string | null
 }
 
 export type TopUpFeatureParams = {
@@ -144,6 +150,14 @@ export type ConfigureAutoTopUpParams = {
     quantity: number
     maxMonthlyTopUps?: number | null
     returnUrl?: string
+}
+
+export type CancelSubscriptionParams = {
+    platformId: string
+}
+
+export type ReactivateSubscriptionParams = {
+    platformId: string
 }
 
 export enum AppSumoAction {
@@ -170,6 +184,8 @@ export type BillingProvider = {
     getBillingInfo(platformId: string): Promise<BillingInfo>
     topUpFeature(params: TopUpFeatureParams): Promise<{ checkoutUrl: string | null }>
     configureAutoTopUp(params: ConfigureAutoTopUpParams): Promise<{ setupPaymentUrl?: string }>
+    cancelSubscription(params: CancelSubscriptionParams): Promise<void>
+    reactivateSubscription(params: ReactivateSubscriptionParams): Promise<void>
     trackCredits(params: TrackCreditsParams): Promise<void>
     trackAppSumoAiUsage(params: TrackAppSumoAiUsageParams): Promise<void>
     ensureEnrolled(platformId: string): Promise<void>

@@ -3,7 +3,12 @@ import {
   ConsumableProductAutoTopupParams,
   CheckoutPlanParams,
 } from '@activepieces/shared';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
@@ -20,14 +25,17 @@ export const billingKeys = {
 
 export const billingMutations = {
   useCheckout: (setIsOpen?: (isOpen: boolean) => void) => {
+    const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async (params: CheckoutPlanParams) => {
-        const { checkoutUrl } = await platformBillingApi.checkout(params);
+      mutationFn: (params: CheckoutPlanParams) =>
+        platformBillingApi.checkout(params),
+      onSuccess: ({ checkoutUrl }) => {
         if (checkoutUrl) {
           window.open(checkoutUrl, '_blank');
+        } else {
+          refreshBillingCaches(queryClient);
+          toast.success(t('Subscription updated'));
         }
-      },
-      onSuccess: () => {
         setIsOpen?.(false);
       },
       onError: (error) => {
@@ -35,6 +43,38 @@ export const billingMutations = {
           description: t(error.message),
           duration: 3000,
         });
+      },
+    });
+  },
+  useCancelSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: () => platformBillingApi.cancel(),
+      onSuccess: () => {
+        refreshBillingCaches(queryClient);
+        toast.success(
+          t('Your plan will be canceled at the end of the billing period'),
+        );
+        setIsOpen?.(false);
+      },
+      onError: () => {
+        toast.error(t('Failed to cancel subscription'));
+        internalErrorToast();
+      },
+    });
+  },
+  useReactivateSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: () => platformBillingApi.reactivate(),
+      onSuccess: () => {
+        refreshBillingCaches(queryClient);
+        toast.success(t("You'll stay on your current plan"));
+        setIsOpen?.(false);
+      },
+      onError: () => {
+        toast.error(t('Failed to update subscription'));
+        internalErrorToast();
       },
     });
   },
@@ -87,10 +127,11 @@ export const billingMutations = {
 };
 
 export const billingQueries = {
-  usePlatformSubscription: (platformId: string) => {
+  usePlatformSubscription: (platformId: string, enabled = true) => {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
+      enabled,
     });
   },
   useListPlans: (platformId: string, enabled = true) => {
@@ -101,3 +142,11 @@ export const billingQueries = {
     });
   },
 };
+
+function refreshBillingCaches(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: ['platform'] });
+  queryClient.invalidateQueries({ queryKey: ['flags'] });
+  queryClient.invalidateQueries({
+    queryKey: ['platform-billing-subscription'],
+  });
+}

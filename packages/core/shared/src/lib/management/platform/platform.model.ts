@@ -252,6 +252,9 @@ export type ToppableFeature = z.infer<typeof ToppableFeature>
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
+    currentPlanId: Nullable(z.string()),
+    currentPlanName: Nullable(z.string()),
+    scheduledPlanName: Nullable(z.string()),
     nextBillingDate: z.number(),
     nextBillingAmount: z.number(),
     cancelAt: Nullable(z.number()),

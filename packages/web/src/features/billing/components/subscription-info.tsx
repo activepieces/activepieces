@@ -11,14 +11,24 @@ type SubscriptionInfoProps = {
 };
 
 export const SubscriptionInfo = ({ info }: SubscriptionInfoProps) => {
-  const isPaid = !isNil(info.plan.plan) && info.plan.plan !== PlanName.FREE;
+  const currentPlanId = info.currentPlanId;
+  const isPaid = !isNil(currentPlanId) && currentPlanId !== PlanName.FREE;
+  const intervalLabel = currentPlanId?.endsWith('_annual')
+    ? t('/year')
+    : t('/month');
+  const planLabel = !isNil(info.currentPlanName)
+    ? info.currentPlanName
+    : isNil(currentPlanId)
+    ? t('Free')
+    : currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1);
+  const cancelDate = isNil(info.cancelAt)
+    ? null
+    : dayjs.unix(info.cancelAt).format('MMM D, YYYY');
 
   return (
     <div className="space-y-4">
       <Badge variant="accent" className="rounded-sm text-sm">
-        {isNil(info.plan.plan)
-          ? t('Free')
-          : info?.plan.plan.charAt(0).toUpperCase() + info?.plan.plan.slice(1)}
+        {planLabel}
       </Badge>
 
       {isPaid && (
@@ -26,7 +36,7 @@ export const SubscriptionInfo = ({ info }: SubscriptionInfoProps) => {
           <div className="text-5xl font-semibold">
             ${info.nextBillingAmount || Number(0).toFixed(2)}
           </div>
-          <div className="text-xl text-muted-foreground">{t('/month')}</div>
+          <div className="text-xl text-muted-foreground">{intervalLabel}</div>
         </div>
       )}
 
@@ -44,16 +54,16 @@ export const SubscriptionInfo = ({ info }: SubscriptionInfoProps) => {
         </div>
       )}
 
-      {info?.cancelAt && (
+      {!isNil(cancelDate) && (
         <div className="text-sm text-muted-foreground flex items-center gap-2">
           <CalendarDays className="w-4 h-4" />
           <span>
-            {t('Subscription will end')}{' '}
-            <span className="font-semibold">
-              {dayjs(dayjs.unix(info.cancelAt).toISOString()).format(
-                'MMM D, YYYY',
-              )}
-            </span>
+            {!isNil(info.scheduledPlanName)
+              ? t('Switches to {plan} on {date}', {
+                  plan: info.scheduledPlanName,
+                  date: cancelDate,
+                })
+              : t('Subscription will end on {date}', { date: cancelDate })}
           </span>
         </div>
       )}

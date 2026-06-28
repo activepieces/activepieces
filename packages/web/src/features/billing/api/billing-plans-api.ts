@@ -25,6 +25,12 @@ export const platformBillingApi = {
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
   },
+  cancel() {
+    return api.post<void>('/v1/platform-billing/cancel', {});
+  },
+  reactivate() {
+    return api.post<void>('/v1/platform-billing/reactivate', {});
+  },
   createConsumableProductTopup(params: ConsumableProductTopupParams) {
     return api.post<{ paymentUrl: string }>(
       '/v1/platform-billing/consumable-product-topups/checkout',

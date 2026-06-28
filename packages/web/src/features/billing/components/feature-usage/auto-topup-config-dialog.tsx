@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -42,9 +42,11 @@ export function AutoTopUpConfigDialog({
   isEditing = false,
 }: AutoTopUpConfigDialogProps) {
   const queryClient = useQueryClient();
-  const [threshold, setThreshold] = useState(currentThreshold ?? 1000);
+  const [threshold, setThreshold] = useState(
+    currentThreshold ?? feature.billingUnits,
+  );
   const [creditsToAdd, setCreditsToAdd] = useState(
-    currentCreditsToAdd ?? 10000,
+    currentCreditsToAdd ?? feature.billingUnits * 10,
   );
   const [maxMonthlyLimit, setMaxMonthlyLimit] = useState<number | null>(
     currentMaxMonthlyLimit ?? null,
@@ -100,12 +102,12 @@ export function AutoTopUpConfigDialog({
                 value={[threshold]}
                 onValueChange={(v) => setThreshold(v[0])}
                 min={0}
-                max={100000}
-                step={1000}
+                max={feature.billingUnits * 100}
+                step={feature.billingUnits}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{t('0')}</span>
-                <span>{t('100,000')}</span>
+                <span>{(0).toLocaleString()}</span>
+                <span>{(feature.billingUnits * 100).toLocaleString()}</span>
               </div>
             </div>
 
@@ -121,13 +123,13 @@ export function AutoTopUpConfigDialog({
               <Slider
                 value={[creditsToAdd]}
                 onValueChange={(v) => setCreditsToAdd(v[0])}
-                min={1000}
-                max={500000}
-                step={1000}
+                min={feature.billingUnits}
+                max={feature.billingUnits * 500}
+                step={feature.billingUnits}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{t('1,000')}</span>
-                <span>{t('500,000')}</span>
+                <span>{feature.billingUnits.toLocaleString()}</span>
+                <span>{(feature.billingUnits * 500).toLocaleString()}</span>
               </div>
             </div>
 
@@ -189,6 +191,15 @@ export function AutoTopUpConfigDialog({
                 })}
               </div>
             </div>
+          </div>
+
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <Info className="size-3.5 mt-0.5 shrink-0" />
+            <span>
+              {t(
+                'Changes apply on your next usage — credits are topped up the next time your balance falls below the threshold, not immediately when you save.',
+              )}
+            </span>
           </div>
         </div>
 

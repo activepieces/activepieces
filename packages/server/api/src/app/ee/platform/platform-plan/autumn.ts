@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core-utils'
+import { isEmpty, isNil } from '@activepieces/core-utils'
 import { apDayjs, apVersionUtil, safeHttp } from '@activepieces/server-utils'
 import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import {
@@ -11,7 +11,6 @@ import {
     type GetCustomerResponse,
     type GetEntityParams,
     type ListPlansParams,
-    PlanBillingMethod,
     type TrackParams,
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
@@ -182,11 +181,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
     getTopUpSettings: async (platformId: string) => {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-        if (isNil(client)) {
+        const creds = await getConsoleCreds(log, platformId)
+        if (isNil(client) || isNil(creds)) {
             return { autoTopUps: [], topUpFeatures: [] }
         }
-   
-        const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
+        const customer = await client.getCustomer({ expand: ['billing_controls.auto_topups.purchase_limit'] })
         const autoTopUps: AutoTopUpConfig[] = (customer.billingControls?.autoTopups ?? []).flatMap((autoTopUp) => {
             if (!isAutumnFeatureId(autoTopUp.featureId)) {
                 return []
@@ -199,19 +198,23 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 maxMonthlyTopUps: autoTopUp.purchaseLimit?.limit ?? null,
             }]
         })
-        return { autoTopUps, topUpFeatures: getToppableFeatures(customer) }
+        return { autoTopUps, topUpFeatures: await toppableFeaturesOnConsole(creds) }
     },
     createCheckoutSession: async ({ platformId, planId, successUrl }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
-        const { paymentUrl } = await checkoutOnConsole({ platformId, planId, successUrl })
+        const creds = await getConsoleCreds(log, platformId)
+        if (isNil(creds)) {
+            return { checkoutUrl: null }
+        }
+        const { paymentUrl } = await checkoutOnConsole({ ...creds, planId, successUrl })
         return { checkoutUrl: paymentUrl }
     },
     getBillingPortalUrl: async ({ platformId, returnUrl }) => {
-        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-        if (isNil(client)) {
+        const creds = await getConsoleCreds(log, platformId)
+        if (isNil(creds)) {
             return { url: '' }
         }
-        const { url } = await portalOnConsole({ platformId, returnUrl })
+        const { url } = await portalOnConsole({ ...creds, returnUrl })
         return { url: url ?? '' }
     },
     getBillingInfo: async (platformId) => {
@@ -219,47 +222,60 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const monthEnd = apDayjs().endOf('month').unix()
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
-            return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null }
+            return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null }
         }
         const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
-        const basePlan = customer.subscriptions.find((subscription) => !subscription.addOn)
+        const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
+        const basePlan = baseSubscriptions.find((subscription) => subscription.status === 'active') ?? baseSubscriptions[0]
+        const scheduledPlan = baseSubscriptions.find((subscription) => subscription !== basePlan)
         return {
-            startDate: basePlan?.currentPeriodStart ?? monthStart,
-            endDate: basePlan?.currentPeriodEnd ?? monthEnd,
+            planId: basePlan?.planId ?? null,
+            planName: basePlan?.plan?.name ?? null,
+            startDate: msToUnixSeconds(basePlan?.currentPeriodStart) ?? monthStart,
+            endDate: msToUnixSeconds(basePlan?.currentPeriodEnd) ?? monthEnd,
             nextBillingAmount: basePlan?.plan?.price?.amount ?? 0,
-            cancelAt: basePlan?.canceledAt ?? null,
+            cancelAt: msToUnixSeconds(basePlan?.expiresAt) ?? null,
+            scheduledPlanName: scheduledPlan?.plan?.name ?? null,
         }
     },
     topUpFeature: async ({ platformId, featureId, quantity, successUrl }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
-        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-        if (isNil(client)) {
+        const creds = await getConsoleCreds(log, platformId)
+        if (isNil(creds)) {
             return { checkoutUrl: null }
         }
-        const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
-        assertFeatureIsToppable({ customer, featureId })
-        const basePlanId = customer.subscriptions.find((subscription) => !subscription.addOn)?.planId
-        if (isNil(basePlanId)) {
-            return { checkoutUrl: null }
-        }
-        const { paymentUrl } = await topUpOnConsole({ platformId, planId: basePlanId, featureId, quantity, successUrl })
+        const { paymentUrl } = await topUpOnConsole({ ...creds, featureId, quantity, successUrl })
         return { checkoutUrl: paymentUrl }
     },
     configureAutoTopUp: async ({ platformId, featureId, enabled, threshold, quantity, maxMonthlyTopUps, returnUrl }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-        if (isNil(client)) {
+        const creds = await getConsoleCreds(log, platformId)
+        if (isNil(client) || isNil(creds)) {
             return {}
         }
-        const customer = enabled ? await client.getCustomer({ expand: ['subscriptions.plan'] }) : null
-        if (!isNil(customer)) {
-            assertFeatureIsToppable({ customer, featureId })
-        }
+        const customer = enabled ? await client.getCustomer({ expand: ['payment_method'] }) : null
         const setupPaymentReturnUrl = enabled && isNil(customer?.paymentMethod) ? returnUrl : undefined
         const { setupPaymentUrl } = await configureAutoTopUpOnConsole({
-            platformId, featureId, enabled, threshold, quantity, maxMonthlyTopUps, setupPaymentReturnUrl,
+            ...creds, featureId, enabled, threshold, quantity, maxMonthlyTopUps, setupPaymentReturnUrl,
         })
         return isNil(setupPaymentUrl) ? {} : { setupPaymentUrl }
+    },
+    cancelSubscription: async ({ platformId }) => {
+        await autumnUtils.ensureEnrolled(log, platformId)
+        const creds = await getConsoleCreds(log, platformId)
+        if (isNil(creds)) {
+            return
+        }
+        await cancelOnConsole({ ...creds })
+    },
+    reactivateSubscription: async ({ platformId }) => {
+        await autumnUtils.ensureEnrolled(log, platformId)
+        const creds = await getConsoleCreds(log, platformId)
+        if (isNil(creds)) {
+            return
+        }
+        await reactivateOnConsole({ ...creds })
     },
     trackCredits: async (params: TrackCreditsParams) => {
         const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
@@ -371,33 +387,6 @@ function isAutumnFeatureId(value: string): value is AutumnFeatureId {
     return Object.values(AutumnFeatureId).some((id) => id === value)
 }
 
-function getToppableFeatures(customer: GetCustomerResponse): ToppableFeature[] {
-    const basePlan = customer.subscriptions.find((subscription) => !subscription.addOn)?.plan
-    if (isNil(basePlan)) {
-        return []
-    }
-    return basePlan.items.flatMap((item) => {
-        if (item.price?.billingMethod !== PlanBillingMethod.Prepaid || !isAutumnFeatureId(item.featureId)) {
-            return []
-        }
-        return [{
-            featureId: item.featureId,
-            pricePerUnit: item.price.amount ?? 0,
-            billingUnits: item.price.billingUnits,
-        }]
-    })
-}
-
-function assertFeatureIsToppable({ customer, featureId }: { customer: GetCustomerResponse, featureId: string }): void {
-    if (!getToppableFeatures(customer).some((feature) => feature.featureId === featureId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS,
-            params: { message: 'Top-up is not available for this feature on the current plan' },
-        })
-    }
-}
-
-
 function toProjectedLimit(balance: AutumnFeatureBalance | undefined, whenAbsent: number | null): number | null {
     if (isNil(balance)) {
         return whenAbsent
@@ -430,6 +419,10 @@ async function computeCreditsState(platformId: string): Promise<CreditsGateState
         remaining: balance?.remaining ?? 0,
         unlimited: balance?.unlimited ?? false,
     }
+}
+
+function msToUnixSeconds(ms: number | null | undefined): number | null {
+    return isNil(ms) ? null : Math.floor(ms / 1000)
 }
 
 function toBalanceCache(balance: Balance): CreditsBalanceCache {
@@ -487,40 +480,78 @@ async function activateOnConsole({ licenseKey, platformId }: { licenseKey: strin
     return response.data.data
 }
 
-async function checkoutOnConsole({ platformId, planId, successUrl }: { platformId: string, planId: string, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
+async function checkoutOnConsole({ autumnCustomerId, autumnApiKey, planId, successUrl }: ConsoleCustomerCall & { planId: string, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
     const response = await safeHttp.axios.post<{ data: { paymentUrl: string | null } }>(
         `${AUTUMN_CONSOLE_URL}/api/billing/checkout`,
-        { platformId, planId, successUrl },
-        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+        { autumnCustomerId, planId, successUrl },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
     )
     return response.data.data
 }
 
-async function topUpOnConsole({ platformId, planId, featureId, quantity, successUrl }: { platformId: string, planId: string, featureId: string, quantity: number, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
+async function toppableFeaturesOnConsole({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<ToppableFeature[]> {
+    const response = await safeHttp.axios.post<{ data: RawToppableFeature[] }>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/toppable-features`,
+        { autumnCustomerId },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
+    )
+    return response.data.data.flatMap((feature) => {
+        if (!isAutumnFeatureId(feature.featureId)) {
+            return []
+        }
+        return [{ featureId: feature.featureId, pricePerUnit: feature.pricePerUnit, billingUnits: feature.billingUnits }]
+    })
+}
+
+async function topUpOnConsole({ autumnCustomerId, autumnApiKey, featureId, quantity, successUrl }: ConsoleCustomerCall & { featureId: string, quantity: number, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
     const response = await safeHttp.axios.post<{ data: { paymentUrl: string | null } }>(
         `${AUTUMN_CONSOLE_URL}/api/billing/topup`,
-        { platformId, planId, featureId, quantity, successUrl },
-        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+        { autumnCustomerId, featureId, quantity, successUrl },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
     )
     return response.data.data
 }
 
-async function portalOnConsole({ platformId, returnUrl }: { platformId: string, returnUrl?: string }): Promise<{ url: string | null }> {
+async function portalOnConsole({ autumnCustomerId, autumnApiKey, returnUrl }: ConsoleCustomerCall & { returnUrl?: string }): Promise<{ url: string | null }> {
     const response = await safeHttp.axios.post<{ data: { url: string | null } }>(
         `${AUTUMN_CONSOLE_URL}/api/billing/portal`,
-        { platformId, returnUrl },
-        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+        { autumnCustomerId, returnUrl },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
     )
     return response.data.data
 }
 
-async function configureAutoTopUpOnConsole(params: { platformId: string, featureId: string, enabled: boolean, threshold: number, quantity: number, maxMonthlyTopUps?: number | null, setupPaymentReturnUrl?: string }): Promise<{ setupPaymentUrl?: string }> {
+async function configureAutoTopUpOnConsole({ autumnCustomerId, autumnApiKey, featureId, enabled, threshold, quantity, maxMonthlyTopUps, setupPaymentReturnUrl }: ConsoleCustomerCall & { featureId: string, enabled: boolean, threshold: number, quantity: number, maxMonthlyTopUps?: number | null, setupPaymentReturnUrl?: string }): Promise<{ setupPaymentUrl?: string }> {
     const response = await safeHttp.axios.post<{ data: { setupPaymentUrl?: string } }>(
         `${AUTUMN_CONSOLE_URL}/api/billing/auto-topup`,
-        params,
-        { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+        { autumnCustomerId, featureId, enabled, threshold, quantity, maxMonthlyTopUps, setupPaymentReturnUrl },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
     )
     return response.data.data
+}
+
+async function cancelOnConsole({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<void> {
+    await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/cancel`,
+        { autumnCustomerId },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
+    )
+}
+
+async function reactivateOnConsole({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<void> {
+    await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        `${AUTUMN_CONSOLE_URL}/api/billing/reactivate`,
+        { autumnCustomerId },
+        { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
+    )
+}
+
+async function getConsoleCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
+    const { autumnCustomerId, autumnApiKey } = await platformPlanService(log).getAutumnCredentials(platformId)
+    if (isNil(autumnCustomerId) || isNil(autumnApiKey)) {
+        return null
+    }
+    return { autumnCustomerId, autumnApiKey }
 }
 
 async function compAppSumoOnConsole({ platformId, planId, action }: { platformId: string, planId?: string, action: AppSumoAction }): Promise<void> {
@@ -535,6 +566,17 @@ async function compAppSumoOnConsole({ platformId, planId, action }: { platformId
     )
 }
 
+
+type ConsoleCustomerCall = {
+    autumnCustomerId: string
+    autumnApiKey: string
+}
+
+type RawToppableFeature = {
+    featureId: string
+    pricePerUnit: number
+    billingUnits: number
+}
 
 type WithoutCustomerId<T> = Omit<T, 'customerId'>
 

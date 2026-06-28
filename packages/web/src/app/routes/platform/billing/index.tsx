@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId, PlanName } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -47,10 +47,10 @@ function BillingPageDetails() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
+  const { mutate: reactivateSubscription, isPending: isReactivating } =
+    billingMutations.useReactivateSubscription();
   const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
-  const hasPaidPlan =
-    !isNil(platformPlanInfo?.plan?.plan) &&
-    platformPlanInfo.plan.plan !== PlanName.FREE;
+  const hasBillingPortal = (platformPlanInfo?.nextBillingAmount ?? 0) > 0;
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
@@ -88,7 +88,7 @@ function BillingPageDetails() {
             >
               {t('Manage Plan')}
             </Button>
-            {hasPaidPlan && (
+            {hasBillingPortal && (
               <Button
                 variant="outline"
                 size="sm"
@@ -96,6 +96,17 @@ function BillingPageDetails() {
                 onClick={() => redirectToPortalSession()}
               >
                 {t('Access Billing Portal')}
+              </Button>
+            )}
+            {!isNil(platformPlanInfo.cancelAt) && (
+              <Button
+                variant="default"
+                size="sm"
+                className="w-fit"
+                disabled={isReactivating}
+                onClick={() => reactivateSubscription()}
+              >
+                {t('Keep current plan')}
               </Button>
             )}
           </div>
