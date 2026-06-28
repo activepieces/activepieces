@@ -44,6 +44,9 @@ export const pieceBundle = (log: FastifyBaseLogger) => ({
             }
             void tryCatch(() => enqueueBundleJob({ name, version, log }))
         }
+        if (system.getBoolean(AppSystemProp.USE_CDN_FOR_BUNDLES)) {
+            return { type: 'redirect', url: cdnTarballUrl({ name, version }) }
+        }
         return { type: 'redirect', url: npmTarballUrl({ name, version }) }
     },
     registerJobHandler(): void {
@@ -71,6 +74,10 @@ async function enqueueBundleJob({ name, version, log }: EnqueueBundleJobParams):
     })
 }
 
+function cdnTarballUrl({ name, version }: PieceRef): string {
+    return `${CDN_PIECES_URL}${name.replace('/', '-')}-${version}.tgz`
+}
+
 function npmTarballUrl({ name, version }: PieceRef): string {
     const unscopedName = name.startsWith('@') ? name.split('/')[1] : name
     return `${NPM_REGISTRY_URL}/${name}/-/${unscopedName}-${version}.tgz`
@@ -81,6 +88,7 @@ function pieceBundleS3Key({ name, version }: PieceRef): string {
 }
 
 const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
+const CDN_PIECES_URL = 'https://cdn.activepieces.com/pieces/retro/'
 const S3_PIECES_PREFIX = 'pieces/'
 
 type PieceRef = {
