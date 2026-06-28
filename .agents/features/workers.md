@@ -27,10 +27,10 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 
 ## Connection & Poll Flow
 1. Worker connects → emits `FETCH_WORKER_SETTINGS`; app's `machineService.onConnection` returns `WorkerSettingsResponse` (incl. `APP_VERSION`) and registers `createHandlers` for the socket.
-2. Worker caches settings and spawns `concurrency` `pollAndExecute` loops.
+2. Worker caches settings, **shuts down any old `Runtime` (fire-and-forget) and creates a fresh one**, then spawns `concurrency` `pollAndExecute` loops. Recreating per (re)connect means an in-flight job from a prior connection is killed with its box (it fails fast and BullMQ retries it) rather than lingering on a reused box — reusing a busy box let the new generation collide on the single-operation engine child and let the lingering job's lock lapse → BullMQ `Job stalled`.
 3. Each loop calls `apiClient.poll(machineInfo)`; the app's `poll` handler returns the next job for the worker's queue, or `null`.
 4. On job: worker executes in a sandbox, periodically `extendLock`, then `completeJob`. For polling and webhook trigger jobs specifically, the worker also calls `saveTriggerRunStats` (best-effort, non-fatal on failure) after execution to record a COMPLETED/FAILED run for that piece, powering the Platform Admin Triggers Health page.
-5. On disconnect, `connectionGeneration++` stops the loops; Socket.IO auto-reconnects and the cycle repeats.
+5. On disconnect, `connectionGeneration++` stops the loops; Socket.IO auto-reconnects (incl. a manual reconnect on `io server disconnect`, e.g. an app restart during a deploy) and the cycle repeats — recreating the runtime as in step 2.
 
 > **Payload resolution is engine-side, not worker-side.** Jobs carry a `JobPayload` (`inline` value or `ref` `fileId`). The worker forwards it unchanged into the engine operation; the engine hydrates a `ref` via the file-download path (direct bytes or an S3 signed-link redirect). There is no worker→API payload-fetch RPC — the contract exposes no `getPayloadFile`.
 

@@ -54,6 +54,7 @@ const systemPropValidators: {
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.LOG_FILE]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
+    [AppSystemProp.CLOUD_CHAT_ROLLOUT_CAP]: numberValidator,
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
