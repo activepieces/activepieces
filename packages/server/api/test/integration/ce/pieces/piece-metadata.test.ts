@@ -571,13 +571,16 @@ describe('Piece Metadata CE API', () => {
     })
 
     describe('audience filtering (canvas filter)', () => {
+        // Covers all three audience values; `both` and untagged actions must stay visible in
+        // both the human and ai perspectives — only the opposite single audience is hidden.
         const buildActions = (): Record<string, ActionBase> => ({
-            human_action: { name: 'human_action', displayName: 'Human Action', description: 'human action', props: {}, requireAuth: false, audience: 'both' },
-            default_action: { name: 'default_action', displayName: 'Default Action', description: 'default action', props: {}, requireAuth: false },
+            human_only_action: { name: 'human_only_action', displayName: 'Human Only', description: 'human only action', props: {}, requireAuth: false, audience: 'human' },
+            both_action: { name: 'both_action', displayName: 'Both Action', description: 'both audiences action', props: {}, requireAuth: false, audience: 'both' },
+            untagged_action: { name: 'untagged_action', displayName: 'Untagged Action', description: 'untagged action', props: {}, requireAuth: false },
             ai_action: { name: 'ai_action', displayName: 'AI Action', description: 'ai only action', props: {}, requireAuth: false, audience: 'ai' },
         })
 
-        it('GET /v1/pieces/:name hides audience:ai actions by default', async () => {
+        it('GET /v1/pieces/:name hides audience:ai by default and keeps both + untagged', async () => {
             const mockPiece = createMockPieceMetadata({
                 name: 'audience-detail-piece',
                 pieceType: PieceType.OFFICIAL,
@@ -596,11 +599,11 @@ describe('Piece Metadata CE API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-            expect(Object.keys(body.actions).sort()).toEqual(['default_action', 'human_action'])
+            expect(Object.keys(body.actions).sort()).toEqual(['both_action', 'human_only_action', 'untagged_action'])
             expect(body.actions).not.toHaveProperty('ai_action')
         })
 
-        it('GET /v1/pieces/:name?includeAiAudience=true returns audience:ai actions', async () => {
+        it('GET /v1/pieces/:name?audience=all returns every action', async () => {
             const mockPiece = createMockPieceMetadata({
                 name: 'audience-detail-piece',
                 pieceType: PieceType.OFFICIAL,
@@ -613,17 +616,39 @@ describe('Piece Metadata CE API', () => {
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({
                 method: 'GET',
-                url: '/api/v1/pieces/audience-detail-piece?includeAiAudience=true',
+                url: '/api/v1/pieces/audience-detail-piece?audience=all',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-            expect(Object.keys(body.actions).sort()).toEqual(['ai_action', 'default_action', 'human_action'])
-            expect(body.actions).toHaveProperty('ai_action')
+            expect(Object.keys(body.actions).sort()).toEqual(['ai_action', 'both_action', 'human_only_action', 'untagged_action'])
         })
 
-        it('GET /v1/pieces/:scope/:name hides audience:ai actions by default', async () => {
+        it('GET /v1/pieces/:name?audience=ai hides human-only and keeps ai + both + untagged', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'audience-detail-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: buildActions(),
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces/audience-detail-piece?audience=ai',
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(Object.keys(body.actions).sort()).toEqual(['ai_action', 'both_action', 'untagged_action'])
+            expect(body.actions).not.toHaveProperty('human_only_action')
+        })
+
+        it('GET /v1/pieces/:scope/:name hides audience:ai by default', async () => {
             const ctx = await createTestContext(app!)
             const mockPiece = createMockPieceMetadata({
                 name: '@activepieces/audience-scoped-piece',
@@ -638,7 +663,7 @@ describe('Piece Metadata CE API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-            expect(Object.keys(body.actions).sort()).toEqual(['default_action', 'human_action'])
+            expect(Object.keys(body.actions).sort()).toEqual(['both_action', 'human_only_action', 'untagged_action'])
             expect(body.actions).not.toHaveProperty('ai_action')
         })
 
@@ -663,11 +688,11 @@ describe('Piece Metadata CE API', () => {
             const entry = response?.json().find((p: { name: string }) => p.name === 'audience-list-piece')
             expect(entry).toBeDefined()
             const suggestedNames = entry.suggestedActions.map((a: { name: string }) => a.name).sort()
-            expect(suggestedNames).toEqual(['default_action', 'human_action'])
-            expect(entry.actions).toBe(2)
+            expect(suggestedNames).toEqual(['both_action', 'human_only_action', 'untagged_action'])
+            expect(entry.actions).toBe(3)
         })
 
-        it('GET /v1/pieces?includeAiAudience=true keeps audience:ai in suggestedActions and the full count', async () => {
+        it('GET /v1/pieces?audience=all keeps every action and the full count', async () => {
             const mockPiece = createMockPieceMetadata({
                 name: 'audience-list-piece',
                 pieceType: PieceType.OFFICIAL,
@@ -680,7 +705,7 @@ describe('Piece Metadata CE API', () => {
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({
                 method: 'GET',
-                url: '/api/v1/pieces?suggestionType=ACTION&includeAiAudience=true',
+                url: '/api/v1/pieces?suggestionType=ACTION&audience=all',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -688,8 +713,8 @@ describe('Piece Metadata CE API', () => {
             const entry = response?.json().find((p: { name: string }) => p.name === 'audience-list-piece')
             expect(entry).toBeDefined()
             const suggestedNames = entry.suggestedActions.map((a: { name: string }) => a.name).sort()
-            expect(suggestedNames).toEqual(['ai_action', 'default_action', 'human_action'])
-            expect(entry.actions).toBe(3)
+            expect(suggestedNames).toEqual(['ai_action', 'both_action', 'human_only_action', 'untagged_action'])
+            expect(entry.actions).toBe(4)
         })
     })
 })

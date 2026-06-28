@@ -28,6 +28,15 @@ export enum PieceOrderBy {
     DESC = 'DESC',
 }
 
+// Audience perspective for filtering actions out of the human piece metadata responses.
+// `both`-tagged and untagged actions are always included; only the opposite single audience
+// is hidden. Defaults to HUMAN (hide `audience: 'ai'`) on the human-facing endpoints.
+export enum PieceAudienceFilter {
+    HUMAN = 'human',
+    AI = 'ai',
+    ALL = 'all',
+}
+
 export const GetPieceRequestWithScopeParams = z.object({
     name: z.string(),
     scope: z.string(),
@@ -47,7 +56,7 @@ export const ListPiecesRequestQuery = z.object({
     release: ExactVersionType.optional(),
     includeTags: OptionalBooleanFromQuery,
     includeHidden: OptionalBooleanFromQuery,
-    includeAiAudience: OptionalBooleanFromQuery,
+    audience: z.nativeEnum(PieceAudienceFilter).optional(),
     edition: z.nativeEnum(ApEdition).optional(),
     searchQuery: z.string().optional(),
     sortBy: z.nativeEnum(PieceSortBy).optional(),
@@ -71,7 +80,7 @@ export const GetPieceRequestQuery = z.object({
     version: VersionType.optional(),
     projectId: z.string().optional(),
     locale: z.string().optional(),
-    includeAiAudience: OptionalBooleanFromQuery,
+    audience: z.nativeEnum(PieceAudienceFilter).optional(),
 })
 
 export type GetPieceRequestQuery = z.infer<typeof GetPieceRequestQuery>

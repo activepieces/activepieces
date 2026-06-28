@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, LocalesEnum } from '@activepieces/core-utils'
 import { ActionBase, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -54,13 +54,13 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             suggestionType: query.suggestionType,
             locale: query.locale as LocalesEnum | undefined,
         })
-        const includeAiAudience = query.includeAiAudience ?? false
+        const audience = query.audience ?? PieceAudienceFilter.HUMAN
         return pieceMetadataSummary.map((piece) => {
             const summary: PieceMetadataModelSummary = {
                 ...piece,
                 i18n: undefined,
             }
-            return includeAiAudience ? summary : excludeAiActionsFromSummary(summary)
+            return filterSummaryActionsByAudience(summary, audience)
         })
     })
 
@@ -80,7 +80,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
-            return (req.query.includeAiAudience ?? false) ? piece : excludeAiActionsFromModel(piece)
+            return filterModelActionsByAudience(piece, req.query.audience ?? PieceAudienceFilter.HUMAN)
         },
     )
 
@@ -98,7 +98,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
-            return (req.query.includeAiAudience ?? false) ? piece : excludeAiActionsFromModel(piece)
+            return filterModelActionsByAudience(piece, req.query.audience ?? PieceAudienceFilter.HUMAN)
         },
     )
 
@@ -154,32 +154,46 @@ function getPlatformId(principal: Principal): string | undefined {
     return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
 }
 
-const isAiOnlyAction = (action: ActionBase): boolean => action.audience === 'ai'
+// Whether an action is visible for the requested audience perspective. `both`-tagged and
+// untagged actions (untagged defaults to `both`) are always visible; only the opposite single
+// audience is hidden. ALL keeps everything.
+const isActionVisibleForAudience = (action: ActionBase, audience: PieceAudienceFilter): boolean => {
+    if (audience === PieceAudienceFilter.ALL) {
+        return true
+    }
+    if (audience === PieceAudienceFilter.AI) {
+        return action.audience !== 'human'
+    }
+    return action.audience !== 'ai'
+}
 
-// Hide AI-only actions from the human flow-builder responses. Applied strictly at the HTTP
-// boundary so internal callers (flow validation, MCP) that use the service directly still see
-// the full action set. Opt back in with ?includeAiAudience=true (AI surface / dev page).
-function excludeAiActionsFromModel(piece: PieceMetadataModel): PieceMetadataModel {
+// Filter actions out of the human-facing responses at the HTTP boundary so internal callers
+// (flow validation, MCP, tool-search reindex) that use the metadata service directly still see
+// the full set. Callers pick a perspective with ?audience= (defaults to HUMAN).
+function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter): PieceMetadataModel {
+    if (audience === PieceAudienceFilter.ALL) {
+        return piece
+    }
     return {
         ...piece,
         actions: Object.fromEntries(
-            Object.entries(piece.actions).filter(([, action]) => !isAiOnlyAction(action)),
+            Object.entries(piece.actions).filter(([, action]) => isActionVisibleForAudience(action, audience)),
         ),
     }
 }
 
-// The summary carries the suggestedActions array only when the caller requests action
-// suggestions (suggestionType ACTION/ACTION_AND_TRIGGER) — the path the flow-builder picker
-// uses. There we hide AI-only entries and recompute the count, so an AI-only piece reports 0
-// actions and drops out of the picker. Without suggestedActions there is no per-action data to
+// The summary carries suggestedActions only when the caller requests action suggestions
+// (suggestionType ACTION/ACTION_AND_TRIGGER) — the path the flow-builder picker uses. There we
+// filter the entries and recompute the count, so a piece with no actions for the perspective
+// reports 0 and drops out of the picker. Without suggestedActions there is no per-action data to
 // filter, so the count is left as the raw total (informational — the bare list is not where the
 // human UI reads per-piece counts, and no action records are exposed). A fully audience-aware
 // count would have to live in the metadata service, which is intentionally left untouched.
-function excludeAiActionsFromSummary(piece: PieceMetadataModelSummary): PieceMetadataModelSummary {
-    if (isNil(piece.suggestedActions)) {
+function filterSummaryActionsByAudience(piece: PieceMetadataModelSummary, audience: PieceAudienceFilter): PieceMetadataModelSummary {
+    if (audience === PieceAudienceFilter.ALL || isNil(piece.suggestedActions)) {
         return piece
     }
-    const visibleSuggestedActions = piece.suggestedActions.filter((action) => !isAiOnlyAction(action))
+    const visibleSuggestedActions = piece.suggestedActions.filter((action) => isActionVisibleForAudience(action, audience))
     const hiddenActionCount = piece.suggestedActions.length - visibleSuggestedActions.length
     return {
         ...piece,
