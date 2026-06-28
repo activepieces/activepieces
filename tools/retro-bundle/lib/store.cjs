@@ -98,6 +98,6 @@ function s3Store({ bucket, endpoint, region }) {
   }
 }
 
-const S3_PIECES_PREFIX = 'pieces/'
+const S3_PIECES_PREFIX = 'pieces/retro/'
 
 module.exports = { makeStore, bundleKey, S3_PIECES_PREFIX }

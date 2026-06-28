@@ -81,7 +81,7 @@ function pieceBundleS3Key({ name, version }: PieceRef): string {
 }
 
 const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
-const S3_PIECES_PREFIX = 'pieces/'
+const S3_PIECES_PREFIX = 'pieces/retro/'
 
 type PieceRef = {
     name: string
