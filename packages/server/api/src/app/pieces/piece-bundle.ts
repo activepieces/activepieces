@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, safeHttp } from '@activepieces/server-utils'
-import { FileType, PackageType } from '@activepieces/shared'
+import { FileType, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileRepo } from '../file/file.service'
 import { s3Helper } from '../file/s3-helper'
@@ -44,8 +44,12 @@ export const pieceBundle = (log: FastifyBaseLogger) => ({
             }
             void tryCatch(() => enqueueBundleJob({ name, version, log }))
         }
-        if (system.getBoolean(AppSystemProp.USE_CDN_FOR_BUNDLES)) {
-            return { type: 'redirect', url: cdnTarballUrl({ name, version }) }
+        // CDN only mirrors official pieces — dev/custom/private registry pieces may 404 there, so fall back to npm.
+        if (metadata.pieceType === PieceType.OFFICIAL && system.getBoolean(AppSystemProp.USE_CDN_FOR_BUNDLES)) {
+            const cdnUrl = cdnTarballUrl({ name, version })
+            if (await cdnBundleExists({ url: cdnUrl, log })) {
+                return { type: 'redirect', url: cdnUrl }
+            }
         }
         return { type: 'redirect', url: npmTarballUrl({ name, version }) }
     },
@@ -78,6 +82,25 @@ function cdnTarballUrl({ name, version }: PieceRef): string {
     return `${CDN_PIECES_URL}${name.replace('/', '-')}-${version}.tgz`
 }
 
+// Piece tarballs are immutable per (name, version), so a positive result is cached forever.
+async function cdnBundleExists({ url, log }: CdnBundleExistsParams): Promise<boolean> {
+    if (cdnVerifiedUrls.has(url)) {
+        return true
+    }
+    const { data: response, error } = await tryCatch(() =>
+        safeHttp.axios.head(url, { validateStatus: (status) => status < 500 }),
+    )
+    if (error !== null) {
+        log.warn({ error, url }, '[pieceBundle] CDN bundle HEAD check failed, falling back to npm')
+        return false
+    }
+    const exists = response.status >= 200 && response.status < 300
+    if (exists) {
+        cdnVerifiedUrls.add(url)
+    }
+    return exists
+}
+
 function npmTarballUrl({ name, version }: PieceRef): string {
     const unscopedName = name.startsWith('@') ? name.split('/')[1] : name
     return `${NPM_REGISTRY_URL}/${name}/-/${unscopedName}-${version}.tgz`
@@ -86,6 +109,8 @@ function npmTarballUrl({ name, version }: PieceRef): string {
 function pieceBundleS3Key({ name, version }: PieceRef): string {
     return `${S3_PIECES_PREFIX}${name.replace('/', '-')}-${version}.tgz`
 }
+
+const cdnVerifiedUrls = new Set<string>()
 
 const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
 const CDN_PIECES_URL = 'https://cdn.activepieces.com/pieces/retro/'
@@ -97,6 +122,11 @@ type PieceRef = {
 }
 
 type EnqueueBundleJobParams = PieceRef & {
+    log: FastifyBaseLogger
+}
+
+type CdnBundleExistsParams = {
+    url: string
     log: FastifyBaseLogger
 }
 
