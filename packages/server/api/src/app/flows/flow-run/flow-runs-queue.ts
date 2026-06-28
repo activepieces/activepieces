@@ -1,4 +1,4 @@
-import { apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { apId, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
 import { FlowRun, FlowRunStatus, isFlowRunStateTerminal } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
@@ -42,14 +42,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     fn: async () => {
                         try {
                             await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
-                            const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
-                            if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
+                            const rawRunMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
+                            if (isNil(rawRunMetadata) || Object.keys(rawRunMetadata).length === 0) {
                                 log.info({
                                     job: { id: job.id },
                                     flowRun: { id: job.data.runId },
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
+                            const runMetadata = sanitizeObjectForPostgresql(rawRunMetadata)
 
                             const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
                             let savedFlowRun: FlowRun
