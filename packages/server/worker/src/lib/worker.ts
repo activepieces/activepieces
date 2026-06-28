@@ -122,19 +122,35 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    // Reuse the runtime across reconnects instead of shutting it down and recreating it: the old
-    // shutdown-before-recreate path deadlocked when a prior-generation job was still in-flight on
-    // that runtime (e.g. a long chat turn) — the await never resolved, polling never restarted, and
-    // the worker silently stopped consuming jobs after any transient Socket.IO disconnect.
-    const activeRuntime = runtime ?? createSandboxRuntime({
+    // Shut down the old runtime and bring up a fresh one on every (re)connect — a prior connection's
+    // in-flight job is killed along with its box, so it fails fast and BullMQ retries it as a new attempt
+    // instead of lingering on a reused box. Reusing the box made the next generation's poll loop run a
+    // second operation on the same single-operation engine child (acquire() hands back a busy sandbox)
+    // and let the lingering job's lock lapse during the reconnect → BullMQ marks it "stalled"; a deploy
+    // disconnects every worker at once, so reuse turned that into mass stalls.
+    if (runtime) {
+        logger.info('Shutting down old runtime before creating a new one')
+        const oldRuntime = runtime
+        runtime = null
+        // Fire-and-forget: awaiting the shutdown here is what deadlocked when a prior job was still
+        // in-flight (the await never resolved, polling never restarted, the worker silently stopped
+        // consuming jobs after any transient disconnect). The kill itself still happens.
+        void tryCatch(() => oldRuntime.shutdown(logger)).then(({ error }) => {
+            if (error) {
+                logger.error({ error }, 'Failed to shut down old runtime on reconnect')
+            }
+        })
+    }
+
+    runtime = createSandboxRuntime({
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
     })
-    runtime = activeRuntime
 
     logger.info({ concurrency }, 'Starting poll loops')
 
+    const activeRuntime = runtime
     await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
         pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
     ))
