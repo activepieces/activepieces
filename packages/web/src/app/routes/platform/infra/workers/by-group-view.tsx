@@ -38,7 +38,7 @@ export function ByGroupView({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="flex flex-wrap gap-4">
       {allGroupLabels.map((label) => (
         <GroupCard
           key={label}
@@ -58,15 +58,20 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
     (p) => p.workerGroupId === groupLabel,
   );
 
-  const onlineWorkerCount = workers.filter(
+  const groupWorkers = workers.filter(
     (w) =>
       w.workerGroupScope === WorkerGroupScope.PROJECT &&
       w.workerGroupId === groupLabel,
-  ).length;
+  );
+  const onlineWorkerCount = groupWorkers.length;
+  const totalSlots = groupWorkers.reduce((sum, worker) => {
+    const parsed = Number(worker.information.workerProps.WORKER_CONCURRENCY);
+    return sum + (Number.isInteger(parsed) && parsed > 0 ? parsed : 1);
+  }, 0);
 
   return (
     <>
-      <div className="flex w-full flex-col rounded-lg border bg-background p-5 gap-4 sm:max-w-[475px]">
+      <div className="flex w-full flex-col rounded-lg border bg-background p-5 gap-4 sm:w-[475px]">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
             <Layers className="size-4" />
@@ -78,19 +83,15 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
           </TextWithTooltip>
         </div>
 
-        <div className="flex items-baseline justify-between">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold leading-tight">
-              {onlineWorkerCount}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {t('{count, plural, =1 {worker} other {workers}}', {
-                count: onlineWorkerCount,
-              })}
-            </span>
-          </div>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl font-bold leading-tight">
+            {onlineWorkerCount}
+          </span>
           <span className="text-sm text-muted-foreground">
-            {t('{count} online', { count: onlineWorkerCount })}
+            {t('{count, plural, =1 {worker} other {workers}}', {
+              count: onlineWorkerCount,
+            })}{' '}
+            | {t('{count} total concurrencies', { count: totalSlots })}
           </span>
         </div>
 

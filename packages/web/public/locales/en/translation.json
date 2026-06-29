@@ -990,6 +990,7 @@
   "shared queue": "shared queue",
   "{count, plural, =1 {worker} other {workers}}": "{count, plural, =1 {worker} other {workers}}",
   "{count} online": "{count} online",
+  "{count} total concurrencies": "{count} total concurrencies",
   "Assign": "Assign",
   "PROJECTS": "PROJECTS",
   "No projects": "No projects",
