@@ -1,23 +1,30 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
-import { folderIdDropdown } from '../common/props';
 import mime from 'mime-types';
 
-export const uploadFileAction = createAction({
+export const uploadFileToKbAction = createAction({
     auth: codyAuth,
-    name: 'upload_file',
-    displayName: 'Upload File to Knowledge Base',
-    description: 'Add a file directly into a specific folder in the knowledge base.',
-    audience: 'human',
-    aiMetadata: { description: 'Uploads a binary file (e.g. txt, md, rtf, pdf, ppt, docx) into a Cody knowledge base folder via a signed URL, then registers it as a document. Use when ingesting an existing file rather than inline text. Requires a target folder ID and the file; creates a new document each call, so it is not idempotent.', idempotent: false },
+    name: 'upload_file_to_kb',
+    displayName: 'Upload File to Knowledge Base (AI)',
+    description: 'Upload a binary file into a Cody knowledge-base folder.',
+    audience: 'ai',
+    aiMetadata: {
+        description:
+            'Uploads a binary file (e.g. txt, md, rtf, pdf, ppt, docx) into a Cody knowledge-base folder and registers it as a document. Use when ingesting an existing file rather than inline text (use Create Text Document) or a web page (use Create Document From Webpage). Resolve the folder ID first via List Folders. This is a composite operation (mint a signed upload URL, PUT the bytes to storage, then register the document); ingestion is asynchronous, so poll Get Document for status. Requires a folder ID and the file; creates a new document each call, so it is not idempotent.',
+        idempotent: false,
+    },
     props: {
-        folder_id: folderIdDropdown,
+        folder_id: Property.ShortText({
+            displayName: 'Folder ID',
+            description: 'The ID of the folder to upload the file into. Resolve via List Folders.',
+            required: true,
+        }),
         file: Property.File({
             displayName: 'File',
             description: 'The file to upload (e.g., txt, md, rtf, pdf, ppt, docx).',
             required: true,
-        })
+        }),
     },
     async run(context) {
         const { folder_id, file } = context.propsValue;
@@ -41,7 +48,7 @@ export const uploadFileAction = createAction({
 
         return {
             success: true,
-            message: `File '${file.filename}' uploaded successfully and is being processed.`
+            message: `File '${file.filename}' uploaded successfully and is being processed.`,
         };
     },
 });

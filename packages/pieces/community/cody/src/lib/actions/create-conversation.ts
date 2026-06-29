@@ -8,7 +8,7 @@ export const createConversationAction = createAction({
   name: 'create_conversation',
   displayName: 'Create Conversation',
   description: 'Creates a new conversation with a bot.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Starts a new conversation thread with a specific Cody bot, returning a conversation ID to use with Send Message. Optionally pass a list of document IDs to scope the bot knowledge base to just those documents (focus mode). Requires a bot ID and a name; creates a new conversation each call, so it is not idempotent.', idempotent: false },
   props: {
     bot_id: botIdDropdown,
