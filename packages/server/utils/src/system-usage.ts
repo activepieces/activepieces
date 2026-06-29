@@ -151,31 +151,44 @@ export const systemUsage = {
         return os.availableParallelism?.() ?? os.cpus().length
     },
 
-    async getProcessTreeMemoryBytes(pid: number): Promise<number> {
-        const { data, error } = await tryCatch(async () => {
-            const { list } = await si.processes()
-            const childrenByParent = new Map<number, number[]>()
-            const rssBytesByPid = new Map<number, number>()
-            for (const proc of list) {
-                rssBytesByPid.set(proc.pid, proc.memRss * 1024)
-                const siblings = childrenByParent.get(proc.parentPid) ?? []
-                siblings.push(proc.pid)
-                childrenByParent.set(proc.parentPid, siblings)
+    async getProcessTreeMemoryBytesByPids(pids: number[]): Promise<Map<number, number>> {
+        const result = new Map<number, number>()
+        if (pids.length === 0) {
+            return result
+        }
+        // si.processes() walks the whole process table — do it once for all pids, never per-pid.
+        const { data, error } = await tryCatch(async () => si.processes())
+        if (error || !data) {
+            for (const pid of pids) {
+                result.set(pid, 0)
             }
-
-            let total = 0
-            const queue = [pid]
-            const visited = new Set<number>()
-            while (queue.length > 0) {
-                const current = queue.shift()!
-                if (visited.has(current)) continue
-                visited.add(current)
-                total += rssBytesByPid.get(current) ?? 0
-                queue.push(...(childrenByParent.get(current) ?? []))
-            }
-            return total
-        })
-        if (error) return 0
-        return data
+            return result
+        }
+        const childrenByParent = new Map<number, number[]>()
+        const rssBytesByPid = new Map<number, number>()
+        for (const proc of data.list) {
+            rssBytesByPid.set(proc.pid, proc.memRss * 1024)
+            const siblings = childrenByParent.get(proc.parentPid) ?? []
+            siblings.push(proc.pid)
+            childrenByParent.set(proc.parentPid, siblings)
+        }
+        for (const pid of pids) {
+            result.set(pid, sumProcessTreeRssBytes({ rootPid: pid, rssBytesByPid, childrenByParent }))
+        }
+        return result
     },
+}
+
+function sumProcessTreeRssBytes({ rootPid, rssBytesByPid, childrenByParent }: { rootPid: number, rssBytesByPid: Map<number, number>, childrenByParent: Map<number, number[]> }): number {
+    let total = 0
+    const queue = [rootPid]
+    const visited = new Set<number>()
+    while (queue.length > 0) {
+        const current = queue.shift()!
+        if (visited.has(current)) continue
+        visited.add(current)
+        total += rssBytesByPid.get(current) ?? 0
+        queue.push(...(childrenByParent.get(current) ?? []))
+    }
+    return total
 }
