@@ -20,6 +20,11 @@ export class AddIsolatedWorkersEnabledToPlatformPlan1797000000000 implements Mig
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ALTER COLUMN "isolatedWorkersEnabled"
+            SET DEFAULT false
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ALTER COLUMN "isolatedWorkersEnabled"
             SET NOT NULL
         `)
     }
