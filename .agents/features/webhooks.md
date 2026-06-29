@@ -78,7 +78,7 @@ External services verify webhook ownership before sending events:
 
 ## Payload Size Limit
 
-`AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` (default 5MB). Returns 413 if exceeded.
+`AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` (default 25MB). Checked against the *constructed* payload (`getPayloadSizeInBytes` in `payload-offloader.ts`) — parsed `body` + `rawBody` + headers + query, not the raw request bytes. Since `rawBody` duplicates a text/JSON body, usable request size is ~half the limit. Returns 413 if exceeded.
 
 ## Flow Resolution
 

@@ -110,6 +110,16 @@ inline threshold are offloaded from Redis to file storage to protect Redis
 memory; smaller payloads stay inline for the fastest path.
 </Tip>
 
+<Note>
+The payload limit is measured against the **processed** payload, not the raw
+request bytes. For text/JSON requests, Activepieces keeps both the parsed `body`
+and the original `rawBody` (needed for signature verification), so the request is
+counted roughly twice — a 25 MB limit accepts a JSON body of about 12 MB. If a
+JSON request is rejected with HTTP 413 well below the configured limit, this
+duplication is why. File uploads (multipart form data or raw binary bodies) are
+counted once, close to their actual size.
+</Note>
+
 ---
 
 ### Key / value storage

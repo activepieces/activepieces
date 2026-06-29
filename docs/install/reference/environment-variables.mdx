@@ -168,7 +168,7 @@ run data is kept. The **Cloud** values and how these interact are covered in
 | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | Maximum combined size (MB) of all step inputs and outputs in a single run. Exceeding it ends the run with `LOG_SIZE_EXCEEDED`. | `50` |
 | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | Step outputs larger than this (KB) are offloaded to object storage instead of inlined in the run log. | `32` |
 | `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | Step inputs larger than this (KB) are replaced with a placeholder in the run log; the step still receives the full value at runtime. | `2` |
-| `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` | Maximum incoming webhook payload size (MB). Larger payloads are rejected with HTTP 413. | `25` |
+| `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` | Maximum size (MB) of the processed webhook payload — the parsed body **plus** the raw body, headers, and query params, not just the raw request bytes. For text/JSON requests the raw body duplicates the parsed body, so the usable request size is roughly half this value (a 25 MB limit accepts a ~12 MB JSON body). File uploads (multipart or raw binary) are counted once, close to their full size. Oversized payloads are rejected with HTTP 413. | `25` |
 | `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | Webhook payloads below this (KB) are stored inline in Redis; larger ones are offloaded to file storage to protect Redis memory. | `512` |
 | `AP_WEBHOOK_TIMEOUT_SECONDS` | Default timeout for synchronous webhooks. Maximum 15 minutes; note Cloudflare caps it at 30 seconds. | `30` |
 | `AP_MAX_RECORDS_PER_TABLE` | Maximum number of records per table. | `10000` |
