@@ -49,6 +49,14 @@ let egressStack: EgressStack | null = null
 
 let sandboxManagers: SandboxManager[] = []
 
+// Sandbox memory/state is UI-only telemetry (the workers page). Computing it needs a full
+// process-table scan (si.processes()), so it must NOT run on the poll hot path — sampling it on
+// every poll pegged worker CPU and collapsed throughput (~7x, #13497). Sample it on a slow
+// interval instead and have buildMachineInfo() read the cached snapshot.
+let cachedSandboxInfo: SandboxInformation[] = []
+let sandboxInfoInterval: NodeJS.Timeout | null = null
+const SANDBOX_INFO_REFRESH_MS = 15_000
+
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
@@ -94,11 +102,13 @@ export const worker = {
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
         }
+        startSandboxInfoSampling()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
     async stop(): Promise<void> {
         polling = false
+        stopSandboxInfoSampling()
         await Promise.all(sandboxManagers.map((sm) => sm.shutdown(logger)))
         sandboxManagers = []
         socket?.disconnect()
@@ -326,21 +336,50 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
         ip: workerHostname,
-        sandboxes: await buildSandboxInfo(),
+        sandboxes: cachedSandboxInfo,
     }
+}
+
+function startSandboxInfoSampling(): void {
+    if (!isNil(sandboxInfoInterval)) {
+        return
+    }
+    void refreshSandboxInfo()
+    sandboxInfoInterval = setInterval(() => void refreshSandboxInfo(), SANDBOX_INFO_REFRESH_MS)
+    sandboxInfoInterval.unref()
+}
+
+function stopSandboxInfoSampling(): void {
+    if (!isNil(sandboxInfoInterval)) {
+        clearInterval(sandboxInfoInterval)
+        sandboxInfoInterval = null
+    }
+    cachedSandboxInfo = []
+}
+
+async function refreshSandboxInfo(): Promise<void> {
+    const { data, error } = await tryCatch(buildSandboxInfo)
+    if (error) {
+        logger.warn({ error }, 'Failed to refresh sandbox info')
+        return
+    }
+    cachedSandboxInfo = data
 }
 
 async function buildSandboxInfo(): Promise<SandboxInformation[]> {
     const activeSandboxes = sandboxManagers
         .map((sandboxManager) => sandboxManager.getActiveSandbox())
         .filter((sandbox): sandbox is ActiveSandboxInfo => !isNil(sandbox))
-
-    return Promise.all(activeSandboxes.map(async (sandbox) => ({
+    if (activeSandboxes.length === 0) {
+        return []
+    }
+    const memoryByPid = await systemUsage.getProcessTreeMemoryBytesByPids(activeSandboxes.map((sandbox) => sandbox.pid))
+    return activeSandboxes.map((sandbox) => ({
         sandboxId: sandbox.sandboxId,
         boxId: sandbox.boxId,
         busy: sandbox.busy,
-        memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(sandbox.pid),
-    })))
+        memoryUsageBytes: memoryByPid.get(sandbox.pid) ?? 0,
+    }))
 }
 
 async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<void> {

@@ -85,18 +85,44 @@ jobs:
           chmod +x smoke-test/verify-isolation.sh
           smoke-test/verify-isolation.sh "${{ steps.setup-isolation.outputs.flow_id }}"
 
+      - name: Restart stack in perf mode (fixed 2 CPU / 2G, info logging)
+        run: |
+          docker compose -f benchmark/docker-compose.yml down -v
+          AP_EXECUTION_MODE=SANDBOX_CODE_ONLY \
+          APP_REPLICAS=1 \
+          WORKER_REPLICAS=1 \
+            docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.perf.yml up -d
+          echo "Waiting for containers to start..."
+          sleep 5
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.perf.yml ps
+
+      - name: Setup perf flow
+        id: setup-perf
+        run: |
+          chmod +x benchmark/setup.sh
+          FLOW_ID=$(benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Flow ID: $FLOW_ID"
+
+      - name: Run perf regression preflight (throughput / CPU / memory)
+        run: |
+          chmod +x smoke-test/verify-perf.sh
+          smoke-test/verify-perf.sh "${{ steps.setup-perf.outputs.flow_id }}"
+
+      # Perf overlay is listed so logs + teardown target every container/volume the job
+      # created, regardless of which stack was last brought up.
       - name: Show app logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 app
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.perf.yml logs --tail=200 app
 
       - name: Show worker logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 worker
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.perf.yml logs --tail=200 worker
 
       - name: Show nginx logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml logs --tail=200 nginx
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.perf.yml logs --tail=200 nginx
 
       - name: Teardown
         if: always()
-        run: docker compose -f benchmark/docker-compose.yml down -v
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.perf.yml down -v

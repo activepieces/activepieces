@@ -18,6 +18,7 @@ vi.mock('../src/file-system-utils', () => ({
 vi.mock('systeminformation', () => ({
     default: {
         mem: vi.fn(),
+        processes: vi.fn(),
     },
 }))
 
@@ -33,6 +34,7 @@ import { fileSystemUtils } from '../src/file-system-utils'
 const mockFileExists = vi.mocked(fileSystemUtils.fileExists)
 const mockReadFile = vi.mocked(fs.promises.readFile)
 const mockMem = vi.mocked(si.mem)
+const mockProcesses = vi.mocked(si.processes)
 const mockCheckDiskSpace = vi.mocked(checkDiskSpace)
 
 function mockCgroupFile(path: string, content: string) {
@@ -210,5 +212,46 @@ describe('getCpuUsage', () => {
         const result = systemUsage.getCpuUsage()
         expect(result).toBeGreaterThanOrEqual(0)
         expect(result).toBeLessThanOrEqual(100)
+    })
+})
+
+describe('getProcessTreeMemoryBytesByPids', () => {
+    function mockProcessList(list: { pid: number, parentPid: number, memRss: number }[]) {
+        mockProcesses.mockResolvedValue({ list } as never)
+    }
+
+    it('returns an empty map without scanning when given no pids', async () => {
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([])
+        expect(result.size).toBe(0)
+        expect(mockProcesses).not.toHaveBeenCalled()
+    })
+
+    it('sums the rss of each pid and its descendants (memRss is KiB)', async () => {
+        // 100 -> 200 -> 300, and an unrelated 999. memRss is in KiB, summed as bytes.
+        mockProcessList([
+            { pid: 100, parentPid: 1, memRss: 10 },
+            { pid: 200, parentPid: 100, memRss: 20 },
+            { pid: 300, parentPid: 200, memRss: 30 },
+            { pid: 999, parentPid: 1, memRss: 50 },
+        ])
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 999])
+        expect(result.get(100)).toBe((10 + 20 + 30) * 1024)
+        expect(result.get(999)).toBe(50 * 1024)
+    })
+
+    it('scans the process table only once for many pids', async () => {
+        mockProcessList([
+            { pid: 100, parentPid: 1, memRss: 10 },
+            { pid: 200, parentPid: 1, memRss: 20 },
+        ])
+        await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
+        expect(mockProcesses).toHaveBeenCalledTimes(1)
+    })
+
+    it('maps every pid to 0 when the scan fails', async () => {
+        mockProcesses.mockRejectedValue(new Error('scan failed'))
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
+        expect(result.get(100)).toBe(0)
+        expect(result.get(200)).toBe(0)
     })
 })
