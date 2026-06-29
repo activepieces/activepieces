@@ -80,6 +80,12 @@ export const airtableSearchRecordsAction = createAction({
       max_records,
     } = propsValue;
 
+    if (/[{}]/.test(search_field)) {
+      throw new Error(
+        'search_field must not contain "{" or "}" — Airtable cannot escape braces inside a field reference.'
+      );
+    }
+
     const escapedValue = String(search_value)
       .replace(/\\/g, '\\\\')
       .replace(/"/g, '\\"');
@@ -110,13 +116,34 @@ export const airtableSearchRecordsAction = createAction({
       queryParams,
     };
 
+    const hasCap = max_records !== undefined && max_records !== null;
+
     try {
-      const response = await httpClient.sendRequest<{
-        records: AirtableRecord[];
-      }>(request);
+      const allRecords: AirtableRecord[] = [];
+      let nextOffset: string | undefined;
+      do {
+        const pageParams: QueryParams = { ...queryParams };
+        if (nextOffset) {
+          pageParams['offset'] = nextOffset;
+        }
+        const response = await httpClient.sendRequest<{
+          records: AirtableRecord[];
+          offset?: string;
+        }>({ ...request, queryParams: pageParams });
+        allRecords.push(...response.body.records);
+        nextOffset = response.body.offset;
+        // Without a max_records cap, return a single page.
+        if (!hasCap) {
+          break;
+        }
+      } while (nextOffset && allRecords.length < (max_records as number));
+
+      const records = hasCap
+        ? allRecords.slice(0, max_records as number)
+        : allRecords;
       return {
-        records: response.body.records,
-        count: response.body.records.length,
+        records,
+        count: records.length,
       };
     } catch (error: any) {
       const status = error?.response?.status;
