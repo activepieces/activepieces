@@ -110,6 +110,27 @@ export const lemlistApiService = {
 
     return response;
   },
+  async addLeadVariables(
+    auth: AppConnectionValueForAuthProperty<typeof lemlistAuth>,
+    { leadId, variables }: { leadId: string; variables: Record<string, unknown> }
+  ) {
+    const queryParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(variables)) {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    }
+
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+
+    const response = await fireHttpRequest({
+      path: `${API_ENDPOINTS.LEADS}/${leadId}/variables${query}`,
+      method: HttpMethod.POST,
+      auth: auth.secret_text,
+    });
+
+    return response;
+  },
   async updateLeadFromCampaign(
     auth: AppConnectionValueForAuthProperty<typeof lemlistAuth>,
     {
