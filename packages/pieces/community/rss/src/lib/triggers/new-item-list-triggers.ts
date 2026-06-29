@@ -8,8 +8,6 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   PieceAuth,
-  PieceAuthProperty,
-  PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -19,6 +17,7 @@ import { isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { getId } from '../common/getId';
 import { sampleData } from '../common/sampleData';
+import { newItemListTriggerOutputSchema } from '../output-schemas';
 
 type PollingProps = {
   rss_feed_urls: string[];
@@ -38,6 +37,7 @@ export const rssNewItemListTrigger = createTrigger({
   props: {
     rss_feed_urls: rssFeedUrls,
   },
+  outputSchema: newItemListTriggerOutputSchema,
   async test({ auth, propsValue, store, files }): Promise<unknown[]> {
     return await pollingHelper.test(polling, {
       auth,

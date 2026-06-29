@@ -3,6 +3,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
+import { channelOutputSchema } from '../../output-schemas';
 
 export const createClickupChannelInSpaceFolderOrList = createAction({
   auth: clickupAuth,
@@ -59,6 +60,7 @@ export const createClickupChannelInSpaceFolderOrList = createAction({
     }),
   },
 
+  outputSchema: channelOutputSchema,
   async run(configValue) {
     const { workspace_id, description, visibility, locationType, locationId,topic } =
       configValue.propsValue;
