@@ -35,7 +35,7 @@ export const airtableUpdateRecordAiAction = createAction({
     fields: Property.Json({
       displayName: 'Fields',
       description:
-        'A JSON object mapping field names to new values, e.g. {"Status": "Done"}. Only the keys you supply are changed; linked-record and multi-select fields take arrays. Use Get Base Schema (Agent) to learn field names.',
+        'A JSON object mapping field names to new values, e.g. {"Status": "Done"}. Only the keys you supply are changed; pass null to clear a field. Linked-record and multi-select fields take arrays of ids/strings; attachment fields take an array of objects like [{"url": "https://..."}]. Use Get Base Schema (Agent) to learn field names and types.',
       required: true,
     }),
   },

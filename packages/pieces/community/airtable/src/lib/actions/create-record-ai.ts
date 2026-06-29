@@ -29,7 +29,7 @@ export const airtableCreateRecordAiAction = createAction({
     fields: Property.Json({
       displayName: 'Fields',
       description:
-        'A JSON object mapping field names to values, e.g. {"Name": "Acme", "Status": "Active"}. Use Get Base Schema (Agent) to learn field names; values are sent with typecast enabled so plain strings are coerced where possible.',
+        'A JSON object mapping field names to values, e.g. {"Name": "Acme", "Status": "Active"}. Use Get Base Schema (Agent) to learn field names and types. Linked-record and multi-select fields take arrays of ids/strings; attachment fields take an array of objects like [{"url": "https://..."}]. Values are sent with typecast enabled so plain strings are coerced where possible.',
       required: true,
     }),
   },

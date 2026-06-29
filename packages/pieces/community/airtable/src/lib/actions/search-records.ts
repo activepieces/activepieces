@@ -47,7 +47,7 @@ export const airtableSearchRecordsAction = createAction({
     match_mode: Property.StaticDropdown({
       displayName: 'Match Mode',
       description:
-        '"contains" (default) does a case-sensitive substring match; "exact" requires the whole field to equal the value.',
+        '"contains" (default) does a case-sensitive substring match; "exact" requires the whole field to equal the value. Exact compares the field as text, so it also matches number and checkbox fields by their text value.',
       required: false,
       defaultValue: 'contains',
       options: {
@@ -80,10 +80,12 @@ export const airtableSearchRecordsAction = createAction({
       max_records,
     } = propsValue;
 
-    const escapedValue = String(search_value).replace(/"/g, '\\"');
+    const escapedValue = String(search_value)
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"');
     const formula =
       match_mode === 'exact'
-        ? `{${search_field}}="${escapedValue}"`
+        ? `{${search_field}}&""="${escapedValue}"`
         : `FIND("${escapedValue}",{${search_field}})`;
 
     const queryParams: QueryParams = {

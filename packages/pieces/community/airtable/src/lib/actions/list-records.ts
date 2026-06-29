@@ -48,13 +48,13 @@ export const airtableListRecordsAction = createAction({
     max_records: Property.Number({
       displayName: 'Max Records',
       description:
-        'Optional maximum total number of records to return across all pages.',
+        'Optional maximum total number of records to return; the action paginates across pages up to this number. Omit to return just the first page (with an offset cursor to continue).',
       required: false,
     }),
     page_size: Property.Number({
       displayName: 'Page Size',
       description:
-        'Optional number of records per page (1-100, default 100). This call returns a single page only.',
+        'Optional number of records per page (1-100, default 100).',
       required: false,
     }),
     sort: Property.Json({
@@ -97,7 +97,9 @@ export const airtableListRecordsAction = createAction({
       queryParams['pageSize'] = String(page_size);
     }
     if (sort) {
-      const sortArray = sort as unknown as {
+      const sortArray = (
+        Array.isArray(sort) ? sort : [sort]
+      ) as unknown as {
         field: string;
         direction?: string;
       }[];
@@ -127,15 +129,35 @@ export const airtableListRecordsAction = createAction({
       queryParams,
     };
 
+    const hasCap = max_records !== undefined && max_records !== null;
+
     try {
-      const response = await httpClient.sendRequest<{
-        records: AirtableRecord[];
-        offset?: string;
-      }>(request);
+      const allRecords: AirtableRecord[] = [];
+      let nextOffset: string | undefined;
+      do {
+        const pageParams: QueryParams = { ...queryParams };
+        if (nextOffset) {
+          pageParams['offset'] = nextOffset;
+        }
+        const response = await httpClient.sendRequest<{
+          records: AirtableRecord[];
+          offset?: string;
+        }>({ ...request, queryParams: pageParams });
+        allRecords.push(...response.body.records);
+        nextOffset = response.body.offset;
+        // Without a max_records cap, return a single page (plus the offset to continue).
+        if (!hasCap) {
+          break;
+        }
+      } while (nextOffset && allRecords.length < (max_records as number));
+
+      const records = hasCap
+        ? allRecords.slice(0, max_records as number)
+        : allRecords;
       return {
-        records: response.body.records,
-        count: response.body.records.length,
-        offset: response.body.offset ?? null,
+        records,
+        count: records.length,
+        offset: nextOffset ?? null,
       };
     } catch (error: any) {
       const status = error?.response?.status;
