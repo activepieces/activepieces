@@ -18,6 +18,7 @@ import { oauth2Util } from '../../app-connection/app-connection-service/oauth2/o
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { ConnectTokenPayload, connectTokenService } from '../../helper/connect-token-service'
 import { platformService } from '../../platform/platform.service'
+import { appearanceHelper } from '../helper/appearance-helper'
 import { connectOAuth2Resolver } from './connect-oauth2-resolver'
 
 export const connectController: FastifyPluginAsyncZod = async (app) => {
@@ -27,6 +28,10 @@ export const connectController: FastifyPluginAsyncZod = async (app) => {
             platformId: payload.platformId,
             pieceName: payload.pieceName,
         })
+        const theme = await appearanceHelper.getTheme({
+            platformId: payload.platformId,
+            log: request.log,
+        })
         return {
             platformId: payload.platformId,
             projectId: payload.projectId,
@@ -34,6 +39,7 @@ export const connectController: FastifyPluginAsyncZod = async (app) => {
             externalId: payload.externalId,
             displayName: payload.displayName ?? null,
             oauth2App,
+            theme,
         }
     })
 

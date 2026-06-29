@@ -1,4 +1,5 @@
 import { Permission } from '@activepieces/core-utils';
+import { ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -69,6 +70,7 @@ export const ProjectDashboardLayoutHeader = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isEmbedded = embedState.isEmbedded;
+  const isSdkProject = project.type === ProjectType.HEADLESS_SDK;
 
   const primaryTabs: ProjectDashboardLayoutHeaderTab[] = [
     {
@@ -76,7 +78,14 @@ export const ProjectDashboardLayoutHeader = () => {
       label: t('Automations'),
       icon: WorkflowIcon,
       hasPermission: checkAccess(Permission.READ_FLOW),
-      show: true,
+      show: !isSdkProject,
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/piece-runs'),
+      label: t('Piece Runs'),
+      icon: HistoryIcon,
+      hasPermission: checkAccess(Permission.READ_RUN),
+      show: isSdkProject,
     },
   ];
 
@@ -86,7 +95,7 @@ export const ProjectDashboardLayoutHeader = () => {
       label: t('Runs'),
       icon: HistoryIcon,
       hasPermission: checkAccess(Permission.READ_RUN),
-      show: true,
+      show: !isSdkProject,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/connections'),
@@ -100,7 +109,7 @@ export const ProjectDashboardLayoutHeader = () => {
       label: t('Variables'),
       icon: VariableIcon,
       hasPermission: checkAccess(Permission.READ_VARIABLE),
-      show: true,
+      show: !isSdkProject,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/releases'),
@@ -110,7 +119,7 @@ export const ProjectDashboardLayoutHeader = () => {
         project.releasesEnabled &&
         checkAccess(Permission.READ_PROJECT_RELEASE) &&
         !isEmbedded,
-      show: project.releasesEnabled,
+      show: project.releasesEnabled && !isSdkProject,
     },
   ];
 

@@ -1,5 +1,13 @@
 {
   "0": "0",
+  "SDK Projects": "SDK Projects",
+  "Piece Runs": "Piece Runs",
+  "Create SDK Project": "Create SDK Project",
+  "Set up a new SDK project to manage connections and review piece runs.": "Set up a new SDK project to manage connections and review piece runs.",
+  "History of piece actions executed through the SDK.": "History of piece actions executed through the SDK.",
+  "No piece runs yet": "No piece runs yet",
+  "Piece actions executed through the SDK will appear here.": "Piece actions executed through the SDK will appear here.",
+  "Run ID": "Run ID",
   "Support": "Support",
   "Runs": "Runs",
   "Edit flow": "Edit flow",

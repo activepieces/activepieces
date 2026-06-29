@@ -23,7 +23,13 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateProjectRequest, async (request, reply) => {
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
-        await assertMaximumNumberOfProjectsReachedByEdition(platformId, request.log)
+        const type = request.body.type ?? ProjectType.TEAM
+        if (type === ProjectType.HEADLESS_SDK) {
+            await assertHeadlessSdkEnabled(platformId, request.log)
+        }
+        else {
+            await assertMaximumNumberOfProjectsReachedByEdition(platformId, request.log)
+        }
         const projectWithUsage = await platformProjectService(request.log).create({
             platformId,
             displayName: request.body.displayName,
@@ -32,6 +38,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
             maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
             globalConnectionExternalIds: request.body.globalConnectionExternalIds ?? undefined,
             alertReceiverEmail: request.body.alertReceiverEmail ?? undefined,
+            type,
         })
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
@@ -132,6 +139,18 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
             code: ErrorCode.VALIDATION,
             params: {
                 message: 'Personal projects cannot be deleted',
+            },
+        })
+    }
+}
+
+async function assertHeadlessSdkEnabled(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+    if (!platform.plan.headlessSdkEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Headless SDK is not available on your current plan',
             },
         })
     }

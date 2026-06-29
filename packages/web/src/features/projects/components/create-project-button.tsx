@@ -58,9 +58,11 @@ function UpgradeTooltip({ children }: { children: React.ReactNode }) {
 function IconVariant({
   disabled,
   onCreate,
+  projectType,
 }: {
   disabled: boolean;
   onCreate?: (project: ProjectWithLimits) => void;
+  projectType?: ProjectType.TEAM | ProjectType.HEADLESS_SDK;
 }) {
   if (disabled) {
     return (
@@ -74,7 +76,7 @@ function IconVariant({
     );
   }
   return (
-    <NewProjectDialog onCreate={onCreate}>
+    <NewProjectDialog onCreate={onCreate} projectType={projectType}>
       <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-accent">
         <Plus />
       </Button>
@@ -134,14 +136,24 @@ export function CreateProjectButton({
   variant,
   projects,
   onCreate,
+  projectType,
 }: {
   variant: 'icon' | 'full' | 'sidebar-menu';
   projects: Pick<ProjectWithLimits, 'type'>[];
   onCreate?: (project: ProjectWithLimits) => void;
+  projectType?: ProjectType.TEAM | ProjectType.HEADLESS_SDK;
 }) {
-  const disabled = useIsCreateProjectDisabled({ projects });
+  const teamLimitReached = useIsCreateProjectDisabled({ projects });
+  const disabled =
+    projectType === ProjectType.HEADLESS_SDK ? false : teamLimitReached;
   if (variant === 'icon') {
-    return <IconVariant disabled={disabled} onCreate={onCreate} />;
+    return (
+      <IconVariant
+        disabled={disabled}
+        onCreate={onCreate}
+        projectType={projectType}
+      />
+    );
   }
   if (variant === 'sidebar-menu') {
     return <SidebarMenuVariant disabled={disabled} onCreate={onCreate} />;

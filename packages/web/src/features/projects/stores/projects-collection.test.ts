@@ -133,6 +133,7 @@ describe('useAll filter', () => {
             .where(({ project }) =>
               or(
                 eq(project.type, ProjectType.TEAM),
+                eq(project.type, ProjectType.HEADLESS_SDK),
                 and(
                   eq(project.type, ProjectType.PERSONAL),
                   eq(project.ownerId, userId),
@@ -161,6 +162,15 @@ describe('useAll filter', () => {
         CURRENT_USER_ID,
       ),
     ).toContain('t1');
+  });
+
+  it('includes a HEADLESS_SDK project regardless of owner', () => {
+    expect(
+      query(
+        [makeProject('sdk1', ProjectType.HEADLESS_SDK, OTHER_USER_ID)],
+        CURRENT_USER_ID,
+      ),
+    ).toContain('sdk1');
   });
 
   it("includes the current user's PERSONAL project", () => {

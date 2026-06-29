@@ -63,6 +63,7 @@ import { projectReplaceModule } from './ee/projects/project-replace/project-repl
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { scimModule } from './ee/scim/scim-module'
 import { connectModule } from './ee/sdk/connect.module'
+import { pieceRunModule } from './ee/sdk/piece-run/piece-run.module'
 import { sdkModule } from './ee/sdk/sdk.module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
@@ -319,6 +320,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(chatFunnelTrackingModule)
             await app.register(aiToolConfigModule)
             await app.register(sdkModule)
+            await app.register(pieceRunModule)
             await app.register(connectModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
@@ -354,6 +356,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(chatEvalModule)
             await app.register(aiToolConfigModule)
             await app.register(sdkModule)
+            await app.register(pieceRunModule)
             await app.register(connectModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)

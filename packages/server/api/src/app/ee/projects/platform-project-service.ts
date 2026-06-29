@@ -79,7 +79,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 externalId: params.externalId,
                 metadata: params.metadata,
                 maxConcurrentJobs: params.maxConcurrentJobs,
-                type: ProjectType.TEAM,
+                type: params.type ?? ProjectType.TEAM,
                 callPostCreateHooks: false,
                 entityManager,
             })
@@ -367,6 +367,7 @@ type CreateProjectParams = {
     maxConcurrentJobs?: number
     globalConnectionExternalIds?: string[]
     alertReceiverEmail?: string | null
+    type?: ProjectType
 }
 
 type DeleteProjectParams = {

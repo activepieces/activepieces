@@ -158,6 +158,7 @@ export const projectCollectionUtils = {
           .where(({ project }) =>
             or(
               eq(project.type, ProjectType.TEAM),
+              eq(project.type, ProjectType.HEADLESS_SDK),
               and(
                 eq(project.type, ProjectType.PERSONAL),
                 eq(project.ownerId, currentUserId),

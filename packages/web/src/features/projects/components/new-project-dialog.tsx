@@ -1,6 +1,7 @@
 import {
   AppConnectionWithoutSensitiveData,
   CreatePlatformProjectRequest,
+  ProjectType,
   ProjectWithLimits,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,12 +35,14 @@ import { platformHooks } from '@/hooks/platform-hooks';
 type NewProjectDialogProps = {
   children: React.ReactNode;
   onCreate?: (project: ProjectWithLimits) => void;
+  projectType?: ProjectType.TEAM | ProjectType.HEADLESS_SDK;
 };
 
 export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const [open, setOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
+  const isSdkProject = props.projectType === ProjectType.HEADLESS_SDK;
 
   const { data: globalConnectionsPage, isLoading: isLoadingConnections } =
     globalConnectionsQueries.useGlobalConnections({
@@ -54,11 +57,17 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create Project')}</DialogTitle>
+          <DialogTitle>
+            {isSdkProject ? t('Create SDK Project') : t('Create Project')}
+          </DialogTitle>
           <DialogDescription>
-            {t(
-              'Set up a new project to organize your automations and connections.',
-            )}
+            {isSdkProject
+              ? t(
+                  'Set up a new SDK project to manage connections and review piece runs.',
+                )
+              : t(
+                  'Set up a new project to organize your automations and connections.',
+                )}
           </DialogDescription>
         </DialogHeader>
         {(!isLoadingConnections || !globalConnectionsEnabled) && (
@@ -67,6 +76,7 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
             globalConnections={globalConnections}
             globalConnectionsEnabled={globalConnectionsEnabled}
             onCreate={props.onCreate}
+            projectType={props.projectType}
           />
         )}
         {isLoadingConnections && globalConnectionsEnabled && (
@@ -82,6 +92,7 @@ const NewProjectForm = ({
   setOpen,
   globalConnections,
   globalConnectionsEnabled,
+  projectType,
 }: Omit<NewProjectDialogProps, 'children'> & {
   setOpen: (open: boolean) => void;
   globalConnections: AppConnectionWithoutSensitiveData[];
@@ -118,6 +129,7 @@ const NewProjectForm = ({
         alertReceiverEmail && alertReceiverEmail.length > 0
           ? alertReceiverEmail
           : null,
+      type: projectType,
     });
   };
 

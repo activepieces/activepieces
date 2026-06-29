@@ -109,9 +109,33 @@ export function ProjectDashboardSidebar({
     }
     return projects;
   }, [isSearchMode, debouncedSearchQuery, projects]);
+
+  const regularProjects = useMemo(
+    () =>
+      displayProjects.filter(
+        (project) => project.type !== ProjectType.HEADLESS_SDK,
+      ),
+    [displayProjects],
+  );
+  const sdkProjects = useMemo(
+    () =>
+      displayProjects.filter(
+        (project) => project.type === ProjectType.HEADLESS_SDK,
+      ),
+    [displayProjects],
+  );
+
+  const canCreateSdkProject =
+    platform.plan.headlessSdkEnabled &&
+    currentUser?.platformRole === PlatformRole.ADMIN;
+  const showSdkProjectsGroup = sdkProjects.length > 0 || canCreateSdkProject;
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
       const project = projects.find((p) => p.id === projectId);
+      const landingPage =
+        project?.type === ProjectType.HEADLESS_SDK
+          ? 'connections'
+          : 'automations';
       if (project) {
         const palette = project.icon
           ? PROJECT_COLOR_PALETTE[project.icon.color]
@@ -121,14 +145,14 @@ export function ProjectDashboardSidebar({
           id: `project-${projectId}`,
           type: 'project',
           label: name,
-          href: `/projects/${projectId}/automations`,
+          href: `/projects/${projectId}/${landingPage}`,
           iconBgColor: palette?.color,
           iconTextColor: palette?.textColor,
           iconLetter: name.charAt(0).toUpperCase(),
         });
       }
       projectCollectionUtils.setCurrentProject(projectId);
-      navigate(`/projects/${projectId}/automations`);
+      navigate(`/projects/${projectId}/${landingPage}`);
       setSearchOpen(false);
     },
     [navigate, projects],
@@ -298,7 +322,7 @@ export function ProjectDashboardSidebar({
               }}
             >
               <div className="flex max-h-[100%]">
-                {displayProjects.length > 0 ? (
+                {regularProjects.length > 0 ? (
                   <VirtualizedScrollArea
                     className={cn(
                       'flex-1',
@@ -306,9 +330,9 @@ export function ProjectDashboardSidebar({
                         ? 'flex flex-col items-center scrollbar-none'
                         : '',
                     )}
-                    items={displayProjects}
+                    items={regularProjects}
                     estimateSize={() => 35}
-                    getItemKey={(index) => displayProjects[index]?.id ?? index}
+                    getItemKey={(index) => regularProjects[index]?.id ?? index}
                     overscan={10}
                     renderItem={(project) => (
                       <SidebarMenuItem className="w-full">
@@ -346,6 +370,40 @@ export function ProjectDashboardSidebar({
               )}
             </div>
           </SidebarGroup>
+
+          {showSdkProjectsGroup && (
+            <>
+              <SidebarSeparator />
+              <SidebarGroup>
+                <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
+                  <SidebarGroupLabel>{t('SDK Projects')}</SidebarGroupLabel>
+                  {canCreateSdkProject && (
+                    <CreateProjectButton
+                      variant="icon"
+                      projects={projects ?? []}
+                      projectType={ProjectType.HEADLESS_SDK}
+                      onCreate={(project) => {
+                        navigate(`/projects/${project.id}/connections`);
+                      }}
+                    />
+                  )}
+                </div>
+                <SidebarMenu>
+                  {sdkProjects.map((project) => (
+                    <SidebarMenuItem key={project.id} className="w-full">
+                      <ProjectSideBarItem
+                        project={project}
+                        isCurrentProject={location.pathname.includes(
+                          `/projects/${project.id}`,
+                        )}
+                        handleProjectSelect={handleProjectSelect}
+                      />
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroup>
+            </>
+          )}
         </SidebarContent>
         <SidebarFooter>
           {state === 'expanded' && <DelayedSidebarUsageLimits />}

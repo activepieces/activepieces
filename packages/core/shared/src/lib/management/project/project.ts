@@ -24,6 +24,7 @@ export enum PiecesFilterType {
 export enum ProjectType {
     TEAM = 'TEAM',
     PERSONAL = 'PERSONAL',
+    HEADLESS_SDK = 'HEADLESS_SDK',
 }
 
 

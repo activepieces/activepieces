@@ -9,12 +9,13 @@ import {
   isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleCheck, Unplug } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { FlagsMap } from '@/api/flags-api';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ const SUPPORTED_AUTH_TYPES: PropertyType[] = [
 const ConnectPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
+  const queryClient = useQueryClient();
 
   const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
@@ -50,7 +52,13 @@ const ConnectPage = () => {
     isError: tokenError,
   } = useQuery({
     queryKey: ['connect-exchange', token],
-    queryFn: () => connectApi.exchange(token),
+    queryFn: async () => {
+      const result = await connectApi.exchange(token);
+      queryClient.setQueryData<FlagsMap>(flagsHooks.queryKey, (previous) =>
+        previous ? { ...previous, [ApFlagId.THEME]: result.theme } : previous,
+      );
+      return result;
+    },
     enabled: token.length > 0,
     retry: false,
   });

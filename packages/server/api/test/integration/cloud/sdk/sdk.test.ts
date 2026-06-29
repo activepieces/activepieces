@@ -38,6 +38,7 @@ describe('Headless SDK API', () => {
             const firstBody = first?.json()
             expect(firstBody.externalId).toBe(externalId)
             expect(firstBody.platformId).toBe(mockPlatform.id)
+            expect(firstBody.type).toBe('HEADLESS_SDK')
 
             const second = await app?.inject({
                 method: 'POST',
@@ -57,6 +58,33 @@ describe('Headless SDK API', () => {
                 method: 'POST',
                 url: '/api/v1/sdk/projects',
                 body: { externalId: apId() },
+                headers: { authorization: `Bearer ${apiKey}` },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        })
+    })
+
+    describe('GET /v1/piece-runs', () => {
+        it('returns an empty page for a project with no piece runs', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { headlessSdkEnabled: true } })
+            const apiKey = await saveApiKeyForPlatform(mockPlatform.id)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/piece-runs?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${apiKey}` },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data).toEqual([])
+        })
+
+        it('returns 402 when headlessSdkEnabled is off', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { headlessSdkEnabled: false } })
+            const apiKey = await saveApiKeyForPlatform(mockPlatform.id)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/piece-runs?projectId=${mockProject.id}`,
                 headers: { authorization: `Bearer ${apiKey}` },
             })
             expect(response?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
@@ -119,6 +147,8 @@ describe('Headless SDK API', () => {
             expect(exchanged.pieceName).toBe('@activepieces/piece-gmail')
             expect(exchanged.externalId).toBe('gmail_personal')
             expect(exchanged.displayName).toBe('Gmail (work)')
+            expect(exchanged.theme.websiteName).toBe(mockPlatform.name)
+            expect(exchanged.theme.logos.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
         })
 
         it('returns a null displayName when none was provided', async () => {

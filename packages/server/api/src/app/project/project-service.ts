@@ -73,12 +73,12 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
         }
 
-        const teamUpdate = request.type === ProjectType.TEAM ? {
+        const nameAndIconUpdate = request.type === ProjectType.TEAM || request.type === ProjectType.HEADLESS_SDK ? {
             ...spreadIfDefined('displayName', request.displayName),
             ...spreadIfDefined('icon', request.icon),
         } : {}
 
-        await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
+        await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...nameAndIconUpdate })
         return this.getOneOrThrow(projectId)
     },
 
@@ -275,7 +275,18 @@ type UpdatePersonalProjectParams = {
     maxConcurrentJobs?: number | null
 }
 
-type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams
+type UpdateHeadlessSdkProjectParams = {
+    type: ProjectType.HEADLESS_SDK
+    displayName?: string
+    externalId?: string
+    releasesEnabled?: boolean
+    metadata?: Metadata
+    poolId?: string | null
+    maxConcurrentJobs?: number | null
+    icon?: ProjectIcon
+}
+
+type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams | UpdateHeadlessSdkProjectParams
 
 type CreateParams = {
     ownerId: UserId

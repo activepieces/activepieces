@@ -1,0 +1,8 @@
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
+import { pieceRunController } from './piece-run.controller'
+
+export const pieceRunModule: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.headlessSdkEnabled))
+    await app.register(pieceRunController, { prefix: '/v1/piece-runs' })
+}

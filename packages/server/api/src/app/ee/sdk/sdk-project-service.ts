@@ -22,7 +22,7 @@ export const sdkProjectService = (log: FastifyBaseLogger) => ({
             ownerId: platform.ownerId,
             platformId,
             externalId: externalProjectId,
-            type: ProjectType.TEAM,
+            type: ProjectType.HEADLESS_SDK,
         })
 
         return { project, isNewProject: true }

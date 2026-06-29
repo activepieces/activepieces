@@ -4,7 +4,7 @@ import {
   ProjectType,
   ProjectWithLimits,
 } from '@activepieces/shared';
-import { User } from 'lucide-react';
+import { Code2, User } from 'lucide-react';
 
 import { Avatar } from '@/components/ui/avatar';
 import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar-shadcn';
@@ -28,20 +28,30 @@ const ProjectSideBarItem = ({
 
   const projectName = getProjectName(project);
 
-  const projectAvatar = isNil(project.icon) ? null : project.type ===
-    ProjectType.TEAM ? (
-    <Avatar
-      className="size-[18px] text-sm font-bold flex items-center justify-center rounded-[4px]"
-      style={{
-        backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
-        color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
-      }}
-    >
-      <span className="scale-75">{projectName.charAt(0).toUpperCase()}</span>
-    </Avatar>
-  ) : (
-    <User className="size-4 " />
-  );
+  const projectAvatar = (() => {
+    if (project.type === ProjectType.HEADLESS_SDK) {
+      return <Code2 className="size-4 " />;
+    }
+    if (isNil(project.icon)) {
+      return null;
+    }
+    if (project.type === ProjectType.TEAM) {
+      return (
+        <Avatar
+          className="size-[18px] text-sm font-bold flex items-center justify-center rounded-[4px]"
+          style={{
+            backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
+            color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
+          }}
+        >
+          <span className="scale-75">
+            {projectName.charAt(0).toUpperCase()}
+          </span>
+        </Avatar>
+      );
+    }
+    return <User className="size-4 " />;
+  })();
 
   const shouldShowTooltip = projectName.length > MAX_LENGTH_TO_NOT_SHOW_TOOLTIP;
   const displayText = shouldShowTooltip
