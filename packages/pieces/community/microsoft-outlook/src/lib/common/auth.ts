@@ -12,7 +12,7 @@ This connection supports two access modes. Pick the matching **Grant Type** and 
  - Calendars.Read
  - offline_access
 
-**App-only (Client Credentials)** — acts as the application, with no signed-in user. Set **Access Mode** to the App-only option for your cloud, set **Tenant ID** to your Directory (tenant) ID, and set **Mailbox** to the target user's email/UPN or object ID. You must register your own Azure app (the shared app cannot grant app-only access to your tenant). Add these **Microsoft Graph (Application) permissions** and **grant admin consent**:
+**App-only (Client Credentials)** — acts as the application, with no signed-in user. Choose the **Server-to-Server (Client Credentials)** authentication method when creating the connection. Then set **Access Mode** to the App-only option for your cloud, set **Tenant ID** to your Directory (tenant) ID, and set **Mailbox** to the target user's email/UPN or object ID. You must register your own Azure app (the shared app cannot grant app-only access to your tenant). Add these **Microsoft Graph (Application) permissions** and **grant admin consent**:
  - Mail.ReadWrite
  - Mail.Send
 
@@ -48,10 +48,38 @@ export const microsoftOutlookAuth = PieceAuth.OAuth2({
     try {
       const authValue = auth as OAuth2PropertyValue;
       const client = outlookCommon.createClient(authValue);
-      await client.api(outlookCommon.mailboxPrefix(authValue)).get();
+      await client
+        .api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders/inbox`)
+        .get();
       return { valid: true };
     } catch (error) {
-      return { valid: false, error: 'Invalid Credentials.' };
+      return { valid: false, error: describeGraphError(error) };
     }
   },
 });
+
+function describeGraphError(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    const parts: string[] = [];
+    if ('statusCode' in error && error.statusCode) {
+      parts.push(`HTTP ${String(error.statusCode)}`);
+    }
+    if ('code' in error && error.code) {
+      parts.push(String(error.code));
+    }
+    if ('message' in error && error.message) {
+      parts.push(String(error.message));
+    }
+    if ('body' in error && error.body) {
+      const body = error.body;
+      parts.push(typeof body === 'string' ? body.slice(0, 800) : JSON.stringify(body).slice(0, 800));
+    }
+    if (parts.length > 0) {
+      return parts.join(' | ');
+    }
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return 'Unknown error while validating the connection.';
+}
