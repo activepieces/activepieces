@@ -3,13 +3,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall, INTEGRATION_OPTIONS, mapTestimonial } from '../common';
 
-export const createTestimonialAction = createAction({
+export const addTestimonialAction = createAction({
   auth: senjaAuth,
-  name: 'create_testimonial',
-  displayName: 'Create Testimonial',
+  name: 'add_testimonial',
+  displayName: 'Add Testimonial',
   description: 'Add a new testimonial to your Senja project.',
-  audience: 'human',
-  aiMetadata: { description: 'Creates a new testimonial in a Senja project, either a text or a video testimonial (set by type). Use to import or record a customer testimonial along with its customer details, rating, tags, and source. Requires type and customer name; text needs body text and video needs a video URL. Not idempotent — each call creates a separate testimonial.', idempotent: false },
+  audience: 'ai',
+  aiMetadata: { description: 'Creates a new Senja testimonial — text or video, set by type — with the customer\'s details, rating, tags, and source. Requires type and customer name; a text testimonial also needs body text and a video testimonial needs a video URL. Each call creates a separate record (no de-duplication), so do not retry blindly on timeout.', idempotent: false },
   props: {
     type: Property.StaticDropdown({
       displayName: 'Testimonial Type',

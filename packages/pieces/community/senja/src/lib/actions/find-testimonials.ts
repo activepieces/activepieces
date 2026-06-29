@@ -3,13 +3,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall, INTEGRATION_OPTIONS, mapTestimonial } from '../common';
 
-export const listTestimonialsAction = createAction({
+export const findTestimonialsAction = createAction({
   auth: senjaAuth,
-  name: 'list_testimonials',
-  displayName: 'List Testimonials',
-  description: 'Retrieve all testimonials from your Senja project.',
-  audience: 'human',
-  aiMetadata: { description: 'Lists testimonials from a Senja project, returning all of them or only those matching optional filters (full-text search, approval status, type, rating, source platform, tags, language) with sorting and pagination. Use to find, audit, or enumerate testimonials before acting on them. Read-only and idempotent.', idempotent: true },
+  name: 'find_testimonials',
+  displayName: 'Find Testimonials',
+  description: 'Search and list testimonials from your Senja project.',
+  audience: 'ai',
+  aiMetadata: { description: 'Searches and lists Senja testimonials, returning all of them or only those matching optional filters (full-text query, approval status, type, rating, source platform, tags, language) with sorting and pagination. Pick this over Get Testimonial when you do not yet have a testimonial ID — it is the resolver that returns the IDs the get/update/delete atomics require. Read-only.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Search',

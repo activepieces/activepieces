@@ -3,13 +3,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall, mapTestimonial } from '../common';
 
-export const getTestimonialAction = createAction({
+export const fetchTestimonialAction = createAction({
   auth: senjaAuth,
-  name: 'get_testimonial',
-  displayName: 'Get Testimonial',
+  name: 'fetch_testimonial',
+  displayName: 'Fetch Testimonial',
   description: 'Retrieve a specific testimonial by its ID.',
-  audience: 'human',
-  aiMetadata: { description: 'Fetches a single Senja testimonial by its unique ID. Use when you already have a testimonial ID (e.g. from List Testimonials or a trigger) and need its full details. Requires the testimonial ID; read-only and idempotent.', idempotent: true },
+  audience: 'ai',
+  aiMetadata: { description: 'Fetches one Senja testimonial\'s full details by its ID. Pick this over Find Testimonials when you already hold a specific testimonial ID (from Find Testimonials or the Testimonial Event trigger) and want only that record. Requires the testimonial ID; resolve unknown IDs via Find Testimonials first. Read-only.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Testimonial ID',
