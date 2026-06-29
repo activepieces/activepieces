@@ -11,7 +11,7 @@ export const githubUpdateIssueAiAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Edits an existing issue (PATCH /repos/{owner}/{repo}/issues/{issue_number}), setting only the fields you provide — title, body, state (open/closed) with state_reason, milestone, labels, or assignees. Use to modify, close, or reopen an issue (no separate close action). Labels and assignees here REPLACE the existing set; use Add Labels to Issue / Add Assignees to Issue to append. Idempotent: applying the same field values again leaves the issue in the same state.',
+      'Edits an existing issue (PATCH /repos/{owner}/{repo}/issues/{issue_number}), setting only the fields you provide — title, body, state (open/closed) with state_reason, milestone (set Clear Milestone to remove it), labels, or assignees. Use to modify, close, or reopen an issue (no separate close action). Labels and assignees here REPLACE the existing set; use Add Labels to Issue / Add Assignees to Issue to append. Idempotent: applying the same field values again leaves the issue in the same state.',
     idempotent: true,
   },
   props: {
@@ -68,7 +68,13 @@ export const githubUpdateIssueAiAction = createAction({
     milestone: Property.Number({
       displayName: 'Milestone Number',
       description:
-        'Milestone number to associate. Resolve via List Milestones. Send null to clear.',
+        "Milestone number to associate. Resolve via List Milestones. To remove the issue's milestone instead, set Clear Milestone.",
+      required: false,
+    }),
+    clear_milestone: Property.Checkbox({
+      displayName: 'Clear Milestone',
+      description:
+        "Set to true to remove the issue's current milestone. Overrides Milestone Number.",
       required: false,
     }),
     labels: Property.Array({
@@ -93,8 +99,11 @@ export const githubUpdateIssueAiAction = createAction({
     if (propsValue.state !== undefined) body['state'] = propsValue.state;
     if (propsValue.state_reason !== undefined)
       body['state_reason'] = propsValue.state_reason;
-    if (propsValue.milestone !== undefined)
+    if (propsValue.clear_milestone) {
+      body['milestone'] = null;
+    } else if (propsValue.milestone !== undefined) {
       body['milestone'] = propsValue.milestone;
+    }
     if (propsValue.labels !== undefined)
       body['labels'] = propsValue.labels as string[];
     if (propsValue.assignees !== undefined)

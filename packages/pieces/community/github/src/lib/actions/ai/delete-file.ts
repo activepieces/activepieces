@@ -47,7 +47,10 @@ export const githubDeleteFileAction = createAction({
       const response = await githubApiCall({
         auth,
         method: HttpMethod.DELETE,
-        resourceUri: `/repos/${owner}/${repo}/contents/${path}`,
+        resourceUri: `/repos/${owner}/${repo}/contents/${path
+          .split('/')
+          .map(encodeURIComponent)
+          .join('/')}`,
         body,
       });
       return response.body;

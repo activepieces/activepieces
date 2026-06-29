@@ -53,7 +53,10 @@ export const githubCreateOrUpdateFileAction = createAction({
       const response = await githubApiCall({
         auth,
         method: HttpMethod.PUT,
-        resourceUri: `/repos/${owner}/${repo}/contents/${path}`,
+        resourceUri: `/repos/${owner}/${repo}/contents/${path
+          .split('/')
+          .map(encodeURIComponent)
+          .join('/')}`,
         body,
       });
       return response.body;

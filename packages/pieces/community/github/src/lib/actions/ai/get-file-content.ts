@@ -39,7 +39,10 @@ export const githubGetFileContentAction = createAction({
       const response = await githubApiCall({
         auth,
         method: HttpMethod.GET,
-        resourceUri: `/repos/${owner}/${repo}/contents/${path}`,
+        resourceUri: `/repos/${owner}/${repo}/contents/${path
+          .split('/')
+          .map(encodeURIComponent)
+          .join('/')}`,
         query,
       });
       return response.body;
