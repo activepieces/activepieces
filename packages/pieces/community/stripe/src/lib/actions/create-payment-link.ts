@@ -9,7 +9,7 @@ export const stripeCreatePaymentLink = createAction({
   displayName: 'Create Payment Link',
   description:
     'Creates a shareable, Stripe-hosted payment link for one-time purchases or subscriptions.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a reusable, Stripe-hosted payment link for the given line items (price IDs and quantities), with optional after-completion redirect, promotion codes, and billing-address collection. Use to generate a shareable checkout URL without building a custom flow. Not idempotent: each call creates a new payment link.',

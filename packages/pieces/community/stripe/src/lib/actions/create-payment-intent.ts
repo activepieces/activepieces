@@ -12,7 +12,7 @@ export const stripeCreatePaymentIntent = createAction({
   auth: stripeAuth,
   displayName: 'Create Payment (Payment Intent)',
   description: 'Creates a new payment intent to start a payment flow.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a Stripe PaymentIntent for a given amount and currency to begin collecting a payment, optionally tied to a customer. Can run in two modes: leave it unconfirmed to obtain a client secret for client-side completion, or set confirm to immediately charge a supplied payment method (which then also requires a return URL). Not idempotent: each call starts a separate payment.',

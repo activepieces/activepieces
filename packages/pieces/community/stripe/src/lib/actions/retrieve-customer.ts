@@ -11,7 +11,7 @@ export const stripeRetrieveCustomer = createAction({
   auth: stripeAuth,
   displayName: 'Retrieve Customer',
   description: 'Retrieve a customer in stripe by id',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches the full details of a single Stripe customer by its customer ID (e.g., cus_...). Use when you already have the exact ID and need the current record; for lookup by email use Search Customer instead. Read-only and idempotent.',
