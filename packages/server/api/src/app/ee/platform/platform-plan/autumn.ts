@@ -227,9 +227,9 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const monthEnd = apDayjs().endOf('month').unix()
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
-            return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null }
+            return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
         }
-        const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'payment_method'] })
         const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
         const basePlan = baseSubscriptions.find((subscription) => subscription.status === 'active') ?? baseSubscriptions[0]
         const scheduledPlan = baseSubscriptions.find((subscription) => subscription !== basePlan)
@@ -241,6 +241,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             nextBillingAmount: basePlan?.plan?.price?.amount ?? 0,
             cancelAt: msToUnixSeconds(basePlan?.expiresAt) ?? null,
             scheduledPlanName: scheduledPlan?.plan?.name ?? null,
+            billingPortalAvailable: !isNil(customer.paymentMethod),
         }
     },
     topUpFeature: async ({ platformId, featureId, quantity, successUrl }) => {

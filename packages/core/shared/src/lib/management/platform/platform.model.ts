@@ -260,5 +260,6 @@ export const PlatformBillingInformation = z.object({
     cancelAt: Nullable(z.number()),
     autoTopUps: z.array(AutoTopUpConfig),
     topUpFeatures: z.array(ToppableFeature),
+    billingPortalAvailable: z.boolean(),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

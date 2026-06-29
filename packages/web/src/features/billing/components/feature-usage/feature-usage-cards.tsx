@@ -28,7 +28,9 @@ import {
   ItemDescription,
   ItemActions,
 } from '@/components/custom/item';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
@@ -54,7 +56,7 @@ export function FeatureUsageCards({
   });
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="grid grid-cols-2 items-start gap-4">
       {cards.map(({ display, resolved }) => (
         <FeatureUsageCard
           key={display.featureId}
@@ -87,27 +89,43 @@ function FeatureUsageCard({
   autoTopUp?: AutoTopUpConfig;
 }) {
   const Icon = display.icon;
+  const isUnlimited = display.kind === 'limit' && isNil(resolved.limit);
   return (
-    <Item variant="outline" className="min-w-[260px] flex-1">
+    <Item
+      variant="outline"
+      className={cn('items-start', toppable && 'col-span-2')}
+    >
       <ItemMedia variant="icon">
         <Icon />
       </ItemMedia>
       <ItemContent>
-        <ItemTitle>{t(display.label)}</ItemTitle>
-        <ItemDescription>
-          <UsageSummary display={display} resolved={resolved} />
-        </ItemDescription>
+        <ItemTitle className="flex items-center gap-2">
+          {t(display.label)}
+          {isUnlimited && (
+            <Badge variant="secondary" className="rounded-sm font-normal">
+              {t('Unlimited')}
+            </Badge>
+          )}
+        </ItemTitle>
+        <UsageSummary display={display} resolved={resolved} />
+        {display.kind === 'limit' && <LimitUsageBar resolved={resolved} />}
       </ItemContent>
-      {toppable && (
+      {toppable && display.kind === 'limit' && (
         <ItemActions>
-          <TopUpControls
+          <ManualTopUpControl
             feature={toppable}
-            autoTopUp={autoTopUp}
-            includedCredits={includedCredits}
-            kind={display.kind}
             purchaseTitle={display.purchaseTitle}
           />
         </ItemActions>
+      )}
+      {toppable && display.kind === 'consumable' && (
+        <div className="mt-1 flex basis-full flex-col border-t pt-3">
+          <AutoTopUpControl
+            feature={toppable}
+            autoTopUp={autoTopUp}
+            includedCredits={includedCredits}
+          />
+        </div>
       )}
     </Item>
   );
@@ -121,70 +139,105 @@ function UsageSummary({
   resolved: ResolvedFeatureUsage;
 }) {
   if (display.kind === 'consumable') {
+    const total = isNil(resolved.remaining)
+      ? null
+      : resolved.used + resolved.remaining;
+    const percent =
+      isNil(total) || total <= 0
+        ? 0
+        : Math.min(100, Math.round((resolved.used / total) * 100));
     return (
-      <>
-        <span className="font-medium text-foreground">
-          {isNil(resolved.remaining)
-            ? t('Unlimited')
-            : Math.round(resolved.remaining).toLocaleString()}
-        </span>{' '}
-        {!isNil(resolved.remaining) && <>{t('available')} </>}
-        <span className="ml-2 text-xs">
-          ({t('Total used')}: {Math.round(resolved.used).toLocaleString()})
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl font-semibold text-foreground">
+            {isNil(resolved.remaining)
+              ? t('Unlimited')
+              : Math.round(resolved.remaining).toLocaleString()}
+          </span>
+          {!isNil(resolved.remaining) && (
+            <span className="text-sm text-muted-foreground">
+              {t('available')}
+            </span>
+          )}
+        </div>
+        {!isNil(total) && (
+          <Progress
+            value={percent}
+            indicatorClassName={usageIndicatorClass(resolved.used / total)}
+          />
+        )}
+        <span className="text-xs text-muted-foreground">
+          {t('Total used')}: {Math.round(resolved.used).toLocaleString()}
         </span>
-      </>
+      </div>
     );
   }
-  const limitLabel = isNil(resolved.limit)
-    ? t('Unlimited')
-    : resolved.limit.toLocaleString();
-  const approachingLimit =
-    !isNil(resolved.limit) &&
-    resolved.limit > 0 &&
-    resolved.used / resolved.limit > 0.8;
+  if (isNil(resolved.limit)) {
+    return (
+      <ItemDescription>
+        <span className="font-medium text-foreground">
+          {resolved.used.toLocaleString()}
+        </span>{' '}
+        {t('used')}
+      </ItemDescription>
+    );
+  }
   return (
-    <>
+    <ItemDescription>
       <span className="font-medium text-foreground">
-        {resolved.used.toLocaleString()} / {limitLabel}
+        {resolved.used.toLocaleString()} / {resolved.limit.toLocaleString()}
       </span>{' '}
       {t('used')}
-      {approachingLimit && (
-        <span className="ml-2 text-destructive font-medium">
-          {t('Approaching limit')}
-        </span>
+    </ItemDescription>
+  );
+}
+
+function usageIndicatorClass(ratio: number): string {
+  if (ratio >= 1) {
+    return 'bg-destructive';
+  }
+  if (ratio > 0.8) {
+    return 'bg-amber-500';
+  }
+  return 'bg-primary';
+}
+
+
+function LimitUsageBar({ resolved }: { resolved: ResolvedFeatureUsage }) {
+  if (isNil(resolved.limit) || resolved.limit <= 0) {
+    return (
+      <div className="mt-2">
+        <Progress value={100} indicatorClassName="bg-muted-foreground/20" />
+      </div>
+    );
+  }
+  const ratio = resolved.used / resolved.limit;
+  const percent = Math.min(100, Math.round(ratio * 100));
+  const reached = ratio >= 1;
+  const approaching = !reached && ratio > 0.8;
+  const indicatorClassName = usageIndicatorClass(ratio);
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      <Progress value={percent} indicatorClassName={indicatorClassName} />
+      {(reached || approaching) && (
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={cn(
+              'text-xs font-medium',
+              reached ? 'text-destructive' : 'text-amber-600',
+            )}
+          >
+            {reached ? t('Limit reached') : t('Approaching limit')}
+          </span>
+        </div>
       )}
-    </>
+    </div>
   );
 }
 
 // Consumable features (credits) are refilled by AUTO top-up only — no manual one-off purchase (product
-// decision). Non-consumable/limit features (e.g. extra seats) you buy outright, so they get the MANUAL top-up
-// instead — you don't auto-buy seats. Branch on the feature kind.
-function TopUpControls({
-  feature,
-  autoTopUp,
-  includedCredits,
-  kind,
-  purchaseTitle,
-}: {
-  feature: ToppableFeature;
-  autoTopUp?: AutoTopUpConfig;
-  includedCredits: number;
-  kind: FeatureKind;
-  purchaseTitle: string;
-}) {
-  if (kind === 'consumable') {
-    return (
-      <AutoTopUpControl
-        feature={feature}
-        autoTopUp={autoTopUp}
-        includedCredits={includedCredits}
-      />
-    );
-  }
-  return <ManualTopUpControl feature={feature} purchaseTitle={purchaseTitle} />;
-}
-
+// decision), rendered as a full-width row beneath the balance. Non-consumable/limit features (e.g. extra
+// seats) you buy outright, so they get the MANUAL top-up button in the card actions — you don't auto-buy seats.
 function ManualTopUpControl({
   feature,
   purchaseTitle,
@@ -235,35 +288,52 @@ function AutoTopUpControl({
       : null;
 
   return (
-    <div className="flex items-center gap-2">
-      {enabled && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => {
-            setIsEditing(true);
-            setIsAutoTopUpOpen(true);
-          }}
-        >
-          <Settings className={cn('size-4')} />
-        </Button>
-      )}
-      <Switch
-        checked={enabled}
-        disabled={isPending}
-        onCheckedChange={(checked) => {
-          if (checked) {
-            setIsEditing(false);
-            setIsAutoTopUpOpen(true);
-          } else {
-            updateAutoTopUp({
-              state: AiCreditsAutoTopUpState.DISABLED,
-              featureId: feature.featureId,
-            });
-          }
-        }}
-      />
+    <>
+      <div className="flex w-full items-center justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-foreground">
+            {t('Auto top-up')}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {enabled && autoTopUp
+              ? t('Adds {credits} credits when below {threshold}', {
+                  credits: autoTopUp.quantity.toLocaleString(),
+                  threshold: autoTopUp.threshold.toLocaleString(),
+                })
+              : t('Automatically buy credits when your balance runs low')}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {enabled && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => {
+                setIsEditing(true);
+                setIsAutoTopUpOpen(true);
+              }}
+            >
+              <Settings className="size-4" />
+            </Button>
+          )}
+          <Switch
+            checked={enabled}
+            disabled={isPending}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                setIsEditing(false);
+                setIsAutoTopUpOpen(true);
+              } else {
+                updateAutoTopUp({
+                  state: AiCreditsAutoTopUpState.DISABLED,
+                  featureId: feature.featureId,
+                });
+              }
+            }}
+          />
+        </div>
+      </div>
       <AutoTopUpConfigDialog
         key={isAutoTopUpOpen ? 'auto-open' : 'auto-closed'}
         isOpen={isAutoTopUpOpen}
@@ -275,7 +345,7 @@ function AutoTopUpControl({
         currentCreditsToAdd={enabled ? autoTopUp?.quantity : undefined}
         currentMaxMonthlyLimit={enabled ? maxMonthlyLimit : undefined}
       />
-    </div>
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Loader2 } from 'lucide-react';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -9,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import {
   FeatureUsageCards,
   LicenseKey,
+  PlanSelector,
   SubscriptionInfo,
   billingMutations,
   billingQueries,
-  useManagePlanDialogStore,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -46,11 +47,11 @@ function BillingPageDetails() {
   } = billingQueries.usePlatformSubscription(platform.id);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
-  const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
+  const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
+    billingMutations.usePortalLink();
   const { mutate: reactivateSubscription, isPending: isReactivating } =
     billingMutations.useReactivateSubscription();
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
-  const hasBillingPortal = (platformPlanInfo?.nextBillingAmount ?? 0) > 0;
+  const hasBillingPortal = platformPlanInfo?.billingPortalAvailable ?? false;
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
@@ -68,8 +69,12 @@ function BillingPageDetails() {
     );
   }
 
+  const showActions =
+    !isCommunity && (hasBillingPortal || !isNil(platformPlanInfo.cancelAt));
+
   return (
     <CenteredPage
+      widthClassName="max-w-[56rem]"
       title={t('Billing')}
       description={t(
         'For questions about billing contact us at support@activepieces.com',
@@ -78,24 +83,20 @@ function BillingPageDetails() {
       <div className="flex flex-col gap-6">
         {!isCommunity && <SubscriptionInfo info={platformPlanInfo} />}
 
-        {!isCommunity && (
+        {showActions && (
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-fit"
-              onClick={() => openManagePlanDialog()}
-            >
-              {t('Manage Plan')}
-            </Button>
             {hasBillingPortal && (
               <Button
                 variant="outline"
                 size="sm"
                 className="w-fit"
+                disabled={isOpeningPortal}
                 onClick={() => redirectToPortalSession()}
               >
-                {t('Access Billing Portal')}
+                {isOpeningPortal && (
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                )}
+                {t('Billing history & payment')}
               </Button>
             )}
             {!isNil(platformPlanInfo.cancelAt) && (
@@ -113,8 +114,16 @@ function BillingPageDetails() {
         )}
 
         {!isCommunity && (
+          <section id="billing-plans" className="flex flex-col gap-3">
+            <h2 className="text-lg font-medium">{t('Plans')}</h2>
+            <PlanSelector enabled={true} />
+          </section>
+        )}
+
+        {!isCommunity && (
           <FeatureUsageCards platformSubscription={platformPlanInfo} />
         )}
+
         <LicenseKey platform={platform} />
       </div>
     </CenteredPage>

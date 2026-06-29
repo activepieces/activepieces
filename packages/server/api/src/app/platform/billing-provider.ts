@@ -3,7 +3,7 @@ import { AutoTopUpConfig, ConsumableProductAutoTopupParams, PurchasablePlan, Top
 import { hooksFactory } from '../helper/hooks-factory'
 
 function defaultBillingInfo(): BillingInfo {
-    return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix(), nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null }
+    return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix(), nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
 }
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
@@ -133,6 +133,7 @@ export type BillingInfo = {
     planId: string | null
     planName: string | null
     scheduledPlanName: string | null
+    billingPortalAvailable: boolean
 }
 
 export type TopUpFeatureParams = {

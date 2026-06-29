@@ -1,4 +1,4 @@
-import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, PlatformBillingInformation, PrincipalType, PurchasablePlan } from '@activepieces/shared'
+import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, isNil, PlatformBillingInformation, PrincipalType, PurchasablePlan } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -19,7 +19,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
             billingProvider.get(request.log).getTopUpSettings(platform.id),
         ])
 
-        const { endDate: nextBillingDate, nextBillingAmount, cancelAt, planId: currentPlanId, planName: currentPlanName, scheduledPlanName } = await billingProvider.get(request.log).getBillingInfo(platform.id)
+        const { endDate: nextBillingDate, nextBillingAmount, cancelAt, planId: currentPlanId, planName: currentPlanName, scheduledPlanName, billingPortalAvailable } = await billingProvider.get(request.log).getBillingInfo(platform.id)
 
         const response: PlatformBillingInformation = {
             plan: platformPlan,
@@ -32,6 +32,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
             cancelAt,
             autoTopUps,
             topUpFeatures,
+            billingPortalAvailable,
         }
         return response
     })
@@ -41,23 +42,31 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
     })
 
     fastify.post('/checkout', CheckoutRequest, async (request) => {
-        return billingProvider.get(request.log).createCheckoutSession({
-            platformId: request.principal.platform.id,
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        const result = await provider.createCheckoutSession({
+            platformId,
             planId: request.body.planId,
             successUrl: request.body.successUrl,
         })
+        if (isNil(result.checkoutUrl)) {
+            await provider.refreshEntitlements(platformId)
+        }
+        return result
     })
 
     fastify.post('/cancel', CancelRequest, async (request) => {
-        await billingProvider.get(request.log).cancelSubscription({
-            platformId: request.principal.platform.id,
-        })
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        await provider.cancelSubscription({ platformId })
+        await provider.refreshEntitlements(platformId)
     })
 
     fastify.post('/reactivate', ReactivateRequest, async (request) => {
-        await billingProvider.get(request.log).reactivateSubscription({
-            platformId: request.principal.platform.id,
-        })
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        await provider.reactivateSubscription({ platformId })
+        await provider.refreshEntitlements(platformId)
     })
 
     fastify.post('/portal', {

@@ -35,6 +35,7 @@ export const PurchasablePlan = z.object({
     price: Nullable(z.number()),
     interval: Nullable(z.string()),
     priceDisplay: Nullable(z.string()),
+    baseVariantId: Nullable(z.string()),
 })
 export type PurchasablePlan = z.infer<typeof PurchasablePlan>
 

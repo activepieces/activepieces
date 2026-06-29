@@ -1,4 +1,5 @@
 export { ManagePlanDialog } from './components/manage-plan-dialog';
+export { PlanSelector } from './components/plan-selector';
 export { FeatureUsageCards } from './components/feature-usage/feature-usage-cards';
 export { Error } from './components/error';
 export { FeatureStatus } from './components/features-status';
