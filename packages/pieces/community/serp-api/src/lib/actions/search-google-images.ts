@@ -54,8 +54,8 @@ export const searchGoogleImages = createAction({
         api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE_IMAGES,
         q: propsValue.query,
-        hl: propsValue.hl,
-        gl: propsValue.gl,
+        hl: propsValue.hl || undefined,
+        gl: propsValue.gl || undefined,
         num: propsValue.num_results,
         ijn: propsValue.ijn,
       };

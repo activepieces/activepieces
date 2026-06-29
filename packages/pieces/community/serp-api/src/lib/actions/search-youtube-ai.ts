@@ -44,8 +44,8 @@ export const searchYoutubeAi = createAction({
         api_key: auth.secret_text,
         engine: SerpApiEngine.YOUTUBE,
         search_query: propsValue.query,
-        hl: propsValue.hl,
-        gl: propsValue.gl,
+        hl: propsValue.hl || undefined,
+        gl: propsValue.gl || undefined,
       };
 
       const response = await client.executeSearch(searchConfig);

@@ -59,7 +59,7 @@ export const searchGoogleScholar = createAction({
         api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE_SCHOLAR,
         q: propsValue.query,
-        hl: propsValue.hl,
+        hl: propsValue.hl || undefined,
         num: propsValue.num_results,
         start: propsValue.start,
         as_ylo: propsValue.as_ylo,

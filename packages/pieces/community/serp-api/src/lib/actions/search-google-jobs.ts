@@ -59,8 +59,8 @@ export const searchGoogleJobs = createAction({
         api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE_JOBS,
         q: propsValue.query,
-        hl: propsValue.hl,
-        gl: propsValue.gl,
+        hl: propsValue.hl || undefined,
+        gl: propsValue.gl || undefined,
       };
 
       if (propsValue.location) {

@@ -68,7 +68,7 @@ export const searchGoogleTrendsAi = createAction({
         api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE_TRENDS,
         q: propsValue.query,
-        hl: propsValue.hl,
+        hl: propsValue.hl || undefined,
         data_type: propsValue.data_type as
           | 'TIMESERIES'
           | 'GEO_MAP'

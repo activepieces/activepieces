@@ -49,8 +49,8 @@ export const searchGoogleShopping = createAction({
         api_key: auth.secret_text,
         engine: SerpApiEngine.GOOGLE_SHOPPING,
         q: propsValue.query,
-        hl: propsValue.hl,
-        gl: propsValue.gl,
+        hl: propsValue.hl || undefined,
+        gl: propsValue.gl || undefined,
         start: propsValue.start,
       };
 
