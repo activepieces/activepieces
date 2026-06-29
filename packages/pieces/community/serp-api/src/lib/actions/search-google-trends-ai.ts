@@ -74,9 +74,9 @@ export const searchGoogleTrendsAi = createAction({
           | 'GEO_MAP'
           | 'RELATED_TOPICS'
           | 'RELATED_QUERIES',
-        geo: propsValue.geo,
-        date: propsValue.date,
-        cat: propsValue.category,
+        geo: propsValue.geo || undefined,
+        date: propsValue.date || undefined,
+        cat: propsValue.category || undefined,
       };
 
       if (propsValue.gprop) {
