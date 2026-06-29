@@ -48,7 +48,7 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
     })
 }
 
-export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
     return {
         async poll(input) {
             log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
@@ -69,7 +69,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 return null
             }
             const pollQueueName = getPollQueueName(assignment)
-            const job = await jobBroker(log).poll(pollQueueName)
+            const job = await jobBroker(log).poll(pollQueueName, connectionId)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }
@@ -316,4 +316,3 @@ function chatRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runI
         ...spreadIfDefined('user', isNil(ids.userId) ? undefined : { id: ids.userId }),
     })
 }
-
