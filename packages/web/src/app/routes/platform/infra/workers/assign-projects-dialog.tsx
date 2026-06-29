@@ -51,13 +51,13 @@ function AssignProjectsContent({
       new Set(
         allProjects
           .filter((p) => p.workerGroupId === groupLabel)
-          .map((p) => p.id),
-      ),
+          .map((p) => p.id)
+      )
   );
   const [search, setSearch] = useState('');
 
   const filteredProjects = allProjects.filter((p) =>
-    p.displayName.toLowerCase().includes(search.toLowerCase()),
+    p.displayName.toLowerCase().includes(search.toLowerCase())
   );
 
   const toggleProject = (projectId: string) => {
@@ -72,17 +72,18 @@ function AssignProjectsContent({
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     for (const project of allProjects) {
       const wasInGroup = project.workerGroupId === groupLabel;
       const isNowChecked = checkedIds.has(project.id);
-
       if (isNowChecked && !wasInGroup) {
-        projectCollectionUtils.update(project.id, {
+        await projectCollectionUtils.update(project.id, {
           workerGroupId: groupLabel,
         });
       } else if (!isNowChecked && wasInGroup) {
-        projectCollectionUtils.update(project.id, { workerGroupId: null });
+        await projectCollectionUtils.update(project.id, {
+          workerGroupId: null,
+        });
       }
     }
     onOpenChange(false);
