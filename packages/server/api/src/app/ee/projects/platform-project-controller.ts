@@ -47,7 +47,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return machineService(request.log).listProjectWorkerGroups()
+        return machineService(request.log).listProjectWorkerGroups(request.principal.platform.id)
     })
 
     app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {

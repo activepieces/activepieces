@@ -112,9 +112,10 @@ export const machineService = (log: FastifyBaseLogger) => {
                     workerGroupScope: worker.workerGroupScope,
                 }))
         },
-        async listProjectWorkerGroups(): Promise<WorkerPoolCapacity> {
+        async listProjectWorkerGroups(platformId: string): Promise<WorkerPoolCapacity> {
             const allWorkers = await workerMachineCache().find()
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
+            const allowedLabels = new Set(await projectWorkerGroupService(log).getPlatformWorkerGroups({ platformId }))
             const slotsByLabel = new Map<string, number>()
             let sharedSlots = 0
             for (const worker of allWorkers) {
@@ -123,7 +124,9 @@ export const machineService = (log: FastifyBaseLogger) => {
                 }
                 const slots = parseWorkerConcurrency(worker.information.workerProps.WORKER_CONCURRENCY)
                 if (worker.workerGroupScope === WorkerGroupScope.PROJECT && !isNil(worker.workerGroupId) && worker.workerGroupId.length > 0) {
-                    slotsByLabel.set(worker.workerGroupId, (slotsByLabel.get(worker.workerGroupId) ?? 0) + slots)
+                    if (allowedLabels.has(worker.workerGroupId)) {
+                        slotsByLabel.set(worker.workerGroupId, (slotsByLabel.get(worker.workerGroupId) ?? 0) + slots)
+                    }
                 }
                 else if (isNil(worker.workerGroupScope)) {
                     sharedSlots += slots
