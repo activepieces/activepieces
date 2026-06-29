@@ -157,7 +157,7 @@ export const systemUsage = {
             return result
         }
         // si.processes() walks the whole process table — do it once for all pids, never per-pid.
-        const { data, error } = await tryCatch(async () => si.processes())
+        const { data, error } = await tryCatch(() => si.processes())
         if (error || !data) {
             for (const pid of pids) {
                 result.set(pid, 0)
