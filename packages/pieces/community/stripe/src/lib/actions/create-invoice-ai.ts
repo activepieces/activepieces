@@ -68,7 +68,11 @@ export const stripeCreateInvoiceAi = createAction({
     };
     if (description) body.description = description;
     if (collection_method) body.collection_method = collection_method;
-    if (days_until_due !== undefined && days_until_due !== null) {
+    if (
+      collection_method === 'send_invoice' &&
+      days_until_due !== undefined &&
+      days_until_due !== null
+    ) {
       body.days_until_due = days_until_due;
     }
 

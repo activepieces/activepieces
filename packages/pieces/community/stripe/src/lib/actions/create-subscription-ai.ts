@@ -111,6 +111,11 @@ export const stripeCreateSubscriptionAi = createAction({
       }
     });
 
+    // Stripe only accepts days_until_due with collection_method=send_invoice.
+    if (collection_method !== 'send_invoice') {
+      delete body['days_until_due'];
+    }
+
     if (items && Array.isArray(items)) {
       items.forEach((item, index) => {
         const typedItem = item as { price: string; quantity?: number };
