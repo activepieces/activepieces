@@ -60,6 +60,7 @@ export function FeatureUsageCards({
           key={display.featureId}
           display={display}
           resolved={resolved}
+          includedCredits={plan.includedCredits}
           toppable={topUpFeatures.find(
             (feature) => feature.featureId === display.featureId,
           )}
@@ -75,11 +76,13 @@ export function FeatureUsageCards({
 function FeatureUsageCard({
   display,
   resolved,
+  includedCredits,
   toppable,
   autoTopUp,
 }: {
   display: FeatureDisplay;
   resolved: ResolvedFeatureUsage;
+  includedCredits: number;
   toppable?: ToppableFeature;
   autoTopUp?: AutoTopUpConfig;
 }) {
@@ -100,6 +103,7 @@ function FeatureUsageCard({
           <TopUpControls
             feature={toppable}
             autoTopUp={autoTopUp}
+            includedCredits={includedCredits}
             kind={display.kind}
             purchaseTitle={display.purchaseTitle}
           />
@@ -159,16 +163,24 @@ function UsageSummary({
 function TopUpControls({
   feature,
   autoTopUp,
+  includedCredits,
   kind,
   purchaseTitle,
 }: {
   feature: ToppableFeature;
   autoTopUp?: AutoTopUpConfig;
+  includedCredits: number;
   kind: FeatureKind;
   purchaseTitle: string;
 }) {
   if (kind === 'consumable') {
-    return <AutoTopUpControl feature={feature} autoTopUp={autoTopUp} />;
+    return (
+      <AutoTopUpControl
+        feature={feature}
+        autoTopUp={autoTopUp}
+        includedCredits={includedCredits}
+      />
+    );
   }
   return <ManualTopUpControl feature={feature} purchaseTitle={purchaseTitle} />;
 }
@@ -204,9 +216,11 @@ function ManualTopUpControl({
 function AutoTopUpControl({
   feature,
   autoTopUp,
+  includedCredits,
 }: {
   feature: ToppableFeature;
   autoTopUp?: AutoTopUpConfig;
+  includedCredits: number;
 }) {
   const queryClient = useQueryClient();
   const [isAutoTopUpOpen, setIsAutoTopUpOpen] = useState(false);
@@ -255,10 +269,11 @@ function AutoTopUpControl({
         isOpen={isAutoTopUpOpen}
         onOpenChange={setIsAutoTopUpOpen}
         feature={feature}
+        includedCredits={includedCredits}
         isEditing={isEditing}
-        currentThreshold={autoTopUp?.threshold}
-        currentCreditsToAdd={autoTopUp?.quantity}
-        currentMaxMonthlyLimit={maxMonthlyLimit}
+        currentThreshold={enabled ? autoTopUp?.threshold : undefined}
+        currentCreditsToAdd={enabled ? autoTopUp?.quantity : undefined}
+        currentMaxMonthlyLimit={enabled ? maxMonthlyLimit : undefined}
       />
     </div>
   );

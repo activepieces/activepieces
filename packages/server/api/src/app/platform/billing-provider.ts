@@ -1,5 +1,5 @@
 import { apDayjs } from '@activepieces/server-utils'
-import { AutoTopUpConfig, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
+import { AutoTopUpConfig, ConsumableProductAutoTopupParams, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import { hooksFactory } from '../helper/hooks-factory'
 
 function defaultBillingInfo(): BillingInfo {
@@ -142,13 +142,8 @@ export type TopUpFeatureParams = {
     successUrl?: string
 }
 
-export type ConfigureAutoTopUpParams = {
+export type ConfigureAutoTopUpParams = ConsumableProductAutoTopupParams & {
     platformId: string
-    featureId: string
-    enabled: boolean
-    threshold: number
-    quantity: number
-    maxMonthlyTopUps?: number | null
     returnUrl?: string
 }
 

@@ -1,5 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
-import { AiCreditsAutoTopUpState, AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, PlatformBillingInformation, PrincipalType, PurchasablePlan } from '@activepieces/shared'
+import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, PlatformBillingInformation, PrincipalType, PurchasablePlan } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -87,15 +86,9 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return { paymentUrl: checkoutUrl }
     })
     fastify.post('/consumable-product-topups/auto-topup', ConsumableProductAutoTopupRequest, async (request) => {
-        const body = request.body
-        const enabled = body.state === AiCreditsAutoTopUpState.ENABLED
         const { setupPaymentUrl } = await billingProvider.get(request.log).configureAutoTopUp({
+            ...request.body,
             platformId: request.principal.platform.id,
-            featureId: body.featureId,
-            enabled,
-            threshold: enabled ? body.minThreshold : 0,
-            quantity: enabled ? body.creditsToAdd : 0,
-            maxMonthlyTopUps: enabled && !isNil(body.maxMonthlyLimit) && body.creditsToAdd > 0 ? Math.floor(body.maxMonthlyLimit / body.creditsToAdd) : null,
         })
         return { paymentUrl: setupPaymentUrl }
     })

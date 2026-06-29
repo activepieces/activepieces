@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core-utils'
 import { apDayjs, apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import {
     Autumn,
     AutumnError,
@@ -29,7 +29,7 @@ const CREDENTIALS_CACHE_MAX_ENTRIES = 10000
 
 const credentialsCache: LRU<ResolvedAutumnCredentials> = lru(CREDENTIALS_CACHE_MAX_ENTRIES, CREDENTIALS_CACHE_TTL_MS)
 
-const AUTUMN_CONSOLE_URL = 'https://console.activepieces.com'
+const AUTUMN_CONSOLE_URL = 'https://orleans-hash-mike-recorder.trycloudflare.com'
 const AUTUMN_FREE_PLAN_ID = 'free'
 
 // Consumable credit features are refilled by auto-top-up ONLY — never a manual one-off purchase (product
@@ -258,17 +258,27 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const { paymentUrl } = await topUpOnConsole({ ...creds, featureId, quantity, successUrl })
         return { checkoutUrl: paymentUrl }
     },
-    configureAutoTopUp: async ({ platformId, featureId, enabled, threshold, quantity, maxMonthlyTopUps, returnUrl }) => {
-        await autumnUtils.ensureEnrolled(log, platformId)
-        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-        const creds = await getConsoleCreds(log, platformId)
+    configureAutoTopUp: async (params) => {
+        await autumnUtils.ensureEnrolled(log, params.platformId)
+        const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
+        const creds = await getConsoleCreds(log, params.platformId)
         if (isNil(client) || isNil(creds)) {
             return {}
         }
-        const customer = enabled ? await client.getCustomer({ expand: ['payment_method'] }) : null
-        const setupPaymentReturnUrl = enabled && isNil(customer?.paymentMethod) ? returnUrl : undefined
+        if (params.state === AiCreditsAutoTopUpState.DISABLED) {
+            await configureAutoTopUpOnConsole({ ...creds, featureId: params.featureId, enabled: false })
+            return {}
+        }
+        const customer = await client.getCustomer({ expand: ['payment_method'] })
+        const setupPaymentReturnUrl = isNil(customer?.paymentMethod) ? params.returnUrl : undefined
         const { setupPaymentUrl } = await configureAutoTopUpOnConsole({
-            ...creds, featureId, enabled, threshold, quantity, maxMonthlyTopUps, setupPaymentReturnUrl,
+            ...creds,
+            featureId: params.featureId,
+            enabled: true,
+            threshold: params.minThreshold,
+            quantity: params.creditsToAdd,
+            maxMonthlyLimit: params.maxMonthlyLimit,
+            setupPaymentReturnUrl,
         })
         return isNil(setupPaymentUrl) ? {} : { setupPaymentUrl }
     },
@@ -532,10 +542,11 @@ async function portalOnConsole({ autumnCustomerId, autumnApiKey, returnUrl }: Co
     return response.data.data
 }
 
-async function configureAutoTopUpOnConsole({ autumnCustomerId, autumnApiKey, featureId, enabled, threshold, quantity, maxMonthlyTopUps, setupPaymentReturnUrl }: ConsoleCustomerCall & { featureId: string, enabled: boolean, threshold: number, quantity: number, maxMonthlyTopUps?: number | null, setupPaymentReturnUrl?: string }): Promise<{ setupPaymentUrl?: string }> {
+async function configureAutoTopUpOnConsole(params: ConsoleCustomerCall & ConfigureAutoTopUpOnConsoleParams): Promise<{ setupPaymentUrl?: string }> {
+    const { autumnCustomerId, autumnApiKey, ...body } = params
     const response = await safeHttp.axios.post<{ data: { setupPaymentUrl?: string } }>(
         `${AUTUMN_CONSOLE_URL}/api/billing/auto-topup`,
-        { autumnCustomerId, featureId, enabled, threshold, quantity, maxMonthlyTopUps, setupPaymentReturnUrl },
+        { autumnCustomerId, ...body },
         { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
     )
     return response.data.data
@@ -582,6 +593,20 @@ type ConsoleCustomerCall = {
     autumnCustomerId: string
     autumnApiKey: string
 }
+
+type ConfigureAutoTopUpOnConsoleParams =
+    | {
+        featureId: string
+        enabled: true
+        threshold: number
+        quantity: number
+        maxMonthlyLimit?: number | null
+        setupPaymentReturnUrl?: string
+    }
+    | {
+        featureId: string
+        enabled: false
+    }
 
 type RawToppableFeature = {
     featureId: string

@@ -1703,6 +1703,7 @@
   "500,000": "500,000",
   "Monthly spending limit": "Monthly spending limit",
   "Maximum credits to add per month": "Maximum credits to add per month",
+  "The monthly spending limit must be at least the credits added per top-up": "The monthly spending limit must be at least the credits added per top-up",
   "{maxMonthlyLimit} credits (${usd})": "{maxMonthlyLimit} credits (${usd})",
   "No limit": "No limit",
   "2,000,000": "2,000,000",

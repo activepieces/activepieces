@@ -26,6 +26,7 @@ interface AutoTopUpConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   feature: ToppableFeature;
+  includedCredits: number;
   currentThreshold?: number | null;
   currentCreditsToAdd?: number | null;
   currentMaxMonthlyLimit?: number | null;
@@ -36,21 +37,24 @@ export function AutoTopUpConfigDialog({
   isOpen,
   onOpenChange,
   feature,
+  includedCredits,
   currentThreshold,
   currentCreditsToAdd,
   currentMaxMonthlyLimit,
   isEditing = false,
 }: AutoTopUpConfigDialogProps) {
   const queryClient = useQueryClient();
-  const [threshold, setThreshold] = useState(
-    currentThreshold ?? feature.billingUnits,
-  );
-  const [creditsToAdd, setCreditsToAdd] = useState(
-    currentCreditsToAdd ?? feature.billingUnits * 10,
-  );
-  const [maxMonthlyLimit, setMaxMonthlyLimit] = useState<number | null>(
-    currentMaxMonthlyLimit ?? null,
-  );
+  const maxCreditsToAdd =
+    includedCredits > 0 ? includedCredits : feature.billingUnits * 500;
+  const maxThreshold = Math.floor(maxCreditsToAdd / 2);
+  const [config, setConfig] = useState<AutoTopUpFormState>({
+    threshold: Math.min(currentThreshold ?? feature.billingUnits, maxThreshold),
+    creditsToAdd: Math.min(
+      currentCreditsToAdd ?? DEFAULT_CREDITS_TO_ADD,
+      maxCreditsToAdd,
+    ),
+    maxMonthlyLimit: currentMaxMonthlyLimit ?? null,
+  });
 
   const { mutate: updateAutoTopUp, isPending: isUpdating } =
     billingMutations.useUpdateAutoTopUp(queryClient);
@@ -59,9 +63,9 @@ export function AutoTopUpConfigDialog({
 
   const handleSave = () => {
     const params: ConsumableProductAutoTopupParams = {
-      minThreshold: threshold,
-      creditsToAdd: creditsToAdd,
-      maxMonthlyLimit: maxMonthlyLimit,
+      minThreshold: config.threshold,
+      creditsToAdd: config.creditsToAdd,
+      maxMonthlyLimit: config.maxMonthlyLimit,
       state: AiCreditsAutoTopUpState.ENABLED,
       featureId: feature.featureId,
     };
@@ -94,20 +98,22 @@ export function AutoTopUpConfigDialog({
                 <Label>{t('When credits fall below')}</Label>
                 <span className="text-sm font-medium text-primary">
                   {t('{threshold} credits', {
-                    threshold: threshold.toLocaleString(),
+                    threshold: config.threshold.toLocaleString(),
                   })}
                 </span>
               </div>
               <Slider
-                value={[threshold]}
-                onValueChange={(v) => setThreshold(v[0])}
+                value={[config.threshold]}
+                onValueChange={(v) =>
+                  setConfig((prev) => ({ ...prev, threshold: v[0] }))
+                }
                 min={0}
-                max={feature.billingUnits * 100}
+                max={maxThreshold}
                 step={feature.billingUnits}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{(0).toLocaleString()}</span>
-                <span>{(feature.billingUnits * 100).toLocaleString()}</span>
+                <span>{maxThreshold.toLocaleString()}</span>
               </div>
             </div>
 
@@ -116,20 +122,29 @@ export function AutoTopUpConfigDialog({
                 <Label>{t('Add this many credits')}</Label>
                 <span className="text-sm font-medium text-primary">
                   {t('{creditsToAdd} credits', {
-                    creditsToAdd: creditsToAdd.toLocaleString(),
+                    creditsToAdd: config.creditsToAdd.toLocaleString(),
                   })}
                 </span>
               </div>
               <Slider
-                value={[creditsToAdd]}
-                onValueChange={(v) => setCreditsToAdd(v[0])}
+                value={[config.creditsToAdd]}
+                onValueChange={(v) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    creditsToAdd: v[0],
+                    maxMonthlyLimit:
+                      prev.maxMonthlyLimit !== null
+                        ? Math.max(prev.maxMonthlyLimit, v[0])
+                        : null,
+                  }))
+                }
                 min={feature.billingUnits}
-                max={feature.billingUnits * 500}
+                max={maxCreditsToAdd}
                 step={feature.billingUnits}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{feature.billingUnits.toLocaleString()}</span>
-                <span>{(feature.billingUnits * 500).toLocaleString()}</span>
+                <span>{maxCreditsToAdd.toLocaleString()}</span>
               </div>
             </div>
 
@@ -142,11 +157,12 @@ export function AutoTopUpConfigDialog({
                   </span>
                 </div>
                 <span className="text-sm font-medium text-primary">
-                  {maxMonthlyLimit
+                  {config.maxMonthlyLimit
                     ? t('{maxMonthlyLimit} credits (${usd})', {
-                        maxMonthlyLimit: maxMonthlyLimit.toLocaleString(),
+                        maxMonthlyLimit:
+                          config.maxMonthlyLimit.toLocaleString(),
                         usd: (
-                          (maxMonthlyLimit / feature.billingUnits) *
+                          (config.maxMonthlyLimit / feature.billingUnits) *
                           feature.pricePerUnit
                         ).toFixed(2),
                       })
@@ -154,9 +170,13 @@ export function AutoTopUpConfigDialog({
                 </span>
               </div>
               <Slider
-                value={[maxMonthlyLimit ?? 0]}
+                value={[config.maxMonthlyLimit ?? 0]}
                 onValueChange={(v) =>
-                  setMaxMonthlyLimit(v[0] === 0 ? null : v[0])
+                  setConfig((prev) => ({
+                    ...prev,
+                    maxMonthlyLimit:
+                      v[0] === 0 ? null : Math.max(v[0], prev.creditsToAdd),
+                  }))
                 }
                 min={0}
                 max={2000000}
@@ -178,7 +198,7 @@ export function AutoTopUpConfigDialog({
                 <span className="text-2xl font-bold text-primary">
                   {t('${totalCost}', {
                     totalCost: (
-                      (creditsToAdd / feature.billingUnits) *
+                      (config.creditsToAdd / feature.billingUnits) *
                       feature.pricePerUnit
                     ).toFixed(2),
                   })}
@@ -220,3 +240,11 @@ export function AutoTopUpConfigDialog({
     </Dialog>
   );
 }
+
+const DEFAULT_CREDITS_TO_ADD = 1000;
+
+type AutoTopUpFormState = {
+  threshold: number;
+  creditsToAdd: number;
+  maxMonthlyLimit: number | null;
+};

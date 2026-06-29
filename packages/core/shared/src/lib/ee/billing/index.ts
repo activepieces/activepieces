@@ -38,7 +38,7 @@ export const PurchasablePlan = z.object({
 })
 export type PurchasablePlan = z.infer<typeof PurchasablePlan>
 
-export const ConsumableProductAutoTopupParams = z.union([
+export const ConsumableProductAutoTopupParams = z.discriminatedUnion('state', [
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.ENABLED),
         minThreshold: z.number(),
@@ -50,7 +50,10 @@ export const ConsumableProductAutoTopupParams = z.union([
         state: z.literal(AiCreditsAutoTopUpState.DISABLED),
         featureId: z.enum(AutumnFeatureId),
     }),
-])
+]).refine(
+    (data) => data.state !== AiCreditsAutoTopUpState.ENABLED || isNil(data.maxMonthlyLimit) || data.maxMonthlyLimit >= data.creditsToAdd,
+    { message: 'The monthly spending limit must be at least the credits added per top-up', path: ['maxMonthlyLimit'] },
+)
 export type ConsumableProductAutoTopupParams = z.infer<typeof ConsumableProductAutoTopupParams>
 
 export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
