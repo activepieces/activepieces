@@ -2,13 +2,17 @@ import { reoonEmailVerifyAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { verifyEmailsResult } from '../common/send-util';
 
-export const bulkVerificationResult = createAction({
+export const getBulkEmailVerificationResult = createAction({
   auth: reoonEmailVerifyAuth,
-  name: 'bulkVerificationResult',
-  displayName: 'Get Bulk Verification Result',
-  description: 'Retrieves result of bulk verification email by task ID.',
-  audience: 'human',
-  aiMetadata: { description: 'Fetches the current status and verification results for a previously created bulk email verification task, identified by its task ID (obtained from the Create Bulk Email Verification action). Use to poll for or read back batch results. Idempotent: a read-only lookup that does not change the task.', idempotent: true },
+  name: 'get_bulk_email_verification_result',
+  displayName: 'Get Bulk Email Verification Result',
+  description: 'Reads the status and results of a bulk verification task.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Reads the current status and verification results of a bulk email verification task by its task_id. The task_id is obtained from the Create Bulk Email Verification action (run that first); poll this until the task reports complete. Read-only — does not change the task or consume additional verification credits.',
+    idempotent: true,
+  },
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

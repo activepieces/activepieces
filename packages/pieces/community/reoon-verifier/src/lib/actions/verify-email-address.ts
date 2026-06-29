@@ -2,13 +2,17 @@ import { reoonEmailVerifyAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { VerifyEmailMode, verifySingleEmail } from '../common/send-util';
 
-export const verifyEmail = createAction({
+export const verifyEmailAddress = createAction({
   auth: reoonEmailVerifyAuth,
-  name: 'verifyEmail',
-  displayName: 'Verify Email',
-  description: 'Verify a single email',
-  audience: 'human',
-  aiMetadata: { description: 'Validates one email address against the Reoon email verification API, returning deliverability and risk signals (e.g. invalid, disposable, role-based). Choose between a fast Quick mode and a slower, more accurate Power mode. Use for checking a single address before sending; for many addresses use the bulk action instead. Idempotent: a read-only lookup that returns the same result for the same input.', idempotent: true },
+  name: 'verify_email_address',
+  displayName: 'Verify Email Address',
+  description: 'Verify a single email address synchronously.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Verifies a single email address synchronously via Reoon and returns deliverability and risk signals (valid / invalid / disposable / role-based, etc.). Use this for one address at a time and when you need the result immediately; for many addresses use Create Bulk Email Verification instead. Each call consumes Reoon verification credits, and Power mode (more accurate, slower) costs more than Quick mode.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
