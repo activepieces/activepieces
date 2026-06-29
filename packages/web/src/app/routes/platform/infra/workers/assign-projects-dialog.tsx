@@ -51,13 +51,13 @@ function AssignProjectsContent({
       new Set(
         allProjects
           .filter((p) => p.workerGroupId === groupLabel)
-          .map((p) => p.id)
-      )
+          .map((p) => p.id),
+      ),
   );
   const [search, setSearch] = useState('');
 
   const filteredProjects = allProjects.filter((p) =>
-    p.displayName.toLowerCase().includes(search.toLowerCase())
+    p.displayName.toLowerCase().includes(search.toLowerCase()),
   );
 
   const toggleProject = (projectId: string) => {
