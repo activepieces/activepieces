@@ -13,7 +13,6 @@ import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
-import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -138,14 +137,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
 
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
-    })
-
-    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
-        chatAnalyticsTelemetry(request.log).sendLandingEvent({
-            platformId: request.principal.platform.id,
-            userId: request.principal.id,
-        })
-        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
@@ -337,16 +328,6 @@ const GetPendingGateRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
-    },
-}
-
-const FunnelLandingRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['chat'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
