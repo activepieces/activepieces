@@ -46,6 +46,35 @@ Activepieces ships pieces that need no external app or connection; registry sear
 | "wait/pause" | `@activepieces/piece-delay` | delay step |
 | "split big work" | `@activepieces/piece-subflows` | call another flow |
 
+## CODE is the last resort — use inline expressions & conditions first
+Dropping a **CODE step** into a flow to filter, reshape, calculate, or format data is almost always the wrong first move — it's slower to build, opaque to a non-coder, and harder to debug. Walk this ladder and stop at the first rung that fits; only the last rung is code:
+1. **A native piece action** — anything that talks to an app or is a normal automation step.
+2. **A router condition** (`ROUTER`; `ap_load_guide('control_flow')`) — to *route/branch* on a value, using the structured `BranchOperator`s.
+3. **An inline formula expression** — to *derive, filter, format, or calculate* a value right inside a step's input. No extra step, runs instantly, and covers the large majority of "I'll just write a quick CODE step to massage this" cases.
+4. **A CODE step** — ONLY when none of the above fit: genuinely procedural multi-step logic, parsing the functions can't express, or a real npm library is needed.
+
+### Writing an inline formula expression
+Put it directly in a step's input value, wrapped EXACTLY like this (the wrapper is what makes it evaluate as a formula instead of a literal string):
+`ap-formula-v1::{ <expression> }::ap-formula-v1`
+Inside: call functions with `;`-separated args, double-quote string literals, and reference earlier steps with the normal `{{step['output'].field}}` syntax. Real examples:
+- Keep only open tickets → `ap-formula-v1::{filter_list({{trigger['output'].tickets}};"status";"open")}::ap-formula-v1`
+- Count rows → `ap-formula-v1::{count({{step_1['output'].rows}})}::ap-formula-v1`
+- Every email on one line → `ap-formula-v1::{join_list(pluck({{step_1['output'].users}};"email");", ")}::ap-formula-v1`
+- Sum a column → `ap-formula-v1::{sum({{step_1['output'].orders}};"amount")}::ap-formula-v1`
+- Label by threshold → `ap-formula-v1::{if({{step_1['output'].amount}} > 1000;"High value";"Standard")}::ap-formula-v1`
+- Format money / clean text → `ap-formula-v1::{format_currency({{step_1['output'].total}};"$")}::ap-formula-v1`, `ap-formula-v1::{titlecase({{trigger['output'].name}})}::ap-formula-v1`
+
+**Where formulas go:** use them in **free-text / value** inputs (a Store value, a message or email body, a field you type into). Do NOT put a formula in a **dropdown, connection, or option-picker** field — those need a resolved option id/value, and a formula string will fail validation.
+
+### The function vocabulary (~100 built-ins; args separated by `;`; for numeric comparisons use `>` `<` `>=` `<=`, and the `is_equal` function for equality — not a bare `=`)
+- **List** (reshape/filter — these replace most CODE steps): `filter_list(list;field;value)` · `sort_list(list;field;order)` · `pluck(list;field)` · `join_list(list;sep)` · `count(list)` · `sum(list;field)` · `average(list;field)` · `min_in_list`/`max_in_list(list;field)` · `deduplicate(list;field)` · `first_item`/`last_item(list)` · `item_at(list;i)` · `contains_item(list;value)` · `flatten(list)` · `reverse_list(list)` · `split_text_to_list(text;sep)`
+- **Logic**: `if(cond;then;else)` · `switch(value;k1;r1;…)` · `coalesce(a;b;…)` · `if_empty`/`if_null(value;fallback)` · `is_empty`/`is_not_empty(value)` · `is_equal(a;b)` · `and`/`or(a;b)` · `not(x)`
+- **Text**: `combine` · `uppercase`/`lowercase`/`titlecase` · `trim` · `replace(text;find;with)` · `split(text;sep;i)` · `contains(text;value)` · `starts_with`/`ends_with` · `extract_email`/`extract_url` · `truncate(text;n)` · `slug` · `length`
+- **Number**: `add`/`subtract`/`multiply`/`divide` · `round(n;decimals)` · `round_up`/`round_down` · `min`/`max` · `percentage(v;total)` · `format_number(n;decimals)` · `format_currency(n;symbol)` · `to_number` · `absolute` · `modulo`
+- **Date**: `format_date(date;fmt)` · `format_time` · `relative_time` · `add_days`/`subtract_days(date;n)` · `add_hours`/`add_minutes` · `days_between`/`hours_between` · `is_before`/`is_after`/`is_same_day` · `now()` · `today()` · `to_date(text)` · `start_of_day`/`end_of_day` · `start_of_month`/`end_of_month` · `get_year`/`get_month`/`get_day`/`get_day_of_week`
+
+Validate a formula input with `ap_validate_step_config` like any step, and confirm the resolved value with `ap_test_step`/`ap_test_flow` — a wrong field name resolves to empty, exactly like a `{{...}}` reference does.
+
 ## Hard limits to design around
 | Limit | Value | If exceeded |
 |---|---|---|
