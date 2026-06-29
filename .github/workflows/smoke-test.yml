@@ -173,22 +173,25 @@ jobs:
           chmod +x smoke-test/verify-perf.sh
           smoke-test/verify-perf.sh "${{ steps.setup-perf.outputs.flow_id }}"
 
+      # All overlays are listed so logs + teardown resolve regardless of which stack
+      # (S3/minio or perf) was last brought up in this job. Same compose project, so
+      # `logs`/`down -v` target every container/volume the job created.
       - name: Show app logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 app
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml logs --tail=200 app
 
       - name: Show worker logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 worker
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml logs --tail=200 worker
 
       - name: Show nginx logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 nginx
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml logs --tail=200 nginx
 
       - name: Show minio logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 minio minio-init || true
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml logs --tail=200 minio minio-init || true
 
       - name: Teardown
         if: always()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml down -v

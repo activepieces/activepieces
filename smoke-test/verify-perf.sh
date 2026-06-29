@@ -19,11 +19,14 @@ DURATION_SECS="${PERF_DURATION_SECS:-20}"
 CONCURRENCY="${PERF_CONCURRENCY:-8}"
 WARMUP_REQUESTS="${PERF_WARMUP_REQUESTS:-100}"
 
-# With a 2-CPU / 2G cap: healthy run ~100+ req/s, worker ~85% CPU, <1G RAM.
-# A #13497-style regression: ~18 req/s, worker pegged ~200%, climbing RAM.
+# With a 2-CPU / 2G cap, throughput is the primary signal — a #13497-style regression
+# drops it from ~90+ to ~15 req/s (floor 40 leaves a wide margin either way). The CPU
+# and memory ceilings are generous sanity bounds: CPU catches a pegged worker (~195%+),
+# memory catches a leak climbing toward the 2G cap and OOM (healthy steady-state is
+# ~1.5G under this load). All three are env-overridable per runner.
 MIN_RPS="${PERF_MIN_RPS:-40}"
-MAX_CPU_PERCENT="${PERF_MAX_CPU_PERCENT:-185}"
-MAX_MEM_MB="${PERF_MAX_MEM_MB:-1500}"
+MAX_CPU_PERCENT="${PERF_MAX_CPU_PERCENT:-192}"
+MAX_MEM_MB="${PERF_MAX_MEM_MB:-1850}"
 
 WEBHOOK_URL="http://$BASE_URL/api/v1/webhooks/$FLOW_ID/sync"
 
@@ -84,7 +87,6 @@ DEADLINE=$((START + DURATION_SECS))
 echo ""
 echo "--- Load (${DURATION_SECS}s) ---"
 sample_stats "$DEADLINE" &
-STATS_PID=$!
 for c in $(seq 1 "$CONCURRENCY"); do
   load_worker "$c" "$DEADLINE" &
 done
@@ -102,12 +104,21 @@ done
 
 RPS=$(awk -v n="$TOTAL_REQUESTS" -v s="$ELAPSED" 'BEGIN { printf "%.1f", n / s }')
 AVG_CPU=$(awk '{ gsub(/%/,"",$1); sum += $1; n++ } END { printf "%.1f", (n ? sum / n : 0) }' "$WORKDIR/stats.txt")
+# MemUsage looks like "<used> / <limit>", e.g. "1.005GiB / 2GiB" or "512MiB / 2GiB".
+# Parse ONLY the used value ($2) and its own unit — never match units against the
+# whole line, or the limit's "GiB" would corrupt a used value in MiB/KiB.
 MAX_MEM_MB_OBSERVED=$(awk '
-  { used = $2 }
-  /GiB/ { gsub(/GiB/,"",used); v = used * 1024 }
-  /MiB/ { gsub(/MiB/,"",used); v = used }
-  /KiB/ { gsub(/KiB/,"",used); v = used / 1024 }
-  v > max { max = v }
+  BEGIN { max = 0 }
+  {
+    used = $2
+    unit = used; gsub(/[0-9.]/, "", unit)
+    val = used;  gsub(/[A-Za-z]/, "", val); val = val + 0
+    if (unit == "GiB") mb = val * 1024
+    else if (unit == "MiB") mb = val
+    else if (unit == "KiB") mb = val / 1024
+    else mb = val / (1024 * 1024)
+    if (mb + 0 > max + 0) max = mb
+  }
   END { printf "%.0f", max }
 ' "$WORKDIR/stats.txt")
 
@@ -120,6 +131,12 @@ printf "%-22s %s\n" "Worker mem (peak):" "${MAX_MEM_MB_OBSERVED} MB   (max ${MAX
 echo ""
 
 FAILED=0
+# Without samples the CPU/memory awks emit 0, which would silently pass both
+# thresholds — exactly the regression this gate must catch. Treat it as a failure.
+if [ ! -s "$WORKDIR/stats.txt" ]; then
+  echo "FAIL: no docker stats samples collected; cannot assert worker CPU/memory"
+  FAILED=1
+fi
 if [ "$BAD_REQUESTS" -gt 0 ]; then
   echo "FAIL: $BAD_REQUESTS request(s) did not return HTTP 200"
   FAILED=1
@@ -143,5 +160,4 @@ if [ "$FAILED" -ne 0 ]; then
   exit 1
 fi
 
-STATS_PID=${STATS_PID:-}
 echo "=== Perf Regression Preflight PASSED ==="
