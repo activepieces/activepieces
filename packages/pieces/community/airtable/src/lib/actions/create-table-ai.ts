@@ -3,19 +3,24 @@ import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableFieldConfig } from '../common/models';
 
-export const airtableCreateTableAction = createAction({
+export const airtableCreateTableAiAction = createAction({
   auth: airtableAuth,
-  name: 'airtable_create_table',
-  displayName: 'Create Table',
+  name: 'create_table_ai',
+  displayName: 'Create Table (Agent)',
   description: 'Create a new table in an existing base.',
-  audience: 'human',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a new table in an existing base from a JSON array of field definitions (the first field becomes the primary field), with an optional table description. Use to add a table to a base you already have. Not idempotent — each call creates a new table.',
+      'Creates a new table in an existing base from a JSON array of field definitions (the first field becomes the primary field), with an optional description. Requires a token with the schema.bases:write scope. Not idempotent — each call creates a new table.',
     idempotent: false,
   },
   props: {
-    base: airtableCommon.base,
+    base_id: Property.ShortText({
+      displayName: 'Base ID',
+      description:
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+      required: true,
+    }),
     name: Property.ShortText({
       displayName: 'Table Name',
       description: 'The name for the new table.',
@@ -23,13 +28,13 @@ export const airtableCreateTableAction = createAction({
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'An optional description for the new table.',
+      description: 'Optional description for the new table.',
       required: false,
     }),
     fields: Property.Json({
       displayName: 'Fields',
       description:
-        'A JSON array of fields for the new table. The first field in the array will become the primary field.',
+        'A JSON array of field definitions; the first entry becomes the primary field. Each entry is {"name": "...", "type": "singleLineText", "description"?: "..."}. Select fields need {"type": "singleSelect", "options": {"choices": [{"name": "Todo"}]}}.',
       required: true,
       defaultValue: [
         {
@@ -45,13 +50,13 @@ export const airtableCreateTableAction = createAction({
     }),
   },
   async run(context) {
-    const { auth: personalToken, propsValue } = context;
-    const { base: baseId, name, description, fields } = propsValue;
+    const { auth, propsValue } = context;
+    const { base_id, name, description, fields } = propsValue;
 
     return await airtableCommon.createTable({
-      personalToken: personalToken.secret_text,
-      baseId: baseId as string,
-      name: name as string,
+      personalToken: auth.secret_text,
+      baseId: base_id,
+      name,
       description: description as string | undefined,
       fields: fields as unknown as AirtableFieldConfig[],
     });

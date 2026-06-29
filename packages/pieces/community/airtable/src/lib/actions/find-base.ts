@@ -8,7 +8,7 @@ export const airtableFindBaseAction = createAction({
   name: 'airtable_find_base',
   displayName: 'Find Base',
   description: 'Find a base by its name or a keyword.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists all accessible bases and returns those whose name contains the given keyword (case-insensitive substring match). Use to resolve a base ID from a name before other operations. Read-only and idempotent.',
