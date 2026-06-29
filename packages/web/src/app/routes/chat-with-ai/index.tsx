@@ -1,4 +1,4 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import { ChatConversation, TelemetryEventName } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 import { AIChatBox } from './ai-chat-box';
@@ -57,9 +58,12 @@ export function ChatWithAIPage() {
   );
   const isMobile = useIsMobile();
   const { capture } = useTelemetry();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   useEffect(() => {
-    capture({ name: TelemetryEventName.CHAT_PAGE_VIEWED, payload: {} });
+    if (isNil(platform.plan.licenseKey)) {
+      capture({ name: TelemetryEventName.CHAT_PAGE_VIEWED, payload: {} });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
