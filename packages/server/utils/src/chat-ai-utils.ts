@@ -7,14 +7,59 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { createOpenRouter } from '@openrouter/ai-sdk-provider'
-import { LanguageModel, ModelMessage, SystemModelMessage } from 'ai'
+import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
+import { LanguageModel, ModelMessage, SystemModelMessage, ToolSet } from 'ai'
 
-function createChatModel({ provider, auth, config, modelId }: {
+const MAX_WEB_SEARCH_RESULTS = 5
+
+const KEEP_RECENT_TOOL_RESULTS = 6
+const COLLAPSE_OUTPUT_OVER_CHARS = 600
+// Tool results that are the agent's working memory of an action's input schema — never collapsed,
+// so it doesn't re-discover or guess a schema it already fetched (A5 pin-discovered-schemas).
+const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action'])
+const CHARS_PER_TOKEN_ESTIMATE = 4
+
+type WebSearchSupport = {
+    nativeTools?: (auth: BaseAIProviderAuthConfig) => ToolSet
+    plugin?: boolean
+}
+
+// OpenAI is absent on purpose: its web search needs the Responses API, which breaks legacy BYOK models.
+const WEB_SEARCH_BY_PROVIDER: Partial<Record<AIProviderName, WebSearchSupport>> = {
+    [AIProviderName.ANTHROPIC]: {
+        nativeTools: ({ apiKey }) => ({ web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }),
+    },
+    [AIProviderName.GOOGLE]: {
+        nativeTools: ({ apiKey }) => ({ google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }),
+    },
+    [AIProviderName.OPENROUTER]: { plugin: true },
+    [AIProviderName.ACTIVEPIECES]: { plugin: true },
+}
+
+function supportsWebSearch(provider: AIProviderName): boolean {
+    return WEB_SEARCH_BY_PROVIDER[provider] !== undefined
+}
+
+function buildWebSearchTools({ provider, auth }: {
+    provider: AIProviderName
+    auth: Record<string, unknown>
+}): ToolSet {
+    return WEB_SEARCH_BY_PROVIDER[provider]?.nativeTools?.(auth as BaseAIProviderAuthConfig) ?? {}
+}
+
+function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
+    if (!webSearchEnabled || !WEB_SEARCH_BY_PROVIDER[provider]?.plugin) {
+        return undefined
+    }
+    return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
+}
+
+function createChatModel({ provider, auth, config, modelId, webSearchEnabled = false }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
+    webSearchEnabled?: boolean
 }): LanguageModel {
     switch (provider) {
         case AIProviderName.OPENAI: {
@@ -65,7 +110,7 @@ function createChatModel({ provider, auth, config, modelId }: {
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenRouter({ apiKey }).chat(modelId) as LanguageModel
+            return createOpenRouter({ apiKey }).chat(modelId, openRouterModelSettings(provider, webSearchEnabled)) as LanguageModel
         }
         default: {
             const exhaustiveCheck: never = provider
@@ -137,23 +182,66 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
 }
 
 /**
- * Collect the messages from EVERY step of a streamText turn, not just the last one.
- * `result.response.messages` is the last step only — using it drops the tool calls and
- * tool results of all earlier steps, so the persisted history would lose what the agent
- * already did this conversation and it would re-run those tools on the next turn.
+ * The response messages of a streamText turn. Each step's `response.messages` is
+ * CUMULATIVE — it already contains every prior step's assistant/tool messages — so the
+ * last step holds the complete set. Flat-mapping all steps instead would re-emit earlier
+ * steps in a 4,3,2,1 staircase, persisting (and re-sending to the model) the same tool
+ * call and reasoning block multiple times. Take the last step only.
  */
 function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
-    return steps.flatMap((step) => step.response.messages)
+    return steps[steps.length - 1]?.response.messages ?? []
 }
 
-function buildProviderOptions({ provider, tier }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number } }): SharedV3ProviderOptions {
+function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {
+    return Math.ceil((JSON.stringify(messages).length + systemPromptLength) / CHARS_PER_TOKEN_ESTIMATE)
+}
+
+/**
+ * A tool result's full payload is only needed while the model is acting on it;
+ * older oversized results just dilute the context and can overflow the window.
+ * Keeps the most recent results intact and replaces older oversized ones with a
+ * short marker. Never removes a message (keeps tool_use/tool_result pairing
+ * valid) and never mutates the input. Pure.
+ */
+function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
+    const totalToolResults = messages.reduce((count, message) => {
+        if (message.role !== 'tool' || !Array.isArray(message.content)) return count
+        return count + message.content.filter((part) => part.type === 'tool-result').length
+    }, 0)
+
+    const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS
+    if (staleCount <= 0) return messages
+
+    let seen = 0
+    return messages.map((message) => {
+        if (message.role !== 'tool' || !Array.isArray(message.content)) return message
+        const content = message.content.map((part) => {
+            if (part.type !== 'tool-result') return part
+            // Pin discovered schemas: never collapse a piece-props/prepare result. These are the
+            // agent's memory of an action's inputs — collapsing them makes it re-discover (or guess)
+            // a schema it already fetched. They don't consume a stale slot either.
+            if (SCHEMA_TOOL_NAMES.has(part.toolName)) return part
+            const isStale = seen++ < staleCount
+            if (!isStale) return part
+            const serialized = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
+            if (serialized.length <= COLLAPSE_OUTPUT_OVER_CHARS) return part
+            return {
+                ...part,
+                output: { type: 'text' as const, value: `[earlier ${part.toolName} result omitted to save context — it was used at the time]` },
+            }
+        })
+        return { ...message, content }
+    })
+}
+
+function buildProviderOptions({ provider, tier, disableThinking = false }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number }, disableThinking?: boolean }): SharedV3ProviderOptions {
     switch (provider) {
         case AIProviderName.ANTHROPIC:
         case AIProviderName.BEDROCK:
-            return { anthropic: { thinking: { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
+            return { anthropic: { thinking: disableThinking ? { type: 'disabled' } : { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: { max_tokens: tier.thinkingBudget } } }
+            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: disableThinking ? { enabled: false } : { max_tokens: tier.thinkingBudget } } }
         default:
             return {}
     }
@@ -181,6 +269,12 @@ type ContentPartLike = {
     input?: unknown
     args?: unknown
     output?: unknown
+    sourceType?: string
+    id?: string
+    url?: string
+    title?: string
+    mediaType?: string
+    filename?: string
 }
 
 function buildStepParts({ content }: {
@@ -201,6 +295,25 @@ function buildStepParts({ content }: {
                 break
             case 'text':
                 if (part.text) parts.push({ type: PersistedChatPartType.TEXT, text: part.text })
+                break
+            case 'source':
+                if (part.sourceType === 'url' && part.url) {
+                    parts.push({
+                        type: PersistedChatPartType.SOURCE_URL,
+                        sourceId: part.id ?? '',
+                        url: part.url,
+                        ...spreadIfDefined('title', part.title),
+                    })
+                }
+                else if (part.sourceType === 'document') {
+                    parts.push({
+                        type: PersistedChatPartType.SOURCE_DOCUMENT,
+                        sourceId: part.id ?? '',
+                        mediaType: part.mediaType ?? '',
+                        title: part.title ?? '',
+                        ...spreadIfDefined('filename', part.filename),
+                    })
+                }
                 break
             case 'tool-call': {
                 const toolName = part.toolName ?? ''
@@ -231,6 +344,56 @@ function buildStepParts({ content }: {
                         type: PersistedChatPartType.BATCH_PROGRESS,
                         data: (rawOutput as Record<string, unknown>)['batchProgress'] as Record<string, unknown>,
                     })
+                }
+                if (toolName === 'ap_set_build_plan') {
+                    const buildId = typeof toRecord(rawOutput)['buildId'] === 'string' ? toRecord(rawOutput)['buildId'] : undefined
+                    if (typeof buildId === 'string') {
+                        parts.push({
+                            type: PersistedChatPartType.BUILD_PLAN,
+                            buildId,
+                            data: { ...input, updatedAt: new Date().toISOString() },
+                        })
+                    }
+                }
+                if (toolName === 'ap_generate_image' && result) {
+                    const out = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const imageUrl = typeof out['url'] === 'string' ? out['url'] : undefined
+                    const imageFileId = typeof out['fileId'] === 'string' ? out['fileId'] : undefined
+                    if (imageUrl && imageFileId) {
+                        parts.push({
+                            type: PersistedChatPartType.IMAGE,
+                            toolCallId: part.toolCallId ?? '',
+                            fileId: imageFileId,
+                            url: imageUrl,
+                            mediaType: typeof out['mediaType'] === 'string' ? out['mediaType'] : 'image/png',
+                            ...spreadIfDefined('prompt', typeof out['prompt'] === 'string' ? out['prompt'] : undefined),
+                            ...spreadIfDefined('model', typeof out['model'] === 'string' ? out['model'] : undefined),
+                            ...spreadIfDefined('title', title),
+                            timestamp: new Date().toISOString(),
+                        })
+                    }
+                }
+                if (toolName === 'ap_run_code' && result) {
+                    const out = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
+                    const producedFiles = Array.isArray(out['producedFiles']) ? out['producedFiles'] : []
+                    for (const file of producedFiles) {
+                        if (typeof file !== 'object' || file === null) continue
+                        const fileRecord = file as Record<string, unknown>
+                        const fileUrl = typeof fileRecord['url'] === 'string' ? fileRecord['url'] : undefined
+                        const fileId = typeof fileRecord['fileId'] === 'string' ? fileRecord['fileId'] : undefined
+                        if (!fileUrl || !fileId) continue
+                        parts.push({
+                            type: PersistedChatPartType.FILE,
+                            toolCallId: part.toolCallId ?? '',
+                            fileId,
+                            url: fileUrl,
+                            mediaType: typeof fileRecord['mediaType'] === 'string' ? fileRecord['mediaType'] : 'application/octet-stream',
+                            fileName: typeof fileRecord['fileName'] === 'string' ? fileRecord['fileName'] : 'file',
+                            byteSize: typeof fileRecord['byteSize'] === 'number' ? fileRecord['byteSize'] : 0,
+                            ...spreadIfDefined('title', title),
+                            timestamp: new Date().toISOString(),
+                        })
+                    }
                 }
                 if (toolName === 'ap_execute_action' && result) {
                     const outputRecord = typeof rawOutput === 'object' && rawOutput !== null ? rawOutput as Record<string, unknown> : {}
@@ -264,14 +427,90 @@ function buildStepParts({ content }: {
     return parts
 }
 
+const DATA_ARRAY_KEYS = ['data', 'results', 'records', 'items', 'value', 'rows', 'entries']
+const PREVIEW_RECORD_COUNT = 5
+
+function findDataArray(payload: unknown): { array: unknown[], path: string } | null {
+    if (Array.isArray(payload)) {
+        return { array: payload, path: 'root' }
+    }
+    if (!isPlainObject(payload)) {
+        return null
+    }
+    for (const key of DATA_ARRAY_KEYS) {
+        const value = payload[key]
+        if (Array.isArray(value)) {
+            return { array: value, path: key }
+        }
+    }
+    return null
+}
+
+// Depth-capped, value-clipped copy of a value — shows the SHAPE of a record (so the model can
+// see how to project it) without dragging the full payload (incl. deep history) into context.
+function shrinkForPreview(value: unknown, opts: { maxDepth: number, maxString: number, maxArray: number, depth?: number }): unknown {
+    const depth = opts.depth ?? 0
+    if (typeof value === 'string') {
+        return value.length <= opts.maxString ? value : `${value.slice(0, opts.maxString)}…`
+    }
+    if (Array.isArray(value)) {
+        if (depth >= opts.maxDepth) return `[${value.length} items]`
+        const kept = value.slice(0, opts.maxArray).map((item) => shrinkForPreview(item, { ...opts, depth: depth + 1 }))
+        return value.length > opts.maxArray ? [...kept, `…+${value.length - opts.maxArray} more`] : kept
+    }
+    if (isPlainObject(value)) {
+        if (depth >= opts.maxDepth) return '{…}'
+        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkForPreview(val, { ...opts, depth: depth + 1 })]))
+    }
+    return value
+}
+
+// Builds a compact, never-mangled preview of a large tool result: a depth-capped shape sample of
+// the first few records + a clear instruction to process the FULL data with ap_run_code via the
+// offloaded fileId (so the giant payload never enters the model context). When there is no fileId
+// (backstop path), it instead steers toward narrowing/paginating.
+function buildLargeResultPreview({ payload, byteSize, fileId, label = 'Result', statusNote = '' }: {
+    payload: unknown
+    byteSize: number
+    fileId?: string
+    label?: string
+    statusNote?: string
+}): string {
+    const kb = Math.round(byteSize / 1024)
+    const found = findDataArray(payload)
+    if (found) {
+        const previewCount = Math.min(found.array.length, PREVIEW_RECORD_COUNT)
+        const preview = found.array.slice(0, previewCount).map((record) => shrinkForPreview(record, { maxDepth: 4, maxString: 200, maxArray: 4 }))
+        const how = fileId !== undefined
+            ? `→ Full result (all ${found.array.length} records) saved as file ${fileId}. Process it with ap_run_code: pass inputFileIds:['${fileId}'] and read inputs.data (parsed JSON) — pull just the fields you need (e.g. name, stage, value, owner), then return a compact summary. Do NOT re-run this call or regex the preview.`
+            : `→ Narrow with a filter/limit or paginate (offset/cursor) to get the rest — or process it in ap_run_code.`
+        return `✅ ${label} completed${statusNote}. ${found.array.length} record(s) at "${found.path}", ~${kb}KB — too large to load inline.\nShape preview (first ${previewCount}, values clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
+    }
+    const preview = shrinkForPreview(payload, { maxDepth: 3, maxString: 300, maxArray: 5 })
+    const how = fileId !== undefined
+        ? `→ Full result saved as file ${fileId}. Inspect/process it with ap_run_code via inputFileIds:['${fileId}'] (read inputs.data).`
+        : '→ Process it in ap_run_code or request a narrower slice.'
+    return `✅ ${label} completed${statusNote}. Large result ~${kb}KB — too large to load inline.\nShape preview (clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 export const chatAiUtils = {
     createChatModel,
+    supportsWebSearch,
+    buildWebSearchTools,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
+    estimateTokenCount,
+    collapseStaleToolOutputs,
     buildProviderOptions,
     buildSystemPromptWithCaching,
     buildStepParts,
+    findDataArray,
+    buildLargeResultPreview,
 }
 
 export type { ContentPartLike }

@@ -67,7 +67,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         if (isEvalConversationId(id)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'ChatConversation' } })
         }
-        return chatHelpers.getConversationOrThrow({ id, platformId, userId })
+        return chatHelpers.getConversationOrThrow({ id, platformId, userId, log })
     },
 
     async updateConversation({ id, platformId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {

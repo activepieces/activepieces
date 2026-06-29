@@ -10,18 +10,27 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
 import {
   ConnectionPickerData,
   isConnectionHealthy,
   normalizePieceName,
+  pickDefaultConnectionExternalId,
 } from '../lib/message-parsers';
 import { useConversationId } from '../lib/use-conversation-id';
+
+import { InteractiveCardShell } from './interactive-card-shell';
+
+type PickerConnection = NonNullable<
+  ConnectionPickerData['connections']
+>[number];
 
 function connectionStatusLabel(status: AppConnectionStatus): string | null {
   if (status === AppConnectionStatus.ERROR) return t('Expired');
@@ -35,7 +44,7 @@ function SelectedState({
   displayName,
 }: {
   pieceName: string;
-  connection: NonNullable<ConnectionPickerData['connections']>[number];
+  connection: PickerConnection;
   displayName: string;
 }) {
   return (
@@ -146,6 +155,7 @@ function useLiveConnections({
 export function ConnectionPickerCard({
   picker,
   onResolve,
+  onDismiss,
   isInteractive = true,
   selectedProjectId,
   selectedConnectionLabel,
@@ -186,8 +196,10 @@ export function ConnectionPickerCard({
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
-  const [selectedConnection, setSelectedConnection] = useState<
-    NonNullable<ConnectionPickerData['connections']>[number] | null
+  const [selectedConnection, setSelectedConnection] =
+    useState<PickerConnection | null>(null);
+  const [userSelectedExternalId, setUserSelectedExternalId] = useState<
+    string | null
   >(null);
 
   const {
@@ -199,6 +211,49 @@ export function ConnectionPickerCard({
     pieceName,
     enabled: isInteractive && !selectedConnection,
   });
+
+  const statusOf = (conn: PickerConnection): AppConnectionStatus =>
+    liveStatuses[conn.externalId] ?? conn.status;
+
+  const healthyConnections = filteredPicker.connections.filter((c) =>
+    isConnectionHealthy(statusOf(c)),
+  );
+
+  const defaultExternalId = useMemo(
+    () =>
+      pickDefaultConnectionExternalId({
+        healthy: healthyConnections,
+        updatedByExternalId: Object.fromEntries(
+          healthyConnections.map((c) => [
+            c.externalId,
+            fullConnections[c.externalId]?.updated,
+          ]),
+        ),
+      }),
+    [healthyConnections, fullConnections],
+  );
+
+  const selectedExternalId =
+    userSelectedExternalId &&
+    healthyConnections.some((c) => c.externalId === userSelectedExternalId)
+      ? userSelectedExternalId
+      : defaultExternalId;
+
+  const resolveWith = (conn: PickerConnection) => {
+    setSelectedConnection(conn);
+    onResolve({
+      connectionExternalId: conn.externalId,
+      projectId: conn.projectId,
+      label: conn.label,
+    });
+  };
+
+  const handleContinue = () => {
+    const conn = filteredPicker.connections.find(
+      (c) => c.externalId === selectedExternalId,
+    );
+    if (conn) resolveWith(conn);
+  };
 
   const handleReconnect = (externalId: string) => {
     const fullConnection = fullConnections[externalId];
@@ -243,42 +298,54 @@ export function ConnectionPickerCard({
     );
   }
 
+  const hasConnections = filteredPicker.connections.length > 0;
+
   return (
     <>
-      <motion.div
-        className="rounded-xl border bg-background overflow-hidden my-2"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.3,
-          type: 'spring',
-          stiffness: 300,
-          damping: 25,
-        }}
+      <InteractiveCardShell
+        onDismiss={() => onDismiss?.()}
+        title={
+          hasConnections
+            ? t('Which {name} account should I use?', {
+                name: filteredPicker.displayName,
+              })
+            : t('Connect {name}', { name: filteredPicker.displayName })
+        }
       >
-        <div className="p-4 pb-3">
-          <h3 className="font-semibold text-base">
-            {t('Which {name} account should I use?', {
+        {!hasConnections && (
+          <div className="pb-2 text-sm text-muted-foreground">
+            {t('No {name} account connected yet', {
               name: filteredPicker.displayName,
             })}
-          </h3>
-        </div>
+          </div>
+        )}
 
-        <div className="max-h-64 overflow-auto">
+        <RadioGroup
+          value={selectedExternalId ?? ''}
+          onValueChange={setUserSelectedExternalId}
+          className="max-h-64 gap-0 overflow-auto"
+        >
           {filteredPicker.connections.map((conn) => {
-            const status = liveStatuses[conn.externalId] ?? conn.status;
+            const status = statusOf(conn);
             const healthy = isConnectionHealthy(status);
-            return (
-              <div
-                key={conn.externalId}
-                className="flex items-center gap-3 px-4 py-3 border-t"
-              >
-                <PieceIconWithPieceName
-                  pieceName={pieceName}
-                  size="sm"
-                  border={false}
-                  showTooltip={false}
-                />
+            const isSelected =
+              healthy && conn.externalId === selectedExternalId;
+
+            const row = (
+              <>
+                {healthy ? (
+                  <RadioGroupItem
+                    value={conn.externalId}
+                    id={`conn-${conn.externalId}`}
+                  />
+                ) : (
+                  <PieceIconWithPieceName
+                    pieceName={pieceName}
+                    size="sm"
+                    border={false}
+                    showTooltip={false}
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">
                     {conn.label}
@@ -289,51 +356,56 @@ export function ConnectionPickerCard({
                       : `${conn.project} · ${connectionStatusLabel(status)}`}
                   </div>
                 </div>
-                {healthy ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0"
-                    onClick={() => {
-                      setSelectedConnection(conn);
-                      onResolve({
-                        connectionExternalId: conn.externalId,
-                        projectId: conn.projectId,
-                        label: conn.label,
-                      });
-                    }}
-                  >
-                    {t('Use')}
-                  </Button>
-                ) : status === AppConnectionStatus.MISSING ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0 gap-1.5"
-                    disabled={isPieceLoading}
-                    onClick={handleNewConnection}
-                  >
-                    <Plus className="h-3 w-3" />
-                    {t('Connect')}
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0 gap-1.5"
-                    disabled={isPieceLoading || isLoadingStatuses}
-                    onClick={() => handleReconnect(conn.externalId)}
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    {t('Reconnect & Use')}
-                  </Button>
+                {!healthy &&
+                  (status === AppConnectionStatus.MISSING ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0 gap-1.5"
+                      disabled={isPieceLoading}
+                      onClick={handleNewConnection}
+                    >
+                      <Plus className="h-3 w-3" />
+                      {t('Connect')}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0 gap-1.5"
+                      disabled={isPieceLoading || isLoadingStatuses}
+                      onClick={() => handleReconnect(conn.externalId)}
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      {t('Reconnect')}
+                    </Button>
+                  ))}
+              </>
+            );
+
+            return healthy ? (
+              <label
+                key={conn.externalId}
+                htmlFor={`conn-${conn.externalId}`}
+                className={cn(
+                  'flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-3 transition-colors hover:bg-muted/40',
+                  isSelected && 'border-primary/40 bg-primary/5',
                 )}
+              >
+                {row}
+              </label>
+            ) : (
+              <div
+                key={conn.externalId}
+                className="flex items-center gap-3 px-2 py-3 border-t first:border-t-0"
+              >
+                {row}
               </div>
             );
           })}
-        </div>
+        </RadioGroup>
 
-        <div className="flex items-center gap-3 px-4 py-3 border-t bg-muted/30">
+        <div className="flex items-center gap-3 border-t py-3">
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium">
               {t('Use a different account')}
@@ -346,6 +418,7 @@ export function ConnectionPickerCard({
           </div>
           <Button
             size="sm"
+            variant="outline"
             className="shrink-0 gap-1.5"
             disabled={isPieceLoading}
             onClick={handleNewConnection}
@@ -354,7 +427,21 @@ export function ConnectionPickerCard({
             {t('Connect')}
           </Button>
         </div>
-      </motion.div>
+
+        {hasConnections && (
+          <div className="flex justify-end pt-1">
+            <Button
+              size="sm"
+              className="gap-1.5"
+              disabled={!selectedExternalId}
+              onClick={handleContinue}
+            >
+              <Check className="h-3.5 w-3.5" />
+              {t('Continue')}
+            </Button>
+          </div>
+        )}
+      </InteractiveCardShell>
 
       {pieceModel && (
         <CreateOrEditConnectionDialog
@@ -369,17 +456,12 @@ export function ConnectionPickerCard({
               });
               const resolvedProjectId =
                 selectedProjectId ?? authenticationSession.getProjectId() ?? '';
-              setSelectedConnection({
+              resolveWith({
                 label: createdConnection.displayName,
                 project: '',
                 externalId: createdConnection.externalId,
                 projectId: resolvedProjectId,
                 status: AppConnectionStatus.ACTIVE,
-              });
-              onResolve({
-                connectionExternalId: createdConnection.externalId,
-                projectId: resolvedProjectId,
-                label: createdConnection.displayName,
               });
             }
           }}
@@ -394,6 +476,7 @@ export function ConnectionPickerCard({
 type ConnectionPickerCardProps = {
   picker: ConnectionPickerData;
   onResolve: (payload: Record<string, unknown>) => void;
+  onDismiss?: () => void;
   isInteractive?: boolean;
   selectedProjectId?: string | null;
   selectedConnectionLabel?: string;

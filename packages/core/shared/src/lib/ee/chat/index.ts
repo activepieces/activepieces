@@ -31,6 +31,11 @@ export enum PersistedChatPartType {
     THINKING_STATUS = 'thinking-status',
     BATCH_PROGRESS = 'batch-progress',
     ACTION_RECEIPT = 'action-receipt',
+    SOURCE_URL = 'source-url',
+    SOURCE_DOCUMENT = 'source-document',
+    IMAGE = 'image',
+    FILE = 'file',
+    BUILD_PLAN = 'build-plan',
 }
 
 export enum PersistedToolCallStatus {
@@ -87,6 +92,51 @@ const PersistedActionReceiptPartSchema = z.object({
     timestamp: z.string(),
 })
 
+const PersistedBuildPlanPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.BUILD_PLAN),
+    buildId: z.string(),
+    data: z.record(z.string(), z.unknown()),
+})
+
+const PersistedSourceUrlPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.SOURCE_URL),
+    sourceId: z.string(),
+    url: z.string(),
+    title: z.string().optional(),
+})
+
+const PersistedSourceDocumentPartSchema = z.object({
+    type: z.literal(PersistedChatPartType.SOURCE_DOCUMENT),
+    sourceId: z.string(),
+    mediaType: z.string(),
+    title: z.string(),
+    filename: z.string().optional(),
+})
+
+const PersistedImagePartSchema = z.object({
+    type: z.literal(PersistedChatPartType.IMAGE),
+    toolCallId: z.string(),
+    fileId: z.string(),
+    url: z.string(),
+    mediaType: z.string(),
+    prompt: z.string().optional(),
+    model: z.string().optional(),
+    title: z.string().optional(),
+    timestamp: z.string(),
+})
+
+const PersistedFilePartSchema = z.object({
+    type: z.literal(PersistedChatPartType.FILE),
+    toolCallId: z.string(),
+    fileId: z.string(),
+    url: z.string(),
+    mediaType: z.string(),
+    fileName: z.string(),
+    byteSize: z.number(),
+    title: z.string().optional(),
+    timestamp: z.string(),
+})
+
 const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedTextPartSchema,
     PersistedReasoningPartSchema,
@@ -94,6 +144,11 @@ const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedThinkingStatusPartSchema,
     PersistedBatchProgressPartSchema,
     PersistedActionReceiptPartSchema,
+    PersistedBuildPlanPartSchema,
+    PersistedSourceUrlPartSchema,
+    PersistedSourceDocumentPartSchema,
+    PersistedImagePartSchema,
+    PersistedFilePartSchema,
 ])
 
 export const PersistedChatMessageSchema = z.object({
@@ -107,6 +162,11 @@ export type PersistedReasoningPart = z.infer<typeof PersistedReasoningPartSchema
 export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
 export type PersistedThinkingStatusPart = z.infer<typeof PersistedThinkingStatusPartSchema>
 export type PersistedActionReceiptPart = z.infer<typeof PersistedActionReceiptPartSchema>
+export type PersistedBuildPlanPart = z.infer<typeof PersistedBuildPlanPartSchema>
+export type PersistedSourceUrlPart = z.infer<typeof PersistedSourceUrlPartSchema>
+export type PersistedSourceDocumentPart = z.infer<typeof PersistedSourceDocumentPartSchema>
+export type PersistedImagePart = z.infer<typeof PersistedImagePartSchema>
+export type PersistedFilePart = z.infer<typeof PersistedFilePartSchema>
 export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
 export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
 
@@ -124,6 +184,7 @@ export const ChatConversation = z.object({
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
     status: z.nativeEnum(ChatConversationStatus).default(ChatConversationStatus.IDLE),
+    activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
     uiMessages: z.array(PersistedChatMessageSchema).nullable().default(null),
     summary: Nullable(z.string()),
@@ -242,3 +303,4 @@ export { CHAT_ALLOWED_MIME_TYPES }
 
 export { chatToolClassification } from './tool-classification'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
+export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'

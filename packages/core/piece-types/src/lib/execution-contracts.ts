@@ -98,6 +98,7 @@ export enum FileType {
     USER_PROFILE_PICTURE = 'USER_PROFILE_PICTURE',
     WEBHOOK_PAYLOAD = 'WEBHOOK_PAYLOAD',
     KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
+    FLOW_BUNDLE = 'FLOW_BUNDLE',
 }
 
 export enum FileCompression {

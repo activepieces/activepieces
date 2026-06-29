@@ -31,6 +31,7 @@ type ApProjectDisplayProps = {
   maxLengthToNotShowTooltip?: number;
   projectType: ProjectType;
   inSidebar?: boolean;
+  framePersonalIcon?: boolean;
 };
 
 export const ApProjectDisplay = ({
@@ -42,6 +43,7 @@ export const ApProjectDisplay = ({
   maxLengthToNotShowTooltip = 30,
   projectType,
   inSidebar = false,
+  framePersonalIcon = false,
 }: ApProjectDisplayProps) => {
   const sidebarState = useSidebarSafe();
   const projectAvatar = isNil(icon) ? null : projectType ===
@@ -58,6 +60,15 @@ export const ApProjectDisplay = ({
     >
       {title.charAt(0).toUpperCase()}
     </Avatar>
+  ) : framePersonalIcon ? (
+    <span
+      className={cn(
+        'flex size-6 shrink-0 items-center justify-center rounded-sm border border-border bg-muted text-muted-foreground',
+        iconClassName,
+      )}
+    >
+      <User className="size-5" />
+    </span>
   ) : (
     <User
       className={cn('size-5 flex items-center justify-center', iconClassName)}

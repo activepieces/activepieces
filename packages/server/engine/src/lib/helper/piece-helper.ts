@@ -12,8 +12,10 @@ import {
     pieceTranslation,
     PropertyType,
     StaticPropsValue } from '@activepieces/pieces-framework'
-import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
+import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
+
+const DEFAULT_REFRESH_EXPIRES_IN_SECONDS = 3300
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../piece-context/flows'
 import { utils } from '../utils'
@@ -128,16 +130,45 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
-        const server = {
-            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
-            publicUrl: params.publicApiUrl,
-        }
+        const server = buildServerContext(params)
         return  validateAuth({
             authValue: params.auth,
             pieceAuth: piece.auth,
             server,
         })
 
+    },
+
+    async executeRefreshTokenAuth(
+        { params, devPieces }: { params: ExecuteRefreshTokenAuthOperation, devPieces: string[] },
+    ): Promise<ExecuteRefreshTokenAuthResponse> {
+        const { piece: piecePackage } = params
+
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
+
+        if (params.auth.type !== AppConnectionType.CUSTOM_AUTH) {
+            return { skipped: true }
+        }
+
+        const pieceAuth = getAuthPropertyForValue({ authValueType: params.auth.type, pieceAuth: piece.auth })
+
+        if (isNil(pieceAuth) || pieceAuth.type !== PropertyType.CUSTOM_AUTH || isNil(pieceAuth.refresh)) {
+            return { skipped: true }
+        }
+
+        const server = buildServerContext(params)
+        const result = await pieceAuth.refresh.generate({
+            auth: params.auth.props,
+            server,
+        })
+
+        const expiresIn = result.expires_in ?? pieceAuth.refresh.defaultExpiresIn ?? DEFAULT_REFRESH_EXPIRES_IN_SECONDS
+
+        return {
+            skipped: false,
+            access_token: result.access_token,
+            expires_in: expiresIn,
+        }
     },
 
     async extractPieceMetadata({ devPieces, params }: { devPieces: string[], params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
@@ -255,4 +286,11 @@ type ValidateAuthParams = {
     }
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
+}
+
+function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: string, publicApiUrl: string }) {
+    return {
+        apiUrl: internalApiUrl.endsWith('/') ? internalApiUrl : internalApiUrl + '/',
+        publicUrl: publicApiUrl,
+    }
 }

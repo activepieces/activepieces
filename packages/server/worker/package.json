@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/sandbox": "workspace:*",
     "@activepieces/server-utils": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@ai-sdk/amazon-bedrock": "3.0.97",
@@ -34,6 +35,7 @@
     "socket.io": "4.7.5",
     "dotenv": "16.4.7",
     "socket.io-client": "4.8.1",
+    "string-strip-html": "8.5.0",
     "tree-kill": "1.2.2",
     "tslib": "2.6.2",
     "write-file-atomic": "5.0.1",

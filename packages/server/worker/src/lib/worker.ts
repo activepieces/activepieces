@@ -1,19 +1,18 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
-import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
-import { EgressStack, startEgressStack } from './egress/lifecycle'
 import { getHandler } from './execute/job-registry'
-import { ActiveSandboxInfo, createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
+import { sandboxConfig } from './runtime/sandbox-config'
 
 
 const AP_VERSION = apVersionUtil.getCurrentRelease()
@@ -46,9 +45,14 @@ const workerHostname = os.hostname()
 
 let healthServerInstance: ReturnType<typeof createServer> | null = null
 
-let egressStack: EgressStack | null = null
+let runtime: Runtime | null = null
 
-let sandboxManagers: SandboxManager[] = []
+// Jobs executing across all poll loops. stop() waits for these to finish + report before tearing
+// down, so a deploy doesn't orphan them in the app's BullMQ `active` list. Abrupt death (OOM/SIGKILL)
+// still falls to the stalled-scan.
+let inFlightJobs = 0
+
+const DRAIN_TIMEOUT_MS = 25_000
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
@@ -65,18 +69,6 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
-            if (!egressStack) {
-                const { data, error } = await tryCatch(() => startEgressStack({ log: logger, apiUrl }))
-                if (error) {
-                    // Kill switch: if SSRF hardening can't be applied, refuse to accept any job.
-                    // Running without egress protection in a configured-hardened worker is
-                    // more dangerous than crash-looping — the orchestrator will restart us.
-                    logger.fatal({ error }, 'Egress stack failed to start; aborting worker to avoid running unprotected')
-                    process.exit(1)
-                }
-                egressStack = data
-            }
-            void warmupPiecesOnStartup(apiClient)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
             })
@@ -86,6 +78,20 @@ export const worker = {
             connectionGeneration++
             polling = false
             logger.warn({ reason }, 'Disconnected from API server')
+            // 'io client disconnect' is our own stop() — it already drained and tore down the runtime.
+            // For any other reason the socket dropped while a job may still be running locally; the app
+            // reclaims that job on disconnect, so kill the runtime now or the original keeps executing
+            // to completion and double-runs the requeued copy. (The reconnect path recreates it.)
+            if (reason !== 'io client disconnect') {
+                abortInFlightRuntime()
+            }
+            // Socket.IO does NOT auto-reconnect when the server initiates the disconnect
+            // (reason 'io server disconnect' — e.g. the API process restarts/hot-reloads).
+            // Without a manual reconnect the worker stays dead and silently stops consuming
+            // jobs. Every other non-client reason already triggers built-in reconnection.
+            if (reason === 'io server disconnect') {
+                socket?.connect()
+            }
         })
 
         socket.on('connect_error', (error) => {
@@ -100,16 +106,15 @@ export const worker = {
 
     async stop(): Promise<void> {
         polling = false
-        await Promise.all(sandboxManagers.map((sm) => sm.shutdown(logger)))
-        sandboxManagers = []
+        await drainInFlightJobs()
+        if (runtime) {
+            await runtime.shutdown(logger)
+            runtime = null
+        }
         socket?.disconnect()
         socket = null
         healthServerInstance?.close()
         healthServerInstance = null
-        if (egressStack) {
-            await egressStack.shutdown()
-            egressStack = null
-        }
         logger.info('Worker stopped')
     },
 }
@@ -120,30 +125,40 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
 
     const generation = connectionGeneration
 
-    if (sandboxManagers.length > 0) {
-        logger.info({ count: sandboxManagers.length }, 'Shutting down old sandbox managers before creating new ones')
-        await Promise.all(sandboxManagers.map((sm) => sm.shutdown(logger)))
-        sandboxManagers = []
-    }
-
+    // The destination is one box per worker (concurrency 1), scaling out with replicas (ADR 0003).
+    // Transitional compatibility mode (ADR 0004): honor AP_WORKER_CONCURRENCY=N by running N poll
+    // loops over N in-process boxes, each routed by its workerIndex. The default (5, main's historical
+    // value) is registered in configs.ts to preserve old behavior, so system.get always returns it; the
+    // '1' below is an unreachable belt-and-suspenders fallback. At N>1 an OOM takes down all N in-flight
+    // jobs, so the operator must size the container accordingly.
     const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
     const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    const proxyPort = egressStack?.proxyPort ?? null
-    workerSettings.setEgressProxy(proxyPort)
-    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, proxyPort }))
+    // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
+    // along with its box (usually already done by the disconnect handler), so it fails fast and is
+    // retried instead of lingering on a reused box. Reusing the box made the next generation's poll
+    // loop run a second operation on the same single-operation engine child (acquire() hands back a
+    // busy sandbox) and let the lingering job's lock lapse during the reconnect → BullMQ "stalled";
+    // a deploy disconnects every worker at once, so reuse turned that into mass stalls.
+    abortInFlightRuntime()
 
-    logger.info({ concurrency }, 'Starting polling workers')
+    runtime = createSandboxRuntime({
+        concurrency,
+        basePath: sandboxConfig.getCacheBasePath(),
+        getSettings: () => sandboxConfig.getSandboxSettings(),
+    })
 
-    const workers = sandboxManagers.map((sbManager, index) =>
-        pollAndExecute(apiClient, sbManager, index, generation),
-    )
-    await Promise.all(workers)
+    logger.info({ concurrency }, 'Starting poll loops')
+
+    const activeRuntime = runtime
+    await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
+        pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
+    ))
 }
 
-async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: SandboxManager, workerIndex: number, generation: number): Promise<void> {
+async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, workerIndex: number, generation: number): Promise<void> {
     const workerLog = logger.child({ workerIndex })
     workerLog.info('Polling worker started')
 
@@ -185,44 +200,80 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
 
         workerLog.debug({ job: { id: job.jobId, type: job.jobData.jobType } }, 'Job received from poll')
 
-        const lockExtensionInterval = setInterval(() => {
-            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
-                if (error) {
-                    workerLog.warn({ error, job: { id: job.jobId } }, 'Failed to extend lock')
-                }
-            })
-        }, 30_000)
+        // Counted for the duration of execute + completeJob so a graceful shutdown can wait for
+        // the report to land before tearing down the socket (otherwise the job is orphaned in active).
+        inFlightJobs++
+        try {
+            const lockExtensionInterval = setInterval(() => {
+                void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
+                    if (error) {
+                        workerLog.warn({ error, job: { id: job.jobId } }, 'Failed to extend lock')
+                    }
+                })
+            }, 30_000)
 
-        const { data: result, error: execError } = await tryCatch(() =>
-            executeJob(apiClient, job, sbManager),
-        )
+            const { data: result, error: execError } = await tryCatch(() =>
+                executeJob(apiClient, job, runtime, workerIndex),
+            )
 
+            const { error: completeError } = await tryCatch(() =>
+                apiClient.completeJob({
+                    jobId: job.jobId,
+                    token: job.token,
+                    queueName: job.queueName,
+                    status: execError
+                        ? EngineResponseStatus.INTERNAL_ERROR
+                        : result.status,
+                    errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
+                    logs: extractLogs(execError ?? undefined, result ?? undefined),
+                    response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
+                }),
+            )
 
-        const { error: completeError } = await tryCatch(() =>
-            apiClient.completeJob({
-                jobId: job.jobId,
-                token: job.token,
-                queueName: job.queueName,
-                status: execError
-                    ? EngineResponseStatus.INTERNAL_ERROR
-                    : result.status,
-                errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
-                logs: extractLogs(execError ?? undefined, result ?? undefined),
-                response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
-            }),
-        )
+            clearInterval(lockExtensionInterval)
 
-        clearInterval(lockExtensionInterval)
-
-        if (completeError) {
-            workerLog.error({ error: completeError, job: { id: job.jobId } }, 'Failed to complete job')
+            if (completeError) {
+                workerLog.error({ error: completeError, job: { id: job.jobId } }, 'Failed to complete job')
+            }
+        }
+        finally {
+            inFlightJobs--
         }
     }
 }
 
-async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, sbManager: SandboxManager): Promise<JobResult> {
+async function drainInFlightJobs(): Promise<void> {
+    const deadline = Date.now() + DRAIN_TIMEOUT_MS
+    while (inFlightJobs > 0 && Date.now() < deadline) {
+        await sleep(100)
+    }
+    if (inFlightJobs > 0) {
+        logger.warn({ inFlightJobs }, 'Drain timeout reached with jobs still in flight; leaving them for the stalled-scan to reclaim')
+    }
+}
+
+// Kill the current runtime (and the job running on it) without awaiting — awaiting the shutdown
+// while a job is in-flight deadlocks (the await never resolves, polling never restarts). Nulling
+// `runtime` lets the next (re)connect create a fresh box.
+function abortInFlightRuntime(): void {
+    if (isNil(runtime)) {
+        return
+    }
+    const oldRuntime = runtime
+    runtime = null
+    void tryCatch(() => oldRuntime.shutdown(logger)).then(({ error }) => {
+        if (error) {
+            logger.error({ error }, 'Failed to shut down runtime')
+        }
+    })
+}
+
+async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
     const rawData = job.jobData
     const jobData = JobData.parse(rawData)
+    // Chat jobs reuse `runId` as the per-message chat run id (NOT a flow run);
+    // map it to the `run`/`conversation` groups so chat logs correlate correctly.
+    const isChatJob = jobData.jobType === WorkerJobType.EXECUTE_CHAT_AGENT
     const jobLogger = createLogger({
         event: 'job.execute',
         job: { id: job.jobId, type: jobData.jobType },
@@ -230,7 +281,9 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('project', 'projectId' in jobData && jobData.projectId != null ? { id: jobData.projectId } : undefined),
         ...spreadIfDefined('platform', 'platformId' in jobData ? { id: jobData.platformId } : undefined),
         ...spreadIfDefined('flow', 'flowId' in jobData ? { id: jobData.flowId } : undefined),
-        ...spreadIfDefined('flowRun', 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('flowRun', !isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('run', isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
     })
     return wideEvent.run({
@@ -240,17 +293,28 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             const apiUrl = getApiUrl()
             const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
             log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
+            const publicApiUrl = ensurePublicApiUrl(publicUrl)
+            // The engine forks in-process inside this worker, so it reaches the app over the worker's own
+            // app URL (cluster-internal when co-located with the app, the public URL for a standalone worker).
+            const internalApiUrl = apiUrl
             const ctx: JobContext = {
                 apiClient,
-                sandboxManager: sbManager,
+                runtime,
+                resolver: createResolver({
+                    apiClient,
+                    basePath: sandboxConfig.getCacheBasePath(),
+                    getSettings: () => sandboxConfig.getSandboxSettings(),
+                    log,
+                }),
+                workerIndex,
                 jobId: job.jobId,
                 engineToken: job.engineToken,
-                internalApiUrl: apiUrl,
-                publicApiUrl: ensurePublicApiUrl(publicUrl),
+                internalApiUrl,
+                publicApiUrl,
                 log,
             }
             try {
-                const handler = getHandler(jobData.jobType)
+                const handler = await getHandler(jobData.jobType)
                 log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
                 const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
                 if (error) {
@@ -341,39 +405,14 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
 }
 
 async function buildSandboxInfo(): Promise<SandboxInformation[]> {
-    const activeSandboxes = sandboxManagers
-        .map((sandboxManager) => sandboxManager.getActiveSandbox())
-        .filter((sandbox): sandbox is ActiveSandboxInfo => !isNil(sandbox))
+    const activeExecutors = runtime?.getActiveExecutors() ?? []
 
-    return Promise.all(activeSandboxes.map(async (sandbox) => ({
-        sandboxId: sandbox.sandboxId,
-        boxId: sandbox.boxId,
-        busy: sandbox.busy,
-        memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(sandbox.pid),
+    return Promise.all(activeExecutors.map(async (executor) => ({
+        sandboxId: executor.sandboxId,
+        boxId: executor.boxId,
+        busy: executor.busy,
+        memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(executor.pid),
     })))
-}
-
-async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<void> {
-    const { data: pieces, error } = await tryCatch(() => apiClient.getUsedPieces({}))
-    if (error) {
-        logger.error({ error }, 'Failed to fetch used pieces for warmup')
-        return
-    }
-    if (!pieces || pieces.length === 0) {
-        logger.info('No pieces to warm up')
-        return
-    }
-    logger.info({ count: pieces.length }, 'Starting piece cache warmup')
-    const { error: installError } = await tryCatch(() =>
-        pieceInstaller(logger, apiClient).install({ pieces, includeFilters: false }),
-    )
-    if (installError) {
-        logger.error({ error: installError }, 'Failed to install pieces during startup warmup')
-    }
-    else {
-        void tryCatch(() => apiClient.markPieceAsUsed({ pieces }))
-    }
-    logger.info({ count: pieces.length }, 'Piece cache warmup complete')
 }
 
 function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {

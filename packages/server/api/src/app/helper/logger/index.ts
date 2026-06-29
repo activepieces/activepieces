@@ -31,6 +31,7 @@ function buildFacade(): FastifyBaseLogger {
                 betterstackToken: environmentVariables.getEnvironment(AppSystemProp.BETTERSTACK_TOKEN),
                 betterstackHost: environmentVariables.getEnvironment(AppSystemProp.BETTERSTACK_HOST),
                 otlpEnabled: environmentVariables.getEnvironment(AppSystemProp.OTEL_ENABLED) === 'true',
+                fileEnabled: environmentVariables.getEnvironment(AppSystemProp.LOG_FILE) === 'true',
             },
         },
     })
