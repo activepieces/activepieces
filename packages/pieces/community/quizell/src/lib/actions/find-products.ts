@@ -5,13 +5,13 @@ import { quizellApiCall } from '../common/client';
 
 type ProductRecord = Record<string, unknown>;
 
-export const searchProducts = createAction({
+export const findProducts = createAction({
   auth: quizellAuth,
-  name: 'search_products',
-  displayName: 'Search Products',
-  description: 'Searches for products in your Quizell catalog by title or SKU.',
-  audience: 'human',
-  aiMetadata: { description: 'Searches the Quizell product catalog with paginated results; leaving title and SKU empty returns all products, while supplying either filters the catalog, and an optional active/inactive status filter narrows further. Use to browse the catalog or resolve a product by title/SKU when you lack its ID. Read-only and idempotent.', idempotent: true },
+  name: 'find_products',
+  displayName: 'Find Products',
+  description: 'Lists or searches the Quizell product catalog by title or SKU.',
+  audience: 'ai',
+  aiMetadata: { description: 'Lists or searches the Quizell product catalog; leave title/SKU empty to page through all products, or filter by title, SKU, or active/inactive status. Use this to resolve a product_id before Update Product, or to browse the catalog. Read-only.', idempotent: true },
   props: {
     title: Property.ShortText({
       displayName: 'Product Title',

@@ -5,13 +5,13 @@ import { quizellApiCall } from '../common/client';
 
 type CustomerRecord = Record<string, unknown>;
 
-export const listCustomers = createAction({
+export const findCustomers = createAction({
   auth: quizellAuth,
-  name: 'list_customers',
-  displayName: 'List Customers',
-  description: 'Retrieves a list of customers (quiz leads) from Quizell.',
-  audience: 'human',
-  aiMetadata: { description: 'Retrieves a paginated list of Quizell customers (quiz leads); an empty search returns all customers, while a search term filters by name or email. Use to browse leads or resolve a customer by name/email when you do not have an ID. Read-only and idempotent.', idempotent: true },
+  name: 'find_customers',
+  displayName: 'Find Customers',
+  description: 'Lists or searches Quizell customers (quiz leads).',
+  audience: 'ai',
+  aiMetadata: { description: 'Lists or searches Quizell customers (quiz leads); leave the search empty to page through all customers, or pass a name/email term to filter. Use this to resolve a customer_id before Get/Update Customer when you only know a name or email. Read-only.', idempotent: true },
   props: {
     search: Property.ShortText({
       displayName: 'Search',
