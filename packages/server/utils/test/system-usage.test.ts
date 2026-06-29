@@ -64,11 +64,70 @@ describe('getContainerMemoryUsage', () => {
         mockCgroupFiles({
             '/sys/fs/cgroup/memory.max': String(totalBytes),
             '/sys/fs/cgroup/memory.current': String(usedBytes),
+            '/sys/fs/cgroup/memory.stat': 'inactive_file 0',
         })
 
         const result = await systemUsage.getContainerMemoryUsage()
         expect(result.totalRamInBytes).toBe(totalBytes)
         expect(result.ramUsage).toBeCloseTo(50)
+    })
+
+    it('should keep container-scoped cgroup usage when memory.stat is unreadable, never host memory', async () => {
+        const totalBytes = 1024 * 1024 * 1024 // 1 GiB cap
+        const currentBytes = 1024 * 1024 * 760 // 760 MiB
+        mockCgroupFiles({
+            '/sys/fs/cgroup/memory.max': String(totalBytes),
+            '/sys/fs/cgroup/memory.current': String(currentBytes),
+        })
+
+        // si.mem() would report a much larger host total; it must not be used here.
+        mockMem.mockResolvedValue({ total: 32_000_000_000, used: 1_000_000_000 } as never)
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.totalRamInBytes).toBe(totalBytes)
+        expect(result.ramUsage).toBeCloseTo((currentBytes / totalBytes) * 100)
+    })
+
+    it('should subtract inactive_file (reclaimable cache) from cgroup v2 usage, matching docker stats', async () => {
+        const totalBytes = 1024 * 1024 * 1024 // 1 GiB
+        const currentBytes = 1024 * 1024 * 760 // 760 MiB reported by memory.current
+        const inactiveFileBytes = 1024 * 1024 * 600 // 600 MiB reclaimable page cache
+        mockCgroupFiles({
+            '/sys/fs/cgroup/memory.max': String(totalBytes),
+            '/sys/fs/cgroup/memory.current': String(currentBytes),
+            '/sys/fs/cgroup/memory.stat': `anon 167772160\nfile 629145600\ninactive_file ${inactiveFileBytes}\nactive_file 31457280`,
+        })
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.totalRamInBytes).toBe(totalBytes)
+        expect(result.ramUsage).toBeCloseTo(((currentBytes - inactiveFileBytes) / totalBytes) * 100)
+    })
+
+    it('should subtract total_inactive_file from cgroup v1 usage', async () => {
+        const totalBytes = 1024 * 1024 * 512 // 512 MiB
+        const usageBytes = 1024 * 1024 * 400 // 400 MiB
+        const inactiveFileBytes = 1024 * 1024 * 200 // 200 MiB
+        mockCgroupFiles({
+            '/sys/fs/cgroup/memory/memory.limit_in_bytes': String(totalBytes),
+            '/sys/fs/cgroup/memory/memory.usage_in_bytes': String(usageBytes),
+            '/sys/fs/cgroup/memory/memory.stat': `total_inactive_file ${inactiveFileBytes}\ntotal_active_file 100000`,
+        })
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.totalRamInBytes).toBe(totalBytes)
+        expect(result.ramUsage).toBeCloseTo(((usageBytes - inactiveFileBytes) / totalBytes) * 100)
+    })
+
+    it('should clamp usage to zero when inactive_file exceeds reported usage', async () => {
+        const totalBytes = 1024 * 1024 * 512 // 512 MiB
+        mockCgroupFiles({
+            '/sys/fs/cgroup/memory.max': String(totalBytes),
+            '/sys/fs/cgroup/memory.current': String(1024 * 1024 * 100),
+            '/sys/fs/cgroup/memory.stat': `inactive_file ${1024 * 1024 * 200}`,
+        })
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.ramUsage).toBe(0)
     })
 
     it('should skip cgroup v1 when limit is sentinel (unlimited)', async () => {

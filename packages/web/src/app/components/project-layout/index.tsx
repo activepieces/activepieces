@@ -123,7 +123,7 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider hoverMode={!searchOpen}>
+    <SidebarProvider defaultOpen={false} hoverMode={!searchOpen}>
       {!isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
         <div

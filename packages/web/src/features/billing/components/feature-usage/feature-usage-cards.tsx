@@ -202,7 +202,6 @@ function usageIndicatorClass(ratio: number): string {
   return 'bg-primary';
 }
 
-
 function LimitUsageBar({ resolved }: { resolved: ResolvedFeatureUsage }) {
   if (isNil(resolved.limit) || resolved.limit <= 0) {
     return (

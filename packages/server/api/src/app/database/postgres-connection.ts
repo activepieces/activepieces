@@ -385,8 +385,11 @@ import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
+import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
 import { AddAutumnBillingColumnsToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddAutumnBillingColumnsToPlatformPlan'
+import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { MigrateTeamProjectsLimitToNumberAndAddUsersLimit1798000000000 } from './migration/postgres/1798000000000-MigrateTeamProjectsLimitToNumberAndAddUsersLimit'
+import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
 import { RemoveLegacyAiCreditsColumnsFromPlatformPlan1799000000000 } from './migration/postgres/1799000000000-RemoveLegacyAiCreditsColumnsFromPlatformPlan'
 import { RenameIncludedAiCreditsToIncludedCredits1800000000000 } from './migration/postgres/1800000000000-RenameIncludedAiCreditsToIncludedCredits'
 
@@ -793,6 +796,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         RemoveStripeColumnsFromPlatformPlan1782293944311,
         RemoveLegacyAiCreditsColumnsFromPlatformPlan1799000000000,
         RenameIncludedAiCreditsToIncludedCredits1800000000000,
+        AddAiToolConfigTable1797000000000,
+        AddChatConversationActiveRunId1798000000000,
+        AddChatRolloutUserTable1799000000000,
     ]
     return migrations
 }

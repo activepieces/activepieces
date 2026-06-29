@@ -1,0 +1,19 @@
+# Cloud Build for the benchmark worker image (ADR 0003 worker-is-the-sandbox). Run from the repo root so
+# the build context (`.`) and `-f Dockerfile.worker` resolve:
+#   gcloud builds submit --config benchmark/cloudbuild.worker.yaml .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    env:
+      - DOCKER_BUILDKIT=1
+    args:
+      - build
+      - -f
+      - Dockerfile.worker
+      - -t
+      - us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench
+      - .
+images:
+  - us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench
+options:
+  machineType: E2_HIGHCPU_8
+timeout: 1800s

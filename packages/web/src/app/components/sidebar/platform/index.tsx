@@ -21,6 +21,7 @@ import { PuzzleIcon } from '@/components/icons/puzzle';
 import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
 import { Settings2Icon } from '@/components/icons/settings2';
+import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
 import { UnplugIcon } from '@/components/icons/unplug';
 import { UsersIcon } from '@/components/icons/users';
@@ -61,6 +62,11 @@ export function PlatformSidebar() {
       to: '/platform/setup/ai',
       label: t('AI Providers'),
       icon: BotIcon,
+    },
+    {
+      to: '/platform/setup/ai-capabilities',
+      label: t('AI Capabilities'),
+      icon: SparklesIcon,
     },
     {
       to: '/platform/setup/mcp',

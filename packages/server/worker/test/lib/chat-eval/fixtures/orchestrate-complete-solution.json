@@ -1,0 +1,51 @@
+{
+    "id": "orchestrate-complete-solution",
+    "description": "Capability: after surfacing the pipeline, the agent ARCHITECTS and commits to the complete multi-part solution (draft outreach now + create next-step tasks + stand up a follow-up automation) and executes it — rather than ending on a menu of partial helps ('want me to draft / make tasks / build an automation?'). Pins the orchestrate_the_solution doctrine. Judgment-heavy → capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "close my open deals"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "connections": [
+                    { "externalId": "conn_attio", "displayName": "Attio", "pieceName": "@activepieces/piece-attio", "status": "ACTIVE", "scope": "PROJECT" }
+                ]
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "structuredContent": {
+                    "count": 5,
+                    "records": [
+                        { "name": "Typeform", "stage": "Proposal", "value": 90000, "next_step": "Follow up with urgency", "last_activity": "2026-05-10" },
+                        { "name": "FlixMobility", "stage": "Proposal", "value": 50000, "next_step": "Do the call", "last_activity": "2026-04-22" },
+                        { "name": "Alvys", "stage": "Evaluating", "value": 60000, "next_step": "Get back on items from the call", "last_activity": "2026-05-01" },
+                        { "name": "Fleetio Upgrade", "stage": "Initial Discussion", "value": 45600, "next_step": null, "last_activity": "2026-03-15" },
+                        { "name": "Europe Express", "stage": "Evaluating", "value": 50000, "next_step": "Follow up with Nick", "last_activity": "2026-04-30" }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "orchestrates_complete_solution_not_a_menu",
+            "rubric": "After surfacing the open deals, the assistant must act like a solution architect: design and COMMIT TO a complete, multi-part play that actually advances the pipeline — drafting tailored outreach for the high-value/stalled deals, creating next-step tasks for the ones missing one, and/or standing up a follow-up automation — and treat those parts as work IT is doing/has done, not choices for the user. PASS if it commits to carrying out a composed plan spanning more than one action and presents those parts as decided work it is executing. It is FINE (expected, even) for it to pause on ONE thing only: a single directional check on the *outward send itself* — e.g. asking which segment / what tone / what angle to use for the outreach before emailing real contacts — that is legitimate mission-alignment, not a failure. FAIL only if it offers the SOLUTION'S OWN PARTS as the menu — e.g. 'Want me to: 1) draft emails, 2) create tasks, or 3) build an automation?' (or the same as quick-reply chips) — or stops at analysis and hands the assembly of the plan back to the user. The test: a card/question about the *direction of the send* = pass; a card/menu asking *which components of the solution to do* = fail.",
+            "expectedLabel": "pass"
+        }
+    ]
+}
