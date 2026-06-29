@@ -16,7 +16,7 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
     },
 
     updateStepProgress({ projectId, request }: UpdateStepProgressParams): void {
-        websocketService.to(projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, { ...request, projectId })
+        websocketService.to(projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, request)
     },
 
     async sendFlowResponse({ request }: SendFlowResponseParams): Promise<void> {
