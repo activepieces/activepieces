@@ -139,14 +139,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
 
-    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
-        rejectedPromiseHandler(chatRolloutService.recordLanding({
-            userId: request.principal.id,
-            platformId: request.principal.platform.id,
-        }), request.log)
-        return reply.status(StatusCodes.NO_CONTENT).send()
-    })
-
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
         request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[chatController] Tool approval received')
         await chatApprovalGate.resolveGate({
@@ -336,16 +328,6 @@ const GetPendingGateRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
-    },
-}
-
-const FunnelLandingRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['chat'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
