@@ -9,7 +9,7 @@ export const githubCreatePullRequestReviewCommentAction = createAction({
   displayName: 'Create Pull Request Review Comment',
   description:
     'Creates a review comment on a pull request in a GitHub repository',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Posts an inline review comment on a pull request, anchored to a specific commit SHA, file path, and diff position. Use to comment on a particular line of changed code in a PR (not a general PR comment — use Create Comment on a Issue for that). Not idempotent: each call adds a new review comment.',
