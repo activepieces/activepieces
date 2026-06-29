@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const revealContact = createAction({
+export const revealContactAi = createAction({
   auth: pubrioAuth,
-  name: 'reveal_contact',
+  name: 'reveal_contact_ai',
   displayName: 'Reveal Contact',
-  description: 'Reveal email or phone number for a person (uses credits)',
-  audience: 'human',
+  description: 'Reveal email or phone for a person (uses credits)',
+  audience: 'ai',
   aiMetadata: {
     description:
-      "Reveal a person's contact details (work/personal email and/or phone) for a single individual identified by people_search_id or LinkedIn URL. This consumes account credits and is not idempotent in cost, so call it only once contacts are actually needed. Use for one person at a time after locating them via Search People or Lookup Person.",
+      'Reveal contact details (work/personal email and/or phone) for one or more people, identified by their `people_search_id`s. **CONSUMES ACCOUNT CREDITS per reveal** and is NOT idempotent in cost — call only once contacts are actually needed, never to retry blindly. Resolve the IDs first via Find People.',
     idempotent: false,
   },
   props: {
@@ -32,7 +32,7 @@ export const revealContact = createAction({
     }),
     people_contact_types: Property.StaticMultiSelectDropdown({
       displayName: 'Contact Types',
-      required: false,
+      required: true,
       options: {
         options: [
           { label: 'Work Email', value: 'email-work' },

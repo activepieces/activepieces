@@ -3,26 +3,26 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const createMonitor = createAction({
+export const updateMonitorAi = createAction({
   auth: pubrioAuth,
-  name: 'create_monitor',
-  displayName: 'Create Monitor',
-  description: 'Create a new signal monitor for jobs, news, or advertisements',
-  audience: 'human',
+  name: 'update_monitor_ai',
+  displayName: 'Update Monitor',
+  description: 'Modify an existing signal monitor',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Create a new signal monitor that watches selected companies for jobs, news, and/or advertisement signals and delivers matches to a webhook, email, or sequence. Not idempotent: each call creates a separate monitor, so calling twice yields duplicates. Use to set up ongoing monitoring; to change an existing monitor use Update Monitor.',
-    idempotent: false,
+      'Modify an existing monitor (by `monitor_id` from List Monitors), changing only the fields you supply — including `is_active`/`is_paused` to pause/resume. Mutating and takes effect immediately; re-sending the same values converges. Use to pause a monitor rather than deleting it.',
+    idempotent: true,
   },
   props: {
-    name: Property.ShortText({
-      displayName: 'Name',
+    monitor_id: Property.ShortText({
+      displayName: 'Monitor ID',
       required: true,
-      description: 'Monitor name',
     }),
+    name: Property.ShortText({ displayName: 'Name', required: false }),
     detection_mode: Property.StaticDropdown({
       displayName: 'Detection Mode',
-      required: true,
+      required: false,
       options: {
         options: [
           { label: 'Company First', value: 'company_first' },
@@ -32,7 +32,7 @@ export const createMonitor = createAction({
     }),
     signal_types: Property.StaticMultiSelectDropdown({
       displayName: 'Signal Types',
-      required: true,
+      required: false,
       options: {
         options: [
           { label: 'Jobs', value: 'jobs' },
@@ -43,7 +43,7 @@ export const createMonitor = createAction({
     }),
     destination_type: Property.StaticDropdown({
       displayName: 'Destination Type',
-      required: true,
+      required: false,
       options: {
         options: [
           { label: 'Webhook', value: 'webhook' },
@@ -55,17 +55,11 @@ export const createMonitor = createAction({
     webhook_url: Property.ShortText({
       displayName: 'Webhook URL',
       required: false,
-      description: 'Required when destination type is webhook',
     }),
-    email: Property.ShortText({
-      displayName: 'Email',
-      required: false,
-      description: 'Required when destination type is email',
-    }),
+    email: Property.ShortText({ displayName: 'Email', required: false }),
     sequence_identifier: Property.ShortText({
       displayName: 'Sequence Identifier',
       required: false,
-      description: 'Required when destination type is sequences',
     }),
     record_type: Property.ShortText({
       displayName: 'Record Type',
@@ -126,19 +120,26 @@ export const createMonitor = createAction({
       required: false,
       defaultValue: false,
     }),
+    is_active: Property.Checkbox({
+      displayName: 'Is Active',
+      required: false,
+      defaultValue: false,
+    }),
+    is_paused: Property.Checkbox({
+      displayName: 'Is Paused',
+      required: false,
+      defaultValue: false,
+    }),
     max_failure_trigger: Property.Number({
       displayName: 'Max Failure Trigger',
-      description: '1-10',
       required: false,
     }),
     max_retry_per_trigger: Property.Number({
       displayName: 'Max Retry Per Trigger',
-      description: '0-3',
       required: false,
     }),
     retry_delay_second: Property.Number({
       displayName: 'Retry Delay (seconds)',
-      description: '1-5',
       required: false,
     }),
     notification_email: Property.ShortText({
@@ -148,11 +149,18 @@ export const createMonitor = createAction({
   },
   async run(context) {
     const body: Record<string, unknown> = {
-      name: context.propsValue.name,
-      detection_mode: context.propsValue.detection_mode,
-      signal_types: context.propsValue.signal_types,
-      destination_type: context.propsValue.destination_type,
+      monitor_id: context.propsValue.monitor_id,
     };
+    if (context.propsValue.name) body['name'] = context.propsValue.name;
+    if (context.propsValue.detection_mode)
+      body['detection_mode'] = context.propsValue.detection_mode;
+    if (
+      context.propsValue.signal_types &&
+      context.propsValue.signal_types.length > 0
+    )
+      body['signal_types'] = context.propsValue.signal_types;
+    if (context.propsValue.destination_type)
+      body['destination_type'] = context.propsValue.destination_type;
     const destConfig: Record<string, unknown> = {};
     if (context.propsValue.webhook_url)
       destConfig['webhook_url'] = context.propsValue.webhook_url;
@@ -192,6 +200,10 @@ export const createMonitor = createAction({
       body['is_company_enrichment'] = context.propsValue.is_company_enrichment;
     if (context.propsValue.is_people_enrichment)
       body['is_people_enrichment'] = context.propsValue.is_people_enrichment;
+    if (context.propsValue.is_active)
+      body['is_active'] = context.propsValue.is_active;
+    if (context.propsValue.is_paused)
+      body['is_paused'] = context.propsValue.is_paused;
     if (context.propsValue.max_failure_trigger != null)
       body['max_failure_trigger'] = context.propsValue.max_failure_trigger;
     if (context.propsValue.max_retry_per_trigger != null)
@@ -203,7 +215,7 @@ export const createMonitor = createAction({
     return await pubrioRequest(
       context.auth.secret_text,
       HttpMethod.POST,
-      '/monitors/create',
+      '/monitors/update',
       body
     );
   },

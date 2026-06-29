@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const getMonitor = createAction({
+export const getMonitorAi = createAction({
   auth: pubrioAuth,
-  name: 'get_monitor',
+  name: 'get_monitor_ai',
   displayName: 'Get Monitor',
-  description: 'Look up a monitor by ID',
-  audience: 'human',
+  description: 'Fetch one signal monitor by its ID',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Fetch a single monitor by its ID, optionally including signature-reveal data. Read-only and repeatable; requires a known monitor ID rather than search criteria.',
+      'Fetch one signal monitor by its `monitor_id` (from List Monitors), optionally with signature-reveal data (note: signature reveal consumes credits — leave off unless needed). Read-only and repeatable.',
     idempotent: true,
   },
   props: {

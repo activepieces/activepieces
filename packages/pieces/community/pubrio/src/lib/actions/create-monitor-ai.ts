@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const createMonitor = createAction({
+export const createMonitorAi = createAction({
   auth: pubrioAuth,
-  name: 'create_monitor',
+  name: 'create_monitor_ai',
   displayName: 'Create Monitor',
-  description: 'Create a new signal monitor for jobs, news, or advertisements',
-  audience: 'human',
+  description: 'Create a signal monitor for jobs, news, or advertisements',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Create a new signal monitor that watches selected companies for jobs, news, and/or advertisement signals and delivers matches to a webhook, email, or sequence. Not idempotent: each call creates a separate monitor, so calling twice yields duplicates. Use to set up ongoing monitoring; to change an existing monitor use Update Monitor.',
+      'Create a signal monitor that watches companies for jobs/news/advertisement signals and delivers matches to a webhook, email, or sequence. NOT idempotent — each call creates a separate monitor (calling twice yields duplicates). Provide `name`, `detection_mode`, `signal_types`, `destination_type`; advanced filters are raw JSON strings. Use Update Monitor to change an existing one.',
     idempotent: false,
   },
   props: {

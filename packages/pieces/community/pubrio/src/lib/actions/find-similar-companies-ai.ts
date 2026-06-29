@@ -3,16 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const findSimilarCompanies = createAction({
+export const findSimilarCompaniesAi = createAction({
   auth: pubrioAuth,
-  name: 'find_similar_companies',
+  name: 'find_similar_companies_ai',
   displayName: 'Find Similar Companies',
-  description:
-    'Find companies similar to a given company by domain or LinkedIn URL',
-  audience: 'human',
+  description: 'Find companies resembling one seed company',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Return a paged list of companies that resemble one seed company, identified via lookup_type (domain or LinkedIn URL). Read-only and repeatable (per_page max 25). Use for lookalike prospecting from a known account; to enrich that one seed company instead use Lookup Company.',
+      'Find companies resembling one seed company (by domain or LinkedIn URL); returns a paged list (max 25/page). Read-only and repeatable. Pick this for lookalike/competitor prospecting from a known account; use Find Companies for criteria-based discovery or Enrich Company Profile for one firm\'s detail.',
     idempotent: true,
   },
   props: {
