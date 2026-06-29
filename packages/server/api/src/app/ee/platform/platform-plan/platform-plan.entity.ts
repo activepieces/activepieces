@@ -80,6 +80,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         dataManipulationEnabled: {
             type: Boolean,
         },
+        headlessSdkEnabled: {
+            type: Boolean,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },

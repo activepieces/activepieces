@@ -63,6 +63,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'List OAuth/app connections in the project — required before adding steps that need auth',
       },
       {
+        name: 'ap_manage_connections',
+        description:
+          'Check whether a piece is connected and return a branded link for the user to authenticate if not',
+      },
+      {
         name: 'ap_list_ai_models',
         description: 'List configured AI providers and their available models',
       },

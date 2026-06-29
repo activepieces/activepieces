@@ -1,17 +1,17 @@
 import { createHash } from 'crypto'
 import { isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
-import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'
+import { sdkProjectService } from '../sdk/sdk-project-service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
@@ -22,10 +22,10 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalAccessToken,
         )
 
-        const { project } = await getOrCreateProject({
+        const { project } = await sdkProjectService(log).getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
-        }, log)
+        })
 
         if (!isNil(externalPrincipal.projectDisplayName)) {
             await projectService(log).update(project.id, {
@@ -156,32 +156,6 @@ const getOrCreateUserIdentity = async (
     })
     return identity
 }
-const getOrCreateProject = async ({
-    platformId,
-    externalProjectId,
-}: GetOrCreateProjectParams, log: FastifyBaseLogger): Promise<{ project: Project, isNewProject: boolean }> => {
-    const existingProject = await projectService(log).getByPlatformIdAndExternalId({
-        platformId,
-        externalId: externalProjectId,
-    })
-
-    if (!isNil(existingProject)) {
-        return { project: existingProject, isNewProject: false }
-    }
-
-    const platform = await platformService(log).getOneOrThrow(platformId)
-
-    const project = await projectService(log).create({
-        displayName: externalProjectId,
-        ownerId: platform.ownerId,
-        platformId,
-        externalId: externalProjectId,
-        type: ProjectType.TEAM,
-    })
-
-    return { project, isNewProject: true }
-}
-
 const getPiecesList = async ({
     piecesFilterType,
     piecesTags,
@@ -219,11 +193,6 @@ type GetOrCreateUserParams = {
     externalProjectId: string
     externalFirstName: string
     externalLastName: string
-}
-
-type GetOrCreateProjectParams = {
-    platformId: string
-    externalProjectId: string
 }
 
 type UpdateProjectLimits = {

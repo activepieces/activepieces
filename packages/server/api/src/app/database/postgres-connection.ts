@@ -387,6 +387,7 @@ import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postg
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
+import { AddHeadlessSdkEnabledToPlatformPlan1800000000000 } from './migration/postgres/1800000000000-AddHeadlessSdkEnabledToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -789,6 +790,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiToolConfigTable1797000000000,
         AddChatConversationActiveRunId1798000000000,
         AddChatRolloutUserTable1799000000000,
+        AddHeadlessSdkEnabledToPlatformPlan1800000000000,
     ]
     return migrations
 }

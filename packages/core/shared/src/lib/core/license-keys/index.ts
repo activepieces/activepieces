@@ -35,6 +35,7 @@ export const LicenseKeyEntity = z.object({
     aiProvidersEnabled: z.boolean(),
     chatEnabled: z.boolean().optional(),
     dataManipulationEnabled: z.boolean().optional(),
+    headlessSdkEnabled: z.boolean().optional(),
 })
 
 

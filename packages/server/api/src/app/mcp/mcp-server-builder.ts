@@ -16,7 +16,14 @@ const MCP_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
-### Workflow
+### Running a piece action directly (no flow)
+Use this loop for one-shot tasks like "send one Slack message" or "check my inbox":
+1. **Discover** — always call ap_research_pieces FIRST to find the exact piece + action name. Never guess slugs.
+2. **Schema** — call ap_get_piece_props to load the action's input fields before executing. Pass strictly schema-compliant args.
+3. **Connect** — call ap_manage_connections for the piece. NEVER run an action without an ACTIVE connection: if it returns a link, share it with the user and wait until they finish. If already connected, reuse the returned connectionExternalId.
+4. **Execute** — call ap_run_action with the piece, action, schema-compliant input, and connectionExternalId.
+
+### Flow-building workflow
 1. Discover: ap_research_pieces, ap_list_connections, ap_list_ai_models
 2. Schema: ap_get_piece_props (get field names/types before configuring)
 3. Build: ap_build_flow (one call for new flows) OR ap_create_flow → ap_update_trigger → ap_add_step (granular)

@@ -16,7 +16,7 @@ export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
     return {
         title: 'ap_run_action',
         permission: Permission.WRITE_RUN,
-        description: 'Execute a single piece action once, without building or saving a flow. Use this for one-shot tasks like "check my inbox" or "send one Slack message". For recurring/triggered work, build a flow with ap_build_flow instead.',
+        description: 'Execute a single piece action once, without building or saving a flow. Use for one-shot tasks like "check my inbox" or "send one Slack message". Call ap_research_pieces (discover) and ap_get_piece_props (schema) first, and ensure an ACTIVE connection via ap_manage_connections — never run without one. For recurring/triggered work, build a flow with ap_build_flow instead.',
         inputSchema: runActionInput.shape,
         annotations: { destructiveHint: true, idempotentHint: false, openWorldHint: true },
         execute: async (args) => {

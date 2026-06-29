@@ -31,6 +31,16 @@ export const oauthAppService = {
         })
         return deleteProps(connection, ['clientSecret'])
     },
+    async getOne({
+        platformId,
+        pieceName,
+    }: {
+        platformId: string
+        pieceName: string
+    }): Promise<OAuthApp | null> {
+        const oauthApp = await oauthRepo().findOneBy({ platformId, pieceName })
+        return isNil(oauthApp) ? null : deleteProps(oauthApp, ['clientSecret'])
+    },
     async getWithSecret({
         platformId,
         pieceName,

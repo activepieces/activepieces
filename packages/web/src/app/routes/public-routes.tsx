@@ -9,6 +9,7 @@ import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
 
 import NotFoundPage from './404-page';
 import AuthenticatePage from './authenticate';
+import { ConnectPage } from './connect';
 import { EmbedPage } from './embed';
 import { EmbeddedConnectionDialog } from './embed/embedded-connection-dialog';
 import { EmbeddedMcpAuthorizeDialog } from './embed/embedded-mcp-authorize-dialog';
@@ -34,6 +35,10 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export const publicRoutes = [
+  {
+    path: '/connect',
+    element: <ConnectPage></ConnectPage>,
+  },
   {
     path: '/embed',
     element: <EmbedPage></EmbedPage>,

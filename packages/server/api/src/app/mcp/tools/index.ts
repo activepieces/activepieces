@@ -23,6 +23,7 @@ import { apListFlowsTool } from './ap-list-flows'
 import { apListRunsTool } from './ap-list-runs'
 import { apListTablesTool } from './ap-list-tables'
 import { apLockAndPublishTool } from './ap-lock-and-publish'
+import { apManageConnectionsTool } from './ap-manage-connections'
 import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
 import { apReadStepCodeTool } from './ap-read-step-code'
@@ -53,6 +54,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_resolve_property_chain',
     'ap_validate_step_config',
     'ap_list_connections',
+    'ap_manage_connections',
     'ap_list_ai_models',
     'ap_list_tables',
     'ap_find_records',
@@ -113,6 +115,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apResolvePropertyChainTool(mcp, log),
     apValidateStepConfigTool(mcp, log),
     apListConnectionsTool(mcp, log),
+    apManageConnectionsTool(mcp, log),
     apUpdateTriggerTool(mcp, log),
     apAddStepTool(mcp, log),
     apUpdateStepTool(mcp, log),
