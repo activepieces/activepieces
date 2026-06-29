@@ -88,13 +88,21 @@ export const stripeCreateSubscriptionAi = createAction({
       metadata,
     } = context.propsValue;
 
+    if (
+      collection_method === 'send_invoice' &&
+      (days_until_due === undefined || days_until_due === null)
+    ) {
+      throw new Error(
+        "days_until_due is required when collection_method is 'send_invoice'."
+      );
+    }
+
     const body: Record<string, unknown> = {
       customer,
       collection_method,
       days_until_due,
       trial_period_days,
       default_payment_method,
-      metadata,
     };
 
     Object.keys(body).forEach((key) => {
@@ -110,6 +118,12 @@ export const stripeCreateSubscriptionAi = createAction({
         if (typedItem.quantity) {
           body[`items[${index}][quantity]`] = typedItem.quantity;
         }
+      });
+    }
+
+    if (metadata && typeof metadata === 'object') {
+      Object.keys(metadata).forEach((key) => {
+        body[`metadata[${key}]`] = (metadata as Record<string, string>)[key];
       });
     }
 

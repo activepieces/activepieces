@@ -53,6 +53,15 @@ export const stripeCreateInvoiceAi = createAction({
     const { customer_id, currency, description, collection_method, days_until_due } =
       context.propsValue;
 
+    if (
+      collection_method === 'send_invoice' &&
+      (days_until_due === undefined || days_until_due === null)
+    ) {
+      throw new Error(
+        "days_until_due is required when collection_method is 'send_invoice'."
+      );
+    }
+
     const body: { [key: string]: unknown } = {
       customer: customer_id,
       currency,

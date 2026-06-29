@@ -68,9 +68,9 @@ export const stripeCreateCustomerAi = createAction({
     if (city) address.city = city;
     if (state) address.state = state;
     if (country) address.country = country;
-    if (Object.keys(address).length > 0) {
-      body.address = address;
-    }
+    Object.keys(address).forEach((key) => {
+      body[`address[${key}]`] = address[key];
+    });
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

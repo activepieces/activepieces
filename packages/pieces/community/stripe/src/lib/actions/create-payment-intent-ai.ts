@@ -15,7 +15,7 @@ export const stripeCreatePaymentIntentAi = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a Stripe PaymentIntent for an amount and currency, optionally tied to a customer. Leave it unconfirmed to get a client secret for client-side completion, or set confirm with a payment method ID (and return URL) to charge immediately. Amount is in the smallest currency unit (e.g. cents). Not idempotent: each call starts a separate payment.',
+      'Creates a Stripe PaymentIntent for an amount and currency, optionally tied to a customer. Leave it unconfirmed to get a client secret for client-side completion, or set confirm with a payment method ID (and return URL) to charge immediately. Amount is a decimal in the major currency unit (e.g. 10.50 for $10.50). Not idempotent: each call starts a separate payment.',
     idempotent: false,
   },
   props: {
