@@ -10,7 +10,7 @@ export const updateConversationAction = createAction({
     audience: 'ai',
     aiMetadata: {
         description:
-            'Updates a Cody conversation via a full replace, not a partial patch: name AND bot ID are both required, so to change just one (e.g. rename) you must re-send the current value of the other to keep it. Optionally pass document IDs to reset the focus-mode documents. Fetch the current values with Get Conversation first. Convergent set-by-key (re-sending the same values yields the same state), so it is idempotent.',
+            'Updates a Cody conversation via a full replace, not a partial patch: name AND bot ID are both required, so to change just one (e.g. rename) you must re-send the current value of the other to keep it. Focus-mode documents are part of the replace too: re-send the conversation\'s current document IDs (from Get Conversation) to keep them — omitting Document IDs may clear focus mode. Fetch the current values with Get Conversation first. Convergent set-by-key (re-sending the same values yields the same state), so it is idempotent.',
         idempotent: true,
     },
     props: {
@@ -34,7 +34,7 @@ export const updateConversationAction = createAction({
         document_ids: Property.Array({
             displayName: 'Document IDs (Focus Mode)',
             description:
-                'Optional list of document IDs to set as the focus-mode documents for this conversation. Resolve via List Documents.',
+                'Optional list of document IDs to set as the focus-mode documents for this conversation (full replace). Re-send the current focus documents (from Get Conversation) to keep them; omitting may clear focus mode. Resolve via List Documents.',
             required: false,
         }),
     },
