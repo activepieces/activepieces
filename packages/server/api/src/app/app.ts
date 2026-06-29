@@ -12,6 +12,7 @@ import { globalRegistry } from 'zod/v4/core'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
+import { aiToolConfigModule } from './ai/ai-tool-config.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -36,6 +37,7 @@ import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { chatEvalModule } from './ee/chat/chat-eval-controller'
+import { chatFunnelTrackingModule } from './ee/chat/chat-funnel-tracking-module'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
@@ -73,6 +75,7 @@ import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
 import { exceptionHandler } from './helper/exception-handler'
+import { clientLogsModule } from './helper/logs/client-logs.module'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
@@ -244,6 +247,14 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(templateModule)
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
+
+    // Dev-only: accept browser debug logs into the shared evlog fs drain so a
+    // chat run can be reconstructed end-to-end (web + api + worker). Never in cloud/prod.
+    const clientLogsEnabled = system.get(AppSystemProp.LOG_FILE) === 'true' && system.getEdition() !== ApEdition.CLOUD
+    if (clientLogsEnabled) {
+        await app.register(clientLogsModule)
+    }
+
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
@@ -303,6 +314,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
             await app.register(chatEvalModule)
+            await app.register(chatFunnelTrackingModule)
+            await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -335,6 +348,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
             await app.register(chatEvalModule)
+            await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
