@@ -11,7 +11,7 @@ export const updateMonitorAi = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Modify an existing monitor (by `monitor_id` from List Monitors), changing only the fields you supply — including `is_active`/`is_paused` to pause/resume. Mutating and takes effect immediately; re-sending the same values converges. Use to pause a monitor rather than deleting it.',
+      'Modify an existing monitor (by `monitor_id` from List Monitors), changing only the fields you supply. Set `is_paused` true to stop a monitor or false to resume it; set `is_active` to enable/disable it. Takes effect immediately and re-sending the same values converges. Hard-deleting a monitor is not available on this API, so pausing (`is_paused: true`) is how you retire one.',
     idempotent: true,
   },
   props: {
@@ -123,12 +123,10 @@ export const updateMonitorAi = createAction({
     is_active: Property.Checkbox({
       displayName: 'Is Active',
       required: false,
-      defaultValue: false,
     }),
     is_paused: Property.Checkbox({
       displayName: 'Is Paused',
       required: false,
-      defaultValue: false,
     }),
     max_failure_trigger: Property.Number({
       displayName: 'Max Failure Trigger',
@@ -200,9 +198,9 @@ export const updateMonitorAi = createAction({
       body['is_company_enrichment'] = context.propsValue.is_company_enrichment;
     if (context.propsValue.is_people_enrichment)
       body['is_people_enrichment'] = context.propsValue.is_people_enrichment;
-    if (context.propsValue.is_active)
+    if (context.propsValue.is_active !== undefined)
       body['is_active'] = context.propsValue.is_active;
-    if (context.propsValue.is_paused)
+    if (context.propsValue.is_paused !== undefined)
       body['is_paused'] = context.propsValue.is_paused;
     if (context.propsValue.max_failure_trigger != null)
       body['max_failure_trigger'] = context.propsValue.max_failure_trigger;

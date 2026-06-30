@@ -123,12 +123,10 @@ export const updateMonitor = createAction({
     is_active: Property.Checkbox({
       displayName: 'Is Active',
       required: false,
-      defaultValue: false,
     }),
     is_paused: Property.Checkbox({
       displayName: 'Is Paused',
       required: false,
-      defaultValue: false,
     }),
     max_failure_trigger: Property.Number({
       displayName: 'Max Failure Trigger',
@@ -200,9 +198,9 @@ export const updateMonitor = createAction({
       body['is_company_enrichment'] = context.propsValue.is_company_enrichment;
     if (context.propsValue.is_people_enrichment)
       body['is_people_enrichment'] = context.propsValue.is_people_enrichment;
-    if (context.propsValue.is_active)
+    if (context.propsValue.is_active !== undefined)
       body['is_active'] = context.propsValue.is_active;
-    if (context.propsValue.is_paused)
+    if (context.propsValue.is_paused !== undefined)
       body['is_paused'] = context.propsValue.is_paused;
     if (context.propsValue.max_failure_trigger != null)
       body['max_failure_trigger'] = context.propsValue.max_failure_trigger;
