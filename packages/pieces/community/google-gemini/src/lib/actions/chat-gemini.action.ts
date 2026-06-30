@@ -9,6 +9,7 @@ import * as z from 'zod/mini'
 import { googleGeminiAuth } from '../auth';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { propsValidation } from '@activepieces/pieces-common';
+import { chatGeminiActionOutputSchema } from '../output-schemas';
 
 export const chatGemini = createAction({
   audience: 'human',
@@ -38,6 +39,7 @@ export const chatGemini = createAction({
       required: false,
     }),
   },
+  outputSchema: chatGeminiActionOutputSchema,
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
       memoryKey: z.optional(z.string().check(z.maxLength(128))),

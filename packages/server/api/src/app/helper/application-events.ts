@@ -26,6 +26,11 @@ const listeners: ListenerRegistration = {
 
 type RawAuditEventParam = Pick<ApplicationEvent, 'data' | 'action'>
 
+type SendWorkerEventParams = RawAuditEventParam & {
+    projectId: string
+    platformId: string
+}
+
 type MetaInformation = {
     platformId: string
     userId?: string
@@ -50,22 +55,19 @@ export const applicationEvents = (log: FastifyBaseLogger) => ({
             }
         }), log)
     },
-    sendWorkerEvent(projectId: string, params: RawAuditEventParam): void {
-        projectService(log).getPlatformId(projectId).then((platformId) => {
-            for (const listener of listeners.workerEventListeners) {
-                const event = {
-                    ...params,
-                    projectId,
-                    platformId,
-                    id: apId(),
-                    created: new Date().toISOString(),
-                    updated: new Date().toISOString(),
-                } as ApplicationEvent
-                listener(projectId, event)
-            }
-        }).catch((error) => {
-            log.error({ error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
-        })
+    sendWorkerEvent({ projectId, platformId, action, data }: SendWorkerEventParams): void {
+        for (const listener of listeners.workerEventListeners) {
+            const event = {
+                action,
+                data,
+                projectId,
+                platformId,
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+            } as ApplicationEvent
+            listener(projectId, event)
+        }
     },
 })
 

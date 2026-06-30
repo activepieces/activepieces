@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { getTaskCommentsOutputSchema } from '../../output-schemas';
 
 export const getClickupTaskComments = createAction({
   auth: clickupAuth,
@@ -17,6 +18,7 @@ export const getClickupTaskComments = createAction({
       required: true,
     }),
   },
+  outputSchema: getTaskCommentsOutputSchema,
   async run(configValue) {
     const { task_id } = configValue.propsValue;
     const response = await callClickUpApi(

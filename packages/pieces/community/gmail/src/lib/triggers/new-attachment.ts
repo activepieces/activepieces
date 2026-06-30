@@ -13,6 +13,7 @@ import {
   getFirstFiveOrAll,
 } from '../common/data';
 import { GmailLabel } from '../common/models';
+import { newAttachmentTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
   from?: string;
@@ -69,6 +70,7 @@ export const gmailNewAttachmentTrigger = createTrigger({
       required: false,
     }),
   },
+  outputSchema: newAttachmentTriggerOutputSchema,
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

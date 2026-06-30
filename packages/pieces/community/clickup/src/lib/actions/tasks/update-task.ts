@@ -3,6 +3,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { taskOutputSchema } from '../../output-schemas';
 
 export const updateClickupTask = createAction({
   auth: clickupAuth,
@@ -39,6 +40,7 @@ export const updateClickupTask = createAction({
       'assignee(s) you want to remove from the task'
     ),
   },
+  outputSchema: taskOutputSchema,
   async run(configValue) {
     const {
       task_id,
