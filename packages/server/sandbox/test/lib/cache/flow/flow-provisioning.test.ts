@@ -50,6 +50,35 @@ function flowWithPiece(overrides: Partial<FlowVersion> = {}): FlowVersion {
 
 const httpPiece = { packageType: PackageType.REGISTRY, name: '@activepieces/piece-http', version: '1.0.5', pieceType: PieceType.OFFICIAL }
 
+// An AI "Run Agent" step (a PIECE step) whose tools reference pieces that are NOT their own flow steps.
+// The perplexity tool carries the legacy flat `predefinedInput` ({ auth, model }), the shape stored by older
+// flows before the `{ fields }` structure existed — it must still be provisioned.
+function flowWithAgentTools(): FlowVersion {
+    return flowWithPiece({
+        trigger: {
+            name: 'trigger', type: FlowTriggerType.EMPTY, displayName: 'Trigger', valid: true, settings: {},
+            nextAction: {
+                name: 'step_1', type: FlowActionType.PIECE, displayName: 'Run Agent', valid: true,
+                settings: {
+                    pieceName: '@activepieces/piece-ai', pieceVersion: '0.1.0', actionName: 'run_agent', inputUiInfo: {},
+                    input: {
+                        agentTools: [
+                            {
+                                type: 'PIECE', toolName: 'perplexity-ai-ask-ai_1uulmb_mcp',
+                                pieceMetadata: {
+                                    pieceName: '@activepieces/piece-perplexity-ai', actionName: 'ask-ai', pieceVersion: '0.2.8',
+                                    predefinedInput: { auth: "{{connections['c1']}}", model: 'sonar-reasoning-pro' },
+                                },
+                            },
+                            { type: 'FLOW', toolName: 'some-flow-tool' },
+                        ],
+                    },
+                },
+            },
+        },
+    } as unknown as Partial<FlowVersion>)
+}
+
 const flow = { id: 'flow1', versionId: 'fv1', projectId: 'p1' }
 
 afterEach(async () => {
@@ -133,6 +162,26 @@ describe('flowProvisioning.resolve', () => {
 
         const resolved = await flowProvisioning(fakeLog, apiClient, uniqueBasePath(), getSettings).resolve({ flow, platformId: 'plat1' })
         expect(resolved.kind === 'ready' && resolved.publishBundle === null).toBe(true)
+    })
+
+    it('miss + agent tool piece with legacy flat predefinedInput → tool piece is provisioned', async () => {
+        const requested: { name: string, version: string }[] = []
+        const apiClient = {
+            async getFlowBundle() { return null },
+            async getFlowVersion() { return flowWithAgentTools() },
+            async getPiece({ name, version }: { name: string, version: string }) {
+                requested.push({ name, version })
+                return { packageType: PackageType.REGISTRY, name, version, pieceType: PieceType.OFFICIAL }
+            },
+        } as unknown as WorkerToApiContract
+
+        const resolved = await flowProvisioning(fakeLog, apiClient, uniqueBasePath(), getSettings).resolve({ flow, platformId: 'plat1' })
+
+        expect(resolved.kind).toBe('ready')
+        const resolvedNames = resolved.kind === 'ready' ? resolved.pieces.map((p) => p.pieceName) : []
+        expect(resolvedNames).toContain('@activepieces/piece-ai')
+        expect(resolvedNames).toContain('@activepieces/piece-perplexity-ai')
+        expect(requested).toContainEqual({ name: '@activepieces/piece-perplexity-ai', version: '0.2.8' })
     })
 
     it('miss + missing piece → disabled and the flow is disabled via apiClient', async () => {

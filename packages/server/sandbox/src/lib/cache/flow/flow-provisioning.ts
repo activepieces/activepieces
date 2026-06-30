@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
-import { AgentPieceTool, FlowActionType, flowStructureUtil, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, Step, WorkerToApiContract } from '@activepieces/shared'
+import { AgentPieceTool, AgentPieceToolMetadata, FlowActionType, flowStructureUtil, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, Step, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../types'
 import { pieceCache, PieceNotFoundError } from '../pieces/piece-cache'
 import { flowBundleStore } from './flow-bundle-store'
@@ -81,6 +81,14 @@ async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath
     ))
 }
 
+// Provisioning only needs a tool's piece coordinates. Validating the full AgentPieceTool would wrongly drop
+// legacy agent tools whose `predefinedInput` predates the `{ fields }` structure (it was a flat map), leaving
+// the tool's piece uninstalled and the run dying with PieceNotFoundError. Match the piece-tool discriminator
+// and read only pieceName/pieceVersion, ignoring the rest of the (version-drifting) tool shape.
+const agentToolPieceRef = AgentPieceTool.pick({ type: true }).extend({
+    pieceMetadata: AgentPieceToolMetadata.pick({ pieceName: true, pieceVersion: true }),
+})
+
 // Pieces used as agent tools live in a PIECE step's `agentTools` input, not as their own flow steps, so the
 // step-based scan above misses them and the engine would fail at runtime with the tool's piece uninstalled.
 function extractAgentToolPieceRefs(step: Step): PieceRef[] {
@@ -92,7 +100,7 @@ function extractAgentToolPieceRefs(step: Step): PieceRef[] {
         return []
     }
     return agentTools.flatMap((tool: unknown) => {
-        const parsed = AgentPieceTool.safeParse(tool)
+        const parsed = agentToolPieceRef.safeParse(tool)
         if (!parsed.success) {
             return []
         }
