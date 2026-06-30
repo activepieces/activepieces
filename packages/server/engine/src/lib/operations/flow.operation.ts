@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -12,7 +12,17 @@ import { resolveJobPayload } from './utils/resolve-job-payload'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
-        const input = await resolveExecuteFlowOperation(operation)
+        const { data: input, error: resolveError } = await tryCatch(() => resolveExecuteFlowOperation(operation))
+        if (resolveError) {
+            // Resolving the trigger payload (downloading its file) happens before flow execution. If the
+            // payload file was deleted/expired, that is a USER-level failure, not an engine bug — report a
+            // FAILED run (the same outcome as any other trigger user error) instead of letting it escape as
+            // INTERNAL_ERROR, which would fail+retry the worker job and page oncall.
+            if (operation.executionType === ExecutionType.BEGIN && isUserExecutionError(resolveError)) {
+                return reportFailedTriggerRun({ operation, error: resolveError })
+            }
+            throw resolveError
+        }
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input, constants)).finishExecution()
         await flowRunProgressReporter.sendUpdate({
@@ -28,6 +38,31 @@ export const flowOperation = {
             response: undefined,
         }
     },
+}
+
+function isUserExecutionError(error: unknown): error is ExecutionError {
+    return error instanceof ExecutionError && error.type === ExecutionErrorType.USER
+}
+
+async function reportFailedTriggerRun({ operation, error }: ReportFailedTriggerRunParams): Promise<EngineResponse<undefined>> {
+    const input: ResolvedBeginExecuteFlowOperation = { ...operation, triggerPayload: undefined }
+    const constants = EngineConstants.fromExecuteFlowInput(input)
+    const baseContext = FlowExecutorContext.empty({
+        engineApi: {
+            engineToken: constants.engineToken,
+            internalApiUrl: constants.internalApiUrl,
+        },
+    })
+    const output = (await buildFailedTriggerContext({ input, baseContext, error })).finishExecution()
+    await flowRunProgressReporter.sendUpdate({
+        engineConstants: constants,
+        flowExecutorContext: output,
+    })
+    await flowRunProgressReporter.backup()
+    return {
+        status: EngineResponseStatus.OK,
+        response: undefined,
+    }
 }
 
 const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOperation, constants: EngineConstants): Promise<FlowExecutorContext> => {
@@ -219,6 +254,11 @@ type ResolveStateParams = {
 type BuildFailedTriggerContextParams = {
     input: ResolvedExecuteFlowOperation
     baseContext: FlowExecutorContext
+    error: ExecutionError
+}
+
+type ReportFailedTriggerRunParams = {
+    operation: BeginExecuteFlowOperation
     error: ExecutionError
 }
 

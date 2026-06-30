@@ -91,6 +91,12 @@ export class FetchError extends ExecutionError {
     }
 }
 
+export class EngineFileNotFoundError extends ExecutionError {
+    constructor(fileId: string, cause?: unknown) {
+        super('EngineFileNotFound', formatMessage(`File (${fileId}) no longer exists`), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class InvalidCronExpressionError extends ExecutionError {
     constructor(cronExpression: string, cause?: unknown) {
         super('InvalidCronExpressionError', formatMessage(`Invalid cron expression: ${cronExpression}`), ExecutionErrorType.USER, cause)

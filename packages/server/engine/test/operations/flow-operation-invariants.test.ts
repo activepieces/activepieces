@@ -1,5 +1,6 @@
 import {
     ConnectionNotFoundError,
+    EngineFileNotFoundError,
     EngineGenericError,
     EngineResponseStatus,
     ExecutionType,
@@ -491,6 +492,25 @@ describe('flow operation invariants', () => {
                 engineToken: 'test-token',
                 fileId: 'payload-file-1',
             })
+        })
+
+        it('surfaces a gone trigger-payload file as a FAILED run + OK engine response (instead of INTERNAL_ERROR)', async () => {
+            mockDownload.mockReset()
+            mockSendUpdate.mockClear()
+            mockBackup.mockClear()
+            mockDownload.mockRejectedValue(new EngineFileNotFoundError('payload-file-gone'))
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'ref', fileId: 'payload-file-gone' },
+            })
+
+            const response = await flowOperation.execute(operation)
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+            const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
+            const finalCtx = finalSendUpdate.flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(finalCtx.verdict.failedStep.name).toBe('trigger_1')
+            expect(mockBackup).toHaveBeenCalled()
         })
     })
 
