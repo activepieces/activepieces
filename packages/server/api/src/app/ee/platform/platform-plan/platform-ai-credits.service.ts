@@ -158,6 +158,19 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             limit: key.limit! + amount,
         })
     },
+
+    // Tops up the platform's managed AI key by a fixed USD amount (used for the one-time
+    // free-chat-credit grant). Resolving the auth config creates the OpenRouter key if needed,
+    // so the worker later reuses the same key instead of minting a second one.
+    async grantFreeChatCredits({ platformId, amountUsd }: { platformId: string, amountUsd: number }): Promise<void> {
+        const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
+        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+        await openRouterApi.updateKey({
+            hash: apiKeyHash,
+            limit: (key.limit ?? 0) + amountUsd,
+        })
+    },
 })
 
 async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogger): Promise<Pick<OpenRouterApikey, 'usage' | 'limit' | 'limit_remaining' | 'usage_monthly'>> {

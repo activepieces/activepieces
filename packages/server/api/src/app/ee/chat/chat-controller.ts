@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -6,9 +6,11 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { rejectedPromiseHandler } from '../../helper/promise-handler'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
@@ -86,8 +88,13 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
-        // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
-        rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped) and, on
+        // their first message, gift one-time free credits so free testers can use managed AI.
+        // Awaited before the credit check below so the managed key is created (and topped up) once.
+        const { firstChat } = await chatRolloutService.recordChatted({ userId, platformId })
+        if (firstChat) {
+            await maybeGrantFreeChatCredits({ platformId, userId, log })
+        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -204,6 +211,27 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send([])
     })
 
+}
+
+const DEFAULT_FREE_CHAT_CREDIT_USD = 10
+
+async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
+    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    // Promotional credit is for free-tier cloud testers only (paid platforms carry a license key).
+    if (!isNil(plan.licenseKey)) {
+        return
+    }
+    const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
+    if (!claimed) {
+        return
+    }
+    const amountUsd = system.getNumber(AppSystemProp.CLOUD_CHAT_FREE_CREDIT_USD) ?? DEFAULT_FREE_CHAT_CREDIT_USD
+    const { error } = await tryCatch(() => platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd }))
+    if (!isNil(error)) {
+        // Roll back the claim so a later message retries the grant.
+        await chatRolloutService.releaseFreeCreditGrant({ userId })
+        log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
+    }
 }
 
 async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
