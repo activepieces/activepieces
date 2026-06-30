@@ -78,12 +78,12 @@ export const chatRolloutService = {
         if (!isCloud()) {
             return { landed: 0, chatted: 0, cap: getCap(), closed: false }
         }
-        const [landed, chatted, open] = await Promise.all([
-            countLanded(),
-            countChatted(),
-            this.isRolloutOpen(),
-        ])
-        return { landed, chatted, cap: getCap(), closed: !open }
+        const cap = getCap()
+        const [landed, chatted] = await Promise.all([countLanded(), countChatted()])
+        // Derive closed from the count we already fetched rather than calling isRolloutOpen(), which
+        // would COUNT chatted a second time. Read-only: the monotonic Redis closed flag is maintained
+        // by recordChatted() when the cap is first reached.
+        return { landed, chatted, cap, closed: chatted >= cap }
     },
 
     async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<{ firstChat: boolean, needsCreditDecision: boolean }> {
