@@ -21,10 +21,14 @@ export const deleteMonitor = createAction({
     }),
   },
   async run(context) {
+    const body: Record<string, unknown> = {
+      monitor_id: context.propsValue.monitor_id,
+    };
     return await pubrioRequest(
       context.auth.secret_text,
-      HttpMethod.DELETE,
-      `/monitors/${context.propsValue.monitor_id}`
+      HttpMethod.POST,
+      '/monitors/delete',
+      body
     );
   },
 });
