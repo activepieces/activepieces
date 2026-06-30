@@ -15,22 +15,33 @@ export const flowOperation = {
         const { data: input, error: resolveError } = await tryCatch(() => resolveExecuteFlowOperation(operation))
         if (resolveError) {
             // Resolving the trigger payload (downloading its file) happens before flow execution. If the
-            // payload file was deleted/expired, that is a USER-level failure, not an engine bug — report a
-            // FAILED run (the same outcome as any other trigger user error) instead of letting it escape as
-            // INTERNAL_ERROR, which would fail+retry the worker job and page oncall.
-            if (operation.executionType === ExecutionType.BEGIN && isUserExecutionError(resolveError)) {
+            // payload file was deleted/expired (404), that is a user/data error, not an engine bug — report a
+            // FAILED run instead of letting it escape as INTERNAL_ERROR, which fails+retries the worker job
+            // and pages oncall. Only genuine ENGINE errors (e.g. a transient 5xx download) keep that path.
+            if (operation.executionType === ExecutionType.BEGIN && !isEngineExecutionError(resolveError)) {
                 return reportFailedTriggerRun({ operation, error: resolveError })
             }
             throw resolveError
         }
         const constants = EngineConstants.fromExecuteFlowInput(input)
-        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input, constants)).finishExecution()
+        const { data: output, error: executionError } = await tryCatch(() => executieSingleStepOrFlowOperation(input, constants))
+        if (executionError) {
+            // Trigger run()/onStart() hooks and single-step test resolution can throw a plain Error/TypeError
+            // or a non-ExecutionError (e.g. ENTITY_NOT_FOUND when testing a deleted step). Like an action step
+            // throwing, those are user/piece-level failures and must surface as a FAILED run, never
+            // INTERNAL_ERROR. Only genuine ENGINE errors keep paging + retrying.
+            if (isEngineExecutionError(executionError)) {
+                throw executionError
+            }
+            return reportFailedRun({ input, constants, error: executionError })
+        }
+        const finished = output.finishExecution()
         await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
-            flowExecutorContext: output,
+            flowExecutorContext: finished,
         })
         await flowRunProgressReporter.backup()
-        const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
+        const status = finished.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
             ? EngineResponseStatus.LOG_SIZE_EXCEEDED
             : EngineResponseStatus.OK
         return {
@@ -40,13 +51,16 @@ export const flowOperation = {
     },
 }
 
-function isUserExecutionError(error: unknown): error is ExecutionError {
-    return error instanceof ExecutionError && error.type === ExecutionErrorType.USER
+function isEngineExecutionError(error: unknown): boolean {
+    return error instanceof ExecutionError && error.type === ExecutionErrorType.ENGINE
 }
 
 async function reportFailedTriggerRun({ operation, error }: ReportFailedTriggerRunParams): Promise<EngineResponse<undefined>> {
     const input: ResolvedBeginExecuteFlowOperation = { ...operation, triggerPayload: undefined }
-    const constants = EngineConstants.fromExecuteFlowInput(input)
+    return reportFailedRun({ input, constants: EngineConstants.fromExecuteFlowInput(input), error })
+}
+
+async function reportFailedRun({ input, constants, error }: ReportFailedRunParams): Promise<EngineResponse<undefined>> {
     const baseContext = FlowExecutorContext.empty({
         engineApi: {
             engineToken: constants.engineToken,
@@ -118,7 +132,7 @@ async function resolveStateOrThrowOnNonUserError({ input, constants, baseContext
 
 async function buildFailedTriggerContext({ input, baseContext, error }: BuildFailedTriggerContextParams): Promise<FlowExecutorContext> {
     const trigger = input.flowVersion.trigger
-    const message = utils.formatExecutionError(error)
+    const message = error instanceof ExecutionError ? utils.formatExecutionError(error) : utils.formatError(error)
     const triggerPayload = input.executionType === ExecutionType.BEGIN ? input.triggerPayload : undefined
     const failedTriggerOutput = GenericStepOutput.create({
         type: trigger.type,
@@ -254,12 +268,18 @@ type ResolveStateParams = {
 type BuildFailedTriggerContextParams = {
     input: ResolvedExecuteFlowOperation
     baseContext: FlowExecutorContext
-    error: ExecutionError
+    error: Error
 }
 
 type ReportFailedTriggerRunParams = {
     operation: BeginExecuteFlowOperation
-    error: ExecutionError
+    error: Error
+}
+
+type ReportFailedRunParams = {
+    input: ResolvedExecuteFlowOperation
+    constants: EngineConstants
+    error: Error
 }
 
 type IsStepRestorableParams = {

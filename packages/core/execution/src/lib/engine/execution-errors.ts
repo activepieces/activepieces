@@ -97,6 +97,12 @@ export class EngineFileNotFoundError extends ExecutionError {
     }
 }
 
+export class VariableNotFoundError extends ExecutionError {
+    constructor(name: string, cause?: unknown) {
+        super('VariableNotFound', formatMessage(`variable (${name}) not found`), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class InvalidCronExpressionError extends ExecutionError {
     constructor(cronExpression: string, cause?: unknown) {
         super('InvalidCronExpressionError', formatMessage(`Invalid cron expression: ${cronExpression}`), ExecutionErrorType.USER, cause)
