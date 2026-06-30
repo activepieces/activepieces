@@ -388,6 +388,7 @@ import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postg
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
+import { AddMcpEndpointAllowlistToPlatform1801000000000 } from './migration/postgres/1801000000000-AddMcpEndpointAllowlistToPlatform'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -791,6 +792,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatConversationActiveRunId1798000000000,
         AddChatRolloutUserTable1799000000000,
         AddTimelineToFlowRun1800000000000,
+        AddMcpEndpointAllowlistToPlatform1801000000000,
     ]
     return migrations
 }

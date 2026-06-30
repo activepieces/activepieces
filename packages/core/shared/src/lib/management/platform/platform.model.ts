@@ -186,6 +186,7 @@ export const Platform = z.object({
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    mcpServerEndpointAllowlist: Nullable(z.array(z.string())),
 })
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
@@ -216,6 +217,7 @@ export const PlatformWithoutSensitiveData = z.object({
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    mcpServerEndpointAllowlist: Nullable(z.array(z.string())),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 

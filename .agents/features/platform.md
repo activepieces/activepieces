@@ -30,6 +30,7 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 - **PieceSelectorConfig** — JSONB config controlling the order, visibility, names, and icons of the piece-selector tab strip in the flow builder; `null` means use the default built-in layout
 - **PieceSelectorTabConfig** — a single tab entry: either `BUILTIN` (referencing one of the five built-in tabs) or `CUSTOM` (a user-created tab with its own ordered piece list and optional sections)
 - **PieceSelectorTabSection** — a named sub-group inside a `CUSTOM` tab; holds a title and an ordered list of piece names
+- **mcpServerEndpointAllowlist** — JSONB array of approved external MCP server hosts/wildcards AI agents may connect to; `null`/`[]` = any endpoint allowed (opt-in). Enforcement and matching are owned by the agents feature — see [agents.md](agents.md) → MCP Endpoint Allowlist
 
 ## Entity
 
@@ -53,6 +54,7 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 | federatedAuthProviders | jsonb | OAuth2 + SAML config |
 | pinnedPieces | string[] | ordered piece name list |
 | pieceSelectorConfig | jsonb (nullable) | piece-selector tab layout (`PieceSelectorConfig`); null = default built-in tabs |
+| mcpServerEndpointAllowlist | jsonb (nullable) | approved external MCP server hosts/wildcards agents may connect to; null/`[]` = any endpoint allowed (opt-in). See [agents.md](agents.md) → MCP Endpoint Allowlist |
 
 ## Endpoints
 

@@ -36,7 +36,7 @@ Gated by `platform.plan.agentsEnabled`. When disabled, the agent step type is hi
 - **AgentToolType** — `PIECE`, `FLOW`, `MCP`, `KNOWLEDGE_BASE`
 - **AgentPieceTool** — references a specific piece action by `pieceName`, `pieceVersion`, `actionName`; can carry `predefinedInput` locking certain fields
 - **AgentFlowTool** — calls another flow by `externalFlowId`; the flow is executed as a child run
-- **AgentMcpTool** — connects to an MCP (Model Context Protocol) server; supports SSE, StreamableHTTP, and SimpleHTTP protocols with None/Bearer/ApiKey/Headers auth
+- **AgentMcpTool** — connects to an MCP (Model Context Protocol) server; supports SSE, StreamableHTTP, and SimpleHTTP protocols with None/Bearer/ApiKey/Headers auth. Subject to the platform **MCP endpoint allowlist** (see below)
 - **AgentKnowledgeBaseTool** — performs semantic search over a knowledge-base file or table; uses cosine similarity on 768-dim embeddings
 - **PredefinedInputsStructure** — per-field config (`AGENT_DECIDE`, `CHOOSE_YOURSELF`, `LEAVE_EMPTY`) baked into the tool so the agent knows which inputs it controls
 - **AgentResult** — runtime output containing `prompt`, `steps[]`, `status`, and optional `structuredOutput`
@@ -57,6 +57,15 @@ The agent step is a `PIECE` action on `@activepieces/piece-agent`. Its `settings
 External MCP servers configured as agent tools are validated server-side via `POST /v1/projects/:projectId/agent-tools/mcp/validate` (see `packages/server/api/src/app/agents/`). The handler performs the JSON-RPC `initialize` → `notifications/initialized` → `tools/list` handshake against the target and returns its tool names. The outbound call is routed through `apAxios`, whose http/https agents are built by `ssrf-agents.ts` to reject private / loopback / link-local / meta IPs by default. Operators can allow specific ranges via `AP_SSRF_ALLOW_LIST` (CIDR supported). All error paths collapse to a single generic message to avoid leaking reachability signal.
 
 The validator lives under `agents/` (not `mcp/`) because it belongs to the **agent piece** domain — validating an external MCP server the agent will connect to at flow-execution time. The `mcp/` module handles the **opposite direction**: exposing Activepieces itself as an MCP server to external clients.
+
+## MCP Endpoint Allowlist (GIT-1584)
+A platform admin can curate which external MCP server hosts agents may connect to via `platform.mcpServerEndpointAllowlist` (host/wildcard entries like `mcp.acme.com` / `*.acme.com`; whole-TLD wildcards and full URLs are rejected). It is opt-in: an empty/unset list permits any endpoint, so existing installs and agents are unchanged. Platform-scoped only for now (per-project curation deferred).
+
+Matching and entry validation live in one shared helper, `mcpEndpointAllowlistUtil` (`@activepieces/shared`, `automation/mcp/mcp-endpoint-allowlist.ts`), reused by both the validate endpoint and the runtime gate so they can't diverge. Enforced in two places:
+- **Validate endpoint** — `agent-tools-controller.ts` rejects an off-list `serverUrl` before probing (inline error in the add-MCP-tool dialog).
+- **Runtime** — the AI piece is sandboxed and can't read platform config, so `getFlowVersion` in `worker-rpc-service.ts` strips off-list `AgentMcpTool`s from each Run Agent step's `settings.input.agentTools` before the flow version reaches the worker. This catches tools saved before the list existed or added by bypassing the dialog.
+
+Admin editor: `packages/web/src/app/routes/platform/setup/mcp/mcp-endpoint-allowlist.tsx` (an "Approved endpoints" tab on the platform MCP setup page).
 
 ## Timeline Rendering
 `AgentTimeline` receives `AgentStepBlock[]` from the step output and renders:
