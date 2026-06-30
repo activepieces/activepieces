@@ -1,16 +1,12 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { billingProvider } from '../../platform/billing-provider'
+import { assertCreditsNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
-import { autumnUtils } from '../platform/platform-plan/autumn'
-import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
@@ -118,7 +114,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             await chatApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertAiCreditsNotExhausted({ platformId, log })
+        await assertCreditsNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({
             id: apId(),
@@ -214,34 +210,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send([])
     })
 
-}
-
-async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
-    if (!chatProvider || chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
-        return
-    }
-    if (await billingProvider.get(log).shouldBlockOnCredits(platformId)) {
-        const balance = await autumnUtils.readCreditsBalance(platformId)
-        throw new ActivepiecesError({
-            code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
-            params: {
-                usage: balance?.usage ?? 0,
-                limit: balance?.granted ?? 0,
-            },
-        })
-    }
-    const usage = await platformAiCreditsService(log).getUsage(platformId)
-    if (usage.usageRemaining <= 0) {
-        log.warn({ usage: usage.usage, limit: usage.limit }, '[chatController] AI credits exhausted, rejecting message')
-        throw new ActivepiecesError({
-            code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
-            params: {
-                usage: usage.usage,
-                limit: usage.limit,
-            },
-        })
-    }
 }
 
 const CreateConversationRoute = {

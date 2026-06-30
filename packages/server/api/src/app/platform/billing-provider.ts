@@ -1,5 +1,7 @@
+import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AutoTopUpConfig, ConsumableProductAutoTopupParams, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
 
 function defaultBillingInfo(): BillingInfo {
@@ -68,6 +70,23 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
         return { credits: null, appSumo: null }
     },
 }))
+
+export async function assertCreditsNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const appSumoAiCredits = await billingProvider.get(log).getAppSumoAiCreditsState(platformId)
+    if (appSumoAiCredits.blocked) {
+        throw new ActivepiecesError({
+            code: ErrorCode.QUOTA_EXCEEDED,
+            params: { metric: PlatformUsageMetric.CREDITS, usage: appSumoAiCredits.usage, limit: appSumoAiCredits.limit },
+        })
+    }
+    const credits = await billingProvider.get(log).getCreditsState(platformId)
+    if (credits.blocked) {
+        throw new ActivepiecesError({
+            code: ErrorCode.QUOTA_EXCEEDED,
+            params: { metric: PlatformUsageMetric.CREDITS, usage: credits.usage, limit: credits.limit },
+        })
+    }
+}
 
 export enum CreditUsageSource {
     FLOW_RUN = 'flow_run',

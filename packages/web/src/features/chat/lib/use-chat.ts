@@ -408,7 +408,7 @@ export function useAgentChat({
         { conversation: { id: convId }, errorCode, error: errorMessage },
         'stream error',
       );
-      if (errorCode === ErrorCode.AI_CREDIT_LIMIT_EXCEEDED) {
+      if (errorCode === ErrorCode.QUOTA_EXCEEDED) {
         onCreditsExhaustedRef.current?.();
         settleStreamRef.current(convId, { suppressNoReply: true });
         return;
@@ -678,7 +678,7 @@ export function useAgentChat({
         );
         stopStream();
         setOptimisticUserMessage(null);
-        if (api.isApError(sendError, ErrorCode.AI_CREDIT_LIMIT_EXCEEDED)) {
+        if (api.isApError(sendError, ErrorCode.QUOTA_EXCEEDED)) {
           onCreditsExhaustedRef.current?.();
           updateSendStatus({ type: 'idle' });
         } else {

@@ -58,7 +58,6 @@ export type ApErrorParams =
     | AIProviderModelNotSupportedParams
     | AIProviderNotSupportedParams
     | AIRequestNotSupportedParams
-    | AICreditLimitExceededParams
     | SessionExpiredParams
     | InvalidLicenseKeyParams
     | NoChatResponseParams
@@ -150,11 +149,6 @@ Record<string, string> &
     message?: string
 }
 >
-
-export type AICreditLimitExceededParams = BaseErrorParams<ErrorCode.AI_CREDIT_LIMIT_EXCEEDED, {
-    usage: number
-    limit: number
-}>
 
 export type PermissionDeniedErrorParams = BaseErrorParams<
 ErrorCode.PERMISSION_DENIED,
@@ -535,7 +529,6 @@ export enum ErrorCode {
     PERMISSION_DENIED = 'PERMISSION_DENIED',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
-    AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
