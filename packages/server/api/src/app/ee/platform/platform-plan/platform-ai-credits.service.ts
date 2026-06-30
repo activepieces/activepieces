@@ -7,6 +7,8 @@ import { distributedLock, distributedStore } from '../../../database/redis-conne
 import { flagService } from '../../../flags/flag.service'
 import { exceptionHandler } from '../../../helper/exception-handler'
 import { sleep } from '../../../helper/sleep'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
@@ -156,6 +158,17 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         await openRouterApi.updateKey({
             hash: apiKeyHash,
             limit: key.limit! + amount,
+        })
+    },
+
+    async grantFreeChatCredits(platformId: string): Promise<void> {
+        const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
+        const amountInUsd = system.getNumber(AppSystemProp.CLOUD_CHAT_FREE_CREDIT_USD) ?? 10
+        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+        await openRouterApi.updateKey({
+            hash: apiKeyHash,
+            limit: key.limit! + amountInUsd,
         })
     },
 })

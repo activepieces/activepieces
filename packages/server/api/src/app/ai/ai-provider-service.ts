@@ -34,6 +34,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         })
 
         if (flagService(log).aiCreditsEnabled() && !activepiecesExists) {
+            const anyChatProviderExists = await aiProviderRepo().existsBy({
+                platformId,
+                enabledForChat: true,
+            })
             await aiProviderRepo().save({
                 id: apId(),
                 auth: await encryptUtils.encryptObject({}),
@@ -41,6 +45,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 provider: AIProviderName.ACTIVEPIECES,
                 displayName: 'Activepieces',
                 platformId,
+                enabledForChat: !anyChatProviderExists,
             })
         }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
@@ -235,6 +240,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             provider: AIProviderName.ACTIVEPIECES,
         })
         if (isNil(aiProvider)) {
+            const anyChatProviderExists = await aiProviderRepo().existsBy({
+                platformId,
+                enabledForChat: true,
+            })
             await aiProviderRepo().save({
                 id: apId(),
                 auth: await encryptUtils.encryptObject({}),
@@ -242,6 +251,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 provider: AIProviderName.ACTIVEPIECES,
                 displayName: 'Activepieces',
                 platformId,
+                enabledForChat: !anyChatProviderExists,
             })
         }
 

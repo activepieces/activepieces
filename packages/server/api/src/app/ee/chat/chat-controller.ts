@@ -6,9 +6,11 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { exceptionHandler } from '../../helper/exception-handler'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
@@ -86,8 +88,26 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
-        // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
-        rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
+        // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud).
+        // On first chat for a free-tier cloud user, grant a one-time $10 credit.
+        const { firstChat } = await chatRolloutService.recordChatted({ userId, platformId })
+        if (firstChat) {
+            const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+            const isFreeTierCloud = isNil(plan.licenseKey)
+            if (isFreeTierCloud) {
+                const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
+                if (claimed) {
+                    try {
+                        await platformAiCreditsService(log).grantFreeChatCredits(platformId)
+                        log.info({ platform: { id: platformId }, user: { id: userId } }, '[chatController] Granted free chat credits')
+                    }
+                    catch (err) {
+                        log.error({ err }, '[chatController] Failed to grant free chat credits, releasing claim')
+                        await chatRolloutService.releaseFreeCreditGrant({ userId })
+                    }
+                }
+            }
+        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
