@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
-import { FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { AgentPieceTool, FlowActionType, FlowVersion, FlowVersionState, flowStructureUtil, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, Step, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../types'
 import { pieceCache, PieceNotFoundError } from '../pieces/piece-cache'
 import { flowBundleStore } from './flow-bundle-store'
@@ -66,13 +66,49 @@ function buildPublishBundle({ log, apiClient, basePath, flowVersion, pieces, pro
 }
 
 async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath, getSettings }: ResolvePiecesParams): Promise<PiecePackage[]> {
-    return Promise.all(flowSteps.piece(flowVersion).map((step) =>
+    const stepPieceRefs = flowSteps.piece(flowVersion).map((step) => ({
+        pieceName: step.settings.pieceName,
+        pieceVersion: step.settings.pieceVersion,
+    }))
+    const agentToolPieceRefs = flowStructureUtil.getAllSteps(flowVersion.trigger).flatMap(extractAgentToolPieceRefs)
+    const uniquePieceRefs = dedupePieceRefs([...stepPieceRefs, ...agentToolPieceRefs])
+    return Promise.all(uniquePieceRefs.map((ref) =>
         pieceCache(log, apiClient, basePath, getSettings).getPiece({
-            pieceName: step.settings.pieceName,
-            pieceVersion: step.settings.pieceVersion,
+            pieceName: ref.pieceName,
+            pieceVersion: ref.pieceVersion,
             platformId,
         }),
     ))
+}
+
+// Pieces used as agent tools live in a PIECE step's `agentTools` input, not as their own flow steps, so the
+// step-based scan above misses them and the engine would fail at runtime with the tool's piece uninstalled.
+function extractAgentToolPieceRefs(step: Step): PieceRef[] {
+    if (step.type !== FlowActionType.PIECE) {
+        return []
+    }
+    const agentTools = step.settings.input['agentTools']
+    if (!Array.isArray(agentTools)) {
+        return []
+    }
+    return agentTools.flatMap((tool: unknown) => {
+        const parsed = AgentPieceTool.safeParse(tool)
+        if (!parsed.success) {
+            return []
+        }
+        return [{
+            pieceName: parsed.data.pieceMetadata.pieceName,
+            pieceVersion: parsed.data.pieceMetadata.pieceVersion,
+        }]
+    })
+}
+
+function dedupePieceRefs(refs: PieceRef[]): PieceRef[] {
+    const byKey = new Map<string, PieceRef>()
+    for (const ref of refs) {
+        byKey.set(`${ref.pieceName}@${ref.pieceVersion}`, ref)
+    }
+    return [...byKey.values()]
 }
 
 function extractCodeArtifacts(flowVersion: FlowVersion): CodeArtifact[] {
@@ -106,6 +142,11 @@ type BuildPublishBundleParams = {
     pieces: PiecePackage[]
     projectId: string
     platformId: string
+}
+
+type PieceRef = {
+    pieceName: string
+    pieceVersion: string
 }
 
 export type PublishBundle = () => Promise<void>
