@@ -1,10 +1,10 @@
-import { assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId, UserId } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil, PlatformId, ProjectId, UserId } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
-import { ArrayContains, Brackets, In } from 'typeorm'
+import { ArrayContains, Brackets } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -33,15 +33,17 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         }))
     },
 
-    async countPublishedFlowsReferencingConnection(flows: PopulatedFlow[], externalId: string): Promise<number> {
-        const publishedVersionIds = flows
-            .map((flow) => flow.publishedVersionId)
-            .filter((id): id is FlowVersionId => !isNil(id))
-        if (publishedVersionIds.length === 0) {
-            return 0
-        }
-        return flowVersionRepo().createQueryBuilder('flow_version')
-            .where({ id: In(publishedVersionIds) })
+    // Queries published versions directly rather than relying on the flows fetched
+    // for the replace, since flowService.list filters by the latest (draft) version's
+    // connectionIds. A flow whose published version still uses the connection but whose
+    // newer draft dropped it would be missing from that list, so deleting the source
+    // would silently orphan the published version.
+    async countPublishedFlowsReferencingConnection({ projectId, externalId }: CountPublishedFlowsParams): Promise<number> {
+        return flowVersionRepo()
+            .createQueryBuilder('flow_version')
+            .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
+            .where('flow."projectId" = :projectId', { projectId })
+            .andWhere('flow_version.id = flow."publishedVersionId"')
             .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
             .getCount()
     },
@@ -377,6 +379,11 @@ type UpdateFlowsWithAppConnectionParams = {
     newAppConnection: AppConnectionWithoutSensitiveData
     userId: UserId
     applyToPublishedVersions: boolean
+}
+
+type CountPublishedFlowsParams = {
+    projectId: ProjectId
+    externalId: string
 }
 
 type HasOtherProjectFlowsParams = {

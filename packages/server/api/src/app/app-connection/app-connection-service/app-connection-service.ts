@@ -222,7 +222,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         // Reject up-front (before mutating any flow) when the source connection
         // can't be deleted because published versions we won't touch still use it.
         const publishedFlowsUsingConnection = deleteSourceConnection && !applyToPublishedVersions
-            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection(flows.data, sourceAppConnection.externalId)
+            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId })
             : 0
         if (publishedFlowsUsingConnection > 0) {
             throw new ActivepiecesError({
