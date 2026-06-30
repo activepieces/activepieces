@@ -149,22 +149,49 @@ jobs:
           smoke-test/verify.sh "${{ steps.setup-s3-signed.outputs.flow_id }}"
           smoke-test/verify-s3.sh "${{ steps.setup-s3-signed.outputs.flow_id }}"
 
+      - name: Restart stack in perf mode (fixed 2 CPU / 2G, info logging)
+        run: |
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
+          AP_EXECUTION_MODE=SANDBOX_CODE_ONLY \
+          APP_REPLICAS=1 \
+          WORKER_REPLICAS=1 \
+            docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.perf.yml up -d
+          echo "Waiting for containers to start..."
+          sleep 5
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.perf.yml ps
+
+      - name: Setup perf flow
+        id: setup-perf
+        run: |
+          chmod +x benchmark/setup.sh
+          FLOW_ID=$(benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Flow ID: $FLOW_ID"
+
+      - name: Run perf regression preflight (throughput / CPU / memory)
+        run: |
+          chmod +x smoke-test/verify-perf.sh
+          smoke-test/verify-perf.sh "${{ steps.setup-perf.outputs.flow_id }}"
+
+      # All overlays are listed so logs + teardown resolve regardless of which stack
+      # (S3/minio or perf) was last brought up in this job. Same compose project, so
+      # `logs`/`down -v` target every container/volume the job created.
       - name: Show app logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 app
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml logs --tail=200 app
 
       - name: Show worker logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 worker
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml logs --tail=200 worker
 
       - name: Show nginx logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 nginx
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml logs --tail=200 nginx
 
       - name: Show minio logs on failure
         if: failure()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml logs --tail=200 minio minio-init || true
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml logs --tail=200 minio minio-init || true
 
       - name: Teardown
         if: always()
-        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml -f benchmark/docker-compose.perf.yml down -v

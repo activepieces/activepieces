@@ -12,6 +12,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { spreadIfDefined } from '@activepieces/pieces-framework';
 import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
+import { askClaudeActionOutputSchema } from '../output-schemas';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
   audience: 'human',
@@ -82,6 +83,7 @@ export const askClaude = createAction({
       },
     }),
   },
+  outputSchema: askClaudeActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),

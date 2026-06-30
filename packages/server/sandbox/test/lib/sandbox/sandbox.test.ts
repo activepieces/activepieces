@@ -317,6 +317,35 @@ describe('createSandbox', () => {
             expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
         })
 
+        it('does NOT crash the process when a fixed ws port is already bound — fails just that sandbox', async () => {
+            // Isolate mode pins a fixed ws port per box. Two boxes contending the same port must not
+            // let the EADDRINUSE 'error' event become an uncaught exception that kills the whole worker.
+            const log = createMockLogger()
+            const fixedPort = 53777
+            const pmA = createTestProcessMaker()
+            const pmB = createTestProcessMaker()
+            const sandboxA = createSandbox(log, 'sb-port-a', { ...defaultOptions, wsRpcPort: fixedPort }, pmA.maker)
+            const sandboxB = createSandbox(log, 'sb-port-b', { ...defaultOptions, wsRpcPort: fixedPort }, pmB.maker)
+
+            await sandboxA.start(startOptions)
+
+            let code: ErrorCode | undefined
+            try {
+                await sandboxB.start(startOptions)
+            }
+            catch (err) {
+                code = (err as ActivepiecesError).error.code
+            }
+            // A catchable error, NOT an uncaught crash (the test process is still running).
+            expect(code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+            // A keeps working on its port.
+            expect(pmA.getClient().connected).toBe(true)
+
+            await sandboxA.shutdown()
+            const clientB = pmB.getClient()
+            if (clientB?.connected) clientB.disconnect()
+        }, 20_000)
+
         it('is idempotent when already connected', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()

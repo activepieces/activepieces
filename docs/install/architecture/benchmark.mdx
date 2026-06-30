@@ -1,10 +1,10 @@
 ---
 title: "Benchmark"
-description: "Warm and cold throughput of the worker-is-the-sandbox model on GKE, and whether the 1:10 app-to-worker ratio earns its extra apps"
+description: "Warm and cold webhook throughput of the worker-is-the-sandbox model on GKE as the fleet scales at the recommended 1:10 app-to-worker ratio"
 icon: "gauge-high"
 ---
 
-This benchmark answers one question for the recommended production shape: **as you add workers, where does throughput come from, and does the 1:10 app-to-worker ratio earn its extra apps?** It runs the [worker-is-the-sandbox](/install/architecture/workers) model on a real GKE cluster, against a same-region object store with signed URLs.
+This benchmark answers one question for the recommended production shape: **at the 1:10 app-to-worker ratio, how does throughput scale as you grow the fleet from 40 to 160 workers?** It runs the [worker-is-the-sandbox](/install/architecture/workers) model on a real GKE cluster, against a same-region object store with signed URLs and official piece tarballs served from the CDN.
 
 <img src="/resources/diagrams/activepieces-architecture.png" alt="Activepieces production architecture: client, app, Redis job queue, Postgres, S3, and one-flow-per-worker execution tier" />
 
@@ -31,7 +31,7 @@ A 4-node **synchronous** webhook flow that holds the HTTP connection open until 
 
 The compute is sub-millisecond by design — everything measured below is orchestration (queueing, callbacks, sandbox boot), which is what actually shapes production latency.
 
-Each configuration is run two ways:
+Each fleet size is held at the recommended **1:10** ratio (1 app per 10 workers) and run two ways:
 
 - **Warm** (`AP_REUSE_SANDBOX=true`) — the engine process is reused between jobs.
 - **Cold** (`AP_REUSE_SANDBOX=false`) — a fresh engine fork per job, the realistic isolation path.
@@ -39,68 +39,59 @@ Each configuration is run two ways:
 ## Results
 
 <CardGroup cols={3}>
-  <Card title="148.9 req/s" icon="gauge-high">
-    Peak warm throughput — 8 apps, 80 workers.
+  <Card title="589 req/s" icon="gauge-high">
+    Peak warm throughput — 16 apps, 160 workers.
   </Card>
-  <Card title="+58% / +35%" icon="arrow-trend-up">
-    Warm gain from halving the ratio to 1:10.
+  <Card title="4–5×" icon="arrow-trend-up">
+    Warm throughput over cold, at every fleet size.
   </Card>
-  <Card title="~1.1 s" icon="snowflake">
+  <Card title="~0.6 s" icon="snowflake">
     Cold-start boot tax paid per job.
   </Card>
 </CardGroup>
 
-Each worker is one sandbox at concurrency 1, hard-capped at 0.5 vCPU / 1 GB. Apps are 1 vCPU / 1 GB.
+Each worker is one sandbox at concurrency 1, hard-capped at 0.5 vCPU / 1 GB. Apps are 1 vCPU / 1 GB. Load concurrency is matched to the worker count so requests don't queue behind the concurrency-1 workers.
 
-| Config | Ratio | Warm req/s | Cold req/s |
+| Apps · Workers | Ratio | Warm req/s | Cold req/s |
 |---|---|---|---|
-| 2 app · 40 workers | 1:20 | 59.1 | 19.8 |
-| 4 app · 40 workers | 1:10 | 93.5 | 19.6 |
-| 4 app · 80 workers | 1:20 | 110.5 | 33.3 |
-| 8 app · 80 workers | 1:10 | 148.9 | 33.5 |
+| 4 app · 40 workers | 1:10 | 180.6 | 39.9 |
+| 8 app · 80 workers | 1:10 | 368.2 | 73.2 |
+| 12 app · 120 workers | 1:10 | 390.6 | 100.2 |
+| 16 app · 160 workers | 1:10 | 589.5 | 106.9 |
 
-## The 1:10 vs 1:20 ratio
+## How throughput scales
 
-Holding worker count fixed and doubling the apps (1:20 to 1:10):
-
-| Workers | Mode | 1:20 | 1:10 | Δ |
-|---|---|---|---|---|
-| 40 | warm | 59.1 | 93.5 | **+58%** |
-| 40 | cold | 19.8 | 19.6 | −1% |
-| 80 | warm | 110.5 | 148.9 | **+35%** |
-| 80 | cold | 33.3 | 33.5 | +1% |
-
-- **Warm is app-bound.** Every step posts a callback to the app, so under warm load the app tier saturates first (workers sit 11–14% idle). More apps means more callback capacity, lower flow-run latency, and higher throughput.
-- **Cold is worker-bound.** Each job pays a 1.1–1.3 s fork-and-boot, so workers are the wall and extra apps sit idle — the ratio barely moves the number.
+- **Warm scales with the fleet, sub-linearly.** Doubling 40→80 workers roughly doubles warm throughput (181→368), but the shared Postgres and Redis singletons absorb a growing share of every step's callback traffic, so the curve flattens through 120 and recovers at 160 (391→589). Warm load is app-and-singleton-bound, not worker-bound — workers sit near-idle (≈7 m/pod of their 500 m cap at peak).
+- **Cold flattens early.** Each job pays a fresh fork-and-boot, and boot is CPU-bound. As the fleet grows, more workers fork simultaneously and contend for CPU on the same nodes, so cold throughput tops out around 100–107 req/s past 120 workers (40→73→100→107). Adding workers past that point buys almost nothing for cold execution — the boot tax, not worker count, is the wall.
 
 <Note>
-**Why Production Setup recommends 1:10.** Apps at 1 vCPU are cheap relative to the worker fleet, and 1:10 is the warm-headroom margin that keeps the app tier from becoming the wall during bursts. 1:20 is the lean floor that still works; 1:10 buys safety, not a proportional throughput gain. See [Production Setup](/install/configure-operate/production-setup).
+**Why Production Setup recommends 1:10.** Apps at 1 vCPU are cheap relative to the worker fleet, and 1:10 is the warm-headroom margin that keeps the app tier from becoming the wall during bursts. See [Production Setup](/install/configure-operate/production-setup).
 </Note>
 
 ## Latency anatomy
 
-Where the milliseconds go — warm (8 app · 80 w) vs cold (2 app · 40 w):
+Where the milliseconds go — warm (16 app · 160 w, peak) vs cold (4 app · 40 w):
 
 | Layer | Warm | Cold |
 |---|---|---|
-| App ingress + Redis enqueue + worker poll + response | ~91 ms | ~39 ms |
-| Provision (flow bundle + piece + engine, all disk-cache hits) | 24 ms | 16 ms |
-| Sandbox boot | 18 ms | 1167 ms |
-| Flow run (4 steps, engine to app callbacks) | 372 ms | 762 ms |
-| **End-to-end avg** | **505 ms** | **1984 ms** |
+| Provision (flow bundle + piece + engine, mostly disk-cache hits) | ~90 ms | ~10 ms |
+| Sandbox boot | ~54 ms | ~577 ms |
+| Flow run (4 steps, engine to app callbacks) | ~228 ms | ~397 ms |
+| **End-to-end avg** | **~225 ms** | **~988 ms** |
 
 <Accordion title="Inside the cold boot tax">
-A fresh engine fork pays Node startup (including the ~80 ms `--no-node-snapshot` penalty that `isolated-vm` forces), engine-bundle parse and compile, and a socket connect. In isolation that's ~570 ms; under sustained cold load it inflates to ~1167 ms because ~40 workers fork at once, each capped at 0.5 CPU, and contend for it — boot is CPU-bound. Warm reuses the process and pays just 18 ms.
+A fresh engine fork pays Node startup (including the ~80 ms `--no-node-snapshot` penalty that `isolated-vm` forces), engine-bundle parse and compile, and a socket connect. In isolation that's ~570 ms; under sustained cold load it inflates further as workers fork at once, each capped at 0.5 CPU, and contend for it — boot is CPU-bound. Warm reuses the process and pays just ~54 ms. The first-ever request (cold process **and** cold disk cache) lands around 1.5 s.
 </Accordion>
 
 ## Test environment
 
-- **Cluster**: GKE `e2-standard-4` × 14 nodes, `europe-west1-b`
+- **Cluster**: GKE `n2-standard-16` × 10 nodes, `europe-west1-b`
 - **Worker**: 0.5 vCPU / 1 GB, concurrency 1, `SANDBOX_CODE_ONLY` (Node fork + `isolated-vm`)
 - **App**: 1 vCPU / 1 GB
-- **Object store**: same-region S3-compatible bucket over the S3-interop endpoint, path-style SigV4 presigned URLs
-- **Postgres + Redis**: in-cluster
-- **Load**: `hey`, concurrency matched to worker count (40 or 80) so requests don't queue behind the concurrency-1 workers — latency reflects real service time, not backlog
+- **Object store**: same-region GCS bucket (`europe-west1`) over the S3-interop endpoint, path-style SigV4 presigned URLs (`AP_S3_USE_SIGNED_URLS=true`)
+- **Piece bundles**: official tarballs served from the Activepieces CDN (`AP_USE_CDN_FOR_BUNDLES=true`)
+- **Postgres + Redis**: in-cluster singletons
+- **Load**: `hey`, concurrency matched to worker count (40/80/120/160) so requests don't queue behind the concurrency-1 workers — latency reflects real service time, not backlog
 
 ## How to reproduce
 

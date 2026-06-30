@@ -3,6 +3,7 @@ import { HttpError } from '@activepieces/pieces-common';
 import { areSheetIdsValid, googleSheetsCommon, mapRowsToHeaderNames } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
+import { findRowByNumActionOutputSchema } from '../output-schemas';
 
 export const findRowByNumAction = createAction({
 	auth: googleSheetsAuth,
@@ -35,6 +36,7 @@ export const findRowByNumAction = createAction({
 			defaultValue: true,
 		}),
 	},
+	outputSchema: findRowByNumActionOutputSchema,
 	async run(context) {
 		const { spreadsheetId, sheetId, rowNumber, headerRow, useHeaderNames } = context.propsValue;
 

@@ -2,6 +2,7 @@ import { createAction } from "@activepieces/pieces-framework";
 import { getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { clickupCommon, listAccessibleCustomFields } from "../../common"
 import { clickupAuth } from '../../auth';
+import { accessibleCustomFieldsOutputSchema } from '../../output-schemas';
 
 export const getClickupAccessibleCustomFields = createAction({
   auth: clickupAuth,
@@ -15,6 +16,7 @@ export const getClickupAccessibleCustomFields = createAction({
     space_id: clickupCommon.space_id(true),
     list_id: clickupCommon.list_id(true)
   },
+  outputSchema: accessibleCustomFieldsOutputSchema,
   async run(configValue) {
     const { list_id } = configValue.propsValue;
     const auth = getAccessTokenOrThrow(configValue.auth)

@@ -7,6 +7,7 @@ import { domainHelper } from '../../helper/domain-helper'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { projectService } from '../../project/project-service'
 import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
@@ -110,7 +111,8 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
                             }
                             if (!isNil(runMetadata.finishTime)) {
-                                await flowRunSideEffects(log).onFinish(savedFlowRun)
+                                const platformId = await projectService(log).getPlatformId(savedFlowRun.projectId)
+                                await flowRunSideEffects(log).onFinish({ flowRun: savedFlowRun, platformId })
                             }
 
                             if (savedFlowRun.status === FlowRunStatus.PAUSED) {
