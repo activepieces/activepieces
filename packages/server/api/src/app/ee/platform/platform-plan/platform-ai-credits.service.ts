@@ -170,11 +170,19 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             hash: apiKeyHash,
             limit: (key.limit ?? 0) + amountUsd,
         })
+
+        // Invalidate the cached usage so the credit check that runs immediately after this grant
+        // (in the same request) sees the topped-up balance instead of a stale within-TTL zero.
+        await distributedStore.delete(openRouterUsageCacheKey(apiKeyHash))
     },
 })
 
+function openRouterUsageCacheKey(apiKeyHash: string): string {
+    return `openrouter_usage_${apiKeyHash}`
+}
+
 async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogger): Promise<Pick<OpenRouterApikey, 'usage' | 'limit' | 'limit_remaining' | 'usage_monthly'>> {
-    const cacheKey = `openrouter_usage_${apiKeyHash}`
+    const cacheKey = openRouterUsageCacheKey(apiKeyHash)
 
     const cachedUsage = await distributedStore.get<OpenRouterApikey>(cacheKey)
     if (!isNil(cachedUsage)) {
