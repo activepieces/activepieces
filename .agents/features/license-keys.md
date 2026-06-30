@@ -16,6 +16,9 @@ License Keys are the mechanism by which self-hosted Enterprise customers activat
 Primarily Enterprise self-hosted (`AP_EDITION=ee`). Also used on Cloud for internal plan management. The endpoints are public and available in all editions, but license keys only have effect when applied to a platform.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **LicenseKeyEntity**: The object returned by the remote secrets service describing what features a key enables.
 - **Trial key**: A key with `isTrial: true`; requested via `requestTrial()`.
 - **TRIAL_TRACKER**: A BullMQ system job (cron `*/59 23 * * *`, effectively daily) that re-validates all platforms' license keys.

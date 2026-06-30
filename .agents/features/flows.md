@@ -40,6 +40,9 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - **Enterprise (EE) / Cloud**: Same core. Some operational features (owner transfer, piece filtering, template sharing) integrate with EE plan flags. Active-flow quota enforcement on publish/enable.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Flow**: The persistent automation record — holds status, folder, published version pointer, and metadata.
 - **FlowVersion**: An immutable (once locked) snapshot of the trigger + action graph. DRAFT state is editable; LOCKED state is the published baseline.
 - **FlowOperationRequest**: The discriminated union of all 26 modification types dispatched to `POST /v1/flows/:id`.

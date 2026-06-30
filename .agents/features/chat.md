@@ -77,6 +77,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - Cloud: shown to all normal (non-embed) cloud users during a capped beta **without** requiring `chatEnabled` — see **Cloud rollout cap**. Embedded cloud sessions never show chat; a platform that has `chatEnabled` (e.g. cloud enterprise) always keeps it
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ChatConversation** — a persisted conversation between a user and the AI assistant, scoped to a platform and user; optionally scoped to a project for tool access
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that blocks on user input until the user responds in the UI; times out after 5 minutes. Used to wait on display-tool cards (connection picker, multi-question card, project picker), the ad-hoc action-preview gate, and the test-flow write gate. Flow build and publish and most MCP tools are NOT gated; `ap_test_flow` is gated only when the flow contains a write/destructive step (see **Write-check gate**)

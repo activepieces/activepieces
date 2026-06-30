@@ -22,6 +22,9 @@ The authentication feature handles user identity creation, sign-in, and JWT sess
 All editions (Community, Enterprise, Cloud). Email auth checks and domain-allow-listing guards are skipped on Community edition. OTP email verification is sent on Cloud; on Community and Enterprise the identity is automatically marked verified.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **UserIdentity** — the email + hashed password + provider record; one per email address, shared across platforms
 - **User** — the platform-specific record linking an identity to a platform and project role
 - **Platform** — the tenant namespace; auto-created on first sign-up
