@@ -39,7 +39,7 @@ stdout is a single-line JSON report (pipe-friendly); all progress chatter goes t
 
 ## Step 2 — Correlate with ClickHouse logs (ClickStack MCP)
 
-Use the **`Logs`** source (`id: 6a2a91b1d37162f45ad78233`; key columns `Body`, `ServiceName`, `SeverityText`, `TraceId`, attrs in `LogAttributes`). Search around the run's failure time for the run id, flow id, project id, or platform id from Step 1:
+Resolve the **`Logs`** source id at run time with `clickstack_list_sources` (pick the source whose `kind` is `log`) — never assume a fixed id, it's environment-specific and differs across deployments / re-provisioning. That source's key columns are `Body`, `ServiceName`, `SeverityText`, `TraceId`, with attrs in `LogAttributes`. Search around the run's failure time for the run id, flow id, project id, or platform id from Step 1:
 
 - `clickstack_search` — keyword/Lucene-style search of `Body` + attributes over a time range. Start with the flow run `id`, then widen to `projectId` / `platformId` / the piece name. Filter `SeverityText` to `error`/`warn` to cut noise.
 - `clickstack_sql` — raw ClickHouse SQL (needs the connection id from `clickstack_list_sources`) when you need exact `LogAttributes` filtering or aggregation.
