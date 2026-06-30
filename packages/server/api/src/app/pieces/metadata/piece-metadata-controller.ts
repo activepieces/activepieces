@@ -151,10 +151,6 @@ function getPlatformId(principal: Principal): string | undefined {
     return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
 }
 
-// Filter AI/human-only actions out of the human-facing detail responses at the HTTP boundary so
-// internal callers (flow validation, MCP) that use getOrThrow directly still see the full set.
-// List summaries are filtered in the metadata service's list() instead, where the full action
-// set is available to recompute the count consistently (see toPieceMetadataModelSummary).
 function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter): PieceMetadataModel {
     if (audience === PieceAudienceFilter.ALL) {
         return piece

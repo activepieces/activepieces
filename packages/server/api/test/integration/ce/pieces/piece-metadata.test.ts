@@ -571,8 +571,6 @@ describe('Piece Metadata CE API', () => {
     })
 
     describe('audience filtering (canvas filter)', () => {
-        // Covers all three audience values; `both` and untagged actions must stay visible in
-        // both the human and ai perspectives — only the opposite single audience is hidden.
         const buildActions = (): Record<string, ActionBase> => ({
             human_only_action: { name: 'human_only_action', displayName: 'Human Only', description: 'human only action', props: {}, requireAuth: false, audience: 'human' },
             both_action: { name: 'both_action', displayName: 'Both Action', description: 'both audiences action', props: {}, requireAuth: false, audience: 'both' },

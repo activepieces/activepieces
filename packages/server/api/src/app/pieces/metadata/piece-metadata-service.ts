@@ -285,8 +285,6 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
     return pieceMetadataEntityList.map((pieceMetadataEntity) => {
         const originalMetadata = originalMetadataList.find((p) => p.name === pieceMetadataEntity.name)
         assertNotNullOrUndefined(originalMetadata, `Original metadata not found for ${pieceMetadataEntity.name}`)
-        // Filter actions by audience here (where the full action set is available) so the count
-        // and suggestedActions stay consistent — including the bare list with no suggestionType.
         const visibleActions = Object.values(originalMetadata.actions).filter((action) => isAudienceVisible(action.audience, audience))
         const visibleSuggestedActions = Object.values(pieceMetadataEntity.actions).filter((action) => isAudienceVisible(action.audience, audience))
         return {

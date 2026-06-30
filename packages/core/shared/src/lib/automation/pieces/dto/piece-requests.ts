@@ -28,19 +28,12 @@ export enum PieceOrderBy {
     DESC = 'DESC',
 }
 
-// Audience perspective for filtering actions out of the human piece metadata responses.
-// `both`-tagged and untagged actions are always included; only the opposite single audience
-// is hidden. Defaults to HUMAN (hide `audience: 'ai'`) on the human-facing endpoints.
 export enum PieceAudienceFilter {
     HUMAN = 'human',
     AI = 'ai',
     ALL = 'all',
 }
 
-// Whether an action with the given `audience` tag is visible for the requested perspective.
-// `both` and untagged actions (untagged defaults to `both`) are visible everywhere; only the
-// opposite single audience is hidden. Takes the tag as a string to avoid a dependency on the
-// pieces-framework `Audience` type.
 export function isAudienceVisible(actionAudience: string | undefined, filter: PieceAudienceFilter): boolean {
     if (filter === PieceAudienceFilter.ALL) {
         return true
