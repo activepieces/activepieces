@@ -10,28 +10,28 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
     async execute(ctx: JobContext, data: ExecuteTriggerHookJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_HOOKS_TIMEOUT_SECONDS
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        const p = await execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
 
-        if (p.kind === 'flow-not-found') {
+        if (resolved.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
-        if (p.kind === 'disabled') {
-            ctx.log.info({ flow: { id: data.flowId } }, 'Failed to provision pieces for trigger hook, skipping')
+        if (resolved.kind === 'disabled') {
+            ctx.log.info({ flow: { id: data.flowId } }, 'Failed to resolve pieces for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
-        // p.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to provision
-        if (isNil(p.flowVersion)) {
-            await execution.dispose({ invalidate: true })
+        // resolved.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to resolve
+        if (isNil(resolved.flowVersion)) {
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
-        const flowVersion: FlowVersion = p.flowVersion
+        const flowVersion: FlowVersion = resolved.flowVersion
 
         const { data: result, error } = await tryCatch(async () => {
-            return execution.run({
+            return ctx.runtime.execute({
+                workerIndex: ctx.workerIndex,
+                log: ctx.log,
                 operationType: EngineOperationType.EXECUTE_TRIGGER_HOOK,
                 operation: {
                     hookType: data.hookType,
@@ -47,12 +47,11 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
                     timeoutInSeconds,
                 },
                 timeoutInSeconds,
+                provision: resolved.provision,
             })
         })
-        await execution.dispose({ invalidate: false })
 
         if (error) {
-            await execution.dispose({ invalidate: true })
             if (isSandboxTimeout(error)) {
                 return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.TIMEOUT, response: undefined }
             }

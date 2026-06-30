@@ -1,13 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  SecretsManagerClient,
   GetSecretValueCommand,
 } from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
 import { secretIdDropdown } from '../common/props';
 
 export const getSecretValue = createAction({
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   name: 'getSecretValue',
   displayName: 'Get Secret Value',
   description: 'Retrieves a secret value.',
@@ -30,14 +30,8 @@ export const getSecretValue = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
-    });
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 
     try {
       const command = new GetSecretValueCommand({

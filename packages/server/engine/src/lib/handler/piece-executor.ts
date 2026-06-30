@@ -76,9 +76,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         }
         const outputContext = flowRunProgressReporter.createOutputContext({
             engineConstants: constants,
-            flowExecutorContext: executionState,
-            stepName: action.name,
-            stepOutput,
         })
 
         const isPaused = executionState.isPaused({ stepName: action.name })

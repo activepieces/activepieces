@@ -11,37 +11,34 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
     async execute(ctx: JobContext, data: ExecuteFlowJobData): Promise<FireAndForgetJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().FLOW_TIMEOUT_SECONDS
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        const { data: p, error: provisionError } = await tryCatch(() =>
-            execution.provision({ platformId: data.platformId, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
+        const { data: resolved, error: provisionError } = await tryCatch(() =>
+            ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
         )
         if (provisionError) {
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, provisionError))
             throw provisionError
         }
 
-        if (p.kind === 'flow-not-found') {
+        if (resolved.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found, skipping')
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        if (p.kind === 'disabled') {
+        if (resolved.kind === 'disabled') {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        // p.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to provision
-        if (isNil(p.flowVersion)) {
-            await execution.dispose({ invalidate: true })
-            const error = new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'flowVersion missing after provision' } })
+        // resolved.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to resolve
+        if (isNil(resolved.flowVersion)) {
+            const error = new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'flowVersion missing after resolve' } })
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, error))
             throw error
         }
-        const flowVersion: FlowVersion = p.flowVersion
+        const flowVersion: FlowVersion = resolved.flowVersion
 
         if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
-            await execution.dispose({ invalidate: true })
             const error = new ActivepiecesError({
                 code: ErrorCode.RESUME_LOGS_FILE_MISSING,
                 params: { runId: data.runId },
@@ -52,10 +49,13 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 
         try {
             const operation = buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
-            const result = await execution.run({
+            const result = await ctx.runtime.execute({
+                workerIndex: ctx.workerIndex,
+                log: ctx.log,
                 operationType: EngineOperationType.EXECUTE_FLOW,
                 operation,
                 timeoutInSeconds,
+                provision: resolved.provision,
             })
 
             if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
@@ -75,7 +75,6 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
-            await execution.dispose({ invalidate: true })
             if (e instanceof ActivepiecesError) {
                 if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.TIMEOUT)
@@ -92,9 +91,6 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             }
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR, toInternalError(RunInternalErrorSource.WORKER, e))
             throw e
-        }
-        finally {
-            await execution.dispose({ invalidate: false })
         }
     },
 }
@@ -159,13 +155,15 @@ async function reportFlowStatus(
     status: FlowRunStatus,
     internalError?: RunInternalError,
 ): Promise<void> {
+    // A status report has no log file of its own; carry logsFileId only for an internalError the server may
+    // persist into one (see uploadRunLog). Sending it on a plain status report would dangle flow_run.logsFileId.
     await ctx.apiClient.uploadRunLog({
         runId: data.runId,
         status,
         projectId: data.projectId,
         streamStepProgress: data.streamStepProgress,
         finishTime: new Date().toISOString(),
-        logsFileId: data.logsFileId,
+        ...(isNil(internalError) ? {} : { logsFileId: data.logsFileId }),
         internalError,
     })
 

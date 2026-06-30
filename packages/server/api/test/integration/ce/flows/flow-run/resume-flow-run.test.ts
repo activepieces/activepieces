@@ -358,7 +358,7 @@ describe('Resume flow run', () => {
 
         await db.update('flow_run', flowRun.id, { status: FlowRunStatus.SUCCEEDED })
         const updatedRun = await db.findOneByOrFail<{ id: string, status: string, projectId: string }>('flow_run', { id: flowRun.id })
-        await flowRunSideEffects(app.log).onFinish(updatedRun as any)
+        await flowRunSideEffects(app.log).onFinish({ flowRun: updatedRun as any, platformId: ctx.platform.id })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
         expect(waitpointAfter).toBeNull()

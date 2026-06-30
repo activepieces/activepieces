@@ -95,6 +95,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - `onStart()` → emit FLOW_RUN_STARTED application event
 - `onResume()` → emit FLOW_RUN_RESUMED
 - `onFinish()` → emit FLOW_RUN_FINISHED (terminal states only), notify via WebSocket, and (paid editions only) fire AI usage billing tracking (see AI Usage Billing below)
+- Each emitter takes `{ flowRun, platformId }` and passes `platformId` straight to `applicationEvents.sendWorkerEvent` — the caller already holds it, so the synchronous webhook dispatch path (`handleSync → start → onStart`) stays free of any `getPlatformId` DB lookup. The async runs-metadata worker that fires `onFinish` resolves `platformId` itself, off the hot path.
 - On run start, project telemetry (`telemetry().trackProject(...)`) is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block the run
 
 ### AI Usage Billing
@@ -111,7 +112,7 @@ A separate scheduled EE job (`ee/flow-run-tracking/`, `SystemJobName.FLOW_RUN_TR
 
 ## Frontend Integration
 
-`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs (infinite query, auto-refetching every 15s while runs are still executing) and deduplicates entries by `id` when flattening pages — a safeguard against page overlap during live refetch. The run-details panel renders step-by-step input/output from the populated run's execution logs. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
+`flowRunsApi.subscribeToTestFlowOrManualRun()` uses Socket.IO to start a test run and stream progress updates via `WebsocketClientEvent.UPDATE_RUN_PROGRESS`. The builder's run-list sidebar polls for recent runs (infinite query, auto-refetching every 15s while runs are still executing) and deduplicates entries by `id` when flattening pages — a safeguard against page overlap during live refetch. The run-details panel renders step-by-step input/output from the populated run's execution logs; step status, selection, and loop-iteration navigation all live on the canvas (`ApStepNodeStatusInRun`, step click, and `LoopIterationInput`), so there is no separate run-overview sidebar. `LoopIterationInput` (`run-details/loop-iteration-input.tsx`) renders on each loop node and, alongside its ↑/↓ iteration stepper, shows a clickable grid of per-iteration status dots (succeeded/failed/running/paused) that call `setLoopIndex` to jump straight to a failed iteration — runs also auto-pin loops to the first failed iteration via `pinLoopsToIterationsWithFailedStep`. The inspector's Input tab uses the same `SmartOutputViewer` (Friendly View / Raw JSON) as Output, and a `ClosePanelButton` sits beside the layout toggle in both run and edit panels. `flowRunMutations.useRetryRun` handles the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` error code with a user-facing toast showing the retention window.
 
 ### Runs Table Filters
 

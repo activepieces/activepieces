@@ -18,10 +18,10 @@ import {
   ChatStoreProvider,
   useChatStoreContext,
 } from '@/features/chat/lib/chat-store-context';
+import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { aiProviderQueries } from '@/features/platform-admin';
-import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -76,6 +76,7 @@ function ChatBoxContent({
     messages,
     modelName,
     isStreaming,
+    isResumedStream,
     isAwaitingResponse,
     wasCancelled,
     isLoadingHistory,
@@ -91,6 +92,9 @@ function ChatBoxContent({
   });
 
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
+  const offerRecurringAutomation = useChatStoreContext(
+    (s) => s.offerRecurringAutomation,
+  );
 
   useEffect(() => {
     if (initialConversationId) {
@@ -139,6 +143,11 @@ function ChatBoxContent({
   const lastMessage = messages[messages.length - 1];
   const lastAssistantMessage = useMemo(
     () => messages.findLast((m) => m.role === 'assistant'),
+    [messages],
+  );
+
+  const claimedBuildIdsByMessage = useMemo(
+    () => computeClaimedBuildIds(messages),
     [messages],
   );
 
@@ -193,7 +202,7 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto px-6 pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-4 gap-0 min-h-full">
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -217,7 +226,10 @@ function ChatBoxContent({
                       key={msg.id}
                       message={msg}
                       isStreaming={isLastStreamingAssistant}
+                      isResumed={isLastStreamingAssistant && isResumedStream}
                       isLastMessage={isLastAssistant}
+                      onSendPrompt={(text) => void handleSend(text)}
+                      claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
                     />
                   );
                 })}
@@ -225,10 +237,11 @@ function ChatBoxContent({
                 {!isAwaitingResponse &&
                   !wasCancelled &&
                   !hasBlockingCard &&
-                  quickReplies.length > 0 && (
+                  (quickReplies.length > 0 || offerRecurringAutomation) && (
                     <div className="mt-auto pt-2">
                       <QuickReplies
                         replies={quickReplies}
+                        offerRecurringAutomation={offerRecurringAutomation}
                         onSend={handleSend}
                       />
                     </div>
@@ -270,40 +283,63 @@ function ChatBoxContent({
         )}
       </AnimatePresence>
 
-      <div className="px-6 pb-4">
+      <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-3xl mx-auto relative">
-          <div
-            className={cn(
-              !hasBlockingCard &&
-                'overflow-hidden rounded-2xl border border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40 transition-colors',
-            )}
-          >
-            {showBanner && !hasBlockingCard && (
-              <CreditsBanner
-                creditsExhausted={credits.creditsExhausted}
-                creditsWarning={credits.creditsWarning}
-                daysUntilReset={credits.daysUntilReset}
-                onDismiss={credits.dismissCreditsWarning}
-              />
-            )}
-            <ChatBottomBar
-              isStreaming={isStreaming}
-              onSend={handleSend}
-              onStop={cancelStream}
-              onInputChange={setHasInput}
-              selectedModel={modelName}
-              onModelChange={setModelName}
-              lastAssistantMessage={lastAssistantMessage}
-              lastMessageId={lastMessage?.id}
-              placeholder={
-                isEmpty ? t('Ask, build, or run a task...') : undefined
-              }
-            />
-          </div>
+          <ChatBottomBar
+            isStreaming={isStreaming}
+            onSend={handleSend}
+            onStop={cancelStream}
+            onInputChange={setHasInput}
+            selectedModel={modelName}
+            onModelChange={setModelName}
+            lastAssistantMessage={lastAssistantMessage}
+            lastMessageId={lastMessage?.id}
+            placeholder={
+              isEmpty ? t('Ask, build, or run a task...') : undefined
+            }
+            banner={
+              showBanner ? (
+                <CreditsBanner
+                  creditsExhausted={credits.creditsExhausted}
+                  creditsWarning={credits.creditsWarning}
+                  daysUntilReset={credits.daysUntilReset}
+                  onDismiss={credits.dismissCreditsWarning}
+                />
+              ) : null
+            }
+          />
         </div>
       </div>
     </div>
   );
+}
+
+// A build's plan is replayed across many messages; assign each build to the
+// single (latest) message allowed to render its card so the plan shows once.
+function computeClaimedBuildIds(
+  messages: ChatUIMessage[],
+): Map<string, Set<string>> {
+  const ownerMessageByBuildId = new Map<string, string>();
+  for (const msg of messages) {
+    if (msg.role !== 'assistant') continue;
+    for (const part of msg.parts) {
+      if (!chatPartUtils.isAnyToolPart(part)) continue;
+      if (chatPartUtils.getToolPartName(part) !== 'ap_set_build_plan') continue;
+      const buildId = chatPartUtils.extractBuildIdFromOutput(part);
+      if (buildId) ownerMessageByBuildId.set(buildId, msg.id);
+    }
+  }
+
+  const claimed = new Map<string, Set<string>>();
+  for (const [buildId, messageId] of ownerMessageByBuildId) {
+    const existing = claimed.get(messageId);
+    if (existing) {
+      existing.add(buildId);
+    } else {
+      claimed.set(messageId, new Set([buildId]));
+    }
+  }
+  return claimed;
 }
 
 type AIChatBoxProps = {

@@ -384,7 +384,10 @@ import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
-import { AddConnectionIdsGinIndexToFlowVersion1797000000000 } from './migration/postgres/1797000000000-AddConnectionIdsGinIndexToFlowVersion'
+import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
+import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
+import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
+import { AddConnectionIdsGinIndexToFlowVersion1800000000000 } from './migration/postgres/1800000000000-AddConnectionIdsGinIndexToFlowVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -784,7 +787,10 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddThemeColorsToPlatform1781206955649,
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
-        AddConnectionIdsGinIndexToFlowVersion1797000000000,
+        AddAiToolConfigTable1797000000000,
+        AddChatConversationActiveRunId1798000000000,
+        AddChatRolloutUserTable1799000000000,
+        AddConnectionIdsGinIndexToFlowVersion1800000000000,
     ]
     return migrations
 }

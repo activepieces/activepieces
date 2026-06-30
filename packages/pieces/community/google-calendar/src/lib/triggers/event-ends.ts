@@ -17,6 +17,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { eventOutputSchema } from '../output-schemas';
 
 interface GoogleCalendarEventList {
   items: GoogleCalendarEvent[];
@@ -138,6 +139,7 @@ export const eventEnds = createTrigger({
     }),
     event_id: googleCalendarCommon.eventDropdown(false),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {
     kind: 'calendar#event',

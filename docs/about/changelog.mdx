@@ -4,6 +4,36 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
+<Update label="June 2026" description="Production Setup: Lightweight Workers, Bundled Pieces & Predictable Scaling">
+
+### Production setup: lightweight workers, bundled pieces, and predictable scaling
+
+A ground-up overhaul of how Activepieces runs in production. The new shape is sized from a single number, your peak concurrent flows, and every piece of it is cheaper to run and easier to reason about. See the updated [Production Setup](/install/configure-operate/production-setup).
+
+**Workers**
+
+- **New lightweight worker image**: a dedicated, slimmer Docker image for the execution tier.
+- **One flow per worker**: run workers at `AP_WORKER_CONCURRENCY=1` so each worker handles a single flow at a time. Recommended size is **0.5 vCPU / 1 GB** per worker; about 300 MB is warm-process overhead, leaving ~700 MB for the flow.
+- **No noisy neighbours**: every flow gets its own guaranteed CPU and memory slice, so one flow can't starve or crash another. See [Reserved Resources](/install/guarantees/reserved-resources).
+- **Less to provision**: the pre-warm feature and worker persistent disks are no longer required; each worker fills its cache lazily and reaches steady-state on its own.
+
+**Pieces & flows**
+
+- **Pieces are now bundled**: each piece (and its dependencies) is compiled into a single small artifact, KB-scale instead of multi-megabyte module trees. Bundling is applied uniformly, so existing pieces shrink too.
+- **Faster cold boot**: less code to compile and only a trivial amount of ephemeral disk needed per run.
+- **Served from S3**: flow bundles and pieces are served and cached from your in-region object store (npm registry stays as a fallback), cutting install time from seconds to under 100 ms. See [S3 Storage](/install/configure-operate/setup-s3).
+
+**Scaling**
+
+- **Arithmetic scaling**: for every 10 workers, add 1 app (a **1:10** app-to-worker ratio).
+- **Measured, near-linear**: throughput scales near-linearly through 80 workers / 8 apps (148.9 req/s warm) on a real GKE cluster. Full methodology in the [Benchmark](/install/architecture/benchmark).
+
+**Worker Groups**
+
+Reserve dedicated worker capacity for specific projects. A worker group is a **floor**, capacity a project's runs can always claim and no other project can take, complementing the soft-cap **ceiling** that limits how much a project may use. Shield your critical projects from noisy neighbours. See [Worker Groups](/install/configure-operate/worker-groups).
+
+</Update>
+
 <Update label="April 2026" description="Waitpoints — Durable Pause & Resume for Flow Runs">
 
 ### Waitpoints — durable pause and resume for flow runs
