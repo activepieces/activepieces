@@ -20,11 +20,14 @@ CONCURRENCY="${PERF_CONCURRENCY:-8}"
 WARMUP_REQUESTS="${PERF_WARMUP_REQUESTS:-100}"
 
 # With a 2-CPU / 2G cap, throughput is the primary signal — a #13497-style regression
-# drops it from ~90+ to ~15 req/s (floor 40 leaves a wide margin either way). The CPU
-# and memory ceilings are generous sanity bounds: CPU catches a pegged worker (~195%+),
-# memory catches a leak climbing toward the 2G cap and OOM (healthy steady-state is
-# ~1.5G under this load). All three are env-overridable per runner.
-MIN_RPS="${PERF_MIN_RPS:-40}"
+# (pegged CPU + ~7x throughput collapse) drops it to single digits. Healthy steady-state
+# varies by runner arch on the same 2-CPU cap: ~90+ req/s on amd64 but only ~32 on the
+# slower arm64 runner, so the floor must sit below 32 (not 40) yet far above a regressed
+# ~5 req/s — 20 separates the two cleanly with wide margin on both ends. The CPU and
+# memory ceilings are generous sanity bounds: CPU catches a pegged worker (~195%+; a
+# real regression spikes CPU while throughput collapses), memory catches a leak climbing
+# toward the 2G cap and OOM. All three are env-overridable per runner.
+MIN_RPS="${PERF_MIN_RPS:-20}"
 MAX_CPU_PERCENT="${PERF_MAX_CPU_PERCENT:-192}"
 MAX_MEM_MB="${PERF_MAX_MEM_MB:-1850}"
 
