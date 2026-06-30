@@ -1,6 +1,6 @@
 import { AIProviderName, ProjectId, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, FlowRunStatus, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, FlowRunStatus, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformService } from '../platform/platform.service'
@@ -25,12 +25,16 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!telemetryEnabled) {
             return
         }
+        // PII (email/name) is gated to Cloud — see pickTelemetryPii.
         getPostHog().identify({
             distinctId: user?.id ?? identity.id,
             properties: {
-                email: identity.email,
-                firstName: identity.firstName,
-                lastName: identity.lastName,
+                ...pickTelemetryPii({
+                    edition: system.getEdition(),
+                    email: identity.email,
+                    firstName: identity.firstName,
+                    lastName: identity.lastName,
+                }),
                 projectId,
                 firstSeenAt: user?.created ?? identity.created,
                 ...(await getMetadata()),

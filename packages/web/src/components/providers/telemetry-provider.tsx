@@ -1,11 +1,18 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApFlagId, TelemetryEvent } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  pickTelemetryPii,
+  TelemetryEvent,
+} from '@activepieces/shared';
 import posthog from 'posthog-js';
 import React, { useEffect, useRef } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { errorReporting } from '@/lib/error-reporting';
 
 interface TelemetryProviderProps {
@@ -25,6 +32,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: flagEnvironment } = flagsHooks.useFlag<string>(
     ApFlagId.ENVIRONMENT,
   );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { embedState } = useEmbedding();
 
   const posthogInitialized = useRef(false);
 
@@ -32,12 +41,13 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (posthogInitialized.current) {
       return;
     }
-    // Skip init entirely (not just capture) when telemetry is off, or for embedded
-    // sessions — the /embed route or any iframe, since an embed can navigate to
-    // non-/embed routes. Those are customers' end-users, not our funnel.
+    // Skip init entirely (not just capture) when telemetry is off, or for the
+    // embed route — those are customers' end-users, not our funnel. Gate on the
+    // /embed route only (matching embedState.isEmbedded, which is set on that
+    // route), NOT on `window.self !== window.top`, so legitimately iframed
+    // product sessions still get tagged.
     const isEmbedded =
-      window.location.pathname.startsWith('/embed') ||
-      window.self !== window.top;
+      embedState.isEmbedded || window.location.pathname.startsWith('/embed');
     if (!telemetryEnabled || isEmbedded) {
       return;
     }
@@ -72,9 +82,15 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       enable_recording_console_log: false,
     });
 
-    // Tag events so the shared project separates product from marketing traffic.
-    posthog.register({ source_site: 'product' });
-  }, [telemetryEnabled]);
+    // Register synchronously after init so even the first events are tagged:
+    // source_site separates product from marketing traffic, and
+    // activepiecesEdition (matching the backend telemetry property) makes
+    // cloud vs self-hosted cleanly filterable in the shared project.
+    posthog.register({
+      source_site: 'product',
+      activepiecesEdition: edition ?? ApEdition.COMMUNITY,
+    });
+  }, [telemetryEnabled, edition, embedState.isEmbedded]);
 
   useEffect(() => {
     errorReporting.init();
@@ -101,13 +117,23 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     const currentVersion = flagCurrentVersion || '0.0.0';
     const environment = flagEnvironment || '0.0.0';
 
-    posthog.identify(currentUser.id, {
-      email: currentUser.email,
-      firstName: currentUser.firstName,
-      lastName: currentUser.lastName,
-      activepiecesVersion: currentVersion,
-      activepiecesEnvironment: environment,
-    });
+    // PII (email/name) is gated to Cloud — see pickTelemetryPii.
+    posthog.identify(
+      currentUser.id,
+      {
+        ...pickTelemetryPii({
+          edition: edition ?? ApEdition.COMMUNITY,
+          email: currentUser.email,
+          firstName: currentUser.firstName,
+          lastName: currentUser.lastName,
+        }),
+        activepiecesVersion: currentVersion,
+        activepiecesEnvironment: environment,
+      },
+      // First-touch acquisition source (UTM only, no PII) persisted on the
+      // person so it attaches to backend signed.up via person-on-events.
+      acquisitionUtils.getAcquisitionParams(),
+    );
 
     if (currentUser.platformId) {
       posthog.group('platform', currentUser.platformId);
