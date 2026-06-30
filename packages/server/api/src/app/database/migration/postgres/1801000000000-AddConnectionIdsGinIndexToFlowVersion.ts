@@ -4,8 +4,8 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-export class AddConnectionIdsGinIndexToFlowVersion1800000000000 implements Migration {
-    name = 'AddConnectionIdsGinIndexToFlowVersion1800000000000'
+export class AddConnectionIdsGinIndexToFlowVersion1801000000000 implements Migration {
+    name = 'AddConnectionIdsGinIndexToFlowVersion1801000000000'
     breaking = false
     release = '0.85.4'
     transaction = false
