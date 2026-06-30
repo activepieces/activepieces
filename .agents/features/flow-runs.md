@@ -45,7 +45,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Entity
 
-**FlowRun**: id, projectId, flowId, flowVersionId, environment (PRODUCTION/TESTING), logsFileId (nullable FK to File), parentRunId (nullable, self-reference for subflows), failParentOnFailure (default true), status, tags[] (nullable), startTime, triggeredBy (nullable FK to User), finishTime, pauseMetadata (JSONB), failedStep (JSONB: `{ name, displayName, message? }`), archivedAt (soft delete), stepNameToTest (nullable), stepsCount.
+**FlowRun**: id, projectId, flowId, flowVersionId, environment (PRODUCTION/TESTING), logsFileId (nullable FK to File), parentRunId (nullable, self-reference for subflows), failParentOnFailure (default true), status, tags[] (nullable), startTime, triggeredBy (nullable FK to User), finishTime, timeline (JSONB, nullable — see RunTimeline), pauseMetadata (JSONB), failedStep (JSONB: `{ name, displayName, message? }`), archivedAt (soft delete), stepNameToTest (nullable), stepsCount.
 
 ## FlowRunStatus (12 States)
 

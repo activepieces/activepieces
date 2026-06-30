@@ -15,7 +15,7 @@ export class AddTimelineToFlowRun1800000000000 implements Migration {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "flow_run" DROP COLUMN "timeline"
+            ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "timeline"
         `)
     }
 
