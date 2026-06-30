@@ -23,6 +23,18 @@ export class AddChatRolloutFreeCreditGrant1802000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        // Reverse the enabledForChat backfill: only reset ACTIVEPIECES providers that were
+        // enabled by the up migration (platforms where no other provider had chat enabled).
+        await queryRunner.query(`
+            UPDATE "ai_provider" SET "enabledForChat" = false
+            WHERE "provider" = 'ACTIVEPIECES' AND "enabledForChat" = true
+            AND NOT EXISTS (
+                SELECT 1 FROM "ai_provider" AS ap
+                WHERE ap."platformId" = "ai_provider"."platformId"
+                AND ap."provider" != 'ACTIVEPIECES'
+                AND ap."enabledForChat" = true
+            )
+        `)
         await queryRunner.query(`
             ALTER TABLE "chat_rollout_user" DROP COLUMN "grantedFreeCreditAt"
         `)

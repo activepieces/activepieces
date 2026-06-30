@@ -91,10 +91,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped) and, on
         // their first message, gift one-time free credits so free testers can use managed AI.
         // Awaited before the credit check below so the managed key is created (and topped up) once.
-        const { firstChat } = await chatRolloutService.recordChatted({ userId, platformId })
-        if (firstChat) {
-            await maybeGrantFreeChatCredits({ platformId, userId, log })
-        }
+        await chatRolloutService.recordChatted({ userId, platformId })
+        await maybeGrantFreeChatCredits({ platformId, userId, log })
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
