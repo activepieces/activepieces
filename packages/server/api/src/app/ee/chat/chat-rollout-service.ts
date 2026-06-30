@@ -27,6 +27,10 @@ async function countChatted(): Promise<number> {
     return rolloutRepo().count({ where: { chattedAt: Not(IsNull()) } })
 }
 
+async function countLanded(): Promise<number> {
+    return rolloutRepo().count({ where: { landedAt: Not(IsNull()) } })
+}
+
 export const chatRolloutService = {
     async isRolloutOpen(): Promise<boolean> {
         if (!isCloud()) {
@@ -50,6 +54,36 @@ export const chatRolloutService = {
         // Pure lookup on the unique userId index (at most one row), then read chattedAt.
         const row = await rolloutRepo().findOne({ where: { userId }, select: ['chattedAt'] })
         return !isNil(row) && !isNil(row.chattedAt)
+    },
+
+    // Records that a user opened the chat page. Sets landedAt without touching chattedAt, so a user
+    // who lands but never sends a message still counts toward "landed" (landed >= chatted).
+    async recordLanding({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
+        if (!isCloud()) {
+            return
+        }
+        await rolloutRepo().query(
+            `INSERT INTO "chat_rollout_user" ("id", "userId", "platformId", "landedAt")
+             VALUES ($1, $2, $3, now())
+             ON CONFLICT ("userId") DO UPDATE
+             SET "landedAt" = COALESCE("chat_rollout_user"."landedAt", now()),
+                 "updated" = now()`,
+            [apId(), userId, platformId],
+        )
+    },
+
+    // Authoritative funnel snapshot for the console rollout dashboard. landed/chatted come from the
+    // same table that drives the cap, so the numbers always match the auto-close.
+    async getFunnelSnapshot(): Promise<{ landed: number, chatted: number, cap: number, closed: boolean }> {
+        if (!isCloud()) {
+            return { landed: 0, chatted: 0, cap: getCap(), closed: false }
+        }
+        const cap = getCap()
+        const [landed, chatted] = await Promise.all([countLanded(), countChatted()])
+        // Derive closed from the count we already fetched rather than calling isRolloutOpen(), which
+        // would COUNT chatted a second time. Read-only: the monotonic Redis closed flag is maintained
+        // by recordChatted() when the cap is first reached.
+        return { landed, chatted, cap, closed: chatted >= cap }
     },
 
     async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<{ firstChat: boolean, needsCreditDecision: boolean }> {
