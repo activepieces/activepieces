@@ -33,6 +33,23 @@ A **synchronous webhook** holds the connection open until your flow returns, so 
 Size **statically for peak** so a warm slot is always waiting. Autoscaling's boot lag cannot defend a 30 s sync budget. Cold starts are not Cloud-specific, they are how the engine boots, and you will see them anywhere.
 </Tip>
 
+## Per-run breakdown
+
+Every run records where its wall-clock time went, shown as a four-phase bar. **To view it, open any run and hover the info icon next to the run's duration** ("Took") in the run header.
+
+<img src="/resources/diagrams/run-timeline-breakdown.png" alt="Run latency breakdown popover: a stacked bar split into Queue (20 ms, waiting for a free worker), Setup (19 ms, installing pieces and engine), Warm-up (0 ms, starting the engine), and Run (32 ms, executing your flow)" />
+
+The phases run in order:
+
+| Phase | What it covers | Warm | Cold |
+|---|---|---|---|
+| **Queue** | Waiting after the run is created until a worker picks it up and starts setup — contention (every worker busy) plus dispatch overhead. | ~0 | grows under load |
+| **Setup** | Fetching the flow bundle and installing the pieces, engine, and code steps into the sandbox (provisioning). | ~0 (cached) | ~0.5 s |
+| **Warm-up** | Forking the engine process, Node boot, `isolated-vm` init, and the socket handshake (engine boot). | ~0 (reused) | ~0.9 s |
+| **Run** | Executing the flow's trigger and steps — the same number reported as the run's duration (**Took**). Your own work and third-party calls dominate here. | your flow | your flow |
+
+Queue, Setup, and Warm-up are the orchestration around your flow; **Run** is the flow itself. On a warm worker the first three collapse toward zero — the reused sandbox is already booted, so Warm-up is ~0 — and the bar is almost entirely **Run**, which is why warm calls are dominated by your own work.
+
 ## Your own work usually dominates
 
 A warm call is almost entirely per-step bookkeeping, not your code: a progress callback per step, tens of ms each. A step that calls a third-party API waits on that API, often far longer. Next to a real outbound call, the Activepieces overhead is the smaller number.
