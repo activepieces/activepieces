@@ -821,7 +821,11 @@ type UpdateMetadataParams = {
     metadata: Metadata | null | undefined
 }
 
-/** When the latest version is locked (published snapshot), creates a new draft and imports it. */
+/** When the latest version is locked (published snapshot), creates a new draft and imports it.
+ *  Both the empty-draft insert and every subsequent import operation run inside a single
+ *  transaction so that a failure mid-import (e.g. stack overflow on a deeply-nested flow)
+ *  rolls back the empty draft instead of leaving an orphaned row in the DB.
+ */
 async function createNewDraftIfVersionIsPublished({
     flowId,
     projectId,
@@ -835,17 +839,25 @@ async function createNewDraftIfVersionIsPublished({
     userId: UserId | null
     log: FastifyBaseLogger
 }): Promise<FlowVersion> {
-    let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
+    const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
         flowId,
         versionId: undefined,
     })
-    if (lastVersion.state === FlowVersionState.LOCKED) {
-        const lockedVersion = lastVersion
-        lastVersion = await flowVersionService(log).createEmptyVersion(flowId, {
-            displayName: lockedVersion.displayName,
-            notes: lockedVersion.notes,
-            schemaVersion: lockedVersion.schemaVersion,
-        })
+    if (lastVersion.state !== FlowVersionState.LOCKED) {
+        return lastVersion
+    }
+
+    const lockedVersion = lastVersion
+    return transaction(async (entityManager) => {
+        let draftVersion = await flowVersionService(log).createEmptyVersion(
+            flowId,
+            {
+                displayName: lockedVersion.displayName,
+                notes: lockedVersion.notes,
+                schemaVersion: lockedVersion.schemaVersion,
+            },
+            entityManager,
+        )
         const operations: FlowOperationRequest[] = [{
             type: FlowOperationType.IMPORT_FLOW,
             request: lockedVersion,
@@ -863,14 +875,15 @@ async function createNewDraftIfVersionIsPublished({
             })
         }
         for (const operation of operations) {
-            lastVersion = await flowVersionService(log).applyOperation({
+            draftVersion = await flowVersionService(log).applyOperation({
                 userId,
                 projectId,
                 platformId,
-                flowVersion: lastVersion,
+                flowVersion: draftVersion,
                 userOperation: operation,
+                entityManager,
             })
         }
-    }
-    return lastVersion
+        return draftVersion
+    })
 }

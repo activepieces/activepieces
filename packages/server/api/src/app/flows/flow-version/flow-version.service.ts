@@ -260,6 +260,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             notes: Note[]
             schemaVersion: string | undefined | null
         },
+        entityManager?: EntityManager,
     ): Promise<FlowVersion> {
         const flowVersion: NewFlowVersion = {
             id: apId(),
@@ -280,7 +281,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             state: FlowVersionState.DRAFT,
             notes: request.notes,
         }
-        return flowVersionRepo().save(flowVersion)
+        return flowVersionRepo(entityManager).save(flowVersion)
     },
     removeConnectionsAndSampleDataFromFlowVersion(
         flowVersion: FlowVersion,
