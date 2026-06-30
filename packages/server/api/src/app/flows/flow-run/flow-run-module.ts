@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import { FlowRunStatus, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
@@ -70,7 +71,12 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         },
     })
     systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {
-        const flowRun = await flowRunService(app.log).getOneOrThrow({ id: data.flowRunId, projectId: data.projectId })
+        const flowRun = await flowRunService(app.log).getOne({ id: data.flowRunId, projectId: data.projectId })
+        if (isNil(flowRun)) {
+            app.log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
+                '[RESUME_DELAY_WAITPOINT] Flow run no longer exists (expired/deleted), skipping')
+            return
+        }
         if (flowRun.status !== FlowRunStatus.PAUSED) {
             app.log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId }, status: flowRun.status },
                 '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
