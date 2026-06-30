@@ -21,7 +21,7 @@ interface TelemetryProviderProps {
 
 const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
-  const initializedUserEmail = useRef<string | null>(null);
+  const identifiedKey = useRef<string | null>(null);
 
   const { data: telemetryEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TELEMETRY_ENABLED,
@@ -82,14 +82,21 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       enable_recording_console_log: false,
     });
 
-    // Register synchronously after init so even the first events are tagged:
-    // source_site separates product from marketing traffic, and
-    // activepiecesEdition (matching the backend telemetry property) makes
-    // cloud vs self-hosted cleanly filterable in the shared project.
-    posthog.register({
-      source_site: 'product',
-      activepiecesEdition: edition ?? ApEdition.COMMUNITY,
-    });
+    // Tag at init so even the first event carries it. source_site separates
+    // product from marketing traffic; activepiecesEdition is registered in its
+    // own effect below so it self-corrects if the EDITION flag resolves late.
+    posthog.register({ source_site: 'product' });
+  }, [telemetryEnabled, embedState.isEmbedded]);
+
+  // Keep activepiecesEdition correct even if the EDITION flag resolves after
+  // init — the init guard above would otherwise pin a stale value for the whole
+  // session. The name matches the backend property so cloud vs self-hosted stays
+  // cleanly filterable in the shared project.
+  useEffect(() => {
+    if (!posthogInitialized.current) {
+      return;
+    }
+    posthog.register({ activepiecesEdition: edition ?? ApEdition.COMMUNITY });
   }, [telemetryEnabled, edition, embedState.isEmbedded]);
 
   useEffect(() => {
@@ -98,17 +105,18 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   }, []);
 
   useDeepCompareEffect(() => {
-    if (isNil(currentUser)) {
+    if (isNil(currentUser) || !telemetryEnabled) {
       return;
     }
-
-    if (
-      telemetryEnabled &&
-      currentUser?.email !== initializedUserEmail.current
-    ) {
-      initTelemetry();
+    // Re-identify when the user or the resolved edition changes, so Cloud PII is
+    // attached even if the EDITION flag arrives after the first identify.
+    const identityKey = `${currentUser.id}:${edition ?? ''}`;
+    if (identityKey === identifiedKey.current) {
+      return;
     }
-  }, [telemetryEnabled, currentUser]);
+    identifiedKey.current = identityKey;
+    initTelemetry();
+  }, [telemetryEnabled, currentUser, edition]);
 
   const initTelemetry = () => {
     if (isNil(currentUser)) {
@@ -138,13 +146,11 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (currentUser.platformId) {
       posthog.group('platform', currentUser.platformId);
     }
-
-    initializedUserEmail.current = currentUser.email;
   };
 
   const reset = () => {
     posthog.reset();
-    initializedUserEmail.current = null;
+    identifiedKey.current = null;
   };
 
   const capture = (event: TelemetryEvent) => {

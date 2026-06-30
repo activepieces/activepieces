@@ -96,6 +96,7 @@ When LOCK_AND_PUBLISH or CHANGE_STATUS to ENABLED:
 3. Invalidate flow execution cache
 4. Emit WebSocket event
 5. Track telemetry — `telemetry().trackProject(...)` is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block or fail the publish
+6. Client-side telemetry — `flowHooks.useChangeFlowStatus` captures a frontend `FLOW_PUBLISHED` event (`flowId`) when `change === 'publish'` succeeds, separate from the backend `trackProject` above
 
 When CHANGE_STATUS to DISABLED:
 1. Disable trigger source (unregister webhook/polling)
