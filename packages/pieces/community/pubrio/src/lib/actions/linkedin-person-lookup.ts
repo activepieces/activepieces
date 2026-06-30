@@ -8,7 +8,6 @@ export const linkedinPersonLookup = createAction({
   name: 'linkedin_person_lookup',
   displayName: 'People LinkedIn Lookup',
   description: 'Real-time LinkedIn person lookup by LinkedIn URL',
-  audience: 'human',
   aiMetadata: {
     description:
       'Resolve a single person profile in real time directly from their LinkedIn profile URL. Read-only and repeatable. Use when you only have a LinkedIn URL and want fresh data; prefer Lookup Person when you have a people_search_id, since this path triggers a live LinkedIn fetch.',
@@ -23,7 +22,7 @@ export const linkedinPersonLookup = createAction({
   },
   async run(context) {
     const body: Record<string, unknown> = {
-      people_linkedin_url: context.propsValue.people_linkedin_url,
+      linkedin_url: context.propsValue.people_linkedin_url,
     };
     return await pubrioRequest(
       context.auth.secret_text,

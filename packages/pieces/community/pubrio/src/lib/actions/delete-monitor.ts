@@ -8,6 +8,7 @@ export const deleteMonitor = createAction({
   name: 'delete_monitor',
   displayName: 'Delete Monitor',
   description: 'Delete a monitor by ID',
+  audience: 'human',
   aiMetadata: {
     description:
       'Permanently delete the signal monitor identified by monitor_id. Destructive and irreversible; re-running on the same id after deletion has no further effect. Use only when the monitor should be removed entirely rather than paused (pause it via Update Monitor instead).',
@@ -20,14 +21,10 @@ export const deleteMonitor = createAction({
     }),
   },
   async run(context) {
-    const body: Record<string, unknown> = {
-      monitor_id: context.propsValue.monitor_id,
-    };
     return await pubrioRequest(
       context.auth.secret_text,
-      HttpMethod.POST,
-      '/monitors/delete',
-      body
+      HttpMethod.DELETE,
+      `/monitors/${context.propsValue.monitor_id}`
     );
   },
 });
