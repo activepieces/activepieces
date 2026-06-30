@@ -1,5 +1,5 @@
-import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation } from '@activepieces/shared';
+import { isNil, SeekPage } from '@activepieces/core-utils';
+import { ChatConversation, TelemetryEventName } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { PlusIcon } from '@/components/icons/plus';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 import { AIChatBox } from './ai-chat-box';
@@ -55,6 +57,15 @@ export function ChatWithAIPage() {
     () => localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY) === 'true',
   );
   const isMobile = useIsMobile();
+  const { capture } = useTelemetry();
+  const { platform } = platformHooks.useCurrentPlatform();
+
+  useEffect(() => {
+    if (isNil(platform.plan.licenseKey)) {
+      capture({ name: TelemetryEventName.CHAT_PAGE_VIEWED, payload: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleSidebar = useCallback(() => {
     setSidebarPinned((prev) => {

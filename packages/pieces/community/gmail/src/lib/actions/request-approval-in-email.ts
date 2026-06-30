@@ -10,6 +10,7 @@ import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
+import { requestApprovalInMailActionOutputSchema } from '../output-schemas';
 
 export const requestApprovalInEmail = createAction({
   auth: gmailAuth,
@@ -74,6 +75,7 @@ export const requestApprovalInEmail = createAction({
       required: false,
     }),
   },
+  outputSchema: requestApprovalInMailActionOutputSchema,
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       try {

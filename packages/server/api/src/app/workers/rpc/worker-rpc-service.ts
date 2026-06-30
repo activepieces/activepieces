@@ -43,7 +43,7 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
     })
 }
 
-export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string, connectionId?: string): WorkerToApiContract {
     return {
         async poll(input) {
             log.info({ worker: { id: input.workerId }, workerGroupId }, '[workerRpc#poll] Poll request received')
@@ -64,7 +64,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 return null
             }
             const pollQueueName = getPollQueueName(workerGroupId)
-            const job = await jobBroker(log).poll(pollQueueName)
+            const job = await jobBroker(log).poll(pollQueueName, connectionId)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }

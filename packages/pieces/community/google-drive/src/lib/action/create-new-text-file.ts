@@ -7,6 +7,7 @@ import {
 import FormData from 'form-data';
 import { googleDriveAuth, getAccessToken } from '../auth';
 import { common } from '../common';
+import { createNewGdriveFileActionOutputSchema } from '../output-schemas';
 
 export const googleDriveCreateNewTextFile = createAction({
   auth: googleDriveAuth,
@@ -51,6 +52,7 @@ export const googleDriveCreateNewTextFile = createAction({
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: createNewGdriveFileActionOutputSchema,
   async run(context) {
     const meta = {
       mimeType: context.propsValue.fileType,

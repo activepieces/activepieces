@@ -6,10 +6,12 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
+import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
@@ -83,6 +85,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             platformId,
             userId,
         })
+
+        // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
+        rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })

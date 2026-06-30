@@ -95,6 +95,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - `onStart()` → emit FLOW_RUN_STARTED application event
 - `onResume()` → emit FLOW_RUN_RESUMED
 - `onFinish()` → emit FLOW_RUN_FINISHED (terminal states only), notify via WebSocket, and (paid editions only) fire AI usage billing tracking (see AI Usage Billing below)
+- Each emitter takes `{ flowRun, platformId }` and passes `platformId` straight to `applicationEvents.sendWorkerEvent` — the caller already holds it, so the synchronous webhook dispatch path (`handleSync → start → onStart`) stays free of any `getPlatformId` DB lookup. The async runs-metadata worker that fires `onFinish` resolves `platformId` itself, off the hot path.
 - On run start, project telemetry (`telemetry().trackProject(...)`) is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block the run
 
 ### AI Usage Billing

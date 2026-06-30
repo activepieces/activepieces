@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
+import { eventOutputSchema } from '../output-schemas';
 
 export const getEventById = createAction({
   auth: googleCalendarAuth,
@@ -36,6 +37,7 @@ export const getEventById = createAction({
       required: false,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run(context) {
     const {
       calendar_id: calendarId,

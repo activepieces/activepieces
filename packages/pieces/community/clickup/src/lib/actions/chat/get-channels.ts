@@ -7,6 +7,7 @@ import {
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
 import * as z from 'zod/mini'
+import { getChannelsOutputSchema } from '../../output-schemas';
 
 export const getClickupChannels = createAction({
   auth: clickupAuth,
@@ -31,6 +32,7 @@ export const getClickupChannels = createAction({
     }),
   },
 
+  outputSchema: getChannelsOutputSchema,
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
       limit: z.number().check(z.minimum(0), z.maximum(100, 'You can fetch between 1 and 100 messages')),
