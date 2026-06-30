@@ -14,6 +14,8 @@
 | FlowOperationRequest | The discriminated union of all 26 modification types dispatched to the single flow update endpoint. | — | Flow, FlowVersion |
 | FlowRun | A single execution instance of a published flow, tracking status, logs, timing, and step results. | execution, job, run instance | Flow, FlowRunStatus, LogsFile |
 | FlowRunStatus | The state machine for a run: QUEUED, RUNNING, PAUSED, SUCCEEDED, FAILED, TIMEOUT, CANCELED, and others. | — | FlowRun |
+| RunTimeline | A run's latency breakdown as legs of four phases — Queue, Provision, Boot, Run — persisted on `flow_run` and shown as a stacked bar in the run detail view. | latency breakdown, waterfall | FlowRun, TimelinePhase |
+| TimelinePhase | One labeled segment of a RunTimeline leg: QUEUE (waiting), PROVISION (install bundle/pieces/engine), BOOT (engine fork/boot), or RUN (flow execution). | stage, span | RunTimeline |
 | FlowVersion | An immutable (once locked) snapshot of a flow's trigger + action graph; DRAFT is editable, LOCKED is published. | version, revision | Flow, Draft, Published |
 | Folder | A grouping container for organizing flows and tables within a project. | directory, category | Flow, Table |
 | Published | A LOCKED FlowVersion pointed to by `flow.publishedVersionId`; the version that runs in production. | live, active version | Draft, FlowVersion, Trigger Source |
