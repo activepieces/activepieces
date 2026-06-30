@@ -1,7 +1,6 @@
-import { propsValidation } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { PromptHubClient } from '../common/client';
-import { listProjectsProps, listProjectsSchema } from '../common/props';
+import { listProjectsProps } from '../common/props';
 import { prompthubAuth } from '../..';
 
 export const listProjects = createAction({
@@ -12,7 +11,6 @@ export const listProjects = createAction({
   props: listProjectsProps,
   auth: prompthubAuth,
   async run({ auth, propsValue }) {
-    await propsValidation.validateZod(propsValue, listProjectsSchema);
     const client = new PromptHubClient(auth.secret_text);
     const result = await client.listProjects(propsValue['teamId'], {
       group: propsValue['group'],

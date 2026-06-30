@@ -1,7 +1,6 @@
-import { propsValidation } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { PromptHubClient } from '../common/client';
-import { runPromptProps, runPromptSchema, sanitizeVariables } from '../common/props';
+import { runPromptProps, sanitizeVariables } from '../common/props';
 import { prompthubAuth } from '../..';
 
 export const runPrompt = createAction({
@@ -12,7 +11,6 @@ export const runPrompt = createAction({
   props: runPromptProps,
   auth: prompthubAuth,
   async run({ auth, propsValue }) {
-    await propsValidation.validateZod(propsValue, runPromptSchema);
     const client = new PromptHubClient(auth.secret_text);
     const body: Record<string, any> = {};
     if (propsValue['branch']) body['branch'] = propsValue['branch'];

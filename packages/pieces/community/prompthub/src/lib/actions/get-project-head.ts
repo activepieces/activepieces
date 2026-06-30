@@ -1,7 +1,6 @@
-import { propsValidation } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { PromptHubClient } from '../common/client';
-import { getProjectHeadProps, getProjectHeadSchema, sanitizeVariables } from '../common/props';
+import { getProjectHeadProps, sanitizeVariables } from '../common/props';
 import { prompthubAuth } from '../..';
 
 export const getProjectHead = createAction({
@@ -12,7 +11,6 @@ export const getProjectHead = createAction({
   props: getProjectHeadProps,
   auth: prompthubAuth,
   async run({ auth, propsValue }) {
-    await propsValidation.validateZod(propsValue, getProjectHeadSchema);
     const client = new PromptHubClient(auth.secret_text);
     const q: Record<string, any> = {};
     
