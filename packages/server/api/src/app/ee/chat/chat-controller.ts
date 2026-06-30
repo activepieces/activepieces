@@ -6,8 +6,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
@@ -214,7 +212,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
 }
 
-const DEFAULT_FREE_CHAT_CREDIT_USD = 10
+const FREE_CHAT_CREDIT_USD = 10
 
 async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
     // Claim first so the decision is settled exactly once across concurrent messages and paid users
@@ -230,8 +228,7 @@ async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platform
     if (!isNil(plan.licenseKey)) {
         return
     }
-    const amountUsd = system.getNumber(AppSystemProp.CLOUD_CHAT_FREE_CREDIT_USD) ?? DEFAULT_FREE_CHAT_CREDIT_USD
-    const { error } = await tryCatch(() => platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd }))
+    const { error } = await tryCatch(() => platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD }))
     if (!isNil(error)) {
         // Roll back the claim so a later message retries the grant (needsCreditDecision goes true again).
         await chatRolloutService.releaseFreeCreditGrant({ userId })
