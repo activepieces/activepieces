@@ -11,7 +11,9 @@ import { StreamStepProgress } from './engine-operation'
 export const UploadRunLogsRequest = z.object({
     runId: z.string(),
     tags: z.array(z.string()).optional(),
-    status: z.nativeEnum(FlowRunStatus),
+    // Optional so the worker can post a timings-only update (provision/boot/run) after a successful
+    // execute without re-asserting the terminal status the engine already reported.
+    status: z.nativeEnum(FlowRunStatus).optional(),
     projectId: z.string(),
     streamStepProgress: z.nativeEnum(StreamStepProgress).optional(),
     logsFileId: z.string().optional(),
@@ -22,6 +24,9 @@ export const UploadRunLogsRequest = z.object({
     stepResponse: StepRunResponse.optional(),
     stepsCount: z.number().optional(),
     internalError: RunInternalError.optional(),
+    provisionMs: z.number().optional(),
+    bootMs: z.number().optional(),
+    runMs: z.number().optional(),
 })
 
 export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
@@ -29,7 +34,8 @@ export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
 
 export const UpdateStepProgressRequest = z.object({
     projectId: z.string(),
-    stepResponse: StepRunResponse,
+    runId: z.string(),
+    output: z.unknown(),
 })
 export type UpdateStepProgressRequest = z.infer<typeof UpdateStepProgressRequest>
 

@@ -8,6 +8,7 @@ import {
 import { Image, linkedinCommon, santizeText } from '../common';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { linkedinAuth } from '../..';
+import { createShareUpdateActionOutputSchema } from '../output-schemas';
 
 export const createShareUpdate = createAction({
   auth: linkedinAuth,
@@ -28,6 +29,7 @@ export const createShareUpdate = createAction({
     linkTitle: linkedinCommon.linkTitle,
     linkDescription: linkedinCommon.linkDescription,
   },
+  outputSchema: createShareUpdateActionOutputSchema,
 
   run: async (context) => {
     

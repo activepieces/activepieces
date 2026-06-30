@@ -5,6 +5,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { Stream } from 'stream';
 import { common } from '../common';
+import { saveFileAsPdfActionOutputSchema } from '../output-schemas';
 
 export const saveFileAsPdf = createAction({
   displayName: 'Save Document as PDF',
@@ -31,6 +32,7 @@ export const saveFileAsPdf = createAction({
     }),
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: saveFileAsPdfActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 

@@ -35,6 +35,8 @@ data:
   AP_S3_ENDPOINT: https://storage.googleapis.com
   AP_S3_REGION: europe-west1
   AP_S3_USE_SIGNED_URLS: "true"
+  # Official piece tarballs are pulled from the Activepieces CDN (cdn.activepieces.com) instead of npm.
+  AP_USE_CDN_FOR_BUNDLES: "true"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -126,8 +128,10 @@ spec:
   # Scale knob: each replica is one sandbox at concurrency 1. __WORKER_REPLICAS__ substituted by run-gke.sh.
   replicas: __WORKER_REPLICAS__
   # maxSurge:0 so a rolling restart never needs spare capacity beyond `replicas` (the fleet runs near
-  # full node capacity at high worker counts); old pods drain before new ones are created.
-  strategy: { rollingUpdate: { maxSurge: 0, maxUnavailable: 4 } }
+  # full node capacity at high worker counts); old pods drain before new ones are created. maxUnavailable
+  # is a high % so the restart is near-parallel — there is no live traffic during a benchmark rollout, and
+  # 4-at-a-time can't finish 120+ workers inside the rollout timeout.
+  strategy: { rollingUpdate: { maxSurge: 0, maxUnavailable: "75%" } }
   selector: { matchLabels: { app: worker } }
   template:
     metadata: { labels: { app: worker } }

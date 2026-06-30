@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 
 import { FieldTypeIcon } from './field-type-icon';
 import { FormatValue, getValueByDotPath } from './format-value';
@@ -374,48 +375,57 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
 
       {expanded && isDescribedList && (
         <div className="pb-1">
-          {listItems.map((item, idx) => (
-            <SchemaListItemRow
-              key={`${path}_item_${idx}`}
-              item={item}
-              itemLabel={schemaUtils.resolveEntryLabel({
-                value: item,
-                labelKey: field.labelKey,
-                fallback: `${label} ${idx + 1}`,
-              })}
-              itemChildren={itemChildren}
-              depth={depth + 1}
-            />
-          ))}
+          <VirtualizedList
+            items={listItems}
+            estimateSize={30}
+            renderItem={(item, idx) => (
+              <SchemaListItemRow
+                item={item}
+                itemLabel={schemaUtils.resolveEntryLabel({
+                  value: item,
+                  labelKey: field.labelKey,
+                  fallback: `${label} ${idx + 1}`,
+                })}
+                itemChildren={itemChildren}
+                depth={depth + 1}
+              />
+            )}
+          />
         </div>
       )}
 
       {expanded && isMatrix && (
         <div className="pb-1">
-          {matrixRows.map((row, idx) => (
-            <SchemaMatrixRow
-              key={`${path}_row_${idx}`}
-              rowKey={`${path}_row_${idx}`}
-              row={row}
-              rowLabel={`${t('Row')} ${idx + 1}`}
-              format={field.format}
-              currency={field.currency}
-              depth={depth + 1}
-            />
-          ))}
+          <VirtualizedList
+            items={matrixRows}
+            estimateSize={30}
+            renderItem={(row, idx) => (
+              <SchemaMatrixRow
+                rowKey={`${path}_row_${idx}`}
+                row={row}
+                rowLabel={`${t('Row')} ${idx + 1}`}
+                format={field.format}
+                currency={field.currency}
+                depth={depth + 1}
+              />
+            )}
+          />
         </div>
       )}
 
       {expanded && isGenericArray && (
         <div className="pb-1">
-          {genericArrayItems.map((item, idx) => (
-            <ValueRow
-              key={`${path}_item_${idx}`}
-              label={`${t('Item')} ${idx + 1}`}
-              value={item}
-              depth={depth + 1}
-            />
-          ))}
+          <VirtualizedList
+            items={genericArrayItems}
+            estimateSize={30}
+            renderItem={(item, idx) => (
+              <ValueRow
+                label={`${t('Item')} ${idx + 1}`}
+                value={item}
+                depth={depth + 1}
+              />
+            )}
+          />
         </div>
       )}
 
@@ -434,36 +444,39 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
 
       {expanded && isPrimitiveList && (
         <div className="pb-1">
-          {primitiveItems.map((item, idx) => (
-            <div
-              key={`${path}_item_${idx}`}
-              className="flex items-start gap-3 py-1.5 pr-3 hover:bg-accent/50"
-              style={{ paddingLeft: nestedPaddingLeft(depth + 1) }}
-            >
-              <span className="flex h-5 items-center shrink-0">
-                <FieldTypeIcon value={item} format={field.format} />
-              </span>
-              <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
-                {`${label} ${idx + 1}`}
-              </span>
-              <span className="flex-1 text-sm min-w-0 break-words whitespace-pre-wrap">
-                {isNil(item) || item === '' ? (
-                  <span className="text-muted-foreground italic">
-                    {t('empty')}
-                  </span>
-                ) : (
-                  <FormatValue
-                    value={item}
-                    field={{
-                      key: 'item',
-                      format: field.format,
-                      currency: field.currency,
-                    }}
-                  />
-                )}
-              </span>
-            </div>
-          ))}
+          <VirtualizedList
+            items={primitiveItems}
+            estimateSize={30}
+            renderItem={(item, idx) => (
+              <div
+                className="flex items-start gap-3 py-1.5 pr-3 hover:bg-accent/50"
+                style={{ paddingLeft: nestedPaddingLeft(depth + 1) }}
+              >
+                <span className="flex h-5 items-center shrink-0">
+                  <FieldTypeIcon value={item} format={field.format} />
+                </span>
+                <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
+                  {`${label} ${idx + 1}`}
+                </span>
+                <span className="flex-1 text-sm min-w-0 break-words whitespace-pre-wrap">
+                  {isNil(item) || item === '' ? (
+                    <span className="text-muted-foreground italic">
+                      {t('empty')}
+                    </span>
+                  ) : (
+                    <FormatValue
+                      value={item}
+                      field={{
+                        key: 'item',
+                        format: field.format,
+                        currency: field.currency,
+                      }}
+                    />
+                  )}
+                </span>
+              </div>
+            )}
+          />
         </div>
       )}
     </div>

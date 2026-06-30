@@ -52,19 +52,6 @@ export const chatRolloutService = {
         return !isNil(row) && !isNil(row.chattedAt)
     },
 
-    async recordLanding({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
-        if (!isCloud()) {
-            return
-        }
-        await rolloutRepo().query(
-            `INSERT INTO "chat_rollout_user" ("id", "userId", "platformId", "landedAt")
-             VALUES ($1, $2, $3, now())
-             ON CONFLICT ("userId") DO UPDATE
-             SET "landedAt" = COALESCE("chat_rollout_user"."landedAt", now()), "updated" = now()`,
-            [apId(), userId, platformId],
-        )
-    },
-
     async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
         if (!isCloud()) {
             return
@@ -79,22 +66,4 @@ export const chatRolloutService = {
             [apId(), userId, platformId],
         )
     },
-
-    async getFunnelAggregate(): Promise<ChatFunnelAggregate> {
-        const cap = getCap()
-        // Two index-backed counts (partial indexes on landedAt / chattedAt) rather than a
-        // single full-table FILTER aggregate.
-        const [landed, chatted] = await Promise.all([
-            rolloutRepo().count({ where: { landedAt: Not(IsNull()) } }),
-            rolloutRepo().count({ where: { chattedAt: Not(IsNull()) } }),
-        ])
-        return { landed, chatted, cap, closed: chatted >= cap }
-    },
-}
-
-export type ChatFunnelAggregate = {
-    landed: number
-    chatted: number
-    cap: number
-    closed: boolean
 }
