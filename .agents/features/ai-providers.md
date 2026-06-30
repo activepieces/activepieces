@@ -57,6 +57,10 @@ Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` en
 3. Key limit set to `platform.plan.includedAiCredits / 1000` (1000 credits = $1)
 4. Schedules `AI_CREDIT_UPDATE_CHECK` system job for auto-renewal and top-up
 
+### `enabledForChat` auto-provisioning
+
+Starting with migration `1802000000000`, the auto-provisioned ACTIVEPIECES provider only sets `enabledForChat = true` when no other provider on the same platform already has `enabledForChat = true`. This ensures existing BYO (bring-your-own) chat provider choices are preserved. The same guard applies in `listProviders()` and `getOrCreateActivePiecesProviderAuthConfig()`. There is also a one-time backfill in the migration that applies the same logic to existing platforms.
+
 ## Credit System
 
 - Rate: 1000 credits = $1 USD
