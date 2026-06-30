@@ -23,6 +23,19 @@ export class AddChatRolloutFreeCreditGrant1802000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        // Revert the backfill: up() set enabledForChat only on ACTIVEPIECES providers for platforms
+        // that had no chat provider, so those platforms now have ACTIVEPIECES as their sole chat
+        // provider. Disable exactly those rows again, leaving any platform with a BYO chat provider
+        // untouched.
+        await queryRunner.query(`
+            UPDATE "ai_provider" SET "enabledForChat" = false
+            WHERE "provider" = 'ACTIVEPIECES'
+            AND "enabledForChat" = true
+            AND "platformId" NOT IN (
+                SELECT "platformId" FROM "ai_provider"
+                WHERE "enabledForChat" = true AND "provider" <> 'ACTIVEPIECES'
+            )
+        `)
         await queryRunner.query(`
             ALTER TABLE "chat_rollout_user" DROP COLUMN "grantedFreeCreditAt"
         `)

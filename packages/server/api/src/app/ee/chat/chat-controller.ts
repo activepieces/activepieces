@@ -88,11 +88,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
-        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped) and, on
-        // their first message, gift one-time free credits so free testers can use managed AI.
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
+        // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
+        // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
         // Awaited before the credit check below so the managed key is created (and topped up) once.
-        const { firstChat } = await chatRolloutService.recordChatted({ userId, platformId })
-        if (firstChat) {
+        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
+        if (needsCreditDecision) {
             await maybeGrantFreeChatCredits({ platformId, userId, log })
         }
 
@@ -216,19 +217,23 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 const DEFAULT_FREE_CHAT_CREDIT_USD = 10
 
 async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
-    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    // Promotional credit is for free-tier cloud testers only (paid platforms carry a license key).
-    if (!isNil(plan.licenseKey)) {
-        return
-    }
+    // Claim first so the decision is settled exactly once across concurrent messages and paid users
+    // stop re-checking after this point (needsCreditDecision becomes false). A losing/duplicate
+    // caller exits immediately.
     const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
     if (!claimed) {
+        return
+    }
+    // Promotional credit is for free-tier cloud testers only (paid platforms carry a license key);
+    // for paid platforms the claim above simply records that no grant is owed.
+    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    if (!isNil(plan.licenseKey)) {
         return
     }
     const amountUsd = system.getNumber(AppSystemProp.CLOUD_CHAT_FREE_CREDIT_USD) ?? DEFAULT_FREE_CHAT_CREDIT_USD
     const { error } = await tryCatch(() => platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd }))
     if (!isNil(error)) {
-        // Roll back the claim so a later message retries the grant.
+        // Roll back the claim so a later message retries the grant (needsCreditDecision goes true again).
         await chatRolloutService.releaseFreeCreditGrant({ userId })
         log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
     }
