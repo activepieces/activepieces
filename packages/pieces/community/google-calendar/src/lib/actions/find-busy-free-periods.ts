@@ -3,6 +3,7 @@ import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from '@active
 import { googleCalendarCommon, googleCalendarAuth, getAccessToken, GoogleCalendarAuthValue } from '../common';
 import { getCalendars } from '../common/helper';
 import dayjs from 'dayjs';
+import { freeBusyActionOutputSchema } from '../output-schemas';
 
 
 interface FreeBusyResponse {
@@ -69,6 +70,7 @@ export const findFreeBusy = createAction({
       required: true,
     }),
   },
+  outputSchema: freeBusyActionOutputSchema,
   async run(context) {
     const { calendar_ids, start_date, end_date } = context.propsValue;
     const access_token = await getAccessToken(context.auth);

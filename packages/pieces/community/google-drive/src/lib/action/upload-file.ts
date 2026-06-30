@@ -8,6 +8,7 @@ import FormData from 'form-data';
 import { googleDriveAuth, getAccessToken } from '../auth';
 import mime from 'mime-types';
 import { common } from '../common';
+import { uploadGdriveFileActionOutputSchema } from '../output-schemas';
 
 export const googleDriveUploadFile = createAction({
   auth: googleDriveAuth,
@@ -30,6 +31,7 @@ export const googleDriveUploadFile = createAction({
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: uploadGdriveFileActionOutputSchema,
   async run(context) {
     const fileData = context.propsValue.file;
     const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');

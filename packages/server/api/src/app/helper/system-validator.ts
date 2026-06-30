@@ -127,6 +127,7 @@ const systemPropValidators: {
     [AppSystemProp.REDIS_SENTINEL_ROLE]: stringValidator,
     [AppSystemProp.REDIS_SENTINEL_HOSTS]: stringValidator,
     [AppSystemProp.REDIS_SENTINEL_NAME]: stringValidator,
+    [AppSystemProp.USE_CDN_FOR_BUNDLES]: booleanValidator,
     [AppSystemProp.S3_ACCESS_KEY_ID]: stringValidator,
     [AppSystemProp.S3_BUCKET]: stringValidator,
     [AppSystemProp.S3_ENDPOINT]: stringValidator,
