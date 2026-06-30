@@ -31,6 +31,9 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Cloud**: Members and invitations available on paid plans. Custom roles behind `customRolesEnabled`. Git sync and releases behind `environmentsEnabled`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ProjectMember**: A user's membership in a project, carrying a role assignment.
 - **ProjectRole**: Named permission set (ADMIN/EDITOR/VIEWER built-in, or custom). Scoped to a platform.
 - **Permission**: One of 26 granular capabilities (e.g. `READ_FLOW`, `WRITE_CONNECTION`).

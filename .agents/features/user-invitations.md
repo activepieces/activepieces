@@ -20,6 +20,9 @@ The User Invitations feature lets platform owners and project members with the `
 - **Cloud**: Both platform and project invitations available; subject to plan `projectRolesEnabled` flag.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **InvitationType**: `PLATFORM` (adds user to the platform with a PlatformRole) or `PROJECT` (adds user to a specific project with a ProjectRole).
 - **InvitationStatus**: `PENDING` (email sent, awaiting click) or `ACCEPTED` (user provisioned).
 - **PlatformRole**: Role granted at platform level (`ADMIN` or `MEMBER`).

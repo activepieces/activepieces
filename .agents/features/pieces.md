@@ -22,6 +22,9 @@ The pieces feature manages the metadata catalog of automation integrations (call
 All editions. Piece filtering by allowed/blocked list and EE-specific filtering are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Piece** — a named integration (e.g. `@activepieces/piece-gmail`) providing actions and triggers
 - **PieceType** — `OFFICIAL` (bundled) or `CUSTOM` (platform-installed)
 - **PackageType** — `REGISTRY` (NPM) or `ARCHIVE` (uploaded tarball)
