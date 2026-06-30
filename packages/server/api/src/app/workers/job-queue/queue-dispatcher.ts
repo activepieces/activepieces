@@ -3,7 +3,9 @@ import { ConsumeJobRequest } from '@activepieces/shared'
 import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 
-const WAITER_TIMEOUT_MS = 50_000
+
+// worker's RPC timeout is 60s, and drainDelay is 15s, so we can safely set WAITER_TIMEOUT_MS to 40s. 
+const WAITER_TIMEOUT_MS = 40_000
 const ERROR_RETRY_DELAY_MS = 5_000
 
 function createQueueDispatcher(params: {
