@@ -72,6 +72,16 @@ export const issueCertificate = createAction({
       throw new Error('Recipient Name is required');
     }
 
+    const issuerName = (issuer ?? '').trim();
+    if (!issuerName) {
+      throw new Error('Organization / Issuer is required');
+    }
+
+    const courseName = (course ?? '').trim();
+    if (!courseName) {
+      throw new Error('Course / Credential is required');
+    }
+
     const date = (completionDate ?? '').trim();
     if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       throw new Error(`Completion Date must be in YYYY-MM-DD format (got "${date}")`);
@@ -89,8 +99,8 @@ export const issueCertificate = createAction({
       recipients: Array<{ name: string; email?: string }>;
       date?: string;
     } = {
-      issuer: (issuer ?? '').trim(),
-      course: (course ?? '').trim(),
+      issuer: issuerName,
+      course: courseName,
       recipients: [recipient],
     };
     if (date) {
