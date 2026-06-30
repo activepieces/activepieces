@@ -3709,6 +3709,21 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/funasr": {
+      "name": "@activepieces/piece-funasr",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "form-data": "4.0.4",
+        "mime-types": "2.1.35",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
+    },
     "packages/pieces/community/gameball": {
       "name": "@activepieces/piece-gameball",
       "version": "0.1.4",
@@ -11651,6 +11666,8 @@
     "@activepieces/piece-frill": ["@activepieces/piece-frill@workspace:packages/pieces/community/frill"],
 
     "@activepieces/piece-front": ["@activepieces/piece-front@workspace:packages/pieces/community/front"],
+
+    "@activepieces/piece-funasr": ["@activepieces/piece-funasr@workspace:packages/pieces/community/funasr"],
 
     "@activepieces/piece-gameball": ["@activepieces/piece-gameball@workspace:packages/pieces/community/gameball"],
 
