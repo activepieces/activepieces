@@ -8,6 +8,7 @@ import {
 import { googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp } from '../common/props';
 import { getAccessToken } from '../common/common';
+import { findSpreadsheetsActionOutputSchema } from '../output-schemas';
 
 export const findSpreadsheets = createAction({
 	name: 'find_spreadsheets',
@@ -35,6 +36,7 @@ export const findSpreadsheets = createAction({
 			defaultValue: false,
 		}),
 	},
+	outputSchema: findSpreadsheetsActionOutputSchema,
 	async run({ propsValue, auth }) {
 		const searchValue = propsValue.spreadsheet_name;
 		const queries = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed=false'];

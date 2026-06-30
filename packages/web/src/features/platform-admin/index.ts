@@ -1,4 +1,5 @@
 export { aiProviderApi } from './api/ai-provider-api';
+export { aiToolConfigApi } from './api/ai-tool-config-api';
 export { analyticsApi } from './api/analytics-api';
 export { apiKeyApi } from './api/api-key-api';
 export { auditEventsApi } from './api/audit-events-api';
@@ -38,6 +39,11 @@ export {
   aiProviderKeys,
   hasAnyAuthFieldFilled,
 } from './hooks/ai-provider-hooks';
+export {
+  aiToolConfigQueries,
+  aiToolConfigMutations,
+  aiToolConfigKeys,
+} from './hooks/ai-tool-config-hooks';
 export {
   piecesTagQueries,
   piecesTagMutations,

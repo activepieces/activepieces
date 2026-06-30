@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, HttpRequest } from '@activepieces/pieces-common';
-import { awsBedrockAuth } from '../auth';
+import { awsBedrockCombinedAuth } from '../auth';
+import { getTemporaryCredentials, isOidcAuth } from '../common';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { HttpRequest as AwsHttpRequest } from '@smithy/protocol-http';
 import { Sha256 } from '@aws-crypto/sha256-js';
@@ -18,6 +19,7 @@ const AWS_BEDROCK_SERVICES = [
 async function signAwsRequest({
   accessKeyId,
   secretAccessKey,
+  sessionToken,
   region,
   service,
   method,
@@ -27,6 +29,7 @@ async function signAwsRequest({
 }: {
   accessKeyId: string;
   secretAccessKey: string;
+  sessionToken?: string;
   region: string;
   service: string;
   method: string;
@@ -51,10 +54,7 @@ async function signAwsRequest({
   });
 
   const signer = new SignatureV4({
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
+    credentials: { accessKeyId, secretAccessKey, sessionToken },
     region,
     service,
     sha256: Sha256,
@@ -73,7 +73,7 @@ export const customApiCall = createAction({
   displayName: 'Custom API Call',
   description:
     'Make a custom API call to any AWS Bedrock endpoint. Requests are automatically signed with AWS Signature V4.',
-  auth: awsBedrockAuth,
+  auth: awsBedrockCombinedAuth,
   requireAuth: true,
   props: {
     service: Property.StaticDropdown({
@@ -139,9 +139,17 @@ export const customApiCall = createAction({
   async run(context) {
     const { service, method, path, headers, queryParams, body, failsafe, timeout } =
       context.propsValue;
-    const auth = context.auth.props;
+    const authProps = context.auth.props;
+    const region = authProps.region;
 
-    const baseUrl = `https://${service}.${auth.region}.amazonaws.com`;
+    let creds: { accessKeyId: string; secretAccessKey: string; sessionToken?: string };
+    if (isOidcAuth(authProps)) {
+      creds = await getTemporaryCredentials({ auth: authProps, server: context.server });
+    } else {
+      creds = { accessKeyId: authProps.accessKeyId, secretAccessKey: authProps.secretAccessKey };
+    }
+
+    const baseUrl = `https://${service}.${region}.amazonaws.com`;
     let fullUrl = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 
     if (queryParams && Object.keys(queryParams).length > 0) {
@@ -168,9 +176,10 @@ export const customApiCall = createAction({
     }
 
     const signed = await signAwsRequest({
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
-      region: auth.region,
+      accessKeyId: creds.accessKeyId,
+      secretAccessKey: creds.secretAccessKey,
+      sessionToken: creds.sessionToken,
+      region,
       service,
       method,
       url: fullUrl,

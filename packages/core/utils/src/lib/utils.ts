@@ -8,7 +8,13 @@ export function truncateString({ value, maxLength, suffix = '…' }: { value: st
     if (value.length <= maxLength) {
         return value
     }
-    return value.slice(0, maxLength) + suffix
+    let end = maxLength
+    const lastKeptCodeUnit = value.charCodeAt(end - 1)
+    const splitsSurrogatePair = lastKeptCodeUnit >= 0xD800 && lastKeptCodeUnit <= 0xDBFF
+    if (splitsSurrogatePair) {
+        end -= 1
+    }
+    return value.slice(0, end) + suffix
 }
 
 export function isNil<T>(value: T | null | undefined): value is null | undefined {

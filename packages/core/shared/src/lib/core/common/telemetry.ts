@@ -220,6 +220,7 @@ export enum TelemetryEventName {
     SIGN_IN_FAILED = 'signin.failed',
     FEDERATED_LOGIN_STARTED = 'federated.login.started',
     SIGNED_IN = 'signed.in',
+    CHAT_PAGE_VIEWED = 'chat.page.viewed',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -303,3 +304,4 @@ export type TelemetryEvent =
   FederatedLoginStarted
   >
   | BaseTelemetryEvent<TelemetryEventName.SIGNED_IN, SignedIn>
+  | BaseTelemetryEvent<TelemetryEventName.CHAT_PAGE_VIEWED, Record<string, never>>

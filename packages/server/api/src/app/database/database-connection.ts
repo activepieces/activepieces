@@ -4,6 +4,7 @@ import {
     EntitySchema,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
+import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
@@ -14,6 +15,7 @@ import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ChatConversationEntity } from '../ee/chat/chat-conversation-entity'
+import { ChatRolloutUserEntity } from '../ee/chat/chat-rollout-user-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
@@ -91,6 +93,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AlertEntity,
         UserInvitationEntity,
         AIProviderEntity,
+        AiToolConfigEntity,
         ProjectRoleEntity,
         TableEntity,
         FieldEntity,
@@ -106,6 +109,7 @@ function getEntities(): EntitySchema<unknown>[] {
         KnowledgeBaseChunkEntity,
         ToolSearchIndexEntity,
         ChatConversationEntity,
+        ChatRolloutUserEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         WaitpointEntity,

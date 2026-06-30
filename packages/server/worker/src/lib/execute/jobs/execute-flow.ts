@@ -58,6 +58,16 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 provision: resolved.provision,
             })
 
+            // Best-effort latency breakdown for the runs page; reuses the run-log metadata upload
+            // with no status so it only merges the timings the engine's own report can't measure.
+            await tryCatch(() => ctx.apiClient.uploadRunLog({
+                runId: data.runId,
+                projectId: data.projectId,
+                provisionMs: result.timings.provisionMs,
+                bootMs: result.timings.bootMs,
+                runMs: result.timings.runMs,
+            }))
+
             if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED, logs: result.logs }
@@ -155,13 +165,15 @@ async function reportFlowStatus(
     status: FlowRunStatus,
     internalError?: RunInternalError,
 ): Promise<void> {
+    // A status report has no log file of its own; carry logsFileId only for an internalError the server may
+    // persist into one (see uploadRunLog). Sending it on a plain status report would dangle flow_run.logsFileId.
     await ctx.apiClient.uploadRunLog({
         runId: data.runId,
         status,
         projectId: data.projectId,
         streamStepProgress: data.streamStepProgress,
         finishTime: new Date().toISOString(),
-        logsFileId: data.logsFileId,
+        ...(isNil(internalError) ? {} : { logsFileId: data.logsFileId }),
         internalError,
     })
 
