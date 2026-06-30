@@ -120,6 +120,9 @@
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
+      "@activepieces/piece-attestify": [
+        "packages/pieces/community/attestify/src/index.ts"
+      ],
       "@activepieces/piece-attio": [
         "packages/pieces/community/attio/src/index.ts"
       ],

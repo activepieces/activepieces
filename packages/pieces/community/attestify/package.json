@@ -1,0 +1,34 @@
+{
+  "name": "@activepieces/piece-attestify",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "description": "Issue tamper-evident verifiable certificates with Attestify — each cert gets a permanent public verify page.",
+  "license": "MIT",
+  "homepage": "https://attestify.novadyne.ai",
+  "keywords": [
+    "activepieces",
+    "attestify",
+    "certificate",
+    "credential",
+    "verifiable",
+    "verification",
+    "ceu",
+    "training"
+  ],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
+    "lint": "eslint 'src/**/*.ts'"
+  }
+}
