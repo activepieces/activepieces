@@ -222,16 +222,18 @@ async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platform
     if (!claimed) {
         return
     }
-    // Promotional credit is for free-tier cloud testers only (paid platforms carry a license key);
-    // for paid platforms the claim above simply records that no grant is owed.
-    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    if (!isNil(plan.licenseKey)) {
-        return
-    }
-    const { error } = await tryCatch(() => platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD }))
+    // Everything after the claim is best-effort and must never fail the user's message. Any error —
+    // the plan lookup or the top-up — rolls the claim back so a later message retries
+    // (needsCreditDecision goes true again). Paid platforms (license key) keep the claim with no
+    // grant owed, so they stop re-checking.
+    const { error } = await tryCatch(async () => {
+        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (isNil(plan.licenseKey)) {
+            await platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD })
+        }
+    })
     if (!isNil(error)) {
-        // Roll back the claim so a later message retries the grant (needsCreditDecision goes true again).
-        await chatRolloutService.releaseFreeCreditGrant({ userId })
+        await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
         log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
     }
 }
