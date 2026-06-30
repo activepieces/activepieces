@@ -6,7 +6,7 @@ import { funasrAuth } from './lib/auth';
 export const funasr = createPiece({
   displayName: 'FunASR',
   description: 'Self-hosted speech recognition with 50+ languages.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/funasr.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: funasrAuth,

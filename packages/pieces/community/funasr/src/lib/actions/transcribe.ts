@@ -40,7 +40,7 @@ export const transcribeAction = createAction({
     const form = new FormData();
     form.append('file', fileData.data, {
       filename: fileData.filename,
-      contentType: mimeType as string,
+      contentType: mimeType,
     });
 
     if (context.propsValue.model) {
@@ -72,7 +72,7 @@ export const transcribeAction = createAction({
         text: transcriptionText,
       };
     } catch (e) {
-      throw new Error(`FunASR transcription failed: ${e}`);
+      throw new Error(`FunASR transcription failed: ${String(e)}`, { cause: e });
     }
   },
 });
