@@ -82,7 +82,7 @@ Callers pick a perspective with the `audience` query param (`PieceAudienceFilter
 
 - `human` (default) — hides `audience: 'ai'`; keeps `human` + `both` + untagged. The flow-builder picker uses this.
 - `ai` — hides `audience: 'human'`; keeps `ai` + `both` + untagged.
-- `all` — returns everything. The local dev page uses this.
+- `all` — returns everything. Used by callers that must resolve any action regardless of audience: the local dev page, and the agent tool-call renderer (`agent-tool-hooks.ts`), which looks up the metadata of a tool the agent already invoked (which may be `audience: 'ai'`).
 
 Where it applies:
 
