@@ -88,6 +88,8 @@ All flow modifications go through `POST /v1/flows/:id` with a `FlowOperationRequ
 - USE_AS_DRAFT → copies published version back to draft for editing
 - Only published flows can be enabled (triggers registered)
 
+**Editing a locked version** (`createNewDraftIfVersionIsPublished`): when any structural edit operation arrives and the latest version is LOCKED, the service creates a new empty DRAFT and imports the locked content into it. Both the empty-draft insert (`createEmptyVersion`) and the import operation loop run inside a single `transaction()` — if the import throws (e.g. stack overflow on a deeply nested flow), the entire transaction rolls back and no orphaned empty draft is left in the DB.
+
 ## Publishing Side Effects
 
 When LOCK_AND_PUBLISH or CHANGE_STATUS to ENABLED:
