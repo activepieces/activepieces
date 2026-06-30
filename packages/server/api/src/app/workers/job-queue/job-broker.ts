@@ -204,7 +204,20 @@ function buildFailedReason(errorMessage: string, logs?: string): string {
     return `${errorMessage}\n${logs}`
 }
 
-export { tryDequeue }
+// Engine failures whose inputs are permanently gone never recover on retry — a deleted/expired
+// connection, or a 404/410 on the trigger-payload file. Retrying them just burns attempts, clogs
+// the failed queue, and re-pages oncall. A transient 5xx file-download error must still retry, so
+// EngineFileDownloadError is only treated as permanent when the status is not-found / gone.
+const PERMANENT_FAILURE_MARKERS = ['ConnectionNotFound', 'ConnectionExpired'] as const
+
+function isPermanentEngineFailure(failedReason: string): boolean {
+    if (PERMANENT_FAILURE_MARKERS.some(marker => failedReason.includes(marker))) {
+        return true
+    }
+    return failedReason.includes('EngineFileDownloadError') && (failedReason.includes('404 Not Found') || failedReason.includes('410 Gone'))
+}
+
+export { tryDequeue, isPermanentEngineFailure }
 
 export const jobBroker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
@@ -247,7 +260,9 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const { error } = await tryCatch(async () => {
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {
-                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
+                const failedReason = buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)
+                const failure = isPermanentEngineFailure(failedReason) ? new UnrecoverableError(failedReason) : new Error(failedReason)
+                await job.moveToFailed(failure, input.token)
                 if (userJobData) {
                     await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                         status: EngineResponseStatus.INTERNAL_ERROR,
