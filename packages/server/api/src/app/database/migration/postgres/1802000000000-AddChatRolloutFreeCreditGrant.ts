@@ -1,40 +1,30 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { QueryRunner } from 'typeorm'
+import { Migration } from '../../migration'
 
-export class AddChatRolloutFreeCreditGrant1802000000000 implements MigrationInterface {
+export class AddChatRolloutFreeCreditGrant1802000000000 implements Migration {
     name = 'AddChatRolloutFreeCreditGrant1802000000000'
+    breaking = false
+    release = '0.85.5'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "chat_rollout_user"
-            ADD COLUMN "grantedFreeCreditAt" TIMESTAMP WITH TIME ZONE
+            ALTER TABLE "chat_rollout_user" ADD COLUMN "grantedFreeCreditAt" TIMESTAMP WITH TIME ZONE
         `)
-
-        // Backfill: existing ACTIVEPIECES providers without a chat provider get enabledForChat
-        // Only affects providers with no currently-enabled chat provider on the platform
+        // Make the managed Activepieces provider the default chat provider so cloud free users
+        // skip the "set up a provider" wall. Scoped to platforms that have not already picked a
+        // chat provider, so existing BYO selections are preserved.
         await queryRunner.query(`
-            UPDATE "ai_provider" ap
-            SET "enabledForChat" = true
-            WHERE ap."provider" = 'ACTIVEPIECES'
-            AND NOT EXISTS (
-                SELECT 1 FROM "ai_provider" ap2
-                WHERE ap2."platformId" = ap."platformId"
-                AND ap2."enabledForChat" = true
-                AND ap2."id" != ap."id"
+            UPDATE "ai_provider" SET "enabledForChat" = true
+            WHERE "provider" = 'ACTIVEPIECES'
+            AND "platformId" NOT IN (
+                SELECT "platformId" FROM "ai_provider" WHERE "enabledForChat" = true
             )
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "chat_rollout_user"
-            DROP COLUMN "grantedFreeCreditAt"
-        `)
-
-        // Revert: reset enabledForChat on ACTIVEPIECES providers
-        await queryRunner.query(`
-            UPDATE "ai_provider"
-            SET "enabledForChat" = false
-            WHERE "provider" = 'ACTIVEPIECES'
+            ALTER TABLE "chat_rollout_user" DROP COLUMN "grantedFreeCreditAt"
         `)
     }
 }

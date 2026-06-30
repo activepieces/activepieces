@@ -7,8 +7,6 @@ import { distributedLock, distributedStore } from '../../../database/redis-conne
 import { flagService } from '../../../flags/flag.service'
 import { exceptionHandler } from '../../../helper/exception-handler'
 import { sleep } from '../../../helper/sleep'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
@@ -161,14 +159,16 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async grantFreeChatCredits(platformId: string): Promise<void> {
+    // Tops up the platform's managed AI key by a fixed USD amount (used for the one-time
+    // free-chat-credit grant). Resolving the auth config creates the OpenRouter key if needed,
+    // so the worker later reuses the same key instead of minting a second one.
+    async grantFreeChatCredits({ platformId, amountUsd }: { platformId: string, amountUsd: number }): Promise<void> {
         const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
-        const amountInUsd = system.getNumber(AppSystemProp.CLOUD_CHAT_FREE_CREDIT_USD) ?? 10
         const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
         await openRouterApi.updateKey({
             hash: apiKeyHash,
-            limit: key.limit! + amountInUsd,
+            limit: (key.limit ?? 0) + amountUsd,
         })
     },
 })

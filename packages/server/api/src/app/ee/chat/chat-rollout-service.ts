@@ -56,45 +56,49 @@ export const chatRolloutService = {
         if (!isCloud()) {
             return { firstChat: false }
         }
-        // INSERT ... ON CONFLICT DO UPDATE RETURNING xmax:
-        // xmax = '0' means a new row was inserted (first chat for this user)
-        // xmax != '0' means an update happened (user already existed, subsequent chat)
-        const result = await rolloutRepo().query(
+        // Rows only ever exist once a user has chatted, so an INSERT (xmax = 0) is the first message.
+        const rows = await rolloutRepo().query(
             `INSERT INTO "chat_rollout_user" ("id", "userId", "platformId", "landedAt", "chattedAt")
              VALUES ($1, $2, $3, now(), now())
              ON CONFLICT ("userId") DO UPDATE
              SET "chattedAt" = COALESCE("chat_rollout_user"."chattedAt", now()),
                  "landedAt" = COALESCE("chat_rollout_user"."landedAt", now()),
                  "updated" = now()
-             RETURNING xmax::text AS xmax`,
+             RETURNING (xmax = 0) AS inserted`,
             [apId(), userId, platformId],
         )
-        const row = result[0] as { xmax: string } | undefined
-        return { firstChat: row?.xmax === '0' }
+        const firstChat = rows[0]?.inserted === true
+        // Close the rollout the moment the cap is reached, not lazily on the next gate check.
+        if (firstChat && (await countChatted()) >= getCap()) {
+            await distributedStore.putBoolean(ROLLOUT_CLOSED_KEY, true)
+        }
+        return { firstChat }
     },
 
+    // Atomically reserve the one-time free-credit grant for a user. Returns true only for the
+    // caller that flips grantedFreeCreditAt from NULL, so the credit top-up runs exactly once.
     async claimFreeCreditGrant({ userId }: { userId: string }): Promise<boolean> {
         if (!isCloud()) {
             return false
         }
-        // Atomically claim the free credit grant — only succeeds if not already granted
-        const result = await rolloutRepo().query(
+        const rows = await rolloutRepo().query(
             `UPDATE "chat_rollout_user"
-             SET "grantedFreeCreditAt" = now()
+             SET "grantedFreeCreditAt" = now(), "updated" = now()
              WHERE "userId" = $1 AND "grantedFreeCreditAt" IS NULL
-             RETURNING id`,
+             RETURNING "id"`,
             [userId],
         )
-        return result.length > 0
+        return rows.length > 0
     },
 
+    // Release a claim so a later message can retry when the credit top-up itself failed.
     async releaseFreeCreditGrant({ userId }: { userId: string }): Promise<void> {
         if (!isCloud()) {
             return
         }
         await rolloutRepo().query(
             `UPDATE "chat_rollout_user"
-             SET "grantedFreeCreditAt" = NULL
+             SET "grantedFreeCreditAt" = NULL, "updated" = now()
              WHERE "userId" = $1`,
             [userId],
         )
