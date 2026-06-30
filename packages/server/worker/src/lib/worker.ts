@@ -93,6 +93,15 @@ export const worker = {
             connectionGeneration++
             polling = false
             logger.warn({ reason }, 'Disconnected from API server')
+            // Socket.IO does NOT auto-reconnect when the server initiates the disconnect
+            // (reason 'io server disconnect' — e.g. the API process restarts during a deploy,
+            // where fastify-socket's preClose calls io.disconnectSockets(true)). Without a
+            // manual reconnect the worker stays dead and silently stops polling for jobs until
+            // the worker process is restarted. Every other non-client reason already triggers
+            // Socket.IO's built-in reconnection.
+            if (reason === 'io server disconnect') {
+                socket?.connect()
+            }
         })
 
         socket.on('connect_error', (error) => {
