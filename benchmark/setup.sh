@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="http://localhost:8080/api/v1"
+BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 MAX_RETRIES=60
 RETRY_INTERVAL=5
 
@@ -35,16 +35,28 @@ for i in $(seq 1 300); do
 done
 
 # Sign up
-echo "Creating user account..." >&2
-SIGNUP_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/authentication/sign-up" \
+echo "Authenticating..." >&2
+BENCH_EMAIL="${BENCH_EMAIL:-bench@activepieces.com}"
+# Try sign-up (first run creates the platform). On repeat runs public sign-up is disabled once a
+# platform exists, so fall back to sign-in with the same fixed credentials. No --fail-with-body here:
+# under `set -e` a rejected sign-up would abort the script before we can fall back.
+SIGNUP_RESPONSE=$(curl -s "$BASE_URL/authentication/sign-up" \
   -H "Content-Type: application/json" \
-  -d '{"email":"bench@activepieces.com","password":"BenchmarkPass1","firstName":"Bench","lastName":"Mark","trackEvents":false,"newsLetter":false}')
+  -d "{\"email\":\"${BENCH_EMAIL}\",\"password\":\"BenchmarkPass1\",\"firstName\":\"Bench\",\"lastName\":\"Mark\",\"trackEvents\":false,\"newsLetter\":false}")
+TOKEN=$(echo "$SIGNUP_RESPONSE" | jq -r '.token // empty')
+PROJECT_ID=$(echo "$SIGNUP_RESPONSE" | jq -r '.projectId // empty')
 
-TOKEN=$(echo "$SIGNUP_RESPONSE" | jq -r '.token')
-PROJECT_ID=$(echo "$SIGNUP_RESPONSE" | jq -r '.projectId')
+if [ -z "$TOKEN" ]; then
+  echo "Sign-up unavailable (platform exists); signing in..." >&2
+  SIGNIN_RESPONSE=$(curl -s "$BASE_URL/authentication/sign-in" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"${BENCH_EMAIL}\",\"password\":\"BenchmarkPass1\"}")
+  TOKEN=$(echo "$SIGNIN_RESPONSE" | jq -r '.token // empty')
+  PROJECT_ID=$(echo "$SIGNIN_RESPONSE" | jq -r '.projectId // empty')
+fi
 
-if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
-  echo "ERROR: Failed to get token from sign-up response" >&2
+if [ -z "$TOKEN" ]; then
+  echo "ERROR: could not authenticate (sign-up and sign-in both failed)" >&2
   echo "$SIGNUP_RESPONSE" >&2
   exit 1
 fi
@@ -87,7 +99,7 @@ if [ -n "${CODE_BODY_FILE:-}" ]; then
   fi
   CODE_STEP_SRC=$(cat "$CODE_BODY_FILE")
 else
-  CODE_STEP_SRC=$'export const code = async (inputs) => {\n  return true;\n};\n'
+  CODE_STEP_SRC=$'export const code = async (inputs) => {\n  return { result: Number(inputs.sum) + 1 };\n};\n'
 fi
 
 if [ -z "${RESPONSE_BODY:-}" ]; then
@@ -98,8 +110,13 @@ else
   RESPONSE_BODY_JSON="$RESPONSE_BODY"
 fi
 
+# Flow: webhook (latest) -> math-helper addition (latest) -> small CODE step -> return response (latest).
+WEBHOOK_VERSION="${WEBHOOK_VERSION:-~0.1.36}"
+MATH_VERSION="${MATH_VERSION:-~0.0.24}"
 IMPORT_PAYLOAD=$(jq -n \
   --arg code "$CODE_STEP_SRC" \
+  --arg webhookV "$WEBHOOK_VERSION" \
+  --arg mathV "$MATH_VERSION" \
   --argjson body "$RESPONSE_BODY_JSON" \
   '{
     type: "IMPORT_FLOW",
@@ -114,7 +131,7 @@ IMPORT_PAYLOAD=$(jq -n \
         type: "PIECE_TRIGGER",
         settings: {
           pieceName: "@activepieces/piece-webhook",
-          pieceVersion: "~0.1.29",
+          pieceVersion: $webhookV,
           triggerName: "catch_webhook",
           input: { authType: "none", authFields: {} },
           propertySettings: {
@@ -127,53 +144,75 @@ IMPORT_PAYLOAD=$(jq -n \
           sampleData: {}
         },
         nextAction: {
-          name: "step_2",
+          name: "step_3",
           skip: false,
-          type: "CODE",
+          type: "PIECE",
           valid: true,
           settings: {
-            input: {},
+            input: { first_number: 2, second_number: 3 },
+            pieceName: "@activepieces/piece-math-helper",
+            actionName: "addition_math",
+            pieceVersion: $mathV,
             sampleData: {},
-            sourceCode: { code: $code, packageJson: "{}" },
+            propertySettings: {
+              first_number: { type: "MANUAL" },
+              second_number: { type: "MANUAL" }
+            },
             errorHandlingOptions: {
               retryOnFailure: { value: false },
               continueOnFailure: { value: false }
             }
           },
-          displayName: "Code",
+          displayName: "Add",
           nextAction: {
-            name: "step_1",
+            name: "step_2",
             skip: false,
-            type: "PIECE",
+            type: "CODE",
             valid: true,
             settings: {
-              input: {
-                fields: { body: $body, status: 200, headers: {} },
-                respond: "stop",
-                responseType: "json"
-              },
-              pieceName: "@activepieces/piece-webhook",
-              actionName: "return_response",
+              input: { sum: "{{step_3}}" },
               sampleData: {},
-              pieceVersion: "~0.1.29",
-              propertySettings: {
-                fields: {
-                  type: "MANUAL",
-                  schema: {
-                    body: { type: "JSON", required: true, displayName: "JSON Body" },
-                    status: { type: "NUMBER", required: false, displayName: "Status", defaultValue: 200 },
-                    headers: { type: "OBJECT", required: false, displayName: "Headers" }
-                  }
-                },
-                respond: { type: "MANUAL" },
-                responseType: { type: "MANUAL" }
-              },
+              sourceCode: { code: $code, packageJson: "{}" },
               errorHandlingOptions: {
                 retryOnFailure: { value: false },
                 continueOnFailure: { value: false }
               }
             },
-            displayName: "Return Response"
+            displayName: "Code",
+            nextAction: {
+              name: "step_1",
+              skip: false,
+              type: "PIECE",
+              valid: true,
+              settings: {
+                input: {
+                  fields: { body: $body, status: 200, headers: {} },
+                  respond: "stop",
+                  responseType: "json"
+                },
+                pieceName: "@activepieces/piece-webhook",
+                actionName: "return_response",
+                sampleData: {},
+                pieceVersion: $webhookV,
+                propertySettings: {
+                  fields: {
+                    type: "MANUAL",
+                    schema: {
+                      body: { type: "JSON", required: true, displayName: "JSON Body" },
+                      status: { type: "NUMBER", required: false, displayName: "Status", defaultValue: 200 },
+                      headers: { type: "OBJECT", required: false, displayName: "Headers" }
+                    }
+                  },
+                  respond: { type: "MANUAL" },
+                  responseType: { type: "MANUAL" }
+                },
+                errorHandlingOptions: {
+                  retryOnFailure: { value: false },
+                  continueOnFailure: { value: false }
+                }
+              },
+              displayName: "Return Response"
+            }
           }
         }
       }

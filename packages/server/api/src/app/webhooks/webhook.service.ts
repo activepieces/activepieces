@@ -284,7 +284,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
     params.onRunCreated?.(createdRun)
 
     const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {
-        status: StatusCodes.NO_CONTENT,
+        status: StatusCodes.REQUEST_TIMEOUT,
         body: {},
         headers: {},
     })

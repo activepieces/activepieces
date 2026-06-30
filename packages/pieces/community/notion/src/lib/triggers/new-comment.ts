@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
+import { newCommentTriggerOutputSchema } from '../output-schemas';
 
 export const newComment = createTrigger({
   auth: notionAuth,
@@ -26,6 +27,7 @@ export const newComment = createTrigger({
   props: {
     page_id: notionCommon.page,
   },
+  outputSchema: newCommentTriggerOutputSchema,
   sampleData: {
     object: 'comment',
     id: '223805e9-774b-80b1-9194-001d0c8f56dd',

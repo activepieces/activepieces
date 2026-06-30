@@ -1,4 +1,4 @@
-import { apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { apId, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
 import { FlowRun, FlowRunStatus, isFlowRunStateTerminal } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,6 +7,7 @@ import { domainHelper } from '../../helper/domain-helper'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { projectService } from '../../project/project-service'
 import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
@@ -42,14 +43,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     fn: async () => {
                         try {
                             await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
-                            const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
-                            if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
+                            const rawRunMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
+                            if (isNil(rawRunMetadata) || Object.keys(rawRunMetadata).length === 0) {
                                 log.info({
                                     job: { id: job.id },
                                     flowRun: { id: job.data.runId },
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
+                            const runMetadata = sanitizeObjectForPostgresql(rawRunMetadata)
 
                             const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
                             let savedFlowRun: FlowRun
@@ -109,7 +111,8 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
                             }
                             if (!isNil(runMetadata.finishTime)) {
-                                await flowRunSideEffects(log).onFinish(savedFlowRun)
+                                const platformId = await projectService(log).getPlatformId(savedFlowRun.projectId)
+                                await flowRunSideEffects(log).onFinish({ flowRun: savedFlowRun, platformId })
                             }
 
                             if (savedFlowRun.status === FlowRunStatus.PAUSED) {

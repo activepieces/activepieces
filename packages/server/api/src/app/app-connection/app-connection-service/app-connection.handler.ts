@@ -124,17 +124,19 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
  * refreshed and it gets accessed at the same time, which could result in the wrong request saving incorrect data.
  */
     async lockAndRefreshConnection({
+        platformId,
         projectId,
         externalId,
         log,
     }: {
+        platformId: PlatformId
         projectId: ProjectId
         externalId: string
         log: FastifyBaseLogger
     }) {
 
         return distributedLock(log).runExclusive({
-            key: `${projectId}_${externalId}`,
+            key: `${platformId}_${externalId}`,
             timeoutInSeconds: 60,
             fn: async () => {
                 let appConnection: AppConnection | null = null
