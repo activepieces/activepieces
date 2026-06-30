@@ -47,6 +47,21 @@ let healthServerInstance: ReturnType<typeof createServer> | null = null
 
 let runtime: Runtime | null = null
 
+// Jobs executing across all poll loops. stop() waits for these to finish + report before tearing
+// down, so a deploy doesn't orphan them in the app's BullMQ `active` list. Abrupt death (OOM/SIGKILL)
+// still falls to the stalled-scan.
+let inFlightJobs = 0
+
+const DRAIN_TIMEOUT_MS = 25_000
+
+// Sandbox memory/state is UI-only telemetry (the workers page). Computing it needs a full
+// process-table scan (si.processes()), so it must NOT run on the poll hot path — sampling it on
+// every poll pegged worker CPU and collapsed throughput (~7x, #13497). Sample it on a slow
+// interval instead and have buildMachineInfo() read the cached snapshot.
+let cachedSandboxInfo: SandboxInformation[] = []
+let sandboxInfoInterval: NodeJS.Timeout | null = null
+const SANDBOX_INFO_REFRESH_MS = 15_000
+
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
@@ -71,11 +86,17 @@ export const worker = {
             connectionGeneration++
             polling = false
             logger.warn({ reason }, 'Disconnected from API server')
+            // 'io client disconnect' is our own stop() — it already drained and tore down the runtime.
+            // For any other reason the socket dropped while a job may still be running locally; the app
+            // reclaims that job on disconnect, so kill the runtime now or the original keeps executing
+            // to completion and double-runs the requeued copy. (The reconnect path recreates it.)
+            if (reason !== 'io client disconnect') {
+                abortInFlightRuntime()
+            }
             // Socket.IO does NOT auto-reconnect when the server initiates the disconnect
             // (reason 'io server disconnect' — e.g. the API process restarts/hot-reloads).
             // Without a manual reconnect the worker stays dead and silently stops consuming
-            // jobs. 'io client disconnect' is our own shutdown, so leave that alone; every
-            // other reason already triggers Socket.IO's built-in reconnection.
+            // jobs. Every other non-client reason already triggers built-in reconnection.
             if (reason === 'io server disconnect') {
                 socket?.connect()
             }
@@ -88,11 +109,14 @@ export const worker = {
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
         }
+        startSandboxInfoSampling()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
     async stop(): Promise<void> {
         polling = false
+        stopSandboxInfoSampling()
+        await drainInFlightJobs()
         if (runtime) {
             await runtime.shutdown(logger)
             runtime = null
@@ -122,25 +146,13 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    // Shut down the old runtime and bring up a fresh one on every (re)connect — a prior connection's
-    // in-flight job is killed along with its box, so it fails fast and BullMQ retries it as a new attempt
-    // instead of lingering on a reused box. Reusing the box made the next generation's poll loop run a
-    // second operation on the same single-operation engine child (acquire() hands back a busy sandbox)
-    // and let the lingering job's lock lapse during the reconnect → BullMQ marks it "stalled"; a deploy
-    // disconnects every worker at once, so reuse turned that into mass stalls.
-    if (runtime) {
-        logger.info('Shutting down old runtime before creating a new one')
-        const oldRuntime = runtime
-        runtime = null
-        // Fire-and-forget: awaiting the shutdown here is what deadlocked when a prior job was still
-        // in-flight (the await never resolved, polling never restarted, the worker silently stopped
-        // consuming jobs after any transient disconnect). The kill itself still happens.
-        void tryCatch(() => oldRuntime.shutdown(logger)).then(({ error }) => {
-            if (error) {
-                logger.error({ error }, 'Failed to shut down old runtime on reconnect')
-            }
-        })
-    }
+    // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
+    // along with its box (usually already done by the disconnect handler), so it fails fast and is
+    // retried instead of lingering on a reused box. Reusing the box made the next generation's poll
+    // loop run a second operation on the same single-operation engine child (acquire() hands back a
+    // busy sandbox) and let the lingering job's lock lapse during the reconnect → BullMQ "stalled";
+    // a deploy disconnects every worker at once, so reuse turned that into mass stalls.
+    abortInFlightRuntime()
 
     runtime = createSandboxRuntime({
         concurrency,
@@ -198,39 +210,72 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
 
         workerLog.debug({ job: { id: job.jobId, type: job.jobData.jobType } }, 'Job received from poll')
 
-        const lockExtensionInterval = setInterval(() => {
-            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
-                if (error) {
-                    workerLog.warn({ error, job: { id: job.jobId } }, 'Failed to extend lock')
-                }
-            })
-        }, 30_000)
+        // Counted for the duration of execute + completeJob so a graceful shutdown can wait for
+        // the report to land before tearing down the socket (otherwise the job is orphaned in active).
+        inFlightJobs++
+        try {
+            const lockExtensionInterval = setInterval(() => {
+                void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
+                    if (error) {
+                        workerLog.warn({ error, job: { id: job.jobId } }, 'Failed to extend lock')
+                    }
+                })
+            }, 30_000)
 
-        const { data: result, error: execError } = await tryCatch(() =>
-            executeJob(apiClient, job, runtime, workerIndex),
-        )
+            const { data: result, error: execError } = await tryCatch(() =>
+                executeJob(apiClient, job, runtime, workerIndex),
+            )
 
+            const { error: completeError } = await tryCatch(() =>
+                apiClient.completeJob({
+                    jobId: job.jobId,
+                    token: job.token,
+                    queueName: job.queueName,
+                    status: execError
+                        ? EngineResponseStatus.INTERNAL_ERROR
+                        : result.status,
+                    errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
+                    logs: extractLogs(execError ?? undefined, result ?? undefined),
+                    response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
+                }),
+            )
 
-        const { error: completeError } = await tryCatch(() =>
-            apiClient.completeJob({
-                jobId: job.jobId,
-                token: job.token,
-                queueName: job.queueName,
-                status: execError
-                    ? EngineResponseStatus.INTERNAL_ERROR
-                    : result.status,
-                errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
-                logs: extractLogs(execError ?? undefined, result ?? undefined),
-                response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
-            }),
-        )
+            clearInterval(lockExtensionInterval)
 
-        clearInterval(lockExtensionInterval)
-
-        if (completeError) {
-            workerLog.error({ error: completeError, job: { id: job.jobId } }, 'Failed to complete job')
+            if (completeError) {
+                workerLog.error({ error: completeError, job: { id: job.jobId } }, 'Failed to complete job')
+            }
+        }
+        finally {
+            inFlightJobs--
         }
     }
+}
+
+async function drainInFlightJobs(): Promise<void> {
+    const deadline = Date.now() + DRAIN_TIMEOUT_MS
+    while (inFlightJobs > 0 && Date.now() < deadline) {
+        await sleep(100)
+    }
+    if (inFlightJobs > 0) {
+        logger.warn({ inFlightJobs }, 'Drain timeout reached with jobs still in flight; leaving them for the stalled-scan to reclaim')
+    }
+}
+
+// Kill the current runtime (and the job running on it) without awaiting — awaiting the shutdown
+// while a job is in-flight deadlocks (the await never resolves, polling never restarts). Nulling
+// `runtime` lets the next (re)connect create a fresh box.
+function abortInFlightRuntime(): void {
+    if (isNil(runtime)) {
+        return
+    }
+    const oldRuntime = runtime
+    runtime = null
+    void tryCatch(() => oldRuntime.shutdown(logger)).then(({ error }) => {
+        if (error) {
+            logger.error({ error }, 'Failed to shut down runtime')
+        }
+    })
 }
 
 async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
@@ -365,19 +410,48 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
         ip: workerHostname,
-        sandboxes: await buildSandboxInfo(),
+        sandboxes: cachedSandboxInfo,
     }
+}
+
+function startSandboxInfoSampling(): void {
+    if (!isNil(sandboxInfoInterval)) {
+        return
+    }
+    void refreshSandboxInfo()
+    sandboxInfoInterval = setInterval(() => void refreshSandboxInfo(), SANDBOX_INFO_REFRESH_MS)
+    sandboxInfoInterval.unref()
+}
+
+function stopSandboxInfoSampling(): void {
+    if (!isNil(sandboxInfoInterval)) {
+        clearInterval(sandboxInfoInterval)
+        sandboxInfoInterval = null
+    }
+    cachedSandboxInfo = []
+}
+
+async function refreshSandboxInfo(): Promise<void> {
+    const { data, error } = await tryCatch(buildSandboxInfo)
+    if (error) {
+        logger.warn({ error }, 'Failed to refresh sandbox info')
+        return
+    }
+    cachedSandboxInfo = data
 }
 
 async function buildSandboxInfo(): Promise<SandboxInformation[]> {
     const activeExecutors = runtime?.getActiveExecutors() ?? []
-
-    return Promise.all(activeExecutors.map(async (executor) => ({
+    if (activeExecutors.length === 0) {
+        return []
+    }
+    const memoryByPid = await systemUsage.getProcessTreeMemoryBytesByPids(activeExecutors.map((executor) => executor.pid))
+    return activeExecutors.map((executor) => ({
         sandboxId: executor.sandboxId,
         boxId: executor.boxId,
         busy: executor.busy,
-        memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(executor.pid),
-    })))
+        memoryUsageBytes: memoryByPid.get(executor.pid) ?? 0,
+    }))
 }
 
 function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {

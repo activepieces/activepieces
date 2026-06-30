@@ -15,7 +15,7 @@ One flow per worker. A small fleet of those. A thin tier of apps in front. Manag
 | Component | Size each | How many |
 |---|---|---|
 | **Worker** | 0.5 vCPU / 1 GB, concurrency **1** | one per concurrent flow |
-| **App** | 1 vCPU / 1 GB | one per ten workers |
+| **App** | 1 vCPU / 2 GB | one per ten workers |
 | **Postgres** | 2 vCPU / 4 GB, managed | one, grows with the fleet |
 | **Redis** | 1 vCPU / 1 GB, managed | one |
 | **Object storage (S3)** | same region, signed URLs on | required |

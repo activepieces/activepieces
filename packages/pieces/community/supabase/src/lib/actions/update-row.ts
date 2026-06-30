@@ -1,7 +1,8 @@
-import { createAction, Property, DynamicPropsValue } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { updateRowActionOutputSchema } from '../output-schemas';
 
 export const updateRow = createAction({
     name: 'update_row',
@@ -130,6 +131,7 @@ export const updateRow = createAction({
             defaultValue: false,
         })
     },
+    outputSchema: updateRowActionOutputSchema,
     async run(context) {
         const { 
             table_name, 

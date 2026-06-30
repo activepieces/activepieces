@@ -16,6 +16,9 @@ OAuth Apps allow platform owners to register their own OAuth 2.0 application cre
 No explicit plan flag gate. The module is available to all platform users (list endpoint uses `publicPlatform` security; create/delete use `platformAdminOnly`).
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **OAuth App**: A platform-scoped record mapping a piece name to its custom OAuth credentials.
 - **pieceName**: The piece identifier (e.g., `@activepieces/piece-google-sheets`) that this credential applies to.
 - **clientId**: The public OAuth 2.0 client identifier.

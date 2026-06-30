@@ -19,6 +19,9 @@ Folders provide a lightweight organizational layer for flows within a project. E
 - **Cloud**: Fully available.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Folder**: Named group that flows belong to within a project. Display name is unique per project (case-insensitive).
 - **FolderDto**: Folder plus `numberOfFlows: number` and `numberOfTables: number` computed at query time.
 - **displayOrder**: Numeric field for client-side ordering (default 0). Not managed by the backend directly; clients may send the value.

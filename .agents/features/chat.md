@@ -31,10 +31,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration; gates `/v1/chat` with `chatVisibilityGuard` (per-user visibility, not just the `chatEnabled` flag)
 - `packages/server/api/src/app/ee/chat/chat-visibility-helper.ts` — `chatVisibilityGuard` + `resolveChatEnabledForUser` (edition + embed + rollout/grandfather); also used by the platform endpoint to surface the effective `plan.chatEnabled`
-- `packages/server/api/src/app/ee/chat/chat-rollout-service.ts` — cloud rollout cohort: `isRolloutOpen` (cached count vs cap), `hasUserChatted` (grandfather), `recordLanding`/`recordChatted` (deduped upserts), `getFunnelAggregate`
-- `packages/server/api/src/app/ee/chat/chat-rollout-user-entity.ts` — `chat_rollout_user` table (one row per distinct cloud user; landedAt/chattedAt)
-- `packages/server/api/src/app/ee/chat/chat-funnel-sync.ts` — cloud-only fire-and-forget push of the funnel aggregate to console.activepieces.com (auth: `CONSOLE_API_SECRET_KEY`)
-- `packages/server/api/src/app/ee/chat/chat-funnel-tracking-module.ts` — schedules the funnel-sync system job (every 30 min)
+- `packages/server/api/src/app/ee/chat/chat-rollout-service.ts` — cloud rollout cohort: `isRolloutOpen` (cached count vs cap), `hasUserChatted` (grandfather), `recordLanding`/`recordChatted` (deduped upserts into the local `chat_rollout_user` table)
+- `packages/server/api/src/app/ee/chat/chat-rollout-user-entity.ts` — `chat_rollout_user` table (one row per distinct cloud user; `landedAt`/`chattedAt`; `chattedAt` drives the cap)
+- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — `chatAnalyticsTelemetry`: `sendConversationUpdate` (per-save conversation sync) + `sendMessageBillingEvent`, both real-time + cloud-only + license-key Bearer to console.activepieces.com (landing/funnel is tracked locally only — no console landing telemetry)
 - `packages/core/shared/src/lib/ee/chat/chat-visibility.ts` — pure `resolveChatEnabled` (CE never / EE flag / embed never / Cloud `flag || rolloutOpen || userHasChatted`)
 - `packages/server/api/src/app/ee/chat/chat-controller.ts` — HTTP endpoints (conversations CRUD, messages, tool approvals)
 - `packages/server/api/src/app/ee/chat/chat-eval-controller.ts` — admin eval/playground endpoints: prompt-source inspection, batch dry-run simulate, and the interactive single-turn eval (stateful `turn/start` + state-poll) backing the console's live prompt playground
@@ -53,7 +52,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/server/api/src/app/ee/chat/mcp/chat-mcp.ts` — connects to Activepieces MCP server for project-scoped tools with approval wrapping
 - `packages/server/api/src/app/ee/chat/history/chat-history.ts` — reconstructs chat history from AI SDK `ModelMessage` format
 - `packages/server/api/src/app/ee/chat/prompt/chat-prompt.ts` — builds system prompt from markdown templates in `src/assets/prompts/`
-- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — exposes `chatAnalyticsTelemetry` with two fire-and-forget paths (cloud-only): `sendConversationUpdate` syncs the full conversation to console.activepieces.com (grouped by platform, authenticated with each platform's license key from `platform_plan` as a Bearer token; platforms without a license key are skipped), and `sendMessageBillingEvent` emits a PostHog `chat_message` billing event (`BillingEvents.CHAT_MESSAGE`, keyed by license key as `distinctId`, with `provider`/`model`/`toolsUsed` from the latest turn). Also exposes `chatAnalyticsBulkSync` for admin bulk sync; falls back to reconstructing messages from raw ModelMessage[] when uiMessages is null
+- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — exposes `chatAnalyticsTelemetry` with two fire-and-forget paths (cloud-only): `sendConversationUpdate` syncs the full conversation to console.activepieces.com — **all** cloud conversations are sent (licensed and free), authenticated once with the instance `CONSOLE_API_SECRET_KEY` as a Bearer token; each conversation carries its own platform license key in the payload (`null` for free platforms with no `platform_plan.licenseKey`), which console stamps onto the row. `sendMessageBillingEvent` emits a PostHog `chat_message` billing event (`BillingEvents.CHAT_MESSAGE`, keyed by license key as `distinctId`, with `provider`/`model`/`toolsUsed` from the latest turn). Also exposes `chatAnalyticsBulkSync` for admin bulk sync; falls back to reconstructing messages from raw ModelMessage[] when uiMessages is null
 - `packages/core/shared/src/lib/ee/chat/index.ts` — shared Zod schemas, types (ChatConversation, request DTOs, ChatHistoryMessage), typed tool outputs (`ChatToolOutputs`); includes `PersistedActionReceiptPartSchema` for persisting action receipts, and `PersistedSourceUrlPartSchema` / `PersistedSourceDocumentPartSchema` for persisting web-search citations, in conversation history; `PersistedToolCallPartSchema` includes optional `title` and `description` fields for UI chip label and conversational status text
 - `packages/web/src/app/routes/chat-with-ai/index.tsx` — main chat page component
 - `packages/web/src/app/routes/chat-with-ai/ai-chat-box.tsx` — chat interface with provider check, message streaming, Zustand store provider; manages suggestion prefill via counter-based key remount on empty-state suggestion clicks
@@ -78,6 +77,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - Cloud: shown to all normal (non-embed) cloud users during a capped beta **without** requiring `chatEnabled` — see **Cloud rollout cap**. Embedded cloud sessions never show chat; a platform that has `chatEnabled` (e.g. cloud enterprise) always keeps it
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ChatConversation** — a persisted conversation between a user and the AI assistant, scoped to a platform and user; optionally scoped to a project for tool access
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that blocks on user input until the user responds in the UI; times out after 5 minutes. Used to wait on display-tool cards (connection picker, multi-question card, project picker), the ad-hoc action-preview gate, and the test-flow write gate. Flow build and publish and most MCP tools are NOT gated; `ap_test_flow` is gated only when the flow contains a write/destructive step (see **Write-check gate**)
@@ -103,7 +105,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **Credits warning banner** — a dismissible amber banner shown when Activepieces AI credits usage reaches 70%; a non-dismissible red banner is shown when credits are fully exhausted
 - **Cloud rollout cap** — on cloud, chat opens to all non-embed users without the `chatEnabled` flag until **200 distinct users have sent a message** (`CLOUD_CHAT_ROLLOUT_CAP`, overridable via `AP_CLOUD_CHAT_ROLLOUT_CAP`). Enforced cloud-local as a single global cohort counted in `chat_rollout_user`; monotonic (closed state cached in Redis); visibility decided per-user by `chatVisibility.resolveChatEnabled`
 - **Grandfathered users** — once the cap closes, users who already chatted keep chat (`hasUserChatted`); new cloud users no longer see it
-- **Chat funnel telemetry** — distinct users who landed on the chat page (`recordLanding`) vs. who sent a message (`recordChatted`), plus progress toward the cap; a cloud-only scheduled job (`chat-funnel-sync`) pushes the `{ landed, chatted, cap, closed }` aggregate to console.activepieces.com (separate from the PostHog billing event)
+- **Chat rollout cohort** — the cap/grandfathering cohort is tracked **locally** in `chat_rollout_user` (`recordChatted` on first message; cloud-only, deduped, no license key needed; `chattedAt` drives the cap). There is no landing telemetry — no scheduled funnel job, no `/funnel/landing` endpoint, no console landing endpoint.
+- **Console chat-analytics** — `sendConversationUpdate` ships **all** cloud chat conversations (licensed and free) to console.activepieces.com via `sendConversationUpdate`. Free-tier conversations arrive with `license_key = null` and are distinguishable there by a free-tier filter; licensed conversations carry their platform's real license key.
 
 ## Data Model
 
@@ -111,9 +114,9 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - Relations: platform (many-to-one), project (many-to-one, SET NULL on delete), user (many-to-one, CASCADE on delete)
 - Index: `idx_chat_conversation_platform_user_created_id` on (platformId, userId, created, id)
 
-**ChatRolloutUser** (`chat_rollout_user`, cloud rollout/funnel): id, userId (unique), platformId, landedAt (nullable), chattedAt (nullable).
-- Partial indexes on `chattedAt` and `landedAt` (WHERE NOT NULL) for cheap cohort/funnel counts; FKs to user + platform (CASCADE on delete).
-- Rows with `chattedAt IS NOT NULL` are the rollout cohort (capped at 200). The cap/funnel `COUNT`s are **intentionally global** (not tenant-scoped) — a single cloud-wide cohort.
+**ChatRolloutUser** (`chat_rollout_user`, cloud rollout cohort): id, userId (unique), platformId, landedAt (nullable — set by `recordLanding` on chat-page mount), chattedAt (nullable — set on first message; drives the cap).
+- Partial indexes on `chattedAt` and `landedAt` (WHERE NOT NULL); FKs to user + platform (CASCADE on delete).
+- Rows with `chattedAt IS NOT NULL` are the rollout cohort (capped at 200). The cap `COUNT` is **intentionally global** (not tenant-scoped) — a single cloud-wide cohort.
 
 ## Key Service Methods
 - `createConversation()` — creates a new conversation for a user on a platform; accepts an optional explicit `id` (defaults to `apId()`) so the interactive eval can mint a reserved-prefix conversation id
@@ -152,7 +155,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `POST /v1/chat/conversations/:id/messages` — send message; if the conversation is STREAMING the old run is cancelled; response body is `{ conversationId, runId }` — clients use runId to filter stale events
 - `POST /v1/chat/tool-approvals/:gateId` — approve or deny a tool execution
 - `POST /v1/chat/conversations/:id/cancel` — cancel an in-progress streaming response
-- `POST /v1/chat/funnel/landing` — record that the user landed on the chat page (cloud rollout funnel; deduped per user, no-op off cloud)
+- `POST /v1/chat/funnel/landing` — record that the user landed on the chat page (`chatRolloutService.recordLanding`; cloud rollout funnel, deduped per user, local-only, no-op off cloud)
 - `GET /v1/chat/conversations/:id/connections?pieceName=` — get available connections for connection picker; falls back to `findConnectionsForPiece` when the Redis cache is empty and stores the result for future calls
 - `GET /v1/chat/conversations/:id/pending-gate` — get pending approval gate for refresh resilience (returns gate info so the frontend can re-show display tool cards)
 - `GET /v1/chat/eval/prompt-sources` — returns the raw prompt template sources (core + project-context + on-demand guides); requires the global eval API key

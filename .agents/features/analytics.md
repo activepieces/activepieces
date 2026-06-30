@@ -22,6 +22,9 @@ The Analytics module provides platform-level reporting on automation usage: dail
 - **Cloud**: Available when `analyticsEnabled` is true on the platform plan.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **PlatformAnalyticsReport**: Cached entity holding daily run aggregations, enabled-flow metadata, and user list for a platform.
 - **AnalyticsTimePeriod**: Enum for time windows (`LAST_WEEK`, `LAST_MONTH`, `LAST_THREE_MONTHS`, `LAST_SIX_MONTHS`, `LAST_YEAR`).
 - **timeSavedPerRun**: Per-flow estimate (in minutes) of manual time saved per automation run; editable by the flow owner.

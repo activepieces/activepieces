@@ -12,6 +12,7 @@ import {
 } from '@activepieces/pieces-common';
 import { getCalendars } from '../common/helper';
 import { CalendarObject } from '../common/types';
+import { calendarOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
@@ -114,6 +115,7 @@ export const newCalendar = createTrigger({
       defaultValue: false,
     }),
   },
+  outputSchema: calendarOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: 'sample_calendar_id@group.calendar.google.com',

@@ -114,3 +114,80 @@ jobs:
             fi
           done
           exit $status
+
+  # Runs ONLY the tool-search integration tests against a real PostgreSQL + pgvector
+  # service container. The default `main` job above runs these on PGLITE, which papers
+  # over node-postgres-specific driver behaviour (e.g. TypeORM `.query()` returning
+  # `[rows, count]` instead of a plain rows array). This job exists to catch that class
+  # of bug. It is intentionally scoped and additive — it does NOT change how the main
+  # suite runs.
+  tool-search-postgres:
+    name: tool-search (postgres)
+    runs-on: ubuntu-latest
+    if: github.repository == 'activepieces/activepieces'
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: activepieces
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      # dotenv (vitest.setup.ts) loads .env.tests WITHOUT overriding values already
+      # present in the environment, so these job-level vars win over the PGLITE defaults.
+      AP_DB_TYPE: POSTGRES
+      AP_POSTGRES_HOST: localhost
+      AP_POSTGRES_PORT: "5432"
+      AP_POSTGRES_DATABASE: activepieces
+      AP_POSTGRES_USERNAME: postgres
+      AP_POSTGRES_PASSWORD: postgres
+      AP_POSTGRES_USE_SSL: "false"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.4.2
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 3w
+          max-size: 20gb
+
+      - name: Enable pgvector extension
+        # The pgvector image ships the extension binary but does not auto-create it in the
+        # database. The tool_search_index migration skips table creation when `vector` is
+        # absent, and the DB-only test never boots the server path that would CREATE it,
+        # so create it explicitly before migrations run.
+        run: |
+          PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d activepieces \
+            -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+
+      - name: Build api
+        run: npx turbo run build --filter=api
+
+      - name: Run tool-search integration tests on Postgres
+        working-directory: packages/server/api
+        run: npx vitest run test/integration/ce/tool-search --bail 1 --passWithNoTests=false

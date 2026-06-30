@@ -473,7 +473,7 @@ async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchP
     return foundPiece ?? null
 }
 
-async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
+export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
     const allKeys = await pieceRepos()
         .createQueryBuilder('pm')
         .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])

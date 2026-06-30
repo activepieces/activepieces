@@ -1,6 +1,7 @@
 import { createAction, Property, StoreScope } from '@activepieces/pieces-framework';
 import { groqAuth } from '../..';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { askAiActionOutputSchema } from '../output-schemas';
 
 export const askGroq = createAction({
   audience: 'human',
@@ -107,6 +108,7 @@ export const askGroq = createAction({
 			defaultValue: [{ role: 'system', content: 'You are a helpful assistant.' }],
 		}),
 	},
+	outputSchema: askAiActionOutputSchema,
 	async run({ auth, propsValue, store }) {
 		const {
 			model,

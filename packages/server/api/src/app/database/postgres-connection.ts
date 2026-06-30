@@ -51,6 +51,7 @@ import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/175
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { AddUiMessagesToChatConversation1778983371000 } from './migration/common/1778983371000-AddUiMessagesToChatConversation'
 import { AddStatusToChatConversation1779500000000 } from './migration/common/1779500000000-AddStatusToChatConversation'
+import { AddTimelineToFlowRun1800000000000 } from './migration/common/1800000000000-AddTimelineToFlowRun'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -387,10 +388,11 @@ import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postg
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
-import { AddFilteredComponentNamesToPlatform1800000000000 } from './migration/postgres/1800000000000-AddFilteredComponentNamesToPlatform'
-import { AddPieceSetTable1801000000000 } from './migration/postgres/1801000000000-AddPieceSetTable'
-import { MigratePieceSetConfig1802000000000 } from './migration/postgres/1802000000000-MigratePieceSetConfig'
-import { BackfillPieceSets1803000000000 } from './migration/postgres/1803000000000-BackfillPieceSets'
+import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
+import { AddFilteredComponentNamesToPlatform1802000000000 } from './migration/postgres/1802000000000-AddFilteredComponentNamesToPlatform'
+import { AddPieceSetTable1803000000000 } from './migration/postgres/1803000000000-AddPieceSetTable'
+import { MigratePieceSetConfig1804000000000 } from './migration/postgres/1804000000000-MigratePieceSetConfig'
+import { BackfillPieceSets1805000000000 } from './migration/postgres/1805000000000-BackfillPieceSets'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -793,10 +795,12 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiToolConfigTable1797000000000,
         AddChatConversationActiveRunId1798000000000,
         AddChatRolloutUserTable1799000000000,
-        AddFilteredComponentNamesToPlatform1800000000000,
-        AddPieceSetTable1801000000000,
-        MigratePieceSetConfig1802000000000,
-        BackfillPieceSets1803000000000,
+        AddTimelineToFlowRun1800000000000,
+        AddToolSearchIndexTable1801000000000,
+        AddFilteredComponentNamesToPlatform1802000000000,
+        AddPieceSetTable1803000000000,
+        MigratePieceSetConfig1804000000000,
+        BackfillPieceSets1805000000000,
     ]
     return migrations
 }

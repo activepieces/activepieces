@@ -35,6 +35,9 @@ The Enterprise Authentication module extends the Community Edition auth layer wi
 - **Cloud**: All features available; same plan flags apply.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **SAML SSO**: Security Assertion Markup Language single sign-on; users authenticate at an external IdP (Okta, JumpCloud, etc.) and are redirected back with a signed assertion.
 - **ACS (Assertion Consumer Service)**: The endpoint (`/v1/authn/saml/acs`) that receives and validates the IdP POST after SAML authentication.
 - **Federated auth**: OAuth-based login via Google or GitHub; `POST /v1/authn/federated/login` initiates, `POST /v1/authn/federated/claim` completes.

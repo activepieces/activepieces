@@ -18,6 +18,9 @@ The File Storage Service is the central infrastructure for persisting binary fil
 - **Cloud**: Fully available. Cloud typically configures S3 as the storage location for execution files.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **FileType**: Categorizes the purpose of a file. Controls storage location (DB vs S3) and retention policy.
 - **FileLocation**: `DB` (stored as `bytea` in Postgres) or `S3` (stored in an S3-compatible bucket with the S3 key recorded in the `s3Key` column).
 - **FileCompression**: `NONE` or `ZSTD`. Applied to execution data files to reduce storage size. Decompression is transparent on read, including legacy auto-detection via magic bytes.

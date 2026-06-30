@@ -16,7 +16,7 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
     },
 
     updateStepProgress({ projectId, request }: UpdateStepProgressParams): void {
-        websocketService.to(projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, { ...request, projectId })
+        websocketService.to(projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, request)
     },
 
     async sendFlowResponse({ request }: SendFlowResponseParams): Promise<void> {
@@ -28,12 +28,14 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
 
     async uploadRunLog({ projectId, request }: UploadRunLogParams): Promise<void> {
         const internalErrorEnabled = request.internalError?.source === RunInternalErrorSource.ENGINE || system.getEdition() !== ApEdition.CLOUD
-        if (internalErrorEnabled && !isNil(request.internalError) && !isNil(request.logsFileId)) {
-            await persistInternalErrorToLogs({
+        const internalError = internalErrorEnabled ? request.internalError : undefined
+        const isTerminal = !isNil(request.status) && isFlowRunStateTerminal({ status: request.status, ignoreInternalError: false })
+        if (isTerminal && !isNil(request.logsFileId)) {
+            await ensureLogsFileExists({
                 log,
                 projectId,
                 logsFileId: request.logsFileId,
-                internalError: request.internalError,
+                internalError,
             })
         }
         const logData: RunsMetadataUpsertData = {
@@ -47,16 +49,15 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
             finishTime: request.finishTime,
             stepsCount: request.stepsCount,
             stepNameToTest: request.stepNameToTest,
+            provisionMs: request.provisionMs,
+            bootMs: request.bootMs,
+            runMs: request.runMs,
         }
         await runsMetadataQueue(log).add(logData)
 
         if (request.stepResponse && request.streamStepProgress === StreamStepProgress.WEBSOCKET) {
             const stepData = { ...request.stepResponse, projectId }
-            const isTerminalStatus = isFlowRunStateTerminal({
-                status: request.status,
-                ignoreInternalError: false,
-            })
-            if (!isTerminalStatus) {
+            if (!isTerminal) {
                 websocketService.to(projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, stepData)
             }
             else {
@@ -66,19 +67,26 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function persistInternalErrorToLogs({ log, projectId, logsFileId, internalError }: PersistInternalErrorParams): Promise<void> {
+async function ensureLogsFileExists({ log, projectId, logsFileId, internalError }: EnsureLogsFileParams): Promise<void> {
     const { error } = await tryCatch(async () => {
-        const existing = await fileService(log).getDataOrUndefined({
+        const fileExists = await fileService(log).exists({
             projectId,
             fileId: logsFileId,
             type: FileType.FLOW_RUN_LOG,
         })
+        if (fileExists && isNil(internalError)) {
+            return
+        }
+
+        const existing = fileExists
+            ? await fileService(log).getDataOrUndefined({ projectId, fileId: logsFileId, type: FileType.FLOW_RUN_LOG })
+            : undefined
         const outputFile: ExecutioOutputFile = !isNil(existing)
             ? JSON.parse(existing.data.toString('utf-8'))
             : { executionState: { steps: {}, tags: [] } }
 
         const data = await fileCompressor.compress({
-            data: await logSerializer.serialize({ ...outputFile, internalError }),
+            data: await logSerializer.serialize(isNil(internalError) ? outputFile : { ...outputFile, internalError }),
             compression: FileCompression.ZSTD,
         })
 
@@ -95,7 +103,7 @@ async function persistInternalErrorToLogs({ log, projectId, logsFileId, internal
     })
 
     if (error) {
-        log.error({ error, logsFileId, project: { id: projectId } }, '[uploadRunLog] Failed to persist internal error to logs file')
+        log.error({ error, logsFileId, project: { id: projectId } }, '[uploadRunLog] Failed to ensure logs file exists')
     }
 }
 
@@ -118,9 +126,9 @@ type UploadRunLogParams = {
     request: UploadRunLogsRequest
 }
 
-type PersistInternalErrorParams = {
+type EnsureLogsFileParams = {
     log: FastifyBaseLogger
     projectId: string
     logsFileId: string
-    internalError: RunInternalError
+    internalError?: RunInternalError
 }

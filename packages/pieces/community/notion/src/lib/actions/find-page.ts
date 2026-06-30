@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { findPageActionOutputSchema } from '../output-schemas';
 
 export const findPage = createAction({
   auth: notionAuth,
@@ -36,6 +37,7 @@ export const findPage = createAction({
       defaultValue: 10,
     }),
   },
+  outputSchema: findPageActionOutputSchema,
   async run(context) {
     const { title, exact_match, limit } = context.propsValue;
 
