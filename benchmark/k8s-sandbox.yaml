@@ -50,14 +50,37 @@ spec:
       containers:
         - name: postgres
           image: postgres:14.4
+          # The shared singleton the whole fleet's callback traffic lands on. Two walls were capping
+          # warm throughput before the fleet's workers were ever busy, making the curve sub-linear:
+          #   1. Connections. Default max_connections=100, but each app pod opens a node-postgres pool
+          #      (~10). At 1:10 the 12-app row alone wants ~120 > 100 — the exact point the old curve
+          #      cracked (80 fine, 120 collapsed). Raised to 2000 so apps×pool never starves.
+          #   2. Commit throughput. Every run still does a few commits; default fsync+WAL on the node
+          #      disk caps a single PG at a few hundred fsync/s. This DB is ephemeral (emptyDir, torn
+          #      down with the run) so durability buys nothing here — fsync/synchronous_commit/
+          #      full_page_writes off turns commits into pure CPU, and the data dir is tmpfs (RAM).
+          args:
+            - postgres
+            - "-c"
+            - "max_connections=2000"
+            - "-c"
+            - "shared_buffers=1GB"
+            - "-c"
+            - "fsync=off"
+            - "-c"
+            - "synchronous_commit=off"
+            - "-c"
+            - "full_page_writes=off"
           env:
             - { name: POSTGRES_DB, value: activepieces }
             - { name: POSTGRES_USER, value: postgres }
             - { name: POSTGRES_PASSWORD, value: password }
           ports: [{ containerPort: 5432 }]
-          resources: { requests: { cpu: "500m", memory: 512Mi } }
+          # No CPU limit so PG can burst on a node with spare cores; generous request reserves headroom.
+          resources: { requests: { cpu: "3", memory: 3Gi } }
           volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
-      volumes: [{ name: data, emptyDir: {} }]
+      # tmpfs data dir: this DB lives only for the run, so back it with RAM and skip disk I/O entirely.
+      volumes: [{ name: data, emptyDir: { medium: Memory, sizeLimit: 2Gi } }]
 ---
 apiVersion: v1
 kind: Service
@@ -78,8 +101,14 @@ spec:
       containers:
         - name: redis
           image: redis:7.0.7
+          # The other shared singleton: BullMQ queue + per-app sync-response pub/sub + run-metadata
+          # coalescing all land here, and 160 blocking-pop workers keep it busy even at idle. Redis
+          # executes commands on one thread, so extra cores only help network I/O — io-threads spreads
+          # socket read/write across 4 threads (matters at this connection count). appendonly stays off
+          # (durability is pointless for an ephemeral bench) so no fork/rewrite stalls under load.
+          args: ["redis-server", "--io-threads", "4", "--io-threads-do-reads", "yes", "--save", "", "--appendonly", "no"]
           ports: [{ containerPort: 6379 }]
-          resources: { requests: { cpu: "250m", memory: 256Mi } }
+          resources: { requests: { cpu: "2", memory: 2Gi } }
 ---
 apiVersion: v1
 kind: Service
