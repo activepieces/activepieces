@@ -103,7 +103,7 @@ const { token } = await response.json()
 
 Automatic on connection retrieval:
 1. `lockAndRefreshConnection()` checks if OAuth token expired (15-min early refresh threshold)
-2. If expired: acquires distributed Redis lock (`key = ${projectId}_${externalId}`, 60s timeout)
+2. If expired: acquires distributed Redis lock (`key = ${platformId}_${externalId}`, 60s timeout) — keyed on the connection's project-invariant identity so projects sharing a connection serialize on one lock
 3. Calls OAuth2 handler's `refresh()` method (different per type: cloud/platform/credentials)
 4. Re-encrypts updated tokens, stores in DB, sets status=ACTIVE
 5. On error (invalid refresh token): sets status=ERROR
@@ -130,7 +130,7 @@ PieceAuth.CustomAuth({
 1. `needRefresh()` checks `connection.value.access_token`:
    - Present → stale once `now >= token_refresh_at` (the precomputed refresh instant)
    - Absent → consult `pieceRefreshSupportCache` (in-process LRU, 500 entries, 5-min TTL keyed by `pieceName@pieceVersion`); on cache miss, load piece metadata and check for `refresh` callback; result cached for future executions
-2. If refresh needed: acquires the same distributed Redis lock (`key = ${projectId}_${externalId}`, 60s)
+2. If refresh needed: acquires the same distributed Redis lock (`key = ${platformId}_${externalId}`, 60s)
 3. Dispatches `EXECUTE_TOKEN_REFRESH` worker job (user-interaction queue, same pattern as `EXECUTE_VALIDATION`)
 4. Engine calls the piece's `refresh.generate()` callback, returns `{ access_token, expires_in? }`
 5. `access_token` and `token_refresh_at` stored encrypted in `CustomAuthConnectionValue`, status=ACTIVE. `token_refresh_at = now + expiresIn - min(15 min, expiresIn / 2)` so the 15-min early-refresh buffer never exceeds half the token's lifetime (a short-lived token would otherwise be stale the instant it is minted); `expiresIn <= 0` means "never expires" → `token_refresh_at` is left unset

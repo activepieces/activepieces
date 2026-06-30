@@ -184,7 +184,7 @@ Inside `validate`, the callback receives the flat shape — `auth.base_url`, `au
 
 Use this when the API requires a login call to get a short-lived token (e.g. username/password → JWT). Without caching, every action triggers a login request and can cause **429 rate limit errors**.
 
-Add a `refresh` field to cache the token server-side. Activepieces renews it automatically 15 minutes before expiry.
+Add a `refresh` field to cache the token server-side. Activepieces renews it automatically up to 15 minutes before expiry (clamped to half the token lifetime for short-lived tokens).
 
 ```typescript
 export const myAppAuth = PieceAuth.CustomAuth({

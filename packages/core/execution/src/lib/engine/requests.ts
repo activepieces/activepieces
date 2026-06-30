@@ -29,7 +29,8 @@ export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
 
 export const UpdateStepProgressRequest = z.object({
     projectId: z.string(),
-    stepResponse: StepRunResponse,
+    runId: z.string(),
+    output: z.unknown(),
 })
 export type UpdateStepProgressRequest = z.infer<typeof UpdateStepProgressRequest>
 

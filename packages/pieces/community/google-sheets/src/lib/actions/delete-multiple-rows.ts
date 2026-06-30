@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
+import { deleteMultipleRowsActionOutputSchema } from '../output-schemas';
 
 export const deleteMultipleRowsAction = createAction({
 	auth: googleSheetsAuth,
@@ -42,6 +43,7 @@ export const deleteMultipleRowsAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: deleteMultipleRowsActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { spreadsheetId, sheetId, mode, startingRow, endingRow, rowNumbers } = propsValue;
 

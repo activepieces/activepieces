@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { ModelModality } from '@aws-sdk/client-bedrock';
-import { awsBedrockAuth } from '../auth';
+import { awsBedrockCombinedAuth } from '../auth';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,
@@ -10,7 +10,7 @@ import {
 
 export const generateImage = createAction({
   audience: 'human',
-  auth: awsBedrockAuth,
+  auth: awsBedrockCombinedAuth,
   name: 'generate_image',
   displayName: 'Generate Image',
   description:
@@ -19,10 +19,10 @@ export const generateImage = createAction({
     model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       description: 'The image generation model to use.',
       refreshers: [],
-      options: async ({ auth }) => {
+      options: async ({ auth }, { server }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -32,7 +32,7 @@ export const generateImage = createAction({
         }
         return getBedrockModelOptions(auth.props, {
           outputModality: ModelModality.IMAGE,
-        });
+        }, server);
       },
     }),
     prompt: Property.LongText({
@@ -65,8 +65,8 @@ export const generateImage = createAction({
         'A seed for reproducible results. Use the same seed and prompt to get the same image.',
     }),
   },
-  async run({ auth, propsValue, files }) {
-    const client = createBedrockRuntimeClient(auth.props);
+  async run({ auth, propsValue, files, server }) {
+    const client = await createBedrockRuntimeClient({ auth: auth.props, server });
     const { model, prompt, negativePrompt, width, height, seed } = propsValue;
 
     const isTitan = model.startsWith('amazon.titan-image');

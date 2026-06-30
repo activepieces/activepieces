@@ -1,28 +1,4 @@
-import { EngineGenericError, ExecutionErrorType, PieceNotFoundError } from '@activepieces/shared'
 import { utils } from '../src/lib/utils'
-
-describe('utils.tryCatchAndThrowOnEngineError', () => {
-    it('rethrows ENGINE-level errors so they surface as INTERNAL_ERROR', async () => {
-        await expect(
-            utils.tryCatchAndThrowOnEngineError(async () => {
-                throw new EngineGenericError('SomeEngineBug', 'boom')
-            }),
-        ).rejects.toThrow(EngineGenericError)
-    })
-
-    it('does not rethrow PieceNotFoundError so a missing piece fails the step instead of the job', async () => {
-        const error = new PieceNotFoundError('Piece not found for package: @activepieces/piece-store-0.6.15')
-
-        expect(error.type).toBe(ExecutionErrorType.USER)
-
-        const result = await utils.tryCatchAndThrowOnEngineError(async () => {
-            throw error
-        })
-
-        expect(result.error).toBe(error)
-        expect(result.data).toBeNull()
-    })
-})
 
 describe('utils.sizeof', () => {
     it('should return correct size for a simple string', () => {

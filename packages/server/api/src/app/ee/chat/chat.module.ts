@@ -1,8 +1,8 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { chatController } from './chat-controller'
+import { chatVisibilityGuard } from './chat-visibility-helper'
 
 export const chatModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.chatEnabled))
+    app.addHook('preHandler', chatVisibilityGuard)
     await app.register(chatController, { prefix: '/v1/chat' })
 }
