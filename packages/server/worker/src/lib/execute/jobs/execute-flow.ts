@@ -19,15 +19,18 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             throw provisionError
         }
 
+        // A deleted/disabled flow can't run — the run is correctly marked FAILED, but the job itself must
+        // COMPLETE, not return INTERNAL_ERROR. INTERNAL_ERROR fails+retries the job and pages oncall for a
+        // user condition (the flow was disabled/removed while jobs were still queued).
         if (resolved.kind === 'flow-not-found') {
             ctx.log.info({ flowVersion: { id: data.flowVersionId } }, 'Flow version not found, skipping')
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
-            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
         if (resolved.kind === 'disabled') {
             await reportFlowStatus(ctx, data, FlowRunStatus.FAILED)
-            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
         // resolved.kind === 'ready' — flowVersion is guaranteed present when flow: is passed to resolve

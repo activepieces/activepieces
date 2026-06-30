@@ -1,6 +1,6 @@
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
+import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
@@ -78,6 +78,12 @@ export const engineFileApi = {
             ...RETRY_CONFIG,
         })
         if (!response.ok) {
+            // A gone file (deleted/expired trigger payload or run log) never recovers on retry and is a
+            // data-lifecycle issue, not an engine bug — surface it as a USER error so callers can fail the
+            // run cleanly. Other non-ok statuses (5xx, throttling) may be transient, so keep them ENGINE.
+            if (response.status === 404 || response.status === 410) {
+                throw new EngineFileNotFoundError(fileId)
+            }
             throw new EngineGenericError(
                 'EngineFileDownloadError',
                 `Failed to download file ${fileId}: ${response.status} ${response.statusText}`,
