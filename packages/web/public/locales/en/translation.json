@@ -59,6 +59,7 @@
   "Item": "Item",
   "itemCount": "{count, plural, =1 {1 item} other {# items}}",
   "Output": "Output",
+  "Overview": "Overview",
   "On success": "On success",
   "On failure": "On failure",
   "Search variables": "Search variables",
@@ -126,6 +127,8 @@
   "You have incomplete steps": "You have incomplete steps",
   "Discarding changes...": "Discarding changes...",
   "Publishing...": "Publishing...",
+  "Run By": "Run By",
+  "Run Details": "Run Details",
   "Run Succeeded": "Run Succeeded",
   "Run Failed": "Run Failed",
   "Run Paused": "Run Paused",
@@ -873,6 +876,8 @@
   "You need a personal project to generate the handler flow.": "You need a personal project to generate the handler flow.",
   "Flow import returned no flow.": "Flow import returned no flow.",
   "Flow run started": "Flow run started",
+  "Flow runs": "Flow runs",
+  "Action runs": "Action runs",
   "Flow run finished": "Flow run finished",
   "Fires for every finished run — successful and failed.": "Fires for every finished run — successful and failed.",
   "Flow run resumed": "Flow run resumed",
@@ -2077,5 +2082,8 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "No action runs yet": "No action runs yet",
+  "Runs of individual actions (via MCP, chat, or the API) will appear here.": "Runs of individual actions (via MCP, chat, or the API) will appear here.",
+  "Code": "Code"
 }

@@ -66,6 +66,7 @@ export function getEngineTimeout(operationType: EngineOperationType, flowTimeout
     switch (operationType) {
         case EngineOperationType.EXECUTE_FLOW:
             return flowTimeoutSandbox
+        case EngineOperationType.EXECUTE_ACTION:
         case EngineOperationType.EXECUTE_PROPERTY:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:
         case EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH:
