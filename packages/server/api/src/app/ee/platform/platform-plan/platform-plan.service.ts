@@ -107,6 +107,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             users: usersCount,
             creditsUsed: credits?.usage ?? 0,
             creditsRemaining: isNil(credits) ? 0 : credits.remaining,
+            creditsNextResetAt: credits?.nextResetAt ?? null,
             appSumoAiCredits: isNil(appSumo) ? null : appSumo.usage,
             appSumoAiCreditsRemaining: isNil(appSumo) ? null : Math.max(0, appSumo.limit - appSumo.usage),
         }

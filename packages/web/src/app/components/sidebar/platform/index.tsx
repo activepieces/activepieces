@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { BotIcon } from '@/components/icons/bot';
+import { ChartLineIcon } from '@/components/icons/chart-line';
 import {
   ChevronLeftIcon,
   ChevronLeftIconHandle,
@@ -99,8 +100,14 @@ export function PlatformSidebar() {
     },
     {
       to: '/platform/setup/billing',
-      label: t('Billing'),
+      label: t('Billing & subscription'),
       icon: ReceiptIcon,
+      locked: edition === ApEdition.COMMUNITY,
+    },
+    {
+      to: '/platform/setup/usage',
+      label: t('Usage'),
+      icon: ChartLineIcon,
       locked: edition === ApEdition.COMMUNITY,
     },
     {

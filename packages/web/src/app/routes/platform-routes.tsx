@@ -8,6 +8,7 @@ import { Error, Success } from '@/features/billing';
 import { PlatformLayout } from '../components/platform-layout';
 
 const SettingsBilling = React.lazy(() => import('./platform/billing'));
+const SettingsUsage = React.lazy(() => import('./platform/usage'));
 const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
@@ -223,6 +224,18 @@ export const platformRoutes = [
         <PageTitle title="Billing">
           <SuspenseWrapper>
             <SettingsBilling />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/setup/usage',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Usage">
+          <SuspenseWrapper>
+            <SettingsUsage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -17,12 +16,9 @@ export function ManagePlanDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
-      <DialogContent className="max-w-[520px]">
+      <DialogContent className="max-w-[1100px]">
         <DialogHeader>
-          <DialogTitle>{t('Manage Plan')}</DialogTitle>
-          <DialogDescription>
-            {t('Choose the plan that fits your team.')}
-          </DialogDescription>
+          <DialogTitle>{t('Explore plans')}</DialogTitle>
         </DialogHeader>
         <PlanSelector enabled={isOpen} onSelected={closeDialog} />
       </DialogContent>

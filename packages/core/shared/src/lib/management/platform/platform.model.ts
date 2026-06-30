@@ -11,6 +11,7 @@ export enum FilteredPieceBehavior {
 export const PlatformUsage = z.object({
     creditsUsed: z.number(),
     creditsRemaining: Nullable(z.number()),
+    creditsNextResetAt: Nullable(z.number()),
     appSumoAiCredits: Nullable(z.number()),
     appSumoAiCreditsRemaining: Nullable(z.number()),
     activeFlows: z.number(),

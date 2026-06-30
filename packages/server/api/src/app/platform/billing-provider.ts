@@ -107,6 +107,7 @@ export type AppSumoAiCreditsUsage = {
 export type CreditsUsage = {
     usage: number
     remaining: number | null
+    nextResetAt: number | null
 }
 
 export type ConsumablesUsage = {

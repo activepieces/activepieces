@@ -29,7 +29,7 @@ const CREDENTIALS_CACHE_MAX_ENTRIES = 10000
 
 const credentialsCache: LRU<ResolvedAutumnCredentials> = lru(CREDENTIALS_CACHE_MAX_ENTRIES, CREDENTIALS_CACHE_TTL_MS)
 
-const AUTUMN_CONSOLE_URL = 'https://orleans-hash-mike-recorder.trycloudflare.com'
+const AUTUMN_CONSOLE_URL = 'https://ribbon-knowledgestorm-zope-forgotten.trycloudflare.com'
 const AUTUMN_FREE_PLAN_ID = 'free'
 
 // Consumable credit features are refilled by auto-top-up ONLY — never a manual one-off purchase (product
@@ -278,7 +278,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             enabled: true,
             threshold: params.minThreshold,
             quantity: params.creditsToAdd,
-            maxMonthlyLimit: params.maxMonthlyLimit,
+            maxMonthlyTopUps: params.maxMonthlyTopUps,
             setupPaymentReturnUrl,
         })
         return isNil(setupPaymentUrl) ? {} : { setupPaymentUrl }
@@ -395,7 +395,7 @@ function toCreditsUsage(balance: Balance | undefined): CreditsUsage | null {
     if (isNil(balance)) {
         return null
     }
-    return { usage: balance.usage, remaining: balance.unlimited ? null : balance.remaining }
+    return { usage: balance.usage, remaining: balance.unlimited ? null : balance.remaining, nextResetAt: msToUnixSeconds(balance.nextResetAt) }
 }
 
 function toAppSumoAiCreditsUsage(balance: Balance | undefined): AppSumoAiCreditsUsage | null {
@@ -601,7 +601,7 @@ type ConfigureAutoTopUpOnConsoleParams =
         enabled: true
         threshold: number
         quantity: number
-        maxMonthlyLimit?: number | null
+        maxMonthlyTopUps?: number | null
         setupPaymentReturnUrl?: string
     }
     | {
