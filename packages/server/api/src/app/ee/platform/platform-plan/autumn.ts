@@ -152,7 +152,7 @@ export const autumnUtils = {
         return {
             ...flags,
             plan: entitlements.planId,
-            teamProjectsLimit: toProjectedLimit(teamProjects, 0),
+            teamProjectsLimit: toProjectedLimit(teamProjects, 1),
             usersLimit: toProjectedLimit(users, null),
             activeFlowsLimit: toProjectedLimit(activeFlows, null),
             includedCredits: credits?.granted ?? 0,
@@ -175,8 +175,6 @@ export const autumnUtils = {
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
-        // The console (master key) owns the catalog + plan-applicability — including which plans a given AP
-        // image version may purchase — so we send the running version and let it return the applicable set.
         const response = await safeHttp.axios.post<ConsolePlansEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/plans`,
             { version: apVersionUtil.getCurrentRelease(), platformId },
@@ -357,8 +355,8 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         await autumnUtils.refreshEntitlements(log, platformId)
     },
     activateLicense: async ({ platformId, licenseKey }: ActivateLicenseParams) => {
-        await platformPlanService(log).update({ platformId, licenseKey })
         const credentials = await activateOnConsole({ licenseKey, platformId })
+        await platformPlanService(log).update({ platformId, licenseKey })
         await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
         await autumnUtils.refreshEntitlements(log, platformId)
     },

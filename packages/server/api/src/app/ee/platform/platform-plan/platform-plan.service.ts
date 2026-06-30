@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -98,7 +98,12 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             .where('project."platformId" = :platformId', { platformId })
             .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
             .getCount()
-        const { credits, appSumo } = await billingProvider.get(log).getConsumablesUsage(platformId)
+        const { data: consumables, error: consumablesError } = await tryCatch(() => billingProvider.get(log).getConsumablesUsage(platformId))
+        if (!isNil(consumablesError)) {
+            log.error({ error: consumablesError, platform: { id: platformId } }, 'Failed to fetch consumables usage; treating as unavailable')
+        }
+        const credits = consumables?.credits ?? null
+        const appSumo = consumables?.appSumo ?? null
         const teamProjectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
         const usersCount = await userService(log).countByPlatformId(platformId)
         return {
@@ -181,9 +186,6 @@ async function throttledAutumnEnrollment(platformId: string, log: FastifyBaseLog
     await billingProvider.get(log).ensureEnrolled(platformId)
 }
 
-// Claim the refresh window with a short marker first; only extend it to the full window AFTER a successful
-// refresh, so a transient Autumn failure (the extend never runs) frees the claim in ~1 min for a retry,
-// while a success suppresses re-refresh for the whole window. Fail-open: the projection keeps its last value.
 async function throttledAutumnRefresh(platformId: string, log: FastifyBaseLogger): Promise<void> {
     const claimed = await distributedStore.putIfAbsent(getEntitlementsRefreshKey(platformId), '1', REFRESH_CLAIM_TTL_SECONDS)
     if (!claimed) {
