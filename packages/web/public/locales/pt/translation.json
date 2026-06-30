@@ -2077,5 +2077,12 @@
   "1 min ago": "1 min atrás",
   "{count} mins ago": "{count} min atrás",
   "1 hour ago": "1 hora atrás",
-  "{count} hours ago": "{count} horas atrás"
+  "{count} hours ago": "{count} horas atrás",
+  "Queue": "Queue",
+  "Warm-up": "Warm-up",
+  "Resumed": "Resumed",
+  "Waiting for a free worker": "Waiting for a free worker",
+  "Installing pieces & engine": "Installing pieces & engine",
+  "Starting the engine": "Starting the engine",
+  "Executing your flow": "Executing your flow"
 }
