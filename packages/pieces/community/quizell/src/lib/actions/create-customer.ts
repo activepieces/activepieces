@@ -8,6 +8,7 @@ export const createCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Creates a new customer (quiz lead) in Quizell.',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new customer (quiz lead) in Quizell, attached to a specific quiz. Use when capturing a new lead or contact from a quiz response. Requires a quiz_id and email; not idempotent — each call creates another customer record even with identical input.', idempotent: false },
   props: {
     quiz_id: Property.ShortText({
