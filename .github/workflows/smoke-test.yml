@@ -85,7 +85,7 @@ jobs:
           chmod +x smoke-test/verify-isolation.sh
           smoke-test/verify-isolation.sh "${{ steps.setup-isolation.outputs.flow_id }}"
 
-      - name: Restart stack in perf mode (fixed 2 CPU / 2G, info logging)
+      - name: Restart stack in perf mode (fixed 2 CPU / 2G)
         run: |
           docker compose -f benchmark/docker-compose.yml down -v
           AP_EXECUTION_MODE=SANDBOX_CODE_ONLY \

@@ -1,12 +1,9 @@
 # Overlay for the perf-regression preflight (smoke-test/verify-perf.sh).
-# Pins app + worker to fixed CPU/RAM so throughput/CPU/memory thresholds are
-# deterministic across runners, and runs with production-like settings:
-# AP_LOG_LEVEL=info (the default operators run with) and a realistic worker
-# concurrency. Use together with benchmark/docker-compose.yml.
+# Pins app + worker to fixed CPU/RAM so the throughput / CPU / memory thresholds
+# are deterministic across runners, with a realistic worker concurrency.
+# Use together with benchmark/docker-compose.yml.
 services:
   app:
-    environment:
-      AP_LOG_LEVEL: info
     deploy:
       resources:
         limits:
@@ -14,7 +11,6 @@ services:
           memory: 2G
   worker:
     environment:
-      AP_LOG_LEVEL: info
       AP_WORKER_CONCURRENCY: '8'
     deploy:
       resources:
