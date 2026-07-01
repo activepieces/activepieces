@@ -9,6 +9,8 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { isToolSearchEnabled } from '../tool-search/tool-search-flag'
+import { toolSearchReindexJob } from '../tool-search/tool-search-reindex.job'
 import { pieceCache } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
@@ -60,6 +62,15 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 deleted,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
+
+            // React to the catalog-change signal: enqueue an async tool-search reconcile (never inline
+            // — embedding must not block sync). The hash-gate means an unchanged catalog re-embeds
+            // nothing, so this is cheap; only fire when something changed AND the engine is enabled —
+            // without the flag guard a delta would enqueue a reconcile even when tool-search is off,
+            // which (if an OpenAI key exists but pgvector does not) crashes silently on every change.
+            if ((added > 0 || deleted > 0) && isToolSearchEnabled()) {
+                rejectedPromiseHandler(toolSearchReindexJob(log).enqueue({ type: 'all' }), log)
+            }
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')

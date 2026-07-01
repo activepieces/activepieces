@@ -87,7 +87,7 @@ Unique index on `(name, version, platformId)`.
 - `registry({ release? })` — returns lightweight name+version list for all pieces
 
 ### `pieceInstallService`
-- `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`
+- `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`. When tool-search is enabled (`isToolSearchEnabled()`), also enqueues a platform-scoped tool-search reindex (`{ type: 'platform', platformId }`) fire-and-forget so the new piece's actions/triggers become searchable; no-op when the flag is off.
 
 ### `pieceSyncService`
-- `sync({ publishCacheRefresh })` — reads bundled piece registry file, upserts official piece metadata records, optionally publishes cache refresh event
+- `sync({ publishCacheRefresh })` — reads bundled piece registry file, upserts official piece metadata records, optionally publishes cache refresh event. When pieces were added or deleted and tool-search is enabled (`isToolSearchEnabled()`), also enqueues a global tool-search reindex (`{ type: 'all' }`) fire-and-forget; no-op when the flag is off.

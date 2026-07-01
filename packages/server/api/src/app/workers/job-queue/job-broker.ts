@@ -73,7 +73,6 @@ function ensureDispatcher(queueName: string, worker: BullMQWorker, log: FastifyB
         queueName,
         worker,
         dequeue: tryDequeue,
-        onOrphanedJob: returnJobToQueue,
         log,
     })
     dispatchers.set(queueName, dispatcher)
@@ -247,15 +246,22 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const { error } = await tryCatch(async () => {
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {
-                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
                 if (userJobData) {
+                    // User-interaction jobs (piece-metadata extraction, validation, property/auth, trigger
+                    // hooks) are synchronous request/response — the caller awaits the result with a timeout.
+                    // Return the error to that caller and COMPLETE the job instead of moving it to failed: the
+                    // exponential-backoff retry only fires long after the caller has timed out, so it serves no
+                    // one and just piles up dead jobs in the failed queue.
                     await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                         status: EngineResponseStatus.INTERNAL_ERROR,
                         response: undefined,
                         error: input.errorMessage ?? 'Internal error',
                         logs: input.logs,
                     })
+                    await job.moveToCompleted({ response: undefined }, input.token, false)
+                    return
                 }
+                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
                 return
             }
 
