@@ -283,8 +283,8 @@ export const autumnConsole = {
 
 function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements {
     const flags: Record<string, boolean> = {}
-    for (const featureId of Object.keys(customer.flags)) {
-        flags[featureId] = true
+    for (const [featureId, flag] of Object.entries(customer.flags)) {
+        flags[featureId] = featureId === AutumnFeatureId.SHOW_POWERED_BY ? !isNil(flag.planId) : true
     }
     const balances: Record<string, AutumnFeatureBalance> = {}
     for (const [featureId, balance] of Object.entries(customer.balances)) {
