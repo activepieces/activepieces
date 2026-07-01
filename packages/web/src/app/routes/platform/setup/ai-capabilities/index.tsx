@@ -1,4 +1,8 @@
-import { AiToolCapability, PlatformRole } from '@activepieces/shared';
+import {
+  AiToolCapability,
+  AiToolConfigWithoutSensitiveData,
+  PlatformRole,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Globe, Image, LucideIcon, Pencil, Search, Trash } from 'lucide-react';
 
@@ -62,13 +66,7 @@ export default function AiCapabilitiesPage() {
                 key={capabilityInfo.capability}
                 capabilityInfo={capabilityInfo}
                 Icon={CAPABILITY_ICON[capabilityInfo.capability]}
-                providerName={
-                  capabilityInfo.providers.find(
-                    (p) => p.id === config?.provider,
-                  )?.name
-                }
-                configId={config?.id}
-                enabled={config?.enabled ?? false}
+                config={config}
                 allowWrite={allowWrite}
                 onToggle={(checked) =>
                   config &&
@@ -88,9 +86,7 @@ export default function AiCapabilitiesPage() {
 function CapabilityCard({
   capabilityInfo,
   Icon,
-  providerName,
-  configId,
-  enabled,
+  config,
   allowWrite,
   onToggle,
   onDelete,
@@ -98,14 +94,17 @@ function CapabilityCard({
 }: {
   capabilityInfo: AiToolCapabilityInfo;
   Icon: LucideIcon;
-  providerName?: string;
-  configId?: string;
-  enabled: boolean;
+  config?: AiToolConfigWithoutSensitiveData;
   allowWrite: boolean;
   onToggle: (checked: boolean) => void;
   onDelete: () => void;
   onSaved: () => void;
 }) {
+  const configId = config?.id;
+  const enabled = config?.enabled ?? false;
+  const providerName = capabilityInfo.providers.find(
+    (p) => p.id === config?.provider,
+  )?.name;
   return (
     <div className="flex items-center gap-4 rounded-lg border bg-card p-4">
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted shrink-0">
@@ -129,7 +128,11 @@ function CapabilityCard({
       {allowWrite && (
         <div className="flex items-center gap-2 shrink-0">
           {configId && <Switch checked={enabled} onCheckedChange={onToggle} />}
-          <AiCapabilityDialog capabilityInfo={capabilityInfo} onSaved={onSaved}>
+          <AiCapabilityDialog
+            capabilityInfo={capabilityInfo}
+            existingConfig={config}
+            onSaved={onSaved}
+          >
             {configId ? (
               <Button variant="ghost" size="icon">
                 <Pencil className="size-4" />

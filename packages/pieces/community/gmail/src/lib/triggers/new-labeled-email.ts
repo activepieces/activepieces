@@ -7,6 +7,7 @@ import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { parseStream, convertAttachment } from '../common/data';
+import { newLabeledEmailTriggerOutputSchema } from '../output-schemas';
 
 async function enrichGmailMessage({
   gmail,
@@ -67,6 +68,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
       required: true,
     }),
   },
+  outputSchema: newLabeledEmailTriggerOutputSchema,
   sampleData: {},
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {

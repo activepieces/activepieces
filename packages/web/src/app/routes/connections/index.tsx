@@ -340,9 +340,12 @@ function AppConnectionsPage() {
     () => [
       {
         render: (_, resetSelection) => {
+          const deletableRows = selectedRows.filter(
+            (row) => row.scope === AppConnectionScope.PROJECT,
+          );
           return (
             <>
-              {selectedRows.length > 0 && (
+              {deletableRows.length > 0 && (
                 <ConfirmationDeleteDialog
                   title={t('Delete Connections')}
                   message={t(
@@ -350,7 +353,7 @@ function AppConnectionsPage() {
                   )}
                   warning={<DeleteConnectionWarning />}
                   mutationFn={async () => {
-                    await deleteConnections(selectedRows.map((row) => row.id));
+                    await deleteConnections(deletableRows.map((row) => row.id));
                     refetch();
                     resetSelection();
                     setSelectedRows([]);
@@ -368,7 +371,7 @@ function AppConnectionsPage() {
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    {t('Delete')} ({selectedRows.length})
+                    {t('Delete')} ({deletableRows.length})
                   </Button>
                 </ConfirmationDeleteDialog>
               )}

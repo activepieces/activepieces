@@ -3,14 +3,14 @@ import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import { engineFileApi } from '../engine-file-api'
+import { engineFileApi } from '../api/engine-file-api'
+import { engineRunApi } from '../api/engine-run-api'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
-import { workerSocket } from '../worker-socket'
 
 
 const zstdCompress = promisify(zstdCompressCallback)
@@ -45,48 +45,47 @@ export const flowRunProgressReporter = {
                 return
             }
             await sendUpdateProgress({
-                step: {
-                    name: stepNameToUpdate,
-                    path: flowExecutorContext.currentPath.path,
-                    output: step,
-                },
-                flowRun: {
-                    projectId: engineConstants.projectId,
-                    flowId: engineConstants.flowId,
-                    flowVersionId: engineConstants.flowVersionId,
-                    id: engineConstants.flowRunId,
-                    created: dayjs().toISOString(),
-                    updated: dayjs().toISOString(),
-                    status: flowExecutorContext.verdict.status,
-                    environment: engineConstants.runEnvironment ?? RunEnvironment.TESTING,
-                    failParentOnFailure: false,
-                    triggeredBy: engineConstants.triggerPieceName,
-                    tags: Array.from(flowExecutorContext.tags),
-                    startTime: params.startTime,
+                engineConstants,
+                request: {
+                    step: {
+                        name: stepNameToUpdate,
+                        path: flowExecutorContext.currentPath.path,
+                        output: step,
+                    },
+                    flowRun: {
+                        projectId: engineConstants.projectId,
+                        flowId: engineConstants.flowId,
+                        flowVersionId: engineConstants.flowVersionId,
+                        id: engineConstants.flowRunId,
+                        created: dayjs().toISOString(),
+                        updated: dayjs().toISOString(),
+                        status: flowExecutorContext.verdict.status,
+                        environment: engineConstants.runEnvironment ?? RunEnvironment.TESTING,
+                        failParentOnFailure: false,
+                        triggeredBy: engineConstants.triggerPieceName,
+                        tags: Array.from(flowExecutorContext.tags),
+                        startTime: params.startTime,
+                    },
                 },
             })
         })
     },
     createOutputContext: (params: CreateOutputContextParams): OutputContext => {
-        const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
+        const { engineConstants } = params
         return {
             update: async (params: { data: unknown }) => {
-                const updated = await flowExecutorContext
-                    .upsertStep(stepName, stepOutput.setOutput(params.data))
-
-                const stepResponse = extractStepResponse({
-                    flowExecutorContext: updated,
-                    runId: engineConstants.flowRunId,
-                    stepName,
-                })
-                if (stepResponse) {
-                    await workerSocket.getWorkerClient().updateStepProgress({
+                // Streaming output is best-effort — a failed push must never fail the run.
+                const { error } = await tryCatch(() => engineRunApi.updateStepProgress({
+                    apiUrl: engineConstants.internalApiUrl,
+                    engineToken: engineConstants.engineToken,
+                    request: {
                         projectId: engineConstants.projectId,
-                        stepResponse: {
-                            ...stepResponse,
-                            output: params.data,
-                        },
-                    })
+                        runId: engineConstants.flowRunId,
+                        output: params.data,
+                    },
+                }))
+                if (error) {
+                    console.error('[Progress] Failed to stream step progress', error)
                 }
             },
         }
@@ -145,7 +144,7 @@ export const flowRunProgressReporter = {
                 tags: Array.from(flowExecutorContext.tags),
                 stepsCount: flowExecutorContext.stepsCount,
             }
-            await sendLogsUpdate(request)
+            await sendLogsUpdate({ engineConstants, request })
         })
     },
     shutdown: async () => {
@@ -181,18 +180,26 @@ async function runFlushLoop(signal: AbortSignal): Promise<void> {
     }
 }
 
-const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {
+const sendUpdateProgress = async ({ engineConstants, request }: SendUpdateProgressParams): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() =>
-        workerSocket.getWorkerClient().updateRunProgress(request),
+        engineRunApi.updateRunProgress({
+            apiUrl: engineConstants.internalApiUrl,
+            engineToken: engineConstants.engineToken,
+            request,
+        }),
     )
     if (result.error) {
         throw new EngineGenericError('ProgressUpdateError', 'Failed to send updateRunProgress', result.error)
     }
 }
 
-const sendLogsUpdate = async (request: UploadRunLogsRequest): Promise<void> => {
+const sendLogsUpdate = async ({ engineConstants, request }: SendLogsUpdateParams): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() =>
-        workerSocket.getWorkerClient().uploadRunLog(request),
+        engineRunApi.uploadRunLog({
+            apiUrl: engineConstants.internalApiUrl,
+            engineToken: engineConstants.engineToken,
+            request,
+        }),
     )
     if (result.error) {
         throw new EngineGenericError('ProgressUpdateError', 'Failed to send uploadRunLog', result.error)
@@ -214,9 +221,19 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
         success: isSuccess,
         input: stepOutput.input,
         output: stepOutput.output,
-        standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
+        standardError: isSuccess ? '' : (stepOutput.errorMessage ?? ''),
         standardOutput: '',
     }
+}
+
+type SendUpdateProgressParams = {
+    engineConstants: EngineConstants
+    request: UpdateRunProgressRequest
+}
+
+type SendLogsUpdateParams = {
+    engineConstants: EngineConstants
+    request: UploadRunLogsRequest
 }
 
 type UpdateStepProgressParams = {
@@ -228,9 +245,6 @@ type UpdateStepProgressParams = {
 
 type CreateOutputContextParams = {
     engineConstants: EngineConstants
-    flowExecutorContext: FlowExecutorContext
-    stepName: string
-    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
 }
 
 type ExtractStepResponse = {

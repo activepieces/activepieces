@@ -122,6 +122,10 @@ async function getPendingGate(conversationId: string): Promise<{
   return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
 }
 
+async function recordLanding(): Promise<void> {
+  return api.post<void>('/v1/chat/funnel/landing');
+}
+
 export const chatApi = {
   createConversation,
   listConversations,
@@ -134,6 +138,7 @@ export const chatApi = {
   cancelConversation,
   getPickerConnections,
   getPendingGate,
+  recordLanding,
 };
 
 export type PickerResolution = {

@@ -2,6 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { searchRowsActionOutputSchema } from '../output-schemas';
 
 type FilterOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'is' | 'in' | 'contains' | 'containedBy';
 
@@ -88,6 +89,7 @@ export const searchRows = createAction({
             }
         }),
     },
+    outputSchema: searchRowsActionOutputSchema,
     async run(context) {
         const { table_name, columns, filters, page, pageSize, countOption } = context.propsValue;
         const { url, apiKey } = context.auth.props;

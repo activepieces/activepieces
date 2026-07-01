@@ -14,7 +14,9 @@ export const isRunningCloudInDevMode = import.meta.env.MODE === 'cloud';
 
 export const API_BASE_URL = isRunningCloudInDevMode
   ? 'https://cloud.activepieces.com'
-  : window.location.origin;
+  : typeof window !== 'undefined'
+  ? window.location.origin
+  : '';
 export const API_URL = `${API_BASE_URL}/api`;
 
 const disallowedRoutes = [

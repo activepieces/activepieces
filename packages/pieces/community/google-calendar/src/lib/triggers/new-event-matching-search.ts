@@ -17,6 +17,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { eventOutputSchema } from '../output-schemas';
 
 interface GoogleCalendarEventList {
   items: GoogleCalendarEvent[];
@@ -179,6 +180,7 @@ export const newEventMatchingSearch = createTrigger({
       },
     }),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: 'abc123def456',

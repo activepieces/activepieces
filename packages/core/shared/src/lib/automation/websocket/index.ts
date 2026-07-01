@@ -1,4 +1,4 @@
-import { FlowStatus, FlowVersion, StepRunResponse } from '@activepieces/core-execution'
+import { FlowStatus, FlowVersion, StepRunResponse, UpdateStepProgressRequest } from '@activepieces/core-execution'
 import { z } from 'zod'
 import { Field } from '../tables/field'
 import { PopulatedRecord } from '../tables/record'
@@ -169,6 +169,7 @@ export type LockResourceResponse = z.infer<typeof LockResourceResponse>
 export type ResourceLockedEvent = z.infer<typeof ResourceLockedEvent>
 export type ResourceUnlockedEvent = z.infer<typeof ResourceUnlockedEvent>
 export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string }
+export type TestStepProgressEvent = UpdateStepProgressRequest | EmitTestStepProgressRequest
 export type PresenceRequest = z.infer<typeof PresenceRequest>
 export type PresenceUser = z.infer<typeof PresenceUser>
 export type PresenceUpdatedEvent = z.infer<typeof PresenceUpdatedEvent>

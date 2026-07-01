@@ -124,7 +124,6 @@ const EmbedPage = React.memo(() => {
               authenticationSession.saveResponse(data, true);
               const configuredRoute = event.data.data.initialRoute ?? '/';
 
-              // Embeds keep their host-configured landing; chat shouldn't override it.
               const defaultRoute = determineDefaultRoute({
                 checkAccess,
               });

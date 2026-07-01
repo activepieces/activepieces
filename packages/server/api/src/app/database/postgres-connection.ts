@@ -51,6 +51,7 @@ import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/175
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { AddUiMessagesToChatConversation1778983371000 } from './migration/common/1778983371000-AddUiMessagesToChatConversation'
 import { AddStatusToChatConversation1779500000000 } from './migration/common/1779500000000-AddStatusToChatConversation'
+import { AddTimelineToFlowRun1800000000000 } from './migration/common/1800000000000-AddTimelineToFlowRun'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -385,9 +386,13 @@ import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migrati
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
-import { AddUiPreferencesToUserIdentity1798000000000 } from './migration/postgres/1798000000000-AddUiPreferencesToUserIdentity'
-import { AddDeletedToRecord1799000000000 } from './migration/postgres/1799000000000-AddDeletedToRecord'
-import { AddColorToRecordAndCell1800000000000 } from './migration/postgres/1800000000000-AddColorToRecordAndCell'
+import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
+import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
+import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
+import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
+import { AddUiPreferencesToUserIdentity1803000000000 } from './migration/postgres/1803000000000-AddUiPreferencesToUserIdentity'
+import { AddDeletedToRecord1804000000000 } from './migration/postgres/1804000000000-AddDeletedToRecord'
+import { AddColorToRecordAndCell1805000000000 } from './migration/postgres/1805000000000-AddColorToRecordAndCell'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -788,9 +793,14 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
         AddAiToolConfigTable1797000000000,
-        AddUiPreferencesToUserIdentity1798000000000,
-        AddDeletedToRecord1799000000000,
-        AddColorToRecordAndCell1800000000000,
+        AddChatConversationActiveRunId1798000000000,
+        AddChatRolloutUserTable1799000000000,
+        AddTimelineToFlowRun1800000000000,
+        AddToolSearchIndexTable1801000000000,
+        AddChatRolloutFreeCreditGrant1802000000000,
+        AddUiPreferencesToUserIdentity1803000000000,
+        AddDeletedToRecord1804000000000,
+        AddColorToRecordAndCell1805000000000,
     ]
     return migrations
 }

@@ -27,7 +27,7 @@ export const aiToolConfigController: FastifyPluginAsyncZod = async (app) => {
 
 const ListAiToolConfigs = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         response: {
@@ -38,7 +38,7 @@ const ListAiToolConfigs = {
 
 const UpsertAiToolConfig = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: CreateAiToolConfigRequest,
@@ -47,7 +47,7 @@ const UpsertAiToolConfig = {
 
 const UpdateAiToolConfig = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: z.object({
@@ -59,7 +59,7 @@ const UpdateAiToolConfig = {
 
 const DeleteAiToolConfig = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: z.object({

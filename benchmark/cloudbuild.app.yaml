@@ -1,0 +1,21 @@
+# Cloud Build for the benchmark APP image (root Dockerfile). Built with a tag substitution so the
+# same config produces both the A/B images:
+#   gcloud builds submit --config benchmark/cloudbuild.app.yaml --substitutions=_TAG=fixed .
+#   gcloud builds submit --config benchmark/cloudbuild.app.yaml --substitutions=_TAG=baseline .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    env:
+      - DOCKER_BUILDKIT=1
+    args:
+      - build
+      - -t
+      - europe-west1-docker.pkg.dev/activepieces-b3803/poolserver/ap-app:${_TAG}
+      - .
+images:
+  - europe-west1-docker.pkg.dev/activepieces-b3803/poolserver/ap-app:${_TAG}
+substitutions:
+  _TAG: fixed
+options:
+  machineType: E2_HIGHCPU_32
+  diskSizeGb: '100'
+timeout: 3600s

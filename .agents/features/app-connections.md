@@ -33,6 +33,9 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - **Cloud**: Available — same as EE; cloud OAuth2 uses `secrets.activepieces.com` for token exchange.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **AppConnection**: An encrypted credential record bound to a platform and optionally scoped to one or more projects.
 - **AppConnectionScope**: `PROJECT` (restricted to projects in `projectIds[]`) or `PLATFORM` (available to all projects).
 - **AppConnectionType**: One of `OAUTH2`, `CLOUD_OAUTH2`, `PLATFORM_OAUTH2`, `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH`, `NO_AUTH`, `OIDC`.
@@ -57,7 +60,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 | PLATFORM_OAUTH2 | Same but uses platform-managed OAuth app credentials | Auto-refresh |
 | SECRET_TEXT | token | None |
 | BASIC_AUTH | username, password | None |
-| CUSTOM_AUTH | piece-defined custom fields | None |
+| CUSTOM_AUTH | piece-defined custom fields + optional `access_token`, `token_refresh_at` | Optional — piece opts in via `refresh` callback; server caches token with 15-min early-refresh buffer (clamped to half the token lifetime) |
 | NO_AUTH | (empty) | None |
 | OIDC | piece-defined props (e.g. role ARN, audience) — token fetched at runtime | None (short-lived JWT issued per-request) |
 
@@ -102,12 +105,43 @@ const { token } = await response.json()
 ## OAuth2 Token Refresh
 
 Automatic on connection retrieval:
-1. `decryptAndRefreshConnection()` checks if OAuth token expired (15-min early refresh threshold)
-2. If expired: acquires distributed Redis lock (`key = ${projectId}_${externalId}`, 60s timeout)
+1. `lockAndRefreshConnection()` checks if OAuth token expired (15-min early refresh threshold)
+2. If expired: acquires distributed Redis lock (`key = ${platformId}_${externalId}`, 60s timeout) — keyed on the connection's project-invariant identity so projects sharing a connection serialize on one lock
 3. Calls OAuth2 handler's `refresh()` method (different per type: cloud/platform/credentials)
 4. Re-encrypts updated tokens, stores in DB, sets status=ACTIVE
 5. On error (invalid refresh token): sets status=ERROR
 6. Always strips refresh_token and client_secret from API responses
+
+## Custom Auth Token Refresh
+
+Opt-in on connection retrieval — piece authors define a `refresh` callback in `CustomAuthProperty`:
+
+```ts
+PieceAuth.CustomAuth({
+  props: { ... },
+  refresh: {
+    generate: async ({ auth }) => {
+      const res = await httpClient.sendRequest({ ... })
+      return { access_token: res.body.token, expires_in: 3300 }
+    },
+    defaultExpiresIn: 3300, // seconds; used when generate() omits expires_in
+  },
+})
+```
+
+**Runtime flow:**
+1. `needRefresh()` checks `connection.value.access_token`:
+   - Present → stale once `now >= token_refresh_at` (the precomputed refresh instant)
+   - Absent → consult `pieceRefreshSupportCache` (in-process LRU, 500 entries, 5-min TTL keyed by `pieceName@pieceVersion`); on cache miss, load piece metadata and check for `refresh` callback; result cached for future executions
+2. If refresh needed: acquires the same distributed Redis lock (`key = ${platformId}_${externalId}`, 60s)
+3. Dispatches `EXECUTE_TOKEN_REFRESH` worker job (user-interaction queue, same pattern as `EXECUTE_VALIDATION`)
+4. Engine calls the piece's `refresh.generate()` callback, returns `{ access_token, expires_in? }`
+5. `access_token` and `token_refresh_at` stored encrypted in `CustomAuthConnectionValue`, status=ACTIVE. `token_refresh_at = now + expiresIn - min(15 min, expiresIn / 2)` so the 15-min early-refresh buffer never exceeds half the token's lifetime (a short-lived token would otherwise be stale the instant it is minted); `expiresIn <= 0` means "never expires" → `token_refresh_at` is left unset
+6. On **timeout**: uses existing credentials unchanged — does NOT mark connection ERROR
+7. On **engine error** (non-OK status): throws `CustomAuthRefreshError` → sets status=ERROR
+8. If piece has no `refresh` callback (returns `skipped: true`): clears stale `access_token`/`token_refresh_at` and sets cache to `false` so no further jobs fire
+
+Inside piece actions/triggers, `context.auth.access_token` holds the cached token alongside the raw `props`.
 
 ## Endpoints
 
@@ -116,7 +150,7 @@ Automatic on connection retrieval:
 - `GET /v1/app-connections` — list with filters (pieceName, displayName ILIKE, status, scope, externalIds)
 - `GET /v1/app-connections/owners` — list connection owners (platform admins + project members)
 - `POST /v1/app-connections/replace` — replace source connection with target across all flows
-- `DELETE /v1/app-connections/:id` — hard delete
+- `DELETE /v1/app-connections/:id` — hard delete; rejects `PLATFORM`-scope connections with `403` (delete those via the platform admin `DELETE /v1/global-connections/:id` instead)
 - `POST /v1/app-connections/oauth2/authorization-url` — generate OAuth redirect URL from piece metadata; accepts optional scopes array to restrict the authorization to a user-selected subset of the piece's declared scopes (all piece scopes used when omitted)
 
 ## Connection → Flow Integration
@@ -131,4 +165,4 @@ All connection values encrypted with `encryptUtils.encryptObject()` (AES-256) be
 
 ## Frontend
 
-The project connections page (`/connections`) shows a data table with status badges, piece icons, scope indicators, and bulk-delete support. The `new-connection-dialog` opens `create-edit-connection-dialog` which renders piece-auth-specific form fields. The "Replace" action opens `replace-connections-dialog` which calls the replace endpoint. The platform admin global connections page (`/platform/setup/connections`) uses `global-connections-hooks` and surfaces `edit-global-connection-dialog` for managing platform-scope connections and their `projectIds` assignment. The builder uses `connection-select` inside step settings to pick, create, or reconnect connections inline; active connections show a "Connected" status with a compact reconnect icon, while connections needing re-authentication keep a "Reconnect" action.
+The project connections page (`/connections`) shows a data table with status badges, piece icons, scope indicators, and bulk-delete support. Bulk-delete operates only on `PROJECT`-scope rows — `PLATFORM`-scope (global) connections are filtered out client-side and the delete button reflects only the deletable count; global connections must be deleted from the platform admin global connections page. The `new-connection-dialog` opens `create-edit-connection-dialog` which renders piece-auth-specific form fields. The "Replace" action opens `replace-connections-dialog` which calls the replace endpoint. The platform admin global connections page (`/platform/setup/connections`) uses `global-connections-hooks` and surfaces `edit-global-connection-dialog` for managing platform-scope connections and their `projectIds` assignment. The builder uses `connection-select` inside step settings to pick, create, or reconnect connections inline; active connections show a "Connected" status with a compact reconnect icon, while connections needing re-authentication keep a "Reconnect" action.
