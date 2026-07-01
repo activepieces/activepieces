@@ -195,6 +195,7 @@ async function replyWithHtml({ reply, html }: { reply: FastifyReply, html: strin
         .type('text/html')
         .header('Content-Security-Policy', RESUME_PAGE_CSP)
         .header('X-Content-Type-Options', 'nosniff')
+        .header('Cache-Control', 'no-store')
         .send(html)
 }
 
