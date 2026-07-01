@@ -1,11 +1,12 @@
 import { apId } from '@activepieces/core-utils'
-import { AppConnectionStatus, AppConnectionType, PackageType, PieceType, PLACEHOLDER_CONNECTION_TYPE } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, PackageType, PieceType, PLACEHOLDER_CONNECTION_TYPE } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
+    createMockConnection,
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -444,6 +445,27 @@ describe('AppConnection CE API', () => {
             const response = await ctx.delete(`/v1/app-connections/${nonExistentId}`)
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('should not delete a platform-scoped connection from the project route', async () => {
+            const ctx = await setup()
+
+            const platformConnection = {
+                ...createMockConnection({
+                    platformId: ctx.platform.id,
+                    projectIds: [ctx.project.id],
+                    externalId: 'platform-delete-test',
+                }, ctx.user.id),
+                scope: AppConnectionScope.PLATFORM,
+            }
+            await db.save('app_connection', platformConnection)
+
+            const response = await ctx.delete(`/v1/app-connections/${platformConnection.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const stillExists = await db.findOneBy('app_connection', { id: platformConnection.id })
+            expect(stillExists).not.toBeNull()
         })
     })
 })

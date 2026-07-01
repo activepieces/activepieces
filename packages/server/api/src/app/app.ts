@@ -76,6 +76,7 @@ import { domainHelper } from './helper/domain-helper'
 import { exceptionHandler } from './helper/exception-handler'
 import { clientLogsModule } from './helper/logs/client-logs.module'
 import { openapiModule } from './helper/openapi/openapi.module'
+import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
@@ -99,6 +100,7 @@ import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
+import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
 import { userBadgeModule } from './user/badges/badge-module'
@@ -212,6 +214,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(storeEntryModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
+    toolSearchReindexJob(app.log).register()
+    // Cold-start backfill: build the tool-search index once if the flag is on but it has never been
+    // built (existing deployment whose piece_metadata is already populated, so no sync delta fires).
+    // Fire-and-forget — a no-op once the index has rows, and must never block or fail boot.
+    rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfEmpty(), app.log)
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
