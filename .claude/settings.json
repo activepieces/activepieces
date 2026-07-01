@@ -5,8 +5,17 @@
       "args": ["-y", "@upstash/context7-mcp"]
     }
   },
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    }
+  },
   "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true
+    "frontend-design@claude-plugins-official": true,
+    "ponytail@ponytail": true
   },
   "permissions": {
     "deny": [
