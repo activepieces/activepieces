@@ -68,6 +68,8 @@ export function createSandbox(
     let wsRpcToken: string | null = null
     let busy = false
     let killedByShutdown = false
+    let nativeStdOut = ''
+    let nativeStdError = ''
 
     function wireConnectionHandler(ioServer: SocketIOServer): void {
         ioServer.use(authenticateHandshake({ getExpectedToken: () => wsRpcToken, log, sandboxId }))
@@ -216,9 +218,20 @@ export function createSandbox(
                 },
             })
 
+            nativeStdOut = ''
+            nativeStdError = ''
+            childProcess.stdout?.on('data', (data: Buffer) => {
+                nativeStdOut = appendBounded(nativeStdOut, data.toString())
+                process.stdout.write(data)
+            })
+            childProcess.stderr?.on('data', (data: Buffer) => {
+                nativeStdError = appendBounded(nativeStdError, data.toString())
+                process.stderr.write(data)
+            })
+
             const exitPromise = new Promise<never>((_, reject) => {
                 childProcess!.once('exit', (code, signal) => {
-                    reject(new Error(`Sandbox ${sandboxId} exited before connecting (code=${code}, signal=${signal})`))
+                    reject(new Error(`Sandbox ${sandboxId} exited before connecting (code=${code}, signal=${signal}) standardError=${nativeStdError}`))
                 })
             })
 
@@ -273,8 +286,8 @@ export function createSandbox(
                         signal,
                         killedByTimeout,
                         killedByShutdown,
-                        stdOut,
-                        stdError,
+                        stdOut: stdOut + nativeStdOut,
+                        stdError: stdError + nativeStdError,
                         reject,
                     })
                 })
@@ -354,6 +367,16 @@ function closeServer(ioServer: SocketIOServer): Promise<void> {
 
 function delay(ms: number): Promise<void> {
     return new Promise<void>((resolve) => setTimeout(resolve, ms))
+}
+
+const MAX_NATIVE_OUTPUT_CHARS = 8192
+
+function appendBounded(existing: string, chunk: string): string {
+    const combined = existing + chunk
+    if (combined.length <= MAX_NATIVE_OUTPUT_CHARS) {
+        return combined
+    }
+    return combined.slice(combined.length - MAX_NATIVE_OUTPUT_CHARS)
 }
 
 function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void {
