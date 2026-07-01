@@ -1,5 +1,5 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { PieceSet } from '@activepieces/shared';
+import { FilteredPieceBehavior, PieceSet } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -8,6 +8,7 @@ import {
   Eye,
   GitBranch,
   Hash,
+  Lock,
   Package,
   Puzzle,
   SlidersHorizontal,
@@ -27,6 +28,7 @@ import {
 } from '@/components/ui/tooltip';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { PieceComponentVisibilitySheet } from '../piece-component-visibility-sheet';
@@ -39,10 +41,12 @@ const BulkPieceSetActions = ({
   pieceSet,
   selectedPieces,
   resetSelection,
+  isPlatformHidden,
 }: {
   pieceSet: PieceSet;
   selectedPieces: PieceMetadataModelSummary[];
   resetSelection: () => void;
+  isPlatformHidden: (pieceName: string) => boolean;
 }) => {
   const {
     mutate: updateSet,
@@ -50,11 +54,14 @@ const BulkPieceSetActions = ({
     variables,
   } = pieceSetMutations.useUpdatePieceSet();
 
-  const selectedNames = selectedPieces.map((p) => p.name);
-  const allIncluded = selectedPieces.every(
+  const actionablePieces = selectedPieces.filter(
+    (p) => !isPlatformHidden(p.name),
+  );
+  const selectedNames = actionablePieces.map((p) => p.name);
+  const allIncluded = actionablePieces.every(
     (p) => !pieceSet.config.disabledPieces.includes(p.name),
   );
-  const allExcluded = selectedPieces.every((p) =>
+  const allExcluded = actionablePieces.every((p) =>
     pieceSet.config.disabledPieces.includes(p.name),
   );
 
@@ -104,16 +111,30 @@ const BulkPieceSetActions = ({
 
 export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
   const { pieces, isLoading } = piecesHooks.usePieces({
-    includeHidden: false,
+    includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,
   });
+  const { platform } = platformHooks.useCurrentPlatform();
   const { mutate: updateSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
   const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
   const [managingComponentsPiece, setManagingComponentsPiece] = useState<
     string | null
   >(null);
+
+  const hiddenPieceNames = useMemo(
+    () => new Set(platform.filteredPieceNames),
+    [platform.filteredPieceNames],
+  );
+
+  const isPlatformHidden = useCallback(
+    (pieceName: string) =>
+      platform.filteredPieceBehavior === FilteredPieceBehavior.ALLOWED
+        ? !hiddenPieceNames.has(pieceName)
+        : hiddenPieceNames.has(pieceName),
+    [platform.filteredPieceBehavior, hiddenPieceNames],
+  );
 
   const togglePiece = useCallback(
     (pieceName: string, currentlyIncluded: boolean) => {
@@ -130,10 +151,13 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     const allPieces = pieces ?? [];
     if (selectedStatuses.size === 0) return allPieces;
     return allPieces.filter((piece) => {
+      if (isPlatformHidden(piece.name)) {
+        return selectedStatuses.has('hidden');
+      }
       const included = !pieceSet.config.disabledPieces.includes(piece.name);
       return selectedStatuses.has(included ? 'enabled' : 'disabled');
     });
-  }, [pieces, pieceSet, selectedStatuses]);
+  }, [pieces, pieceSet, selectedStatuses, isPlatformHidden]);
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
@@ -208,6 +232,24 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           id: 'actions',
           size: 120,
           cell: ({ row }) => {
+            if (isPlatformHidden(row.original.name)) {
+              return (
+                <div className="flex items-center justify-end gap-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex items-center justify-center size-9 text-muted-foreground">
+                        <Lock className="size-4" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t(
+                        'Hidden from all projects. Manage it from the Pieces tab.',
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              );
+            }
             const included = !pieceSet.config.disabledPieces.includes(
               row.original.name,
             );
@@ -250,7 +292,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           },
         },
       ],
-      [pieceSet, togglePiece, isPending],
+      [pieceSet, togglePiece, isPending, isPlatformHidden],
     );
 
   const managingPieceDisplayName = useMemo(
@@ -286,6 +328,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             options={[
               { label: t('Enabled'), value: 'enabled' },
               { label: t('Disabled'), value: 'disabled' },
+              { label: t('Hidden'), value: 'hidden' },
             ]}
             handleFilterChange={(values) =>
               setSelectedStatuses(new Set(values))
@@ -299,6 +342,9 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
         }}
         isLoading={isLoading}
         clientFiltering={true}
+        getRowClassName={(row) =>
+          isPlatformHidden(row.name) ? 'opacity-60' : ''
+        }
         bulkActions={[
           {
             render: (selectedRows, resetSelection) => (
@@ -306,6 +352,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                 pieceSet={pieceSet}
                 selectedPieces={selectedRows}
                 resetSelection={resetSelection}
+                isPlatformHidden={isPlatformHidden}
               />
             ),
           },

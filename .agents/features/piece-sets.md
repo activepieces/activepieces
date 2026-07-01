@@ -12,7 +12,7 @@ A **piece set** is a named, reusable collection of piece / action / trigger visi
 - `packages/server/api/src/app/ee/pieces/filters/piece-filtering-utils.ts` — applies the resolved set when filtering pieces/components
 - `packages/server/api/src/app/ee/pieces/piece-hooks.ts` / `ee-piece-hooks.ts` — keep sets in sync when pieces/actions are installed
 - `packages/web/src/features/piece-sets/` — `pieceSetsApi`, `pieceSetsHooks`
-- `packages/web/src/app/routes/platform/setup/pieces/piece-sets/` — management UI (list, create/edit/duplicate dialogs, details page, pieces & projects tabs)
+- `packages/web/src/app/routes/platform/setup/pieces/piece-sets/` — management UI (list, create/edit/duplicate dialogs, details page, pieces tab, and the assign-projects dialog). Project assignment is not a dedicated tab: the details-page header shows a summary control (first 3 project names + "+N more") that opens a dialog (`piece-set-projects-dialog.tsx`) with a multi-select of all projects (assigned ones pre-checked); an explicit **Save** diffs the selection and calls assign/bulk-remove. On the Default set, projects that resolve to it are checked + disabled (can't be unassigned).
 
 ## Edition Availability
 EE / Cloud only, gated behind `platform.plan.managePiecesEnabled`. On CE (or when the flag is off) piece sets are inert and piece filtering falls back to the legacy project-plan allow/block lists. No-op and zero-setup for self-hosted Community.

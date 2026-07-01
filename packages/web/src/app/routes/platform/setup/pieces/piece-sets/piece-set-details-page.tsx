@@ -1,16 +1,16 @@
 import { t } from 'i18next';
-import { ArrowLeft, Layers, LayoutGrid, Loader2, Puzzle } from 'lucide-react';
+import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { cn } from '@/lib/utils';
 
 import { PieceSetPiecesTab } from './piece-set-pieces-tab';
-import { PieceSetProjectsTab } from './piece-set-projects-tab';
+import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
 
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,60 +61,74 @@ const PieceSetDetailsPage = () => {
       />
 
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
-        <div className="px-4 pt-3 pb-6 flex flex-col gap-4 shrink-0">
-          <div className="flex items-center justify-between max-w-md">
-            <span className="text-sm font-medium">
-              {t('Include new pieces by default')}
-            </span>
-            <Switch
-              checked={pieceSet.includeNewPieces}
-              disabled={isPending}
-              onCheckedChange={(v) => handleToggle('includeNewPieces', v)}
-            />
-          </div>
-          <div className="flex items-center justify-between max-w-md">
-            <span className="text-sm font-medium">
-              {t('Include new actions by default')}
-            </span>
-            <Switch
-              checked={pieceSet.includeNewActions}
-              disabled={isPending}
-              onCheckedChange={(v) => handleToggle('includeNewActions', v)}
-            />
+        <div className="px-4 pt-3 pb-6 shrink-0">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('Assigned')}
+              </span>
+              <PieceSetProjectsDialog pieceSet={pieceSet} />
+            </div>
+
+            <div className="self-stretch w-px bg-border" />
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('Auto-include')}
+              </span>
+              <AutoIncludePill
+                label={t('New pieces')}
+                checked={pieceSet.includeNewPieces}
+                disabled={isPending}
+                onCheckedChange={(v) => handleToggle('includeNewPieces', v)}
+              />
+              <AutoIncludePill
+                label={t('New actions')}
+                checked={pieceSet.includeNewActions}
+                disabled={isPending}
+                onCheckedChange={(v) => handleToggle('includeNewActions', v)}
+              />
+            </div>
           </div>
         </div>
 
-        <Tabs defaultValue="pieces" className="flex flex-col flex-1 min-h-0">
-          <TabsList
-            variant="outline"
-            className="border-b w-full rounded-none justify-start shrink-0"
-          >
-            <TabsTrigger variant="outline" value="pieces">
-              <Puzzle className="size-4 mr-2" />
-              {t('Pieces')}
-            </TabsTrigger>
-            <TabsTrigger variant="outline" value="projects">
-              <LayoutGrid className="size-4 mr-2" />
-              {t('Projects')}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent
-            value="pieces"
-            className="flex-1 min-h-0 flex flex-col mt-0"
-          >
-            <PieceSetPiecesTab pieceSet={pieceSet} />
-          </TabsContent>
-          <TabsContent
-            value="projects"
-            className="flex-1 min-h-0 flex flex-col mt-0"
-          >
-            <PieceSetProjectsTab pieceSet={pieceSet} />
-          </TabsContent>
-        </Tabs>
+        <div className="flex-1 min-h-0 flex flex-col">
+          <PieceSetPiecesTab pieceSet={pieceSet} />
+        </div>
       </div>
     </>
   );
 };
+
+function AutoIncludePill({
+  label,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  label: string;
+  checked: boolean;
+  disabled: boolean;
+  onCheckedChange: (value: boolean) => void;
+}) {
+  return (
+    <label
+      className={cn(
+        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border bg-background px-3 text-sm font-medium transition-colors',
+        checked && 'border-primary/50 bg-primary/[0.07] text-primary',
+        disabled && 'cursor-not-allowed opacity-60',
+      )}
+    >
+      <Switch
+        size="sm"
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onCheckedChange}
+      />
+      {label}
+    </label>
+  );
+}
 
 PieceSetDetailsPage.displayName = 'PieceSetDetailsPage';
 export { PieceSetDetailsPage };
