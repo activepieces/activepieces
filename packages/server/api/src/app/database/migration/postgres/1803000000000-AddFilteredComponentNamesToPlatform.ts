@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddFilteredComponentNamesToPlatform1802000000000 implements Migration {
-    name = 'AddFilteredComponentNamesToPlatform1802000000000'
+export class AddFilteredComponentNamesToPlatform1803000000000 implements Migration {
+    name = 'AddFilteredComponentNamesToPlatform1803000000000'
     breaking = false
     release = '0.85.4'
 

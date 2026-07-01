@@ -1849,6 +1849,13 @@
   "Step Stopped": "Step Stopped",
   "Step Succeeded": "Step Succeeded",
   "Step Failed": "Step Failed",
+  "Queue": "Queue",
+  "Warm-up": "Warm-up",
+  "Waiting for a free worker": "Waiting for a free worker",
+  "Installing pieces & engine": "Installing pieces & engine",
+  "Starting the engine": "Starting the engine",
+  "Executing your flow": "Executing your flow",
+  "Resumed": "Resumed",
   "Retry failed": "Retry failed",
   "Please select an owner": "Please select an owner",
   "Flow owner has been updated": "Flow owner has been updated",
@@ -2120,13 +2127,5 @@
   "Manage visibility": "Manage visibility",
   "Search actions & triggers...": "Search actions & triggers...",
   "Hide selected": "Hide selected",
-  "Show selected": "Show selected",
-  "Queue": "Queue",
-  "Setup": "Setup",
-  "Warm-up": "Warm-up",
-  "Resumed": "Resumed",
-  "Waiting for a free worker": "Waiting for a free worker",
-  "Installing pieces & engine": "Installing pieces & engine",
-  "Starting the engine": "Starting the engine",
-  "Executing your flow": "Executing your flow"
+  "Show selected": "Show selected"
 }

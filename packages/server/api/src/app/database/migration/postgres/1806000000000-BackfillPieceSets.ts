@@ -23,8 +23,8 @@ const PROJECT_BATCH = 500
 
 const log = system.globalLogger()
 
-export class BackfillPieceSets1805000000000 implements Migration {
-    name = 'BackfillPieceSets1805000000000'
+export class BackfillPieceSets1806000000000 implements Migration {
+    name = 'BackfillPieceSets1806000000000'
     breaking = false
     release = '0.103.0'
 
@@ -33,7 +33,7 @@ export class BackfillPieceSets1805000000000 implements Migration {
             return
         }
 
-        log.info('[BackfillPieceSets1805000000000#up] Starting piece-set backfill')
+        log.info('[BackfillPieceSets1806000000000#up] Starting piece-set backfill')
 
         let platformOffset = 0
         let platformCount = 0
@@ -54,7 +54,7 @@ export class BackfillPieceSets1805000000000 implements Migration {
             if (platforms.length < PLATFORM_BATCH) break
         }
 
-        log.info({ platformCount }, '[BackfillPieceSets1805000000000#up] Backfill complete')
+        log.info({ platformCount }, '[BackfillPieceSets1806000000000#up] Backfill complete')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -82,7 +82,7 @@ export class BackfillPieceSets1805000000000 implements Migration {
                OR "generatedForProjectId" IS NOT NULL
         `)
 
-        log.info('[BackfillPieceSets1805000000000#down] Rolled back piece-set backfill')
+        log.info('[BackfillPieceSets1806000000000#down] Rolled back piece-set backfill')
     }
 }
 
@@ -95,7 +95,7 @@ async function migratePlatform(queryRunner: QueryRunner, platformId: string): Pr
     await migrateAllowedProjects(queryRunner, platformId, allPieceNames)
     await assignRemainingProjectsToDefault(queryRunner, platformId, defaultSetId)
 
-    log.info({ platform: { id: platformId } }, '[BackfillPieceSets1805000000000] Platform migrated')
+    log.info({ platform: { id: platformId } }, '[BackfillPieceSets1806000000000] Platform migrated')
 }
 
 // ─── Step 1: Default sets ──────────────────────────────────────────────────────

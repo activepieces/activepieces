@@ -170,6 +170,13 @@ const handleResponseError = async ({ key, response }: HandleResponseErrorParams)
         throw new StorageLimitError(key, STORE_VALUE_MAX_SIZE)
     }
     const cause = await response.text()
+    // A 4xx from the store API means the request itself was invalid — typically a key that resolved to
+    // undefined/empty from the flow's own data (the API rejects it with a 400 validation error). That is a
+    // user/data error (FAILED step), not a storage outage. Only 5xx is a genuine store-API failure, which
+    // stays an ENGINE error so it retries + pages.
+    if (response.status >= 400 && response.status < 500) {
+        throw new StorageInvalidKeyError(key, cause)
+    }
     throw new StorageError(key, cause)
 }
 
