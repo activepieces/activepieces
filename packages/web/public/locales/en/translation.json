@@ -964,6 +964,7 @@
   "Shared": "Shared",
   "This worker runs exclusively for your platform with no sandboxing overhead.": "This worker runs exclusively for your platform with no sandboxing overhead.",
   "This worker is shared across platforms and uses strict sandboxing for isolation.": "This worker is shared across platforms and uses strict sandboxing for isolation.",
+  "This worker runs the projects assigned to the {group} group.": "This worker runs the projects assigned to the {group} group.",
   "seen": "seen",
   "Worker Machines": "Worker Machines",
   "Assignments": "Assignments",

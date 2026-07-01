@@ -1,6 +1,7 @@
 import {
   ApEdition,
   ApFlagId,
+  WorkerGroupScope,
   WorkerMachineStatus,
   WorkerMachineType,
   WorkerMachineWithStatus,
@@ -171,12 +172,7 @@ export default function WorkersPage() {
             {!isLoading && (workersData ?? []).length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {(workersData ?? []).map((worker, index) => (
-                  <WorkerCard
-                    key={worker.id}
-                    worker={worker}
-                    index={index}
-                    isCloud={isCloud}
-                  />
+                  <WorkerCard key={worker.id} worker={worker} index={index} />
                 ))}
               </div>
             )}
@@ -224,7 +220,7 @@ function StatBar({ label, value, detail }: StatBarProps) {
   );
 }
 
-function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
+function WorkerCard({ worker, index }: WorkerCardProps) {
   const timeAgo = useTimeAgo(new Date(worker.updated));
   const isOnline = worker.status === WorkerMachineStatus.ONLINE;
 
@@ -266,38 +262,46 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-            {worker.workerGroupId && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                <Layers className="size-3.5 shrink-0" />
-                {worker.workerGroupId.replaceAll('_', ' ')}
-              </span>
-            )}
-            {isCloud && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
+                worker.workerGroupId ? (
+                  <Badge
+                    variant="outline"
+                    className="border-primary/40 bg-primary/10 text-primary"
+                  >
+                    <Layers className="size-3 shrink-0" />
+                    {worker.workerGroupId.replaceAll('_', ' ')}
+                  </Badge>
+                ) : (
                   <Badge
                     variant={
-                      worker.type === WorkerMachineType.DEDICATED
+                      worker.workerGroupScope === WorkerGroupScope.PLATFORM
                         ? 'success'
                         : 'secondary'
                     }
                   >
-                    {worker.type === WorkerMachineType.DEDICATED
+                    {worker.workerGroupScope === WorkerGroupScope.PLATFORM
                       ? t('Dedicated')
                       : t('Shared')}
                   </Badge>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  {worker.type === WorkerMachineType.DEDICATED
+                )}
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
+                worker.workerGroupId
+                  ? t('This worker runs the projects assigned to the {group} group.', {
+                      group: worker.workerGroupId.replaceAll('_', ' '),
+                    })
+                  : worker.workerGroupScope === WorkerGroupScope.PLATFORM
                     ? t(
                         'This worker runs exclusively for your platform with no sandboxing overhead.',
                       )
                     : t(
                         'This worker is shared across platforms and uses strict sandboxing for isolation.',
                       )}
-                </TooltipContent>
-              </Tooltip>
-            )}
+              </TooltipContent>
+            </Tooltip>
             <Badge variant={isOnline ? 'success' : 'destructive'}>
               {t(worker.status.toLowerCase())}
             </Badge>
@@ -363,5 +367,4 @@ type StatBarProps = { label: React.ReactNode; value: number; detail?: string };
 type WorkerCardProps = {
   worker: WorkerMachineWithStatus;
   index: number;
-  isCloud: boolean;
 };

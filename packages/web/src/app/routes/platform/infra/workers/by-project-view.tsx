@@ -309,16 +309,26 @@ function ConcurrencyCell({
     }
   };
 
+  const handleChange = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, '');
+    if (digits === '') {
+      setConcurrencyInput('');
+      return;
+    }
+    const parsed = parseInt(digits, 10);
+    const capped = poolSlots > 0 ? Math.min(parsed, poolSlots) : parsed;
+    setConcurrencyInput(String(capped));
+  };
+
   return (
     <Input
       type="text"
       inputMode="numeric"
+      max={poolSlots > 0 ? poolSlots : undefined}
       className="w-[150px]"
       placeholder={concurrencyPlaceholder}
       value={concurrencyInput}
-      onChange={(e) =>
-        setConcurrencyInput(e.target.value.replace(/[^0-9]/g, ''))
-      }
+      onChange={(e) => handleChange(e.target.value)}
       onBlur={commitConcurrency}
       onKeyDown={handleKeyDown}
     />
