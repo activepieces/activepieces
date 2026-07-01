@@ -11,7 +11,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
-import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
+import { chatAnalyticsBulkSync } from '../../chat/chat-analytics-sync'
 import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 

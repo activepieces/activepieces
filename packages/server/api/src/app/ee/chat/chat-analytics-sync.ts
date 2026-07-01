@@ -1,12 +1,8 @@
 import { AIProviderName, chunk, isNil, tryCatch } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, ChatHistoryMessage, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus } from '@activepieces/shared'
-import { ModelMessage } from 'ai'
+import { ApEdition, ChatConversation, PersistedChatMessage, PersistedChatPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { aiProviderService } from '../../ai/ai-provider-service'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
-import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -22,11 +18,6 @@ export const chatAnalyticsTelemetry = (log: FastifyBaseLogger) => ({
         conversation: ChatConversation
     }): void {
         rejectedPromiseHandler(syncConversations({ conversations: [conversation], log }), log)
-    },
-    sendMessageBillingEvent({ conversation }: {
-        conversation: ChatConversation
-    }): void {
-        rejectedPromiseHandler(emitMessageBillingEvent({ conversation, log }), log)
     },
 })
 
@@ -125,7 +116,7 @@ async function resolveLookups({ conversations, log }: {
     const [userEntries, platformNameEntries, providerEntries] = await Promise.all([
         Promise.all(uniqueUserIds.map(async (userId): Promise<[string, string | null]> => [userId, await resolveUserEmail({ userId, log })])),
         Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, string | null]> => [platformId, await resolvePlatformName({ platformId, log })])),
-        Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, AIProviderName | null]> => [platformId, await resolveChatProviderName({ platformId, log })])),
+        Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, AIProviderName | null]> => [platformId, await chatHelpers.resolveChatProviderName({ platformId, log })])),
     ])
 
     return {
@@ -190,9 +181,9 @@ async function toSyncPayload({ conversation, log, userCache, platformCache, prov
 }): Promise<Record<string, unknown>> {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
-    const provider = providerCache?.get(conversation.platformId) ?? await resolveChatProviderName({ platformId: conversation.platformId, log })
+    const provider = providerCache?.get(conversation.platformId) ?? await chatHelpers.resolveChatProviderName({ platformId: conversation.platformId, log })
 
-    const messages = resolveMessages(conversation)
+    const messages = chatHistory.resolveMessages({ conversation, log })
 
     return {
         id: conversation.id,
@@ -201,7 +192,7 @@ async function toSyncPayload({ conversation, log, userCache, platformCache, prov
         userId: conversation.userId,
         userEmail,
         title: conversation.title,
-        modelName: resolveModelId({ tierId: conversation.modelName ?? null, provider }),
+        modelName: chatHelpers.resolveModelId({ tierId: conversation.modelName ?? null, provider }),
         provider,
         messages,
         messageCount: messages.length,
@@ -210,141 +201,6 @@ async function toSyncPayload({ conversation, log, userCache, platformCache, prov
         createdAt: conversation.created,
         updatedAt: conversation.updated,
     }
-}
-
-function resolveMessages(conversation: ChatConversation): PersistedChatMessage[] {
-    if (!isNil(conversation.uiMessages) && conversation.uiMessages.length > 0) {
-        return conversation.uiMessages
-    }
-    const rawMessages = conversation.messages as ModelMessage[]
-    if (isNil(rawMessages) || rawMessages.length === 0) {
-        return []
-    }
-    return convertToPersistedFormat(chatHistory.reconstruct(rawMessages))
-}
-
-function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChatMessage[] {
-    return messages.map((msg) => {
-        const parts: PersistedChatPart[] = []
-
-        if (msg.content) {
-            parts.push({ type: PersistedChatPartType.TEXT, text: msg.content })
-        }
-
-        if (msg.thoughts) {
-            parts.push({ type: PersistedChatPartType.REASONING, text: msg.thoughts })
-        }
-
-        if (msg.toolCalls) {
-            for (const tc of msg.toolCalls) {
-                parts.push({
-                    type: PersistedChatPartType.TOOL_CALL,
-                    toolCallId: tc.toolCallId,
-                    toolName: tc.title,
-                    input: tc.input ?? {},
-                    output: tc.output,
-                    status: tc.status === 'completed' ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
-                })
-            }
-        }
-
-        return {
-            role: msg.role === 'user' ? PersistedChatRole.USER : PersistedChatRole.ASSISTANT,
-            parts,
-        }
-    })
-}
-
-
-function resolveModelId({ tierId, provider }: { tierId: string | null, provider: AIProviderName | null }): string | null {
-    if (isNil(tierId)) {
-        return null
-    }
-    const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
-    if (isNil(tier)) {
-        return tierId
-    }
-    if (isNil(provider)) {
-        return tier.modelId
-    }
-    return chatHelpers.resolveModelIdForProvider({ tier, provider })
-}
-
-async function emitMessageBillingEvent({ conversation, log }: {
-    conversation: ChatConversation
-    log: FastifyBaseLogger
-}): Promise<void> {
-    const messages = resolveMessages(conversation)
-    const toolsUsed = countToolCallsInLatestTurn(messages)
-    const turnIndex = messages.filter((message) => message.role === PersistedChatRole.USER).length
-
-    const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
-    const model = resolveModelId({ tierId: conversation.modelName ?? null, provider })
-
-    const isManagedProvider = provider === AIProviderName.ACTIVEPIECES
-    const tier = chatHelpers.resolveTier({ tierId: conversation.modelName ?? null })
-    const creditValue = isManagedProvider ? tier.creditWeight + toolsUsed : 1 + toolsUsed
-
-    await billingProvider.get(log).trackCredits({
-        platformId: conversation.platformId,
-        value: creditValue,
-        source: CreditUsageSource.CHAT,
-        idempotencyKey: `${conversation.id}:chat:${turnIndex}`,
-        properties: {
-            platformId: conversation.platformId,
-            projectId: conversation.projectId,
-            userId: conversation.userId,
-            conversationId: conversation.id,
-            turnIndex,
-            messages: 1,
-            toolCalls: toolsUsed,
-            provider,
-            model,
-            tier: tier.id,
-        },
-    })
-
-    if (provider === AIProviderName.ACTIVEPIECES) {
-        await billingProvider.get(log).trackAppSumoAiUsage({
-            platformId: conversation.platformId,
-            value: creditValue,
-            idempotencyKey: `${conversation.id}:appSumoAi:${turnIndex}`,
-            properties: {
-                platformId: conversation.platformId,
-                projectId: conversation.projectId,
-                conversationId: conversation.id,
-                turnIndex,
-                tier: tier.id,
-            },
-        })
-    }
-
-    const licenseKeyByPlatform = await resolveLicenseKeysByPlatform({ platformIds: [conversation.platformId] })
-    const licenseKey = licenseKeyByPlatform.get(conversation.platformId)
-    if (isNil(licenseKey)) {
-        return
-    }
-
-    captureBillingEvent({
-        licenseKey,
-        event: BillingEvents.CHAT_MESSAGE,
-        properties: {
-            provider,
-            model,
-            toolsUsed,
-        },
-    })
-}
-
-function countToolCallsInLatestTurn(messages: PersistedChatMessage[]): number {
-    const lastUserIndex = messages.map((message) => message.role).lastIndexOf(PersistedChatRole.USER)
-    const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
-    return turn.reduce((sum, message) => sum + message.parts.filter((part) => part.type === PersistedChatPartType.TOOL_CALL).length, 0)
-}
-
-async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
-    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId }))
-    return result.error ? null : result.data
 }
 
 function extractToolCallsSummary(messages: PersistedChatMessage[]): Array<{ name: string, successCount: number, failureCount: number }> | null {

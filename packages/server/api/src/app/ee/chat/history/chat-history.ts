@@ -1,5 +1,7 @@
-import { ChatHistoryMessage, ChatHistoryToolCall, chatPersistenceUtils } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ChatConversation, ChatHistoryMessage, ChatHistoryToolCall, chatPersistenceUtils, PersistedChatMessage } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
 
 function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] {
     const result: ChatHistoryMessage[] = []
@@ -97,6 +99,15 @@ function extractTextFromContent(content: unknown): string {
     return text
 }
 
+function resolveMessages({ conversation, log }: { conversation: ChatConversation, log: FastifyBaseLogger }): PersistedChatMessage[] {
+    if (isNil(conversation.uiMessages)) {
+        log.error({ conversation: { id: conversation.id } }, 'Chat conversation has null uiMessages')
+        return []
+    }
+    return conversation.uiMessages
+}
+
 export const chatHistory = {
     reconstruct: reconstructChatHistory,
+    resolveMessages,
 }

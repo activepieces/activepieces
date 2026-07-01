@@ -38,8 +38,12 @@ vi.mock('../../../../../src/app/ee/chat/chat-helpers', () => ({
     },
 }))
 
-vi.mock('../../../../../src/app/ee/chat/chat-sync-job', () => ({
-    chatAnalyticsTelemetry: () => ({ sendConversationUpdate: vi.fn(), sendMessageBillingEvent: vi.fn() }),
+vi.mock('../../../../../src/app/ee/chat/chat-analytics-sync', () => ({
+    chatAnalyticsTelemetry: () => ({ sendConversationUpdate: vi.fn() }),
+}))
+
+vi.mock('../../../../../src/app/ee/chat/chat-usage-tracker', () => ({
+    chatUsageTracker: () => ({ track: vi.fn().mockResolvedValue(undefined) }),
 }))
 
 const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }

@@ -9,16 +9,18 @@ import { redisConnections } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
+import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatCompaction } from './chat-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistChatAttachments } from './chat-file-utils'
 import { chatHelpers } from './chat-helpers'
-import { chatAnalyticsTelemetry } from './chat-sync-job'
+import { chatUsageTracker } from './chat-usage-tracker'
 import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
 import { executeCrossProjectTool } from './tools/chat-tools'
@@ -382,7 +384,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             const conversation = await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId })
             if (conversation) {
                 chatAnalyticsTelemetry(log).sendConversationUpdate({ conversation })
-                chatAnalyticsTelemetry(log).sendMessageBillingEvent({ conversation })
+                rejectedPromiseHandler(chatUsageTracker(log).track({ conversation }), log)
             }
         }
     },

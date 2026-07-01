@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetProviderConfigResponse, Project, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -85,6 +85,25 @@ function resolveFastModelId({ provider }: { provider: AIProviderName }): string 
     return resolveModelIdForProvider({ tier: resolveTier({ tierId: FAST_TIER_ID }), provider })
 }
 
+function resolveModelId({ tierId, provider }: { tierId: string | null, provider: AIProviderName | null }): string | null {
+    if (isNil(tierId)) {
+        return null
+    }
+    const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
+    if (isNil(tier)) {
+        return tierId
+    }
+    if (isNil(provider)) {
+        return tier.modelId
+    }
+    return resolveModelIdForProvider({ tier, provider })
+}
+
+async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId }))
+    return result.error ? null : result.data
+}
+
 export const chatHelpers = {
     getConversationOrThrow,
     getUserProjects,
@@ -92,5 +111,7 @@ export const chatHelpers = {
     resolveTier,
     resolveModelIdForProvider,
     resolveFastModelId,
+    resolveModelId,
+    resolveChatProviderName,
     conversationRepo,
 }
