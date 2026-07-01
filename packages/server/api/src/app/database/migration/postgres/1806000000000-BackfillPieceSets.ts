@@ -10,12 +10,14 @@ type PieceSetConfig = {
     disabledPieces: string[]
     disabledActions: Record<string, string[]>
     disabledTriggers: Record<string, string[]>
+    curatedPieces: string[]
 }
 
 const EMPTY_CONFIG: PieceSetConfig = {
     disabledPieces: [],
     disabledActions: {},
     disabledTriggers: {},
+    curatedPieces: [],
 }
 
 const PLATFORM_BATCH = 100
@@ -118,8 +120,8 @@ async function ensureDefaultSet(queryRunner: QueryRunner, platformId: string): P
 
     const id = apId()
     await queryRunner.query(
-        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "includeNewPieces", "includeNewActions", "generatedForProjectId", "externalId", config)
-         VALUES ($1, NOW(), NOW(), $2, 'Default', true, true, true, NULL, 'default', $3)`,
+        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "includeNewPieces", "generatedForProjectId", "externalId", config)
+         VALUES ($1, NOW(), NOW(), $2, 'Default', true, true, NULL, 'default', $3)`,
         [id, platformId, JSON.stringify(EMPTY_CONFIG)],
     )
     return id
@@ -171,10 +173,10 @@ async function migrateTagSets(
         const taggedPieces = piecesByTagId.get(tagId) ?? new Set<string>()
         const disabledPieces = allPieceNames.filter((name) => !taggedPieces.has(name))
 
-        const config: PieceSetConfig = { disabledPieces, disabledActions: {}, disabledTriggers: {} }
+        const config: PieceSetConfig = { disabledPieces, disabledActions: {}, disabledTriggers: {}, curatedPieces: [] }
         await queryRunner.query(
-            `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "includeNewPieces", "includeNewActions", "generatedForProjectId", "externalId", config)
-             VALUES ($1, NOW(), NOW(), $2, $3, false, false, false, NULL, $4, $5)`,
+            `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "includeNewPieces", "generatedForProjectId", "externalId", config)
+             VALUES ($1, NOW(), NOW(), $2, $3, false, false, NULL, $4, $5)`,
             [apId(), platformId, tagName, tagName, JSON.stringify(config)],
         )
     }
@@ -236,7 +238,7 @@ async function insertProjectSets(
             id: apId(),
             projectId,
             name: `Project (${projectId})`,
-            config: { disabledPieces, disabledActions: {}, disabledTriggers: {} },
+            config: { disabledPieces, disabledActions: {}, disabledTriggers: {}, curatedPieces: [] },
         }
     })
 
@@ -246,14 +248,14 @@ async function insertProjectSets(
     const valuePlaceholders = rows
         .map((_, i) => {
             const base = i * 5
-            return `($${base + 1}, NOW(), NOW(), $${base + 2}, $${base + 3}, false, false, false, $${base + 4}, NULL, $${base + 5})`
+            return `($${base + 1}, NOW(), NOW(), $${base + 2}, $${base + 3}, false, false, $${base + 4}, NULL, $${base + 5})`
         })
         .join(', ')
 
     const params: unknown[] = rows.flatMap((r) => [r.id, platformId, r.name, r.projectId, JSON.stringify(r.config)])
 
     await queryRunner.query(
-        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "includeNewPieces", "includeNewActions", "generatedForProjectId", "externalId", config)
+        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "includeNewPieces", "generatedForProjectId", "externalId", config)
          VALUES ${valuePlaceholders}`,
         params,
     )

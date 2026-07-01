@@ -29,7 +29,6 @@ const formSchema = z.object({
   name: z.string().min(1, { message: formErrors.required }),
   externalId: z.string().optional(),
   includeNewPieces: z.boolean(),
-  includeNewActions: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,7 +40,6 @@ type EditPieceSetDialogProps = {
   currentName: string;
   currentExternalId: string | null;
   currentIncludeNewPieces: boolean;
-  currentIncludeNewActions: boolean;
 };
 
 const EditPieceSetForm = ({
@@ -50,14 +48,12 @@ const EditPieceSetForm = ({
   currentName,
   currentExternalId,
   currentIncludeNewPieces,
-  currentIncludeNewActions,
 }: {
   onOpenChange: (open: boolean) => void;
   id: string;
   currentName: string;
   currentExternalId: string | null;
   currentIncludeNewPieces: boolean;
-  currentIncludeNewActions: boolean;
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,7 +61,6 @@ const EditPieceSetForm = ({
       name: currentName,
       externalId: currentExternalId ?? '',
       includeNewPieces: currentIncludeNewPieces,
-      includeNewActions: currentIncludeNewActions,
     },
     mode: 'onChange',
   });
@@ -73,12 +68,7 @@ const EditPieceSetForm = ({
   const { mutate: updateSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
 
-  const handleSubmit = ({
-    name,
-    externalId,
-    includeNewPieces,
-    includeNewActions,
-  }: FormValues) => {
+  const handleSubmit = ({ name, externalId, includeNewPieces }: FormValues) => {
     updateSet(
       {
         id,
@@ -86,7 +76,6 @@ const EditPieceSetForm = ({
           name,
           externalId: externalId || null,
           includeNewPieces,
-          includeNewActions,
         },
       },
       { onSuccess: () => onOpenChange(false) },
@@ -150,28 +139,6 @@ const EditPieceSetForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="includeNewActions"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between gap-4">
-              <div>
-                <FormLabel>{t('Include new actions')}</FormLabel>
-                <FormDescription>
-                  {t(
-                    'Automatically include new actions and triggers from existing pieces',
-                  )}
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
         <DialogFooter>
           <Button
             type="button"
@@ -196,7 +163,6 @@ export const EditPieceSetDialog = ({
   currentName,
   currentExternalId,
   currentIncludeNewPieces,
-  currentIncludeNewActions,
 }: EditPieceSetDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -211,7 +177,6 @@ export const EditPieceSetDialog = ({
           currentName={currentName}
           currentExternalId={currentExternalId}
           currentIncludeNewPieces={currentIncludeNewPieces}
-          currentIncludeNewActions={currentIncludeNewActions}
         />
       </DialogContent>
     </Dialog>

@@ -192,7 +192,6 @@ describe('Piece Component Filtering (EE)', () => {
                 externalId: null,
                 isDefault: false,
                 includeNewPieces: true,
-                includeNewActions: true,
                 generatedForProjectId: null,
                 config: { disabledPieces, disabledActions: {}, disabledTriggers: {} },
             }
@@ -223,7 +222,6 @@ describe('Piece Component Filtering (EE)', () => {
                 externalId: null,
                 isDefault: true,
                 includeNewPieces: true,
-                includeNewActions: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             }
@@ -303,7 +301,6 @@ describe('Piece Component Filtering (EE)', () => {
                 externalId: null,
                 isDefault: false,
                 includeNewPieces: true,
-                includeNewActions: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             }
@@ -337,7 +334,6 @@ describe('Piece Component Filtering (EE)', () => {
                 externalId: null,
                 isDefault: true,
                 includeNewPieces: true,
-                includeNewActions: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             }
@@ -377,7 +373,6 @@ describe('Piece Component Filtering (EE)', () => {
                 externalId: null,
                 isDefault: false,
                 includeNewPieces: true,
-                includeNewActions: true,
                 generatedForProjectId: null,
                 config: {
                     disabledPieces: [],
@@ -499,7 +494,6 @@ describe('Piece Component Filtering (EE)', () => {
                 externalId: null,
                 isDefault: false,
                 includeNewPieces: true,
-                includeNewActions: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             }

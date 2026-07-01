@@ -6,6 +6,7 @@ export const PieceSetConfig = z.object({
     disabledPieces: z.array(z.string()).default([]),
     disabledActions: z.record(z.string(), z.array(z.string())).default({}),
     disabledTriggers: z.record(z.string(), z.array(z.string())).default({}),
+    curatedPieces: z.array(z.string()).default([]),
 })
 export type PieceSetConfig = z.infer<typeof PieceSetConfig>
 
@@ -16,7 +17,6 @@ export const PieceSet = z.object({
     externalId: Nullable(z.string()),
     isDefault: z.boolean(),
     includeNewPieces: z.boolean(),
-    includeNewActions: z.boolean(),
     generatedForProjectId: Nullable(ApId),
     config: PieceSetConfig,
 })
@@ -26,7 +26,6 @@ export const CreatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }),
     externalId: z.string().optional(),
     includeNewPieces: z.boolean().optional().default(true),
-    includeNewActions: z.boolean().optional().default(true),
 })
 export type CreatePieceSetRequestBody = z.infer<typeof CreatePieceSetRequestBody>
 
@@ -34,9 +33,10 @@ export const UpdatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }).optional(),
     externalId: z.string().nullable().optional(),
     includeNewPieces: z.boolean().optional(),
-    includeNewActions: z.boolean().optional(),
     enablePieces: z.array(z.string()).optional(),
     disablePieces: z.array(z.string()).optional(),
+    curatePieces: z.array(z.string()).optional(),
+    uncuratePieces: z.array(z.string()).optional(),
     enableActions: z.record(z.string(), z.array(z.string())).optional(),
     disableActions: z.record(z.string(), z.array(z.string())).optional(),
     enableTriggers: z.record(z.string(), z.array(z.string())).optional(),

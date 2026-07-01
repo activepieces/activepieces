@@ -29,7 +29,6 @@ import { pieceSetMutations } from '@/features/piece-sets';
 
 const formSchema = CreatePieceSetRequestBody.extend({
   includeNewPieces: z.boolean(),
-  includeNewActions: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -50,7 +49,6 @@ const CreatePieceSetForm = ({
     defaultValues: {
       name: '',
       includeNewPieces: true,
-      includeNewActions: true,
     },
     mode: 'onChange',
   });
@@ -92,21 +90,6 @@ const CreatePieceSetForm = ({
           render={({ field }) => (
             <FormItem className="flex items-center justify-between">
               <FormLabel>{t('Include new pieces by default')}</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value ?? true}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="includeNewActions"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
-              <FormLabel>{t('Include new actions by default')}</FormLabel>
               <FormControl>
                 <Switch
                   checked={field.value ?? true}

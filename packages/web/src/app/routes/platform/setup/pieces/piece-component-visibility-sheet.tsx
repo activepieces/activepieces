@@ -1,18 +1,12 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -20,7 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformPiecesMutations } from '@/features/platform-admin';
@@ -39,11 +33,7 @@ type ComponentItem =
   | { type: 'action'; data: ActionBase }
   | { type: 'trigger'; data: TriggerBase };
 
-type ItemKey = string;
-
-function makeKey(item: ComponentItem): ItemKey {
-  return `${item.type}:${item.data.name}`;
-}
+type VisibilityMode = 'all' | 'selected';
 
 export const PieceComponentVisibilitySheet = ({
   pieceName,
@@ -77,11 +67,6 @@ function PieceComponentVisibilitySheetContent({
   onOpenChange,
   pieceSet,
 }: PieceComponentVisibilitySheetProps) {
-  const [search, setSearch] = useState('');
-  const [selectedKeys, setSelectedKeys] = useState<Set<ItemKey>>(new Set());
-  const [actionsExpanded, setActionsExpanded] = useState(true);
-  const [triggersExpanded, setTriggersExpanded] = useState(true);
-
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: pieceName,
@@ -95,18 +80,20 @@ function PieceComponentVisibilitySheetContent({
     ? pieceSet.config.disabledTriggers[pieceName] ?? []
     : platform.filteredTriggerNames[pieceName] ?? [];
 
+  const originalMode: VisibilityMode =
+    pieceSet && (pieceSet.config.curatedPieces ?? []).includes(pieceName)
+      ? 'selected'
+      : 'all';
+
+  const [mode, setMode] = useState<VisibilityMode>(
+    pieceSet ? originalMode : 'selected',
+  );
   const [localHiddenActions, setLocalHiddenActions] = useState<string[]>(
     () => originalHiddenActions,
   );
   const [localHiddenTriggers, setLocalHiddenTriggers] = useState<string[]>(
     () => originalHiddenTriggers,
   );
-
-  const isDirty =
-    JSON.stringify([...localHiddenActions].sort()) !==
-      JSON.stringify([...originalHiddenActions].sort()) ||
-    JSON.stringify([...localHiddenTriggers].sort()) !==
-      JSON.stringify([...originalHiddenTriggers].sort());
 
   const { mutate: setPieceComponentVisibility, isPending: isPlatformSaving } =
     platformPiecesMutations.useSetPieceComponentVisibility({
@@ -120,103 +107,6 @@ function PieceComponentVisibilitySheetContent({
     pieceSetMutations.useUpdatePieceSet();
 
   const isMutating = isPlatformSaving || isPieceSetPending;
-
-  const toggleComponent = ({
-    componentName,
-    isAction,
-  }: {
-    pieceName: string;
-    componentName: string;
-    isAction: boolean;
-  }) => {
-    if (isAction) {
-      setLocalHiddenActions((prev) =>
-        prev.includes(componentName)
-          ? prev.filter((n) => n !== componentName)
-          : [...prev, componentName],
-      );
-    } else {
-      setLocalHiddenTriggers((prev) =>
-        prev.includes(componentName)
-          ? prev.filter((n) => n !== componentName)
-          : [...prev, componentName],
-      );
-    }
-  };
-
-  const batchHide = ({
-    actionNames,
-    triggerNames,
-  }: {
-    pieceName: string;
-    actionNames: string[];
-    triggerNames: string[];
-  }) => {
-    setLocalHiddenActions((prev) => [...new Set([...prev, ...actionNames])]);
-    setLocalHiddenTriggers((prev) => [...new Set([...prev, ...triggerNames])]);
-  };
-
-  const batchShow = ({
-    actionNames,
-    triggerNames,
-  }: {
-    pieceName: string;
-    actionNames: string[];
-    triggerNames: string[];
-  }) => {
-    setLocalHiddenActions((prev) =>
-      prev.filter((n) => !actionNames.includes(n)),
-    );
-    setLocalHiddenTriggers((prev) =>
-      prev.filter((n) => !triggerNames.includes(n)),
-    );
-  };
-
-  const handleSave = () => {
-    if (pieceSet) {
-      const newlyDisabledActions = localHiddenActions.filter(
-        (n) => !originalHiddenActions.includes(n),
-      );
-      const newlyEnabledActions = originalHiddenActions.filter(
-        (n) => !localHiddenActions.includes(n),
-      );
-      const newlyDisabledTriggers = localHiddenTriggers.filter(
-        (n) => !originalHiddenTriggers.includes(n),
-      );
-      const newlyEnabledTriggers = originalHiddenTriggers.filter(
-        (n) => !localHiddenTriggers.includes(n),
-      );
-      updatePieceSet(
-        {
-          id: pieceSet.id,
-          request: {
-            ...(newlyDisabledActions.length > 0 && {
-              disableActions: { [pieceName]: newlyDisabledActions },
-            }),
-            ...(newlyEnabledActions.length > 0 && {
-              enableActions: { [pieceName]: newlyEnabledActions },
-            }),
-            ...(newlyDisabledTriggers.length > 0 && {
-              disableTriggers: { [pieceName]: newlyDisabledTriggers },
-            }),
-            ...(newlyEnabledTriggers.length > 0 && {
-              enableTriggers: { [pieceName]: newlyEnabledTriggers },
-            }),
-          },
-        },
-        { onSuccess: () => onOpenChange(false) },
-      );
-    } else {
-      setPieceComponentVisibility(
-        {
-          pieceName,
-          hiddenActions: localHiddenActions,
-          hiddenTriggers: localHiddenTriggers,
-        },
-        { onSuccess: () => onOpenChange(false) },
-      );
-    }
-  };
 
   const allActions = useMemo<ComponentItem[]>(() => {
     if (!pieceModel) return [];
@@ -234,213 +124,211 @@ function PieceComponentVisibilitySheetContent({
     }));
   }, [pieceModel]);
 
-  const filteredActions = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return allActions.filter(
-      (item) => !q || item.data.displayName.toLowerCase().includes(q),
-    );
-  }, [allActions, search]);
-
-  const filteredTriggers = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return allTriggers.filter(
-      (item) => !q || item.data.displayName.toLowerCase().includes(q),
-    );
-  }, [allTriggers, search]);
-
-  const allVisibleItems = useMemo(
-    () => [...filteredActions, ...filteredTriggers],
-    [filteredActions, filteredTriggers],
-  );
-
   const visibleActionCount = allActions.filter(
     (item) => !localHiddenActions.includes(item.data.name),
   ).length;
-
   const visibleTriggerCount = allTriggers.filter(
     (item) => !localHiddenTriggers.includes(item.data.name),
   ).length;
 
-  const allVisibleSelected =
-    allVisibleItems.length > 0 &&
-    allVisibleItems.every((item) => selectedKeys.has(makeKey(item)));
+  const totalCount = allActions.length + allTriggers.length;
+  const checkedCount = visibleActionCount + visibleTriggerCount;
+  const selectAllState: boolean | 'indeterminate' =
+    checkedCount === 0
+      ? false
+      : checkedCount === totalCount
+      ? true
+      : 'indeterminate';
 
-  const someVisibleSelected =
-    !allVisibleSelected &&
-    allVisibleItems.some((item) => selectedKeys.has(makeKey(item)));
-
-  const toggleSelectAll = () => {
-    if (allVisibleSelected) {
-      setSelectedKeys(new Set());
+  const toggleComponent = (item: ComponentItem) => {
+    if (item.type === 'action') {
+      setLocalHiddenActions((prev) =>
+        prev.includes(item.data.name)
+          ? prev.filter((n) => n !== item.data.name)
+          : [...prev, item.data.name],
+      );
     } else {
-      setSelectedKeys(new Set(allVisibleItems.map(makeKey)));
+      setLocalHiddenTriggers((prev) =>
+        prev.includes(item.data.name)
+          ? prev.filter((n) => n !== item.data.name)
+          : [...prev, item.data.name],
+      );
     }
   };
 
-  const toggleGroupSelection = (items: ComponentItem[]) => {
-    const allSelected = items.every((item) => selectedKeys.has(makeKey(item)));
-    setSelectedKeys((prev) => {
-      const next = new Set(prev);
-      if (allSelected) {
-        items.forEach((item) => next.delete(makeKey(item)));
-      } else {
-        items.forEach((item) => next.add(makeKey(item)));
-      }
-      return next;
-    });
+  const toggleSelectAll = () => {
+    if (checkedCount === totalCount) {
+      setLocalHiddenActions(allActions.map((item) => item.data.name));
+      setLocalHiddenTriggers(allTriggers.map((item) => item.data.name));
+    } else {
+      setLocalHiddenActions([]);
+      setLocalHiddenTriggers([]);
+    }
   };
 
-  const toggleItemSelection = (item: ComponentItem) => {
-    setSelectedKeys((prev) => {
-      const next = new Set(prev);
-      const key = makeKey(item);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
+  const hiddenChanged =
+    JSON.stringify([...localHiddenActions].sort()) !==
+      JSON.stringify([...originalHiddenActions].sort()) ||
+    JSON.stringify([...localHiddenTriggers].sort()) !==
+      JSON.stringify([...originalHiddenTriggers].sort());
+
+  const isDirty = pieceSet
+    ? mode !== originalMode || (mode === 'selected' && hiddenChanged)
+    : hiddenChanged;
+
+  const handleSave = () => {
+    if (!pieceSet) {
+      setPieceComponentVisibility(
+        {
+          pieceName,
+          hiddenActions: localHiddenActions,
+          hiddenTriggers: localHiddenTriggers,
+        },
+        { onSuccess: () => onOpenChange(false) },
+      );
+      return;
+    }
+
+    if (mode === 'all') {
+      updatePieceSet(
+        {
+          id: pieceSet.id,
+          request:
+            originalMode === 'selected' ? { uncuratePieces: [pieceName] } : {},
+        },
+        { onSuccess: () => onOpenChange(false) },
+      );
+      return;
+    }
+
+    const newlyDisabledActions = localHiddenActions.filter(
+      (n) => !originalHiddenActions.includes(n),
+    );
+    const newlyEnabledActions = originalHiddenActions.filter(
+      (n) => !localHiddenActions.includes(n),
+    );
+    const newlyDisabledTriggers = localHiddenTriggers.filter(
+      (n) => !originalHiddenTriggers.includes(n),
+    );
+    const newlyEnabledTriggers = originalHiddenTriggers.filter(
+      (n) => !localHiddenTriggers.includes(n),
+    );
+
+    updatePieceSet(
+      {
+        id: pieceSet.id,
+        request: {
+          ...(originalMode === 'all' && { curatePieces: [pieceName] }),
+          ...(newlyDisabledActions.length > 0 && {
+            disableActions: { [pieceName]: newlyDisabledActions },
+          }),
+          ...(newlyEnabledActions.length > 0 && {
+            enableActions: { [pieceName]: newlyEnabledActions },
+          }),
+          ...(newlyDisabledTriggers.length > 0 && {
+            disableTriggers: { [pieceName]: newlyDisabledTriggers },
+          }),
+          ...(newlyEnabledTriggers.length > 0 && {
+            enableTriggers: { [pieceName]: newlyEnabledTriggers },
+          }),
+        },
+      },
+      { onSuccess: () => onOpenChange(false) },
+    );
   };
 
-  const handleHideSelected = () => {
-    const actionNames = filteredActions
-      .filter((item) => selectedKeys.has(makeKey(item)))
-      .map((item) => item.data.name);
-    const triggerNames = filteredTriggers
-      .filter((item) => selectedKeys.has(makeKey(item)))
-      .map((item) => item.data.name);
-    batchHide({ pieceName, actionNames, triggerNames });
-    setSelectedKeys(new Set());
-  };
-
-  const handleShowSelected = () => {
-    const actionNames = filteredActions
-      .filter((item) => selectedKeys.has(makeKey(item)))
-      .map((item) => item.data.name);
-    const triggerNames = filteredTriggers
-      .filter((item) => selectedKeys.has(makeKey(item)))
-      .map((item) => item.data.name);
-    batchShow({ pieceName, actionNames, triggerNames });
-    setSelectedKeys(new Set());
-  };
-
-  const hasSelection = selectedKeys.size > 0;
+  const showCheckboxes = mode === 'selected';
 
   return (
     <>
       <SheetHeader className="px-6 py-4 border-b shrink-0">
-        <SheetTitle className="text-base">{t('Manage visibility')}</SheetTitle>
+        <SheetTitle className="text-base">{t('Actions & triggers')}</SheetTitle>
         <SheetDescription>
           {pieceSet
-            ? t(
-                'Select which actions and triggers to include in this piece set for',
-              )
+            ? t('For {name} in this piece set', { name: pieceDisplayName })
             : t(
-                'Control which actions and triggers are available in the flow builder for',
-              )}{' '}
-          <span className="font-medium text-foreground">
-            {pieceDisplayName}
-          </span>
+                'Control which actions and triggers are available in the flow builder for {name}',
+                { name: pieceDisplayName },
+              )}
         </SheetDescription>
       </SheetHeader>
 
-      <div className="px-4 pt-3 flex flex-col gap-2 shrink-0">
-        <Input
-          placeholder={t('Search actions & triggers...')}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 cursor-pointer select-none text-sm">
-            <Checkbox
-              checked={
-                allVisibleSelected ||
-                (someVisibleSelected ? 'indeterminate' : false)
-              }
-              onCheckedChange={toggleSelectAll}
-              disabled={allVisibleItems.length === 0}
-            />
-            {t('Select all')}
-          </label>
-          <div className="flex-1" />
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!hasSelection || isLoading}
-            onClick={handleHideSelected}
+      {pieceSet && (
+        <div className="px-6 pt-4 pb-3 border-b shrink-0 flex flex-col gap-2.5">
+          <Tabs
+            value={mode}
+            onValueChange={(value) => setMode(value as VisibilityMode)}
           >
-            <EyeOff className="size-4" />
-            {t('Hide selected')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!hasSelection || isLoading}
-            onClick={handleShowSelected}
-          >
-            <Eye className="size-4" />
-            {t('Show selected')}
-          </Button>
+            <TabsList className="w-full">
+              <TabsTrigger value="all" className="flex-1">
+                {t('All actions & triggers')}
+              </TabsTrigger>
+              <TabsTrigger value="selected" className="flex-1">
+                {t('Only selected')}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <p className="text-xs text-muted-foreground">
+            {mode === 'all'
+              ? t(
+                  'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
+                )
+              : t(
+                  'Only the checked items below are available. New actions and triggers added to this piece later stay hidden until you check them here.',
+                )}
+          </p>
         </div>
-      </div>
+      )}
 
-      <div className="flex-1 overflow-y-auto">
+      {showCheckboxes && (
+        <div className="px-6 pt-3 flex items-center gap-2.5 shrink-0">
+          <Checkbox
+            checked={selectAllState}
+            onCheckedChange={toggleSelectAll}
+            disabled={totalCount === 0}
+          />
+          <span className="text-sm font-medium">{t('Select all')}</span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {t('{count} of {total} selected', {
+              count: checkedCount,
+              total: totalCount,
+            })}
+          </span>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
-        ) : allVisibleItems.length === 0 ? (
+        ) : totalCount === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-            {t('No results found')}
+            {t('No actions or triggers found')}
           </div>
         ) : (
-          <div>
-            {filteredActions.length > 0 && (
-              <ComponentGroup
+          <>
+            {allActions.length > 0 && (
+              <ComponentSection
                 label={t('Actions')}
-                items={filteredActions}
-                totalCount={allActions.length}
+                items={allActions}
                 visibleCount={visibleActionCount}
-                expanded={actionsExpanded}
-                onExpandedChange={setActionsExpanded}
-                selectedKeys={selectedKeys}
                 hiddenNames={localHiddenActions}
-                onToggleGroupSelection={toggleGroupSelection}
-                onToggleItemSelection={toggleItemSelection}
-                chevronAtEnd={true}
-                onToggleComponentVisibility={(componentName) =>
-                  toggleComponent({
-                    pieceName,
-                    componentName,
-                    isAction: true,
-                  })
-                }
+                showCheckboxes={showCheckboxes}
+                onToggle={toggleComponent}
               />
             )}
-            {filteredTriggers.length > 0 && (
-              <ComponentGroup
+            {allTriggers.length > 0 && (
+              <ComponentSection
                 label={t('Triggers')}
-                items={filteredTriggers}
-                totalCount={allTriggers.length}
+                items={allTriggers}
                 visibleCount={visibleTriggerCount}
-                expanded={triggersExpanded}
-                onExpandedChange={setTriggersExpanded}
-                selectedKeys={selectedKeys}
                 hiddenNames={localHiddenTriggers}
-                onToggleGroupSelection={toggleGroupSelection}
-                onToggleItemSelection={toggleItemSelection}
-                chevronAtEnd={true}
-                onToggleComponentVisibility={(componentName) =>
-                  toggleComponent({
-                    pieceName,
-                    componentName,
-                    isAction: false,
-                  })
-                }
+                showCheckboxes={showCheckboxes}
+                onToggle={toggleComponent}
               />
             )}
-          </div>
+          </>
         )}
       </div>
 
@@ -461,128 +349,73 @@ function PieceComponentVisibilitySheetContent({
   );
 }
 
-type ComponentGroupProps = {
+type ComponentSectionProps = {
   label: string;
   items: ComponentItem[];
-  totalCount: number;
   visibleCount: number;
-  expanded: boolean;
-  onExpandedChange: (expanded: boolean) => void;
-  selectedKeys: Set<ItemKey>;
   hiddenNames: string[];
-  onToggleGroupSelection: (items: ComponentItem[]) => void;
-  onToggleItemSelection: (item: ComponentItem) => void;
-  onToggleComponentVisibility: (componentName: string) => void;
-  chevronAtEnd?: boolean;
+  showCheckboxes: boolean;
+  onToggle: (item: ComponentItem) => void;
 };
 
-function ComponentGroup({
+function ComponentSection({
   label,
   items,
-  totalCount,
   visibleCount,
-  expanded,
-  onExpandedChange,
-  selectedKeys,
   hiddenNames,
-  onToggleGroupSelection,
-  onToggleItemSelection,
-  onToggleComponentVisibility,
-  chevronAtEnd = false,
-}: ComponentGroupProps) {
-  const allGroupSelected =
-    items.length > 0 && items.every((item) => selectedKeys.has(makeKey(item)));
-  const someGroupSelected =
-    !allGroupSelected && items.some((item) => selectedKeys.has(makeKey(item)));
-
-  const chevron = expanded ? (
-    <ChevronDown
-      className={cn(
-        'size-4 text-muted-foreground shrink-0',
-        chevronAtEnd && 'ml-auto',
-      )}
-    />
-  ) : (
-    <ChevronRight
-      className={cn(
-        'size-4 text-muted-foreground shrink-0',
-        chevronAtEnd && 'ml-auto',
-      )}
-    />
-  );
-
-  const groupCheckbox = (
-    <Checkbox
-      checked={
-        allGroupSelected || (someGroupSelected ? 'indeterminate' : false)
-      }
-      onCheckedChange={() => onToggleGroupSelection(items)}
-    />
-  );
-
+  showCheckboxes,
+  onToggle,
+}: ComponentSectionProps) {
   return (
-    <Collapsible open={expanded} onOpenChange={onExpandedChange}>
-      <div className="flex items-center gap-2 px-4 py-2 hover:bg-muted/30 transition-colors bg-muted/50 border-t border-b border-border">
-        {chevronAtEnd && groupCheckbox}
-        <CollapsibleTrigger className="flex items-center gap-2 flex-1 min-w-0">
-          {!chevronAtEnd && chevron}
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {label}
-          </span>
-          <Badge variant="inverted" className="text-xs shrink-0 font-bold">
-            {visibleCount}/{totalCount}
-          </Badge>
-          {chevronAtEnd && chevron}
-        </CollapsibleTrigger>
-        {!chevronAtEnd && groupCheckbox}
+    <div>
+      <div className="flex items-center gap-2 pt-4 pb-1.5">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+        <Badge variant="inverted" className="text-xs font-bold">
+          {visibleCount}/{items.length}
+        </Badge>
       </div>
-
-      <CollapsibleContent>
-        <div className="divide-y">
-          {items.map((item) => {
-            const isHidden = hiddenNames.includes(item.data.name);
-            const isSelected = selectedKeys.has(makeKey(item));
-
-            return (
-              <div
-                key={makeKey(item)}
-                className={cn(
-                  'flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors',
-                )}
-              >
+      <div className="divide-y">
+        {items.map((item) => {
+          const isHidden = hiddenNames.includes(item.data.name);
+          return (
+            <label
+              key={`${item.type}:${item.data.name}`}
+              className={cn(
+                'flex items-center gap-3 py-2.5',
+                showCheckboxes && 'cursor-pointer',
+                showCheckboxes && isHidden && 'opacity-50',
+              )}
+            >
+              {showCheckboxes && (
                 <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={() => onToggleItemSelection(item)}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium truncate">
-                      {item.data.displayName}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className="shrink-0 text-xs capitalize"
-                    >
-                      {item.type}
-                    </Badge>
-                  </div>
-                  {item.data.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {item.data.description}
-                    </p>
-                  )}
-                </div>
-                <Switch
                   checked={!isHidden}
-                  onCheckedChange={() =>
-                    onToggleComponentVisibility(item.data.name)
-                  }
+                  onCheckedChange={() => onToggle(item)}
                 />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium truncate">
+                    {item.data.displayName}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 text-xs capitalize"
+                  >
+                    {item.type}
+                  </Badge>
+                </div>
+                {item.data.description && (
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {item.data.description}
+                  </p>
+                )}
               </div>
-            );
-          })}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+            </label>
+          );
+        })}
+      </div>
+    </div>
   );
 }

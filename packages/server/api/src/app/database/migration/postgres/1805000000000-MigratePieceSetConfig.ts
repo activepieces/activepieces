@@ -64,14 +64,16 @@ export class MigratePieceSetConfig1805000000000 implements Migration {
                         ) AS grouped_triggers
                     ),
                     '{}'::jsonb
-                )
+                ),
+                'curatedPieces',
+                '[]'::jsonb
             )
             WHERE config ? 'pieceOverrides'
         `)
 
         await queryRunner.query(`
             ALTER TABLE "piece_set"
-            ALTER COLUMN config SET DEFAULT '{"disabledPieces":[],"disabledActions":{},"disabledTriggers":{}}'
+            ALTER COLUMN config SET DEFAULT '{"disabledPieces":[],"disabledActions":{},"disabledTriggers":{},"curatedPieces":[]}'
         `)
     }
 

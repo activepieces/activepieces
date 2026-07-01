@@ -31,10 +31,6 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
             type: Boolean,
             default: true,
         },
-        includeNewActions: {
-            type: Boolean,
-            default: true,
-        },
         generatedForProjectId: {
             ...ApIdSchema,
             nullable: true,

@@ -389,11 +389,11 @@ import { AddAiToolConfigTable1797000000000 } from './migration/postgres/17970000
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
+import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { AddFilteredComponentNamesToPlatform1803000000000 } from './migration/postgres/1803000000000-AddFilteredComponentNamesToPlatform'
 import { AddPieceSetTable1804000000000 } from './migration/postgres/1804000000000-AddPieceSetTable'
 import { MigratePieceSetConfig1805000000000 } from './migration/postgres/1805000000000-MigratePieceSetConfig'
 import { BackfillPieceSets1806000000000 } from './migration/postgres/1806000000000-BackfillPieceSets'
-import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)

@@ -104,24 +104,6 @@ export const PieceSetsTab = () => {
         ),
       },
       {
-        accessorKey: 'includeNewActions',
-        size: 175,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Include new actions')}
-            icon={ToggleLeft}
-          />
-        ),
-        cell: ({ row }) => (
-          <Badge
-            variant={row.original.includeNewActions ? 'success' : 'outline'}
-          >
-            {row.original.includeNewActions ? t('Yes') : t('No')}
-          </Badge>
-        ),
-      },
-      {
         id: 'actions',
         size: 80,
         cell: ({ row }) => (
@@ -224,7 +206,6 @@ export const PieceSetsTab = () => {
           currentName={editingSet.name}
           currentExternalId={editingSet.externalId ?? null}
           currentIncludeNewPieces={editingSet.includeNewPieces}
-          currentIncludeNewActions={editingSet.includeNewActions}
         />
       )}
     </>

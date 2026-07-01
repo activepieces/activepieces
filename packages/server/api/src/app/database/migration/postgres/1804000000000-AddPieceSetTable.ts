@@ -17,7 +17,6 @@ export class AddPieceSetTable1804000000000 implements Migration {
                 "externalId" character varying,
                 "isDefault" boolean NOT NULL DEFAULT false,
                 "includeNewPieces" boolean NOT NULL DEFAULT true,
-                "includeNewActions" boolean NOT NULL DEFAULT true,
                 "generatedForProjectId" character varying(21),
                 "config" jsonb NOT NULL DEFAULT '{"pieceOverrides":{},"actionOverrides":{},"triggerOverrides":{}}',
                 CONSTRAINT "pk_piece_set" PRIMARY KEY ("id"),

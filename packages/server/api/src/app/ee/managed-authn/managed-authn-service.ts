@@ -214,7 +214,7 @@ const upsertTagManagedSet = async ({ platformId, projectId, piecesTags, log }: U
 
     const taggedSet = new Set(taggedPieces)
     const disabledPieces = allPieceNames.filter((name) => !taggedSet.has(name))
-    const config = { disabledPieces, disabledActions: {}, disabledTriggers: {} }
+    const config = { disabledPieces, disabledActions: {}, disabledTriggers: {}, curatedPieces: [] }
 
     await distributedLock(log).runExclusive({
         key: `piece_set_managed_${platformId}_${projectId}`,
@@ -232,7 +232,6 @@ const upsertTagManagedSet = async ({ platformId, projectId, piecesTags, log }: U
                 externalId: undefined,
                 isDefault: false,
                 includeNewPieces: false,
-                includeNewActions: false,
                 generatedForProjectId: projectId,
                 config,
             })

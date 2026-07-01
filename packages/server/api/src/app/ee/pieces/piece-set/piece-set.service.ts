@@ -118,7 +118,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         return set
     },
 
-    async create({ platformId, name, externalId, includeNewPieces = true, includeNewActions = true, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
+    async create({ platformId, name, externalId, includeNewPieces = true, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
         const id = apId()
         await pieceSetRepo().save({
             id,
@@ -127,9 +127,8 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
             externalId: externalId ?? null,
             isDefault,
             includeNewPieces,
-            includeNewActions,
             generatedForProjectId,
-            config: config ?? { disabledPieces: [], disabledActions: {}, disabledTriggers: {} },
+            config: config ?? { disabledPieces: [], disabledActions: {}, disabledTriggers: {}, curatedPieces: [] },
         })
         return pieceSetRepo().findOneByOrFail({ id })
     },
@@ -143,7 +142,6 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('name', request.name),
             ...(request.externalId !== undefined ? { externalId: request.externalId } : {}),
             includeNewPieces: request.includeNewPieces ?? existing.includeNewPieces,
-            includeNewActions: request.includeNewActions ?? existing.includeNewActions,
             config: updatedConfig,
         })
 
@@ -181,7 +179,6 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
             name,
             externalId: undefined,
             includeNewPieces: original.includeNewPieces,
-            includeNewActions: original.includeNewActions,
             isDefault: false,
             generatedForProjectId: null,
             config: original.config,
@@ -229,15 +226,18 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         const hasNewActionsOrTriggers = newActionNames.length > 0 || newTriggerNames.length > 0
         if (!isNewPiece && !hasNewActionsOrTriggers) return
 
+        // New pieces are governed by the set-level includeNewPieces policy.
+        // New actions/triggers on an existing piece are governed per-piece: only sets that
+        // have curated (closed-listed) this piece auto-hide its new components.
         const orConditions: string[] = []
         if (isNewPiece) orConditions.push('ps.includeNewPieces = false')
-        if (hasNewActionsOrTriggers) orConditions.push('ps.includeNewActions = false')
+        if (hasNewActionsOrTriggers) orConditions.push('jsonb_exists(COALESCE(ps.config->\'curatedPieces\', \'[]\'::jsonb), :pieceName)')
 
         let cursor: string | undefined
         for (;;) {
             const qb = pieceSetRepo()
                 .createQueryBuilder('ps')
-                .where(`(${orConditions.join(' OR ')})`)
+                .where(`(${orConditions.join(' OR ')})`, { pieceName })
                 .orderBy('ps.id', 'ASC')
                 .take(NEW_PIECE_BATCH_SIZE)
 
@@ -266,13 +266,14 @@ function computeConfigForNewPiece({ set, pieceName, isNewPiece, newActionNames, 
     const disabledPieces = [...config.disabledPieces]
     const disabledActions = { ...config.disabledActions }
     const disabledTriggers = { ...config.disabledTriggers }
+    const curatedPieces = [...(config.curatedPieces ?? [])]
 
     if (isNewPiece && !set.includeNewPieces && !disabledPieces.includes(pieceName)) {
         disabledPieces.push(pieceName)
         changed = true
     }
 
-    if (!set.includeNewActions) {
+    if (curatedPieces.includes(pieceName)) {
         if (newActionNames.length > 0) {
             const existing = disabledActions[pieceName] ?? []
             const toAdd = newActionNames.filter((a) => !existing.includes(a))
@@ -291,7 +292,7 @@ function computeConfigForNewPiece({ set, pieceName, isNewPiece, newActionNames, 
         }
     }
 
-    return changed ? { disabledPieces, disabledActions, disabledTriggers } : null
+    return changed ? { disabledPieces, disabledActions, disabledTriggers, curatedPieces } : null
 }
 
 function buildDefaultSet(platformId: string) {
@@ -302,12 +303,12 @@ function buildDefaultSet(platformId: string) {
         externalId: 'default',
         isDefault: true,
         includeNewPieces: true,
-        includeNewActions: true,
         generatedForProjectId: null,
         config: {
             disabledPieces: [],
             disabledActions: {},
             disabledTriggers: {},
+            curatedPieces: [],
         },
     }
 }
@@ -322,7 +323,20 @@ function applyPatchOps(current: PieceSetConfig, req: UpdatePieceSetRequestBody):
         if (!disabledPieces.includes(piece)) disabledPieces.push(piece)
     }
 
+    let curatedPieces = [...(current.curatedPieces ?? [])]
+    for (const piece of req.curatePieces ?? []) {
+        if (!curatedPieces.includes(piece)) curatedPieces.push(piece)
+    }
+    // Opening a piece back to "all" clears any curated subset so every action/trigger is available again.
+    const openedPieces = new Set(req.uncuratePieces ?? [])
+    if (openedPieces.size > 0) {
+        curatedPieces = curatedPieces.filter((p) => !openedPieces.has(p))
+    }
+
     let disabledActions = { ...current.disabledActions }
+    for (const piece of openedPieces) {
+        disabledActions = Object.fromEntries(Object.entries(disabledActions).filter(([k]) => k !== piece))
+    }
     for (const [piece, actions] of Object.entries(req.enableActions ?? {})) {
         const remaining = (disabledActions[piece] ?? []).filter((a) => !actions.includes(a))
         disabledActions = remaining.length > 0
@@ -336,6 +350,9 @@ function applyPatchOps(current: PieceSetConfig, req: UpdatePieceSetRequestBody):
     }
 
     let disabledTriggers = { ...current.disabledTriggers }
+    for (const piece of openedPieces) {
+        disabledTriggers = Object.fromEntries(Object.entries(disabledTriggers).filter(([k]) => k !== piece))
+    }
     for (const [piece, triggers] of Object.entries(req.enableTriggers ?? {})) {
         const remaining = (disabledTriggers[piece] ?? []).filter((t) => !triggers.includes(t))
         disabledTriggers = remaining.length > 0
@@ -348,5 +365,5 @@ function applyPatchOps(current: PieceSetConfig, req: UpdatePieceSetRequestBody):
         if (toAdd.length > 0) disabledTriggers = { ...disabledTriggers, [piece]: [...existing, ...toAdd] }
     }
 
-    return { disabledPieces, disabledActions, disabledTriggers }
+    return { disabledPieces, disabledActions, disabledTriggers, curatedPieces }
 }

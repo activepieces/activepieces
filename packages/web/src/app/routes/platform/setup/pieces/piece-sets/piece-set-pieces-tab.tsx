@@ -229,57 +229,79 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           ),
         },
         {
-          id: 'actions',
-          size: 120,
+          id: 'actionsAndTriggers',
+          size: 180,
+          header: ({ column }) => (
+            <DataTableColumnHeader
+              column={column}
+              title={t('Actions & triggers')}
+              icon={SlidersHorizontal}
+            />
+          ),
           cell: ({ row }) => {
             if (isPlatformHidden(row.original.name)) {
               return (
-                <div className="flex items-center justify-end gap-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex items-center justify-center size-9 text-muted-foreground">
-                        <Lock className="size-4" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {t(
-                        'Hidden from all projects. Manage it from the Pieces tab.',
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Lock className="size-3.5" />
+                  {t('Managed by platform')}
+                </span>
               );
             }
             const included = !pieceSet.config.disabledPieces.includes(
               row.original.name,
             );
-            const hasComponentFilters =
-              !!pieceSet.config.disabledActions[row.original.name]?.length ||
-              !!pieceSet.config.disabledTriggers[row.original.name]?.length;
+            const curated = (pieceSet.config.curatedPieces ?? []).includes(
+              row.original.name,
+            );
+            const total = row.original.actions + row.original.triggers;
+            const disabledCount =
+              (pieceSet.config.disabledActions[row.original.name]?.length ??
+                0) +
+              (pieceSet.config.disabledTriggers[row.original.name]?.length ??
+                0);
+            const selectedCount = Math.max(total - disabledCount, 0);
             return (
-              <div className="flex items-center justify-end gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={!included}
-                      onClick={() =>
-                        setManagingComponentsPiece(row.original.name)
-                      }
-                    >
-                      <SlidersHorizontal
-                        className={cn(
-                          'size-4',
-                          hasComponentFilters && 'text-primary',
-                        )}
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t('Manage actions & triggers')}
-                  </TooltipContent>
-                </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={!included}
+                    onClick={() =>
+                      setManagingComponentsPiece(row.original.name)
+                    }
+                    className={cn(
+                      'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
+                    )}
+                  >
+                    <Badge variant={curated ? 'default' : 'secondary'}>
+                      {curated
+                        ? t('{count} of {total} selected', {
+                            count: selectedCount,
+                            total,
+                          })
+                        : t('All actions')}
+                    </Badge>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('Manage actions & triggers')}
+                </TooltipContent>
+              </Tooltip>
+            );
+          },
+        },
+        {
+          id: 'actions',
+          size: 80,
+          cell: ({ row }) => {
+            if (isPlatformHidden(row.original.name)) {
+              return null;
+            }
+            const included = !pieceSet.config.disabledPieces.includes(
+              row.original.name,
+            );
+            return (
+              <div className="flex items-center justify-end">
                 <Switch
                   checked={included}
                   disabled={isPending}
