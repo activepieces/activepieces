@@ -4,8 +4,20 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
 import { oneNoteAuth } from '../auth';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { Client, PageCollection, ResponseType } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
+
+async function fetchPageContent(client: Client, pageId: string): Promise<string | null> {
+	try {
+		return await client
+			.api(`/me/onenote/pages/${pageId}/content`)
+			.responseType(ResponseType.TEXT)
+			.get();
+	} catch (error) {
+		console.error(`Failed to fetch content for page ${pageId}:`, error);
+		return null;
+	}
+}
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { notebook_id: string; section_id: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -46,7 +58,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { 
 				}
 			}
 
-			return pages.map((page) => ({
+			const pagesWithContent = await Promise.all(
+				pages.map(async (page) => ({
+					...page,
+					content: await fetchPageContent(client, page.id),
+				})),
+			);
+
+			return pagesWithContent.map((page) => ({
 				epochMilliSeconds: dayjs(page.createdDateTime).valueOf(),
 				data: page,
 			}));
@@ -136,6 +155,7 @@ export const newNoteInSectionTrigger = createTrigger({
 		lastModifiedDateTime: '2025-01-09T01:00:00Z',
 		createdByAppId: 'app-id-example',
 		contentUrl: 'https://graph.microsoft.com/v1.0/me/onenote/pages/page-id-example/content',
+		content: '<html><head><title>Sample Page Title</title></head><body><p>Sample note content.</p></body></html>',
 		links: {
 			oneNoteClientUrl: {
 				href: 'onenote:https://example.com/page'
