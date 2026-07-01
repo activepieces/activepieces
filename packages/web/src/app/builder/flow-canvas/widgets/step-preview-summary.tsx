@@ -28,7 +28,7 @@ export const StepPreviewSummary = ({
   const { stepMetadata } = stepsHooks.useStepMetadata({ step });
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-2 px-4 py-3">
+      <div className="flex shrink-0 items-center gap-2 px-4 py-3">
         <PieceIcon
           logoUrl={stepMetadata?.logoUrl}
           displayName={stepMetadata?.displayName}

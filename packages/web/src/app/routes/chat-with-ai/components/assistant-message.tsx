@@ -1,3 +1,4 @@
+import { ActionReceiptEvent, ImageGeneratedEvent } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -22,11 +23,13 @@ import {
 import { useTts } from '@/features/chat/lib/use-tts';
 import { cn } from '@/lib/utils';
 
+import { rehypeEmailGroup } from '../lib/email-group-marker';
 import {
   buildMessageBlocks,
   getLastThinkingSegment,
   MessageBlock,
   OutcomeCardBlock,
+  pickGroupLayout,
 } from '../lib/message-blocks';
 import {
   ConnectionPickerData,
@@ -40,14 +43,20 @@ import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
+import { FileGroup } from './file-group';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
+import { ImageCarouselGroup } from './image-carousel-group';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { DocumentPreview } from './previews/document-preview';
 import { markdownPreviewComponents } from './previews/markdown-preview-components';
+import { usePieceTagPlugins } from './previews/piece-tag';
 import { previewUtils } from './previews/preview-utils';
 import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { ReceiptListGroup } from './receipt-list-group';
+import { ShowcaseCard, ShowcaseContent } from './showcase-card/showcase-card';
+import { ShowcaseCardSkeleton } from './showcase-card/showcase-skeleton';
 import { StageOpenChip } from './stage-open-chip';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
@@ -227,6 +236,11 @@ function MessageBlocks({
   isResumed?: boolean;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const piecePlugins = usePieceTagPlugins();
+  const rehypePlugins = useMemo(
+    () => [...(piecePlugins ?? []), rehypeEmailGroup],
+    [piecePlugins],
+  );
   const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
   const lastTextIdx = blocks.findLastIndex((b) => b.kind === 'text');
   const hasActiveDisplayCard = blocks.some(
@@ -354,9 +368,13 @@ function MessageBlocks({
                   <StreamingText
                     text={block.text}
                     components={markdownPreviewComponents}
+                    rehypePlugins={rehypePlugins}
                   />
                 ) : (
-                  <Markdown components={markdownPreviewComponents}>
+                  <Markdown
+                    components={markdownPreviewComponents}
+                    rehypePlugins={rehypePlugins}
+                  >
                     {block.text}
                   </Markdown>
                 )}
@@ -373,8 +391,18 @@ function MessageBlocks({
                   <DisplayToolCard
                     part={block.part}
                     onResolve={approveGate}
+                    onSendPrompt={onSendPrompt}
                     isInteractive={false}
                   />
+                </div>
+              );
+            }
+            if (
+              chatPartUtils.getToolPartName(block.part) === 'ap_show_showcase'
+            ) {
+              return (
+                <div key={block.part.toolCallId} className="py-2">
+                  <ShowcaseCardSkeleton />
                 </div>
               );
             }
@@ -493,10 +521,61 @@ function OutcomeCard({
   }
 }
 
-// A run of adjacent outcome cards collapses into one quiet, expandable group so
-// a batch of writes doesn't flood the timeline. Collapsed by default — the count
-// header tells the user how many landed; expanding reveals each card.
+// A run of adjacent outcome cards is grouped so a batch doesn't flood the
+// timeline. The layout follows the content: a homogeneous run gets a
+// purpose-built view (image carousel, receipt list, file grid); a mixed run
+// falls back to the quiet collapsed stack.
 function CardGroup({
+  cards,
+  toolCallMeta,
+}: {
+  cards: OutcomeCardBlock[];
+  toolCallMeta: Record<string, ToolCallMeta>;
+}) {
+  const layout = pickGroupLayout(cards);
+
+  if (layout === 'gallery') {
+    const images = cards
+      .map((card) => toolCallMeta[card.toolCallId]?.image)
+      .filter((image): image is ImageGeneratedEvent => image != null);
+    if (images.length === 0) return null;
+    return (
+      <div className="py-2">
+        <ImageCarouselGroup images={images} />
+      </div>
+    );
+  }
+
+  if (layout === 'receipts') {
+    const receipts = cards
+      .map((card) => toolCallMeta[card.toolCallId]?.actionReceipt)
+      .filter((receipt): receipt is ActionReceiptEvent => receipt != null);
+    if (receipts.length === 0) return null;
+    return (
+      <div className="py-2">
+        <ReceiptListGroup receipts={receipts} />
+      </div>
+    );
+  }
+
+  if (layout === 'files') {
+    const files = cards.flatMap(
+      (card) => toolCallMeta[card.toolCallId]?.files ?? [],
+    );
+    if (files.length === 0) return null;
+    return (
+      <div className="py-2">
+        <FileGroup files={files} />
+      </div>
+    );
+  }
+
+  return <MixedCardGroup cards={cards} toolCallMeta={toolCallMeta} />;
+}
+
+// Mixed outcome kinds (rare) keep the quiet collapsed stack — the count header
+// tells the user how many landed; expanding reveals each card.
+function MixedCardGroup({
   cards,
   toolCallMeta,
 }: {
@@ -539,10 +618,12 @@ function CardGroup({
 function DisplayToolCard({
   part,
   onResolve,
+  onSendPrompt,
   isInteractive,
 }: {
   part: AnyToolPart;
   onResolve: (gateId: string, payload?: Record<string, unknown>) => void;
+  onSendPrompt?: (text: string) => void;
   isInteractive: boolean;
 }) {
   if (!chatPartUtils.isReady(part)) return null;
@@ -604,6 +685,13 @@ function DisplayToolCard({
       if (!answersText) return null;
       return <AnsweredQuestionsCard answersText={answersText} />;
     }
+    case 'ap_show_showcase':
+      return (
+        <ShowcaseCard
+          content={data as unknown as ShowcaseContent}
+          onSendPrompt={onSendPrompt}
+        />
+      );
     default:
       return null;
   }

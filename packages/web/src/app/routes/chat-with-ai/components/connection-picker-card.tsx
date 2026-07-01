@@ -162,26 +162,49 @@ export function ConnectionPickerCard({
 }: ConnectionPickerCardProps) {
   const queryClient = useQueryClient();
   const conversationId = useConversationId();
-  const pieceName = normalizePieceName(picker.piece);
+  const hintPieceName = normalizePieceName(picker.piece);
   const shouldFetch =
     !picker.connections?.length && !!conversationId && isInteractive;
-  const { data: fetchedConnections, isLoading: isFetchingConnections } =
-    useQuery({
-      queryKey: ['chat-picker-connections', conversationId, pieceName],
-      queryFn: async () => {
-        const conns = await chatApi.getPickerConnections({
-          conversationId: conversationId!,
-          pieceName,
-        });
-        return conns.map((c) => ({
-          ...c,
-          status: c.status as AppConnectionStatus,
-        }));
-      },
-      enabled: shouldFetch,
-    });
+  const {
+    data: resolution,
+    isLoading: isFetchingConnections,
+    isError: isFetchError,
+  } = useQuery({
+    queryKey: [
+      'chat-picker-connections',
+      conversationId,
+      hintPieceName,
+      picker.displayName,
+    ],
+    queryFn: () =>
+      chatApi.getPickerConnections({
+        conversationId: conversationId!,
+        pieceName: hintPieceName,
+        displayName: picker.displayName,
+      }),
+    enabled: shouldFetch,
+  });
 
-  const resolvedConnections = picker.connections ?? fetchedConnections ?? [];
+  const fetchedConnections = useMemo<PickerConnection[]>(
+    () =>
+      (resolution?.connections ?? []).map((c) => ({
+        ...c,
+        status: c.status as AppConnectionStatus,
+      })),
+    [resolution],
+  );
+  // `??` alone would keep an empty embedded array and drop the fetched list — prefer a non-empty
+  // embedded list, otherwise fall back to what the server resolved.
+  const resolvedConnections = picker.connections?.length
+    ? picker.connections
+    : fetchedConnections;
+  const isFallback = resolution?.fallback ?? false;
+  const resolvedPieceName = resolution?.resolvedPieceName ?? null;
+  const resolvedDisplayName =
+    resolution?.resolvedDisplayName ?? picker.displayName;
+  // Use the piece the server actually resolved (against real metadata + the user's connections),
+  // not the raw model hint, so the icon, piece model, and connect/reconnect dialogs target the right piece.
+  const pieceName = resolvedPieceName ?? hintPieceName;
   const filteredPicker = useMemo(() => {
     if (!selectedProjectId)
       return { ...picker, connections: resolvedConnections };
@@ -209,7 +232,7 @@ export function ConnectionPickerCard({
   } = useLiveConnections({
     connections: filteredPicker.connections,
     pieceName,
-    enabled: isInteractive && !selectedConnection,
+    enabled: isInteractive && !selectedConnection && !isFallback,
   });
 
   const statusOf = (conn: PickerConnection): AppConnectionStatus =>
@@ -272,13 +295,28 @@ export function ConnectionPickerCard({
       <SelectedState
         pieceName={pieceName}
         connection={selectedConnection}
-        displayName={filteredPicker.displayName}
+        displayName={resolvedDisplayName}
       />
     );
   }
 
   if (shouldFetch && isFetchingConnections) {
     return null;
+  }
+
+  if (shouldFetch && isFetchError) {
+    return (
+      <InteractiveCardShell
+        onDismiss={() => onDismiss?.()}
+        title={t('Could not load your connected accounts')}
+      >
+        <div className="pb-2 text-sm text-muted-foreground">
+          {t(
+            'Something went wrong loading your connections. Try again in a moment.',
+          )}
+        </div>
+      </InteractiveCardShell>
+    );
   }
 
   if (!isInteractive) {
@@ -305,18 +343,32 @@ export function ConnectionPickerCard({
       <InteractiveCardShell
         onDismiss={() => onDismiss?.()}
         title={
-          hasConnections
+          hasConnections && isFallback
+            ? t('Pick one of your connected accounts')
+            : hasConnections
             ? t('Which {name} account should I use?', {
-                name: filteredPicker.displayName,
+                name: resolvedDisplayName,
               })
-            : t('Connect {name}', { name: filteredPicker.displayName })
+            : resolvedPieceName !== null
+            ? t('Connect {name}', { name: resolvedDisplayName })
+            : t('No connected apps yet')
         }
       >
+        {hasConnections && isFallback && (
+          <div className="pb-2 text-sm text-muted-foreground">
+            {t('Could not match {name} — choose an account to use', {
+              name: resolvedDisplayName,
+            })}
+          </div>
+        )}
+
         {!hasConnections && (
           <div className="pb-2 text-sm text-muted-foreground">
-            {t('No {name} account connected yet', {
-              name: filteredPicker.displayName,
-            })}
+            {resolvedPieceName !== null
+              ? t('No {name} account connected yet', {
+                  name: resolvedDisplayName,
+                })
+              : t('No apps connected yet — connect one to continue')}
           </div>
         )}
 
@@ -405,28 +457,30 @@ export function ConnectionPickerCard({
           })}
         </RadioGroup>
 
-        <div className="flex items-center gap-3 border-t py-3">
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium">
-              {t('Use a different account')}
+        {!isFallback && (
+          <div className="flex items-center gap-3 border-t py-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium">
+                {t('Use a different account')}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t('Connect a new {name} account', {
+                  name: resolvedDisplayName,
+                })}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {t('Connect a new {name} account', {
-                name: filteredPicker.displayName,
-              })}
-            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 gap-1.5"
+              disabled={isPieceLoading}
+              onClick={handleNewConnection}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t('Connect')}
+            </Button>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="shrink-0 gap-1.5"
-            disabled={isPieceLoading}
-            onClick={handleNewConnection}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {t('Connect')}
-          </Button>
-        </div>
+        )}
 
         {hasConnections && (
           <div className="flex justify-end pt-1">

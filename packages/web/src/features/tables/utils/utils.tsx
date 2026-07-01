@@ -1,7 +1,7 @@
 import { ExportTableResponse, FieldType } from '@activepieces/shared';
 import JSZip from 'jszip';
 import { Type, Calendar, Hash, ChevronDownCircle } from 'lucide-react';
-import { createContext, ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/dom-utils';
 
@@ -90,18 +90,41 @@ function exportRecords({
     extension: 'csv',
   });
 }
+function sanitizeSheetName(name: string): string {
+  // Excel sheet names cap at 31 chars and forbid : \ / ? * [ ]
+  const cleaned = name.replace(/[:\\/?*[\]]/g, ' ').trim();
+  return (cleaned || 'Sheet1').slice(0, 31);
+}
+
+async function exportTableAsXlsx(table: ExportTableResponse) {
+  const ExcelJS = (await import('exceljs')).default;
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sanitizeSheetName(table.name));
+  worksheet.addRow(table.fields.map((field) => field.name));
+  worksheet.getRow(1).font = { bold: true };
+  table.rows.forEach((row) => {
+    worksheet.addRow(table.fields.map((field) => row[field.name] ?? ''));
+  });
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${table.name}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export const tablesUtils = {
   exportTables,
+  exportTableAsXlsx,
   getColumnIcon,
   exportRecords,
 };
-
-export const FieldHeaderContext = createContext<{
-  setIsPopoverOpen: (open: boolean) => void;
-  setPopoverContent: (content: React.ReactNode) => void;
-  field: ClientField & { index: number };
-  userHasTableWritePermission: boolean;
-} | null>(null);
 
 // Map<CsvColumnIndex, FieldId>
 export type FieldsMapping = (string | null)[];

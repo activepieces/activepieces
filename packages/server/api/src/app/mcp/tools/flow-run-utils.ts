@@ -14,6 +14,11 @@ const MAX_WAIT_MS = 120_000
 // The actionable part of an API error (which field, what format, allowed values) often lands past
 // 300 chars, so the agent never saw it. Keep the head but allow enough to carry the real guidance.
 const ERROR_SUMMARY_MAX_LENGTH = 900
+// Input keys that carry a page size (best-effort across REST conventions); used to detect when a
+// read returned exactly the size requested and is therefore probably a truncated page.
+const LIMIT_INPUT_KEYS = ['limit', 'pageSize', 'pagesize', 'page_size', 'perPage', 'per_page', 'maxResults', 'max_results', 'first', 'top', '$top']
+// Well-known keys under which APIs nest their record array.
+const DATA_ARRAY_KEYS = ['data', 'results', 'records', 'items', 'value', 'rows', 'entries']
 
 type AdhocActionResult = {
     text: string
@@ -285,18 +290,20 @@ export async function executeAdhocAction({
             }
         }
 
+        const truncationCaveat = buildAdhocTruncationCaveat({ run: completedRun, stepName, actionName: action.name, input })
+
         if (offload !== undefined) {
             const offloaded = await maybeOffloadLargeResult({ run: completedRun, stepName, actionName: action.name, displayName: action.displayName, offload })
             if (offloaded !== null) {
-                return offloaded
+                return appendTextCaveat(offloaded, truncationCaveat)
             }
         }
 
-        const formatted = formatAdhocActionResult(completedRun, stepName, action.displayName, action.name)
-        return {
+        const formatted = formatAdhocActionResult({ run: completedRun, stepName, displayName: action.displayName, actionName: action.name, actionDescription: action.description, actionAiDescription: action.aiMetadata?.description })
+        return appendTextCaveat({
             content: [{ type: 'text', text: formatted.text }],
             ...(formatted.errorSummary !== undefined ? { structuredContent: { errorSummary: formatted.errorSummary } } : {}),
-        }
+        }, truncationCaveat)
     }
     catch (err) {
         log.error({ error: err, project: { id: projectId }, flow: { id: flow.id } }, 'executeAdhocAction failed')
@@ -458,8 +465,12 @@ function buildTriggerShapeHint(trigger: Step): string {
 // An empty result is the classic thrash trigger: the old note ("try broader parameters") pushed the
 // agent to re-run the SAME action with looser filters. When the action was a find-one, the real fix
 // is usually a different INSTRUMENT — switch to the app's list_*/search_* action — so redirect there.
-function emptyResultNote(actionName?: string): string {
-    const cardinality = isNil(actionName) ? 'other' : mcpUtils.classifyActionCardinality(actionName)
+function emptyResultNote({ actionName, description, aiDescription }: {
+    actionName?: string
+    description?: string
+    aiDescription?: string
+}): string {
+    const cardinality = isNil(actionName) ? 'other' : mcpUtils.classifyActionCardinality({ actionName, description, aiDescription })
     if (cardinality === 'single') {
         return `Note: empty result. "${actionName}" returns a SINGLE match — if you meant to enumerate records, switch to this app's list/search action (e.g. list_records) rather than retrying this one. Otherwise confirm a connection (auth) is set and any required object/list id is resolved before treating this as "no data".`
     }
@@ -519,6 +530,87 @@ function getAdhocStepOutput(run: FlowRun, stepName: string): { status: unknown, 
     return { status: stepRecord.status, output: stepRecord.output }
 }
 
+// Best-effort: the page size the agent asked for, scanned from the input and the common nested
+// containers (custom_api_call carries it in body/queryParams). Only positive integers count.
+function detectRequestedLimit(input: Record<string, unknown> | undefined): number | undefined {
+    if (isNil(input)) {
+        return undefined
+    }
+    const containers = [input, input.body, input.queryParams, input.params]
+    for (const container of containers) {
+        if (!isObject(container)) {
+            continue
+        }
+        for (const key of LIMIT_INPUT_KEYS) {
+            const raw = container[key]
+            const num = typeof raw === 'number'
+                ? raw
+                : (typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN)
+            if (Number.isInteger(num) && num > 0) {
+                return num
+            }
+        }
+    }
+    return undefined
+}
+
+// Length of the primary record array in a payload (root array, or the first well-known data key),
+// or undefined when the payload isn't a list.
+function dataArrayLength(payload: unknown): number | undefined {
+    if (Array.isArray(payload)) {
+        return payload.length
+    }
+    if (!isObject(payload)) {
+        return undefined
+    }
+    for (const key of DATA_ARRAY_KEYS) {
+        const value = payload[key]
+        if (Array.isArray(value)) {
+            return value.length
+        }
+    }
+    return undefined
+}
+
+// A read that returns EXACTLY the page size the agent requested is almost certainly a truncated
+// page — a complete small result is otherwise indistinguishable from a clipped one. Surface that
+// as an explicit caveat so the model never reports a page count as the total. '' when N/A.
+function buildAdhocTruncationCaveat({ run, stepName, actionName, input }: {
+    run: FlowRun
+    stepName: string
+    actionName: string
+    input: Record<string, unknown> | undefined
+}): string {
+    const requestedLimit = detectRequestedLimit(input)
+    if (requestedLimit === undefined) {
+        return ''
+    }
+    const outcome = getAdhocStepOutput(run, stepName)
+    if (outcome === null || outcome.status !== StepOutputStatus.SUCCEEDED) {
+        return ''
+    }
+    const payload = actionName === 'custom_api_call'
+        ? slimCustomApiCallOutput(outcome.output).payload
+        : outcome.output
+    const arrayLength = dataArrayLength(payload)
+    if (arrayLength === undefined || arrayLength !== requestedLimit) {
+        return ''
+    }
+    return `\n\n⚠️ Returned exactly your requested limit of ${requestedLimit} — this is almost certainly a truncated page, not the full set. For a true total or all of them, paginate (offset/cursor) or raise the limit; do NOT report ${requestedLimit} as the complete count.`
+}
+
+function appendTextCaveat(result: McpToolResult, caveat: string): McpToolResult {
+    if (caveat === '') {
+        return result
+    }
+    return {
+        ...result,
+        content: result.content.map((part, index) =>
+            index === 0 ? { ...part, text: `${part.text}${caveat}` } : part,
+        ),
+    }
+}
+
 // A large successful result (e.g. a 1.4MB Attio query) is offloaded to a file via the caller's
 // handler, which returns a compact preview + fileId in place of the blob. Returns null to fall
 // through to normal formatting (result small, empty, failed, or persistence declined/failed).
@@ -554,7 +646,14 @@ async function maybeOffloadLargeResult({ run, stepName, actionName, displayName,
     return { content: [{ type: 'text', text }] }
 }
 
-function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string, actionName?: string): AdhocActionResult {
+function formatAdhocActionResult({ run, stepName, displayName, actionName, actionDescription, actionAiDescription }: {
+    run: FlowRun
+    stepName: string
+    displayName: string
+    actionName?: string
+    actionDescription?: string
+    actionAiDescription?: string
+}): AdhocActionResult {
     const steps = run.steps
     if (isNil(steps) || typeof steps !== 'object') {
         return {
@@ -582,7 +681,7 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
             : typeof payload === 'string' ? payload : JSON.stringify(payload)
         const base = `✅ ${displayName} completed (run ${run.id})${statusNote}.\n\n${outStr}`
         if (looksEmpty(payload)) {
-            return { text: `${base}\n\n${emptyResultNote(actionName)}` }
+            return { text: `${base}\n\n${emptyResultNote({ actionName, description: actionDescription, aiDescription: actionAiDescription })}` }
         }
         return { text: base }
     }

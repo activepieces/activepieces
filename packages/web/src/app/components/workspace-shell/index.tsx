@@ -10,7 +10,6 @@ import React, {
 import { PanelImperativeHandle } from 'react-resizable-panels';
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -84,7 +83,6 @@ function ProjectChangedRedirector({
 
 function WorkspaceShellInner() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { embedState } = useEmbedding();
   const { isStageOpen, closeStage, stageKey } = useStage();
   const isMobile = useIsMobile();
   const chatPanelRef = useRef<PanelImperativeHandle>(null);
@@ -198,18 +196,6 @@ function WorkspaceShellInner() {
     () => ({ chatPopped, chatCollapsed, popOutChat, dockChat }),
     [chatPopped, chatCollapsed, popOutChat, dockChat],
   );
-
-  if (embedState.isEmbedded) {
-    return (
-      <SidebarProvider open={false} hoverMode={false}>
-        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-          <div className="flex-1 flex overflow-hidden">
-            <StageContainer />
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    );
-  }
 
   return (
     <ChatDockProvider value={chatDockValue}>

@@ -1,10 +1,15 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation, ChatMention } from '@activepieces/shared';
+import {
+  ChatConversation,
+  ChatMention,
+  type ChatMessageSource,
+} from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useStickToBottomContext } from 'use-stick-to-bottom';
 
 import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import {
@@ -42,6 +47,24 @@ import { StageContextChip } from './components/stage-context-chip';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 import { useStageContext } from './lib/use-stage-context';
+
+// Forces a scroll to the newly-sent message. The chat's stick-to-bottom only
+// auto-follows when already at the bottom, so clicking a showcase tile (or sending)
+// while scrolled up wouldn't reveal the new message without this. Scrolls only when
+// a user message is ADDED (count rises) — not when the optimistic id reconciles to
+// its persisted id — so it never yanks the user mid-read. Rendered inside the
+// StickToBottom tree so useStickToBottomContext resolves.
+function ScrollOnSend({ count }: { count: number }) {
+  const { scrollToBottom } = useStickToBottomContext();
+  const prevCount = useRef(count);
+  useEffect(() => {
+    if (count > prevCount.current) {
+      void scrollToBottom();
+    }
+    prevCount.current = count;
+  }, [count, scrollToBottom]);
+  return null;
+}
 
 export function AIChatBox({
   incognito,
@@ -115,6 +138,13 @@ function ChatBoxContent({
       }
       stage.open({ type: event.resourceType, id: event.resourceId });
     },
+    onBrowserView: (event) => {
+      if (!stage) return;
+      stage.showBrowserView(event);
+    },
+    onStreamEnd: () => {
+      stage?.pauseBrowserViewIfLive();
+    },
     getActiveContext,
   });
 
@@ -151,10 +181,15 @@ function ChatBoxContent({
   const [hasSentMessage, setHasSentMessage] = useState(false);
 
   const handleSend = useCallback(
-    async (text: string, files?: File[], mentions?: ChatMention[]) => {
+    async (
+      text: string,
+      files?: File[],
+      mentions?: ChatMention[],
+      source?: ChatMessageSource,
+    ) => {
       if (!text.trim() && (!files || files.length === 0)) return;
       setHasSentMessage(true);
-      await sendMessage(text.trim(), files, mentions);
+      await sendMessage(text.trim(), files, mentions, source);
     },
     [sendMessage],
   );
@@ -169,12 +204,15 @@ function ChatBoxContent({
     () => messages.findLast((m) => m.role === 'assistant'),
     [messages],
   );
+  const userMessageCount = useMemo(
+    () => messages.filter((m) => m.role === 'user').length,
+    [messages],
+  );
 
-  // Each user message stores a snapshot of what was open in the Stage. We render a
-  // subtle context tag below a message only when its context differs from the
-  // previous committed one — the first/baseline context shows nothing. The live
-  // chip above the composer carries the "current location" signal, so there's no
-  // separate pending/"switched" indicator.
+  // Each user message stores a snapshot of what was open in the Stage. We print a
+  // bare "User is on / moved to …" line above a message when its position changed
+  // from the previous one — including the first message that has a position. The
+  // live chip above the composer carries the "current location" signal.
   const contextMarkers = useMemo(
     () => computeContextMarkers(messages),
     [messages],
@@ -213,7 +251,9 @@ function ChatBoxContent({
         {isEmpty ? (
           <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
             <EmptyState
-              onSuggestionClick={(text) => void handleSend(text)}
+              onSuggestionClick={(text) =>
+                void handleSend(text, undefined, undefined, 'suggestion')
+              }
               incognito={incognito}
               showFlowCards={!hasConversations}
               hasInput={hasInput}
@@ -237,6 +277,7 @@ function ChatBoxContent({
               }}
             >
               <ChatContainerContent className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-4 gap-0 min-h-full">
+                <ScrollOnSend count={userMessageCount} />
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -246,7 +287,7 @@ function ChatBoxContent({
                         key={msg.id}
                         message={msg}
                         isLastMessage={idx === messages.length - 1}
-                        contextMarker={contextMarkers.get(msg.id)}
+                        positionMarker={contextMarkers.get(msg.id)}
                       />
                     );
                   }
@@ -331,9 +372,7 @@ function ChatBoxContent({
             placeholder={
               isEmpty ? t('Ask, build, or run a task...') : undefined
             }
-            contextChip={
-              <StageContextChip context={activeContext} variant="live" />
-            }
+            contextChip={<StageContextChip context={activeContext} />}
             banner={
               showBanner ? (
                 <CreditsBanner
@@ -355,24 +394,31 @@ function getMessageContext(msg: ChatUIMessage): ActiveChatContext | undefined {
   return (msg as ChatUIMessage & { context?: ActiveChatContext }).context;
 }
 
-// A user message's stored context renders as a subtle context tag only when it
-// differs from the previous committed context — so the baseline and repeats are
+// A user message's stored context prints a bare "User is on / moved to …" line
+// ABOVE it when the position changed — the baseline (first message that has a
+// position) and every focus-aware change, while same-position repeats stay
 // silent. "Differs" includes the selected item (focus): two messages on the same
-// flow but different steps each show their own step, instead of being de-duped to
-// silence. isSameForMarker adds focus on top of isSame; isSame itself stays
-// focus-blind because it mirrors the server's switch-line semantics (selecting a
-// step must not read as a "Switched to" event).
+// flow but different steps each get their own line. isSameForMarker adds focus on
+// top of isSame; isSame itself stays focus-blind because it mirrors the server's
+// switch-line semantics (selecting a step must not read as a resource switch).
+// We carry the previous context too so the line can read "(from {previous})".
 function computeContextMarkers(
   messages: ChatUIMessage[],
-): Map<string, ActiveChatContext> {
-  const markers = new Map<string, ActiveChatContext>();
+): Map<
+  string,
+  { context: ActiveChatContext; previous: ActiveChatContext | undefined }
+> {
+  const markers = new Map<
+    string,
+    { context: ActiveChatContext; previous: ActiveChatContext | undefined }
+  >();
   let prev: ActiveChatContext | undefined;
   for (const msg of messages) {
     if (msg.role !== 'user') continue;
     const ctx = getMessageContext(msg);
     if (!ctx) continue;
-    if (prev !== undefined && !activeContextUtils.isSameForMarker(ctx, prev)) {
-      markers.set(msg.id, ctx);
+    if (prev === undefined || !activeContextUtils.isSameForMarker(ctx, prev)) {
+      markers.set(msg.id, { context: ctx, previous: prev });
     }
     prev = ctx;
   }

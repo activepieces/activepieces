@@ -41,6 +41,7 @@ const ApStepCanvasNode = React.memo(
       setOpenedPieceSelectorStepNameOrAddButtonId,
       isRightSidebarOpen,
       canvasOrientation,
+      isRecentlyChanged,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -52,6 +53,7 @@ const ApStepCanvasNode = React.memo(
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
       state.rightSidebar !== RightSideBarType.NONE,
       state.canvasOrientation,
+      state.recentlyChangedSteps[step.name] !== undefined,
     ]);
     const chatDock = useChatDockOptional();
     const isHorizontal = canvasOrientation === 'horizontal';
@@ -161,6 +163,7 @@ const ApStepCanvasNode = React.memo(
             'bg-accent': isSkipped,
             'rounded-tl-none': isTrigger && !isHorizontal,
             'hover:border-ring': !isSelected,
+            'ap-step-fx-changed': isRecentlyChanged && !isDragging,
           },
         )}
         onClick={(e) => handleStepClick(e)}

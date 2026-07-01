@@ -21,19 +21,54 @@ export function useReportFlowFocus() {
   const stage = useStageOptional();
   const reportStageFocus = stage?.reportStageFocus;
 
-  const [flowId, selectedStepName, selectedStep, isEditingStep] =
-    useBuilderStateContext((state) => [
-      state.flowVersion.flowId,
-      state.selectedStep,
-      flowStructureUtil.getStep(
-        state.selectedStep ?? '',
-        state.flowVersion.trigger,
-      ),
-      state.rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-        !isNil(state.selectedStep),
-    ]);
+  // Select only value-stable values: a string KEY for the multi-selection (box-drag
+  // / shift-click populate selectedNodes) and the trigger ref. Resolving the names
+  // to steps inside the selector would return a fresh array every call, which —
+  // destructured as a `focus` dependency — recomputes `focus` on every render and
+  // turns the reportStageFocus effect into an infinite update loop.
+  const [
+    flowId,
+    selectedStepName,
+    selectedStep,
+    selectedNodesKey,
+    trigger,
+    isEditingStep,
+  ] = useBuilderStateContext((state) => [
+    state.flowVersion.flowId,
+    state.selectedStep,
+    flowStructureUtil.getStep(
+      state.selectedStep ?? '',
+      state.flowVersion.trigger,
+    ),
+    state.selectedNodes.join(','),
+    state.flowVersion.trigger,
+    state.rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+      !isNil(state.selectedStep),
+  ]);
 
   const focus = useMemo<StageFocus | null>(() => {
+    const nodeNames = selectedNodesKey ? selectedNodesKey.split(',') : [];
+    if (nodeNames.length > 1) {
+      const steps = nodeNames
+        .map((name) => flowStructureUtil.getStep(name, trigger))
+        .filter((step): step is Step => !isNil(step));
+      if (steps.length > 1) {
+        const names = steps.map((step) => step.displayName);
+        const shown = names.slice(0, MULTI_STEP_PREVIEW);
+        const summary =
+          shown.join(', ') +
+          (names.length > shown.length
+            ? `, +${names.length - shown.length} more`
+            : '');
+        return {
+          scopeType: 'flow',
+          scopeId: flowId,
+          kind: 'flow-steps',
+          label: `${names.length} steps selected (${summary})`,
+          ref: steps.map((step) => step.name).join(','),
+        };
+      }
+    }
     if (isNil(selectedStepName) || isNil(selectedStep)) {
       return null;
     }
@@ -45,7 +80,14 @@ export function useReportFlowFocus() {
       ref: selectedStep.name,
       detail: stepDetail(selectedStep, isEditingStep),
     };
-  }, [flowId, selectedStepName, selectedStep, isEditingStep]);
+  }, [
+    flowId,
+    selectedStepName,
+    selectedStep,
+    selectedNodesKey,
+    trigger,
+    isEditingStep,
+  ]);
 
   useEffect(() => {
     reportStageFocus?.(focus);
@@ -55,6 +97,8 @@ export function useReportFlowFocus() {
     return () => reportStageFocus?.(null);
   }, [reportStageFocus]);
 }
+
+const MULTI_STEP_PREVIEW = 4;
 
 function pieceShortName(pieceName: string): string {
   return pieceName.replace('@activepieces/piece-', '');

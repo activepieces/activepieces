@@ -1,5 +1,11 @@
 import { t } from 'i18next';
+import { Table2, Workflow } from 'lucide-react';
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 import { type ProjectFilter } from './use-browse-navigation';
@@ -13,37 +19,55 @@ export function BrowseFilterChips({
   onSelect: (filter: ProjectFilter) => void;
   hideTables?: boolean;
 }) {
-  const chips = CHIP_DEFS.filter(
-    (chip) => !(chip.value === 'tables' && hideTables),
-  );
+  const isActive = (value: ProjectFilter) => value === active;
+  const chip = (value: ProjectFilter) =>
+    cn(
+      'flex h-8 items-center justify-center rounded-lg text-sm font-medium transition-colors',
+      isActive(value)
+        ? 'bg-foreground/[0.08] text-foreground'
+        : 'text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground',
+    );
 
   return (
-    <div className="flex items-center gap-1.5">
-      {chips.map((chip) => {
-        const isActive = chip.value === active;
-        return (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onSelect('all')}
+        onMouseDown={(e) => e.preventDefault()}
+        className={cn(chip('all'), 'px-3')}
+      >
+        {t('All')}
+      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
           <button
-            key={chip.value}
             type="button"
-            onClick={() => onSelect(chip.value)}
-            className={cn(
-              'rounded-full px-2.5 py-1 text-xs font-medium transition-colors',
-              isActive
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-            )}
+            aria-label={t('Flows')}
+            onClick={() => onSelect('flows')}
+            onMouseDown={(e) => e.preventDefault()}
+            className={cn(chip('flows'), 'w-8')}
           >
-            {chip.label}
+            <Workflow className="size-[18px]" />
           </button>
-        );
-      })}
+        </TooltipTrigger>
+        <TooltipContent side="bottom">{t('Flows')}</TooltipContent>
+      </Tooltip>
+      {!hideTables && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t('Tables')}
+              onClick={() => onSelect('tables')}
+              onMouseDown={(e) => e.preventDefault()}
+              className={cn(chip('tables'), 'w-8')}
+            >
+              <Table2 className="size-[18px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t('Tables')}</TooltipContent>
+        </Tooltip>
+      )}
     </div>
   );
 }
-
-const CHIP_DEFS: { value: ProjectFilter; label: string }[] = [
-  { value: 'all', label: t('All') },
-  { value: 'flows', label: t('Flows') },
-  { value: 'tables', label: t('Tables') },
-  { value: 'active', label: t('Active') },
-];

@@ -112,6 +112,7 @@ export function ChatModelSelector({
         align="end"
         side="top"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onFocusOutside={(e) => e.preventDefault()}
       >
         <div
           ref={listRef}

@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, spreadIfDefined } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, normalizePieceName, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -11,7 +11,8 @@ import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatService } from './chat-service'
-import { findConnectionsForPiece } from './tools/chat-tools'
+import { chatPrompt } from './prompt/chat-prompt'
+import { resolvePickerConnections } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
@@ -70,7 +71,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
-        const { content, runId: clientRunId, files, activeContext, mentions } = request.body
+        const { content, runId: clientRunId, files, activeContext, mentions, source } = request.body
         const conversationId = request.params.id
         const userId = request.principal.id
         const platformId = request.principal.platform.id
@@ -121,6 +122,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 files,
                 activeContext,
                 mentions,
+                source,
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
@@ -176,17 +178,30 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const userId = request.principal.id
         await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const pieceName = request.query.pieceName
+        const displayName = request.query.displayName
         const cached = await chatApprovalGate.getAvailableConnections({ conversationId, pieceName })
         if (cached.length > 0) {
-            return reply.status(StatusCodes.OK).send(cached)
+            return reply.status(StatusCodes.OK).send({
+                resolvedPieceName: normalizePieceName(pieceName),
+                resolvedDisplayName: displayName ?? null,
+                connections: cached,
+                fallback: false,
+            })
         }
         const projects = await chatHelpers.getUserProjects({ platformId, userId, log: request.log })
-        const result = await findConnectionsForPiece({ pieceName, projects, platformId, log: request.log })
-        if ('pickConnection' in result) {
-            await chatApprovalGate.storeAvailableConnections({ conversationId, pieceName, connections: result.connections })
-            return reply.status(StatusCodes.OK).send(result.connections)
+        const resolution = await resolvePickerConnections({ pieceHint: pieceName, displayNameHint: displayName, projects, platformId, log: request.log })
+        if (!resolution.fallback && resolution.connections.length > 0) {
+            await chatApprovalGate.storeAvailableConnections({ conversationId, pieceName, connections: resolution.connections })
         }
-        return reply.status(StatusCodes.OK).send([])
+        return reply.status(StatusCodes.OK).send(resolution)
+    })
+
+    // Authored prompt + guide text that shapes the agent, for the dev-only harness console.
+    // Session-authed (unlike /eval/prompt-sources which is API-key gated) so the web app can
+    // read it with its normal bearer token. The static tool/guide/pipeline metadata is bundled
+    // client-side from @activepieces/shared, so this only serves the markdown sources.
+    app.get('/harness', GetHarnessRoute, async (_request, reply) => {
+        return reply.status(StatusCodes.OK).send(chatPrompt.sources)
     })
 
 }
@@ -316,6 +331,16 @@ const GetPendingGateRoute = {
     },
 }
 
+const GetHarnessRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
+
 const GetPickerConnectionsRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
@@ -324,7 +349,7 @@ const GetPickerConnectionsRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
-        querystring: z.object({ pieceName: z.string() }),
+        querystring: z.object({ pieceName: z.string(), displayName: z.string().optional() }),
     },
 }
 

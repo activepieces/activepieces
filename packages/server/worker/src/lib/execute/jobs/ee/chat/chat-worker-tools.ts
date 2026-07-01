@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StageOpenEvent, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BrowserViewEvent, BuildPlanEvent, ChatAgentEventType, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, normalizePieceName as sharedNormalizePieceName, StageOpenEvent, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -183,9 +183,7 @@ function looksLikeMcpContentParts(array: unknown[]): boolean {
 }
 
 function normalizePieceName(piece: string): string {
-    if (piece.startsWith('@')) return piece
-    const stripped = piece.startsWith('piece-') ? piece.slice('piece-'.length) : piece
-    return `@activepieces/piece-${stripped.replace(/_/g, '-')}`
+    return sharedNormalizePieceName(piece)
 }
 
 function createEventEmitter({ sendEvent, userId, conversationId, log }: {
@@ -249,6 +247,18 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
             void sendWithRetry({
                 event: { type: ChatAgentEventType.STAGE_OPEN, data },
                 maxAttempts: 2,
+            })
+        },
+        emitBrowserView(data: BrowserViewEvent): void {
+            void sendWithRetry({
+                event: { type: ChatAgentEventType.BROWSER_VIEW, data },
+                maxAttempts: 2,
+            })
+        },
+        emitBrowserViewAndWait(data: BrowserViewEvent): Promise<void> {
+            return sendWithRetry({
+                event: { type: ChatAgentEventType.BROWSER_VIEW, data },
+                maxAttempts: 3,
             })
         },
     }
@@ -438,6 +448,24 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             description: 'Offer 1-3 short, relevant follow-up suggestions above the chat input. Only use when concrete next steps genuinely exist; skip it otherwise.',
             inputSchema: z.object({
                 replies: z.array(z.string().max(80)).min(1).max(3).describe('Short suggestion texts'),
+            }),
+            execute: async () => {
+                return { displayed: true }
+            },
+        }),
+
+        ap_show_showcase: tool({
+            description: 'Render a designed "showcase" card to introduce yourself or show what is possible — your way to answer "what can you do?", "what is this?", "who are you?", "what is <product>?", and similar (or to spotlight what the user can do with their connected apps, or with an AI agent). Use this card, NOT prose and NOT a bullet list. Make it personal and use-case-led: pull the user\'s name and company from the "Who you\'re talking to" note, and feature a few of THEIR real apps from "Your connected apps". Each tile is a REAL job in their world (work their actual deals, clean out their inbox, chase their late payers) — NEVER a feature or capability name ("Send email", "Use AI"). Write them CASUALLY, like you\'d say it out loud to a friend — plain words, contractions, a little swagger ("Wake up to a clean inbox", "Win back the ones who ghosted you") — exaggerate the energy but only promise what you can actually deliver, and NEVER use marketing/hype words ("supercharge", "unlock", "seamless", "effortless", "10x", "boost", "streamline") or Title-Case headlines. 3-4 tiles, not a long list. Give each tile EITHER an `app` (one of their real apps — shows its logo) OR an `icon` (a kebab-case Lucide name); `app` wins if both are set. Give EVERY tile a `starter` — the ready-to-run first message sent when the user taps it (the tiles are the only clickable element, so don\'t leave any without one). The tiles are themselves the clickable options, so do NOT also call ap_show_quick_replies in the same turn. Never hardcode an integration count — say "hundreds".',
+            inputSchema: z.object({
+                headline: z.string().max(120).describe('Short, warm, personal headline, e.g. "Here\'s what I can take off your plate, Ash"'),
+                subhead: z.string().max(160).optional().describe('Optional one-line subhead under the headline'),
+                tiles: z.array(z.object({
+                    title: z.string().max(48).describe('Short outcome-led title, e.g. "Chase overdue invoices"'),
+                    description: z.string().max(120).describe('One line on the value to the user'),
+                    app: z.string().optional().describe('An app/integration name to show its real logo, e.g. "gmail", "hubspot", "@activepieces/piece-slack". Use for tiles about one of their connected apps. Omit for a generic capability tile.'),
+                    icon: z.string().optional().describe('kebab-case Lucide icon name for a generic capability tile, e.g. "wand-sparkles", "bot", "calendar-clock". Ignored when `app` is set.'),
+                    starter: z.string().max(120).optional().describe('Ready-to-run prompt sent when the tile is tapped'),
+                })).min(2).max(4).describe('2-4 use-case tiles, personalised to this user'),
             }),
             execute: async () => {
                 return { displayed: true }
@@ -797,6 +825,29 @@ function createWebTools(): ToolSet {
 const SEARCH_TIMEOUT_MS = 30 * 1_000
 const SCRAPE_TIMEOUT_MS = 60 * 1_000
 const IMAGE_TIMEOUT_MS = 120 * 1_000
+const BROWSER_SESSION_TIMEOUT_MS = 4 * 60 * 1_000
+const FIRECRAWL_INTERACT_URL = 'https://api.firecrawl.dev/v2/interact'
+// Runs after every browser step so the model always sees the page's real interactive elements
+// (and never has to guess selectors). Returns a JSON string the worker parses back.
+const BROWSER_SIGHT_CODE = `JSON.stringify({
+  url: page.url(),
+  title: await page.title().catch(() => ''),
+  fields: await page.$$eval('input, textarea, select, button', els => els.slice(0, 45).map(el => {
+    const name = el.getAttribute('name') || '';
+    const selector = el.id ? ('#' + (window.CSS && CSS.escape ? CSS.escape(el.id) : el.id)) : (name ? ('[name="' + name + '"]') : '');
+    return {
+      tag: el.tagName,
+      type: el.getAttribute('type') || '',
+      selector,
+      name,
+      id: (el.id || '').slice(0, 60),
+      placeholder: el.getAttribute('placeholder') || '',
+      label: (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 50),
+      value: ('value' in el ? (el.value || '') : '').slice(0, 80),
+      visible: !!el.offsetParent,
+    };
+  })).catch(() => []),
+})`
 const MAX_SEARCH_RESULTS = 5
 
 const FAL_MODEL_BY_STYLE: Record<ImageStyle, string> = {
@@ -881,6 +932,274 @@ function createScrapeTools({ scraping }: { scraping: ResolvedToolConfig }): Tool
                             return { content: [{ type: 'text', text: `Failed to scrape ${toolInput.url}: ${error instanceof Error ? error.message : String(error)}` }] }
                         }
                         return truncateLargeResult({ url: toolInput.url, markdown: scraped.markdown, metadata: scraped.metadata })
+                    },
+                })
+            },
+        }),
+    }
+}
+
+const browserActionSchema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal('fill'), selector: z.string().describe('CSS selector from a field\'s selector/id/name, e.g. "#_systemfield_email"'), value: z.string() }),
+    z.object({ type: z.literal('select'), selector: z.string(), value: z.string().describe('The option value or label to choose') }),
+    z.object({ type: z.literal('check'), selector: z.string() }),
+    z.object({ type: z.literal('uncheck'), selector: z.string() }),
+    z.object({ type: z.literal('click'), selector: z.string().describe('e.g. a submit button: "button[type=submit]"') }),
+    z.object({ type: z.literal('press'), selector: z.string().optional(), key: z.string().describe('e.g. "Enter"') }),
+    z.object({ type: z.literal('uploadFromUrl'), selector: z.string().describe('the file input, e.g. "#_systemfield_resume"'), url: z.string().describe('public URL to fetch the file from'), fileName: z.string().optional(), mimeType: z.string().optional() }),
+    z.object({ type: z.literal('uploadFile'), selector: z.string().describe('the file input, e.g. "#_systemfield_resume"'), fileId: z.string().describe('a chat fileId — either a file the user attached, or one you generated with ap_run_code (e.g. a résumé PDF). The file is uploaded into the input.') }),
+    z.object({ type: z.literal('waitFor'), selector: z.string().describe('wait until this element appears') }),
+    z.object({ type: z.literal('wait'), ms: z.number().describe('milliseconds to pause') }),
+    z.object({ type: z.literal('extract'), selector: z.string().optional().describe('Read the page\'s visible text back so you can return the data to the user. Omit selector for the whole page, or pass one to read just matching elements (e.g. the product cards). ALWAYS finish a "get me / show me / find" task with an extract so the data lands in chat.') }),
+])
+
+function compileBrowserActions(actions: BrowserAction[], fileMap: Record<string, BrowserInputFile>): string {
+    const j = (v: unknown): string => JSON.stringify(v ?? '')
+    const lines = actions.map((action, index) => {
+        const selector = 'selector' in action ? (action.selector ?? '') : ''
+        const wrap = (body: string): string => `await __run(${index}, ${j(action.type)}, ${j(selector)}, async () => { ${body} });`
+        switch (action.type) {
+            case 'fill': return wrap(`await page.fill(${j(action.selector)}, ${j(action.value)}, { timeout: 8000 });`)
+            case 'select': return wrap(`await page.selectOption(${j(action.selector)}, ${j(action.value)}, { timeout: 8000 });`)
+            case 'check': return wrap(`await page.check(${j(action.selector)}, { timeout: 8000 });`)
+            case 'uncheck': return wrap(`await page.uncheck(${j(action.selector)}, { timeout: 8000 });`)
+            case 'click': return wrap(`await page.click(${j(action.selector)}, { timeout: 8000 });`)
+            case 'press': return wrap(action.selector ? `await page.press(${j(action.selector)}, ${j(action.key)});` : `await page.keyboard.press(${j(action.key)});`)
+            case 'waitFor': return wrap(`await page.waitForSelector(${j(action.selector)}, { timeout: 10000 });`)
+            case 'wait': return wrap(`await page.waitForTimeout(${Math.min(Math.max(action.ms, 0), 15000)});`)
+            case 'uploadFromUrl': return wrap(`const __r = await fetch(${j(action.url)}); if (!__r.ok) throw new Error('download failed: ' + __r.status); const __b = Buffer.from(await __r.arrayBuffer()); await page.setInputFiles(${j(action.selector)}, { name: ${j(action.fileName ?? 'upload')}, mimeType: ${j(action.mimeType ?? 'application/octet-stream')}, buffer: __b });`)
+            case 'uploadFile': {
+                const f = fileMap[action.fileId]
+                if (isNil(f)) return wrap(`throw new Error('file not found: ${action.fileId}');`)
+                return wrap(`await page.setInputFiles(${j(action.selector)}, { name: ${j(f.name)}, mimeType: ${j(f.mimeType)}, buffer: Buffer.from(${j(f.base64)}, 'base64') });`)
+            }
+            case 'extract': return action.selector
+                ? wrap(`return (await page.$$eval(${j(action.selector)}, els => els.map(e => (e.innerText || e.textContent || '').replace(/\\s+/g, ' ').trim()).filter(Boolean).join('\\n'))).slice(0, 20000);`)
+                : wrap('return (await page.evaluate(() => document.body ? document.body.innerText : \'\')).replace(/\\n{3,}/g, \'\\n\\n\').slice(0, 20000);')
+            default: return ''
+        }
+    })
+    return `const __results = [];
+const __run = async (index, type, selector, fn) => { try { const __d = await fn(); __results.push({ index, type, selector, ok: true, ...(__d === undefined ? {} : { data: __d }) }); } catch (e) { __results.push({ index, type, selector, ok: false, error: String((e && e.message) || e).slice(0, 180) }); } };
+${lines.join('\n')}
+JSON.stringify(__results);`
+}
+
+function parseActionResults(raw: unknown): BrowserActionResult[] | undefined {
+    if (isNil(raw)) return undefined
+    const { data: parsed } = tryCatchSync(() => typeof raw === 'string' ? JSON.parse(raw) : raw)
+    if (!Array.isArray(parsed)) return undefined
+    return parsed.map((r) => ({
+        index: isObject(r) && typeof r['index'] === 'number' ? r['index'] : -1,
+        type: isObject(r) && typeof r['type'] === 'string' ? r['type'] : '',
+        selector: isObject(r) && typeof r['selector'] === 'string' ? r['selector'] : '',
+        ok: isObject(r) && r['ok'] === true,
+        ...(isObject(r) && typeof r['error'] === 'string' ? { error: r['error'] } : {}),
+        ...(isObject(r) && typeof r['data'] === 'string' ? { data: r['data'] } : {}),
+    }))
+}
+
+// Close any stray tabs and focus our page so the Firecrawl live view shows the page we drive —
+// the session opens with extra about:blank tabs and the screencast otherwise displays the wrong one.
+const BROWSER_NORMALIZE_CODE = 'for (const __c of browser.contexts()) { for (const __p of __c.pages()) { if (__p !== page) { try { await __p.close(); } catch (e) {} } } } await page.bringToFront(); \'normalized\''
+
+// Firecrawl returns success:true even on thrown errors / timeouts / SyntaxErrors — the only signal
+// is a non-empty stderr. Treat that as the failure and surface its first line to the model.
+function browserRunErrorText(run: BrowserRunResult): string | undefined {
+    const stderr = (run.stderr ?? '').trim()
+    if (stderr.length === 0) return undefined
+    return stderr.split('\n').find((l) => l.trim().length > 0)?.slice(0, 200) ?? stderr.slice(0, 200)
+}
+
+// The model sometimes drops a JSON action-array into `code`. Recover it as `actions` rather than
+// running it as (no-op or broken) JS.
+function coerceCodeToActions(code: string | undefined): BrowserAction[] | undefined {
+    if (isNil(code) || !code.trim().startsWith('[')) return undefined
+    const { data: parsed } = tryCatchSync(() => JSON.parse(code))
+    if (!Array.isArray(parsed)) return undefined
+    const actions = parsed.map((item) => browserActionSchema.safeParse(item)).filter((r) => r.success).map((r) => r.data)
+    return actions.length > 0 ? actions : undefined
+}
+
+async function resolveActionFiles({ actions, readFile }: {
+    actions: BrowserAction[]
+    readFile: (fileId: string) => Promise<BrowserInputFile | undefined>
+}): Promise<Record<string, BrowserInputFile>> {
+    const fileIds = [...new Set(actions.filter((a): a is Extract<BrowserAction, { type: 'uploadFile' }> => a.type === 'uploadFile').map((a) => a.fileId))]
+    const map: Record<string, BrowserInputFile> = {}
+    for (const fileId of fileIds) {
+        const file = await readFile(fileId)
+        if (!isNil(file)) map[fileId] = file
+    }
+    return map
+}
+
+function createBrowserTools({ scraping, eventEmitter, sessionState, log, readFile, loadStoredSession, saveStoredSession }: {
+    scraping: ResolvedToolConfig
+    eventEmitter: ChatEventEmitter
+    sessionState: BrowserSessionState
+    log: { info: (obj: Record<string, unknown>, msg: string) => void }
+    readFile: (fileId: string) => Promise<BrowserInputFile | undefined>
+    loadStoredSession: () => Promise<StoredBrowserSession | undefined>
+    saveStoredSession: (session: StoredBrowserSession) => Promise<void>
+}): ToolSet {
+    return {
+        ap_browser_act: tool({
+            description: 'Drive a REAL browser to act on a website that has no API, then READ data back from it — fill/submit forms, click through flows, complete an application, operate a portal, OR open a page and extract what is on it. This is how you DO things and GET data from sites like job boards, shops, or portals. The user watches it LIVE in the side panel. ONE browser stays open across your calls AND across turns — if you opened a page in an earlier message, it is still there (same page, same filled fields), so just keep driving it; only pass a `startUrl` to go somewhere new. When you have fully finished the browser task (form submitted / flow complete), set `done: true` on your final call so the browser closes cleanly; if you are pausing to hand back to the user or expect to continue next message, leave `done` unset and the browser stays warm. Every call returns the page\'s real interactive elements (`page.fields` — each with its `selector`, label, current `value`), so you ALWAYS know exactly what to target and can SEE that your fills landed — never guess selectors, never re-fill a field already showing the right value. You do NOT write code: you pass a list of `actions` (fill / click / select / check / uploadFromUrl / uploadFile / waitFor / extract). To attach a document a form needs, GENERATE it first with ap_run_code (e.g. a résumé PDF) then `uploadFile` its fileId — never ask the user for a file you can produce. Smooth rhythm: (1) `{ startUrl, observeOnly: true }` to see the page, (2) one call with all the `actions` (fill everything + upload), (3) click submit. **Carry the task all the way to DONE — fill, attach, and SUBMIT — then return the result/confirmation. Never end on a "share your details / take over" prompt or generic suggestions.** Only set `interactive: true` for a genuine login / 2FA / CAPTCHA wall the user must clear; otherwise complete it yourself. (For a page you only need to READ, `ap_scrape_url` is simpler. For RECURRING work, build a flow.)',
+            inputSchema: z.object({
+                ...cardTitleFields,
+                startUrl: z.string().optional().describe('URL to open. Required on the FIRST call when no browser is open yet. If a browser is already open (from earlier this turn OR a previous message), it stays where it is — only pass startUrl to navigate somewhere NEW (it reloads the page and clears what you filled, so never re-pass the current URL).'),
+                done: z.boolean().optional().describe('Set true on your FINAL browser call once the task is fully complete (form submitted / flow finished) so the browser session closes cleanly. Leave unset while still working or if pausing to continue in a later message — the browser then stays warm and resumable.'),
+                observeOnly: z.boolean().optional().describe('True = just LOOK at the current page and return its fields, without acting. Use it as your first call to learn the real selectors.'),
+                actions: z.array(browserActionSchema).optional().describe('The things to do on the page, run in order. Target elements using a `selector` taken from a field\'s `selector`/`id`/`name` in a previous result (e.g. "#_systemfield_email"). Batch everything you can into ONE call (all fills + the file upload), then submit. Each action reports back ok/failed so you know exactly what landed.'),
+                code: z.string().optional().describe('ESCAPE HATCH for rare custom interactions that `actions` can\'t express. Raw Playwright Node code (a string) against the already-open `page` — only `page` exists; do not redeclare it. Prefer `actions`; only use this when you truly must. (This is NOT for passing actions — put structured steps in `actions`.)'),
+                recipe: z.array(z.string()).optional().describe('3-6 short plain-English lines describing what you are doing, for the user (no code, no selectors). E.g. ["Open the application", "Fill in name, email and phone", "Attach the résumé", "Submit"].'),
+                interactive: z.boolean().optional().describe('Set true ONLY for a genuine login / 2FA/OTP / CAPTCHA wall a human must clear. The side panel becomes interactive so they can take over that one step. Do NOT use it to ask the user to fill the form or share details — complete it yourself.'),
+            }),
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions) => {
+                // The LAST call's `done` wins — it tells the turn-end teardown whether to close or park.
+                sessionState.done = toolInput.done ?? false
+                return withToolTimeout({
+                    toolName: 'ap_browser_act',
+                    timeoutMs: BROWSER_SESSION_TIMEOUT_MS + 10_000,
+                    fn: async (signal) => {
+                        // Resume a browser parked by a previous turn before opening a fresh one, so a
+                        // follow-up ("now submit") keeps the same page and the fields already filled.
+                        if (isNil(sessionState.session)) {
+                            const stored = await loadStoredSession()
+                            if (!isNil(stored)) {
+                                const { data: probe } = await tryCatch(() => runBrowserScript({ sessionId: stored.id, code: '\'alive\'', apiKey: scraping.apiKey, signal }))
+                                if (probe?.result === 'alive') {
+                                    sessionState.session = { id: stored.id, liveViewUrl: stored.liveViewUrl, ...spreadIfDefined('interactiveLiveViewUrl', stored.interactiveLiveViewUrl) }
+                                    sessionState.navigated = stored.navigated
+                                    sessionState.interactiveSignaled = stored.interactiveSignaled ?? false
+                                    sessionState.toolCallId = toolCallId
+                                    // Bring the live panel back for this turn.
+                                    eventEmitter.emitBrowserView({
+                                        toolCallId,
+                                        sessionId: stored.id,
+                                        liveViewUrl: stored.liveViewUrl,
+                                        ...spreadIfDefined('interactiveLiveViewUrl', stored.interactiveLiveViewUrl),
+                                        status: 'live',
+                                        interactive: sessionState.interactiveSignaled,
+                                        ...spreadIfDefined('displayName', toolInput.doneTitle ?? toolInput.title),
+                                    })
+                                }
+                            }
+                        }
+                        if (isNil(sessionState.session)) {
+                            if (isNil(toolInput.startUrl) || !/^https?:\/\//i.test(toolInput.startUrl)) {
+                                return { content: [{ type: 'text', text: 'Pass a valid http(s) `startUrl` to open a page. Tip: start with `{ startUrl, observeOnly: true }` to see the fields.' }] }
+                            }
+                            const { data: session, error: sessionError } = await tryCatch(() => createBrowserSession({ apiKey: scraping.apiKey, signal }))
+                            if (sessionError) {
+                                return { content: [{ type: 'text', text: `I couldn't open the browser just now: ${describeHttpError(sessionError)}. I'll try again.` }] }
+                            }
+                            sessionState.session = session
+                            sessionState.toolCallId = toolCallId
+                            sessionState.interactiveSignaled = toolInput.interactive ?? false
+                            // Close stray about:blank tabs + focus our page so the live view shows it.
+                            await tryCatch(() => runBrowserScript({ sessionId: session.id, code: BROWSER_NORMALIZE_CODE, apiKey: scraping.apiKey, signal }))
+                            eventEmitter.emitBrowserView({
+                                toolCallId,
+                                sessionId: session.id,
+                                liveViewUrl: session.liveViewUrl,
+                                ...spreadIfDefined('interactiveLiveViewUrl', session.interactiveLiveViewUrl),
+                                status: 'live',
+                                interactive: toolInput.interactive ?? false,
+                                ...spreadIfDefined('displayName', toolInput.doneTitle ?? toolInput.title),
+                            })
+                            await tryCatch(() => saveStoredSession({ id: session.id, liveViewUrl: session.liveViewUrl, ...spreadIfDefined('interactiveLiveViewUrl', session.interactiveLiveViewUrl), interactiveSignaled: sessionState.interactiveSignaled, toolCallId }))
+                        }
+                        const session = sessionState.session
+                        // Human takeover asked for on a later call (e.g. the final submit): flip the
+                        // live panel to interactive so the user can click in.
+                        if ((toolInput.interactive ?? false) && !sessionState.interactiveSignaled) {
+                            sessionState.interactiveSignaled = true
+                            eventEmitter.emitBrowserView({
+                                toolCallId: sessionState.toolCallId ?? toolCallId,
+                                sessionId: session.id,
+                                liveViewUrl: session.liveViewUrl,
+                                ...spreadIfDefined('interactiveLiveViewUrl', session.interactiveLiveViewUrl),
+                                status: 'live',
+                                interactive: true,
+                            })
+                        }
+                        // Navigate only when the page isn't already where we want it — re-visiting the
+                        // same URL resets the DOM and wipes anything already filled.
+                        const shouldNavigate = !isNil(toolInput.startUrl) && toolInput.startUrl !== sessionState.navigated
+                        if (shouldNavigate) {
+                            const { error: navError } = await tryCatch(() => runBrowserScript({
+                                sessionId: session.id,
+                                code: `await page.goto(${JSON.stringify(toolInput.startUrl)}, { waitUntil: 'domcontentloaded' });\nawait page.waitForLoadState('networkidle').catch(() => {});\nawait page.bringToFront();\n'navigated'`,
+                                apiKey: scraping.apiKey, signal,
+                            }))
+                            if (navError) {
+                                return { content: [{ type: 'text', text: `I couldn't open ${toolInput.startUrl} (${describeHttpError(navError)}). I'll try a different way.` }] }
+                            }
+                            sessionState.navigated = toolInput.startUrl
+                            // Keep the parked handle's current page in step so a resume lands where we left off.
+                            await tryCatch(() => saveStoredSession({ id: session.id, liveViewUrl: session.liveViewUrl, ...spreadIfDefined('interactiveLiveViewUrl', session.interactiveLiveViewUrl), navigated: toolInput.startUrl, interactiveSignaled: sessionState.interactiveSignaled ?? false, toolCallId: sessionState.toolCallId ?? toolCallId }))
+                        }
+
+                        // Defensive coercion: if the model put a JSON action-array into `code` (a common
+                        // slip), run it as `actions` instead of as raw code.
+                        const actions = toolInput.actions ?? coerceCodeToActions(toolInput.code)
+
+                        // Run the structured actions (preferred) or the raw-code escape hatch, then
+                        // detect real failures from stderr / per-action results — never from `success`,
+                        // which Firecrawl returns true even on thrown errors and timeouts.
+                        let actionResults: BrowserActionResult[] | undefined
+                        let stepError: string | undefined
+                        if (!isNil(actions) && actions.length > 0) {
+                            const { data: fileMap, error: fileError } = await tryCatch(() => resolveActionFiles({ actions, readFile }))
+                            if (fileError) {
+                                return { content: [{ type: 'text', text: `I couldn't load a file to upload (${fileError instanceof Error ? fileError.message : String(fileError)}).` }] }
+                            }
+                            const { data: run, error: runError } = await tryCatch(() => runBrowserScript({
+                                sessionId: session.id, code: compileBrowserActions(actions, fileMap), apiKey: scraping.apiKey, signal,
+                            }))
+                            if (runError) {
+                                return { content: [{ type: 'text', text: `That didn't go through (${describeHttpError(runError)}). The page is still open — I'll look again and adjust.` }] }
+                            }
+                            actionResults = parseActionResults(run.result)
+                            if (browserRunErrorText(run) && isNil(actionResults)) {
+                                stepError = browserRunErrorText(run)
+                            }
+                        }
+                        else if (!isNil(toolInput.code)) {
+                            const code = toolInput.code
+                            const { data: run, error: runError } = await tryCatch(() => runBrowserScript({
+                                sessionId: session.id, code, apiKey: scraping.apiKey, signal,
+                            }))
+                            if (runError) {
+                                return { content: [{ type: 'text', text: `That didn't go through (${describeHttpError(runError)}). The page is still open — I'll look again and adjust.` }] }
+                            }
+                            stepError = browserRunErrorText(run)
+                        }
+
+                        // Always hand the model the page's real interactive elements + values so it never
+                        // guesses selectors and can SEE that fills landed.
+                        const { data: sight } = await tryCatch(() => runBrowserScript({ sessionId: session.id, code: BROWSER_SIGHT_CODE, apiKey: scraping.apiKey, signal }))
+                        const page = parseSightResult(sight?.result)
+
+                        const failed = (actionResults ?? []).filter((r) => !r.ok)
+                        const extracted = (actionResults ?? []).filter((r) => r.type === 'extract' && typeof r.data === 'string').map((r) => r.data ?? '')
+                        const extractedChars = extracted.reduce((sum, d) => sum + d.length, 0)
+                        log.info({
+                            tool: { name: 'ap_browser_act' },
+                            browser: { sessionId: session.id, url: page?.url ?? sessionState.navigated, actionCount: (actionResults ?? []).length, failedCount: failed.length, extractedChars, interactive: toolInput.interactive ?? false },
+                            ...(stepError ? { error: stepError } : {}),
+                        }, '[ap_browser_act] browser step completed')
+                        return truncateLargeResult({
+                            success: isNil(stepError) && failed.length === 0,
+                            ...(actionResults ? { actions: actionResults } : {}),
+                            ...(failed.length > 0 ? { note: `${failed.length} action(s) failed — check the selector against page.fields and retry just those.` } : {}),
+                            ...(stepError ? { error: stepError } : {}),
+                            ...(page ? { page } : {}),
+                            ...spreadIfDefined('recipe', toolInput.recipe),
+                            ...((toolInput.interactive ?? false) ? { handoff: 'The browser is open in the side panel — the user can click in to take over (login / 2FA / final submit).' } : {}),
+                        })
                     },
                 })
             },
@@ -991,6 +1310,136 @@ async function scrapeWithFirecrawl({ url, apiKey, signal }: { url: string, apiKe
     return {
         markdown: typeof data['markdown'] === 'string' ? data['markdown'] : '',
         metadata: isObject(data['metadata']) ? data['metadata'] : {},
+    }
+}
+
+async function createBrowserSession({ apiKey, signal }: { apiKey: string, signal: AbortSignal }): Promise<BrowserSession> {
+    // One generous-TTL session is reused across every ap_browser_act call in the turn AND parked
+    // (kept alive) across turns so a follow-up message resumes the same page — it must outlast a
+    // slow multi-step flow and the gap between turns. Closed explicitly when the task is done,
+    // aborted, or when these TTLs lapse. The Redis handle TTL is kept in step with `ttl` below.
+    const response = await safeHttp.axios.post(FIRECRAWL_INTERACT_URL, {
+        ttl: 1800,
+        activityTtl: 600,
+    }, {
+        signal,
+        timeout: 30 * 1_000,
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    })
+    const body = isObject(response.data) ? response.data : {}
+    const id = typeof body['id'] === 'string' ? body['id'] : ''
+    const liveViewUrl = typeof body['liveViewUrl'] === 'string' ? body['liveViewUrl'] : ''
+    const interactiveLiveViewUrl = typeof body['interactiveLiveViewUrl'] === 'string' ? body['interactiveLiveViewUrl'] : undefined
+    if (id.length === 0 || liveViewUrl.length === 0) {
+        throw new Error('Browser session did not start (no session id / live view url).')
+    }
+    return { id, liveViewUrl, interactiveLiveViewUrl }
+}
+
+async function runBrowserScript({ sessionId, code, apiKey, signal }: { sessionId: string, code: string, apiKey: string, signal: AbortSignal }): Promise<BrowserRunResult> {
+    const response = await safeHttp.axios.post(`${FIRECRAWL_INTERACT_URL}/${sessionId}/execute`, {
+        code,
+        language: 'node',
+    }, {
+        signal,
+        timeout: BROWSER_SESSION_TIMEOUT_MS,
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    })
+    const body = isObject(response.data) ? response.data : {}
+    return {
+        success: body['success'] !== false,
+        result: body['result'],
+        output: body['output'],
+        stdout: typeof body['stdout'] === 'string' ? body['stdout'] : undefined,
+        stderr: typeof body['stderr'] === 'string' ? body['stderr'] : undefined,
+    }
+}
+
+async function closeBrowserSession({ sessionId, apiKey }: { sessionId: string, apiKey: string }): Promise<void> {
+    await safeHttp.axios.delete(`${FIRECRAWL_INTERACT_URL}/${sessionId}`, {
+        timeout: 15 * 1_000,
+        headers: { Authorization: `Bearer ${apiKey}` },
+    })
+}
+
+function createBrowserSessionState(): BrowserSessionState {
+    return {}
+}
+
+// End-of-turn handling for the turn's browser session. `mode: 'close'` ends it for good (task
+// done, or the turn was aborted/failed): final screenshot, 'closed' event, delete the session,
+// clear the stored handle. `mode: 'park'` leaves it alive and resumable — persists the handle and
+// emits an 'idle' frame so a follow-up message picks the same page back up. Called from the job's
+// finally. No-op if the agent never opened a browser this turn (a session parked by an EARLIER
+// turn is left untouched in that case, so it stays warm).
+async function teardownBrowserSession({ sessionState, apiKey, eventEmitter, mode, saveStoredSession, clearStoredSession }: {
+    sessionState: BrowserSessionState
+    apiKey: string
+    eventEmitter: ChatEventEmitter
+    mode: 'close' | 'park'
+    saveStoredSession: (session: StoredBrowserSession) => Promise<void>
+    clearStoredSession: () => Promise<void>
+}): Promise<void> {
+    const session = sessionState.session
+    if (isNil(session)) return
+    sessionState.session = undefined
+    // Grab a final frame while the session is still alive so the panel shows the real end state
+    // (paused or finished) instead of a bare placeholder.
+    const { data: shot } = await tryCatch(() => runBrowserScript({
+        sessionId: session.id,
+        code: '(await page.screenshot({ type: \'jpeg\', quality: 40 })).toString(\'base64\')',
+        apiKey,
+        signal: AbortSignal.timeout(15_000),
+    }))
+    const finalScreenshot = typeof shot?.result === 'string' && shot.result.length > 0 ? `data:image/jpeg;base64,${shot.result}` : undefined
+
+    if (mode === 'park') {
+        // Keep the Firecrawl session alive; persist the handle so the next turn resumes it. The
+        // 'idle' frame swaps the live iframe for the screenshot, so the user never sees the panel
+        // flip to an Unauthorized error if Firecrawl later reaps the idle session.
+        await tryCatch(() => saveStoredSession({
+            id: session.id,
+            liveViewUrl: session.liveViewUrl,
+            ...spreadIfDefined('interactiveLiveViewUrl', session.interactiveLiveViewUrl),
+            ...spreadIfDefined('navigated', sessionState.navigated),
+            interactiveSignaled: sessionState.interactiveSignaled ?? false,
+            ...spreadIfDefined('toolCallId', sessionState.toolCallId),
+        }))
+        await tryCatch(() => eventEmitter.emitBrowserViewAndWait({
+            toolCallId: sessionState.toolCallId ?? session.id,
+            sessionId: session.id,
+            liveViewUrl: session.liveViewUrl,
+            status: 'idle',
+            interactive: false,
+            ...spreadIfDefined('finalScreenshot', finalScreenshot),
+        }))
+        return
+    }
+
+    // Tell the UI the view ended and AWAIT delivery FIRST, so the web swaps off the live iframe
+    // before we delete the session. Otherwise the iframe sits on a dead session showing
+    // {"error":"Unauthorized"}, and the fire-and-forget close event gets dropped as the job ends.
+    await tryCatch(() => eventEmitter.emitBrowserViewAndWait({
+        toolCallId: sessionState.toolCallId ?? session.id,
+        sessionId: session.id,
+        liveViewUrl: session.liveViewUrl,
+        status: 'closed',
+        interactive: false,
+        ...spreadIfDefined('finalScreenshot', finalScreenshot),
+    }))
+    await tryCatch(() => clearStoredSession())
+    await tryCatch(() => closeBrowserSession({ sessionId: session.id, apiKey }))
+}
+
+function parseSightResult(raw: unknown): BrowserPageSight | undefined {
+    if (isNil(raw)) return undefined
+    const { data: parsed } = tryCatchSync(() => typeof raw === 'string' ? JSON.parse(raw) : raw)
+    if (!isObject(parsed)) return undefined
+    const fields = Array.isArray(parsed['fields']) ? parsed['fields'] : []
+    return {
+        url: typeof parsed['url'] === 'string' ? parsed['url'] : '',
+        title: typeof parsed['title'] === 'string' ? parsed['title'] : '',
+        fields,
     }
 }
 
@@ -1383,6 +1832,8 @@ export type ChatEventEmitter = {
     emitFileProduced(data: FileProducedEvent): void
     emitBuildPlan(data: BuildPlanEvent): void
     emitStageOpen(data: StageOpenEvent): void
+    emitBrowserView(data: BrowserViewEvent): void
+    emitBrowserViewAndWait(data: BrowserViewEvent): Promise<void>
 }
 
 export const chatWorkerTools = {
@@ -1393,6 +1844,9 @@ export const chatWorkerTools = {
     createWebTools,
     createSearchTools,
     createScrapeTools,
+    createBrowserTools,
+    createBrowserSessionState,
+    teardownBrowserSession,
     createImageTools,
     createEmailTools,
     wrapTestFlowGate,
@@ -1413,4 +1867,20 @@ type ResolvedToolConfig = { provider: string, apiKey: string, config?: Record<st
 type ImageStyle = 'realistic' | 'graphic_text' | 'brand_vector' | 'abstract'
 type ImageAspect = 'square' | 'landscape' | 'portrait'
 type ScrapedPage = { markdown: string, metadata: Record<string, unknown> }
+
+type BrowserSession = { id: string, liveViewUrl: string, interactiveLiveViewUrl?: string }
+
+type BrowserSessionState = { session?: BrowserSession, navigated?: string, toolCallId?: string, interactiveSignaled?: boolean, done?: boolean }
+
+export type StoredBrowserSession = { id: string, liveViewUrl: string, interactiveLiveViewUrl?: string, navigated?: string, interactiveSignaled?: boolean, toolCallId?: string }
+
+type BrowserRunResult = { success: boolean, result?: unknown, output?: unknown, stdout?: string, stderr?: string }
+
+type BrowserPageSight = { url: string, title: string, fields: unknown[] }
+
+type BrowserAction = z.infer<typeof browserActionSchema>
+
+type BrowserActionResult = { index: number, type: string, selector: string, ok: boolean, error?: string, data?: string }
+
+type BrowserInputFile = { name: string, mimeType: string, base64: string }
 type GeneratedImage = { bytes: Buffer, mediaType: string, extension: string }

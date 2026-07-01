@@ -1,15 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
 import { ChatConversation } from '@activepieces/shared';
-import {
-  DndContext,
-  PointerSensor,
-  useDraggable,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import type { DragEndEvent, DraggableSyntheticListeners } from '@dnd-kit/core';
-import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import { CSS } from '@dnd-kit/utilities';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -28,6 +18,8 @@ import {
   useRef,
   useMemo,
 } from 'react';
+import { createPortal } from 'react-dom';
+import { Rnd } from 'react-rnd';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -59,22 +51,66 @@ import {
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  STAGE_TRANSITION_EASING,
-  STAGE_TRANSITION_MS,
-} from '@/lib/ui-transitions';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_PINNED_STORAGE_KEY = 'chat-sidebar-pinned';
 const FLOAT_POS_STORAGE_KEY = 'chat-float-pos';
 const FLOAT_SIZE_STORAGE_KEY = 'chat-float-size';
-const FLOAT_DEFAULT_WIDTH = 460;
-const FLOAT_DEFAULT_HEIGHT = 720;
-const FLOAT_MIN_WIDTH = 380;
-const FLOAT_MAX_WIDTH = 760;
-const FLOAT_MIN_HEIGHT = 480;
-const FLOAT_VIEWPORT_MARGIN = 32;
-const FLOAT_DRAG_ID = 'workspace-chat-window';
+const FLOAT_MIN_WIDTH = 400;
+const FLOAT_MAX_WIDTH = 720;
+const FLOAT_MIN_HEIGHT = 520;
+const FLOAT_MAX_HEIGHT = 920;
+const FLOAT_VIEWPORT_MARGIN = 16;
+const FLOAT_DRAG_HANDLE_CLASS = 'chat-drag-handle';
+const FLOAT_BOUNDS_CLASS = 'chat-float-bounds';
+const FLOAT_DEFAULT_WIDTH_RATIO = 0.4;
+const FLOAT_DEFAULT_HEIGHT_RATIO = 0.82;
+
+const RESIZE_ALL_HANDLES = {
+  top: true,
+  right: true,
+  bottom: true,
+  left: true,
+  topRight: true,
+  bottomRight: true,
+  bottomLeft: true,
+  topLeft: true,
+};
+
+// Comfortable grab targets that sit just inside the card border. react-rnd
+// positions handles with negative offsets by default, so we don't clip the root.
+const EDGE = 10;
+const CORNER = 18;
+const RESIZE_HANDLE_STYLES: Record<string, React.CSSProperties> = {
+  top: { height: EDGE, top: -EDGE / 2 },
+  bottom: { height: EDGE, bottom: -EDGE / 2 },
+  left: { width: EDGE, left: -EDGE / 2 },
+  right: { width: EDGE, right: -EDGE / 2 },
+  topLeft: {
+    width: CORNER,
+    height: CORNER,
+    top: -CORNER / 2,
+    left: -CORNER / 2,
+  },
+  topRight: {
+    width: CORNER,
+    height: CORNER,
+    top: -CORNER / 2,
+    right: -CORNER / 2,
+  },
+  bottomLeft: {
+    width: CORNER,
+    height: CORNER,
+    bottom: -CORNER / 2,
+    left: -CORNER / 2,
+  },
+  bottomRight: {
+    width: CORNER,
+    height: CORNER,
+    bottom: -CORNER / 2,
+    right: -CORNER / 2,
+  },
+};
 
 export function WorkspaceChatPanel({
   showClose,
@@ -118,23 +154,7 @@ export function WorkspaceChatPanel({
   const isMobile = useIsMobile();
   const [floatSize, setFloatSize] = useState(readFloatSize);
   const [floatPos, setFloatPos] = useState(() => readFloatPos(floatSize));
-  const floatCardRef = useRef<HTMLDivElement | null>(null);
-  const pendingSizeRef = useRef(floatSize);
-  const pendingPosRef = useRef(floatPos);
-  const resizeStartRef = useRef<{
-    pointerX: number;
-    pointerY: number;
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-    axis: 'x' | 'y' | 'both';
-  } | null>(null);
-  const dragSensors = useSensors(
-    useSensor(ChatDragPointerSensor, {
-      activationConstraint: { distance: 4 },
-    }),
-  );
+  const innerRef = useRef<HTMLDivElement | null>(null);
 
   const toggleSidebar = useCallback(() => {
     setSidebarPinned((prev) => {
@@ -144,175 +164,46 @@ export function WorkspaceChatPanel({
     });
   }, []);
 
-  // The card is anchored to its top-left corner. When it's jammed against the
-  // viewport edge (the default bottom-right dock), there's no room to grow the
-  // right/bottom edge — so we also slide the anchor up/left as the card enlarges,
-  // keeping it on-screen and resizable in both directions. During the drag we
-  // mutate the card's style directly so the heavy chat subtree never re-renders —
-  // that's what keeps it smooth — and commit to state only on release.
-  const startResize = useCallback(
-    (axis: 'x' | 'y' | 'both') => (e: React.PointerEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.currentTarget.setPointerCapture(e.pointerId);
-      const card = floatCardRef.current;
-      const rect = card?.getBoundingClientRect();
-      resizeStartRef.current = {
-        pointerX: e.clientX,
-        pointerY: e.clientY,
-        width: card?.offsetWidth ?? floatSize.width,
-        height: card?.offsetHeight ?? floatSize.height,
-        left: rect?.left ?? floatPos.x,
-        top: rect?.top ?? floatPos.y,
-        axis,
-      };
-    },
-    [floatSize, floatPos],
-  );
+  // react-rnd owns the live drag/resize gesture (smooth, rAF-batched, clamped to
+  // the inset bounds box); we only fold the result into React state + localStorage
+  // on release so the heavy chat subtree never re-renders mid-gesture.
+  const handleDragStop = useCallback((pos: { x: number; y: number }) => {
+    const next = { x: pos.x, y: pos.y };
+    setFloatPos(next);
+    localStorage.setItem(FLOAT_POS_STORAGE_KEY, JSON.stringify(next));
+  }, []);
 
-  const handleResizeMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const start = resizeStartRef.current;
-      const card = floatCardRef.current;
-      if (!start || !card) {
-        return;
-      }
-      const dx = e.clientX - start.pointerX;
-      const dy = e.clientY - start.pointerY;
-      let { width, height, left, top } = start;
-      if (start.axis !== 'y') {
-        width = clamp(
-          start.width + dx,
-          FLOAT_MIN_WIDTH,
-          Math.min(
-            FLOAT_MAX_WIDTH,
-            window.innerWidth - 2 * FLOAT_VIEWPORT_MARGIN,
-          ),
-        );
-        left = clamp(
-          start.left,
-          FLOAT_VIEWPORT_MARGIN,
-          window.innerWidth - width - FLOAT_VIEWPORT_MARGIN,
-        );
-      }
-      if (start.axis !== 'x') {
-        height = clamp(
-          start.height + dy,
-          FLOAT_MIN_HEIGHT,
-          window.innerHeight - 2 * FLOAT_VIEWPORT_MARGIN,
-        );
-        top = clamp(
-          start.top,
-          FLOAT_VIEWPORT_MARGIN,
-          window.innerHeight - height - FLOAT_VIEWPORT_MARGIN,
-        );
-      }
-      card.style.width = `${width}px`;
-      card.style.height = `${height}px`;
-      card.style.left = `${left}px`;
-      card.style.top = `${top}px`;
-      pendingSizeRef.current = { width, height };
-      pendingPosRef.current = { x: left, y: top };
+  const handleResizeStop = useCallback(
+    (
+      size: { width: number; height: number },
+      pos: { x: number; y: number },
+    ) => {
+      setFloatSize(size);
+      setFloatPos(pos);
+      localStorage.setItem(FLOAT_SIZE_STORAGE_KEY, JSON.stringify(size));
+      localStorage.setItem(FLOAT_POS_STORAGE_KEY, JSON.stringify(pos));
     },
     [],
   );
 
-  const endResize = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!resizeStartRef.current) {
-      return;
-    }
-    resizeStartRef.current = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    const size = pendingSizeRef.current;
-    const pos = pendingPosRef.current;
-    setFloatSize(size);
-    setFloatPos(pos);
-    localStorage.setItem(FLOAT_SIZE_STORAGE_KEY, JSON.stringify(size));
-    localStorage.setItem(FLOAT_POS_STORAGE_KEY, JSON.stringify(pos));
-  }, []);
-
-  // @dnd-kit drives the live drag via a CSS transform on the card; we only fold
-  // that delta into the persisted left/top here, on release. restrictToWindowEdges
-  // keeps the drag in-bounds, and clampPos is a cheap belt-and-suspenders guard.
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setFloatPos((prev) => {
-        const card = floatCardRef.current;
-        const next = clampPos(
-          { x: prev.x + event.delta.x, y: prev.y + event.delta.y },
-          card?.offsetWidth ?? floatSize.width,
-          card?.offsetHeight ?? floatSize.height,
-        );
-        localStorage.setItem(FLOAT_POS_STORAGE_KEY, JSON.stringify(next));
-        return next;
-      });
-    },
-    [floatSize],
-  );
-
-  // A shrinking viewport (or a stale stored position) could strand the card
-  // off-screen — re-clamp it into view whenever the window resizes.
-  useEffect(() => {
-    if (!floating) {
-      return;
-    }
-    const onResize = () => {
-      setFloatPos((prev) => {
-        const card = floatCardRef.current;
-        const next = clampPos(
-          prev,
-          card?.offsetWidth ?? floatSize.width,
-          card?.offsetHeight ?? floatSize.height,
-        );
-        if (next.x === prev.x && next.y === prev.y) {
-          return prev;
-        }
-        localStorage.setItem(FLOAT_POS_STORAGE_KEY, JSON.stringify(next));
-        return next;
-      });
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [floating, floatSize]);
-
-  // Popping out flips the panel to a fixed corner card, which would otherwise
-  // teleport. FLIP it: remember where the chat sat while docked, then slide the
-  // card from that origin into the corner with a gentle fade. We use a uniform
-  // scale that never exceeds 1 — scaling content up (which the old size-ratio
-  // FLIP did) painted the text enlarged on the first frame. The panel re-renders
-  // rarely (streaming lives in AIChatBox), so measuring here is cheap.
-  const dockedRectRef = useRef<DOMRect | null>(null);
+  // On pop-out, grow the card out of its own corner with a soft scale + fade —
+  // no cross-screen slide. The scale runs on the inner wrapper, never on the Rnd
+  // root, so it can't fight the translate react-rnd applies for positioning.
   const wasFloatingRef = useRef(floating);
   useLayoutEffect(() => {
-    const el = floatCardRef.current;
-    if (!el) {
-      return;
-    }
     const becameFloating = floating && !wasFloatingRef.current;
     wasFloatingRef.current = floating;
-    if (!floating) {
-      dockedRectRef.current = el.getBoundingClientRect();
+    const inner = innerRef.current;
+    if (!becameFloating || !inner) {
       return;
     }
-    if (!becameFloating) {
-      return;
-    }
-    const from = dockedRectRef.current;
-    const to = el.getBoundingClientRect();
-    if (!from || from.width === 0 || to.width === 0) {
-      return;
-    }
-    el.style.transformOrigin = 'top left';
-    el.animate(
+    inner.style.transformOrigin = 'bottom left';
+    inner.animate(
       [
-        {
-          transform: `translate(${from.left - to.left}px, ${
-            from.top - to.top
-          }px) scale(0.96)`,
-          opacity: 0,
-        },
-        { transform: 'translate(0px, 0px) scale(1)', opacity: 1 },
+        { transform: 'scale(0.92)', opacity: 0 },
+        { transform: 'scale(1)', opacity: 1 },
       ],
-      { duration: STAGE_TRANSITION_MS, easing: STAGE_TRANSITION_EASING },
+      { duration: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
     );
   });
 
@@ -515,12 +406,11 @@ export function WorkspaceChatPanel({
     : t('New Chat');
   const effectivePinned = !isMobile && sidebarPinned && !floating;
 
-  const renderHeader = (dragListeners?: DraggableSyntheticListeners) => (
+  const renderHeader = (draggable?: boolean) => (
     <div
-      {...dragListeners}
       className={cn(
         'shrink-0 flex items-center gap-1.5 px-3 h-12 border-b',
-        dragListeners && 'cursor-grab select-none touch-none',
+        draggable && `${FLOAT_DRAG_HANDLE_CLASS} cursor-grab select-none`,
       )}
     >
       <ConversationSidebarToggle
@@ -712,10 +602,7 @@ export function WorkspaceChatPanel({
 
   if (!floating) {
     return (
-      <div
-        ref={floatCardRef}
-        className="flex h-full overflow-hidden bg-background"
-      >
+      <div className="flex h-full overflow-hidden bg-background">
         {effectivePinned && (
           <div className="shrink-0 overflow-hidden border-r animate-in slide-in-from-left-2 duration-200">
             <ConversationList
@@ -733,120 +620,67 @@ export function WorkspaceChatPanel({
     );
   }
 
-  return (
-    <DndContext
-      sensors={dragSensors}
-      modifiers={[restrictToWindowEdges]}
-      onDragEnd={handleDragEnd}
-    >
-      <FloatingChatCard
-        cardRef={floatCardRef}
-        pos={floatPos}
-        size={floatSize}
-        onStartResize={startResize}
-        onResizeMove={handleResizeMove}
-        onEndResize={endResize}
-        renderHeader={renderHeader}
-      >
-        {body}
-      </FloatingChatCard>
-    </DndContext>
+  const floatMaxWidth = Math.min(
+    FLOAT_MAX_WIDTH,
+    window.innerWidth - 2 * FLOAT_VIEWPORT_MARGIN,
   );
-}
+  const floatMaxHeight = Math.min(
+    FLOAT_MAX_HEIGHT,
+    window.innerHeight - 2 * FLOAT_VIEWPORT_MARGIN,
+  );
 
-// The whole title bar is the drag handle, but it's packed with buttons and the
-// rename input — so we only start a drag when the press doesn't land on an
-// interactive control. `closest` (not a tag check) is needed because the press
-// often lands on an icon `<svg>` nested inside a button.
-class ChatDragPointerSensor extends PointerSensor {
-  static activators = [
-    {
-      eventName: 'onPointerDown' as const,
-      handler: ({ nativeEvent: event }: React.PointerEvent): boolean => {
-        if (!event.isPrimary || event.button !== 0) {
-          return false;
+  // Portal to <body> so the card escapes the nested resizable-panel layout: with
+  // body as the offset parent (the app shell is height-locked, so it never
+  // scrolls) react-rnd's default absolute positioning maps 1:1 to viewport
+  // coordinates, which is what makes bounds="window" clamp correctly on both drag
+  // and resize. Rendering inline with position:fixed broke that math and let the
+  // card cross the screen edges.
+  return createPortal(
+    <>
+      {/* Invisible viewport box inset by the margin — react-rnd clamps drag AND
+          resize to this element, so the card stops `FLOAT_VIEWPORT_MARGIN` from
+          every edge instead of flush against the screen. */}
+      <div
+        aria-hidden
+        className={FLOAT_BOUNDS_CLASS}
+        style={{
+          position: 'fixed',
+          inset: FLOAT_VIEWPORT_MARGIN,
+          pointerEvents: 'none',
+        }}
+      />
+      <Rnd
+        position={{ x: floatPos.x, y: floatPos.y }}
+        size={{ width: floatSize.width, height: floatSize.height }}
+        minWidth={FLOAT_MIN_WIDTH}
+        minHeight={FLOAT_MIN_HEIGHT}
+        maxWidth={floatMaxWidth}
+        maxHeight={floatMaxHeight}
+        bounds={`.${FLOAT_BOUNDS_CLASS}`}
+        dragHandleClassName={FLOAT_DRAG_HANDLE_CLASS}
+        cancel="button, input, textarea, select, a, [role='menuitem'], [contenteditable='true']"
+        enableResizing={RESIZE_ALL_HANDLES}
+        resizeHandleStyles={RESIZE_HANDLE_STYLES}
+        className="z-50 rounded-xl border bg-background shadow-2xl"
+        onDragStop={(_e, d) => handleDragStop({ x: d.x, y: d.y })}
+        onResizeStop={(_e, _dir, ref, _delta, position) =>
+          handleResizeStop(
+            { width: ref.offsetWidth, height: ref.offsetHeight },
+            position,
+          )
         }
-        return !(event.target as HTMLElement | null)?.closest(
-          'button, input, textarea, select, a, [role="menuitem"], [contenteditable="true"]',
-        );
-      },
-    },
-  ];
-}
-
-function FloatingChatCard({
-  cardRef,
-  pos,
-  size,
-  onStartResize,
-  onResizeMove,
-  onEndResize,
-  renderHeader,
-  children,
-}: {
-  cardRef: React.MutableRefObject<HTMLDivElement | null>;
-  pos: { x: number; y: number };
-  size: { width: number; height: number };
-  onStartResize: (
-    axis: 'x' | 'y' | 'both',
-  ) => (e: React.PointerEvent<HTMLDivElement>) => void;
-  onResizeMove: (e: React.PointerEvent<HTMLDivElement>) => void;
-  onEndResize: (e: React.PointerEvent<HTMLDivElement>) => void;
-  renderHeader: (
-    dragListeners?: DraggableSyntheticListeners,
-  ) => React.ReactNode;
-  children: React.ReactNode;
-}) {
-  const { setNodeRef, listeners, transform } = useDraggable({
-    id: FLOAT_DRAG_ID,
-  });
-  // Merge dnd-kit's node ref with the panel's own ref (used by resize + the
-  // pop-out FLIP animation).
-  const setRefs = useCallback(
-    (node: HTMLDivElement | null) => {
-      setNodeRef(node);
-      cardRef.current = node;
-    },
-    [setNodeRef, cardRef],
-  );
-  return (
-    <div
-      ref={setRefs}
-      className="fixed z-50 flex overflow-hidden rounded-xl border bg-background shadow-2xl"
-      style={{
-        left: pos.x,
-        top: pos.y,
-        width: size.width,
-        height: size.height,
-        transform: CSS.Translate.toString(transform),
-      }}
-    >
-      <div
-        onPointerDown={onStartResize('x')}
-        onPointerMove={onResizeMove}
-        onPointerUp={onEndResize}
-        onPointerCancel={onEndResize}
-        className="absolute inset-y-0 right-0 z-20 w-3 touch-none cursor-ew-resize"
-      />
-      <div
-        onPointerDown={onStartResize('y')}
-        onPointerMove={onResizeMove}
-        onPointerUp={onEndResize}
-        onPointerCancel={onEndResize}
-        className="absolute inset-x-0 bottom-0 z-20 h-3 touch-none cursor-ns-resize"
-      />
-      <div
-        onPointerDown={onStartResize('both')}
-        onPointerMove={onResizeMove}
-        onPointerUp={onEndResize}
-        onPointerCancel={onEndResize}
-        className="absolute bottom-0 right-0 z-30 h-5 w-5 touch-none cursor-nwse-resize"
-      />
-      <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-        {renderHeader(listeners)}
-        {children}
-      </div>
-    </div>
+      >
+        <div
+          ref={innerRef}
+          data-chat-dense
+          className="flex flex-col w-full h-full min-w-0 min-h-0 overflow-hidden rounded-xl"
+        >
+          {renderHeader(true)}
+          {body}
+        </div>
+      </Rnd>
+    </>,
+    document.body,
   );
 }
 
@@ -877,9 +711,10 @@ function readFloatPos(size: { width: number; height: number }): {
   x: number;
   y: number;
 } {
+  // Snug in the bottom-left corner by default.
   const fallback = clampPos(
     {
-      x: window.innerWidth - size.width - FLOAT_VIEWPORT_MARGIN,
+      x: FLOAT_VIEWPORT_MARGIN,
       y: window.innerHeight - size.height - FLOAT_VIEWPORT_MARGIN,
     },
     size.width,
@@ -906,9 +741,12 @@ function readFloatSize(): { width: number; height: number } {
   // too small or off-screen.
   const maxWidth = Math.min(
     FLOAT_MAX_WIDTH,
-    window.innerWidth - FLOAT_VIEWPORT_MARGIN,
+    window.innerWidth - 2 * FLOAT_VIEWPORT_MARGIN,
   );
-  const maxHeight = window.innerHeight - FLOAT_VIEWPORT_MARGIN;
+  const maxHeight = Math.min(
+    FLOAT_MAX_HEIGHT,
+    window.innerHeight - 2 * FLOAT_VIEWPORT_MARGIN,
+  );
   const fit = (size: { width: number; height: number }) => ({
     width: clamp(size.width, Math.min(FLOAT_MIN_WIDTH, maxWidth), maxWidth),
     height: clamp(
@@ -917,9 +755,10 @@ function readFloatSize(): { width: number; height: number } {
       maxHeight,
     ),
   });
+  // Scale the default to the viewport so it's comfortably usable on any screen.
   const fallback = fit({
-    width: FLOAT_DEFAULT_WIDTH,
-    height: FLOAT_DEFAULT_HEIGHT,
+    width: Math.round(window.innerWidth * FLOAT_DEFAULT_WIDTH_RATIO),
+    height: Math.round(window.innerHeight * FLOAT_DEFAULT_HEIGHT_RATIO),
   });
   try {
     const raw = localStorage.getItem(FLOAT_SIZE_STORAGE_KEY);

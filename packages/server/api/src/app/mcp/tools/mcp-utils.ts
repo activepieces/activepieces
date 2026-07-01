@@ -1,6 +1,6 @@
 import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, normalizePieceName as sharedNormalizePieceName, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -365,12 +365,7 @@ function normalizePieceName(pieceName: string | undefined): string | undefined {
     if (isNil(pieceName)) {
         return undefined
     }
-    if (pieceName.startsWith('@')) {
-        return pieceName
-    }
-    const stripped = pieceName.startsWith('piece-') ? pieceName.slice('piece-'.length) : pieceName
-    const normalized = stripped.replace(/_/g, '-')
-    return `@activepieces/piece-${normalized}`
+    return sharedNormalizePieceName(pieceName)
 }
 
 async function lookupPieceComponent({ pieceName, componentName, componentType, projectId, platformId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
@@ -654,20 +649,32 @@ async function executePropertyResolution({ pieceName, pieceVersion, actionOrTrig
     return { status: 'failed', message: 'Unrecognized options format' }
 }
 
-// Classify an action by how many records it returns, from its name. This is the signal the agent
-// lacks today: it reaches for find_record (one match) when it meant to enumerate, then thrashes on
-// the empty result. 'enumerate' = list/search/plural-find; 'single' = find/get one; 'other' = a write
-// or anything else. Used to redirect empty-result feedback and to rank actions by intent.
-function classifyActionCardinality(actionName: string): ActionCardinality {
+// Phrases in an action's OWN description that mean it returns MANY rows even when its name reads like
+// a find-one (Attio's find_record: "query for matching records … empty filters return all records").
+// Kept tight so a genuine find-one ("fetches one record by its exact id") is NOT swept in.
+const ENUMERATE_METADATA = /matching records|all records|multiple records|records that match|records matching|list of (records|rows|items|entries|results)|returns? a list|query (for )?(matching )?records/
+
+// Classify an action by how many records it returns. The name is the first signal (list_/search_ →
+// enumerate; find/get → single), but names lie: a find-one name often hides an enumerate action
+// (find_record returns ALL matches). When the name says single yet the action's metadata describes
+// enumeration, trust the metadata — otherwise the agent is steered away from the only list action and
+// thrashes on an empty find. 'other' = a write or anything else. Used to redirect empty-result
+// feedback and to rank actions by intent.
+function classifyActionCardinality({ actionName, description, aiDescription }: {
+    actionName: string
+    description?: string
+    aiDescription?: string
+}): ActionCardinality {
     const name = actionName.toLowerCase()
     // 'list'/'search' only signal enumerate as the leading VERB (or '_search' verb) — not when 'list'
     // is a noun mid-name (find_list_entry is a find-ONE). Plural-record suffixes also mean enumerate.
-    const isEnumerate = /^(list|search)/.test(name) || /_search(_|$)/.test(name) || /_(records|rows|items|entries|results|messages|contacts|files)$/.test(name)
-    if (isEnumerate) {
+    const isEnumerateName = /^(list|search)/.test(name) || /_search(_|$)/.test(name) || /_(records|rows|items|entries|results|messages|contacts|files)$/.test(name)
+    if (isEnumerateName) {
         return 'enumerate'
     }
     if (/(^|_)(find|get|fetch|read|retrieve|lookup)(_|$)/.test(name)) {
-        return 'single'
+        const meta = `${description ?? ''} ${aiDescription ?? ''}`.toLowerCase()
+        return ENUMERATE_METADATA.test(meta) ? 'enumerate' : 'single'
     }
     return 'other'
 }
@@ -766,6 +773,8 @@ export const mcpUtils = {
     flattenOutputSchemaFields,
     deriveFieldPathsFromSample,
     normalizePieceName,
+    levenshtein,
+    suggestClosestKey,
     lookupPieceComponent,
     findResolvableProps,
     validateAuth,

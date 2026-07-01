@@ -1,4 +1,5 @@
-import { Permission } from '@activepieces/core-utils';
+import { Permission, tryCatch } from '@activepieces/core-utils';
+import { TableColor } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   EllipsisVertical,
@@ -10,8 +11,10 @@ import {
   Import,
   FileJson,
   Lock,
+  Palette,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -49,11 +52,13 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { downloadFile } from '@/lib/dom-utils';
 
+import { recordsApi } from '../api/records-api';
 import { tablesApi } from '../api/tables-api';
 import { tablesUtils } from '../utils/utils';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportTableDialog } from './import-table-dialog';
+import { TableColorPicker } from './table-color-picker';
 
 interface ApTableHeaderProps {
   onBack: () => void;
@@ -74,6 +79,7 @@ export function ApTableHeader({
     table,
     renameTable,
     deleteRecords,
+    setRecordColorsLocal,
   ] = useTableState((state) => [
     state.selectedRecords,
     state.setSelectedRecords,
@@ -82,6 +88,7 @@ export function ApTableHeader({
     state.table,
     state.renameTable,
     state.deleteRecords,
+    state.setRecordColorsLocal,
   ]);
   const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
   const [isEditingTableName, setIsEditingTableName] = useState(false);
@@ -108,6 +115,11 @@ export function ApTableHeader({
   const downloadCsv = async () => {
     const exportedTable = await tablesApi.export(table.id);
     tablesUtils.exportTables([exportedTable]);
+  };
+
+  const downloadXlsx = async () => {
+    const exportedTable = await tablesApi.export(table.id);
+    await tablesUtils.exportTableAsXlsx(exportedTable);
   };
 
   const nameControl = (
@@ -177,7 +189,11 @@ export function ApTableHeader({
           {!showPushToGit && <DropdownMenuSeparator />}
           <DropdownMenuItem onSelect={downloadCsv}>
             <Download className="mr-2 h-4 w-4" />
-            {t('Download Data')}
+            {t('Download CSV')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={downloadXlsx}>
+            <Download className="mr-2 h-4 w-4" />
+            {t('Download Excel')}
           </DropdownMenuItem>
           <PermissionNeededTooltip hasPermission={canEdit}>
             <ConfirmationDeleteDialog
@@ -236,8 +252,32 @@ export function ApTableHeader({
     table?.name,
   );
 
+  const colorSelectedRecords = async (color: TableColor | null) => {
+    const selected = records.filter(
+      (record) => selectedRecords.has(record.uuid) && record.recordId !== null,
+    );
+    if (selected.length === 0) {
+      return;
+    }
+    setRecordColorsLocal(
+      selected.map((record) => record.uuid),
+      color,
+    );
+    const { error } = await tryCatch(() =>
+      recordsApi.setColors({
+        tableId: table.id,
+        records: selected.flatMap((record) =>
+          record.recordId ? [{ recordId: record.recordId, color }] : [],
+        ),
+      }),
+    );
+    if (error) {
+      toast.error(t('Failed to update color'));
+    }
+  };
+
   const rightContent = (
-    <div className="flex items-center gap-2">
+    <div className="flex min-h-9 items-center gap-2">
       {isSaving && (
         <div className="flex items-center gap-2 text-muted-foreground animate-in fade-in">
           <RefreshCw className="h-4 w-4 animate-spin" />
@@ -257,6 +297,20 @@ export function ApTableHeader({
         </div>
       )}
       <ActiveUsersWidget resourceId={table.id} />
+      {selectedRecords.size > 0 && (
+        <PermissionNeededTooltip hasPermission={canEdit}>
+          <TableColorPicker onPick={colorSelectedRecords}>
+            <Button
+              variant="outline"
+              className="flex gap-2 items-center"
+              disabled={!canEdit}
+            >
+              <Palette className="size-4" />
+              {t('Color')}
+            </Button>
+          </TableColorPicker>
+        </PermissionNeededTooltip>
+      )}
       {selectedRecords.size > 0 && (
         <PermissionNeededTooltip hasPermission={canEdit}>
           <ConfirmationDeleteDialog

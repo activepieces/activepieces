@@ -39,6 +39,7 @@ import { TableServerDelta } from '../stores/store/ap-tables-client-state';
 function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
   const socket = useSocket();
   const applyServerDelta = useTableState((state) => state.applyServerDelta);
+  const setRowsExiting = useTableState((state) => state.setRowsExiting);
   const reconcileServerSnapshot = useTableState(
     (state) => state.reconcileServerSnapshot,
   );
@@ -46,6 +47,11 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
   const isAiActiveRef = useRef(isAiActive);
   const readyRef = useRef(true);
   const bufferRef = useRef<TableServerDelta[]>([]);
+  // One keyed timer per exiting row — so the delete animation is deterministic and a
+  // superseding event / unmount can cancel it cleanly (no anonymous setTimeout soup).
+  const exitTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
 
   // A burst of deltas from one agent write (e.g. ap_insert_records inserting many
   // rows) is emitted back-to-back and would otherwise land in a single frame — all
@@ -58,22 +64,16 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
   const enqueueApply = useCallback(
     (delta: TableServerDelta) => {
       const drain = () => {
+        // Drain at a FIXED cadence so a burst always cascades identically. Past a cap we
+        // apply the remainder in one frame rather than dragging a huge insert out forever.
+        const overCap = streamQueueRef.current.length > STAGGER_MAX_QUEUE;
         const next = streamQueueRef.current.shift();
         if (next === undefined) {
           streamTimerRef.current = null;
           return;
         }
         applyServerDelta(next);
-        const stagger = Math.max(
-          MIN_STREAM_STAGGER_MS,
-          Math.min(
-            STREAM_STAGGER_MS,
-            Math.round(
-              STREAM_STAGGER_BUDGET_MS / (streamQueueRef.current.length || 1),
-            ),
-          ),
-        );
-        streamTimerRef.current = setTimeout(drain, stagger);
+        streamTimerRef.current = setTimeout(drain, overCap ? 0 : STAGGER_MS);
       };
       streamQueueRef.current.push(delta);
       if (streamTimerRef.current === null) {
@@ -83,15 +83,17 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
     [applyServerDelta],
   );
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const exitTimers = exitTimersRef.current;
+    return () => {
       if (streamTimerRef.current !== null) {
         clearTimeout(streamTimerRef.current);
         streamTimerRef.current = null;
       }
-    },
-    [],
-  );
+      exitTimers.forEach((timer) => clearTimeout(timer));
+      exitTimers.clear();
+    };
+  }, []);
 
   useEffect(() => {
     const handle = (delta: TableServerDelta) => {
@@ -100,6 +102,23 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
       }
       if (!readyRef.current) {
         bufferRef.current.push(delta);
+        return;
+      }
+      // Delete is a deterministic two-beat: mark the row exiting (takeover border +
+      // disintegrate + track-collapse), then commit the removal after a FIXED beat via a
+      // keyed timer (replaces any in-flight one for the same row so repeats can't stack).
+      if (delta.kind === 'record-deleted') {
+        const { recordId } = delta;
+        const existing = exitTimersRef.current.get(recordId);
+        if (existing) {
+          clearTimeout(existing);
+        }
+        setRowsExiting([recordId]);
+        const timer = setTimeout(() => {
+          exitTimersRef.current.delete(recordId);
+          enqueueApply(delta);
+        }, EXIT_MS);
+        exitTimersRef.current.set(recordId, timer);
         return;
       }
       enqueueApply(delta);
@@ -145,7 +164,7 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
       socket.off(WebsocketClientEvent.TABLE_FIELD_UPDATED, onFieldUpdated);
       socket.off(WebsocketClientEvent.TABLE_FIELD_DELETED, onFieldDeleted);
     };
-  }, [socket, tableId, enqueueApply]);
+  }, [socket, tableId, enqueueApply, setRowsExiting]);
 
   useEffect(() => {
     const wasActive = isAiActiveRef.current;
@@ -175,6 +194,9 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
         bufferRef.current = [];
         buffered.forEach(enqueueApply);
       }
+      // On turn end we DON'T abruptly clear: the snapshot above is authoritative, and any
+      // in-flight exit timer still fires (its delete is idempotent against the snapshot), so
+      // a row caught mid-disintegration finishes cleanly instead of snapping away.
     })();
     return () => {
       cancelled = true;
@@ -184,9 +206,15 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
 
 export { useTableRealtime };
 
-const STREAM_STAGGER_MS = 70;
-const MIN_STREAM_STAGGER_MS = 18;
-const STREAM_STAGGER_BUDGET_MS = 1400;
+// The delete beat: mark the row exiting (the overlay clones it into a disintegrating
+// ghost synchronously at that moment), then remove the real row one frame later. The
+// ghost — not the real row — carries the full dissolve, so this only needs to outlast
+// the clone, not the animation.
+const EXIT_MS = 32;
+// Fixed cascade cadence for create/update bursts — identical every time. Past the cap a large
+// burst applies its remainder in one frame instead of dragging on.
+const STAGGER_MS = 45;
+const STAGGER_MAX_QUEUE = 24;
 
 type UseTableRealtimeParams = {
   tableId: string;

@@ -7,10 +7,12 @@ export function StreamingText({
   text,
   components,
   className,
+  rehypePlugins,
 }: {
   text: string;
   components?: Partial<Components>;
   className?: string;
+  rehypePlugins?: Options['rehypePlugins'];
 }) {
   const wordEnds = useMemo(() => wordEndOffsets(text), [text]);
   const totalWords = wordEnds.length;
@@ -59,18 +61,29 @@ export function StreamingText({
     };
   }, [totalWords]);
 
-  const revealedText =
-    revealedWords >= totalWords
-      ? text
-      : text.slice(0, wordEnds[revealedWords - 1] ?? 0);
+  const isFullyRevealed = revealedWords >= totalWords;
+  const revealedText = isFullyRevealed
+    ? text
+    : text.slice(0, wordEnds[revealedWords - 1] ?? 0);
+  // A multi-word marker (`{{app:Google Sheets}}`) can be revealed mid-token while
+  // streaming (`…{{app:Google`); hide a trailing unclosed `{{…` until it completes
+  // so the raw marker never flashes. Never applied once fully revealed.
+  const visibleText = isFullyRevealed
+    ? revealedText
+    : revealedText.replace(/\{\{[^}]*$/, '');
+
+  const mergedPlugins = useMemo(
+    () => [...(rehypePlugins ?? []), rehypeWordFade],
+    [rehypePlugins],
+  );
 
   return (
     <Markdown
       className={className}
       components={components}
-      rehypePlugins={WORD_FADE_PLUGINS}
+      rehypePlugins={mergedPlugins}
     >
-      {revealedText}
+      {visibleText}
     </Markdown>
   );
 }
@@ -129,8 +142,7 @@ function rehypeWordFade() {
 const MS_PER_WORD = 22;
 const CATCH_UP_THRESHOLD = 40;
 const CATCH_UP_DIVISOR = 8;
-const SKIP_TAGS = new Set(['code', 'pre', 'a']);
-const WORD_FADE_PLUGINS: Options['rehypePlugins'] = [rehypeWordFade];
+const SKIP_TAGS = new Set(['code', 'pre', 'a', 'data']);
 
 interface HastNode {
   type: string;

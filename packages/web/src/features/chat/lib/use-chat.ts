@@ -2,6 +2,7 @@ import { apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
+  BrowserViewEvent,
   BuildPlanEvent,
   ChatAllowedMimeType,
   FileProducedEvent,
@@ -9,6 +10,7 @@ import {
   ChatConversationStatus,
   ChatHistoryMessage,
   ChatMention,
+  type ChatMessageSource,
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
   PersistedChatMessage,
@@ -195,12 +197,16 @@ export function useAgentChat({
   onConversationCreated,
   onCreditsExhausted,
   onStageOpen,
+  onBrowserView,
+  onStreamEnd,
   getActiveContext,
 }: {
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
   onStageOpen?: (event: StageOpenEvent) => void;
+  onBrowserView?: (event: BrowserViewEvent) => void;
+  onStreamEnd?: () => void;
   getActiveContext?: () => ActiveChatContext | undefined;
 } = {}) {
   const store = useChatStoreApi();
@@ -219,6 +225,10 @@ export function useAgentChat({
   onCreditsExhaustedRef.current = onCreditsExhausted;
   const onStageOpenRef = useRef(onStageOpen);
   onStageOpenRef.current = onStageOpen;
+  const onBrowserViewRef = useRef(onBrowserView);
+  onBrowserViewRef.current = onBrowserView;
+  const onStreamEndRef = useRef(onStreamEnd);
+  onStreamEndRef.current = onStreamEnd;
 
   const [persistedMessages, setPersistedMessages] = useState<ChatUIMessage[]>(
     [],
@@ -348,6 +358,10 @@ export function useAgentChat({
     onStageOpenRef.current?.(event);
   }, []);
 
+  const handleBrowserView = useCallback((event: BrowserViewEvent) => {
+    onBrowserViewRef.current?.(event);
+  }, []);
+
   const updateSendStatus = useCallback((next: SendStatus) => {
     sendStatusRef.current = next;
     setSendStatus(next);
@@ -401,8 +415,10 @@ export function useAgentChat({
     onFileProduced: handleFileProduced,
     onBuildPlan: handleBuildPlan,
     onStageOpen: handleStageOpen,
+    onBrowserView: handleBrowserView,
     onStreamFinished: (convId) => {
       chatDebug.info({ conversation: { id: convId } }, 'stream finished');
+      onStreamEndRef.current?.();
       settleStreamRef.current(convId);
     },
     onStreamError: ({ conversationId: convId, errorCode, errorMessage }) => {
@@ -410,6 +426,7 @@ export function useAgentChat({
         { conversation: { id: convId }, errorCode, error: errorMessage },
         'stream error',
       );
+      onStreamEndRef.current?.();
       if (errorCode === ErrorCode.AI_CREDIT_LIMIT_EXCEEDED) {
         onCreditsExhaustedRef.current?.();
         settleStreamRef.current(convId, { suppressNoReply: true });
@@ -539,6 +556,7 @@ export function useAgentChat({
   const cancelStream = useCallback(() => {
     commitInFlightTurn();
     stopStream();
+    onStreamEndRef.current?.();
     setOptimisticUserMessage(null);
     setIsPollingForAgentReply(false);
     updateSendStatus({ type: 'cancelled' });
@@ -565,7 +583,12 @@ export function useAgentChat({
   );
 
   const sendMessage = useCallback(
-    async (content: string, files?: File[], mentions?: ChatMention[]) => {
+    async (
+      content: string,
+      files?: File[],
+      mentions?: ChatMention[],
+      source?: ChatMessageSource,
+    ) => {
       updateSendStatus({ type: 'submitting' });
 
       const fileNames = files?.map((f) => f.name) ?? [];
@@ -684,6 +707,7 @@ export function useAgentChat({
           files: pendingFilesRef.current,
           activeContext,
           mentions,
+          source,
         }),
       );
       if (sendError) {

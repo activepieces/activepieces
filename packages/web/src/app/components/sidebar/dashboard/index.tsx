@@ -1,6 +1,8 @@
+import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { t } from 'i18next';
 import { House, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { ShieldIcon } from '@/components/icons/shield';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
@@ -18,6 +20,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import {
@@ -26,7 +29,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { InviteUserDialog } from '@/features/members';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +41,7 @@ import {
   useGlobalSearch,
 } from '../../global-search/global-search-context';
 import { STATIC_PAGES } from '../../global-search/static-pages';
+import { useUiPreferences } from '../../global-search/use-ui-preferences';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import { AppSidebarHeader } from '../sidebar-header';
 import { SidebarUser } from '../sidebar-user';
@@ -61,6 +67,7 @@ export function ProjectDashboardSidebar({
     !embedState.hideSideNav && (
       <Sidebar
         collapsible="icon"
+        disableExpandOnClick
         id={SIDEBAR_ID}
         className={cn('max-h-[100vh] border-r-0!', className)}
       >
@@ -73,6 +80,7 @@ export function ProjectDashboardSidebar({
               <SidebarBrowseItem />
             </SidebarMenu>
           </SidebarGroup>
+          <PinnedProjectsGroup />
         </SidebarContent>
 
         <SidebarFooter>
@@ -82,6 +90,59 @@ export function ProjectDashboardSidebar({
         </SidebarFooter>
       </Sidebar>
     )
+  );
+}
+
+function PinnedProjectsGroup() {
+  const navigate = useNavigate();
+  const { prefs } = useUiPreferences();
+  const { data: projects = [] } = projectCollectionUtils.useAll();
+  const activeProjectId = authenticationSession.getProjectId();
+
+  if (!prefs.pinProjectSidebar || projects.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <SidebarSeparator className="mx-2 my-1.5" />
+      <SidebarGroup className="pt-1">
+        <SidebarMenu className="gap-1.5">
+          {projects.map((project) => {
+            const palette = project.icon
+              ? PROJECT_COLOR_PALETTE[project.icon.color]
+              : null;
+            const name = getProjectName(project);
+            return (
+              <SidebarMenuItem key={project.id}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton
+                      isActive={project.id === activeProjectId}
+                      onClick={() => {
+                        projectCollectionUtils.setCurrentProject(project.id);
+                        navigate(`/projects/${project.id}/automations`);
+                      }}
+                    >
+                      <span
+                        className="flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
+                        style={{
+                          backgroundColor: palette?.color,
+                          color: palette?.textColor,
+                        }}
+                      >
+                        {name.charAt(0).toUpperCase()}
+                      </span>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{name}</TooltipContent>
+                </Tooltip>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroup>
+    </>
   );
 }
 
@@ -111,7 +172,7 @@ function SidebarBrowseItem() {
           side="right"
           align="start"
           sideOffset={8}
-          className="flex h-[min(560px,78vh)] w-[min(640px,calc(100vw-6rem))] flex-col overflow-hidden rounded-2xl border-foreground/[0.08] bg-popover/80 p-0 shadow-2xl backdrop-blur-2xl"
+          className="flex h-[min(480px,70vh)] w-[min(560px,calc(100vw-6rem))] flex-col overflow-hidden rounded-2xl border-foreground/[0.08] bg-popover/80 p-0 shadow-2xl backdrop-blur-2xl"
           onInteractOutside={(e) => {
             // Keep the popover open when interacting with nested overlays it
             // spawns (create/rename/move/delete dialogs, dropdown menus, toasts).

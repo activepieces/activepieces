@@ -318,6 +318,22 @@ describe('stageExcerptUtils.tableOutline', () => {
     expect(outline).toContain('Name=Beth Jones');
   });
 
+  it('tags every numbered row with its record id (the join key the agent acts on)', () => {
+    const outline = stageExcerptUtils.tableOutline({
+      tableName: 'Students',
+      fields,
+      records,
+      selectedCell: null,
+      selectedRecords: new Set(),
+    });
+
+    expect(outline).toContain('1. [id rec_1] Name=Adam Smith');
+    expect(outline).toContain('2. [id rec_2] Name=Beth Jones');
+    // The header tells the agent the bracketed id is authoritative and not to
+    // re-fetch ids it already holds.
+    expect(outline).toContain('ap_update_records');
+  });
+
   it('marks the selected cell with its column name', () => {
     const outline = stageExcerptUtils.tableOutline({
       tableName: 'Students',
@@ -348,6 +364,21 @@ describe('stageExcerptUtils.tableOutline', () => {
       .find((line) => line.includes('Beth Jones'));
     expect(bethLine).toContain('← selected');
     expect(outline.match(/← selected/g)).toHaveLength(1);
+  });
+
+  it('marks every row in a multi-cell range with its column names', () => {
+    const outline = stageExcerptUtils.tableOutline({
+      tableName: 'Students',
+      fields,
+      records,
+      selectedCell: null,
+      // columns 0–1 (Name, Email), rows 0–1 — range coords are 0-based over data
+      // fields with no checkbox offset.
+      selectedRange: { x: 0, y: 0, x1: 1, y1: 1 },
+      selectedRecords: new Set(),
+    });
+
+    expect(outline.match(/← selected \(range: Name, Email\)/g)).toHaveLength(2);
   });
 
   it('renders empty cells and caps rows at 15 with a "+N more" tail', () => {

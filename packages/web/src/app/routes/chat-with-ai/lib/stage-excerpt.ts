@@ -214,21 +214,41 @@ function tableOutline({
   fields,
   records,
   selectedCell,
+  selectedRange,
   selectedRecords,
 }: {
   tableName: string;
   fields: ClientField[];
   records: ClientRecordData[];
   selectedCell: { rowIdx: number; columnIdx: number } | null;
+  selectedRange?: { x: number; y: number; x1: number; y1: number } | null;
   selectedRecords: ReadonlySet<string>;
 }): string {
   const columnList = fields.map((field) => field.name).join(' · ');
-  const header = `Table "${tableName}" — ${records.length} row${
-    records.length === 1 ? '' : 's'
-  }. Columns: ${columnList || '(none)'}.`;
+  const header =
+    `Table "${tableName}" — ${records.length} row${
+      records.length === 1 ? '' : 's'
+    }. Columns: ${columnList || '(none)'}.` +
+    ` Each row below reads "N. [id …] col=val …"; the bracketed id is that row's record id and is the authoritative way to address the row — pass those ids straight to ap_update_records / ap_delete_records, no need to re-fetch with ap_find_records.`;
   // The grid's leading column (idx 0) is the row-select checkbox, so data field
-  // N sits at grid columnIdx N+1 (see use-report-table-focus.ts).
+  // N sits at grid columnIdx N+1 (see use-report-table-focus.ts). Range coords
+  // are already 0-based over data fields (no checkbox offset).
   const selectedFieldIndex = selectedCell ? selectedCell.columnIdx - 1 : -1;
+  const range = selectedRange
+    ? {
+        rowStart: Math.min(selectedRange.y, selectedRange.y1),
+        rowEnd: Math.max(selectedRange.y, selectedRange.y1),
+        colStart: Math.min(selectedRange.x, selectedRange.x1),
+        colEnd: Math.max(selectedRange.x, selectedRange.x1),
+      }
+    : null;
+  const rangeColumnNames = range
+    ? fields
+        .slice(range.colStart, range.colEnd + 1)
+        .map((field) => field?.name)
+        .filter((name): name is string => !isNil(name))
+        .join(', ')
+    : '';
   const shown = records.slice(0, MAX_TABLE_ROWS);
   const lines = shown.map((record, index) => {
     const cells = fields.map((field, fieldIndex) => {
@@ -237,6 +257,8 @@ function tableOutline({
       )?.value;
       return `${field.name}=${cellPreview(value)}`;
     });
+    const isInRange =
+      !isNil(range) && index >= range.rowStart && index <= range.rowEnd;
     const isSelectedRow =
       selectedCell?.rowIdx === index ||
       (!isNil(record.recordId) && selectedRecords.has(record.recordId));
@@ -244,12 +266,15 @@ function tableOutline({
       selectedFieldIndex >= 0
         ? fields[selectedFieldIndex]?.name ?? `column ${selectedFieldIndex + 1}`
         : undefined;
-    const marker = isSelectedRow
+    const marker = isInRange
+      ? `  ← selected (range: ${rangeColumnNames || 'cells'})`
+      : isSelectedRow
       ? selectedCell && selectedColumnName
         ? `  ← selected (${selectedColumnName})`
         : '  ← selected'
       : '';
-    return `${index + 1}. ${cells.join(' · ')}${marker}`;
+    const idTag = record.recordId ? `[id ${record.recordId}] ` : '';
+    return `${index + 1}. ${idTag}${cells.join(' · ')}${marker}`;
   });
   if (records.length > shown.length) {
     lines.push(`(+${records.length - shown.length} more rows)`);

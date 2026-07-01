@@ -28,5 +28,61 @@ This sits on top of, and is distinct from, the **resource lock** (`RESOURCE_LOCK
 - **Mirror the server-state, don't enqueue.** Server-originated deltas update the mirror used by user edits but must NOT re-issue API writes (unlike user-initiated create/update which enqueue via the PromiseQueue). Without the mirror, a user edit after the agent added rows resolves the wrong record by index.
 - **Highlight without a render storm.** `recentlyChanged` holds `id → expiry`; CSS animations play on class apply; a single debounced `clearExpiredHighlights` timer prunes expired entries. Cell flash is selected per-cell so only changed cells re-render.
 
-## Applying to flows (next)
-Flows are the planned next adopter. Add `FLOW_*` delta events (same `{ projectId, resourceId, payload }` envelope), emit from the flow/flow-version service mutation methods (the agent edits flows via the same direct-service path), and consume with a `use-flow-realtime` hook of the same shape (gate on AI lock → idempotent apply → catch-up reconcile). The builder already has `use-flow-lock.ts` + `ResourceLockWidget` for the read-only banner; deltas would let the canvas update live instead of only on unlock.
+## Flows implementation
+Flows adopt the same pattern with one deliberate difference: instead of granular
+per-op deltas, each flow operation broadcasts the **full mutated `FlowVersion`** as a
+snapshot. `FlowVersion` is small, and a snapshot is naturally last-write-wins, so the
+client applies it as a pure state swap (no need to replay `flowOperations.apply`
+client-side — which is also blocked by the builder's `readonly` and would enqueue an
+echoing server write).
+- `packages/core/shared/src/lib/automation/websocket/index.ts` — `FLOW_VERSION_UPDATED`
+  event + `FlowVersionUpdatedEvent` schema (`{ projectId, flowId, flowVersionId,
+  operationType, changedStepNames, flowVersion }`). `changedStepNames` drives the effect.
+- `packages/server/api/src/app/flows/flow-realtime.ts` — `flowRealtime.versionUpdated`;
+  best-effort emit + `deriveChangedStepNames(operation)`.
+- `packages/server/api/src/app/flows/flow-version/flow-version.service.ts` — emits from
+  `applyOperation` after the save (single chokepoint: agent + REST + piece callers).
+- `packages/web/src/app/builder/state/flow-state.ts` — `applyServerVersion` (swap +
+  highlight, **does not** recompute `readonly` so it never fights the lock) and
+  `reconcileServerVersion` (catch-up, no highlight). `resolveSelectionAfterServerSwap`
+  drops a selection that points at a deleted step.
+- `packages/web/src/app/builder/state/canvas-state.ts` — `recentlyChangedSteps`
+  (stepName → expiry) + `clearExpiredChangedSteps`.
+- `packages/web/src/app/builder/flow-canvas/widgets/use-flow-realtime.ts` — same shape as
+  `use-table-realtime`: gate on AI lock → buffer-before-fetch → FIFO stagger so a
+  `ap_build_flow` run reveals step-by-step → auto-follow via `fitView({ nodes: [{ id }] })`
+  (node id === step name). Mounted in `builder-banner.tsx` next to `useFlowLock`.
+- `packages/web/src/styles.css` — `ap-step-fx-changed` (purple glow pulse + scale-in,
+  top-level keyframe so Tailwind v4 emits it; `prefers-reduced-motion` → static ring).
+  Applied by `step-node/index.tsx` when the step is in `recentlyChangedSteps`.
+- Tests: `packages/web/test/app/builder/state/flow-state-server-version.test.ts`.
+
+The agent announces the AI lock keyed on `flowId` (worker `chat-mcp-client.ts`
+`MUTATING_FLOW_TABLE_TOOLS` → `onEditResource(flowId)`), which is what flips `isAiActive`.
+
+### Flow-level actions, live test runs, no post-finish refresh (Part 2)
+Version-content edits were only half the story — flow-LEVEL actions and the post-finish
+refresh were added next so **everything the agent does** to an open flow is live:
+- **No refresh after finishing.** `use-flow-lock.ts` `handleUnlocked` no longer refetches +
+  `setVersion` (that reset the canvas/selection — the visible "refresh"). The single silent
+  reconcile lives in `use-flow-realtime`'s lock-edge effect (`flowsApi.get` →
+  `reconcileServerVersion` + `applyServerFlow`), which preserves selection. (`takeOver`'s
+  `window.location.reload()` is intentionally kept — deliberate human force-unlock.)
+- **Publish / enable / disable / move** ride a new `FLOW_UPDATED` event
+  (`FlowEntityUpdatedEvent` schema — note the audit-events `FlowUpdatedEvent` name was
+  already taken). `flowRealtime.flowUpdated` is emitted once from `flow.service.ts`
+  `update()` at the single populated-return for `FLOW_LEVEL_OPERATIONS`
+  (LOCK_AND_PUBLISH / CHANGE_STATUS / CHANGE_FOLDER). Client patches via `applyServerFlow`
+  (status/publishedVersionId/folderId only — no selection/version/readonly change); the
+  publish badge + status toggle already render from those fields. Rename + notes already
+  rode `FLOW_VERSION_UPDATED` (they mutate the version).
+- **Test runs.** `UPDATE_RUN_PROGRESS` already broadcasts to the project room;
+  `use-flow-realtime` subscribes (gated on `isAiActive`), matches `flowRun.flowId`, and
+  feeds the builder's `setRun` — accumulating step deltas via `flowRunUtils.updateRunSteps`
+  exactly like the human test path. `ap_test_flow` was added to `MUTATING_FLOW_TABLE_TOOLS`
+  so the agent's test announces the AI lock (→ `isAiActive` true during the run).
+- Tests extended: `applyServerFlow` idempotent-patch case in the same store test file.
+
+**Not yet done:** edge draw-in animation for newly-connected steps; delete uses the plain
+snapshot swap (no disintegrate beat); `ap_test_step` live surfacing (different `TEST_STEP_*`
+events/panel); agent deleting the currently-open flow.

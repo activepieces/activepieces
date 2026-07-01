@@ -20,6 +20,7 @@ import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { STAGE_DOCK_TARGET_ID } from '@/hooks/use-stage-scroll-container';
 import { cn } from '@/lib/utils';
 
+import { BrowserLiveView } from './browser-live-view';
 import { StageResource, useStage } from './stage-context';
 
 const FULL_BLEED_TYPES = new Set(['flow', 'table', 'run']);
@@ -171,7 +172,7 @@ export function StageContainer({
   onShowChat?: () => void;
   chromeless?: boolean;
 }) {
-  const { stageRef, current } = useStage();
+  const { stageRef, current, browserView, dismissBrowserView } = useStage();
   const isFullBleed = FULL_BLEED_TYPES.has(current.type);
 
   return (
@@ -194,6 +195,12 @@ export function StageContainer({
           )}
         >
           <Outlet />
+          {browserView && (
+            <BrowserLiveView
+              data={browserView}
+              onDismiss={dismissBrowserView}
+            />
+          )}
         </div>
       </div>
     </StageHeaderSlotProvider>

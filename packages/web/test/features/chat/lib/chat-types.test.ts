@@ -104,4 +104,63 @@ describe('activeContextUtils.isSameForMarker', () => {
       ),
     ).toBe(false);
   });
+
+  it('treats a multi-step selection as different from a single-step one', () => {
+    const single = {
+      type: 'flow',
+      id: 'f1',
+      projectId: 'p1',
+      focus: { kind: 'flow-step', label: 'Step A', ref: 'step_1' },
+    };
+    const multi = {
+      type: 'flow',
+      id: 'f1',
+      projectId: 'p1',
+      focus: {
+        kind: 'flow-steps',
+        label: '3 steps selected (Step A, Step B, Step C)',
+        ref: 'step_1,step_2,step_3',
+      },
+    };
+    expect(activeContextUtils.isSameForMarker(single, multi)).toBe(false);
+  });
+
+  it('treats a different cell range on the same table as a change', () => {
+    const a = {
+      type: 'table',
+      id: 't1',
+      projectId: 'p1',
+      focus: { kind: 'table-range', label: 'range · rows 1–3 · Name', ref: '0,0,0,2' },
+    };
+    const b = {
+      type: 'table',
+      id: 't1',
+      projectId: 'p1',
+      focus: { kind: 'table-range', label: 'range · rows 1–5 · Name', ref: '0,0,0,4' },
+    };
+    expect(activeContextUtils.isSameForMarker(a, b)).toBe(false);
+  });
+});
+
+describe('activeContextUtils.formatPositionLabel', () => {
+  it('combines resource name and focus label', () => {
+    expect(
+      activeContextUtils.formatPositionLabel({
+        type: 'table',
+        id: 't1',
+        name: 'Leads',
+        focus: { kind: 'table-cell', label: 'row 7 · Website' },
+      }),
+    ).toBe('Leads · row 7 · Website');
+  });
+
+  it('falls back to the type when there is no name', () => {
+    expect(
+      activeContextUtils.formatPositionLabel({ type: 'connections' }),
+    ).toBe('connections');
+  });
+
+  it('returns an empty string when there is no context', () => {
+    expect(activeContextUtils.formatPositionLabel(undefined)).toBe('');
+  });
 });

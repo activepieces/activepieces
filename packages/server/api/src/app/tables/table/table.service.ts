@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, ProjectId, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
 import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, PopulatedTable, SharedTemplate, Table, TableDataState, TableImportDataType, TableTemplate, TableWebhook, TableWebhookEventType, TemplateStatus, TemplateType, UncategorizedFolderId, UpdateTableRequest, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ILike, In, IsNull } from 'typeorm'
@@ -281,6 +281,32 @@ export const tableService = {
             where.folderId = folderId === UncategorizedFolderId ? null : folderId
         }
         return tableRepo().count({ where })
+    },
+    async countTablesByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
+        if (projectIds.length === 0) {
+            return new Map()
+        }
+        const result = await tableRepo()
+            .createQueryBuilder('t')
+            .select('t.projectId', 'projectId')
+            .addSelect('COUNT(*)', 'count')
+            .where('t.projectId IN (:...projectIds)', { projectIds })
+            .groupBy('t.projectId')
+            .getRawMany()
+        return new Map(result.map((r) => [r.projectId, parseInt(r.count)]))
+    },
+    async listRecentTableNamesByProjects({ projectIds, limit }: { projectIds: ProjectId[], limit: number }): Promise<string[]> {
+        if (projectIds.length === 0) {
+            return []
+        }
+        const result = await tableRepo()
+            .createQueryBuilder('t')
+            .select('t.name', 'name')
+            .where('t.projectId IN (:...projectIds)', { projectIds })
+            .orderBy('t.created', 'DESC')
+            .limit(limit)
+            .getRawMany()
+        return result.map((r) => r.name)
     },
 
 }

@@ -2,6 +2,7 @@ import { isNil, debounce } from '@activepieces/core-utils';
 import {
   FlowOperationRequest,
   FlowOperationType,
+  FlowStatus,
   FlowVersion,
   FlowVersionState,
   PopulatedFlow,
@@ -47,6 +48,16 @@ export type FlowState = {
     flowVersion: FlowVersion,
     shouldReselectInitialStep?: boolean,
   ) => void;
+  applyServerVersion: (params: {
+    flowVersion: FlowVersion;
+    changedStepNames: string[];
+  }) => void;
+  reconcileServerVersion: (flowVersion: FlowVersion) => void;
+  applyServerFlow: (params: {
+    status: FlowStatus;
+    publishedVersionId: string | null;
+    folderId: string | null;
+  }) => void;
   addOperationListener: (
     listener: (
       flowVersion: FlowVersion,
@@ -283,6 +294,28 @@ export const createFlowState = (
         selectedBranchIndex: null,
       }));
     },
+    applyServerVersion: ({ flowVersion, changedStepNames }) =>
+      set((state) => {
+        const now = Date.now();
+        const recentlyChangedSteps = { ...state.recentlyChangedSteps };
+        changedStepNames.forEach((name) => {
+          recentlyChangedSteps[name] = now + STEP_HIGHLIGHT_MS;
+        });
+        return {
+          flowVersion,
+          recentlyChangedSteps,
+          ...resolveSelectionAfterServerSwap(state.selectedStep, flowVersion),
+        };
+      }),
+    reconcileServerVersion: (flowVersion: FlowVersion) =>
+      set((state) => ({
+        flowVersion,
+        ...resolveSelectionAfterServerSwap(state.selectedStep, flowVersion),
+      })),
+    applyServerFlow: ({ status, publishedVersionId, folderId }) =>
+      set((state) => ({
+        flow: { ...state.flow, status, publishedVersionId, folderId },
+      })),
     operationListeners: [],
     addOperationListener: (
       listener: (
@@ -420,6 +453,31 @@ export const createFlowState = (
     },
   };
 };
+const STEP_HIGHLIGHT_MS = 1500;
+
+// When a server-originated version replaces local state (live AI edits / catch-up),
+// keep the current selection only if that step still exists; otherwise drop it so the
+// settings panel never points at a deleted step.
+function resolveSelectionAfterServerSwap(
+  selectedStep: string | null,
+  flowVersion: FlowVersion,
+): Partial<BuilderState> {
+  if (isNil(selectedStep)) {
+    return {};
+  }
+  const stepStillExists =
+    selectedStep === 'trigger' ||
+    !isNil(flowStructureUtil.getStep(selectedStep, flowVersion.trigger));
+  if (stepStillExists) {
+    return {};
+  }
+  return {
+    selectedStep: null,
+    rightSidebar: RightSideBarType.NONE,
+    selectedBranchIndex: null,
+  };
+}
+
 /**Because the server creates the sample data files ids and we need to update the local flow version with the new sample data files ids so when an update happens again in the future it doesn't get unset */
 const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
   operation,

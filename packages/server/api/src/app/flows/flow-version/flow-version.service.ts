@@ -7,6 +7,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { userService } from '../../user/user-service'
+import { flowRealtime } from '../flow-realtime'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionMigrationService } from './flow-version-migration.service'
@@ -102,7 +103,9 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }
         mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
         mutatedFlowVersion.agentIds = flowStructureUtil.extractAgentIds(mutatedFlowVersion)
-        return flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
+        const savedFlowVersion = await flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
+        flowRealtime.versionUpdated({ projectId, flowVersion: savedFlowVersion, operation: userOperation })
+        return savedFlowVersion
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {

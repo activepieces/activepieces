@@ -14,7 +14,13 @@ import { createPortal } from 'react-dom';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { RightSideBarType } from '@/app/builder/types';
 import { useChatDockOptional } from '@/app/components/workspace-shell/chat-dock-context';
+import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { piecesHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -122,9 +128,16 @@ export const StepPreviewCard = ({
   const boundsBottom =
     Math.min(rect.bottom, window.innerHeight) - CARD_VIEWPORT_MARGIN;
 
+  const available = boundsRight - boundsLeft;
   const cardWidth = Math.max(
     0,
-    Math.min(PREVIEW_CARD_WIDTH, boundsRight - boundsLeft),
+    Math.min(
+      available,
+      Math.max(
+        PREVIEW_CARD_MIN_WIDTH,
+        Math.min(PREVIEW_CARD_MAX_WIDTH, available),
+      ),
+    ),
   );
   const maxHeight = Math.max(
     0,
@@ -166,6 +179,7 @@ export const StepPreviewCard = ({
 
 const StepPreviewCardBody = ({ step }: { step: Step }) => {
   const chatDock = useChatDockOptional();
+  const stageTier = useStageOptional()?.stageTier ?? 'comfortable';
   const isPieceStep =
     step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE;
   const { pieceModel } = piecesHooks.usePieceModelForStepSettings({
@@ -176,20 +190,37 @@ const StepPreviewCardBody = ({ step }: { step: Step }) => {
 
   return (
     <>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-hidden">
         <StepPreviewSummary step={step} pieceModel={pieceModel} />
       </div>
       {chatDock && (
         <div className="shrink-0 border-t p-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-full gap-2"
-            onClick={() => chatDock.popOutChat({ teachDock: true })}
-          >
-            <PanelRightOpen className="size-3.5" />
-            {t('Edit settings')}
-          </Button>
+          {stageTier === 'mini' ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={t('Edit settings')}
+                  className="w-full"
+                  onClick={() => chatDock.popOutChat({ teachDock: true })}
+                >
+                  <PanelRightOpen className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('Edit settings')}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-full min-w-0 gap-2"
+              onClick={() => chatDock.popOutChat({ teachDock: true })}
+            >
+              <PanelRightOpen className="size-3.5" />
+              <span className="truncate">{t('Edit settings')}</span>
+            </Button>
+          )}
         </div>
       )}
     </>
@@ -200,6 +231,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-const PREVIEW_CARD_WIDTH = 360;
+const PREVIEW_CARD_MAX_WIDTH = 360;
+const PREVIEW_CARD_MIN_WIDTH = 280;
 const CARD_VIEWPORT_MARGIN = 12;
 const CARD_MAX_HEIGHT = 440;

@@ -385,6 +385,9 @@ import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migrati
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
+import { AddUiPreferencesToUserIdentity1798000000000 } from './migration/postgres/1798000000000-AddUiPreferencesToUserIdentity'
+import { AddDeletedToRecord1799000000000 } from './migration/postgres/1799000000000-AddDeletedToRecord'
+import { AddColorToRecordAndCell1800000000000 } from './migration/postgres/1800000000000-AddColorToRecordAndCell'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -785,6 +788,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
         AddAiToolConfigTable1797000000000,
+        AddUiPreferencesToUserIdentity1798000000000,
+        AddDeletedToRecord1799000000000,
+        AddColorToRecordAndCell1800000000000,
     ]
     return migrations
 }

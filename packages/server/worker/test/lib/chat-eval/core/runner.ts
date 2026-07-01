@@ -15,7 +15,7 @@ const EVAL_PROJECTS = [{ id: 'eval-project', displayName: 'Eval Project', type: 
 
 // These cards block on user input in production; the eval auto-approves them, so we stop the
 // turn here to mirror "show card, await user" — otherwise the loop re-nudges the model to re-ask.
-const TERMINAL_DISPLAY_TOOLS = ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_connection_picker', 'ap_show_connection_required', 'ap_show_project_picker']
+const TERMINAL_DISPLAY_TOOLS = ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase', 'ap_show_connection_picker', 'ap_show_connection_required', 'ap_show_project_picker']
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 const OPENROUTER_INFERENCE_ENV = 'OPENROUTER_API_KEY'

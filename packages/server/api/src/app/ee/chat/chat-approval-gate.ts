@@ -1,3 +1,4 @@
+import { normalizePieceName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
@@ -13,6 +14,10 @@ const ACTIVE_RUN_PREFIX = 'chat-active-run:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
 const PENDING_GATE_PREFIX = 'chat-pending-gate:'
+const BROWSER_SESSION_PREFIX = 'chat-browser-session:'
+// Aligned with the Firecrawl session's own ttl (set on creation in the worker). A parked browser
+// outlives the turn that opened it so a follow-up message ("now submit") resumes the same page.
+const BROWSER_SESSION_TTL_SECONDS = 30 * 60
 
 function decisionKey(gateId: string): string {
     return `${KEY_PREFIX}${gateId}`
@@ -113,14 +118,14 @@ async function storeAvailableConnections({ conversationId, pieceName, connection
     pieceName: string
     connections: StoredConnection[]
 }): Promise<void> {
-    await distributedStore.put(`${AVAILABLE_CONNECTIONS_PREFIX}${conversationId}:${pieceName}`, connections, CONNECTION_STORE_TTL_SECONDS)
+    await distributedStore.put(`${AVAILABLE_CONNECTIONS_PREFIX}${conversationId}:${normalizePieceName(pieceName)}`, connections, CONNECTION_STORE_TTL_SECONDS)
 }
 
 async function getAvailableConnections({ conversationId, pieceName }: {
     conversationId: string
     pieceName: string
 }): Promise<StoredConnection[]> {
-    return await distributedStore.get<StoredConnection[]>(`${AVAILABLE_CONNECTIONS_PREFIX}${conversationId}:${pieceName}`) ?? []
+    return await distributedStore.get<StoredConnection[]>(`${AVAILABLE_CONNECTIONS_PREFIX}${conversationId}:${normalizePieceName(pieceName)}`) ?? []
 }
 
 async function storeSelectedConnection({ conversationId, pieceName, externalId, label, projectId }: {
@@ -130,14 +135,14 @@ async function storeSelectedConnection({ conversationId, pieceName, externalId, 
     label: string
     projectId: string
 }): Promise<void> {
-    await distributedStore.put(`${SELECTED_CONNECTION_PREFIX}${conversationId}:${pieceName}`, { externalId, label, projectId }, CONNECTION_STORE_TTL_SECONDS)
+    await distributedStore.put(`${SELECTED_CONNECTION_PREFIX}${conversationId}:${normalizePieceName(pieceName)}`, { externalId, label, projectId }, CONNECTION_STORE_TTL_SECONDS)
 }
 
 async function getSelectedConnection({ conversationId, pieceName }: {
     conversationId: string
     pieceName: string
 }): Promise<SelectedConnection | null> {
-    return distributedStore.get<SelectedConnection>(`${SELECTED_CONNECTION_PREFIX}${conversationId}:${pieceName}`)
+    return distributedStore.get<SelectedConnection>(`${SELECTED_CONNECTION_PREFIX}${conversationId}:${normalizePieceName(pieceName)}`)
 }
 
 async function storePendingGate({ conversationId, gate }: {
@@ -158,6 +163,21 @@ async function clearPendingGate({ conversationId }: { conversationId: string }):
     await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
 }
 
+async function storeBrowserSession({ conversationId, session }: {
+    conversationId: string
+    session: StoredBrowserSession
+}): Promise<void> {
+    await distributedStore.put(`${BROWSER_SESSION_PREFIX}${conversationId}`, session, BROWSER_SESSION_TTL_SECONDS)
+}
+
+async function getBrowserSession({ conversationId }: { conversationId: string }): Promise<StoredBrowserSession | null> {
+    return distributedStore.get<StoredBrowserSession>(`${BROWSER_SESSION_PREFIX}${conversationId}`)
+}
+
+async function clearBrowserSession({ conversationId }: { conversationId: string }): Promise<void> {
+    await distributedStore.delete(`${BROWSER_SESSION_PREFIX}${conversationId}`)
+}
+
 export const chatApprovalGate = {
     resolveGate,
     waitForDecision,
@@ -173,6 +193,9 @@ export const chatApprovalGate = {
     storePendingGate,
     getPendingGate,
     clearPendingGate,
+    storeBrowserSession,
+    getBrowserSession,
+    clearBrowserSession,
 }
 
 type GateDecision = {
@@ -196,4 +219,13 @@ type PendingGate = {
     toolName: string
     displayName: string
     toolInput: Record<string, unknown>
+}
+
+type StoredBrowserSession = {
+    id: string
+    liveViewUrl: string
+    interactiveLiveViewUrl?: string
+    navigated?: string
+    interactiveSignaled?: boolean
+    toolCallId?: string
 }

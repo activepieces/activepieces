@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, unique, UserId } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, normalizePieceName, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
@@ -294,7 +294,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             platformId,
         }
         if (!isNil(pieceName)) {
-            querySelector.pieceName = Equal(pieceName)
+            querySelector.pieceName = Equal(normalizePieceName(pieceName))
         }
         if (!isNil(displayName)) {
             querySelector.displayName = ILike(`%${displayName}%`)
@@ -337,6 +337,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             refreshConnections,
             cursor,
         )
+    },
+    async countConnectionsByPiece({ projectIds, platformId }: { projectIds: ProjectId[], platformId: PlatformId }): Promise<{ pieceName: string, count: number }[]> {
+        if (projectIds.length === 0) {
+            return []
+        }
+        const result = await appConnectionsRepo()
+            .createQueryBuilder('app_connection')
+            .select('app_connection.pieceName', 'pieceName')
+            .addSelect('COUNT(*)', 'count')
+            .where('app_connection."platformId" = :platformId', { platformId })
+            .andWhere('app_connection."projectIds" && :projectIds::varchar[]', { projectIds })
+            .groupBy('app_connection.pieceName')
+            .getRawMany()
+        return result.map((r) => ({ pieceName: r.pieceName, count: parseInt(r.count) }))
     },
     removeSensitiveData: (
         appConnection: AppConnection | AppConnectionSchema,

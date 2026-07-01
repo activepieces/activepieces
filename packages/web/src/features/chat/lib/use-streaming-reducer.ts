@@ -1,6 +1,7 @@
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
+  BrowserViewEvent,
   BuildPlanEvent,
   ChatAgentEventType,
   FileProducedEvent,
@@ -30,6 +31,7 @@ export function useStreamingReducer({
   onFileProduced,
   onBuildPlan,
   onStageOpen,
+  onBrowserView,
   onStreamFinished,
   onStreamError,
   onStaleCheck,
@@ -42,6 +44,7 @@ export function useStreamingReducer({
   onFileProduced: (event: FileProducedEvent) => void;
   onBuildPlan: (event: BuildPlanEvent) => void;
   onStageOpen: (event: StageOpenEvent) => void;
+  onBrowserView: (event: BrowserViewEvent) => void;
   onStreamFinished: (conversationId: string) => void;
   onStreamError: (params: {
     conversationId: string;
@@ -81,6 +84,8 @@ export function useStreamingReducer({
   onBuildPlanRef.current = onBuildPlan;
   const onStageOpenRef = useRef(onStageOpen);
   onStageOpenRef.current = onStageOpen;
+  const onBrowserViewRef = useRef(onBrowserView);
+  onBrowserViewRef.current = onBrowserView;
   const onStreamFinishedRef = useRef(onStreamFinished);
   onStreamFinishedRef.current = onStreamFinished;
   const onStreamErrorRef = useRef(onStreamError);
@@ -297,6 +302,9 @@ export function useStreamingReducer({
         } else if (event.type === ChatAgentEventType.STAGE_OPEN) {
           lastChunkTimeRef.current = Date.now();
           onStageOpenRef.current(event.data as StageOpenEvent);
+        } else if (event.type === ChatAgentEventType.BROWSER_VIEW) {
+          lastChunkTimeRef.current = Date.now();
+          onBrowserViewRef.current(event.data as BrowserViewEvent);
         }
       };
 

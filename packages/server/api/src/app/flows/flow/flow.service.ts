@@ -17,6 +17,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { flowRealtime } from '../flow-realtime'
 import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -415,10 +416,24 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        return this.getOnePopulatedOrThrow({
+        const populatedFlow = await this.getOnePopulatedOrThrow({
             id,
             projectId,
         })
+        // Flow-level ops (publish / enable-disable / move) change the Flow entity, not the
+        // version, so they don't go through flowVersionService.applyOperation's emit. Broadcast
+        // the final flow state so an open builder reflects them live (gated client-side on the
+        // AI lock). Version-content ops already emit FLOW_VERSION_UPDATED.
+        if (FLOW_LEVEL_OPERATIONS.has(operation.type)) {
+            flowRealtime.flowUpdated({
+                projectId,
+                flowId: populatedFlow.id,
+                status: populatedFlow.status,
+                publishedVersionId: populatedFlow.publishedVersionId ?? null,
+                folderId: populatedFlow.folderId ?? null,
+            })
+        }
+        return populatedFlow
     },
     async updatedPublishedVersionId({
         id,
@@ -626,8 +641,33 @@ export const flowService = (log: FastifyBaseLogger) => ({
         
         return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
+
+    async listRecentFlowNamesByProjects({ projectIds, limit }: { projectIds: ProjectId[], limit: number }): Promise<string[]> {
+        if (projectIds.length === 0) {
+            return []
+        }
+        const result = await flowRepo()
+            .createQueryBuilder('ff')
+            .select('latest_version."displayName"', 'displayName')
+            .innerJoin(
+                'flow_version',
+                'latest_version',
+                'latest_version."flowId" = ff.id AND latest_version.id = (SELECT fv_sub.id FROM flow_version fv_sub WHERE fv_sub."flowId" = ff.id ORDER BY fv_sub.created DESC LIMIT 1)',
+            )
+            .where('ff."projectId" IN (:...projectIds)', { projectIds })
+            .andWhere('ff."operationStatus" != :deleting', { deleting: FlowOperationStatus.DELETING })
+            .orderBy('ff.updated', 'DESC')
+            .limit(limit)
+            .getRawMany()
+        return result.map((r) => r.displayName)
+    },
 })
 
+const FLOW_LEVEL_OPERATIONS = new Set<FlowOperationType>([
+    FlowOperationType.LOCK_AND_PUBLISH,
+    FlowOperationType.CHANGE_STATUS,
+    FlowOperationType.CHANGE_FOLDER,
+])
 
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,

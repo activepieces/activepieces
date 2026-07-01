@@ -118,9 +118,10 @@ export function ConversationSidebarToggle({
         side="bottom"
         align="start"
         sideOffset={8}
-        className="flex w-[240px] flex-col overflow-hidden p-0 max-h-[70vh]"
+        className="flex w-[240px] flex-col overflow-hidden p-0"
       >
         <ConversationList
+          floating
           className="w-full"
           onNewChat={onNewChat}
           onSelect={onSelect}

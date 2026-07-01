@@ -12,6 +12,11 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
     name: 'record',
     columns: {
         ...BaseColumnSchemaPart,
+        deleted: {
+            type: 'timestamp with time zone',
+            deleteDate: true,
+            nullable: true,
+        },
         tableId: {
             ...ApIdSchema,
             nullable: false,
@@ -20,15 +25,21 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
             ...ApIdSchema,
             nullable: false,
         },
+        color: {
+            type: 'varchar',
+            nullable: true,
+        },
     },
     indices: [
         {
             name: 'idx_record_project_id_table_id',
             columns: ['projectId', 'tableId'],
+            where: '"deleted" IS NULL',
         },
         {
             name: 'idx_record_table_id_project_id_record_id',
             columns: ['tableId', 'projectId', 'id'],
+            where: '"deleted" IS NULL',
         },
     ],
     relations: {

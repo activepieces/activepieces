@@ -108,6 +108,7 @@ export enum ChatAgentEventType {
     FILE = 'FILE',
     BUILD_PLAN = 'BUILD_PLAN',
     STAGE_OPEN = 'STAGE_OPEN',
+    BROWSER_VIEW = 'BROWSER_VIEW',
 }
 
 export type ToolProgressEvent = {
@@ -197,6 +198,19 @@ export type StageOpenEvent = {
     displayName?: string
 }
 
+export type BrowserViewEvent = {
+    toolCallId: string
+    sessionId: string
+    liveViewUrl: string
+    interactiveLiveViewUrl?: string
+    // 'live' = the agent is actively driving it. 'idle' = parked between turns, the session is
+    // still alive and resumable on the next message. 'closed' = the session ended for good.
+    status: 'live' | 'idle' | 'closed'
+    interactive: boolean
+    displayName?: string
+    finalScreenshot?: string
+}
+
 export type ChatAgentEvent =
     | { type: ChatAgentEventType.CHUNK, data: unknown }
     | { type: ChatAgentEventType.FINISHED, data: { conversationId: string } }
@@ -209,6 +223,7 @@ export type ChatAgentEvent =
     | { type: ChatAgentEventType.FILE, data: FileProducedEvent }
     | { type: ChatAgentEventType.BUILD_PLAN, data: BuildPlanEvent }
     | { type: ChatAgentEventType.STAGE_OPEN, data: StageOpenEvent }
+    | { type: ChatAgentEventType.BROWSER_VIEW, data: BrowserViewEvent }
 
 export type GetChatConfigRequest = {
     conversationId: string
@@ -221,6 +236,7 @@ export type GetChatConfigRequest = {
     mentions?: ChatMention[]
     promptOverride?: ChatPromptOverride
     activeContext?: ActiveStageContext
+    source?: 'suggestion'
     dryRun?: boolean
 }
 
@@ -253,6 +269,10 @@ export type ChatConfigResponse = {
     aiTools: ChatAiToolsConfig
     emailEnabled: boolean
     userEmail: string
+    // toolName -> the arg holding the resource id ('tableId' | 'flowId'). The worker announces
+    // the Stage AI lock (which gates realtime deltas) for exactly these tools. Derived on the API
+    // from each tool's permission + id arg so the worker never hand-maintains a drifting name list.
+    mutatingResourceTools: Record<string, string>
 }
 
 export type SaveChatMessagesRequest = {

@@ -4,11 +4,12 @@ import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
-import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 
 import { normalizePieceName } from '../lib/message-parsers';
+
+import { ReceiptOutputBody } from './receipt-output';
 
 export function ActionReceiptCard({
   receipt,
@@ -80,13 +81,8 @@ export function ActionReceiptCard({
               )}
             </button>
             <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-              <div className="mt-1.5 rounded-lg bg-muted/30 overflow-hidden">
-                <SimpleJsonViewer
-                  data={tryParseJson(receipt.output)}
-                  hideCopyButton={true}
-                  maxHeight={150}
-                  fontSize="11px"
-                />
+              <div className="mt-1.5">
+                <ReceiptOutputBody output={receipt.output} />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -119,15 +115,4 @@ function formatTimestamp(timestamp: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function tryParseJson(value: unknown): unknown {
-  if (typeof value === 'string') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
-    }
-  }
-  return value;
 }

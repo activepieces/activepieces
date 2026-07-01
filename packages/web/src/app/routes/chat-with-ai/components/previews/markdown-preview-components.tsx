@@ -8,9 +8,11 @@ import {
 
 import { CodeFilePreview } from './code-file-preview';
 import { DocumentPreview } from './document-preview';
+import { EmailGroup } from './email-group';
 import { EmailPreview } from './email-preview';
 import { HtmlPreview } from './html-preview';
 import { JsonPreview } from './json-preview';
+import { PieceTagInline } from './piece-tag';
 import { previewUtils, HastNode } from './preview-utils';
 import { SpreadsheetPreview } from './spreadsheet-preview';
 import { SvgPreview } from './svg-preview';
@@ -76,6 +78,8 @@ export const markdownPreviewComponents: Partial<Components> = {
   ...INITIAL_COMPONENTS,
   code: PreviewCode as Components['code'],
   table: PreviewTable as Components['table'],
+  data: PieceTagInline,
+  section: EmailGroup,
 };
 
 type MarkdownCodeProps = {

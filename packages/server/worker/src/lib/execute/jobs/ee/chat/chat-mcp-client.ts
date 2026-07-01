@@ -179,17 +179,6 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text: chatAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
 }
 
-// Flow/table edit tools whose args carry the id of an existing resource that may
-// be open in the Stage. Locking these (not the read-only ap_list_*/ap_find_*/
-// validate/test tools, and not the create tools whose id is only known after) is
-// what flips the open Stage into a calm "Chat is working on this" read-only state.
-const MUTATING_FLOW_TABLE_TOOLS = new Set([
-    'ap_add_step', 'ap_update_step', 'ap_update_trigger', 'ap_add_branch', 'ap_update_branch',
-    'ap_delete_branch', 'ap_delete_step', 'ap_build_flow', 'ap_change_flow_status', 'ap_rename_flow',
-    'ap_lock_and_publish', 'ap_manage_notes', 'ap_duplicate_flow',
-    'ap_insert_records', 'ap_update_record', 'ap_manage_fields', 'ap_delete_table', 'ap_delete_records',
-])
-
 function readResourceId(args: unknown): string | undefined {
     if (typeof args !== 'object' || args === null) {
         return undefined
@@ -203,12 +192,15 @@ function readResourceId(args: unknown): string | undefined {
     return undefined
 }
 
-function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult, onEditResource }: {
+function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult, onEditResource, mutatingResourceTools }: {
     mcpToolSet: Record<string, unknown>
     brokenConnectors: Set<string>
     getSelectedAuth?: (params: { pieceName: string }) => string | undefined
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
     onEditResource?: (resourceId: string) => Promise<void>
+    // toolName -> id arg ('tableId' | 'flowId'); supplied by getChatConfig (derived from tool
+    // permissions). Membership = "this tool mutates an openable resource, so announce the AI lock".
+    mutatingResourceTools: Record<string, string>
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
 
@@ -227,7 +219,7 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
                 }
-                if (onEditResource && MUTATING_FLOW_TABLE_TOOLS.has(name)) {
+                if (onEditResource && name in mutatingResourceTools) {
                     const resourceId = readResourceId(args)
                     if (resourceId !== undefined) {
                         await onEditResource(resourceId)
@@ -276,4 +268,5 @@ export const chatMcpClient = {
     connect: connectMcpClient,
     withToolTimeouts,
     classifyMcpAuthError,
+    injectSelectedAuth,
 }

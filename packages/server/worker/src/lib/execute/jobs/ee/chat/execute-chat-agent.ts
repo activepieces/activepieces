@@ -4,7 +4,7 @@ import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, Ex
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
-import { chatWorkerTools } from './chat-worker-tools'
+import { chatWorkerTools, StoredBrowserSession } from './chat-worker-tools'
 import { delayWithJitter, runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
@@ -30,7 +30,7 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOL = 'ap_execute_action'
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
     async execute(ctx: JobContext, data: ExecuteChatAgentJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, mentions, promptOverride, activeContext, dryRun, discoveryOnly } = data
+        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, mentions, promptOverride, activeContext, source, dryRun, discoveryOnly } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
         const config = await ctx.apiClient.getChatConfig({
@@ -38,6 +38,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             ...spreadIfDefined('mentions', mentions),
             ...spreadIfDefined('promptOverride', promptOverride),
             ...spreadIfDefined('activeContext', activeContext),
+            ...spreadIfDefined('source', source),
             ...spreadIfDefined('dryRun', dryRun),
         })
 
@@ -122,6 +123,33 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         }
         const heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
 
+        const browserSessionState = chatWorkerTools.createBrowserSessionState()
+        // Cross-turn browser persistence: the live Firecrawl session handle is stashed in the
+        // distributed store (keyed on the conversation) so a follow-up message resumes the same
+        // page. Each turn is a separate job that may run on a different worker, hence not in-memory.
+        const loadStoredBrowserSession = async (): Promise<StoredBrowserSession | undefined> => {
+            const { data: response } = await tryCatch(() => ctx.apiClient.executeChatTool({ toolName: '__get_browser_session', toolInput: { conversationId }, platformId, userId, conversationId }))
+            const result = response?.result
+            if (!isObject(result) || typeof result['id'] !== 'string' || typeof result['liveViewUrl'] !== 'string') {
+                return undefined
+            }
+            return {
+                id: result['id'],
+                liveViewUrl: result['liveViewUrl'],
+                ...(typeof result['interactiveLiveViewUrl'] === 'string' ? { interactiveLiveViewUrl: result['interactiveLiveViewUrl'] } : {}),
+                ...(typeof result['navigated'] === 'string' ? { navigated: result['navigated'] } : {}),
+                ...(typeof result['interactiveSignaled'] === 'boolean' ? { interactiveSignaled: result['interactiveSignaled'] } : {}),
+                ...(typeof result['toolCallId'] === 'string' ? { toolCallId: result['toolCallId'] } : {}),
+            }
+        }
+        const saveStoredBrowserSession = async (session: StoredBrowserSession): Promise<void> => {
+            await tryCatch(() => ctx.apiClient.executeChatTool({ toolName: '__save_browser_session', toolInput: { conversationId, session }, platformId, userId, conversationId }))
+        }
+        const clearStoredBrowserSession = async (): Promise<void> => {
+            await tryCatch(() => ctx.apiClient.executeChatTool({ toolName: '__clear_browser_session', toolInput: { conversationId }, platformId, userId, conversationId }))
+        }
+        let turnFailed = false
+
         try {
             const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
 
@@ -130,6 +158,18 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 ...(aiTools.webSearch ? chatWorkerTools.createSearchTools({ webSearch: aiTools.webSearch }) : {}),
                 ...(webSearchActive ? chatAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
                 ...(aiTools.webScraping ? chatWorkerTools.createScrapeTools({ scraping: aiTools.webScraping }) : {}),
+                ...(aiTools.webScraping?.provider === 'firecrawl' && !discoveryOnly ? chatWorkerTools.createBrowserTools({
+                    scraping: aiTools.webScraping, eventEmitter, sessionState: browserSessionState, log,
+                    readFile: async (fileId) => {
+                        const { data: response } = await tryCatch(() => ctx.apiClient.executeChatTool({ toolName: '__read_chat_file', toolInput: { fileId }, platformId, userId, conversationId }))
+                        const result = response?.result
+                        return isObject(result) && typeof result['base64'] === 'string' && typeof result['name'] === 'string' && typeof result['mimeType'] === 'string'
+                            ? { name: result['name'], mimeType: result['mimeType'], base64: result['base64'] }
+                            : undefined
+                    },
+                    loadStoredSession: loadStoredBrowserSession,
+                    saveStoredSession: saveStoredBrowserSession,
+                }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? chatWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveChatFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
@@ -144,6 +184,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
                 lockedResources,
+                // Degrade to no-lock (the pre-fix behavior) rather than crash if an older API
+                // build omits the field — dev hot-reload desyncs api/worker independently.
+                mutatingResourceTools: config.mutatingResourceTools ?? {},
             })
 
             const thinkingStartTime = Date.now()
@@ -284,6 +327,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             })
         }
         catch (err) {
+            turnFailed = true
             log.error({ error: err, conversation: { id: conversationId } }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
@@ -306,6 +350,16 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             clearTimeout(turnWallClockTimer)
             clearInterval(cancelCheckInterval)
             clearInterval(heartbeatInterval)
+            // End the turn's browser session. Close it for good when the agent marked the task done
+            // or the turn aborted/failed; otherwise PARK it (keep alive + persist the handle) so a
+            // follow-up message resumes the same page. Firecrawl's session TTL is the crash backstop.
+            if (!isNil(aiTools.webScraping)) {
+                const browserMode = abortController.signal.aborted || turnFailed || (browserSessionState.done ?? false) ? 'close' : 'park'
+                await chatWorkerTools.teardownBrowserSession({
+                    sessionState: browserSessionState, apiKey: aiTools.webScraping.apiKey, eventEmitter,
+                    mode: browserMode, saveStoredSession: saveStoredBrowserSession, clearStoredSession: clearStoredBrowserSession,
+                })
+            }
             // Release every Stage lock the agent took this turn (completion/abort/error all
             // land here). A worker crash skips this, but the 60s Redis TTL auto-expires it.
             for (const resourceId of lockedResources) {
@@ -324,7 +378,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, lockedResources }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, lockedResources, mutatingResourceTools }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -342,6 +396,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     emailEnabled: boolean
     abortSignal: AbortSignal
     lockedResources: Set<string>
+    mutatingResourceTools: Record<string, string>
 }) {
     const brokenConnectors = new Set<string>()
 
@@ -453,6 +508,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         mcpTools: chatMcpClient.withToolTimeouts({
             mcpToolSet,
             brokenConnectors,
+            mutatingResourceTools,
             getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
             saveLargeResult: async ({ json, fileName }) => {
                 const { data: saved } = await tryCatch(() => ctx.apiClient.saveChatFile({

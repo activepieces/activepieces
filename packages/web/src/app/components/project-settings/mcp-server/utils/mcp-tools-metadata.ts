@@ -196,8 +196,20 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Update specific cells in a record',
       },
       {
+        name: 'ap_update_records',
+        description: 'Set the same field value(s) on many records at once',
+      },
+      {
         name: 'ap_delete_records',
-        description: 'Delete records by their IDs',
+        description: 'Delete records by their IDs or by filters',
+      },
+      {
+        name: 'ap_restore_records',
+        description: 'Restore previously deleted records by their IDs',
+      },
+      {
+        name: 'ap_clear_table',
+        description: 'Delete every row in a table in one operation',
       },
     ],
   },

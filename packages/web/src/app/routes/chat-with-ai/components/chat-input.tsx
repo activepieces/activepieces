@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
+import { cn } from '@/lib/utils';
 
 import { EmojiButtonPopover } from './emoji/emoji-picker-popover';
 import {
@@ -175,13 +176,7 @@ export function ChatInput({
             </motion.div>
           )}
         </AnimatePresence>
-        {isRecording ? (
-          <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-foreground whitespace-pre-wrap break-words">
-            {interimText || (
-              <span className="text-muted-foreground">{t('Listening...')}</span>
-            )}
-          </div>
-        ) : (
+        <div className="relative">
           <ChatMentionEditor
             ref={editorRef}
             autoFocus
@@ -191,9 +186,21 @@ export function ChatInput({
             }
             onChange={handleEditorChange}
             onSubmit={handleSubmit}
-            className="max-h-60 overflow-y-auto"
+            className={cn(
+              'max-h-60 overflow-y-auto',
+              isRecording && 'invisible',
+            )}
           />
-        )}
+          {isRecording && (
+            <div className="absolute inset-0 min-h-[44px] px-3 py-2.5 text-base sm:text-sm text-foreground whitespace-pre-wrap break-words">
+              {interimText || (
+                <span className="text-muted-foreground">
+                  {t('Listening...')}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         <PromptInputActions className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <PromptInputAction tooltip={t('Attach files')}>

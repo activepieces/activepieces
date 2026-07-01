@@ -85,23 +85,27 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
             if (widened) {
                 phaseState.phase = 'build'
             }
-            // Round one of the loop runs on the fast model with native thinking OFF, so the
-            // opener ("Lead with text") + first discovery stream out in ~400ms instead of
-            // waiting behind the smart model's slower first token and silent thinking budget.
-            // From round two we switch to the smart model (thinking still gated below).
-            // It's one continuous turn (no second call), so there's no double-greeting.
+            // Only the first loop step runs on the fast model with native thinking OFF, so the
+            // opener ("Lead with text") + first discovery stream out in ~400ms instead of waiting
+            // behind the tier model's slower first token. From round two we switch to the user's
+            // selected tier model for the rest of the turn — discovery, data CRUD, and flow
+            // construction all benefit from the tier model's reliability; only the opener trades it
+            // for latency. It's one continuous turn (no second call), so there's no double-greeting.
+            // (THINKING is a separate latch, gated below on construction tools — see tool-phases.ts.)
             const isFirstStep = steps.length === 0
-            // Thinking is gated on whether the agent has started genuine flow construction —
-            // NOT on the build phase. The build phase only governs tool VISIBILITY; table/data
-            // writes and one-time actions are build-phase tools that need no deep reasoning, so
-            // keeping thinking on for them made every row add/delete cost tens of seconds of
-            // reasoning on a large context. Once a deep-reasoning tool (flow construction/test/
-            // publish, or ap_set_build_plan one step before it) has fired in any prior step, the
-            // latch stays on so the multi-step build keeps its planning depth.
-            const deepReasoningStarted = steps.some((s) => s.toolCalls?.some((c) => chatToolPhases.isDeepReasoningTool(c.toolName)))
-            const disableThinking = isFirstStep || !deepReasoningStarted
+            const useFastModel = isFirstStep
+            // Thinking is far costlier per step, so it latches on ONLY for genuine new-flow
+            // architecture (ap_build_flow / ap_set_build_plan / ap_add_step). Single-field edits to
+            // an existing flow, publish, rename, test, etc. run on the smart model with thinking
+            // OFF — that's what keeps small edits snappy. ap_set_build_plan precedes a brand-new
+            // build, so the latch turns on one step early and the construction keeps its depth.
+            const thinkingStarted = steps.some((s) => s.toolCalls?.some((c) => chatToolPhases.isThinkingTool(c.toolName)))
+            const disableThinking = isFirstStep || !thinkingStarted
+            // Diagnostic: nothing else logs the per-step model, so confirm the fast-model
+            // override is actually firing for data-op steps (and thinking is off).
+            log.debug({ step: { index: steps.length, model: useFastModel && fastModel ? 'fast' : tier.modelId, thinking: !disableThinking, phase: phaseState.phase } }, 'Chat step model selected')
             return {
-                ...(isFirstStep && fastModel ? { model: fastModel } : {}),
+                ...(useFastModel && fastModel ? { model: fastModel } : {}),
                 activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }),
                 providerOptions: chatAiUtils.buildProviderOptions({ provider, tier, disableThinking }),
                 ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),

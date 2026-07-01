@@ -95,7 +95,9 @@ export const ChatMentionEditor = forwardRef<
   }, [editor]);
 
   const focus = useCallback(() => {
-    editor?.commands.focus('end');
+    if (editor && !editor.isFocused) {
+      editor.commands.focus('end');
+    }
   }, [editor]);
 
   const insertText = useCallback(

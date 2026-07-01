@@ -1,6 +1,5 @@
 import {
   type FolderDto,
-  FlowStatus,
   type PopulatedFlow,
   type Table,
 } from '@activepieces/shared';
@@ -51,7 +50,7 @@ function buildMergedFolderGroups(opts: {
     groups.push({
       type: `folder-${folder.id}`,
       heading: `${folder.displayName} · ${list.length}`,
-      items: list,
+      items: sortByUpdatedDesc(list),
       isLoading: false,
     });
   }
@@ -59,11 +58,19 @@ function buildMergedFolderGroups(opts: {
     groups.push({
       type: 'uncategorized',
       heading: `${t('Uncategorized')} · ${uncategorized.length}`,
-      items: uncategorized,
+      items: sortByUpdatedDesc(uncategorized),
       isLoading: false,
     });
   }
   return groups;
+}
+
+function sortByUpdatedDesc(items: SearchResultItem[]): SearchResultItem[] {
+  return [...items].sort((a, b) => {
+    const aTime = a.updated ? new Date(a.updated).getTime() : 0;
+    const bTime = b.updated ? new Date(b.updated).getTime() : 0;
+    return bTime - aTime;
+  });
 }
 
 export function useBrowseResults({
@@ -129,14 +136,9 @@ export function useBrowseResults({
     };
   }
 
-  const visibleFlows =
-    projectFilter === 'active'
-      ? flows.filter((flow) => flow.status === FlowStatus.ENABLED)
-      : flows;
-
   const merged: { folderId: string | null; item: SearchResultItem }[] = [];
   if (wantsFlows) {
-    for (const flow of visibleFlows) {
+    for (const flow of flows) {
       merged.push({
         folderId: flow.folderId ?? null,
         item: {
@@ -147,6 +149,7 @@ export function useBrowseResults({
           action: 'open',
           projectId,
           status: flow.status,
+          updated: flow.updated ? String(flow.updated) : null,
         },
       });
     }
@@ -162,6 +165,7 @@ export function useBrowseResults({
           href: `/projects/${projectId}/tables/${table.id}`,
           action: 'open',
           projectId,
+          updated: table.updated ? String(table.updated) : null,
         },
       });
     }

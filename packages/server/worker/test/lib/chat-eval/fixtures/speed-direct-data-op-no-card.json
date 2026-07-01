@@ -1,0 +1,51 @@
+{
+    "id": "speed-direct-data-op-no-card",
+    "description": "AGT-13: a direct, well-specified table-data request ('show me the rows in my Leads table') goes straight to the data with no clarifying question card and no ceremony. Pins the speed exemption for direct data ops (skip the status-card dance). Deterministic assertions + judge; left capability until validated live, then promote to regression.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "show me the rows in my Leads table"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "tables": [
+                    { "id": "tbl_leads", "name": "Leads", "projectId": "eval-project", "fieldCount": 4 }
+                ]
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "content": [{ "type": "text", "text": "Listed 2 record(s)." }],
+                "structuredContent": {
+                    "count": 2,
+                    "records": [
+                        { "name": "Acme Corp", "email": "ops@acme.com", "stage": "Demo booked" },
+                        { "name": "Globex", "email": "lia@globex.io", "stage": "Trialing" }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "maxQuestionCards", "n": 0, "toolNames": ["ap_show_questions", "ap_show_quick_replies", "ap_show_project_picker"] },
+        { "type": "reachedToolWithin", "toolName": "ap_explore_data", "n": 2 }
+    ],
+    "judge": [
+        {
+            "dimension": "acts_directly_no_ceremony",
+            "rubric": "The request is direct and well-specified (show the rows of the named Leads table). PASS when the assistant just reads the table and shows the rows, without first asking a clarifying question card or stalling on which-table/which-project ceremony — there is exactly one obvious table. FAIL when it pops a question/quick-reply card, asks which table/project it means, or otherwise adds a confirmation step before simply showing the data.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

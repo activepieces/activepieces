@@ -17,15 +17,23 @@ export function useReportTableExcerpt() {
   const stage = useStageOptional();
   const reportStageExcerpt = stage?.reportStageExcerpt;
 
-  const [tableName, tableId, fields, records, selectedCell, selectedRecords] =
-    useTableState((state) => [
-      state.table.name,
-      state.table.id,
-      state.fields,
-      state.records,
-      state.selectedCell,
-      state.selectedRecords,
-    ]);
+  const [
+    tableName,
+    tableId,
+    fields,
+    records,
+    selectedCell,
+    selectedRange,
+    selectedRecords,
+  ] = useTableState((state) => [
+    state.table.name,
+    state.table.id,
+    state.fields,
+    state.records,
+    state.selectedCell,
+    state.selectedRange,
+    state.selectedRecords,
+  ]);
 
   const excerpt = useMemo<StageExcerpt | null>(() => {
     if (fields.length === 0) {
@@ -39,10 +47,19 @@ export function useReportTableExcerpt() {
         fields,
         records,
         selectedCell,
+        selectedRange,
         selectedRecords,
       }),
     };
-  }, [tableName, tableId, fields, records, selectedCell, selectedRecords]);
+  }, [
+    tableName,
+    tableId,
+    fields,
+    records,
+    selectedCell,
+    selectedRange,
+    selectedRecords,
+  ]);
 
   useEffect(() => {
     reportStageExcerpt?.(excerpt);

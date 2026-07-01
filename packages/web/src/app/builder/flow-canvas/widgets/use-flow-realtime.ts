@@ -1,0 +1,246 @@
+import { isNil, tryCatch } from '@activepieces/core-utils';
+import {
+  FlowEntityUpdatedEvent,
+  FlowRun,
+  FlowVersionUpdatedEvent,
+  UpdateRunProgressRequest,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
+import { useReactFlow } from '@xyflow/react';
+import { useCallback, useEffect, useRef } from 'react';
+
+import { useSocket } from '@/components/providers/socket-provider';
+import { flowRunUtils } from '@/features/flow-runs';
+import { flowsApi } from '@/features/flows';
+
+import { useBuilderStateContext } from '../../builder-hooks';
+
+/**
+ * Live channel for an open flow builder. While the flow is under an AI lock, every
+ * operation the chat agent applies is broadcast to the project room as a full
+ * FlowVersion snapshot and swapped into the builder store, so the canvas updates
+ * step-by-step instead of waiting for the agent to release the lock.
+ *
+ * Same shape as `use-table-realtime`: subscribe → gate on the AI lock → idempotent
+ * apply (a whole-version snapshot is naturally last-write-wins) → catch-up reconcile.
+ * On both edges of the lock we re-fetch an authoritative snapshot; on the rising edge
+ * we buffer deltas that arrive during the fetch (so opening the flow mid-run doesn't
+ * miss anything) and drain them after.
+ */
+function useFlowRealtime({ flowId, isAiActive }: UseFlowRealtimeParams) {
+  const socket = useSocket();
+  const { fitView } = useReactFlow();
+  const applyServerVersion = useBuilderStateContext(
+    (state) => state.applyServerVersion,
+  );
+  const reconcileServerVersion = useBuilderStateContext(
+    (state) => state.reconcileServerVersion,
+  );
+  const clearExpiredChangedSteps = useBuilderStateContext(
+    (state) => state.clearExpiredChangedSteps,
+  );
+  const applyServerFlow = useBuilderStateContext(
+    (state) => state.applyServerFlow,
+  );
+  const setRun = useBuilderStateContext((state) => state.setRun);
+  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
+  // Keep the latest version in a ref so the run handler can hand it to setRun without
+  // re-subscribing the socket on every version delta.
+  const flowVersionRef = useRef(flowVersion);
+  flowVersionRef.current = flowVersion;
+  // The agent's run streams as incremental step deltas; accumulate them across events
+  // (same merge the human test path uses) so the run view fills in progressively.
+  const lastRunRef = useRef<FlowRun | null>(null);
+
+  const isAiActiveRef = useRef(isAiActive);
+  const readyRef = useRef(true);
+  const bufferRef = useRef<FlowVersionUpdatedEvent[]>([]);
+
+  // A sequence of operations (e.g. ap_build_flow adding steps one-by-one) arrives as a
+  // burst of snapshots. Drain them through a fixed stagger so the steps reveal one after
+  // another: the first applies immediately, the rest follow ~STAGGER_MS apart, applied in
+  // arrival order so a newer snapshot never regresses to an older one.
+  const streamQueueRef = useRef<FlowVersionUpdatedEvent[]>([]);
+  const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pruneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const followStep = useCallback(
+    (stepName: string | undefined) => {
+      if (stepName === undefined) {
+        return;
+      }
+      // Defer to the next frame so the just-applied node exists in the React Flow
+      // store before we pan to it.
+      setTimeout(() => {
+        tryCatch(() =>
+          fitView({ nodes: [{ id: stepName }], duration: 500, maxZoom: 1.2 }),
+        );
+      }, FOLLOW_DELAY_MS);
+    },
+    [fitView],
+  );
+
+  const apply = useCallback(
+    (event: FlowVersionUpdatedEvent) => {
+      applyServerVersion({
+        flowVersion: event.flowVersion,
+        changedStepNames: event.changedStepNames,
+      });
+      followStep(event.changedStepNames[event.changedStepNames.length - 1]);
+      if (pruneTimerRef.current !== null) {
+        clearTimeout(pruneTimerRef.current);
+      }
+      pruneTimerRef.current = setTimeout(
+        clearExpiredChangedSteps,
+        PRUNE_DELAY_MS,
+      );
+    },
+    [applyServerVersion, followStep, clearExpiredChangedSteps],
+  );
+
+  const enqueueApply = useCallback(
+    (event: FlowVersionUpdatedEvent) => {
+      const drain = () => {
+        const next = streamQueueRef.current.shift();
+        if (next === undefined) {
+          streamTimerRef.current = null;
+          return;
+        }
+        apply(next);
+        streamTimerRef.current = setTimeout(drain, STAGGER_MS);
+      };
+      streamQueueRef.current.push(event);
+      if (streamTimerRef.current === null) {
+        drain();
+      }
+    },
+    [apply],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (streamTimerRef.current !== null) {
+        clearTimeout(streamTimerRef.current);
+        streamTimerRef.current = null;
+      }
+      if (pruneTimerRef.current !== null) {
+        clearTimeout(pruneTimerRef.current);
+        pruneTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const onVersionUpdated = (event: FlowVersionUpdatedEvent) => {
+      if (event.flowId !== flowId || !isAiActiveRef.current) {
+        return;
+      }
+      if (!readyRef.current) {
+        bufferRef.current.push(event);
+        return;
+      }
+      enqueueApply(event);
+    };
+
+    // Flow-level changes (publish / enable-disable / move) — patch the flow entity so the
+    // publish badge and status toggle update live. Infrequent, so applied immediately.
+    const onFlowUpdated = (event: FlowEntityUpdatedEvent) => {
+      if (event.flowId !== flowId || !isAiActiveRef.current) {
+        return;
+      }
+      applyServerFlow({
+        status: event.status,
+        publishedVersionId: event.publishedVersionId,
+        folderId: event.folderId,
+      });
+    };
+
+    // The agent's test run streams to the project room as step deltas; adopt it into the
+    // builder's run view (start → progress → result) so testing is visible live without a
+    // refresh. Merge each step into the accumulated run, like the human test path does.
+    const onRunProgress = (event: UpdateRunProgressRequest) => {
+      if (event.flowRun.flowId !== flowId || !isAiActiveRef.current) {
+        return;
+      }
+      const isSameRun = lastRunRef.current?.id === event.flowRun.id;
+      const prevSteps = isSameRun ? lastRunRef.current?.steps ?? {} : {};
+      const startTime =
+        event.flowRun.startTime ??
+        (isSameRun ? lastRunRef.current?.startTime : undefined);
+      const steps = isNil(event.step)
+        ? prevSteps
+        : flowRunUtils.updateRunSteps(
+            prevSteps,
+            event.step.name,
+            event.step.path,
+            event.step.output,
+          );
+      const nextRun = { ...event.flowRun, startTime, steps };
+      lastRunRef.current = nextRun;
+      setRun(nextRun, flowVersionRef.current);
+    };
+
+    socket.on(WebsocketClientEvent.FLOW_VERSION_UPDATED, onVersionUpdated);
+    socket.on(WebsocketClientEvent.FLOW_UPDATED, onFlowUpdated);
+    socket.on(WebsocketClientEvent.UPDATE_RUN_PROGRESS, onRunProgress);
+    return () => {
+      socket.off(WebsocketClientEvent.FLOW_VERSION_UPDATED, onVersionUpdated);
+      socket.off(WebsocketClientEvent.FLOW_UPDATED, onFlowUpdated);
+      socket.off(WebsocketClientEvent.UPDATE_RUN_PROGRESS, onRunProgress);
+    };
+  }, [socket, flowId, enqueueApply, applyServerFlow, setRun]);
+
+  useEffect(() => {
+    const wasActive = isAiActiveRef.current;
+    isAiActiveRef.current = isAiActive;
+    if (isAiActive === wasActive) {
+      return;
+    }
+    let cancelled = false;
+    if (isAiActive) {
+      readyRef.current = false;
+      bufferRef.current = [];
+    }
+    void (async () => {
+      const { data: flow } = await tryCatch(() => flowsApi.get(flowId));
+      if (!cancelled && flow) {
+        // Silent reconcile (no canvas reset): version content + flow-level fields.
+        reconcileServerVersion(flow.version);
+        applyServerFlow({
+          status: flow.status,
+          publishedVersionId: flow.publishedVersionId ?? null,
+          folderId: flow.folderId ?? null,
+        });
+      }
+      if (isAiActive) {
+        readyRef.current = true;
+        const buffered = bufferRef.current;
+        bufferRef.current = [];
+        buffered.forEach(enqueueApply);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isAiActive,
+    flowId,
+    enqueueApply,
+    reconcileServerVersion,
+    applyServerFlow,
+  ]);
+}
+
+export { useFlowRealtime };
+
+// Fixed cascade cadence between snapshots in a burst.
+const STAGGER_MS = 90;
+// Let the just-applied node mount before panning to it.
+const FOLLOW_DELAY_MS = 60;
+// Prune expired highlights a little after the longest possible highlight lifetime.
+const PRUNE_DELAY_MS = 1700;
+
+type UseFlowRealtimeParams = {
+  flowId: string;
+  isAiActive: boolean;
+};

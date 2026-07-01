@@ -21,9 +21,9 @@ import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
 
+import { ContextPositionLine } from './context-position-line';
 import { CopyIconButton } from './copy-icon-button';
 import { mentionSerialization } from './mention-composer/mention-serialization';
-import { StageContextChip } from './stage-context-chip';
 
 function MentionChip({ mention }: { mention: ChatMention }) {
   const openNewWindow = useNewWindow();
@@ -117,11 +117,14 @@ function toDisplayText(content: string): string {
 export const UserMessage = memo(function UserMessage({
   message,
   isLastMessage = false,
-  contextMarker,
+  positionMarker,
 }: {
   message: ChatUIMessage;
   isLastMessage?: boolean;
-  contextMarker?: ActiveChatContext;
+  positionMarker?: {
+    context: ActiveChatContext;
+    previous: ActiveChatContext | undefined;
+  };
 }) {
   const content = getTextFromParts(message.parts);
   const fileNames = message.parts
@@ -141,54 +144,56 @@ export const UserMessage = memo(function UserMessage({
   const isFromHistory = message.id.startsWith('hist-');
 
   return (
-    <motion.div
-      className="flex justify-end py-3 group/msg"
-      initial={isFromHistory ? false : { opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <div className="max-w-[80%]">
-        <Message className="flex-row-reverse">
-          <div className="bg-muted rounded-2xl rounded-br-md px-2.5 py-1 text-sm">
-            {fileNames.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-1.5">
-                {fileNames.map((name, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 rounded-md bg-background/60 px-2 py-0.5 text-xs text-muted-foreground"
-                  >
-                    <Paperclip className="size-3" />
-                    <span className="max-w-[150px] truncate">{name}</span>
-                  </span>
-                ))}
-              </div>
+    <>
+      {positionMarker && (
+        <ContextPositionLine
+          context={positionMarker.context}
+          previous={positionMarker.previous}
+          className="px-1 pt-2"
+        />
+      )}
+      <motion.div
+        className="flex justify-end py-3 group/msg"
+        initial={isFromHistory ? false : { opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        <div className="max-w-[80%]">
+          <Message className="flex-row-reverse">
+            <div className="bg-muted rounded-2xl rounded-br-md px-2.5 py-1 text-sm">
+              {fileNames.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                  {fileNames.map((name, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 rounded-md bg-background/60 px-2 py-0.5 text-xs text-muted-foreground"
+                    >
+                      <Paperclip className="size-3" />
+                      <span className="max-w-[150px] truncate">{name}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <UserMessageBody content={content} />
+            </div>
+          </Message>
+          <MessageActions
+            className={cn(
+              'justify-end mt-1 transition-opacity',
+              isLastMessage
+                ? 'opacity-100'
+                : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
             )}
-            <UserMessageBody content={content} />
-          </div>
-        </Message>
-        {contextMarker && (
-          <StageContextChip
-            context={contextMarker}
-            variant="committed"
-            className="mt-1.5"
-          />
-        )}
-        <MessageActions
-          className={cn(
-            'justify-end mt-1 transition-opacity',
-            isLastMessage
-              ? 'opacity-100'
-              : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
-          )}
-        >
-          <MessageAction tooltip={t('Copy')}>
-            <CopyIconButton
-              textToCopy={toDisplayText(content)}
-              className="h-6 w-6"
-            />
-          </MessageAction>
-        </MessageActions>
-      </div>
-    </motion.div>
+          >
+            <MessageAction tooltip={t('Copy')}>
+              <CopyIconButton
+                textToCopy={toDisplayText(content)}
+                className="h-6 w-6"
+              />
+            </MessageAction>
+          </MessageActions>
+        </div>
+      </motion.div>
+    </>
   );
 });

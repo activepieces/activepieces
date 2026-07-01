@@ -34,6 +34,7 @@
     "chat-evals": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/chat-eval/cli/tsconfig.json packages/server/worker/test/lib/chat-eval/cli/index.ts",
     "chat-evals:ci": "set -a && . ./.env.dev && set +a && vitest run --dir packages/server/worker/test/lib/chat-eval",
     "chat-evals:live": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/chat-eval/cli/tsconfig.json packages/server/worker/test/lib/chat-eval/live/run.ts",
+    "chat:quality": "vitest run packages/core/shared/test/ee/chat-tool packages/server/worker/test/lib/execute/jobs/ee/chat packages/server/api/test/unit/app/ee/chat packages/server/utils/test/chat-ai-utils",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
     "create-action": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts actions create",

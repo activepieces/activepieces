@@ -4,6 +4,7 @@ import {
   PopulatedRecord,
   Table,
   TableAutomationStatus,
+  TableColor,
 } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
@@ -13,6 +14,7 @@ import { createServerState } from './ap-tables-server-state';
 export type ClientCellData = {
   fieldIndex: number;
   value: unknown;
+  color?: TableColor | null;
 };
 
 export type ClientRecordData = {
@@ -20,6 +22,7 @@ export type ClientRecordData = {
   recordId: string | null;
   agentRunId: string | null;
   values: ClientCellData[];
+  color?: TableColor | null;
 };
 
 export type ClientField = {
@@ -44,9 +47,11 @@ const mapRecorddToClientRecordsData = (
     uuid: nanoid(),
     recordId: record.id,
     agentRunId: null,
+    color: record.color ?? null,
     values: Object.entries(record.cells).map(([fieldId, cell]) => ({
       fieldIndex: fields.findIndex((field) => field.id === fieldId),
       value: cell.value,
+      color: cell.color ?? null,
     })),
   }));
 };
@@ -65,6 +70,15 @@ export type TableState = {
   setSelectedCell: (
     selectedCell: { rowIdx: number; columnIdx: number } | null,
   ) => void;
+  selectedRange: {
+    x: number;
+    y: number;
+    x1: number;
+    y1: number;
+  } | null;
+  setSelectedRange: (
+    selectedRange: { x: number; y: number; x1: number; y1: number } | null,
+  ) => void;
   selectedAgentRunId: string | null;
   setSelectedAgentRunId: (agentRunId: string | null) => void;
   createRecord: (recordData: ClientRecordData) => void;
@@ -79,13 +93,19 @@ export type TableState = {
   renameField: (fieldIndex: number, newName: string) => void;
   setRecords: (records: PopulatedRecord[]) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
+  setRecordColorsLocal: (
+    recordUuids: string[],
+    color: TableColor | null,
+  ) => void;
   toggleStatus: () => void;
   lockedByOtherUser: boolean;
   setLockedByOtherUser: (locked: boolean) => void;
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
   recentlyChanged: RecentlyChanged;
+  exitingRows: Record<string, number>;
   applyServerDelta: (delta: TableServerDelta) => void;
+  setRowsExiting: (recordIds: string[]) => void;
   reconcileServerSnapshot: (snapshot: {
     fields: Field[];
     records: PopulatedRecord[];
@@ -138,6 +158,10 @@ export const createApTableStore = (
       setSelectedCell: (
         selectedCell: { rowIdx: number; columnIdx: number } | null,
       ) => set({ selectedCell }),
+      selectedRange: null,
+      setSelectedRange: (
+        selectedRange: { x: number; y: number; x1: number; y1: number } | null,
+      ) => set({ selectedRange }),
       fields: fields.map((field) => {
         if (field.type === FieldType.STATIC_DROPDOWN) {
           return {
@@ -244,6 +268,18 @@ export const createApTableStore = (
           ),
         }));
       },
+      // Manual (non-AI) color edits don't echo back through the realtime channel
+      // (that's gated on the AI lock), so reflect them locally right away; the
+      // server write persists them for the next load.
+      setRecordColorsLocal: (recordUuids: string[], color: TableColor | null) =>
+        set((state) => {
+          const targets = new Set(recordUuids);
+          return {
+            records: state.records.map((record) =>
+              targets.has(record.uuid) ? { ...record, color } : record,
+            ),
+          };
+        }),
       toggleStatus: () => {
         return set((state) => {
           const newStatus =
@@ -267,10 +303,25 @@ export const createApTableStore = (
       serverFields: serverState.fields,
       serverRecords: serverState.records,
       recentlyChanged: { records: {}, cells: {} },
+      exitingRows: {},
       applyServerDelta: (delta: TableServerDelta) => {
         mirrorDeltaToServerState(serverState, delta);
         set((state) => computeDeltaState(state, delta, true));
       },
+      // The single source of the delete animation: the coordinator marks a row exiting
+      // (border + disintegrate + track-collapse), then removes it after a fixed beat.
+      setRowsExiting: (recordIds: string[]) =>
+        set((state) => {
+          if (recordIds.length === 0) {
+            return {};
+          }
+          const until = Date.now() + EXITING_MS;
+          const exitingRows = { ...state.exitingRows };
+          recordIds.forEach((id) => {
+            exitingRows[id] = until;
+          });
+          return { exitingRows };
+        }),
       reconcileServerSnapshot: ({
         fields: snapshotFields,
         records: snapshotRecords,
@@ -299,13 +350,19 @@ export const createApTableStore = (
           const now = Date.now();
           const records = filterExpired(state.recentlyChanged.records, now);
           const cells = filterExpired(state.recentlyChanged.cells, now);
-          if (
+          const exitingRows = filterExpired(state.exitingRows, now);
+          const recentlyUnchanged =
             records === state.recentlyChanged.records &&
-            cells === state.recentlyChanged.cells
-          ) {
+            cells === state.recentlyChanged.cells;
+          if (recentlyUnchanged && exitingRows === state.exitingRows) {
             return {};
           }
-          return { recentlyChanged: { records, cells } };
+          return {
+            recentlyChanged: recentlyUnchanged
+              ? state.recentlyChanged
+              : { records, cells },
+            exitingRows,
+          };
         }),
     };
   });
@@ -332,7 +389,7 @@ function buildClientValues(
     if (fieldIndex === -1) {
       return [];
     }
-    return [{ fieldIndex, value: cell.value }];
+    return [{ fieldIndex, value: cell.value, color: cell.color ?? null }];
   });
 }
 
@@ -397,7 +454,13 @@ function computeDeltaState(
       if (index === -1) {
         const records = [
           ...state.records,
-          { uuid: nanoid(), recordId: record.id, agentRunId: null, values },
+          {
+            uuid: nanoid(),
+            recordId: record.id,
+            agentRunId: null,
+            values,
+            color: record.color ?? null,
+          },
         ];
         const recentlyChanged = highlight
           ? markChanged(
@@ -418,7 +481,9 @@ function computeDeltaState(
         })
         .map((value) => cellKey(value.fieldIndex));
       const records = state.records.map((r, i) =>
-        i === index ? { ...r, recordId: record.id, values } : r,
+        i === index
+          ? { ...r, recordId: record.id, values, color: record.color ?? null }
+          : r,
       );
       const recentlyChanged = highlight
         ? markChanged(state.recentlyChanged, [], changedCellKeys)
@@ -506,6 +571,9 @@ function mirrorDeltaToServerState(
 }
 
 const HIGHLIGHT_MS = 1500;
+// Safety lifetime for the exiting-row mark — the coordinator removes the row on its own keyed
+// timer well before this; this is just the backstop so a dropped timer can't strand a row.
+const EXITING_MS = 2000;
 
 export type RecentlyChanged = {
   records: Record<string, number>;

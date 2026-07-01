@@ -1,10 +1,19 @@
-import { UpdateMeResponse, UserWithBadges } from '@activepieces/shared';
+import {
+  type UiPreferences,
+  UpdateMeResponse,
+  UserWithBadges,
+} from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
 export const userApi = {
   getUserById(id: string) {
     return api.get<UserWithBadges>(`/v1/users/${id}`);
+  },
+  updateUiPreferences(uiPreferences: UiPreferences): Promise<UserWithBadges> {
+    return api.post<UserWithBadges>('/v1/users/me/ui-preferences', {
+      uiPreferences,
+    });
   },
   updateMe(profilePicture?: File): Promise<UpdateMeResponse> {
     const formData = new FormData();

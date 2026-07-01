@@ -291,22 +291,40 @@ describe('mcpUtils.diagnosePieceProps — static dropdown value validation', () 
 })
 
 describe('mcpUtils.classifyActionCardinality', () => {
-    it('classifies find-one / get actions as single', () => {
+    it('classifies find-one / get actions as single (name only, no metadata)', () => {
         for (const name of ['find_record', 'find_list_entry', 'get_contact', 'get_row', 'retrieve_invoice', 'lookup_user']) {
-            expect(mcpUtils.classifyActionCardinality(name), name).toBe('single')
+            expect(mcpUtils.classifyActionCardinality({ actionName: name }), name).toBe('single')
         }
     })
 
     it('classifies list/search and plural-find actions as enumerate', () => {
         for (const name of ['list_records', 'search_records', 'list_contacts', 'find_records', 'search_emails', 'list_rows']) {
-            expect(mcpUtils.classifyActionCardinality(name), name).toBe('enumerate')
+            expect(mcpUtils.classifyActionCardinality({ actionName: name }), name).toBe('enumerate')
         }
     })
 
     it('classifies writes and everything else as other', () => {
         for (const name of ['create_record', 'send_message', 'update_row', 'delete_contact', 'make_call']) {
-            expect(mcpUtils.classifyActionCardinality(name), name).toBe('other')
+            expect(mcpUtils.classifyActionCardinality({ actionName: name }), name).toBe('other')
         }
+    })
+
+    it('reclassifies a find-one NAME as enumerate when its metadata describes returning many (Attio find_record)', () => {
+        const cardinality = mcpUtils.classifyActionCardinality({
+            actionName: 'find_record',
+            description: 'Search for records in Attio using filters and return matching results.',
+            aiDescription: 'Looks up records of a chosen Attio object type. Leave the record id empty and provide attribute filters to query for matching records (empty filters return all records).',
+        })
+        expect(cardinality).toBe('enumerate')
+    })
+
+    it('keeps a genuine find-one as single even when its metadata mentions records/search', () => {
+        const cardinality = mcpUtils.classifyActionCardinality({
+            actionName: 'get_record',
+            description: 'Retrieve a single record by ID and return its normalized attribute values.',
+            aiDescription: 'Fetches one record by its exact ID; use Find Record instead when you need to search by attributes.',
+        })
+        expect(cardinality).toBe('single')
     })
 })
 

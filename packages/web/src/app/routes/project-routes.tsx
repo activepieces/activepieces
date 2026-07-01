@@ -7,10 +7,11 @@ import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { ApTableStateProvider } from '@/features/tables';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import { CHAT_ROUTE, routesThatRequireProjectId } from '@/lib/route-utils';
+import { routesThatRequireProjectId } from '@/lib/route-utils';
 
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
+import { DefaultRoute } from '../guards/default-route';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
@@ -99,11 +100,11 @@ const bareRedirect = (path: string) =>
   ProjectRouterWrapper({ path, element: <></> }).slice(1);
 
 export const projectShellRoutes = [
-  // Bare /projects/:projectId has no Stage resource — fold it into the canonical
-  // chat landing (/chat) so there's a single closed-Stage URL and no project stays
-  // selected. The parent already ran TokenCheckerWrapper, so the session project is
-  // set before we land on /chat.
-  { index: true, element: <Navigate to={CHAT_ROUTE} replace /> },
+  // Bare /projects/:projectId has no Stage resource. DefaultRoute folds the operator
+  // app into the canonical chat landing (/chat, Stage closed, no project selected),
+  // and folds an embed into its default surface (/automations) — an embed never lands
+  // on /chat. The parent already ran TokenCheckerWrapper, so the session project is set.
+  { index: true, element: <DefaultRoute /> },
   shellChild(
     routesThatRequireProjectId.automations,
     <RoutePermissionGuard requiredPermissions={automationsPagePermissions}>

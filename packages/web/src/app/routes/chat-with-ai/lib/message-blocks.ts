@@ -363,6 +363,17 @@ export function getLastThinkingSegment(steps: ThinkingStep[]): {
   return { thought, toolSteps };
 }
 
+// A grouped run of outcome cards is laid out by its content: a homogeneous run
+// gets a purpose-built layout (image carousel, receipt list, file grid); a mixed
+// run falls back to a plain stack. Pure so it can be unit-tested without rendering.
+export function pickGroupLayout(cards: OutcomeCardBlock[]): GroupLayout {
+  if (cards.length === 0) return 'mixed';
+  if (cards.every((card) => card.kind === 'image')) return 'gallery';
+  if (cards.every((card) => card.kind === 'action-receipt')) return 'receipts';
+  if (cards.every((card) => card.kind === 'files')) return 'files';
+  return 'mixed';
+}
+
 export type MessageBlock =
   | {
       kind: 'thinking';
@@ -399,5 +410,7 @@ export type OutcomeCardBlock =
   | { kind: 'action-receipt'; toolCallId: string }
   | { kind: 'image'; toolCallId: string }
   | { kind: 'files'; toolCallId: string };
+
+export type GroupLayout = 'gallery' | 'receipts' | 'files' | 'mixed';
 
 export type SourceItem = { key: string; href?: string; title?: string };

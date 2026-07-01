@@ -1,0 +1,58 @@
+{
+    "id": "accuracy-ground-open-predicate",
+    "description": "ACC-2: 'show my open deals' must ground the word 'open' in the table's real Stage values (Lead/In Progress/Won/Lost) — excluding the terminal Won/Lost — and STATE that interpretation, rather than treating every staged deal as open or inventing a catch-all. It should declare the mapping, not ask a clarifying card. Pins the ground-and-declare-the-qualifier rule. Judgment-heavy -> capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "show me my open deals"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "tables": [
+                    { "id": "tbl_deals", "name": "Deals", "projectId": "eval-project", "fieldCount": 5 }
+                ]
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "content": [{ "type": "text", "text": "Found 8 record(s) — this is the complete set (all matches)." }],
+                "structuredContent": {
+                    "count": 8,
+                    "totalMatching": 8,
+                    "hasMore": false,
+                    "records": [
+                        { "name": "Acme Corp", "stage": "Lead", "value": "12000" },
+                        { "name": "Globex", "stage": "In Progress", "value": "40000" },
+                        { "name": "Initech", "stage": "In Progress", "value": "8000" },
+                        { "name": "Umbrella", "stage": "Won", "value": "55000" },
+                        { "name": "Soylent", "stage": "Lost", "value": "3000" },
+                        { "name": "Hooli", "stage": "Lead", "value": "9000" },
+                        { "name": "Stark", "stage": "Won", "value": "120000" },
+                        { "name": "Wayne", "stage": "Lost", "value": "15000" }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "maxQuestionCards", "n": 0, "toolNames": ["ap_show_questions"] }
+    ],
+    "judge": [
+        {
+            "dimension": "grounds_open_and_declares_mapping",
+            "rubric": "The Deals table's Stage values are Lead, In Progress, Won, and Lost. 'Open' deals are the non-terminal ones (Lead, In Progress); Won and Lost are closed. PASS when the assistant BOTH (a) treats only the non-terminal stages as open — i.e. it excludes the Won deals (Umbrella, Stark) and the Lost deals (Soylent, Wayne), surfacing the 4 open ones (Acme, Globex, Initech, Hooli) — AND (b) states the interpretation it used (e.g. 'treating Won and Lost as closed, so open = Lead + In Progress'). FAIL when it lists all 8 as open, includes Won/Lost among the open deals without distinguishing them, or never says what it took 'open' to mean. Note: popping a clarifying question card asking the user what 'open' means is NOT the desired behavior — it should declare a sensible mapping and proceed, letting the user correct it.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

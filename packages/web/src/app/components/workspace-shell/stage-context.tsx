@@ -1,3 +1,4 @@
+import { BrowserViewEvent } from '@activepieces/shared';
 import {
   createContext,
   useCallback,
@@ -91,6 +92,7 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
   const [stack, setStack] = useState<StageResource[]>([]);
   const [stageFocus, setStageFocus] = useState<StageFocus | null>(null);
   const [stageExcerpt, setStageExcerpt] = useState<StageExcerpt | null>(null);
+  const [browserView, setBrowserView] = useState<BrowserViewData | null>(null);
 
   const activeProjectId = useMemo<string | null>(() => {
     const match = pathname.match(/^\/projects\/([^/?#]+)/);
@@ -178,6 +180,7 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
   }, [navigate, search, stack]);
 
   const closeStage = useCallback(() => {
+    setBrowserView(null);
     const chat = new URLSearchParams(search).get('chat');
     navigate(chat ? `${CHAT_ROUTE}?chat=${chat}` : CHAT_ROUTE);
   }, [navigate, search]);
@@ -199,6 +202,33 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
     setStageExcerpt(excerpt);
   }, []);
 
+  // Shows a live browser view overlaid on the Stage content. When a new status
+  // ('live' / 'idle' / 'closed') arrives for the same session, we update in-place
+  // rather than replacing so the iframe does not flicker.
+  const showBrowserView = useCallback((event: BrowserViewEvent) => {
+    setBrowserView((prev) => {
+      if (prev?.sessionId === event.sessionId) {
+        return { ...prev, ...event };
+      }
+      return event;
+    });
+  }, []);
+
+  const dismissBrowserView = useCallback(() => {
+    setBrowserView(null);
+  }, []);
+
+  // Pause a live browser view the instant the chat turn stops. The worker now PARKS the Firecrawl
+  // session at turn end (keeps it alive, resumable next message) rather than closing it, so we
+  // swap the live iframe for a paused state immediately — both because the iframe shows nothing
+  // useful once the agent stops driving, and to avoid an Unauthorized flash if the session is
+  // closed. The worker's awaited trailing event then settles the final state ('idle' or 'closed').
+  const pauseBrowserViewIfLive = useCallback(() => {
+    setBrowserView((prev) =>
+      prev && prev.status === 'live' ? { ...prev, status: 'idle' } : prev,
+    );
+  }, []);
+
   useEffect(() => {
     if (current.type === 'none') {
       setStageFocus(null);
@@ -206,8 +236,12 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [current.type]);
 
-  const isStageOpen = current.type !== 'none';
-  const stageKey = isStageOpen ? resourceKey(current) : 'none';
+  const isStageOpen = current.type !== 'none' || browserView !== null;
+  const stageKey = isStageOpen
+    ? browserView && current.type === 'none'
+      ? `browser:${browserView.sessionId}`
+      : resourceKey(current)
+    : 'none';
   const isCompact = width > 0 && width < STAGE_COMPACT_BREAKPOINT_PX;
   const stageTier = computeStageTier(width);
 
@@ -230,6 +264,10 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
       reportStageFocus,
       stageExcerpt,
       reportStageExcerpt,
+      browserView,
+      showBrowserView,
+      dismissBrowserView,
+      pauseBrowserViewIfLive,
     }),
     [
       current,
@@ -247,6 +285,10 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
       reportStageFocus,
       stageExcerpt,
       reportStageExcerpt,
+      browserView,
+      showBrowserView,
+      dismissBrowserView,
+      pauseBrowserViewIfLive,
     ],
   );
 
@@ -315,6 +357,12 @@ export type StageContextValue = {
   reportStageFocus: (focus: StageFocus | null) => void;
   stageExcerpt: StageExcerpt | null;
   reportStageExcerpt: (excerpt: StageExcerpt | null) => void;
+  browserView: BrowserViewData | null;
+  showBrowserView: (event: BrowserViewEvent) => void;
+  dismissBrowserView: () => void;
+  pauseBrowserViewIfLive: () => void;
 };
+
+export type BrowserViewData = BrowserViewEvent;
 
 export type StageTier = 'comfortable' | 'compact' | 'narrow' | 'mini';

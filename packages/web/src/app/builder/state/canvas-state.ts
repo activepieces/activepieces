@@ -48,6 +48,8 @@ export type CanvasState = {
   setStepDataPanelView: (view: StepDataPanelView) => void;
   isStepDataPanelOpen: boolean;
   setStepDataPanelOpen: (open: boolean) => void;
+  recentlyChangedSteps: Record<string, number>;
+  clearExpiredChangedSteps: () => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -221,6 +223,18 @@ export const createCanvasState = (
         isStepDataPanelOpen: open,
       }));
     },
+    recentlyChangedSteps: {},
+    clearExpiredChangedSteps: () =>
+      set((state) => {
+        const now = Date.now();
+        const kept = Object.entries(state.recentlyChangedSteps).filter(
+          ([, expiry]) => expiry > now,
+        );
+        if (kept.length === Object.keys(state.recentlyChangedSteps).length) {
+          return state;
+        }
+        return { recentlyChangedSteps: Object.fromEntries(kept) };
+      }),
   };
 };
 

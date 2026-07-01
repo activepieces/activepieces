@@ -16,6 +16,10 @@ export type {
   ClientField,
   ClientRecordData,
 } from './stores/store/ap-tables-client-state';
-export { ROW_HEIGHT_MAP, RowHeight } from './types/types';
+export {
+  HEADER_ROW_HEIGHT_MAP,
+  ROW_HEIGHT_MAP,
+  RowHeight,
+} from './types/types';
 export type { Row } from './types/types';
 export { tablesUtils } from './utils/utils';

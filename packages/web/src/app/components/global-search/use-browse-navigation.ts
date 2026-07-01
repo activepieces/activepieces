@@ -1,9 +1,22 @@
 import { useCallback, useState } from 'react';
 
-export function useBrowseNavigation(activeProjectId: string) {
-  const [projectId, setProjectId] = useState(activeProjectId);
-  const [category, setCategory] = useState<BrowseCategory>('recent');
-  const [projectFilter, setProjectFilter] = useState<ProjectFilter>('all');
+export function useBrowseNavigation(
+  activeProjectId: string,
+  initial?: {
+    category?: BrowseCategory;
+    filter?: ProjectFilter;
+    projectId?: string;
+  },
+) {
+  const [projectId, setProjectId] = useState(
+    initial?.projectId ?? activeProjectId,
+  );
+  const [category, setCategory] = useState<BrowseCategory>(
+    initial?.category ?? 'recent',
+  );
+  const [projectFilter, setProjectFilter] = useState<ProjectFilter>(
+    initial?.filter ?? 'all',
+  );
 
   const selectProject = useCallback(
     (id: string, nextCategory?: BrowseCategory) => {
@@ -39,4 +52,4 @@ export function useBrowseNavigation(activeProjectId: string) {
 }
 
 export type BrowseCategory = 'recent' | 'project';
-export type ProjectFilter = 'all' | 'flows' | 'tables' | 'active';
+export type ProjectFilter = 'all' | 'flows' | 'tables';

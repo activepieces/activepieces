@@ -4,6 +4,7 @@ import {
   DeleteRecordsRequest,
   ListRecordsRequest,
   PopulatedRecord,
+  SetRecordColorsRequest,
   UpdateRecordRequest,
 } from '@activepieces/shared';
 
@@ -30,6 +31,10 @@ export const recordsApi = {
 
   delete(request: DeleteRecordsRequest): Promise<void> {
     return api.delete<void>(`/v1/records/`, undefined, request);
+  },
+
+  setColors(request: SetRecordColorsRequest): Promise<PopulatedRecord[]> {
+    return api.post<PopulatedRecord[]>('/v1/records/set-colors', request);
   },
 
   async importCsv({

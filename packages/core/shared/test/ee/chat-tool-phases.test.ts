@@ -59,28 +59,43 @@ describe('chatToolPhases hidden/build classification', () => {
         expect(chatToolPhases.isBuildOnlyTool('ap_build_flow')).toBe(true)
         expect(chatToolPhases.isBuildOnlyTool('ap_research_pieces')).toBe(false)
     })
+
+    it('keeps table row data ops out of build-only so they need no set_phase round-trip', () => {
+        expect(chatToolPhases.isBuildOnlyTool('ap_insert_records')).toBe(false)
+        expect(chatToolPhases.isBuildOnlyTool('ap_update_record')).toBe(false)
+        expect(chatToolPhases.isBuildOnlyTool('ap_delete_records')).toBe(false)
+        expect(chatToolPhases.isBuildOnlyTool('ap_color_records')).toBe(false)
+    })
+
+    it('keeps structural table ops build-only', () => {
+        expect(chatToolPhases.isBuildOnlyTool('ap_create_table')).toBe(true)
+        expect(chatToolPhases.isBuildOnlyTool('ap_delete_table')).toBe(true)
+        expect(chatToolPhases.isBuildOnlyTool('ap_manage_fields')).toBe(true)
+    })
 })
 
-describe('chatToolPhases.isDeepReasoningTool', () => {
-    it('flags flow-construction tools (thinking ON)', () => {
-        expect(chatToolPhases.isDeepReasoningTool('ap_build_flow')).toBe(true)
-        expect(chatToolPhases.isDeepReasoningTool('ap_add_step')).toBe(true)
-        expect(chatToolPhases.isDeepReasoningTool('ap_test_flow')).toBe(true)
-        expect(chatToolPhases.isDeepReasoningTool('ap_lock_and_publish')).toBe(true)
-        expect(chatToolPhases.isDeepReasoningTool('ap_set_build_plan')).toBe(true)
+describe('chatToolPhases.isThinkingTool (thinking latch — narrow)', () => {
+    it('flags only genuine new-flow architecture so thinking turns on for construction', () => {
+        expect(chatToolPhases.isThinkingTool('ap_build_flow')).toBe(true)
+        expect(chatToolPhases.isThinkingTool('ap_set_build_plan')).toBe(true)
+        expect(chatToolPhases.isThinkingTool('ap_add_step')).toBe(true)
+    })
+
+    it('keeps single-field edits, publish, rename, and test snappy (thinking OFF)', () => {
+        expect(chatToolPhases.isThinkingTool('ap_update_step')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_update_trigger')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_lock_and_publish')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_test_flow')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_rename_flow')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_change_flow_status')).toBe(false)
     })
 
     it('keeps table/data writes and one-time actions fast (thinking OFF)', () => {
-        expect(chatToolPhases.isDeepReasoningTool('ap_insert_records')).toBe(false)
-        expect(chatToolPhases.isDeepReasoningTool('ap_update_record')).toBe(false)
-        expect(chatToolPhases.isDeepReasoningTool('ap_delete_records')).toBe(false)
-        expect(chatToolPhases.isDeepReasoningTool('ap_manage_fields')).toBe(false)
-        expect(chatToolPhases.isDeepReasoningTool('ap_create_table')).toBe(false)
-        expect(chatToolPhases.isDeepReasoningTool('ap_execute_action')).toBe(false)
-        expect(chatToolPhases.isDeepReasoningTool('ap_run_code')).toBe(false)
-    })
-
-    it('does not treat ap_set_phase as a deep-reasoning signal (it precedes table writes too)', () => {
-        expect(chatToolPhases.isDeepReasoningTool('ap_set_phase')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_insert_records')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_update_record')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_color_records')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_execute_action')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_run_code')).toBe(false)
+        expect(chatToolPhases.isThinkingTool('ap_set_phase')).toBe(false)
     })
 })

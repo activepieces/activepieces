@@ -293,6 +293,7 @@ export const ExecuteChatAgentJobData = z.object({
     mentions: z.array(ChatMention).max(10).optional(),
     promptOverride: ChatPromptOverride.optional(),
     activeContext: ActiveStageContext.optional(),
+    source: z.enum(['suggestion']).optional(),
     dryRun: z.boolean().optional(),
     // Measurement mode: run real discovery (research/get-props/resolve/reads) but neutralize
     // ap_execute_action and auto-resolve approval gates, so the eval harness can measure how the

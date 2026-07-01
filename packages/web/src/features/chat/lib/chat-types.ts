@@ -4,6 +4,7 @@ import {
   ChatToolName,
   ChatToolOutputs,
   chatToolClassification,
+  normalizePieceName,
 } from '@activepieces/shared';
 import {
   DynamicToolUIPart,
@@ -50,6 +51,7 @@ const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_project_picker',
   'ap_show_questions',
   'ap_show_quick_replies',
+  'ap_show_showcase',
 ]);
 
 function isDisplayTool(name: string): boolean {
@@ -142,14 +144,6 @@ function extractToolOutputText(part: AnyToolPart): string | undefined {
     return part.errorText;
   }
   return undefined;
-}
-
-function normalizePieceName(name: string): string {
-  if (name.startsWith('@')) return name;
-  const stripped = name.startsWith('piece-')
-    ? name.slice('piece-'.length)
-    : name;
-  return `@activepieces/piece-${stripped.replace(/_/g, '-')}`;
 }
 
 function extractPieceNames(
@@ -276,9 +270,20 @@ function isSameActiveContextForMarker(
   );
 }
 
+// The human-readable position label shown in the transcript marker and the live
+// chip: the resource/page name plus the selected item (cell/step/range) when one
+// is focused. Mirrors what the live chip renders so both surfaces read the same.
+function formatPositionLabel(context: ActiveChatContext | undefined): string {
+  if (!context) return '';
+  const name = context.name?.trim() || context.type;
+  const focusLabel = context.focus?.label?.trim();
+  return focusLabel ? `${name} · ${focusLabel}` : name;
+}
+
 export const activeContextUtils = {
   isSame: isSameActiveContext,
   isSameForMarker: isSameActiveContextForMarker,
+  formatPositionLabel,
 };
 
 export const chatPartUtils = {

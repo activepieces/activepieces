@@ -27,6 +27,10 @@ export const CellEntity = new EntitySchema<CellSchema>({
         value: {
             type: 'varchar',
         },
+        color: {
+            type: 'varchar',
+            nullable: true,
+        },
     },
     indices: [
         {

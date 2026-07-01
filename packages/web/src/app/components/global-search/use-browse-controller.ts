@@ -35,6 +35,7 @@ import {
   type SearchResultItem,
   useGlobalSearchResults,
 } from './use-global-search-results';
+import { useUiPreferences } from './use-ui-preferences';
 
 type ActionIcon = React.ComponentType<{ className?: string; size?: number }>;
 
@@ -45,9 +46,19 @@ export function useBrowseController({
 }): BrowseController {
   const navigate = useNavigate();
   const activeProjectId = authenticationSession.getProjectId() ?? '';
-  const browse = useBrowseNavigation(activeProjectId);
+  const uiPrefs = useUiPreferences();
   const { data: allProjects = [] } = projectCollectionUtils.useAll();
   const { project: activeProject } = projectCollectionUtils.useCurrentProject();
+  const initialProjectId =
+    uiPrefs.prefs.browseProjectId &&
+    allProjects.some((p) => p.id === uiPrefs.prefs.browseProjectId)
+      ? uiPrefs.prefs.browseProjectId
+      : activeProjectId;
+  const browse = useBrowseNavigation(activeProjectId, {
+    category: uiPrefs.prefs.browseScope,
+    filter: uiPrefs.prefs.browseFilter,
+    projectId: initialProjectId,
+  });
   const { checkAccess } = useAuthorization();
   const { embedState } = useEmbedding();
   const isPlatformAdmin = useIsPlatformAdmin();
@@ -57,6 +68,7 @@ export function useBrowseController({
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 200);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [projectMenuIndex, setProjectMenuIndex] = useState(0);
@@ -80,8 +92,13 @@ export function useBrowseController({
     !isActiveContext || checkAccess(Permission.WRITE_FOLDER);
 
   const flatItems = groups.flatMap((group) => group.items);
-  const clampedIndex =
-    flatItems.length === 0 ? -1 : Math.min(selectedIndex, flatItems.length - 1);
+  const rowCount = flatItems.length;
+
+  const ensureCurrentProject = useCallback(() => {
+    if (browse.projectId !== activeProjectId) {
+      projectCollectionUtils.setCurrentProject(browse.projectId);
+    }
+  }, [browse.projectId, activeProjectId]);
 
   const openItem = useCallback(
     (item: SearchResultItem) => {
@@ -119,23 +136,28 @@ export function useBrowseController({
 
   const openDestination = useCallback(
     (dest: { stageType: StageResource['type']; path: string }) => {
-      if (browse.projectId !== activeProjectId) {
-        projectCollectionUtils.setCurrentProject(browse.projectId);
-      }
+      ensureCurrentProject();
       const chat = new URLSearchParams(window.location.search).get('chat');
       const base = `/projects/${browse.projectId}${dest.path}`;
       navigate(chat ? `${base}?chat=${chat}` : base);
       onClose();
     },
-    [navigate, onClose, browse.projectId, activeProjectId],
+    [navigate, onClose, browse.projectId, ensureCurrentProject],
   );
+
+  const openSettings = useCallback(() => {
+    ensureCurrentProject();
+    setSettingsOpen(true);
+  }, [ensureCurrentProject]);
 
   const switchProject = useCallback(
     (projectId: string) => {
       browse.selectProject(projectId, 'project');
       setProjectMenuOpen(false);
+      setSelectedIndex(0);
+      uiPrefs.update({ browseProjectId: projectId, browseScope: 'project' });
     },
-    [browse],
+    [browse, uiPrefs],
   );
 
   const handleProjectMenuOpenChange = useCallback(
@@ -153,33 +175,49 @@ export function useBrowseController({
     (category: BrowseCategory) => {
       setSelectedIndex(0);
       browse.selectCategory(category);
+      uiPrefs.update({ browseScope: category });
     },
-    [browse],
+    [browse, uiPrefs],
   );
 
   const setProjectFilter = useCallback(
     (filter: ProjectFilter) => {
       setSelectedIndex(0);
       browse.selectProjectFilter(filter);
+      uiPrefs.update({ browseFilter: filter });
     },
-    [browse],
+    [browse, uiPrefs],
   );
 
-  const moveSelection = useCallback(
-    (delta: number) => {
-      setSelectedIndex((i) => {
-        const len = flatItems.length;
-        if (len === 0) return 0;
-        return (Math.max(0, Math.min(i, len - 1)) + delta + len) % len;
+  const cycleScopeFilter = useCallback(
+    (dir: 1 | -1) => {
+      const sequence: { category: BrowseCategory; filter?: ProjectFilter }[] = [
+        { category: 'recent' },
+        { category: 'project', filter: 'all' },
+        { category: 'project', filter: 'flows' },
+        ...(embedState.hideTables
+          ? []
+          : [{ category: 'project' as const, filter: 'tables' as const }]),
+      ];
+      const currentIdx =
+        browse.category === 'recent'
+          ? 0
+          : sequence.findIndex(
+              (s) =>
+                s.category === 'project' && s.filter === browse.projectFilter,
+            );
+      const next =
+        sequence[(currentIdx + dir + sequence.length) % sequence.length];
+      setSelectedIndex(0);
+      browse.selectCategory(next.category);
+      if (next.filter) browse.selectProjectFilter(next.filter);
+      uiPrefs.update({
+        browseScope: next.category,
+        ...(next.filter ? { browseFilter: next.filter } : {}),
       });
     },
-    [flatItems.length],
+    [browse, embedState.hideTables, uiPrefs],
   );
-
-  const openSelected = useCallback(() => {
-    const item = flatItems[clampedIndex];
-    if (item) openItem(item);
-  }, [flatItems, clampedIndex, openItem]);
 
   const createFlow = useCallback(async () => {
     const flow = await mutations.createFlow();
@@ -220,7 +258,6 @@ export function useBrowseController({
       key: 'runs',
       label: t('Runs'),
       Icon: HistoryIcon,
-      shortcut: 'R',
       hidden: isActiveContext && !checkAccess(Permission.READ_RUN),
       onSelect: () => openDestination({ stageType: 'runs', path: '/runs' }),
     },
@@ -228,7 +265,6 @@ export function useBrowseController({
       key: 'connections',
       label: t('Connections'),
       Icon: ConnectIcon,
-      shortcut: 'C',
       hidden: isActiveContext && !checkAccess(Permission.READ_APP_CONNECTION),
       onSelect: () =>
         openDestination({ stageType: 'connections', path: '/connections' }),
@@ -237,7 +273,6 @@ export function useBrowseController({
       key: 'variables',
       label: t('Variables'),
       Icon: VariableIcon,
-      shortcut: 'V',
       hidden: isActiveContext && !checkAccess(Permission.READ_VARIABLE),
       onSelect: () =>
         openDestination({ stageType: 'variables', path: '/variables' }),
@@ -246,7 +281,6 @@ export function useBrowseController({
       key: 'releases',
       label: t('Releases'),
       Icon: BoxIcon,
-      shortcut: 'L',
       hidden: embedState.isEmbedded || !releasesEnabled,
       onSelect: () =>
         openDestination({ stageType: 'releases', path: '/releases' }),
@@ -255,20 +289,56 @@ export function useBrowseController({
       key: 'settings',
       label: t('Settings'),
       Icon: Settings2Icon,
-      shortcut: 'S',
       hidden: false,
-      onSelect: () =>
-        openDestination({ stageType: 'settings', path: '/settings' }),
+      onSelect: openSettings,
     },
     {
       key: 'invite',
       label: t('Invite'),
       Icon: UserRoundPlusIcon,
-      shortcut: 'I',
       hidden: !canInvite,
       onSelect: () => setInviteOpen(true),
     },
   ].filter((action) => !action.hidden);
+
+  const navItems: NavItem[] = [
+    ...flatItems.map((item) => ({ kind: 'item' as const, item })),
+    ...(browse.category === 'project'
+      ? projectActions.map((action) => ({ kind: 'action' as const, action }))
+      : []),
+  ];
+  const clampedIndex =
+    navItems.length === 0 ? -1 : Math.min(selectedIndex, navItems.length - 1);
+
+  const setSelected = useCallback((index: number) => {
+    setSelectedIndex(index);
+  }, []);
+
+  const moveSelection = useCallback(
+    (delta: number) => {
+      setSelectedIndex((i) => {
+        const len = navItems.length;
+        if (len === 0) return 0;
+        return (Math.max(0, Math.min(i, len - 1)) + delta + len) % len;
+      });
+    },
+    [navItems.length],
+  );
+
+  const openSelected = useCallback(() => {
+    const nav = navItems[clampedIndex];
+    if (!nav) return;
+    if (nav.kind === 'item') openItem(nav.item);
+    else nav.action.onSelect();
+  }, [navItems, clampedIndex, openItem]);
+
+  const pinProjectSidebar = uiPrefs.prefs.pinProjectSidebar ?? false;
+  const togglePinProjectSidebar = useCallback(() => {
+    uiPrefs.update(
+      { pinProjectSidebar: !pinProjectSidebar },
+      { immediate: true },
+    );
+  }, [uiPrefs, pinProjectSidebar]);
 
   return {
     search,
@@ -279,6 +349,7 @@ export function useBrowseController({
     setCategory,
     projectFilter: browse.projectFilter,
     setProjectFilter,
+    cycleScopeFilter,
     projectId: browse.projectId,
     allProjects,
     currentProject,
@@ -289,8 +360,9 @@ export function useBrowseController({
     handleProjectMenuOpenChange,
     groups,
     isLoading,
-    flatItems,
+    rowCount,
     selectedIndex: clampedIndex,
+    setSelected,
     moveSelection,
     openSelected,
     openItem,
@@ -309,7 +381,11 @@ export function useBrowseController({
     invalidate: mutations.invalidate,
     inviteOpen,
     setInviteOpen,
+    settingsOpen,
+    setSettingsOpen,
     canInvite: !!canInvite,
+    pinProjectSidebar,
+    togglePinProjectSidebar,
   };
 }
 
@@ -317,10 +393,13 @@ export type BrowseAction = {
   key: string;
   label: string;
   Icon: ActionIcon;
-  shortcut: string;
   hidden: boolean;
   onSelect: () => void;
 };
+
+type NavItem =
+  | { kind: 'item'; item: SearchResultItem }
+  | { kind: 'action'; action: BrowseAction };
 
 export type BrowseController = {
   search: string;
@@ -331,6 +410,7 @@ export type BrowseController = {
   setCategory: (category: BrowseCategory) => void;
   projectFilter: ProjectFilter;
   setProjectFilter: (filter: ProjectFilter) => void;
+  cycleScopeFilter: (dir: 1 | -1) => void;
   projectId: string;
   allProjects: ProjectWithLimits[];
   currentProject?: ProjectWithLimits;
@@ -341,8 +421,9 @@ export type BrowseController = {
   handleProjectMenuOpenChange: (open: boolean) => void;
   groups: ReturnType<typeof useBrowseResults>['groups'];
   isLoading: boolean;
-  flatItems: SearchResultItem[];
+  rowCount: number;
   selectedIndex: number;
+  setSelected: (index: number) => void;
   moveSelection: (delta: number) => void;
   openSelected: () => void;
   openItem: (item: SearchResultItem) => void;
@@ -364,5 +445,9 @@ export type BrowseController = {
   invalidate: () => void;
   inviteOpen: boolean;
   setInviteOpen: (open: boolean) => void;
+  settingsOpen: boolean;
+  setSettingsOpen: (open: boolean) => void;
   canInvite: boolean;
+  pinProjectSidebar: boolean;
+  togglePinProjectSidebar: () => void;
 };
