@@ -403,6 +403,7 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
         actionName,
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
+        conversationId,
         source: AdhocRunSource.CHAT,
         ...spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,
@@ -479,7 +480,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
         input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
     }
 
-    const result = await executeAdhocCode({ projectId, userId, code, packageJson, input, source: AdhocRunSource.CHAT, log })
+    const result = await executeAdhocCode({ projectId, userId, code, packageJson, input, conversationId, source: AdhocRunSource.CHAT, log })
 
     if (result.status !== 'succeeded') {
         const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'

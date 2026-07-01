@@ -390,6 +390,7 @@ import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/17990
 import { AddAdhocRunTable1800000000000 } from './migration/postgres/1800000000000-AddAdhocRunTable'
 import { AddUserIdToAdhocRun1800000000001 } from './migration/postgres/1800000000001-AddUserIdToAdhocRun'
 import { AddArchivedAtToAdhocRun1800000000002 } from './migration/postgres/1800000000002-AddArchivedAtToAdhocRun'
+import { AddConversationIdToAdhocRun1800000000003 } from './migration/postgres/1800000000003-AddConversationIdToAdhocRun'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -795,6 +796,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAdhocRunTable1800000000000,
         AddUserIdToAdhocRun1800000000001,
         AddArchivedAtToAdhocRun1800000000002,
+        AddConversationIdToAdhocRun1800000000003,
     ]
     return migrations
 }

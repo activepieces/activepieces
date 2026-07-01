@@ -15,6 +15,7 @@ export const adhocRunsApi = {
     limit,
     status,
     source,
+    userId,
     createdAfter,
     createdBefore,
     includeArchived,
@@ -24,6 +25,7 @@ export const adhocRunsApi = {
     limit?: number;
     status?: FlowRunStatus[];
     source?: AdhocRunSource[];
+    userId?: string[];
     createdAfter?: string;
     createdBefore?: string;
     includeArchived?: boolean;
@@ -34,6 +36,7 @@ export const adhocRunsApi = {
       limit,
       status,
       source,
+      userId,
       createdAfter,
       createdBefore,
       includeArchived,

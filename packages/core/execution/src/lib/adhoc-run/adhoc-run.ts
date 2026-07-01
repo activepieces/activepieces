@@ -23,6 +23,7 @@ export const AdhocRun = z.object({
     pieceVersion: Nullable(z.string()),
     actionName: Nullable(z.string()),
     connectionExternalId: Nullable(z.string()),
+    conversationId: Nullable(z.string()),
     source: z.nativeEnum(AdhocRunSource),
     status: z.nativeEnum(FlowRunStatus),
     input: z.unknown(),
@@ -38,6 +39,8 @@ export const AdhocRun = z.object({
 export const PopulatedAdhocRun = AdhocRun.extend({
     connectionDisplayName: Nullable(z.string()),
     userName: Nullable(z.string()),
+    userEmail: Nullable(z.string()),
+    userImageUrl: Nullable(z.string()),
 })
 
 export const BulkArchiveAdhocRunsRequestBody = z.object({
@@ -46,6 +49,7 @@ export const BulkArchiveAdhocRunsRequestBody = z.object({
     excludeAdhocRunIds: z.array(ApId).optional(),
     status: z.array(z.nativeEnum(FlowRunStatus)).optional(),
     source: z.array(z.nativeEnum(AdhocRunSource)).optional(),
+    userId: z.array(ApId).optional(),
     createdAfter: z.string().optional(),
     createdBefore: z.string().optional(),
 })

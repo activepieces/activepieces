@@ -119,6 +119,7 @@ export async function executeAdhocAction({
     actionName,
     input,
     connectionExternalId,
+    conversationId,
     offload,
     source,
     log,
@@ -130,6 +131,7 @@ export async function executeAdhocAction({
     actionName: string
     input?: Record<string, unknown>
     connectionExternalId?: string
+    conversationId?: string
     offload?: AdhocOffload
     source?: AdhocRunSource
     log: FastifyBaseLogger
@@ -228,6 +230,7 @@ export async function executeAdhocAction({
         source: source ?? AdhocRunSource.MCP,
         step,
         connectionExternalId: effectiveExternalId,
+        conversationId,
     }))
     if (runError) {
         log.error({ error: runError, project: { id: projectId } }, 'executeAdhocAction failed')
@@ -280,6 +283,7 @@ export async function executeAdhocCode({
     code,
     packageJson,
     input,
+    conversationId,
     source,
     log,
 }: {
@@ -288,6 +292,7 @@ export async function executeAdhocCode({
     code: string
     packageJson?: string
     input?: Record<string, unknown>
+    conversationId?: string
     source?: AdhocRunSource
     log: FastifyBaseLogger
 }): Promise<AdhocCodeResult> {
@@ -323,6 +328,7 @@ export async function executeAdhocCode({
         userId,
         source: source ?? AdhocRunSource.MCP,
         step,
+        conversationId,
     }))
     if (runError) {
         log.error({ error: runError, project: { id: projectId } }, 'executeAdhocCode failed')

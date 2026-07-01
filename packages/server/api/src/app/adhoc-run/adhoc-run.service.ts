@@ -83,7 +83,7 @@ async function buildConnectionDisplayNames(params: { runs: AdhocRun[], projectId
     return new Map(connections.map((connection) => [connection.externalId, connection.displayName]))
 }
 
-async function buildUserNames(runs: AdhocRun[]): Promise<Map<string, string>> {
+async function buildUsers(runs: AdhocRun[]): Promise<Map<string, AdhocRunUser>> {
     const userIds = unique(runs.map((run) => run.userId).filter((id): id is string => !isNil(id)))
     if (userIds.length === 0) {
         return new Map()
@@ -94,7 +94,11 @@ async function buildUserNames(runs: AdhocRun[]): Promise<Map<string, string>> {
     })
     return new Map(users
         .filter((user) => !isNil(user.identity))
-        .map((user) => [user.id, `${user.identity.firstName} ${user.identity.lastName}`.trim()]))
+        .map((user) => [user.id, {
+            name: `${user.identity.firstName} ${user.identity.lastName}`.trim(),
+            email: user.identity.email,
+            imageUrl: user.identity.imageUrl ?? null,
+        }]))
 }
 
 function applyAdhocRunFilters(query: SelectQueryBuilder<AdhocRun>, params: AdhocRunFilterParams): SelectQueryBuilder<AdhocRun> {
@@ -104,6 +108,9 @@ function applyAdhocRunFilters(query: SelectQueryBuilder<AdhocRun>, params: Adhoc
     }
     if (!isNil(params.source) && params.source.length > 0) {
         filtered = filtered.andWhere({ source: In(params.source) })
+    }
+    if (!isNil(params.userId) && params.userId.length > 0) {
+        filtered = filtered.andWhere({ userId: In(params.userId) })
     }
     if (!isNil(params.createdAfter)) {
         filtered = filtered.andWhere('adhoc_run.created >= :createdAfter', { createdAfter: params.createdAfter })
@@ -115,22 +122,27 @@ function applyAdhocRunFilters(query: SelectQueryBuilder<AdhocRun>, params: Adhoc
 }
 
 async function populateRuns(params: { runs: AdhocRun[], projectId: string }): Promise<PopulatedAdhocRun[]> {
-    const [connectionDisplayNames, userNames] = await Promise.all([
+    const [connectionDisplayNames, users] = await Promise.all([
         buildConnectionDisplayNames(params),
-        buildUserNames(params.runs),
+        buildUsers(params.runs),
     ])
-    return params.runs.map((run) => ({
-        ...run,
-        connectionDisplayName: isNil(run.connectionExternalId)
-            ? null
-            : connectionDisplayNames.get(run.connectionExternalId) ?? null,
-        userName: isNil(run.userId) ? null : userNames.get(run.userId) ?? null,
-    }))
+    return params.runs.map((run) => {
+        const user = isNil(run.userId) ? undefined : users.get(run.userId)
+        return {
+            ...run,
+            connectionDisplayName: isNil(run.connectionExternalId)
+                ? null
+                : connectionDisplayNames.get(run.connectionExternalId) ?? null,
+            userName: user?.name ?? null,
+            userEmail: user?.email ?? null,
+            userImageUrl: user?.imageUrl ?? null,
+        }
+    })
 }
 
 export const adhocRunService = (log: FastifyBaseLogger) => ({
     async run(params: RunParams): Promise<AdhocRun> {
-        const { projectId, platformId, userId, source, step, connectionExternalId } = params
+        const { projectId, platformId, userId, source, step, connectionExternalId, conversationId } = params
         const kind = step.type === FlowActionType.CODE ? AdhocRunKind.CODE : AdhocRunKind.PIECE
 
         const piece = step.type === FlowActionType.PIECE
@@ -153,6 +165,7 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
             pieceVersion: step.type === FlowActionType.PIECE ? step.settings.pieceVersion : null,
             actionName: step.type === FlowActionType.PIECE ? step.settings.actionName : null,
             connectionExternalId: connectionExternalId ?? null,
+            conversationId: conversationId ?? null,
             source,
             status: FlowRunStatus.RUNNING,
             input: sanitizeValue(step.settings.input),
@@ -244,6 +257,12 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
     },
 })
 
+type AdhocRunUser = {
+    name: string
+    email: string
+    imageUrl: string | null
+}
+
 type RunParams = {
     projectId: string
     platformId: string
@@ -251,11 +270,13 @@ type RunParams = {
     source: AdhocRunSource
     step: PieceAction | CodeAction
     connectionExternalId?: string
+    conversationId?: string
 }
 
 type AdhocRunFilterParams = {
     status?: FlowRunStatus[]
     source?: AdhocRunSource[]
+    userId?: string[]
     createdAfter?: string
     createdBefore?: string
 }

@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Archive, Boxes, CheckIcon } from 'lucide-react';
+import { Archive, Boxes, CheckIcon, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { adhocRunsApi } from '@/features/adhoc-runs/api/adhoc-runs-api';
 import { DEFAULT_DATE_PRESET } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -55,6 +56,7 @@ export const AdhocRunsTable = () => {
   const [excludedRows, setExcludedRows] = useState<Set<string>>(new Set());
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteRun = checkAccess(Permission.WRITE_RUN);
+  const { projectMembers } = projectMembersHooks.useProjectMembers();
 
   const [hasSeededDefaultRange, setHasSeededDefaultRange] = useState(() =>
     searchParams.has('createdAfter'),
@@ -88,6 +90,7 @@ export const AdhocRunsTable = () => {
       const limit = limitParam ? parseInt(limitParam) : 10;
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const source = searchParams.getAll('source') as AdhocRunSource[];
+      const userId = searchParams.getAll('userId');
       const createdAfter = searchParams.get('createdAfter');
       const createdBefore = searchParams.get('createdBefore');
       const includeArchived = searchParams.get('archivedAt') === 'true';
@@ -97,6 +100,7 @@ export const AdhocRunsTable = () => {
         limit,
         status,
         source,
+        userId,
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
         includeArchived,
@@ -116,7 +120,7 @@ export const AdhocRunsTable = () => {
   });
 
   const filters: DataTableFilters<
-    'status' | 'source' | 'created' | 'archivedAt'
+    'status' | 'source' | 'userId' | 'created' | 'archivedAt'
   >[] = useMemo(
     () => [
       {
@@ -140,6 +144,22 @@ export const AdhocRunsTable = () => {
         })),
         icon: CheckIcon,
       },
+      ...(projectMembers && projectMembers.length > 0
+        ? [
+            {
+              type: 'select' as const,
+              title: t('Run By'),
+              accessorKey: 'userId' as const,
+              options: projectMembers.map((member) => ({
+                label:
+                  `${member.user.firstName} ${member.user.lastName}`.trim() ||
+                  member.user.email,
+                value: member.userId,
+              })),
+              icon: User,
+            },
+          ]
+        : []),
       {
         type: 'date',
         title: t('Created'),
@@ -153,7 +173,7 @@ export const AdhocRunsTable = () => {
         accessorKey: 'archivedAt',
       },
     ],
-    [],
+    [projectMembers],
   );
 
   const columns = useMemo(
@@ -185,6 +205,10 @@ export const AdhocRunsTable = () => {
         source:
           searchParams.getAll('source').length > 0
             ? (searchParams.getAll('source') as AdhocRunSource[])
+            : undefined,
+        userId:
+          searchParams.getAll('userId').length > 0
+            ? searchParams.getAll('userId')
             : undefined,
         createdAfter: searchParams.get('createdAfter') || undefined,
         createdBefore: searchParams.get('createdBefore') || undefined,

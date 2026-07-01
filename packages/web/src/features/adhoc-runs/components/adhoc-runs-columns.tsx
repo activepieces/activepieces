@@ -27,6 +27,7 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -290,14 +291,22 @@ export const adhocRunsColumns = ({
       <DataTableColumnHeader column={column} title={t('Run By')} icon={User} />
     ),
     cell: ({ row }) => {
-      const { userName } = row.original;
+      const { userName, userEmail, userImageUrl } = row.original;
+      if (isNil(userName)) {
+        return <div className="text-left">—</div>;
+      }
       return (
-        <div className="text-left">
-          {isNil(userName) ? (
-            '—'
-          ) : (
-            <TruncatedColumnTextValue value={userName} />
-          )}
+        <div className="flex items-center gap-2 text-left min-w-0">
+          <div className="shrink-0">
+            <UserAvatar
+              name={userName}
+              email={userEmail ?? ''}
+              imageUrl={userImageUrl}
+              size={24}
+              disableTooltip
+            />
+          </div>
+          <TruncatedColumnTextValue value={userName} />
         </div>
       );
     },

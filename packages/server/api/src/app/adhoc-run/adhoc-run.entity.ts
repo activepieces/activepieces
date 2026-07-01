@@ -45,6 +45,10 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
             type: String,
             nullable: true,
         },
+        conversationId: {
+            type: String,
+            nullable: true,
+        },
         source: {
             type: String,
         },
@@ -104,6 +108,10 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
         {
             name: 'idx_adhoc_run_user_id',
             columns: ['userId'],
+        },
+        {
+            name: 'idx_adhoc_run_conversation_id',
+            columns: ['conversationId'],
         },
     ],
     relations: {

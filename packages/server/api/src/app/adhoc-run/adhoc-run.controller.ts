@@ -18,6 +18,7 @@ export const adhocRunController: FastifyPluginAsyncZod = async (app) => {
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
             status: request.query.status,
             source: request.query.source,
+            userId: request.query.userId,
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
             includeArchived: request.query.includeArchived,
@@ -38,6 +39,7 @@ export const adhocRunController: FastifyPluginAsyncZod = async (app) => {
             excludeAdhocRunIds: request.body.excludeAdhocRunIds,
             status: request.body.status,
             source: request.body.source,
+            userId: request.body.userId,
             createdAfter: request.body.createdAfter,
             createdBefore: request.body.createdBefore,
         })
@@ -62,6 +64,7 @@ const ListRequest = {
             limit: z.coerce.number().optional(),
             status: OptionalArrayFromQuery(z.nativeEnum(FlowRunStatus)),
             source: OptionalArrayFromQuery(z.nativeEnum(AdhocRunSource)),
+            userId: OptionalArrayFromQuery(ApId),
             createdAfter: z.string().optional(),
             createdBefore: z.string().optional(),
             includeArchived: OptionalBooleanFromQuery,
