@@ -6,8 +6,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
@@ -15,6 +13,7 @@ import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
+import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -73,6 +72,17 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
+        // Cloud rollout: record that this user opened the chat page, then refresh the console
+        // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
+        await chatRolloutService.recordLanding({
+            userId: request.principal.id,
+            platformId: request.principal.platform.id,
+        })
+        chatAnalyticsTelemetry(request.log).sendRolloutFunnelUpdate()
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
         const { content, runId: clientRunId, files } = request.body
         const conversationId = request.params.id
@@ -88,18 +98,20 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
-        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped) and, on
-        // their first message, gift one-time free credits so free testers can use managed AI.
-        // Awaited before the credit check below so the managed key is created (and topped up) once.
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
         // Wrapped in tryCatch so a transient DB write failure doesn't surface 500 to the user.
-        const { error: rolloutError } = await tryCatch(() =>
+        // On success, check needsCreditDecision so a transient top-up failure is retried later.
+        const { error: rolloutError, data: rolloutResult } = await tryCatch(() =>
             chatRolloutService.recordChatted({ userId, platformId }),
         )
-        if (!isNil(rolloutError)) {
-            log.error({ error: rolloutError }, '[chatController] Failed to record chatted \u2014 skipping free credit grant')
-        } else {
+        if (isNil(rolloutError) && rolloutResult?.needsCreditDecision) {
             await maybeGrantFreeChatCredits({ platformId, userId, log })
         }
+        if (!isNil(rolloutError)) {
+            log.error({ error: rolloutError }, '[chatController] Failed to record chatted \u2014 skipping free credit grant')
+        }
+        // Refresh the console rollout funnel snapshot (chatted count just changed).
+        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -218,23 +230,28 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
 }
 
-const DEFAULT_FREE_CHAT_CREDIT_USD = 10
+const FREE_CHAT_CREDIT_USD = 10
 
 async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
-    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    // Promotional credit is for free-tier cloud testers only (paid platforms carry a license key).
-    if (!isNil(plan.licenseKey)) {
-        return
-    }
+    // Claim first so the decision is settled exactly once across concurrent messages and paid users
+    // stop re-checking after this point (needsCreditDecision becomes false). A losing/duplicate
+    // caller exits immediately.
     const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
     if (!claimed) {
         return
     }
-    const amountUsd = system.getNumber(AppSystemProp.CLOUD_CHAT_FREE_CREDIT_USD) ?? DEFAULT_FREE_CHAT_CREDIT_USD
-    const { error } = await tryCatch(() => platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd }))
+    // Everything after the claim is best-effort and must never fail the user's message. Any error —
+    // the plan lookup or the top-up — rolls the claim back so a later message retries
+    // (needsCreditDecision goes true again). Paid platforms (license key) keep the claim with no
+    // grant owed, so they stop re-checking.
+    const { error } = await tryCatch(async () => {
+        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (isNil(plan.licenseKey)) {
+            await platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD })
+        }
+    })
     if (!isNil(error)) {
-        // Roll back the claim so a later message retries the grant.
-        await chatRolloutService.releaseFreeCreditGrant({ userId })
+        await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
         log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
     }
 }
@@ -338,6 +355,16 @@ const SendMessageRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
         body: SendChatMessageRequest,
+    },
+}
+
+const FunnelLandingRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 

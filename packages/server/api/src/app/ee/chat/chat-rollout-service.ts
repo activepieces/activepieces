@@ -27,6 +27,10 @@ async function countChatted(): Promise<number> {
     return rolloutRepo().count({ where: { chattedAt: Not(IsNull()) } })
 }
 
+async function countLanded(): Promise<number> {
+    return rolloutRepo().count({ where: { landedAt: Not(IsNull()) } })
+}
+
 export const chatRolloutService = {
     async isRolloutOpen(): Promise<boolean> {
         if (!isCloud()) {
@@ -52,11 +56,45 @@ export const chatRolloutService = {
         return !isNil(row) && !isNil(row.chattedAt)
     },
 
-    async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<{ firstChat: boolean }> {
+    // Records that a user opened the chat page. Sets landedAt without touching chattedAt, so a user
+    // who lands but never sends a message still counts toward "landed" (landed >= chatted).
+    async recordLanding({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
+
         if (!isCloud()) {
             return { firstChat: false }
         }
+        await rolloutRepo().query(
+            `INSERT INTO "chat_rollout_user" ("id", "userId", "platformId", "landedAt")
+             VALUES ($1, $2, $3, now())
+             ON CONFLICT ("userId") DO UPDATE
+             SET "landedAt" = COALESCE("chat_rollout_user"."landedAt", now()),
+                 "updated" = now()`,
+            [apId(), userId, platformId],
+        )
+    },
+
+    // Authoritative funnel snapshot for the console rollout dashboard. landed/chatted come from the
+    // same table that drives the cap, so the numbers always match the auto-close.
+    async getFunnelSnapshot(): Promise<{ landed: number, chatted: number, cap: number, closed: boolean }> {
+        if (!isCloud()) {
+            return { landed: 0, chatted: 0, cap: getCap(), closed: false }
+        }
+        const cap = getCap()
+        const [landed, chatted] = await Promise.all([countLanded(), countChatted()])
+        // Derive closed from the count we already fetched rather than calling isRolloutOpen(), which
+        // would COUNT chatted a second time. Read-only: the monotonic Redis closed flag is maintained
+        // by recordChatted() when the cap is first reached.
+        return { landed, chatted, cap, closed: chatted >= cap }
+    },
+
+    async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<{ firstChat: boolean, needsCreditDecision: boolean }> {
+        if (!isCloud()) {
+            return { firstChat: false, needsCreditDecision: false }
+        }
         // Rows only ever exist once a user has chatted, so an INSERT (xmax = 0) is the first message.
+        // needsCreditDecision stays true until the one-time free-credit decision is settled, so the
+        // grant is retried on later messages if it failed (not gated on the one-shot firstChat).
+
         const rows = await rolloutRepo().query(
             `INSERT INTO "chat_rollout_user" ("id", "userId", "platformId", "landedAt", "chattedAt")
              VALUES ($1, $2, $3, now(), now())
@@ -64,19 +102,23 @@ export const chatRolloutService = {
              SET "chattedAt" = COALESCE("chat_rollout_user"."chattedAt", now()),
                  "landedAt" = COALESCE("chat_rollout_user"."landedAt", now()),
                  "updated" = now()
-             RETURNING (xmax = 0) AS inserted`,
+             RETURNING (xmax = 0) AS inserted, ("grantedFreeCreditAt" IS NULL) AS needs_credit_decision`,
             [apId(), userId, platformId],
         )
         const firstChat = rows[0]?.inserted === true
+        const needsCreditDecision = rows[0]?.needs_credit_decision === true
+
         // Close the rollout the moment the cap is reached, not lazily on the next gate check.
         if (firstChat && (await countChatted()) >= getCap()) {
             await distributedStore.putBoolean(ROLLOUT_CLOSED_KEY, true)
         }
-        return { firstChat }
+        return { firstChat, needsCreditDecision }
     },
 
-    // Atomically reserve the one-time free-credit grant for a user. Returns true only for the
-    // caller that flips grantedFreeCreditAt from NULL, so the credit top-up runs exactly once.
+    // Atomically settle the one-time free-credit decision for a user. Returns true only for the
+    // caller that flips grantedFreeCreditAt from NULL, so the decision (grant for free-tier, or a
+    // no-op skip for paid) is processed exactly once even under concurrent messages.
+
     async claimFreeCreditGrant({ userId }: { userId: string }): Promise<boolean> {
         if (!isCloud()) {
             return false
