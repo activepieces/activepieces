@@ -13,7 +13,7 @@ export const requestApprovalInMail = createAction({
   description:
     'Send approval request email and then wait until the email is approved or disapproved',
   audience: 'both',
-  aiMetadata: { description: 'Sends an email containing Approve/Disapprove links to one recipient, then pauses the flow until they click one of the links, resuming with the decision. Use this as a human-in-the-loop approval gate before proceeding. Not idempotent: each call sends a new email and creates a new pending waitpoint.', idempotent: false },
+  aiMetadata: { description: 'Sends an email with a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with the decision. Use this as a human-in-the-loop approval gate before proceeding. Not idempotent: each call sends a new email and creates a new pending waitpoint.', idempotent: false },
   props: {
     recipients: Property.ShortText({
       displayName: 'To Email Address',
@@ -49,20 +49,14 @@ export const requestApprovalInMail = createAction({
         const waitpoint = await context.run.createWaitpoint({
           type: 'WEBHOOK',
         });
-        const approvalLink = waitpoint.buildResumeUrl({
-          queryParams: { action: 'approve' },
-        });
-        const disapprovalLink = waitpoint.buildResumeUrl({
-          queryParams: { action: 'disapprove' },
-        });
+        const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
 
         const htmlBody = `
         <div>
           <p>${body}</p>
           <br />
           <p>
-            <a href="${approvalLink}" style="display: inline-block; padding: 10px 20px; margin-right: 10px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px;">Approve</a>
-            <a href="${disapprovalLink}" style="display: inline-block; padding: 10px 20px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px;">Disapprove</a>
+            <a href="${confirmationLink}" style="display: inline-block; padding: 10px 20px; background-color: #6e41e2; color: white; text-decoration: none; border-radius: 4px;">Review &amp; Respond</a>
           </p>
         </div>
       `;
