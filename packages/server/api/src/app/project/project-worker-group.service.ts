@@ -28,14 +28,4 @@ export const projectWorkerGroupService = (_log: FastifyBaseLogger) => ({
     async invalidate({ projectId }: { projectId: string }): Promise<void> {
         await distributedStore.delete(getProjectWorkerGroupCacheKey(projectId))
     },
-
-    async getPlatformWorkerGroups({ platformId }: { platformId: string }): Promise<string[]> {
-        const rows = await projectRepo()
-            .createQueryBuilder('project')
-            .select('DISTINCT project."workerGroupId"', 'workerGroupId')
-            .where('project."platformId" = :platformId', { platformId })
-            .andWhere('project."workerGroupId" IS NOT NULL')
-            .getRawMany<{ workerGroupId: string }>()
-        return rows.map((row) => row.workerGroupId)
-    },
 })

@@ -182,7 +182,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
         chatEnabled: platformPlan?.chatEnabled ?? false,
         dataManipulationEnabled: platformPlan?.dataManipulationEnabled ?? false,
-        isolatedWorkersEnabled: platformPlan?.isolatedWorkersEnabled ?? false,
+        workerGroupsEnabled: platformPlan?.workerGroupsEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),

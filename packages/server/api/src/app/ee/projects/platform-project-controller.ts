@@ -39,7 +39,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/worker-groups', ListWorkerGroupsRequest, async (request) => {
         const platform = await platformService(request.log).getOneWithPlanOrThrow(request.principal.platform.id)
-        if (!platform.plan.isolatedWorkersEnabled) {
+        if (!platform.plan.workerGroupsEnabled) {
             throw new ActivepiecesError({
                 code: ErrorCode.FEATURE_DISABLED,
                 params: {
@@ -47,7 +47,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return machineService(request.log).listProjectWorkerGroups(request.principal.platform.id)
+        return machineService(request.log).listProjectWorkerGroups()
     })
 
     app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {

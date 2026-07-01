@@ -92,7 +92,7 @@ export default function WorkersPage() {
             <Activity className="w-4 h-4 mr-2" />
             {t('Health')}
           </TabsTrigger>
-          {platform.plan.isolatedWorkersEnabled && (
+          {platform.plan.workerGroupsEnabled && (
             <TabsTrigger variant="outline" value="worker-groups">
               <Layers className="w-4 h-4 mr-2" />
               {t('Worker groups')}
@@ -179,7 +179,7 @@ export default function WorkersPage() {
           </div>
         </TabsContent>
 
-        {platform.plan.isolatedWorkersEnabled && (
+        {platform.plan.workerGroupsEnabled && (
           <TabsContent value="worker-groups">
             <WorkerAssignmentsTab />
           </TabsContent>
@@ -290,16 +290,19 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
               <TooltipContent className="max-w-xs">
                 {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
                 worker.workerGroupId
-                  ? t('This worker runs the projects assigned to the {group} group.', {
-                      group: worker.workerGroupId.replaceAll('_', ' '),
-                    })
+                  ? t(
+                      'This worker runs the projects assigned to the {group} group.',
+                      {
+                        group: worker.workerGroupId.replaceAll('_', ' '),
+                      },
+                    )
                   : worker.workerGroupScope === WorkerGroupScope.PLATFORM
-                    ? t(
-                        'This worker runs exclusively for your platform with no sandboxing overhead.',
-                      )
-                    : t(
-                        'This worker is shared across platforms and uses strict sandboxing for isolation.',
-                      )}
+                  ? t(
+                      'This worker runs exclusively for your platform with no sandboxing overhead.',
+                    )
+                  : t(
+                      'This worker is shared across platforms and uses strict sandboxing for isolation.',
+                    )}
               </TooltipContent>
             </Tooltip>
             <Badge variant={isOnline ? 'success' : 'destructive'}>

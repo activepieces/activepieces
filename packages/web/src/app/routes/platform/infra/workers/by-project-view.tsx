@@ -1,4 +1,5 @@
 import {
+  isNil,
   SeekPage,
   UpdateProjectPlatformRequest,
   ProjectWithLimits,
@@ -216,6 +217,9 @@ function WorkerGroupCell({
 }) {
   const selectValue = row.workerGroupId ?? SHARED_SENTINEL;
   const isShared = selectValue === SHARED_SENTINEL;
+  const isOffline =
+    !isNil(row.workerGroupId) &&
+    !workerGroups.some((info) => info.label === row.workerGroupId);
 
   const handleChange = async (value: string) => {
     const workerGroupId = value === SHARED_SENTINEL ? null : value;
@@ -233,29 +237,49 @@ function WorkerGroupCell({
   };
 
   return (
-    <Select value={selectValue} onValueChange={handleChange}>
-      <SelectTrigger className="w-[200px]">
-        <div className="flex items-center gap-2 min-w-0">
-          <Cpu
-            className={cn(
-              'size-3.5 shrink-0',
-              isShared ? 'text-muted-foreground' : 'text-primary',
-            )}
-          />
-          <SelectValue />
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={SHARED_SENTINEL}>
-          <span className="text-muted-foreground">{t('Shared')}</span>
-        </SelectItem>
-        {workerGroups.map((info) => (
-          <SelectItem key={info.label} value={info.label}>
-            {info.label.replaceAll('_', ' ')}
+    <div className="flex flex-col gap-1">
+      <Select value={selectValue} onValueChange={handleChange}>
+        <SelectTrigger
+          className={cn('w-[200px]', isOffline && 'border-destructive')}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Cpu
+              className={cn(
+                'size-3.5 shrink-0',
+                isOffline
+                  ? 'text-destructive'
+                  : isShared
+                  ? 'text-muted-foreground'
+                  : 'text-primary',
+              )}
+            />
+            <SelectValue />
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={SHARED_SENTINEL}>
+            <span className="text-muted-foreground">{t('Shared')}</span>
           </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+          {isOffline && (
+            <SelectItem value={row.workerGroupId!}>
+              {row.workerGroupId!.replaceAll('_', ' ')}
+            </SelectItem>
+          )}
+          {workerGroups.map((info) => (
+            <SelectItem key={info.label} value={info.label}>
+              {info.label.replaceAll('_', ' ')}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {isOffline && (
+        <p className="text-xs text-destructive">
+          {t('{group} has no workers online. Fallback to Shared', {
+            group: row.workerGroupId!.replaceAll('_', ' '),
+          })}
+        </p>
+      )}
+    </div>
   );
 }
 

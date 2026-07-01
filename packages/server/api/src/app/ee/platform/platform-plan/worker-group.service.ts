@@ -11,8 +11,23 @@ export const CANARY_WORKER_GROUP_ID = 'canary'
 const NO_WORKER_GROUP_SENTINEL = '__none__'
 const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
 const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id:v2`
+const getWorkerGroupsEnabledCacheKey = (platformId: string): string => `platform:${platformId}:worker_groups_enabled`
 
 export const workerGroupService = (log: FastifyBaseLogger) => ({
+    async isWorkerGroupsEnabled({ platformId }: { platformId: string }): Promise<boolean> {
+        const cached = await distributedStore.get<string>(getWorkerGroupsEnabledCacheKey(platformId))
+        if (!isNil(cached)) {
+            return cached === 'true'
+        }
+        const plan = await platformPlanRepo().findOne({
+            select: ['workerGroupsEnabled'],
+            where: { platformId },
+        })
+        const enabled = plan?.workerGroupsEnabled ?? false
+        await distributedStore.put(getWorkerGroupsEnabledCacheKey(platformId), enabled ? 'true' : 'false', CACHE_TTL_SECONDS)
+        return enabled
+    },
+
     async getWorkerGroupId({ platformId }: { platformId: string }): Promise<string | null> {
         const cached = await distributedStore.get<string>(getWorkerGroupCacheKey(platformId))
         if (!isNil(cached)) {

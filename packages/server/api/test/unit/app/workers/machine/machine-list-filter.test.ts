@@ -36,14 +36,6 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/worker-group.service',
     }),
 }))
 
-const mockGetPlatformWorkerGroups = vi.fn()
-
-vi.mock('../../../../../src/app/project/project-worker-group.service', () => ({
-    projectWorkerGroupService: () => ({
-        getPlatformWorkerGroups: (...args: unknown[]) => mockGetPlatformWorkerGroups(...args),
-    }),
-}))
-
 const mockLogger = {
     info: vi.fn(),
     warn: vi.fn(),
@@ -68,8 +60,6 @@ function fakeMachineInfo(workerId: string): MachineInformation {
 describe('machineService.list — platform filtering', () => {
     beforeEach(() => {
         mockGetWorkerGroupId.mockReset()
-        mockGetPlatformWorkerGroups.mockReset()
-        mockGetPlatformWorkerGroups.mockResolvedValue([])
         inMemoryStore = new Map()
     })
 
@@ -193,12 +183,8 @@ describe('machineService.list — platform filtering', () => {
         expect(result[0].type).toBe(WorkerMachineType.SHARED)
     })
 
-    it('should return a project-scope worker only to a platform that has a project on its label', async () => {
+    it('should return project-scope workers to any platform', async () => {
         mockGetWorkerGroupId.mockResolvedValue(null)
-        mockGetPlatformWorkerGroups.mockImplementation(({ platformId }: { platformId: string }) => {
-            if (platformId === 'platform-with-project') return Promise.resolve(['1cpu_machine'])
-            return Promise.resolve([])
-        })
 
         await workerMachineCache().upsert({
             id: 'project-worker',
@@ -208,13 +194,10 @@ describe('machineService.list — platform filtering', () => {
             workerGroupId: '1cpu_machine',
         })
 
-        const visible = await machineService(mockLogger).list('platform-with-project')
-        expect(visible).toHaveLength(1)
-        expect(visible[0].id).toBe('project-worker')
-        expect(visible[0].workerGroupScope).toBe(WorkerGroupScope.PROJECT)
-
-        const hidden = await machineService(mockLogger).list('platform-without-project')
-        expect(hidden).toHaveLength(0)
+        const result = await machineService(mockLogger).list('any-platform');
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe('project-worker')
+        expect(result[0].workerGroupScope).toBe(WorkerGroupScope.PROJECT)
     })
 
     it('should include legacy workers with no type as shared', async () => {

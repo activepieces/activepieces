@@ -9,6 +9,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectWorkerGroupService } from '../../project/project-worker-group.service'
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName } from '../job'
+import { workerCapacity } from '../machine/worker-capacity'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -178,10 +179,19 @@ const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
 ])
 
 async function getQueueName({ platformId, projectId, jobType }: GetQueueNameParams, log: FastifyBaseLogger): Promise<string> {
-    if (!isNil(projectId) && !isNil(jobType) && PROJECT_GROUP_ROUTABLE_JOB_TYPES.has(jobType)) {
-        const projectGroupId = await projectWorkerGroupService(log).getProjectWorkerGroup({ projectId, platformId })
-        if (!isNil(projectGroupId)) {
-            return getProjectGroupQueueName(projectGroupId)
+    if (!isNil(platformId) && !isNil(projectId) && !isNil(jobType) && PROJECT_GROUP_ROUTABLE_JOB_TYPES.has(jobType)) {
+        const workerGroupsEnabled = await workerGroupService(log).isWorkerGroupsEnabled({ platformId })
+        if (workerGroupsEnabled) {
+            const projectGroupId = await projectWorkerGroupService(log).getProjectWorkerGroup({ projectId, platformId })
+            if (!isNil(projectGroupId)) {
+                // Only route to the group's dedicated queue while it has a live worker; otherwise fall
+                // through to the shared/platform queue so runs still execute until a worker returns.
+                const { projectGroups } = await workerCapacity.get()
+                const capacity = projectGroups.get(projectGroupId)
+                if (!isNil(capacity) && capacity.online > 0) {
+                    return getProjectGroupQueueName(projectGroupId)
+                }
+            }
         }
     }
     if (!platformId) {

@@ -14,7 +14,7 @@ export function WorkerAssignmentsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { data: capacity } = workersQueries.useWorkerGroups(
-    platform.plan.isolatedWorkersEnabled,
+    platform.plan.workerGroupsEnabled,
   );
   const { data: workersData } = workersQueries.useWorkerMachines();
 

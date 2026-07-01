@@ -385,7 +385,7 @@ import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migrati
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
-import { AddIsolatedWorkersEnabledToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddIsolatedWorkersEnabledToPlatformPlan'
+import { AddWorkerGroupsEnabledToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddWorkerGroupsEnabledToPlatformPlan'
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/1798000000000-AddWorkerGroupIdToProject'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
@@ -788,7 +788,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddThemeColorsToPlatform1781206955649,
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
-        AddIsolatedWorkersEnabledToPlatformPlan1797000000000,
+        AddWorkerGroupsEnabledToPlatformPlan1797000000000,
         AddWorkerGroupIdToProject1798000000000,
         AddAiToolConfigTable1797000000000,
         AddChatConversationActiveRunId1798000000000,

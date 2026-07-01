@@ -80,7 +80,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         dataManipulationEnabled: {
             type: Boolean,
         },
-        isolatedWorkersEnabled: {
+        workerGroupsEnabled: {
             type: Boolean,
             default: false,
         },
