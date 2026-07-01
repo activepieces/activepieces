@@ -1,5 +1,7 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from './lib/common/microsoft-cloud';
 import { appendNote } from './lib/actions/append-note';
 import { createImageNote } from './lib/actions/create-image-note';
 import { createNoteInSection } from './lib/actions/create-note-in-section';
@@ -25,6 +27,16 @@ export const microsoftOnenote = createPiece({
     createPage,
     createImageNote,
     appendNote,
+    createCustomApiCallAction({
+      auth: oneNoteAuth,
+      baseUrl: (auth) => {
+        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+        return getGraphBaseUrl(cloud) + '/v1.0/';
+      },
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.access_token}`,
+      }),
+    }),
   ],
   triggers: [newNoteInSectionTrigger],
 });

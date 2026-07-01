@@ -33,6 +33,9 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - **Cloud**: Available — same as EE; cloud OAuth2 uses `secrets.activepieces.com` for token exchange.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **AppConnection**: An encrypted credential record bound to a platform and optionally scoped to one or more projects.
 - **AppConnectionScope**: `PROJECT` (restricted to projects in `projectIds[]`) or `PLATFORM` (available to all projects).
 - **AppConnectionType**: One of `OAUTH2`, `CLOUD_OAUTH2`, `PLATFORM_OAUTH2`, `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH`, `NO_AUTH`, `OIDC`.

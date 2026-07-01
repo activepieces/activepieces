@@ -35,6 +35,9 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 - Cloud: same as CE; trigger health stats shown in Platform Admin
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **TriggerStrategy** — execution model: `POLLING`, `WEBHOOK`, `APP_WEBHOOK`, `MANUAL`
 - **TriggerSource** — the persisted record linking a flow version to its registered trigger; soft-deleted on disable; unique per (projectId, flowId, simulate)
 - **TriggerEvent** — a captured payload from a trigger execution, stored as a File reference; used for test data selection in the builder
