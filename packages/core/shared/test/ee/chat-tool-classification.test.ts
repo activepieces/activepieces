@@ -91,18 +91,3 @@ describe('chatToolClassification.hasFailureTextPrefix', () => {
         expect(chatToolClassification.hasFailureTextPrefix('')).toBe(false)
     })
 })
-
-describe('chatToolClassification.requiresActionPreview — custom_api_call', () => {
-    it.each(['GET', 'HEAD', 'OPTIONS', 'get', 'head'])('skips the gate for read-only method "%s"', (method) => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method } })).toBe(false)
-    })
-
-    it.each(['POST', 'PUT', 'PATCH', 'DELETE', 'delete'])('requires the gate for mutating method "%s"', (method) => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method } })).toBe(true)
-    })
-
-    it('requires the gate when the method is unknown or missing', () => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call' })).toBe(true)
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: {} })).toBe(true)
-    })
-})

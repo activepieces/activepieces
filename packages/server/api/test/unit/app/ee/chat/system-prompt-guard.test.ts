@@ -8,9 +8,11 @@ import { describe, expect, it } from 'vitest'
 // de-dup/modularization is tracked separately; this prevents regression in the meantime.)
 const PROMPT_PATH = path.resolve('packages/server/api/src/assets/prompts/chat-system-prompt.md')
 const CHARS_PER_TOKEN = 4
-// ~22.5k tokens today. Ceiling set just above to block bloat while leaving room for the planned
-// de-dup to bring it DOWN. Lower this number as de-dup lands — never raise it without a reason.
-const MAX_TOKENS = 25_000
+// Temporarily raised 25k -> 30k for the chat/Stage review PR: merging our branch's expanded
+// prompt (persona, decision doctrine, guides) puts it at ~28.9k tokens. The planned de-dup to
+// bring it back under 25k is tracked as a follow-up (see the PR's "Known issues" section).
+// Never raise this further without a reason; lower it as de-dup lands.
+const MAX_TOKENS = 30_000
 
 const REQUIRED_SECTIONS = ['<identity>', '<persona>', '<product_model>', '<interpreting_intent>', '<operating_principles>', '<guardrails>', '<discovery>', '<guides>', '<decision_framework>']
 

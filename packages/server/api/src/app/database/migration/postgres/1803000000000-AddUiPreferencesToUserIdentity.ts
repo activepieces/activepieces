@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddUiPreferencesToUserIdentity1798000000000 implements Migration {
-    name = 'AddUiPreferencesToUserIdentity1798000000000'
+export class AddUiPreferencesToUserIdentity1803000000000 implements Migration {
+    name = 'AddUiPreferencesToUserIdentity1803000000000'
     breaking = false
     release = '0.85.4'
 

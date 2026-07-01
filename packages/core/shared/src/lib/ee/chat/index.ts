@@ -185,12 +185,14 @@ export const ChatConversation = z.object({
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
     status: z.nativeEnum(ChatConversationStatus).default(ChatConversationStatus.IDLE),
+    activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
     uiMessages: z.array(PersistedChatMessageSchema).nullable().default(null),
     summary: Nullable(z.string()),
     summarizedUpToIndex: Nullable(z.number().int()),
 })
 export type ChatConversation = z.infer<typeof ChatConversation>
+export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
 
 export const CreateChatConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
