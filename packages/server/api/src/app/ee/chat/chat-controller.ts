@@ -91,8 +91,15 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped) and, on
         // their first message, gift one-time free credits so free testers can use managed AI.
         // Awaited before the credit check below so the managed key is created (and topped up) once.
-        await chatRolloutService.recordChatted({ userId, platformId })
-        await maybeGrantFreeChatCredits({ platformId, userId, log })
+        // Wrapped in tryCatch so a transient DB write failure doesn't surface 500 to the user.
+        const { error: rolloutError } = await tryCatch(() =>
+            chatRolloutService.recordChatted({ userId, platformId }),
+        )
+        if (!isNil(rolloutError)) {
+            log.error({ error: rolloutError }, '[chatController] Failed to record chatted \u2014 skipping free credit grant')
+        } else {
+            await maybeGrantFreeChatCredits({ platformId, userId, log })
+        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
