@@ -35,7 +35,7 @@ describe('platformQueueMigrationService', () => {
     it('returns early without touching queues when fromQueueName equals toQueueName', async () => {
         const platformId = apId()
         const flowVersionId = apId()
-        const sameQueue = getWorkerGroupQueueName(apId())
+        const sameQueue = getPlatformGroupQueueName(apId())
         const queue = await jobQueue(app.log).getOrCreateQueue({ queueName: sameQueue })
 
         await queue.upsertJobScheduler(
