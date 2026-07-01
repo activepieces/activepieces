@@ -17,10 +17,6 @@ export class AddAutumnBillingColumnsToPlatformPlan1797000000000 implements Migra
             ADD COLUMN IF NOT EXISTS "autumnApiKey" character varying
         `)
         await queryRunner.query(`
-            ALTER TABLE "platform_plan"
-            ADD COLUMN IF NOT EXISTS "billingEnforced" boolean
-        `)
-        await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN IF EXISTS "agentsEnabled"
         `)
     }
@@ -32,7 +28,6 @@ export class AddAutumnBillingColumnsToPlatformPlan1797000000000 implements Migra
         `)
         await queryRunner.query('UPDATE "platform_plan" SET "agentsEnabled" = NOT "embeddingEnabled"')
         await queryRunner.query('ALTER TABLE "platform_plan" ALTER COLUMN "agentsEnabled" SET NOT NULL')
-        await queryRunner.query('ALTER TABLE "platform_plan" DROP COLUMN IF EXISTS "billingEnforced"')
         await queryRunner.query('ALTER TABLE "platform_plan" DROP COLUMN IF EXISTS "autumnApiKey"')
         await queryRunner.query('ALTER TABLE "platform_plan" DROP COLUMN IF EXISTS "autumnCustomerId"')
     }

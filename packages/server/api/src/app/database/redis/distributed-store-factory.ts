@@ -28,6 +28,15 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         return result === 'OK'
     },
 
+    async runOnceWithin(key: string, ttlInSeconds: number, fn: () => Promise<unknown>): Promise<boolean> {
+        const claimed = await this.putIfAbsent(key, '1', ttlInSeconds)
+        if (!claimed) {
+            return false
+        }
+        await fn()
+        return true
+    },
+
     async delete(keys: string | string[]): Promise<void> {
         const keysArray = Array.isArray(keys) ? keys : [keys]
         if (keysArray.length === 0) return

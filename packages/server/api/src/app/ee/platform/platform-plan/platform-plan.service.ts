@@ -2,7 +2,7 @@ import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric, tryCatc
 import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getBillingEnforcedKey, getEnrollAttemptKey, getEntitlementsRefreshKey, getForcedEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { getEnrollAttemptKey, getEntitlementsRefreshKey, getForcedEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -25,7 +25,6 @@ const ENROLL_ATTEMPT_TTL_SECONDS = 300
 const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
 const REFRESH_CLAIM_TTL_SECONDS = 60
 const FORCED_REFRESH_DEBOUNCE_SECONDS = 15
-const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
@@ -73,19 +72,16 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         else {
             await distributedStore.delete(getPlatformPlanNameKey(platformId))
         }
-        await distributedStore.put(getBillingEnforcedKey(platformId), updatedPlatformPlan.billingEnforced === true, BILLING_ENFORCED_TTL_SECONDS)
         return updatedPlatformPlan
     },
     async forceRefreshEntitlements(platformId: string): Promise<void> {
         if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
             return
         }
-        const claimed = await distributedStore.putIfAbsent(getForcedEntitlementsRefreshKey(platformId), '1', FORCED_REFRESH_DEBOUNCE_SECONDS)
-        if (!claimed) {
-            return
-        }
-        await billingProvider.get(log).refreshEntitlements(platformId)
-        await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
+        await distributedStore.runOnceWithin(getForcedEntitlementsRefreshKey(platformId), FORCED_REFRESH_DEBOUNCE_SECONDS, async () => {
+            await billingProvider.get(log).refreshEntitlements(platformId)
+            await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
+        })
     },
     async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
         const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
@@ -179,20 +175,16 @@ function triggerLazyAutumnSync({ platformId, autumnCustomerId }: TriggerLazyAutu
 }
 
 async function throttledAutumnEnrollment(platformId: string, log: FastifyBaseLogger): Promise<void> {
-    const reserved = await distributedStore.putIfAbsent(getEnrollAttemptKey(platformId), '1', ENROLL_ATTEMPT_TTL_SECONDS)
-    if (!reserved) {
-        return
-    }
-    await billingProvider.get(log).ensureEnrolled(platformId)
+    await distributedStore.runOnceWithin(getEnrollAttemptKey(platformId), ENROLL_ATTEMPT_TTL_SECONDS, () =>
+        billingProvider.get(log).ensureEnrolled(platformId),
+    )
 }
 
 async function throttledAutumnRefresh(platformId: string, log: FastifyBaseLogger): Promise<void> {
-    const claimed = await distributedStore.putIfAbsent(getEntitlementsRefreshKey(platformId), '1', REFRESH_CLAIM_TTL_SECONDS)
-    if (!claimed) {
-        return
-    }
-    await billingProvider.get(log).refreshEntitlements(platformId)
-    await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
+    await distributedStore.runOnceWithin(getEntitlementsRefreshKey(platformId), REFRESH_CLAIM_TTL_SECONDS, async () => {
+        await billingProvider.get(log).refreshEntitlements(platformId)
+        await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
+    })
 }
 
 function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {

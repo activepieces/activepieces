@@ -12,7 +12,7 @@ import {
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
-import { getAppSumoAiCreditsBalanceKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
+import { BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
@@ -88,6 +88,9 @@ export const autumnUtils = {
         credentialsCache.set(platformId, { autumnCustomerId, autumnApiKey })
         return autumnUtils.client({ secretKey: autumnApiKey, customerId: autumnCustomerId })
     },
+    evictCredentials(platformId: string): void {
+        credentialsCache.delete(platformId)
+    },
     async ensureEnrolled(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
         if (!isNil(autumnCustomerId)) {
@@ -118,14 +121,7 @@ export const autumnUtils = {
         const customer = await client.getCustomer()
         const entitlements = toAutumnEntitlements(customer)
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
-        const creditsBalance = customer.balances[AutumnFeatureId.AP_CREDITS]
-        if (!isNil(creditsBalance)) {
-            await autumnUtils.writeCreditsBalance(platformId, creditsBalance)
-        }
-        const appSumoBalance = customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]
-        if (!isNil(appSumoBalance)) {
-            await autumnUtils.writeAppSumoAiCreditsBalance(platformId, appSumoBalance)
-        }
+        await autumnUtils.writeCustomerStateCaches(platformId, customer)
     },
     mapAutumnFeaturesToPlatformPlan(entitlements: AutumnEntitlements): Partial<PlatformPlanLimits> {
         const flags: Partial<PlatformPlanLimits> = {}
@@ -143,7 +139,6 @@ export const autumnUtils = {
             usersLimit: toProjectedLimit(users, null),
             activeFlowsLimit: toProjectedLimit(activeFlows, null),
             includedCredits: credits?.granted ?? 0,
-            billingEnforced: entitlements.flags[AutumnFeatureId.BILLING_ENFORCED] ?? false,
         }
     },
     async readCreditsBalance(platformId: string): Promise<CreditsBalanceCache | null> {
@@ -157,6 +152,25 @@ export const autumnUtils = {
     },
     async writeAppSumoAiCreditsBalance(platformId: string, balance: Balance): Promise<void> {
         await distributedStore.put(getAppSumoAiCreditsBalanceKey(platformId), autumnUtils.toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
+    },
+    billingEnforcedFromCustomer(customer: GetCustomerResponse): boolean {
+        return !isNil(customer.flags[AutumnFeatureId.BILLING_ENFORCED])
+    },
+    // Writes the Autumn-sourced customer-state caches (billing-enforced flag + credit balances) to Redis.
+    // billingEnforced lives only here — no DB column. The gate reads it and fails open when absent, so a
+    // cache miss never blocks and never triggers a synchronous fetch; the next background refresh repopulates.
+    async writeCustomerStateCaches(platformId: string, customer: GetCustomerResponse): Promise<BalanceCacheSnapshot> {
+        const creditsBalance = customer.balances[AutumnFeatureId.AP_CREDITS]
+        const appSumoBalance = customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]
+        await Promise.all([
+            distributedStore.put(getBillingEnforcedKey(platformId), autumnUtils.billingEnforcedFromCustomer(customer), BILLING_ENFORCED_TTL_SECONDS),
+            isNil(creditsBalance) ? Promise.resolve() : autumnUtils.writeCreditsBalance(platformId, creditsBalance),
+            isNil(appSumoBalance) ? Promise.resolve() : autumnUtils.writeAppSumoAiCreditsBalance(platformId, appSumoBalance),
+        ])
+        return {
+            credits: isNil(creditsBalance) ? null : autumnUtils.toBalanceCache(creditsBalance),
+            appSumo: isNil(appSumoBalance) ? null : autumnUtils.toBalanceCache(appSumoBalance),
+        }
     },
     toBalanceCache(balance: Balance): CreditsBalanceCache {
         return {
@@ -404,3 +418,9 @@ export type CreditsBalanceCache = {
     nextResetAt: number | null
     syncedAt: number
 }
+
+export type BalanceCacheSnapshot = {
+    credits: CreditsBalanceCache | null
+    appSumo: CreditsBalanceCache | null
+}
+

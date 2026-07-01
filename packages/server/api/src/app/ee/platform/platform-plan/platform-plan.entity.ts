@@ -83,10 +83,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         scimEnabled: {
             type: Boolean,
         },
-        billingEnforced: {
-            type: Boolean,
-            nullable: true,
-        },
         licenseKey: {
             type: String,
             nullable: true,

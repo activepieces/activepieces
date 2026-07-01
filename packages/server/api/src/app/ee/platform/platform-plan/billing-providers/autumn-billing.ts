@@ -1,17 +1,16 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId } from '@activepieces/shared'
-import { AutumnError, type Balance } from 'autumn-js'
+import { AutumnError } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { getBillingEnforcedKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingProvider, CreditsGateState, CreditsUsage, ReportUsageCountsParams, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
 import { platformPlanService } from '../platform-plan.service'
-import { autumnConsole, autumnUtils, CreditsBalanceCache } from './autumn-utils'
+import { autumnConsole, autumnUtils, BalanceCacheSnapshot, CreditsBalanceCache } from './autumn-utils'
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
-const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 60
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
 const AUTO_TOP_UP_ONLY_FEATURE_IDS: string[] = [AutumnFeatureId.AP_CREDITS, AutumnFeatureId.APP_SUMO_AI_CREDITS]
@@ -199,10 +198,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const credentials = await autumnConsole.activate({ licenseKey, platformId })
         await platformPlanService(log).update({ platformId, licenseKey })
         await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
+        autumnUtils.evictCredentials(platformId)
         await autumnUtils.refreshEntitlements(log, platformId)
     },
     isBillingEnforced: async (platformId: string) => {
-        return (await resolveCustomerState(log, platformId)).billingEnforced
+        return (await distributedStore.get<boolean>(getBillingEnforcedKey(platformId))) ?? false
     },
     shouldBlockOnCredits: async (platformId: string) => {
         return (await computeCreditsState(log, platformId)).blocked
@@ -211,34 +211,30 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return computeCreditsState(log, platformId)
     },
     getAppSumoAiCreditsState: async (platformId: string) => {
-        const { appSumo: balance } = await resolveCustomerState(log, platformId)
+        const { appSumo: balance } = await resolveCreditsCache(log, platformId)
         if (isNil(balance) || balance.unlimited) {
             return { blocked: false, usage: balance?.usage ?? 0, limit: balance?.granted ?? 0, remaining: balance?.remaining ?? 0, unlimited: balance?.unlimited ?? false }
         }
         return { blocked: balance.remaining <= 0, usage: balance.usage, limit: balance.granted, remaining: balance.remaining, unlimited: false }
     },
     getConsumablesUsage: async (platformId: string) => {
-        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-        if (isNil(client)) {
-            return { credits: null, appSumo: null }
-        }
-        const customer = await client.getCustomer()
+        const { credits, appSumo } = await resolveCreditsCache(log, platformId)
         return {
-            credits: toCreditsUsage(customer.balances[AutumnFeatureId.AP_CREDITS]),
-            appSumo: toAppSumoAiCreditsUsage(customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]),
+            credits: toCreditsUsage(credits),
+            appSumo: toAppSumoAiCreditsUsage(appSumo),
         }
     },
 })
 
-function toCreditsUsage(balance: Balance | undefined): CreditsUsage | null {
+function toCreditsUsage(balance: CreditsBalanceCache | null): CreditsUsage | null {
     if (isNil(balance)) {
         return null
     }
     return { usage: balance.usage, remaining: balance.unlimited ? null : balance.remaining, nextResetAt: msToUnixSeconds(balance.nextResetAt) }
 }
 
-function toAppSumoAiCreditsUsage(balance: Balance | undefined): AppSumoAiCreditsUsage | null {
-    if (isNil(balance) || balance.unlimited || isNil(balance.granted) || balance.granted <= 0) {
+function toAppSumoAiCreditsUsage(balance: CreditsBalanceCache | null): AppSumoAiCreditsUsage | null {
+    if (isNil(balance) || balance.unlimited || balance.granted <= 0) {
         return null
     }
     return { usage: balance.usage, limit: balance.granted }
@@ -253,10 +249,13 @@ function msToUnixSeconds(ms: number | null | undefined): number | null {
 }
 
 async function computeCreditsState(log: FastifyBaseLogger, platformId: string): Promise<CreditsGateState> {
-    const { billingEnforced, credits: balance } = await resolveCustomerState(log, platformId)
+    const [billingEnforced, { credits: balance }] = await Promise.all([
+        distributedStore.get<boolean>(getBillingEnforcedKey(platformId)),
+        resolveCreditsCache(log, platformId),
+    ])
     const exhausted = !isNil(balance) && !balance.unlimited && balance.remaining <= 0
     return {
-        blocked: billingEnforced && exhausted,
+        blocked: (billingEnforced ?? false) && exhausted,
         usage: balance?.usage ?? 0,
         limit: balance?.granted ?? 0,
         remaining: balance?.remaining ?? 0,
@@ -280,44 +279,43 @@ async function reportUsageCounts(log: FastifyBaseLogger, { platformId, activeFlo
     }
 }
 
-async function resolveCustomerState(log: FastifyBaseLogger, platformId: string): Promise<CustomerState> {
-    const cached = await readCachedCustomerState(platformId)
-    if (isNil(cached.billingEnforced) || isNil(cached.credits)) {
-        const fetched = await fetchCustomerStateDeduped(log, platformId)
+async function resolveCreditsCache(log: FastifyBaseLogger, platformId: string): Promise<BalanceCacheSnapshot> {
+    const cached = await readCachedCredits(platformId)
+    if (isNil(cached.credits)) {
+        const fetched = await fetchCreditsDeduped(log, platformId)
         if (!isNil(fetched)) {
             return fetched
         }
-        return { billingEnforced: cached.billingEnforced ?? false, credits: cached.credits, appSumo: cached.appSumo }
+        return cached
     }
     if (isCreditsStale(cached.credits)) {
-        rejectedPromiseHandler(refreshCustomerState(log, platformId), log)
+        rejectedPromiseHandler(refreshCredits(log, platformId), log)
     }
-    return { billingEnforced: cached.billingEnforced, credits: cached.credits, appSumo: cached.appSumo }
+    return cached
 }
 
-async function readCachedCustomerState(platformId: string): Promise<CachedCustomerState> {
-    const [billingEnforced, credits, appSumo] = await Promise.all([
-        distributedStore.get<boolean>(getBillingEnforcedKey(platformId)),
+async function readCachedCredits(platformId: string): Promise<BalanceCacheSnapshot> {
+    const [credits, appSumo] = await Promise.all([
         autumnUtils.readCreditsBalance(platformId),
         autumnUtils.readAppSumoAiCreditsBalance(platformId),
     ])
-    return { billingEnforced, credits, appSumo }
+    return { credits, appSumo }
 }
 
 function isCreditsStale(credits: CreditsBalanceCache): boolean {
     return Date.now() - credits.syncedAt > CREDITS_REFETCH_PERIOD_MS
 }
 
-async function fetchCustomerStateDeduped(log: FastifyBaseLogger, platformId: string): Promise<CustomerState | null> {
+async function fetchCreditsDeduped(log: FastifyBaseLogger, platformId: string): Promise<BalanceCacheSnapshot | null> {
     const { data, error } = await tryCatch(() => distributedLock(log).runExclusive({
         key: `customer_state_fetch_${platformId}`,
         timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
         fn: async () => {
-            const cached = await readCachedCustomerState(platformId)
-            if (!isNil(cached.billingEnforced) && !isNil(cached.credits)) {
-                return { billingEnforced: cached.billingEnforced, credits: cached.credits, appSumo: cached.appSumo }
+            const cached = await readCachedCredits(platformId)
+            if (!isNil(cached.credits)) {
+                return cached
             }
-            return fetchCustomerState(log, platformId)
+            return fetchCredits(log, platformId)
         },
     }))
     if (!isNil(error)) {
@@ -327,43 +325,17 @@ async function fetchCustomerStateDeduped(log: FastifyBaseLogger, platformId: str
     return data
 }
 
-async function refreshCustomerState(log: FastifyBaseLogger, platformId: string): Promise<void> {
-    const claimed = await distributedStore.putIfAbsent(getCustomerStateRefreshKey(platformId), '1', CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS)
-    if (!claimed) {
-        return
-    }
-    await fetchCustomerState(log, platformId)
+async function refreshCredits(log: FastifyBaseLogger, platformId: string): Promise<void> {
+    await distributedStore.runOnceWithin(getCustomerStateRefreshKey(platformId), CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS, () =>
+        fetchCredits(log, platformId),
+    )
 }
 
-async function fetchCustomerState(log: FastifyBaseLogger, platformId: string): Promise<CustomerState | null> {
+async function fetchCredits(log: FastifyBaseLogger, platformId: string): Promise<BalanceCacheSnapshot | null> {
     const client = await autumnUtils.resolveClientForPlatform(log, platformId)
     if (isNil(client)) {
         return null
     }
     const customer = await client.getCustomer()
-    const billingEnforced = !isNil(customer.flags[AutumnFeatureId.BILLING_ENFORCED])
-    const creditsBalance = customer.balances[AutumnFeatureId.AP_CREDITS]
-    const appSumoBalance = customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]
-    await Promise.all([
-        distributedStore.put(getBillingEnforcedKey(platformId), billingEnforced, BILLING_ENFORCED_TTL_SECONDS),
-        isNil(creditsBalance) ? Promise.resolve() : autumnUtils.writeCreditsBalance(platformId, creditsBalance),
-        isNil(appSumoBalance) ? Promise.resolve() : autumnUtils.writeAppSumoAiCreditsBalance(platformId, appSumoBalance),
-    ])
-    return {
-        billingEnforced,
-        credits: isNil(creditsBalance) ? null : autumnUtils.toBalanceCache(creditsBalance),
-        appSumo: isNil(appSumoBalance) ? null : autumnUtils.toBalanceCache(appSumoBalance),
-    }
-}
-
-type CustomerState = {
-    billingEnforced: boolean
-    credits: CreditsBalanceCache | null
-    appSumo: CreditsBalanceCache | null
-}
-
-type CachedCustomerState = {
-    billingEnforced: boolean | null
-    credits: CreditsBalanceCache | null
-    appSumo: CreditsBalanceCache | null
+    return autumnUtils.writeCustomerStateCaches(platformId, customer)
 }

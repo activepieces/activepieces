@@ -138,6 +138,7 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.plans(platformId),
       queryFn: platformBillingApi.listPlans,
+      staleTime: 60 * 1000,
       enabled,
     });
   },
