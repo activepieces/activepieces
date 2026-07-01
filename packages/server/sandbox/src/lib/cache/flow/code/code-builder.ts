@@ -167,20 +167,12 @@ async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Pr
 }
 
 async function handleCompilationError({ codePath, error }: HandleCompilationErrorParams): Promise<void> {
-    const errorHasStdout =
-        typeof error === 'object' && error && 'stdout' in error
-    const stdoutError = errorHasStdout ? error.stdout : undefined
-    const genericError = `${error ?? 'error compiling'}`
-    const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
+    const errorMessage = `Compilation Error ${error ?? 'error compiling'}`
     await writeInvalidArtifact({ codePath, errorMessage })
 }
 
 async function handleInstallError({ codePath, error }: HandleInstallErrorParams): Promise<void> {
-    const errorHasStderr =
-        typeof error === 'object' && error && 'stderr' in error
-    const stderrError = errorHasStderr ? error.stderr : undefined
-    const genericError = `${error ?? 'error installing dependencies'}`
-    const errorMessage = `Failed to install dependencies. ${stderrError ?? genericError}`
+    const errorMessage = `Failed to install dependencies. ${error ?? 'error installing dependencies'}`
     await writeInvalidArtifact({ codePath, errorMessage })
 }
 
