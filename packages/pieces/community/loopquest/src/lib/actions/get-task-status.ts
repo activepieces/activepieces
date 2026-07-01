@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { loopquestAuth, baseUrl, LoopQuestAuth } from '../auth';
+import { loopquestAuth, baseUrl, authHeaders, LoopQuestAuth } from '../auth';
 
 export const getTaskStatus = createAction({
   auth: loopquestAuth,
@@ -19,7 +19,7 @@ export const getTaskStatus = createAction({
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${baseUrl(auth)}/api/v1/tasks/${context.propsValue.taskId}`,
-      headers: { authorization: `Bearer ${auth.apiKey}` },
+      headers: authHeaders(auth),
     });
     return res.body;
   },
