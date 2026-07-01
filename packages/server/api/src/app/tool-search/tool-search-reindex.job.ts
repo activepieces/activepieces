@@ -42,8 +42,9 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
                 key: reindexLockKey(data.scope),
                 timeoutInSeconds: REINDEX_LOCK_TIMEOUT_SECONDS,
                 fn: async () => {
-                    // Embedding is funded by the platform that holds the AI key (the oldest platform —
-                    // the same one embed-security / chat use); scope only bounds which rows reconcile.
+                    // Embedding is funded by AP_OPENAI_API_KEY when set; otherwise by the platform that
+                    // holds the AI key (the oldest platform — the same one embed-security / chat use).
+                    // Scope only bounds which rows reconcile, never whose key pays.
                     const platform = await platformService(log).getOldestPlatform()
                     if (isNil(platform)) {
                         log.info('[toolSearchReindexJob] No platform configured — skipping reindex.')
