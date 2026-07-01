@@ -41,7 +41,8 @@ export const workerCapacity = {
                 shared.online += 1
             }
         }
-        return { projectGroups, shared }
+        capacitySnapshot = { projectGroups, shared }
+        return capacitySnapshot
     },
     invalidate(): void {
         capacitySnapshot = null
