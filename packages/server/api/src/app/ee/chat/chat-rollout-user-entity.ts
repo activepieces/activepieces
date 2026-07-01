@@ -10,6 +10,7 @@ type ChatRolloutUser = {
     platformId: string
     landedAt: string | null
     chattedAt: string | null
+    grantedFreeCreditAt: string | null
 }
 
 type ChatRolloutUserWithRelations = ChatRolloutUser & {
@@ -34,6 +35,10 @@ export const ChatRolloutUserEntity = new EntitySchema<ChatRolloutUserWithRelatio
             nullable: true,
         },
         chattedAt: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
+        grantedFreeCreditAt: {
             type: 'timestamp with time zone',
             nullable: true,
         },

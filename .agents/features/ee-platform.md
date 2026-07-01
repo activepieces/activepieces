@@ -19,6 +19,9 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 - **Cloud**: Full Stripe integration. `STANDARD_CLOUD_PLAN` is the default; paid addons unlock higher active-flow limits and AI credits. Cloud Enterprise has all flags enabled.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **PlatformPlan**: The single entity (one-per-platform) holding all billing state, feature flags, and limits.
 - **Active Flows**: Published and enabled flows that count against the `activeFlowsLimit` quota.
 - **AI Credits**: Usage currency for OpenRouter-backed AI actions. 1000 credits = $1 USD.
