@@ -32,6 +32,9 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **`workerGroupId` assignment / per-project worker routing**: Enterprise feature gated behind `platform_plan.isolatedWorkersEnabled`. Both setting a project's `workerGroupId` (via the project update endpoint) and listing project worker groups (`GET /v1/projects/worker-groups`) require the flag.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ProjectMember**: A user's membership in a project, carrying a role assignment.
 - **ProjectRole**: Named permission set (ADMIN/EDITOR/VIEWER built-in, or custom). Scoped to a platform.
 - **Permission**: One of 26 granular capabilities (e.g. `READ_FLOW`, `WRITE_CONNECTION`).

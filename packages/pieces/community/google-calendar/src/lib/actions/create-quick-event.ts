@@ -6,6 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
+import { quickEventActionOutputSchema } from '../output-schemas';
 
 export const createQuickCalendarEvent = createAction({
   auth: googleCalendarAuth,
@@ -45,6 +46,7 @@ export const createQuickCalendarEvent = createAction({
       },
     }),
   },
+  outputSchema: quickEventActionOutputSchema,
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/quickAdd
     const calendarId = configValue.propsValue['calendar_id'];
