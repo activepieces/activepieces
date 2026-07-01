@@ -1,4 +1,15 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+
+export type LoopQuestAuth = { apiKey: string; baseUrl?: string };
+
+export const baseUrl = (auth: LoopQuestAuth) =>
+  (auth.baseUrl || 'https://loopquest.tomphillips.uk').replace(/\/+$/, '');
+
+export const authHeaders = (auth: LoopQuestAuth) => ({
+  authorization: `Bearer ${auth.apiKey}`,
+  'content-type': 'application/json',
+});
 
 export const loopquestAuth = PieceAuth.CustomAuth({
   description:
@@ -12,14 +23,17 @@ export const loopquestAuth = PieceAuth.CustomAuth({
       defaultValue: 'https://loopquest.tomphillips.uk',
     }),
   },
-});
-
-export type LoopQuestAuth = { apiKey: string; baseUrl?: string };
-
-export const baseUrl = (auth: LoopQuestAuth) =>
-  (auth.baseUrl || 'https://loopquest.tomphillips.uk').replace(/\/+$/, '');
-
-export const authHeaders = (auth: LoopQuestAuth) => ({
-  authorization: `Bearer ${auth.apiKey}`,
-  'content-type': 'application/json',
+  validate: async ({ auth }) => {
+    const a = auth as LoopQuestAuth;
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${baseUrl(a)}/api/v1/me`,
+        headers: authHeaders(a),
+      });
+      return { valid: true };
+    } catch {
+      return { valid: false, error: 'Invalid API key or base URL.' };
+    }
+  },
 });
