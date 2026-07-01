@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.107.1",
+  "version": "0.108.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -27,6 +27,6 @@
   "devDependencies": {
     "@types/node": "24.11.0",
     "@types/semver": "7.5.6",
-    "vitest": "3.0.8"
+    "vitest": "3.2.6"
   }
 }

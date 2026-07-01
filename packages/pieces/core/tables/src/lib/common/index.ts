@@ -297,7 +297,7 @@ export const csvUtils = {
     }
 
     for (const row of rows) {
-      lines.push(columnNames.map((name) => this.escapeCsvCell(row[name] ?? '')).join(','));
+      lines.push(columnNames.map((name) => this.escapeCsvCell(trimCellEdges(row[name] ?? ''))).join(','));
     }
 
     return lines.join('\n');
@@ -309,6 +309,12 @@ export const csvUtils = {
     }
     return value;
   },
+}
+
+const CELL_EDGE_CHARS = /^[\s\u0000-\u001F\u007F-\u009F]+|[\s\u0000-\u001F\u007F-\u009F]+$/g;
+
+function trimCellEdges(value: string): string {
+  return value.replace(CELL_EDGE_CHARS, '');
 }
 
 const fetchAllTables = async (context: { server: { apiUrl: string, token: string }, project: { id: string } }): Promise<Table[]> => {
