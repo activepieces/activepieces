@@ -86,6 +86,7 @@ Upgrading breaks nothing: the default `AP_WORKER_CONCURRENCY=5` keeps each conta
 AP_WORKER_CONCURRENCY=1
 AP_REUSE_SANDBOX=true
 AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
+AP_USE_CDN_FOR_BUNDLES=true
 ```
 On [Worker Groups](./worker-groups), keep `AP_EXECUTION_MODE=SANDBOX_PROCESS`; code-only mode is rejected for grouped workers.
 </Step>
