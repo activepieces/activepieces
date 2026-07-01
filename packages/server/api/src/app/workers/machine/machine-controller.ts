@@ -14,7 +14,8 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
             const rawWorkerGroupValue = socket.handshake.auth?.workerGroupId
-            const assignment = parseWorkerGroupValue(typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined)
+            const projectWorker = socket.handshake.auth?.projectWorker === true
+            const assignment = parseWorkerGroupValue({ value: typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined, projectWorker })
             const response = await machineService(app.log).onConnection(request, assignment)
             callback?.(response)
             createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, assignment, socket.id))

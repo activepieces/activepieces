@@ -57,9 +57,9 @@ const DRAIN_TIMEOUT_MS = 25_000
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
-        assertValidWorkerGroupPrefix(workerGroupId)
+        const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? false
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -333,17 +333,6 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
             }
         },
     })
-}
-
-function assertValidWorkerGroupPrefix(value: string | undefined): void {
-    if (isNil(value)) {
-        return
-    }
-    const validPrefixes = ['pl_', 'pr_']
-    const valid = validPrefixes.some((prefix) => value.startsWith(prefix) && value.length > prefix.length)
-    if (!valid) {
-        throw new Error(`AP_WORKER_GROUP_ID must start with "pl_" (platform) or "pr_" (project) followed by an id, e.g. "pl_canary" or "pr_1cpu_machine". Got: "${value}"`)
-    }
 }
 
 export function ensurePublicApiUrl(publicUrl: string): string {

@@ -8,21 +8,14 @@ import {
 } from '@activepieces/shared'
 import { z } from 'zod'
 
-const WORKER_GROUP_PREFIXES: { prefix: string, scope: WorkerGroupScope }[] = [
-    { prefix: 'pl_', scope: WorkerGroupScope.PLATFORM },
-    { prefix: 'pr_', scope: WorkerGroupScope.PROJECT },
-]
-
-export const parseWorkerGroupValue = (value: string | undefined): WorkerGroupAssignment | null => {
-    if (isNil(value)) {
+export const parseWorkerGroupValue = ({ value, projectWorker }: { value: string | undefined, projectWorker: boolean }): WorkerGroupAssignment | null => {
+    if (isNil(value) || value.length === 0) {
         return null
     }
-    for (const { prefix, scope } of WORKER_GROUP_PREFIXES) {
-        if (value.startsWith(prefix) && value.length > prefix.length) {
-            return { scope, id: value.slice(prefix.length) }
-        }
+    return {
+        scope: projectWorker ? WorkerGroupScope.PROJECT : WorkerGroupScope.PLATFORM,
+        id: value,
     }
-    return null
 }
 
 export * from './runs-metadata-queue-factory'
