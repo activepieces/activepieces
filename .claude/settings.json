@@ -9,7 +9,8 @@
     "ponytail": {
       "source": {
         "source": "github",
-        "repo": "DietrichGebert/ponytail"
+        "repo": "DietrichGebert/ponytail",
+        "ref": "v4.8.4"
       }
     }
   },
