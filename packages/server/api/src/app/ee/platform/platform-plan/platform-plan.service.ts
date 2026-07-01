@@ -136,7 +136,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (ApEdition.COMMUNITY === edition) {
             return
         }
-        if (!await billingProvider.get(log).shouldBlock(platformId)) {
+        if (!await billingProvider.get(log).isBillingEnforced(platformId)) {
             return
         }
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)

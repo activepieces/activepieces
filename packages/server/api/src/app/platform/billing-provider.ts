@@ -42,6 +42,9 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     trackAppSumoAiUsage: async () => {
         return
     },
+    reportUsageCounts: async () => {
+        return
+    },
     ensureEnrolled: async () => {
         return
     },
@@ -54,7 +57,7 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     activateLicense: async () => {
         return
     },
-    shouldBlock: async () => {
+    isBillingEnforced: async () => {
         return false
     },
     shouldBlockOnCredits: async () => {
@@ -107,6 +110,13 @@ export type TrackAppSumoAiUsageParams = {
     value: number
     idempotencyKey: string
     properties?: Record<string, unknown>
+}
+
+export type ReportUsageCountsParams = {
+    platformId: string
+    activeFlows: number
+    teamProjects: number
+    users: number
 }
 
 
@@ -204,11 +214,12 @@ export type BillingProvider = {
     reactivateSubscription(params: ReactivateSubscriptionParams): Promise<void>
     trackCredits(params: TrackCreditsParams): Promise<void>
     trackAppSumoAiUsage(params: TrackAppSumoAiUsageParams): Promise<void>
+    reportUsageCounts(params: ReportUsageCountsParams): Promise<void>
     ensureEnrolled(platformId: string): Promise<void>
     refreshEntitlements(platformId: string): Promise<void>
     applyAppSumoPlan(params: ApplyAppSumoPlanParams): Promise<void>
     activateLicense(params: ActivateLicenseParams): Promise<void>
-    shouldBlock(platformId: string): Promise<boolean>
+    isBillingEnforced(platformId: string): Promise<boolean>
     shouldBlockOnCredits(platformId: string): Promise<boolean>
     getAppSumoAiCreditsState(platformId: string): Promise<CreditsGateState>
     getCreditsState(platformId: string): Promise<CreditsGateState>
