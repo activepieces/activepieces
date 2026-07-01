@@ -1,10 +1,15 @@
 import { isNil } from '@activepieces/core-utils'
-import { WorkerGroupScope } from '@activepieces/shared'
+import { ApEnvironment, WorkerGroupScope } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import { pubsub } from '../../helper/pubsub'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { workerMachineCache } from './machine-cache'
 
 dayjs.extend(utc)
+
+const isTestingEnvironment = system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
 
 export function parseWorkerConcurrency(value: string | undefined): number {
     const parsed = Number(value)
@@ -19,6 +24,18 @@ let capacitySnapshot: WorkerCapacitySnapshot | null = null
 
 
 export const workerCapacity = {
+    // Subscribe to cross-instance invalidations. The snapshot is a per-process memo of the Redis-backed
+    // machine cache; a worker connect/disconnect is only observed by the one API instance holding that
+    // socket, so it broadcasts here and every other instance drops its memo (else it routes/rate-limits
+    // against a worker set that's stale on this box until it happens to handle its own worker event).
+    async setup(): Promise<void> {
+        if (isTestingEnvironment) {
+            return
+        }
+        await pubsub.subscribe(WORKER_CAPACITY_INVALIDATION_CHANNEL, () => {
+            capacitySnapshot = null
+        })
+    },
     async get(): Promise<WorkerCapacitySnapshot> {
         if (!isNil(capacitySnapshot)) {
             return capacitySnapshot
@@ -44,10 +61,15 @@ export const workerCapacity = {
         capacitySnapshot = { projectGroups, shared }
         return capacitySnapshot
     },
-    invalidate(): void {
+    async invalidate(): Promise<void> {
         capacitySnapshot = null
+        if (!isTestingEnvironment) {
+            await pubsub.publish(WORKER_CAPACITY_INVALIDATION_CHANNEL, '1')
+        }
     },
 }
+
+export const WORKER_CAPACITY_INVALIDATION_CHANNEL = 'worker-capacity-invalidation'
 
 export type PoolCapacity = {
     slots: number

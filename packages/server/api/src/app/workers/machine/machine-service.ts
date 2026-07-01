@@ -69,7 +69,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 worker: { id: request.workerId },
             })
             await workerMachineCache().delete([request.workerId])
-            workerCapacity.invalidate()
+            await workerCapacity.invalidate()
         },
         async onConnection(request: WorkerMachineHealthcheckRequest, assignment: WorkerGroupAssignment | null = null): Promise<WorkerSettingsResponse> {
             const existingWorker = await workerMachineCache().findOne(request.workerId)
@@ -84,7 +84,7 @@ export const machineService = (log: FastifyBaseLogger) => {
             }, existingWorker)
             // Only a newly-seen worker changes capacity; heartbeats from known workers don't.
             if (isNil(existingWorker)) {
-                workerCapacity.invalidate()
+                await workerCapacity.invalidate()
             }
             return buildSettingsResponse(log)
         },
