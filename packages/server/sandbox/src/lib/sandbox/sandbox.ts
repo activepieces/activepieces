@@ -230,13 +230,15 @@ export function createSandbox(
             })
 
             const exitPromise = new Promise<never>((_, reject) => {
-                childProcess!.once('exit', (code, signal) => {
+                // 'close' (not 'exit') so the child's stdout/stderr pipes are fully drained first —
+                // 'exit' can fire before the final 'data' chunk, leaving nativeStdError empty.
+                childProcess!.once('close', (code, signal) => {
                     reject(new Error(`Sandbox ${sandboxId} exited before connecting (code=${code}, signal=${signal}) standardError=${nativeStdError}`))
                 })
             })
 
             await Promise.race([waitForConnection(), exitPromise])
-            childProcess!.removeAllListeners('exit')
+            childProcess!.removeAllListeners('close')
 
             log.debug({
                 sandbox: { id: sandboxId },
@@ -250,6 +252,10 @@ export function createSandbox(
             let timeout: NodeJS.Timeout | null = null
             const executeSocket = connectedSocket
             const executeProcess = childProcess
+            // Reset per-execute so a reused sandbox doesn't prefix this run's crash output with
+            // native output accumulated during previous (healthy) executions.
+            nativeStdOut = ''
+            nativeStdError = ''
             const operationPromise = new Promise<SandboxResult>((resolve, reject) => {
                 assertNotNullOrUndefined(executeProcess, 'Sandbox process should not be null')
                 assertNotNullOrUndefined(executeSocket, 'Connected socket should not be null')
@@ -278,7 +284,7 @@ export function createSandbox(
                     log.error({ sandbox: { id: sandboxId }, error: String(error) }, 'Sandbox process error')
                 })
 
-                executeProcess.on('exit', (code, signal) => {
+                executeProcess.on('close', (code, signal) => {
                     handleProcessExit(log, {
                         sandboxId,
                         operationType,
@@ -317,7 +323,7 @@ export function createSandbox(
                     clearTimeout(timeout)
                 }
                 executeSocket?.removeAllListeners('rpc-notify')
-                executeProcess?.removeAllListeners('exit')
+                executeProcess?.removeAllListeners('close')
                 executeProcess?.removeAllListeners('error')
             }
         },

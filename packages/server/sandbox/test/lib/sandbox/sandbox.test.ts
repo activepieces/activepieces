@@ -561,7 +561,7 @@ describe('createSandbox', () => {
 
             // Don't respond to RPC — let it timeout
             treeKillMock.mockImplementation((_pid: number, _signal: string, cb: (err?: Error) => void) => {
-                child.emit('exit', null, 'SIGKILL')
+                child.emit('close', null, 'SIGKILL')
                 cb()
             })
 
@@ -586,7 +586,7 @@ describe('createSandbox', () => {
             const child = testPM.getChild()
 
             client.on('rpc', () => {
-                child.emit('exit', 134, null)
+                child.emit('close', 134, null)
             })
 
             const executePromise = sandbox.execute(
@@ -612,7 +612,7 @@ describe('createSandbox', () => {
             client.on('rpc', () => {
                 client.emit('rpc-notify', { method: 'stderr', payload: { message: 'Flow run data size exceeded the maximum allowed size' } })
                 setTimeout(() => {
-                    child.emit('exit', 1, null)
+                    child.emit('close', 1, null)
                 }, 50)
             })
 
@@ -637,7 +637,7 @@ describe('createSandbox', () => {
             const child = testPM.getChild()
 
             client.on('rpc', () => {
-                child.emit('exit', 1, null)
+                child.emit('close', 1, null)
             })
 
             const executePromise = sandbox.execute(
@@ -663,7 +663,7 @@ describe('createSandbox', () => {
 
             client.on('rpc', () => {
                 ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from(nativeStack))
-                setTimeout(() => child.emit('exit', 1, null), 20)
+                setTimeout(() => child.emit('close', 1, null), 20)
             })
 
             const executePromise = sandbox.execute(
@@ -690,7 +690,7 @@ describe('createSandbox', () => {
 
             client.on('rpc', () => {
                 ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from('FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\n'))
-                setTimeout(() => child.emit('exit', 1, null), 20)
+                setTimeout(() => child.emit('close', 1, null), 20)
             })
 
             const executePromise = sandbox.execute(
@@ -726,7 +726,7 @@ describe('createSandbox', () => {
                 { timeoutInSeconds: 10 },
             )
 
-            expect(removeAllListenersSpy).toHaveBeenCalledWith('exit')
+            expect(removeAllListenersSpy).toHaveBeenCalledWith('close')
             expect(removeAllListenersSpy).toHaveBeenCalledWith('error')
         })
     })
