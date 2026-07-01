@@ -61,7 +61,7 @@ export const chatRolloutService = {
     async recordLanding({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
 
         if (!isCloud()) {
-            return { firstChat: false }
+            return
         }
         await rolloutRepo().query(
             `INSERT INTO "chat_rollout_user" ("id", "userId", "platformId", "landedAt")
