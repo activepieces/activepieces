@@ -43,7 +43,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Git Sync**: Configuration of an SSH-backed git repo + branch used as a release source or push target.
 - **RBAC**: Role-Based Access Control — enforced per-request via `rbacService.assertPrincipalAccessToProject()`.
 - **Release Type**: GIT_BRANCH (from git), MANUAL (from another project), ROLLBACK (revert to a previous release).
-- **workerGroupId**: Optional pool label on a project (bare, e.g. `1cpu_machine`). When set (and `isolatedWorkersEnabled` is on for the platform), the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs are routed to `project-<label>-jobs`; other job types are unaffected. The matching worker advertises `AP_WORKER_GROUP_ID=pr_<label>`. Set via `POST /v1/projects/:id`. See the Workers feature doc for the unified prefixed worker-group mechanics.
+- **workerGroupId**: Optional pool label on a project (bare, e.g. `1cpu_machine`). When set (and `isolatedWorkersEnabled` is on for the platform), the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs are routed to `project-<label>-jobs`; other job types are unaffected. The matching worker advertises `AP_WORKER_GROUP_ID=<label>` with `AP_PROJECT_WORKER=true` (scope comes from the flag, not a prefix). Set via `POST /v1/projects/:id`. See the Workers feature doc for the unified worker-group mechanics.
 
 ## Project Members
 
@@ -111,4 +111,4 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 
 **Endpoints** (`platform-project-controller.ts`):
 - `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` accepts `workerGroupId` (validated against `^[a-z0-9_-]+$`, applied in `platformProjectService.update()` only when `platform_plan.isolatedWorkersEnabled` is on).
-- `GET /v1/projects/worker-groups` — platform-admin only; returns `{ groups: [{ label, slots }], sharedSlots }` from online project-scope (`pr_`) workers (`machineService.listProjectWorkerGroups()`) for the assignment UI; returns 402 `FEATURE_DISABLED` when `isolatedWorkersEnabled` is off.
+- `GET /v1/projects/worker-groups` — platform-admin only; returns `{ groups: [{ label, slots }], sharedSlots }` from online project-scope workers (those started with `AP_PROJECT_WORKER=true`) via `machineService.listProjectWorkerGroups()` for the assignment UI; returns 402 `FEATURE_DISABLED` when `isolatedWorkersEnabled` is off.
