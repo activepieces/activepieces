@@ -42,7 +42,7 @@ import { apUpdateTriggerTool } from './ap-update-trigger'
 import { apValidateFlowTool } from './ap-validate-flow'
 import { apValidateStepConfigTool } from './ap-validate-step-config'
 
-export const LOCKED_TOOL_NAMES: string[] = [
+export const LOCKED_TOOL_NAMES = [
     'ap_list_flows',
     'ap_flow_structure',
     'ap_read_step_code',
@@ -59,18 +59,18 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_runs',
     'ap_get_run',
     'ap_setup_guide',
-]
-
-export const PLATFORM_LEVEL_TOOL_NAMES: string[] = [
+] as const
+ 
+export const PLATFORM_LEVEL_TOOL_NAMES= [
     'ap_research_pieces',
     'ap_list_ai_models',
     'ap_get_piece_props',
-]
+] as const
 
 // NOTE: Keep this list in sync with TOOL_CATEGORIES in
 // packages/web/src/app/components/project-settings/mcp-server/utils/mcp-tools-metadata.ts
 // Any tool added here must also be added there so it appears in the UI settings panel.
-export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
+export const ALL_CONTROLLABLE_TOOL_NAMES= [
     'ap_build_flow',
     'ap_create_flow',
     'ap_duplicate_flow',
@@ -96,7 +96,7 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_test_step',
     'ap_retry_run',
     'ap_run_action',
-]
+]  as const
 
 export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | undefined, log: FastifyBaseLogger): McpToolDefinition[] => [
     apBuildFlowTool({ mcp, userId }, log),
