@@ -36,13 +36,13 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { billingUsageReportModule } from './ee/billing-usage-report/billing-usage-report-module'
 import { chatEvalModule } from './ee/chat/chat-eval-controller'
 import { chatFunnelTrackingModule } from './ee/chat/chat-funnel-tracking-module'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-import { flowRunTrackingModule } from './ee/flow-run-tracking/flow-run-tracking-module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
@@ -239,7 +239,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
-    await app.register(flowRunTrackingModule)
+    await app.register(billingUsageReportModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
     await app.register(userModule)

@@ -5,6 +5,7 @@ const {
     mockQueryBuilder,
     mockExceptionHandle,
     mockCaptureBillingEvent,
+    mockReportUsageCounts,
 } = vi.hoisted(() => {
     const mockGetRawMany = vi.fn()
     const mockQueryBuilder = {
@@ -22,6 +23,7 @@ const {
         mockQueryBuilder,
         mockExceptionHandle: vi.fn(),
         mockCaptureBillingEvent: vi.fn(),
+        mockReportUsageCounts: vi.fn().mockResolvedValue(undefined),
     }
 })
 
@@ -68,7 +70,13 @@ vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
     },
 }))
 
-import { flowRunTrackingService } from '../../../../../src/app/ee/flow-run-tracking/flow-run-tracking-service'
+vi.mock('../../../../../src/app/platform/billing-provider', () => ({
+    billingProvider: {
+        get: vi.fn(() => ({ reportUsageCounts: mockReportUsageCounts })),
+    },
+}))
+
+import { billingUsageReportService } from '../../../../../src/app/ee/billing-usage-report/billing-usage-report-service'
 
 const mockLog = {
     info: vi.fn(),
@@ -80,7 +88,7 @@ const mockLog = {
     trace: vi.fn(),
     silent: vi.fn(),
     level: 'info',
-} as unknown as Parameters<typeof flowRunTrackingService>[0]
+} as unknown as Parameters<typeof billingUsageReportService>[0]
 
 // License keys are queried first (and gate the rest); the scoped count queries run afterwards in
 // declaration order: active flows, users, team projects, then per-day executions — which itself runs
@@ -102,7 +110,7 @@ const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects 
         .mockResolvedValueOnce(executionRuns)
 }
 
-describe('flowRunTrackingService', () => {
+describe('billingUsageReportService', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetRawMany.mockReset().mockResolvedValue([])
@@ -112,7 +120,7 @@ describe('flowRunTrackingService', () => {
         it('should emit a TOTAL_RUNS_PER_DAY billing event per licensed platform keyed by its license key', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await flowRunTrackingService(mockLog).reportAllPlatforms()
+            await billingUsageReportService(mockLog).reportAllPlatforms()
 
             expect(mockCaptureBillingEvent).toHaveBeenCalledTimes(1)
             expect(mockCaptureBillingEvent).toHaveBeenCalledWith(
@@ -121,15 +129,20 @@ describe('flowRunTrackingService', () => {
                     event: 'total_runs_per_day',
                 }),
             )
+            expect(mockReportUsageCounts).toHaveBeenCalledTimes(1)
+            expect(mockReportUsageCounts).toHaveBeenCalledWith(
+                expect.objectContaining({ platformId: 'platform-1' }),
+            )
         })
 
         it('should skip the heavy aggregate queries and send nothing when no platform has a license key', async () => {
             mockQueries({ licenseKeys: [] })
 
-            await flowRunTrackingService(mockLog).reportAllPlatforms()
+            await billingUsageReportService(mockLog).reportAllPlatforms()
 
             expect(mockGetRawMany).toHaveBeenCalledTimes(1)
             expect(mockCaptureBillingEvent).not.toHaveBeenCalled()
+            expect(mockReportUsageCounts).not.toHaveBeenCalled()
         })
 
         it('should build the event properties with per-day executions and no key_value field', async () => {
@@ -145,7 +158,7 @@ describe('flowRunTrackingService', () => {
                 licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }],
             })
 
-            await flowRunTrackingService(mockLog).reportAllPlatforms()
+            await billingUsageReportService(mockLog).reportAllPlatforms()
 
             const properties = mockCaptureBillingEvent.mock.calls[0][0].properties
             expect(properties).toEqual(expect.objectContaining({
@@ -181,7 +194,7 @@ describe('flowRunTrackingService', () => {
                 ],
             })
 
-            await flowRunTrackingService(mockLog).reportAllPlatforms()
+            await billingUsageReportService(mockLog).reportAllPlatforms()
 
             // Events are emitted in platform insertion order: platform-1 then platform-2.
             const first = mockCaptureBillingEvent.mock.calls[0][0]
@@ -199,7 +212,7 @@ describe('flowRunTrackingService', () => {
         it('should default gauges to zero and send empty daily executions when a platform has no usage', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await flowRunTrackingService(mockLog).reportAllPlatforms()
+            await billingUsageReportService(mockLog).reportAllPlatforms()
 
             const properties = mockCaptureBillingEvent.mock.calls[0][0].properties
             expect(properties).toEqual(expect.objectContaining({

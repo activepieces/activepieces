@@ -1,4 +1,4 @@
-import { chunk } from '@activepieces/core-utils'
+import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
 import { FlowStatus, ProjectType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -8,6 +8,7 @@ import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
 import { BillingEvents, captureBillingEvent, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
+import { billingProvider } from '../../platform/billing-provider'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -17,16 +18,17 @@ dayjs.extend(utc)
 const EXECUTIONS_PROJECT_CHUNK_SIZE = 100
 const EXECUTIONS_CHUNK_DELAY_MS = 1000
 
-export const flowRunTrackingService = (log: FastifyBaseLogger) => ({
+export const billingUsageReportService = (log: FastifyBaseLogger) => ({
     /**
-     * Reports per-platform usage to PostHog for billing/metering — this is NOT product telemetry, so it
-     * is intentionally not gated on AP_TELEMETRY_ENABLED. The license key is the gate and the event
-     * identifier: only licensed platforms are reported, keyed by their license key (distinctId), so
-     * unlicensed instances bail before the heavy aggregate queries and send nothing. Only the previous
-     * *completed* UTC day is reported (the current, in-progress day is excluded), so the count is final
-     * on first send. Re-running the same day re-emits the same value. Note: with a single-day window
-     * there is no healing margin — if a day's run is missed entirely, the next run won't backfill it,
-     * since it only ever looks at yesterday.
+     * Reports per-platform usage to PostHog (for billing/metering) and to the billing provider (Autumn),
+     * from a single daily bulk pass — this is NOT product telemetry, so it is intentionally not gated on
+     * AP_TELEMETRY_ENABLED. The license key is the gate and the PostHog event identifier: only licensed
+     * platforms are reported, keyed by their license key (distinctId), so unlicensed instances bail before
+     * the heavy aggregate queries and send nothing. Free (no-license-key) platforms are intentionally not
+     * reported to the billing provider either. Only the previous *completed* UTC day is reported (the
+     * current, in-progress day is excluded), so the count is final on first send. Re-running the same day
+     * re-emits the same value. Note: with a single-day window there is no healing margin — if a day's run
+     * is missed entirely, the next run won't backfill it, since it only ever looks at yesterday.
      */
     async reportAllPlatforms(): Promise<void> {
         try {
@@ -52,18 +54,25 @@ export const flowRunTrackingService = (log: FastifyBaseLogger) => ({
             const reportedAt = new Date().toISOString()
 
             for (const [platformId, licenseKey] of licenseKeysByPlatform) {
+                const activeFlows = activeFlowsByPlatform.get(platformId) ?? 0
+                const users = usersByPlatform.get(platformId) ?? 0
+                const teamProjects = teamProjectsByPlatform.get(platformId) ?? 0
                 captureBillingEvent({
                     licenseKey,
                     event: BillingEvents.TOTAL_RUNS_PER_DAY,
                     properties: buildSnapshotBody({
                         platformId,
-                        activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
-                        users: usersByPlatform.get(platformId) ?? 0,
-                        projects: teamProjectsByPlatform.get(platformId) ?? 0,
+                        activeFlows,
+                        users,
+                        projects: teamProjects,
                         dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
                         reportedAt,
                     }),
                 })
+                const { error } = await tryCatch(() => billingProvider.get(log).reportUsageCounts({ platformId, activeFlows, teamProjects, users }))
+                if (!isNil(error)) {
+                    log.warn({ error, platform: { id: platformId } }, 'Failed to report usage counts to billing provider')
+                }
             }
         }
         catch (error) {

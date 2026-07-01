@@ -11,7 +11,7 @@ export enum SystemJobName {
     DELETE_FLOW = 'delete-flow',
     HARD_DELETE_PROJECT = 'hard-delete-project',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
-    FLOW_RUN_TRACKING = 'flow-run-tracking',
+    BILLING_USAGE_REPORT = 'billing-usage-report',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
     BUNDLE_PIECE = 'bundle-piece',
     CHAT_FUNNEL_SYNC = 'chat-funnel-sync',
@@ -53,7 +53,7 @@ type SystemJobDataMap = {
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
-    [SystemJobName.FLOW_RUN_TRACKING]: Record<string, never>
+    [SystemJobName.BILLING_USAGE_REPORT]: Record<string, never>
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
     [SystemJobName.BUNDLE_PIECE]: BundlePieceSystemJobData
     [SystemJobName.CHAT_FUNNEL_SYNC]: Record<string, never>
