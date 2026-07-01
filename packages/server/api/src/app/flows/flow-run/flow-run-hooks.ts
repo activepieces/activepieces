@@ -8,7 +8,7 @@ import { system } from '../../helper/system/system'
 import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
-import { aiUsageTracker } from './ai-usage-tracker'
+import { flowRunAiUsageTracker } from './flow-run-ai-usage-tracker'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -25,7 +25,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         if (flowRun.environment === RunEnvironment.TESTING || isManualTrigger) {
             websocketService.to(flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, {
                 flowRun,
-            } satisfies UpdateRunProgressRequest)
+            })
         }
         if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStep)) {
             const date = dayjs(flowRun.created).toISOString()
@@ -47,7 +47,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         if (!paidEditions || isNil(flowVersion)) {
             return
         }
-        const { error } = await tryCatch(() => aiUsageTracker(log).track({ flowRun, flowVersion }))
+        const { error } = await tryCatch(() => flowRunAiUsageTracker(log).track({ flowRun, flowVersion }))
         if (error) {
             log.warn({ error, flowRun: { id: flowRun.id } }, 'Failed to capture AI usage event')
         }

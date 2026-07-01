@@ -148,7 +148,7 @@ const UNKNOWN = 'unknown'
 const REDACTED_MARKER = '**REDACTED**'
 const SLEEP_EVERY_N_STEPS = 1000
 
-export const aiUsageExtractor = { extractAiUsage, flowVersionHasAiStep }
+export const flowRunAiUsageExtractor = { extractAiUsage, flowVersionHasAiStep }
 
 export type SliceFetcher = (ref: LogSliceRef) => Promise<unknown>
 

@@ -1,18 +1,18 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { FileType, FlowRun, FlowVersion, LogSliceRef } from '@activepieces/shared'
+import { FileType, FlowRun, FlowVersion, LogSliceRef, PlanName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
-import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
+import { CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
-import { aiUsageExtractor } from './ai-usage-extractor'
+import { flowRunAiUsageExtractor } from './flow-run-ai-usage-extractor'
 import { flowRunService } from './flow-run-service'
 
-export const aiUsageTracker = (log: FastifyBaseLogger) => ({
+export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
     async track({ flowRun, flowVersion }: TrackParams): Promise<void> {
-        if (!aiUsageExtractor.flowVersionHasAiStep(flowVersion)) {
+        if (!flowRunAiUsageExtractor.flowVersionHasAiStep(flowVersion)) {
             return
         }
         const project = await projectService(log).getOne(flowRun.projectId)
@@ -23,7 +23,7 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
         if (isNil(steps)) {
             return
         }
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps,
             flowVersion,
             stepNameToTest: flowRun.stepNameToTest,
@@ -32,27 +32,30 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
         if (usage.messages === 0 && usage.toolCalls === 0) {
             return
         }
-        await billingProvider.get(log).trackCredits({
-            platformId: project.platformId,
-            value: usage.messages + usage.toolCalls,
-            source: CreditUsageSource.AI,
-            idempotencyKey: `${flowRun.id}:ai`,
-            properties: {
-                platformId: project.platformId,
-                projectId: flowRun.projectId,
-                flowId: flowRun.flowId,
-                flowRunId: flowRun.id,
-                environment: flowRun.environment,
-                messages: usage.messages,
-                toolCalls: usage.toolCalls,
-                breakdown: usage.breakdown,
-            },
-        })
         const appSumoAiValue = usage.breakdown
             .filter((entry) => entry.provider === AIProviderName.ACTIVEPIECES)
             .reduce((sum, entry) => sum + entry.messages + entry.toolCalls, 0)
-        if (appSumoAiValue > 0) {
-            await billingProvider.get(log).trackAppSumoAiUsage({
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
+        const isAppSumoPlan = platformPlan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false
+        await trackCreditsWithAppSumo({
+            log,
+            credits: {
+                platformId: project.platformId,
+                value: usage.messages + usage.toolCalls,
+                source: CreditUsageSource.AI,
+                idempotencyKey: `${flowRun.id}:ai`,
+                properties: {
+                    platformId: project.platformId,
+                    projectId: flowRun.projectId,
+                    flowId: flowRun.flowId,
+                    flowRunId: flowRun.id,
+                    environment: flowRun.environment,
+                    messages: usage.messages,
+                    toolCalls: usage.toolCalls,
+                    breakdown: usage.breakdown,
+                },
+            },
+            appSumo: appSumoAiValue > 0 && isAppSumoPlan ? {
                 platformId: project.platformId,
                 value: appSumoAiValue,
                 idempotencyKey: `${flowRun.id}:appSumoAi`,
@@ -63,9 +66,8 @@ export const aiUsageTracker = (log: FastifyBaseLogger) => ({
                     flowRunId: flowRun.id,
                     environment: flowRun.environment,
                 },
-            })
-        }
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
+            } : undefined,
+        })
         const licenseKey = platformPlan.licenseKey
         if (isNil(licenseKey) || licenseKey.length === 0) {
             return

@@ -9,7 +9,7 @@ import {
     StepOutputType,
 } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
-import { aiUsageExtractor } from '../../../../../src/app/flows/flow-run/ai-usage-extractor'
+import { flowRunAiUsageExtractor } from '../../../../../src/app/flows/flow-run/flow-run-ai-usage-extractor'
 
 const RUN_AGENT = 'run_agent'
 const ASK_AI = 'askAi'
@@ -63,10 +63,10 @@ function steps(record: Record<string, unknown>): Record<string, StepOutput> {
 
 const noopFetchSlice = vi.fn(async () => undefined)
 
-describe('aiUsageTracker extractor', () => {
+describe('flowRunAiUsageExtractor', () => {
     it('returns zero usage for a run with no AI steps', async () => {
         const flowVersion = flowVersionWith([])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({ trigger: { type: FlowTriggerType.EMPTY, status: StepOutputStatus.SUCCEEDED } }),
             flowVersion,
             fetchSlice: noopFetchSlice,
@@ -76,7 +76,7 @@ describe('aiUsageTracker extractor', () => {
 
     it('counts a succeeded askAI step as one message with its provider/model', async () => {
         const flowVersion = flowVersionWith([aiAction({ name: 'step_1', actionName: ASK_AI })])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 step_1: {
                     type: FlowActionType.PIECE,
@@ -97,7 +97,7 @@ describe('aiUsageTracker extractor', () => {
 
     it('excludes a failed non-agent AI step', async () => {
         const flowVersion = flowVersionWith([aiAction({ name: 'step_1', actionName: ASK_AI })])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 step_1: {
                     type: FlowActionType.PIECE,
@@ -113,7 +113,7 @@ describe('aiUsageTracker extractor', () => {
 
     it('counts a run_agent step as message + tool calls', async () => {
         const flowVersion = flowVersionWith([aiAction({ name: 'agent_1', actionName: RUN_AGENT })])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 agent_1: {
                     type: FlowActionType.PIECE,
@@ -134,7 +134,7 @@ describe('aiUsageTracker extractor', () => {
 
     it('counts a markdown-only run_agent as one message with zero tool calls', async () => {
         const flowVersion = flowVersionWith([aiAction({ name: 'agent_1', actionName: RUN_AGENT })])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 agent_1: {
                     type: FlowActionType.PIECE,
@@ -152,7 +152,7 @@ describe('aiUsageTracker extractor', () => {
 
     it('counts a FAILED run_agent that still made tool calls', async () => {
         const flowVersion = flowVersionWith([aiAction({ name: 'agent_1', actionName: RUN_AGENT })])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 agent_1: {
                     type: FlowActionType.PIECE,
@@ -173,7 +173,7 @@ describe('aiUsageTracker extractor', () => {
 
     it('does not count a run_agent that crashed with no output', async () => {
         const flowVersion = flowVersionWith([aiAction({ name: 'agent_1', actionName: RUN_AGENT })])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 agent_1: {
                     type: FlowActionType.PIECE,
@@ -197,7 +197,7 @@ describe('aiUsageTracker extractor', () => {
                 input: { provider: 'openai', model: 'gpt-4o' },
             },
         }
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 loop_1: {
                     type: FlowActionType.LOOP_ON_ITEMS,
@@ -236,7 +236,7 @@ describe('aiUsageTracker extractor', () => {
                 output: { iterations: [innerIteration, innerIteration] },
             },
         }
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 loop_1: {
                     type: FlowActionType.LOOP_ON_ITEMS,
@@ -255,7 +255,7 @@ describe('aiUsageTracker extractor', () => {
         const flowVersion = flowVersionWith([
             loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'step_1', actionName: ASK_AI }) }),
         ])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 loop_2: {
                     type: FlowActionType.LOOP_ON_ITEMS,
@@ -287,7 +287,7 @@ describe('aiUsageTracker extractor', () => {
             },
         }
         const iterationCount = 2500
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 loop_1: {
                     type: FlowActionType.LOOP_ON_ITEMS,
@@ -307,7 +307,7 @@ describe('aiUsageTracker extractor', () => {
             aiAction({ name: 'step_1', actionName: ASK_AI }),
             aiAction({ name: 'agent_1', actionName: RUN_AGENT }),
         ])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 // The tested step that actually executed this run.
                 step_1: {
@@ -340,7 +340,7 @@ describe('aiUsageTracker extractor', () => {
             aiAction({ name: 'step_2', actionName: ASK_AI }),
             aiAction({ name: 'step_3', actionName: ASK_AI }),
         ])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 step_1: { type: FlowActionType.PIECE, status: StepOutputStatus.SUCCEEDED, input: { provider: 'openai', model: 'gpt-4o' } },
                 step_2: { type: FlowActionType.PIECE, status: StepOutputStatus.SUCCEEDED, input: { provider: 'openai', model: 'gpt-4o' } },
@@ -358,7 +358,7 @@ describe('aiUsageTracker extractor', () => {
 
     it('falls back to flow-version settings when the logged model is redacted', async () => {
         const flowVersion = flowVersionWith([aiAction({ name: 'step_1', actionName: ASK_AI, input: { provider: 'openai', model: 'gpt-4o' } })])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 step_1: {
                     type: FlowActionType.PIECE,
@@ -374,7 +374,7 @@ describe('aiUsageTracker extractor', () => {
 
     it('reports unknown provider/model when neither log nor settings has them', async () => {
         const flowVersion = flowVersionWith([aiAction({ name: 'step_1', actionName: ASK_AI })])
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 step_1: { type: FlowActionType.PIECE, status: StepOutputStatus.SUCCEEDED, input: {} },
             }),
@@ -390,7 +390,7 @@ describe('aiUsageTracker extractor', () => {
             status: 'COMPLETED',
             steps: [toolCallBlock(), toolCallBlock(), markdownBlock()],
         }))
-        const usage = await aiUsageExtractor.extractAiUsage({
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
             steps: steps({
                 agent_1: {
                     type: FlowActionType.PIECE,

@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AutoTopUpConfig, ConsumableProductAutoTopupParams, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -88,6 +88,18 @@ export async function assertCreditsNotExceeded({ platformId, log }: { platformId
             code: ErrorCode.QUOTA_EXCEEDED,
             params: { metric: PlatformUsageMetric.CREDITS, usage: credits.usage, limit: credits.limit },
         })
+    }
+}
+
+export async function trackCreditsWithAppSumo({ log, credits, appSumo }: {
+    log: FastifyBaseLogger
+    credits: TrackCreditsParams
+    appSumo?: TrackAppSumoAiUsageParams
+}): Promise<void> {
+    const provider = billingProvider.get(log)
+    await provider.trackCredits(credits)
+    if (!isNil(appSumo)) {
+        await provider.trackAppSumoAiUsage(appSumo)
     }
 }
 
