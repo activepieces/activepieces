@@ -22,6 +22,9 @@ The pieces feature manages the metadata catalog of automation integrations (call
 All editions. Piece filtering by allowed/blocked list and EE-specific filtering are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Piece** — a named integration (e.g. `@activepieces/piece-gmail`) providing actions and triggers
 - **PieceType** — `OFFICIAL` (bundled) or `CUSTOM` (platform-installed)
 - **PackageType** — `REGISTRY` (NPM) or `ARCHIVE` (uploaded tarball)
@@ -84,7 +87,7 @@ Unique index on `(name, version, platformId)`.
 - `registry({ release? })` — returns lightweight name+version list for all pieces
 
 ### `pieceInstallService`
-- `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`
+- `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`. When tool-search is enabled (`isToolSearchEnabled()`), also enqueues a platform-scoped tool-search reindex (`{ type: 'platform', platformId }`) fire-and-forget so the new piece's actions/triggers become searchable; no-op when the flag is off.
 
 ### `pieceSyncService`
-- `sync({ publishCacheRefresh })` — reads bundled piece registry file, upserts official piece metadata records, optionally publishes cache refresh event
+- `sync({ publishCacheRefresh })` — reads bundled piece registry file, upserts official piece metadata records, optionally publishes cache refresh event. When pieces were added or deleted and tool-search is enabled (`isToolSearchEnabled()`), also enqueues a global tool-search reindex (`{ type: 'all' }`) fire-and-forget; no-op when the flag is off.

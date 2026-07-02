@@ -1,6 +1,7 @@
 import { supabaseAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { createClient } from '@supabase/supabase-js';
+import { uploadFileActionOutputSchema } from '../output-schemas';
 
 export const uploadFile = createAction({
   auth: supabaseAuth,
@@ -23,6 +24,7 @@ export const uploadFile = createAction({
       required: true,
     }),
   },
+  outputSchema: uploadFileActionOutputSchema,
   async run(context) {
     const { url, apiKey } = context.auth.props;
     const { file, filePath, bucket } = context.propsValue;

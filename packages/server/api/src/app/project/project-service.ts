@@ -5,6 +5,7 @@ import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder
 import { userService } from '../user/user-service'
 import { projectHooks, ProjectPostCreateContext } from './project-hooks'
 import { projectRepo } from './project-repo'
+import { projectWorkerGroupService } from './project-worker-group.service'
 
 export { projectRepo }
 
@@ -71,6 +72,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('metadata', request.metadata),
             ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
+            ...(request.workerGroupId !== undefined ? { workerGroupId: request.workerGroupId } : {}),
         }
 
         const teamUpdate = request.type === ProjectType.TEAM ? {
@@ -79,6 +81,9 @@ export const projectService = (log: FastifyBaseLogger) => ({
         } : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
+        if (request.workerGroupId !== undefined) {
+            await projectWorkerGroupService(log).invalidate({ projectId })
+        }
         return this.getOneOrThrow(projectId)
     },
 
@@ -263,6 +268,7 @@ type UpdateTeamProjectParams = {
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null
+    workerGroupId?: string | null
     icon?: ProjectIcon
 }
 
@@ -273,6 +279,7 @@ type UpdatePersonalProjectParams = {
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null
+    workerGroupId?: string | null
 }
 
 type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams

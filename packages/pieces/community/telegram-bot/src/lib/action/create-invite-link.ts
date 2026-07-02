@@ -2,6 +2,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { telegramBotAuth } from '../..';
 import { telegramCommons } from '../common';
+import { createInviteLinkActionOutputSchema } from '../output-schemas';
 
 export const telegramCreateInviteLinkAction = createAction({
   auth: telegramBotAuth,
@@ -37,6 +38,7 @@ export const telegramCreateInviteLinkAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: createInviteLinkActionOutputSchema,
   async run(ctx) {
     const response = await httpClient.sendRequest<never>({
       method: HttpMethod.POST,

@@ -15,6 +15,7 @@ export enum SystemJobName {
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
     FLOW_RUN_TRACKING = 'flow-run-tracking',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
+    TOOL_SEARCH_REINDEX = 'tool-search-reindex',
     BUNDLE_PIECE = 'bundle-piece',
     CHAT_STALE_SWEEP = 'chat-stale-sweep',
 }
@@ -52,6 +53,12 @@ type ResumeDelayWaitpointSystemJobData = {
     waitpointId: string
 }
 
+// Scope shape kept inline (structurally equal to tool-search's ReindexScope) so this generic
+// job framework does not depend on the tool-search feature module.
+type ToolSearchReindexSystemJobData = {
+    scope: { type: 'all' } | { type: 'platform', platformId: PlatformId }
+}
+
 type SystemJobDataMap = {
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
@@ -64,6 +71,7 @@ type SystemJobDataMap = {
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
     [SystemJobName.FLOW_RUN_TRACKING]: Record<string, never>
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
+    [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
     [SystemJobName.BUNDLE_PIECE]: BundlePieceSystemJobData
     [SystemJobName.CHAT_STALE_SWEEP]: Record<string, never>
 }

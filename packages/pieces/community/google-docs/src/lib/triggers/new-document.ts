@@ -6,6 +6,7 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { folderIdProp } from '../common/props';
+import { newDocumentTriggerOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
 import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 
@@ -75,6 +76,7 @@ export const newDocumentTrigger = createTrigger({
 	props: {
 		folderId: folderIdProp,
 	},
+	outputSchema: newDocumentTriggerOutputSchema,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {
 			auth: context.auth,

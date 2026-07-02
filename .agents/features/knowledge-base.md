@@ -27,6 +27,9 @@ Knowledge base requires the PostgreSQL `vector` extension. It is **not** created
 - **Frontend gate** — the `PGVECTOR_AVAILABLE` flag (`ApFlagId`, computed in `flag.service.ts` from `isVectorExtensionInstalled()`) drives the UI: `KnowledgeBaseSection` renders `null` (hides entirely) when the flag is `false`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **KnowledgeBaseFile** — a record linking a project, a stored file (in the `file` table), and a display name
 - **KnowledgeBaseChunk** — a text segment extracted from a file; optionally has a 768-dim vector embedding
 - **chunkIndex** — 0-based position of the chunk within its source file

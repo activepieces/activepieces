@@ -393,3 +393,4 @@ export { CHAT_ALLOWED_MIME_TYPES }
 
 export { chatToolClassification } from './tool-classification'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
+export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'

@@ -18,6 +18,9 @@ A Platform is the top-level tenant namespace in Activepieces. Every installation
 All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, `ssoEnabled`, `agentsEnabled`) control which capabilities are active. Community edition uses `OPEN_SOURCE_PLAN` with all booleans set to their CE defaults. `usage` is only populated on non-Community editions.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Platform** — tenant root; owns branding, auth config, piece filters
 - **PlatformPlan** — separate record (in EE module) storing feature flags, limits, Stripe subscription state
 - **FilteredPieceBehavior** — `ALLOWED` (allowlist) or `BLOCKED` (blocklist) applied to `filteredPieceNames`
@@ -55,7 +58,7 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 
 | Method | Path | Security | Description |
 |---|---|---|---|
-| GET | `/v1/platforms/:id` | publicPlatform (USER, SERVICE) | Get platform with plan and usage (sensitive SSO data stripped) |
+| GET | `/v1/platforms/:id` | publicPlatform (USER, SERVICE) | Get platform with plan and usage (sensitive SSO data stripped). For USER principals, `plan.chatEnabled` is rewritten to the **effective per-user** chat visibility (`chatVisibilityHelper.resolveChatEnabledForUser` — edition + embed + cloud rollout/grandfather), and `licenseKey` is nulled for embedded users |
 | POST | `/v1/platforms/:id` | platformAdminOnly (USER) | Update branding, auth settings, piece filters |
 | DELETE | `/v1/platforms/:id` | platformAdminOnly (USER) | Cloud only: mark projects for deletion and schedule hard delete |
 | GET | `/v1/platforms/assets/:id` | public | Download a platform asset (logo/favicon) by file ID |
