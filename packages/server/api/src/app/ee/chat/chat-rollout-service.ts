@@ -52,18 +52,47 @@ export const chatRolloutService = {
         return !isNil(row) && !isNil(row.chattedAt)
     },
 
-    async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
+    async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<{ firstChat: boolean }> {
         if (!isCloud()) {
-            return
+            return { firstChat: false }
         }
-        await rolloutRepo().query(
+        // Use INSERT ... ON CONFLICT and rely on xmax to determine if it was an insert or update
+        // xmax = 0 means the row was inserted, xmax != 0 means it was updated (existed before)
+        const result = await rolloutRepo().query(
             `INSERT INTO "chat_rollout_user" ("id", "userId", "platformId", "landedAt", "chattedAt")
              VALUES ($1, $2, $3, now(), now())
              ON CONFLICT ("userId") DO UPDATE
              SET "chattedAt" = COALESCE("chat_rollout_user"."chattedAt", now()),
                  "landedAt" = COALESCE("chat_rollout_user"."landedAt", now()),
-                 "updated" = now()`,
+                 "updated" = now()
+             RETURNING xmax`,
             [apId(), userId, platformId],
+        )
+        // xmax = 0 indicates a fresh insert (first chat)
+        const xmax = result[0]?.xmax
+        return { firstChat: xmax === '0' || xmax === 0 }
+    },
+
+    async claimFreeCreditGrant({ userId, platformId }: { userId: string, platformId: string }): Promise<boolean> {
+        if (!isCloud()) return false
+        // Atomic claim: UPDATE only if grantedFreeCreditAt is NULL
+        const result = await rolloutRepo().query(
+            `UPDATE "chat_rollout_user" 
+             SET "grantedFreeCreditAt" = now(), "updated" = now()
+             WHERE "userId" = $1 AND "platformId" = $2 AND "grantedFreeCreditAt" IS NULL`,
+            [userId, platformId],
+        )
+        // pg driver returns [rows, rowCount] - result[1] is the number of updated rows
+        return result[1] > 0
+    },
+
+    async releaseFreeCreditGrant({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
+        if (!isCloud()) return
+        await rolloutRepo().query(
+            `UPDATE "chat_rollout_user"
+             SET "grantedFreeCreditAt" = NULL, "updated" = now()
+             WHERE "userId" = $1 AND "platformId" = $2`,
+            [userId, platformId],
         )
     },
 }

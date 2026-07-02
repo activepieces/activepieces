@@ -1,19 +1,22 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
 import { findConnectionsForPiece } from './tools/chat-tools'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { isNotOneOfTheseEditions } from '../../database/database-common'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
@@ -87,7 +90,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
 
         // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
-        rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
+        const { firstChat } = await chatRolloutService.recordChatted({ userId, platformId })
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -114,6 +117,24 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 status: ChatConversationStatus.IDLE,
             })
             await chatApprovalGate.clearPendingGate({ conversationId })
+        }
+
+        // Free-tier cloud users get a one-time $10 credit grant on their first chat
+        if (firstChat && !isNotOneOfTheseEditions([ApEdition.CLOUD])) {
+            const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+            if (isNil(plan.licenseKey)) {
+                const freeCreditUsd = system.getNumber(AppSystemProp.CLOUD_CHAT_FREE_CREDIT_USD) ?? 10
+                const claimed = await chatRolloutService.claimFreeCreditGrant({ userId, platformId })
+                if (claimed) {
+                    const { error } = await tryCatch(
+                        platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: freeCreditUsd }),
+                    )
+                    if (!isNil(error)) {
+                        await chatRolloutService.releaseFreeCreditGrant({ userId, platformId })
+                        log.error({ error }, '[chatController] Failed to grant free chat credits')
+                    }
+                }
+            }
         }
 
         await assertAiCreditsNotExhausted({ platformId, log })
