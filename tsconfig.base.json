@@ -1000,6 +1000,9 @@
       "@activepieces/piece-placid": [
         "packages/pieces/community/placid/src/index.ts"
       ],
+      "@activepieces/piece-plivo": [
+        "packages/pieces/community/plivo/src/index.ts"
+      ],
       "@activepieces/piece-podio": [
         "packages/pieces/community/podio/src/index.ts"
       ],
