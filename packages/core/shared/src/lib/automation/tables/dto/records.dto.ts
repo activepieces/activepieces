@@ -1,5 +1,6 @@
 import { Cursor, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { TableColorSchema } from '../table-color'
 
 const coerceToString = z.preprocess(
     (v) => (v === null || v === undefined ? v : String(v)),
@@ -26,6 +27,21 @@ export const UpdateRecordRequest = z.object({
 })
 
 export type UpdateRecordRequest = z.infer<typeof UpdateRecordRequest>
+
+export const SetRecordColorsRequest = z.object({
+    tableId: z.string(),
+    records: z.array(z.object({
+        recordId: z.string(),
+        color: TableColorSchema.nullable(),
+    })).optional(),
+    cells: z.array(z.object({
+        recordId: z.string(),
+        fieldId: z.string(),
+        color: TableColorSchema.nullable(),
+    })).optional(),
+})
+
+export type SetRecordColorsRequest = z.infer<typeof SetRecordColorsRequest>
 
 
 export enum FilterOperator {
@@ -80,4 +96,11 @@ export const DeleteRecordsRequest = z.object({
 })
 
 export type DeleteRecordsRequest = z.infer<typeof DeleteRecordsRequest>
+
+export const RestoreRecordsRequest = z.object({
+    tableId: z.string(),
+    ids: z.array(z.string()),
+})
+
+export type RestoreRecordsRequest = z.infer<typeof RestoreRecordsRequest>
 

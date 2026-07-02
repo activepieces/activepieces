@@ -3,12 +3,16 @@ import {
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
+  ChatMention,
+  type ChatMessageSource,
   ConnectionOption,
   CreateChatConversationRequest,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
+
+import { ActiveChatContext } from './chat-types';
 
 async function createConversation(
   request: CreateChatConversationRequest,
@@ -57,15 +61,21 @@ async function sendMessage({
   content,
   runId,
   files,
+  activeContext,
+  mentions,
+  source,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
+  activeContext?: ActiveChatContext;
+  mentions?: ChatMention[];
+  source?: ChatMessageSource;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/chat/conversations/${conversationId}/messages`,
-    { content, runId, files },
+    { content, runId, files, activeContext, mentions, source },
   );
 }
 
@@ -91,12 +101,15 @@ async function cancelConversation(conversationId: string): Promise<void> {
 async function getPickerConnections({
   conversationId,
   pieceName,
+  displayName,
 }: {
   conversationId: string;
   pieceName: string;
-}): Promise<ConnectionOption[]> {
+  displayName?: string;
+}): Promise<PickerResolution> {
   return api.get(`/v1/chat/conversations/${conversationId}/connections`, {
     pieceName,
+    ...(displayName ? { displayName } : {}),
   });
 }
 
@@ -126,4 +139,11 @@ export const chatApi = {
   getPickerConnections,
   getPendingGate,
   recordLanding,
+};
+
+export type PickerResolution = {
+  resolvedPieceName: string | null;
+  resolvedDisplayName: string | null;
+  connections: ConnectionOption[];
+  fallback: boolean;
 };

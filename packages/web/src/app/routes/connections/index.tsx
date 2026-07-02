@@ -22,6 +22,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
+import { useReportConnectionsExcerpt } from '@/app/routes/connections/use-report-connections-excerpt';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
@@ -121,6 +122,11 @@ function AppConnectionsPage() {
       previous: connections.previous,
     };
   }, [connections, location.search]);
+
+  useReportConnectionsExcerpt({
+    connections: filteredData?.data,
+    total: filteredData?.data?.length,
+  });
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -239,6 +245,7 @@ function AppConnectionsPage() {
       {
         accessorKey: 'updated',
         size: 150,
+        meta: { responsivePriority: 'tertiary' },
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -257,6 +264,7 @@ function AppConnectionsPage() {
       {
         accessorKey: 'flowCount',
         size: 80,
+        meta: { responsivePriority: 'secondary' },
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}

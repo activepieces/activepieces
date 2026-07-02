@@ -2,6 +2,8 @@ import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2 } from 'lucide-react';
 
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -11,31 +13,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 type RoleConfig<T = string> = {
   value: T;
   label: string;
   description: string;
+  badge?: string;
 };
 
 const PLATFORM_ROLES: RoleConfig<PlatformRole>[] = [
   {
-    value: PlatformRole.ADMIN,
-    label: t('Admin'),
-    description: t('Full access to all projects and platform settings'),
-  },
-  {
     value: PlatformRole.OPERATOR,
     label: t('Operator'),
     description: t(
-      'Access and edit flows in all projects, no platform settings',
+      'Builds and edits flows in every project. No platform settings or people management.',
+    ),
+    badge: t('Most common'),
+  },
+  {
+    value: PlatformRole.ADMIN,
+    label: t('Admin'),
+    description: t(
+      'Full control of the workspace, all projects, and platform settings.',
     ),
   },
   {
     value: PlatformRole.MEMBER,
     label: t('Member'),
     description: t(
-      "Access to personal project and any team projects they're invited to",
+      'Starts with their own private project. Add them to shared projects to collaborate.',
     ),
   },
 ];
@@ -171,4 +178,76 @@ export const RoleDropdown = ({
       </SelectContent>
     </Select>
   );
+};
+
+interface AccessLevelCardsProps {
+  value: string;
+  onValueChange: (value: string) => void;
+  disabled?: boolean;
+}
+
+export const AccessLevelCards = ({
+  value,
+  onValueChange,
+  disabled = false,
+}: AccessLevelCardsProps) => {
+  return (
+    <RadioGroup
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+      className="grid gap-2"
+    >
+      {PLATFORM_ROLES.map((role) => {
+        const isSelected = role.value === value;
+        return (
+          <Label
+            key={role.value}
+            htmlFor={`access-${role.value}`}
+            className={cn(
+              'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
+              isSelected
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:bg-muted/50',
+            )}
+          >
+            <RadioGroupItem
+              id={`access-${role.value}`}
+              value={role.value}
+              className="mt-0.5"
+            />
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{t(role.label)}</span>
+                {role.badge && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                    {t(role.badge)}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {t(role.description)}
+              </span>
+            </div>
+          </Label>
+        );
+      })}
+    </RadioGroup>
+  );
+};
+
+const PLATFORM_ROLE_PREVIEWS: Record<PlatformRole, string> = {
+  [PlatformRole.ADMIN]: t(
+    "They'll be able to manage all projects and platform settings.",
+  ),
+  [PlatformRole.OPERATOR]: t(
+    "They'll be able to build and edit flows in all projects.",
+  ),
+  [PlatformRole.MEMBER]: t(
+    "They'll start in their own private project. Add them to shared projects to collaborate.",
+  ),
+};
+
+export const getPlatformRolePreview = (role: PlatformRole): string => {
+  return PLATFORM_ROLE_PREVIEWS[role] ?? '';
 };

@@ -2,20 +2,22 @@ import { isNil, Permission } from '@activepieces/core-utils'
 import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
 import { resolveFieldNamesForTable, resolveInternalTableId, tableNotFoundError } from './table-utils'
 
 const insertRecordsInput = z.object({
     tableId: z.string().describe('The table ID (the "id" from ap_list_tables; the externalId is also accepted)'),
-    records: z.array(z.record(z.string(), z.string())).min(1).max(50).describe('Array of records (1–50). Each record maps field names to values. Example: [{"Name": "Alice", "Age": "30"}]'),
+    records: z.array(z.record(z.string(), z.string())).min(1).max(250).describe('Array of records (1–250 per call). Each record maps field names to values. Example: [{"Name": "Alice", "Age": "30"}]'),
 })
 
 export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_insert_records',
         permission: Permission.WRITE_TABLE,
-        description: 'Insert one or more records into a table. Max 50 records per call.',
+        description: 'Bulk-insert rows into an Activepieces Table — pass an array of records (1–250 per call; call again for the next batch). For a large job, generate the array with ap_run_code first, then insert in full batches of up to 250; the result reports the running table total so you can verify how many rows actually landed (never claim a count you did not read back). Tables hold up to 10,000 rows. This is the ONLY way to add table rows: never use ap_run_code or fetch() to write a table.',
         inputSchema: insertRecordsInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -47,10 +49,13 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     fields,
                 })
 
+                const total = await recordService.count({ projectId: mcp.projectId, tableId: resolvedTableId })
+                const maxRows = system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)
+
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Inserted ${result.length} record(s). IDs: ${result.map(r => r.id).join(', ')}`,
+                        text: `✅ Inserted ${result.length} record(s). Table now holds ${total} of ${maxRows} max rows. IDs: ${result.map(r => r.id).join(', ')}`,
                     }],
                 }
             }

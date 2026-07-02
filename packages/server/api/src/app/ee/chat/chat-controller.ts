@@ -1,5 +1,5 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, normalizePieceName, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -8,13 +8,11 @@ import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
-import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
-import { chatAnalyticsTelemetry } from './chat-sync-job'
-import { findConnectionsForPiece } from './tools/chat-tools'
+import { chatPrompt } from './prompt/chat-prompt'
+import { resolvePickerConnections } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
@@ -72,19 +70,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
-        // Cloud rollout: record that this user opened the chat page, then refresh the console
-        // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
-        await chatRolloutService.recordLanding({
-            userId: request.principal.id,
-            platformId: request.principal.platform.id,
-        })
-        chatAnalyticsTelemetry(request.log).sendRolloutFunnelUpdate()
-        return reply.status(StatusCodes.NO_CONTENT).send()
-    })
-
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
-        const { content, runId: clientRunId, files } = request.body
+        const { content, runId: clientRunId, files, activeContext, mentions, source } = request.body
         const conversationId = request.params.id
         const userId = request.principal.id
         const platformId = request.principal.platform.id
@@ -98,36 +85,14 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
-        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
-        // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
-        // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
-        // Awaited before the credit check below so the managed key is created (and topped up) once.
-        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
-        if (needsCreditDecision) {
-            await maybeGrantFreeChatCredits({ platformId, userId, log })
-        }
-        // Refresh the console rollout funnel snapshot (chatted count just changed).
-        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
-
-        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
-        const runLog = log.child({ run: { id: runId } })
-
-        // Claim ownership atomically in the DB — the single source of truth that
-        // saveChatMessages/updateChatProgress/heartbeat fence against. A late write from the
-        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
-        // with no Redis/DB split to race through. The prior owner is read from the same row.
-        const preemptedRunId = conversation.status === ChatConversationStatus.STREAMING
-            ? conversation.activeRunId
-            : null
-        await chatHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
-
         if (conversation.status === ChatConversationStatus.STREAMING) {
-            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[chatController] Cancelling in-flight run before new message')
+            const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+            log.info({ ...spreadIfDefined('preemptedRunId', activeRunId ?? undefined) }, '[chatController] Cancelling in-flight run before new message')
             const cancelPromises = [
                 chatApprovalGate.requestCancel({ conversationId }),
             ]
-            if (preemptedRunId) {
-                cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
+            if (activeRunId) {
+                cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
             }
             await Promise.all(cancelPromises)
             await chatHelpers.conversationRepo().update(conversationId, {
@@ -138,6 +103,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         await assertAiCreditsNotExhausted({ platformId, log })
 
+        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
+        const runLog = log.child({ run: { id: runId } })
+        await chatApprovalGate.storeActiveRunId({ conversationId, runId })
         await jobQueue(runLog).add({
             id: apId(),
             type: JobType.ONE_TIME,
@@ -152,6 +120,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 userMessage: content,
                 modelName: conversation.modelName ?? null,
                 files,
+                activeContext,
+                mentions,
+                source,
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
@@ -175,8 +146,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
         const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
-        const conversation = await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        const activeRunId = conversation.activeRunId
+        await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
         log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[chatController] Cancel requested')
         const cancelPromises = [
             chatApprovalGate.requestCancel({ conversationId }),
@@ -211,45 +182,32 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const userId = request.principal.id
         await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const pieceName = request.query.pieceName
+        const displayName = request.query.displayName
         const cached = await chatApprovalGate.getAvailableConnections({ conversationId, pieceName })
         if (cached.length > 0) {
-            return reply.status(StatusCodes.OK).send(cached)
+            return reply.status(StatusCodes.OK).send({
+                resolvedPieceName: normalizePieceName(pieceName),
+                resolvedDisplayName: displayName ?? null,
+                connections: cached,
+                fallback: false,
+            })
         }
         const projects = await chatHelpers.getUserProjects({ platformId, userId, log: request.log })
-        const result = await findConnectionsForPiece({ pieceName, projects, platformId, log: request.log })
-        if ('pickConnection' in result) {
-            await chatApprovalGate.storeAvailableConnections({ conversationId, pieceName, connections: result.connections })
-            return reply.status(StatusCodes.OK).send(result.connections)
+        const resolution = await resolvePickerConnections({ pieceHint: pieceName, displayNameHint: displayName, projects, platformId, log: request.log })
+        if (!resolution.fallback && resolution.connections.length > 0) {
+            await chatApprovalGate.storeAvailableConnections({ conversationId, pieceName, connections: resolution.connections })
         }
-        return reply.status(StatusCodes.OK).send([])
+        return reply.status(StatusCodes.OK).send(resolution)
     })
 
-}
-
-const FREE_CHAT_CREDIT_USD = 10
-
-async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
-    // Claim first so the decision is settled exactly once across concurrent messages and paid users
-    // stop re-checking after this point (needsCreditDecision becomes false). A losing/duplicate
-    // caller exits immediately.
-    const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
-    if (!claimed) {
-        return
-    }
-    // Everything after the claim is best-effort and must never fail the user's message. Any error —
-    // the plan lookup or the top-up — rolls the claim back so a later message retries
-    // (needsCreditDecision goes true again). Paid platforms (license key) keep the claim with no
-    // grant owed, so they stop re-checking.
-    const { error } = await tryCatch(async () => {
-        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (isNil(plan.licenseKey)) {
-            await platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD })
-        }
+    // Authored prompt + guide text that shapes the agent, for the dev-only harness console.
+    // Session-authed (unlike /eval/prompt-sources which is API-key gated) so the web app can
+    // read it with its normal bearer token. The static tool/guide/pipeline metadata is bundled
+    // client-side from @activepieces/shared, so this only serves the markdown sources.
+    app.get('/harness', GetHarnessRoute, async (_request, reply) => {
+        return reply.status(StatusCodes.OK).send(chatPrompt.sources)
     })
-    if (!isNil(error)) {
-        await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
-        log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
-    }
+
 }
 
 async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
@@ -354,16 +312,6 @@ const SendMessageRoute = {
     },
 }
 
-const FunnelLandingRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['chat'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-    },
-}
-
 const ToolApprovalRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
@@ -387,6 +335,16 @@ const GetPendingGateRoute = {
     },
 }
 
+const GetHarnessRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
+
 const GetPickerConnectionsRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
@@ -395,7 +353,7 @@ const GetPickerConnectionsRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
-        querystring: z.object({ pieceName: z.string() }),
+        querystring: z.object({ pieceName: z.string(), displayName: z.string().optional() }),
     },
 }
 

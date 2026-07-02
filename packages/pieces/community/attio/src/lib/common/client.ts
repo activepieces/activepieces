@@ -59,10 +59,15 @@ export async function attioPaginatedApiCall<T extends HttpMessageBody>({
 	body,
 }: AttioApiCallParams): Promise<T[]> {
 	const limit = 500;
+	// Cap total pages so an unfiltered query (e.g. find_record with no attributes) can't page through
+	// an entire workspace and blow the step-execution timeout — it returns a bounded result instead of
+	// hanging. 20 pages = 10k records, far above any realistic single-step need.
+	const maxPages = 20;
 	let offset = 0;
 
 	const resultData: T[] = [];
 	let hasMoreItems = true;
+	let page = 0;
 
 	do {
 		const qs = {
@@ -84,9 +89,10 @@ export async function attioPaginatedApiCall<T extends HttpMessageBody>({
 		}
 
 		resultData.push(...response.data);
+		page += 1;
 
-		// If fewer than 'limit' items returned, we've reached the last page
-		hasMoreItems = response.data.length === limit;
+		// Stop at the last page (a short page) or once the page cap is reached.
+		hasMoreItems = response.data.length === limit && page < maxPages;
 		offset += limit;
 	} while (hasMoreItems);
 

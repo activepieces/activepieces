@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { PlusIcon } from '@/components/icons/plus';
+import { SquarePenIcon } from '@/components/icons/square-pen';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -55,12 +55,6 @@ export function ChatWithAIPage() {
     () => localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY) === 'true',
   );
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    // Record the chat-page landing for the cloud rollout funnel (server is cloud-gated; no-op otherwise).
-    chatApi.recordLanding().catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const toggleSidebar = useCallback(() => {
     setSidebarPinned((prev) => {
@@ -252,7 +246,7 @@ export function ChatWithAIPage() {
                     className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
                     onClick={handleNewChat}
                   >
-                    <PlusIcon size={16} />
+                    <SquarePenIcon size={16} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="flex items-center gap-2">

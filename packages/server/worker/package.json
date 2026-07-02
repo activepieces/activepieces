@@ -6,7 +6,7 @@
   "typings": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
-    "serve": "cd ../../.. && npx tsx watch --tsconfig packages/server/worker/tsconfig.lib.json packages/server/worker/src/bootstrap.ts",
+    "serve": "cd ../../.. && npx tsx watch --clear-screen=false --exclude 'packages/pieces/**' --exclude 'packages/**/dist/**' --include 'packages/server/worker/src/**' --include 'packages/core/**/src/**' --include 'packages/server/utils/src/**' --include 'packages/pieces/framework/src/**' --include 'packages/pieces/common/src/**' --tsconfig packages/server/worker/tsconfig.lib.json packages/server/worker/src/bootstrap.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },

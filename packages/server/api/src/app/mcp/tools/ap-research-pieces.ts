@@ -73,7 +73,8 @@ function summarizeComponent(c: { name: string, displayName: string, description:
         requiresAuth: c.requireAuth,
         // Tells the model, at selection time, whether an action returns ONE record or MANY — the
         // signal it lacks today (it grabs find_record when it meant to enumerate, then thrashes).
-        cardinality: mcpUtils.classifyActionCardinality(c.name),
+        // Pass description + aiMetadata so a find-one NAME that actually enumerates is classified right.
+        cardinality: mcpUtils.classifyActionCardinality({ actionName: c.name, description: c.description, aiDescription: c.aiMetadata?.description }),
         ...(c.aiMetadata?.description && { aiDescription: c.aiMetadata.description }),
     }
 }

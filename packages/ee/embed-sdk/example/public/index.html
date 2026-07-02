@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Helio — Automations (Activepieces embed showcase)</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <!-- Local SDK bundle (served from dist by server.mjs) so this page tests THIS repo's embed code. -->
+    <script src="/sdk.js"></script>
+  </head>
+  <body>
+    <!-- Fictional SaaS host chrome: "Helio" embeds Activepieces as its automation product. -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">✦</span>
+        <span class="brand-name">Helio</span>
+        <span class="brand-sub">Revenue OS</span>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="workspace-pill" id="workspacePill">Acme Corp Workspace</div>
+      <div class="user-chip" id="userChip">
+        <span class="avatar" id="userAvatar">D</span>
+        <span class="user-meta">
+          <span class="user-name" id="userName">Dana Operator</span>
+          <span class="user-role" id="userRole">ADMIN</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="rail">
+        <a class="rail-item" data-tip="Home">⌂</a>
+        <a class="rail-item" data-tip="Contacts">☺</a>
+        <a class="rail-item" data-tip="Deals">$</a>
+        <a class="rail-item active" data-tip="Automations">⚙</a>
+        <a class="rail-item" data-tip="AI &amp; MCP">✷</a>
+        <a class="rail-item rail-bottom" data-tip="Settings">⚑</a>
+      </nav>
+
+      <main class="stage">
+        <div class="stage-head">
+          <div>
+            <h1>Automations</h1>
+            <p class="muted">Powered by Activepieces — embedded inside the Helio product shell.</p>
+          </div>
+          <div class="stage-status">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">Booting…</span>
+          </div>
+        </div>
+        <!-- The entire Activepieces dashboard + builder renders inside this container. -->
+        <div id="ap-container" class="ap-container"></div>
+      </main>
+
+      <aside class="console" id="console">
+        <div class="console-head">
+          <h2>Embed Dev Console</h2>
+          <p class="muted">Every surface the embed SDK exposes. Toggle, apply, observe.</p>
+        </div>
+
+        <div class="console-scroll">
+          <section class="panel">
+            <h3>1 · Session <span class="badge">configure()</span></h3>
+            <label class="field">
+              <span>Role (re-provisions JWT)</span>
+              <select id="role">
+                <option value="ADMIN">ADMIN</option>
+                <option value="EDITOR">EDITOR</option>
+                <option value="VIEWER">VIEWER</option>
+              </select>
+            </label>
+            <p class="hint" id="tokenHint">JWT minted by the host backend, exchanged for a session inside the iframe.</p>
+          </section>
+
+          <section class="panel">
+            <h3>2 · Appearance <span class="badge">styling</span></h3>
+            <div class="seg" id="modeSeg">
+              <button data-mode="light" class="active">Light</button>
+              <button data-mode="dark">Dark</button>
+            </div>
+            <label class="field">
+              <span>Font family</span>
+              <input id="fontFamily" type="text" placeholder="e.g. Inter" />
+            </label>
+            <label class="field">
+              <span>Font URL</span>
+              <input id="fontUrl" type="text" placeholder="https://fonts…/inter.css" />
+            </label>
+          </section>
+
+          <section class="panel">
+            <h3>3 · Localization <span class="badge">locale</span></h3>
+            <label class="field">
+              <span>Locale</span>
+              <select id="locale">
+                <option value="en">en — English</option>
+                <option value="de">de — Deutsch</option>
+                <option value="fr">fr — Français</option>
+                <option value="es">es — Español</option>
+                <option value="pt">pt — Português</option>
+                <option value="it">it — Italiano</option>
+                <option value="ja">ja — 日本語</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="panel">
+            <h3>4 · Dashboard <span class="badge">dashboard</span></h3>
+            <label class="check"><input type="checkbox" id="hideSidebar" /> Hide sidebar</label>
+            <label class="check"><input type="checkbox" id="hideFlowsPageNavbar" /> Hide flows page navbar</label>
+            <label class="check"><input type="checkbox" id="hidePageHeader" /> Hide page header</label>
+          </section>
+
+          <section class="panel">
+            <h3>5 · Builder <span class="badge">builder</span></h3>
+            <label class="check"><input type="checkbox" id="disableNavigation" /> Disable navigation in builder</label>
+            <label class="check"><input type="checkbox" id="hideFlowName" /> Hide flow name</label>
+            <div class="seg" id="homeIconSeg">
+              <button data-icon="logo" class="active">Home icon: logo</button>
+              <button data-icon="back">back</button>
+            </div>
+            <label class="check"><input type="checkbox" id="homeHandler" /> Intercept home button (homeButtonClickedHandler)</label>
+          </section>
+
+          <section class="panel">
+            <h3>6 · Flows &amp; folders</h3>
+            <label class="check"><input type="checkbox" id="hideExportAndImportFlow" /> Hide export / import flow</label>
+            <label class="check"><input type="checkbox" id="hideDuplicateFlow" /> Hide duplicate flow</label>
+            <label class="check"><input type="checkbox" id="hideFolders" /> Hide folders</label>
+            <label class="check"><input type="checkbox" id="hideTables" /> Hide tables</label>
+          </section>
+
+          <button class="apply" id="applyBtn">⟳ Apply configuration (reloads embed)</button>
+
+          <section class="panel">
+            <h3>7 · Navigate <span class="badge">navigate()</span></h3>
+            <div class="btn-grid">
+              <button class="ghost" data-route="/flows">Flows</button>
+              <button class="ghost" data-route="/runs">Runs</button>
+              <button class="ghost" data-route="/connections">Connections</button>
+              <button class="ghost" data-route="/tables">Tables</button>
+              <button class="ghost" data-route="/todos">Todos</button>
+              <button class="ghost" data-route="/mcp">MCP</button>
+            </div>
+            <div class="inline">
+              <input id="routeInput" type="text" placeholder="/flows/abc123" />
+              <button class="ghost" id="routeGo">Go</button>
+            </div>
+            <p class="hint" id="urlSync">Host URL stays in sync via the navigation handler.</p>
+          </section>
+
+          <section class="panel">
+            <h3>8 · Connections <span class="badge">connect()</span></h3>
+            <label class="field">
+              <span>Piece name</span>
+              <input id="connectPiece" type="text" value="@activepieces/piece-google-sheets" />
+            </label>
+            <label class="field">
+              <span>External connection name (optional)</span>
+              <input id="connectName" type="text" placeholder="acme-google-sheets" />
+            </label>
+            <div class="inline">
+              <button class="ghost" id="connectIframe">Connect (overlay)</button>
+              <button class="ghost" id="connectPopup">Connect (popup)</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h3>9 · MCP <span class="badge">mcp*</span></h3>
+            <div class="btn-grid">
+              <button class="ghost" id="mcpSettings">Open MCP settings</button>
+              <button class="ghost" id="mcpToken">Generate MCP token</button>
+            </div>
+            <div class="inline">
+              <input id="authRequestId" type="text" placeholder="authRequestId from /authorize" />
+              <button class="ghost" id="mcpAuthorize">Authorize</button>
+            </div>
+            <pre class="result" id="mcpResult" hidden></pre>
+          </section>
+
+          <section class="panel">
+            <h3>10 · Server requests <span class="badge">request()</span></h3>
+            <div class="btn-grid">
+              <button class="ghost" id="reqWhoami">GET users/me</button>
+              <button class="ghost" id="reqFlows">GET flows</button>
+            </div>
+            <pre class="result" id="reqResult" hidden></pre>
+          </section>
+
+          <section class="panel log-panel">
+            <h3>Event log <button class="tiny" id="clearLog">clear</button></h3>
+            <div class="log" id="log"></div>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <div class="boot-error" id="bootError" hidden></div>
+    <script src="/app.js"></script>
+  </body>
+</html>

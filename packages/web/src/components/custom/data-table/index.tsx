@@ -7,6 +7,7 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  RowData,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
@@ -42,6 +43,14 @@ import { DataTableFilter, DataTableFilterProps } from './data-table-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 
+declare module '@tanstack/react-table' {
+  // Declaration merging requires identical type-parameter names; they are unused here.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    responsivePriority?: ResponsivePriority;
+  }
+}
+
 export type DataWithId = {
   id?: string;
 };
@@ -59,6 +68,17 @@ type DataTableAction<TData extends DataWithId> = (
 
 type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
   notClickable?: boolean;
+};
+
+// Container-query visibility for secondary columns, set per-column via the standard
+// TanStack `meta.responsivePriority`. The scroll wrapper is marked `@container`, so
+// these collapse against the table's own rendered width (its Stage width) rather than
+// the viewport. `tertiary` drops first, `secondary` next. Static strings so Tailwind
+// v4's JIT emits them. display:none keeps the cell in the DOM, so td cellIndex stays
+// aligned with the `columns` array used by notClickable.
+const RESPONSIVE_HIDE_CLASS: Record<ResponsivePriority, string> = {
+  tertiary: '@max-[64rem]:hidden',
+  secondary: '@max-[48rem]:hidden',
 };
 
 interface DataTableProps<
@@ -319,6 +339,7 @@ export function DataTable<
   return (
     <div
       className={cn(
+        '@container',
         virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
       )}
     >
@@ -326,8 +347,8 @@ export function DataTable<
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
         <DataTableToolbar>
-          <div className="w-full flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="w-full flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               {filters &&
                 filters.map((filter) => (
                   <DataTableFilter
@@ -342,7 +363,7 @@ export function DataTable<
                 ))}
             </div>
             {toolbarButtons && toolbarButtons.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2 ml-auto">
                 {toolbarButtons.map((button, idx) => (
                   <React.Fragment key={idx}>{button}</React.Fragment>
                 ))}
@@ -354,8 +375,8 @@ export function DataTable<
 
       <div
         ref={scrollContainerRef}
-        className={cn('mt-0', {
-          'overflow-hidden': !virtualizeRows,
+        className={cn('@container mt-0', {
+          'overflow-x-auto': !virtualizeRows,
           'flex-1 min-h-0 overflow-auto': virtualizeRows,
         })}
       >
@@ -367,9 +388,15 @@ export function DataTable<
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
                   const size = header.column.columnDef.size;
+                  const responsivePriority =
+                    header.column.columnDef.meta?.responsivePriority;
                   return (
                     <TableHead
                       key={header.id}
+                      className={cn(
+                        responsivePriority &&
+                          RESPONSIVE_HIDE_CLASS[responsivePriority],
+                      )}
                       style={
                         size
                           ? { width: size, minWidth: size, maxWidth: size }
@@ -454,9 +481,15 @@ export function DataTable<
                       >
                         {row.getVisibleCells().map((cell) => {
                           const size = cell.column.columnDef.size;
+                          const responsivePriority =
+                            cell.column.columnDef.meta?.responsivePriority;
                           return (
                             <TableCell
                               key={cell.id}
+                              className={cn(
+                                responsivePriority &&
+                                  RESPONSIVE_HIDE_CLASS[responsivePriority],
+                              )}
                               style={
                                 size
                                   ? {
@@ -547,9 +580,15 @@ export function DataTable<
                   >
                     {row.getVisibleCells().map((cell) => {
                       const size = cell.column.columnDef.size;
+                      const responsivePriority =
+                        cell.column.columnDef.meta?.responsivePriority;
                       return (
                         <TableCell
                           key={cell.id}
+                          className={cn(
+                            responsivePriority &&
+                              RESPONSIVE_HIDE_CLASS[responsivePriority],
+                          )}
                           style={
                             size
                               ? {
@@ -612,9 +651,11 @@ export function DataTable<
         </Table>
       </div>
       {!hidePagination && !virtualizeRows && (
-        <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 px-2 py-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">{t('Rows per page')}</span>
+            <span className="text-muted-foreground @max-[28rem]:hidden">
+              {t('Rows per page')}
+            </span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
@@ -688,3 +729,5 @@ export function DataTable<
     </div>
   );
 }
+
+export type ResponsivePriority = 'secondary' | 'tertiary';

@@ -181,6 +181,15 @@
         "*.jsx"
       ],
       "rules": {}
+    },
+    {
+      "files": [
+        "src/**/*.ts",
+        "src/**/*.tsx"
+      ],
+      "rules": {
+        "testing-library/no-debugging-utils": "off"
+      }
     }
   ]
 }

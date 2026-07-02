@@ -77,6 +77,9 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const exampleInput = mcpUtils.buildExampleInput(props)
 
                 const aiMetadata = component.aiMetadata
+                const cardinality = type === 'action'
+                    ? mcpUtils.classifyActionCardinality({ actionName: component.name, description: component.description, aiDescription: aiMetadata?.description })
+                    : 'other'
                 const declaredOutputFields = component.outputSchema?.fields
                     ? mcpUtils.flattenOutputSchemaFields(component.outputSchema.fields)
                     : []
@@ -101,7 +104,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     displayName: component.displayName,
                     description: component.description,
                     requiresAuth,
-                    cardinality: mcpUtils.classifyActionCardinality(component.name),
+                    cardinality,
                     ...spreadIfDefined('expertNotes', pieceExpertise.getNotes({ pieceName: normalized, actionName: component.name })),
                     ...(aiMetadata && { aiMetadata }),
                     ...(component.outputSchema && { outputSchema: component.outputSchema }),
@@ -116,6 +119,11 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const idempotentLine = typeof aiMetadata?.idempotent === 'boolean'
                     ? `Idempotent: ${aiMetadata.idempotent}\n`
                     : ''
+                const returnsLine = cardinality === 'enumerate'
+                    ? 'Returns: a LIST of records — use this for "list / all / every / how many" requests. Leave optional filters empty to get everything, or pass a filter to narrow.\n'
+                    : cardinality === 'single'
+                        ? 'Returns: a SINGLE record — use this when you have an id or a uniquely-identifying value, NOT to enumerate many.\n'
+                        : ''
                 const outputHeader = outputFieldsSource === 'declared'
                     ? '📤 Output fields this step produces'
                     : '📤 Output fields (from this trigger\'s sample data)'
@@ -127,7 +135,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     : '\nNo required inputs.'
                 const exampleSection = `\n\n🧪 Example input (fill the placeholders, then pass to ap_execute_action):\n${JSON.stringify(exampleInput, null, 2)}`
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}${aiHintLine}${idempotentLine}${requiredLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}${exampleSection}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}${aiHintLine}${idempotentLine}${returnsLine}${requiredLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}${exampleSection}` }],
                     structuredContent: structured,
                 }
             }

@@ -4,6 +4,17 @@ A gate for the AI Copilot chat **system prompt**. It runs fixtures live against 
 
 Promotion to production stays a **manual PR** — this tool only tells you whether to make it.
 
+## Two tiers + the invariants registry
+
+The behaviors and guarantees we don't want to regress are catalogued in [`INVARIANTS.md`](./INVARIANTS.md) — each row links to the test that pins it. There are two gates:
+
+| Tier | Command | Model? | Run it when |
+|---|---|---|---|
+| **Backend invariants** (deterministic) | `npm run chat:quality` | no | **every** chat change |
+| **Agent behavior** (this harness) | `npm run chat-evals:ci` | yes (OpenRouter) | you touched the **system prompt** or agent behavior |
+
+`chat:quality` runs the deterministic chat backend tests (phases, classification, MCP client, approval gate, history hygiene, loop logic, streaming) across packages — fast, no key. This harness (`chat-evals*`) is the agent-behavior gate below. When you add a behavior, add a fixture here **and** a row in `INVARIANTS.md`; when you add a backend guarantee, add a `BE-*` test under a `chat:quality` glob and a row in `INVARIANTS.md`.
+
 ## Run it
 
 ```bash

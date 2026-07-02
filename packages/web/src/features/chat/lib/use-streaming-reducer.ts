@@ -1,10 +1,13 @@
+import { isObject } from '@activepieces/core-utils';
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
+  BrowserViewEvent,
   BuildPlanEvent,
   ChatAgentEventType,
   FileProducedEvent,
   ImageGeneratedEvent,
+  StageOpenEvent,
   ToolProgressEvent,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -28,6 +31,8 @@ export function useStreamingReducer({
   onImageGenerated,
   onFileProduced,
   onBuildPlan,
+  onStageOpen,
+  onBrowserView,
   onStreamFinished,
   onStreamError,
   onStaleCheck,
@@ -39,6 +44,8 @@ export function useStreamingReducer({
   onImageGenerated: (event: ImageGeneratedEvent) => void;
   onFileProduced: (event: FileProducedEvent) => void;
   onBuildPlan: (event: BuildPlanEvent) => void;
+  onStageOpen: (event: StageOpenEvent) => void;
+  onBrowserView: (event: BrowserViewEvent) => void;
   onStreamFinished: (conversationId: string) => void;
   onStreamError: (params: {
     conversationId: string;
@@ -76,6 +83,10 @@ export function useStreamingReducer({
   onFileProducedRef.current = onFileProduced;
   const onBuildPlanRef = useRef(onBuildPlan);
   onBuildPlanRef.current = onBuildPlan;
+  const onStageOpenRef = useRef(onStageOpen);
+  onStageOpenRef.current = onStageOpen;
+  const onBrowserViewRef = useRef(onBrowserView);
+  onBrowserViewRef.current = onBrowserView;
   const onStreamFinishedRef = useRef(onStreamFinished);
   onStreamFinishedRef.current = onStreamFinished;
   const onStreamErrorRef = useRef(onStreamError);
@@ -289,6 +300,16 @@ export function useStreamingReducer({
         } else if (event.type === ChatAgentEventType.BUILD_PLAN) {
           lastChunkTimeRef.current = Date.now();
           onBuildPlanRef.current(event.data as BuildPlanEvent);
+        } else if (event.type === ChatAgentEventType.STAGE_OPEN) {
+          lastChunkTimeRef.current = Date.now();
+          if (isStageOpenEvent(event.data)) {
+            onStageOpenRef.current(event.data);
+          }
+        } else if (event.type === ChatAgentEventType.BROWSER_VIEW) {
+          lastChunkTimeRef.current = Date.now();
+          if (isBrowserViewEvent(event.data)) {
+            onBrowserViewRef.current(event.data);
+          }
         }
       };
 
@@ -354,6 +375,28 @@ export function useStreamingReducer({
     stopStream,
     clearStreamingState,
   };
+}
+
+function isStageOpenEvent(data: unknown): data is StageOpenEvent {
+  return (
+    isObject(data) &&
+    (data.resourceType === 'flow' ||
+      data.resourceType === 'table' ||
+      data.resourceType === 'run') &&
+    typeof data.resourceId === 'string'
+  );
+}
+
+function isBrowserViewEvent(data: unknown): data is BrowserViewEvent {
+  return (
+    isObject(data) &&
+    typeof data.sessionId === 'string' &&
+    typeof data.liveViewUrl === 'string' &&
+    typeof data.interactive === 'boolean' &&
+    (data.status === 'live' ||
+      data.status === 'idle' ||
+      data.status === 'closed')
+  );
 }
 
 type SocketEvent = {

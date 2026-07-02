@@ -13,10 +13,9 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { PlatformSwitcher } from '@/features/projects';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { determineDefaultRoute } from '@/lib/route-utils';
+import { CHAT_ROUTE } from '@/lib/route-utils';
 
 function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const branding = flagsHooks.useWebsiteBranding();
@@ -44,17 +43,13 @@ export const AppSidebarHeader = () => {
   const showSwitcher = edition === ApEdition.CLOUD && !embedState.isEmbedded;
   const { state } = useSidebar();
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
-  const { checkAccess } = useAuthorization();
-  const defaultRoute = determineDefaultRoute({
-    checkAccess,
-  });
   const branding = flagsHooks.useWebsiteBranding();
 
   if (!showSwitcher) {
     return (
       <SidebarHeader className="pb-0">
         <div className="w-full flex items-center gap-2">
-          <SidebarLogoCollapsed linkTo={defaultRoute} />
+          <SidebarLogoCollapsed linkTo={`${CHAT_ROUTE}?new=1`} />
           {state !== 'collapsed' && (
             <h1 className="truncate text-sm font-medium">
               {branding.websiteName}
@@ -69,7 +64,7 @@ export const AppSidebarHeader = () => {
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem className="flex items-center">
-          <SidebarLogoCollapsed linkTo={defaultRoute} />
+          <SidebarLogoCollapsed linkTo={`${CHAT_ROUTE}?new=1`} />
           {state !== 'collapsed' && (
             <div className="flex-1 min-w-0">
               <PlatformSwitcher>

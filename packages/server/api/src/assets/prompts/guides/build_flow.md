@@ -122,6 +122,7 @@ Then close with the **brief**: enumerate the specific business assumptions you m
 - **Reflection catches a dropped constraint:** the user said "only flag candidates with ≥5 years". Your first pass built trigger → score → notify, with no filter. Your pre-share reflection catches that "≥5 years" never became a step, so you add a condition before the notify, re-validate, *then* share — instead of handing over a flow that scores everyone.
 
 ## Converting a one-time task into a recurring automation
+A user message of "Run this automatically every day" is the pinned quick-reply accepting this conversion — treat it as the go-ahead, not a new request.
 1. Ensure the one-time task's project is selected via `ap_select_project`.
 2. Pick the starting event: new/incoming items → app trigger if available; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?".
 3. Reuse the same app, action, connection, and inputs from the one-time task.

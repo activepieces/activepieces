@@ -32,9 +32,11 @@ export const AutomationsPagination = ({
   const maxPages = Math.max(totalPages, 1);
 
   return (
-    <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 px-2 py-4 text-sm">
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">{t('Rows per page')}</span>
+        <span className="text-muted-foreground @max-[28rem]:hidden">
+          {t('Rows per page')}
+        </span>
         <Select
           value={String(pageSize)}
           onValueChange={(val) => onPageSizeChange(Number(val))}

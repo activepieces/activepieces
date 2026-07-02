@@ -1,8 +1,9 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, PiecePackage, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
+import { distributedStore } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
@@ -12,6 +13,7 @@ import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callba
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
+import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -84,8 +86,23 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             await jobBroker(log).completeJob(input)
         },
 
+        async updateRunProgress(input) {
+            websocketService.to(input.flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, input)
+        },
+
         async uploadRunLog(input) {
             await engineRunCallbackService(log).uploadRunLog({ projectId: input.projectId, request: input })
+        },
+
+        async sendFlowResponse(input) {
+            await pubsub.publish(
+                `engine-run:sync:${input.workerHandlerId}`,
+                JSON.stringify({ requestId: input.httpRequestId, response: input.runResponse }),
+            )
+        },
+
+        async updateStepProgress(input) {
+            websocketService.to(input.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, input)
         },
 
         async submitPayloads(input) {
@@ -241,6 +258,22 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             })
         },
 
+        async getUsedPieces() {
+            const redisKey = `usedPieces:${isNil(assignment) ? 'shared' : `${assignment.scope}:${assignment.id}`}`
+            const pieces = await distributedStore.get<PiecePackage[]>(redisKey)
+            return pieces ?? []
+        },
+
+        async markPieceAsUsed(input) {
+            const redisKey = `usedPieces:${isNil(assignment) ? 'shared' : `${assignment.scope}:${assignment.id}`}`
+            const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
+            const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
+            const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))
+            if (newPieces.length > 0) {
+                await distributedStore.put(redisKey, [...existing, ...newPieces])
+            }
+        },
+
         async disableFlow(input) {
             const { flowId, projectId } = input
             const flow = await flowService(log).getOneOrThrow({ id: flowId, projectId })
@@ -316,3 +349,4 @@ function chatRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runI
         ...spreadIfDefined('user', isNil(ids.userId) ? undefined : { id: ids.userId }),
     })
 }
+

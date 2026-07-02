@@ -179,11 +179,28 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text: chatAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
 }
 
-function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult }: {
+function readResourceId(args: unknown): string | undefined {
+    if (typeof args !== 'object' || args === null) {
+        return undefined
+    }
+    if ('flowId' in args && typeof args.flowId === 'string') {
+        return args.flowId
+    }
+    if ('tableId' in args && typeof args.tableId === 'string') {
+        return args.tableId
+    }
+    return undefined
+}
+
+function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult, onEditResource, mutatingResourceTools }: {
     mcpToolSet: Record<string, unknown>
     brokenConnectors: Set<string>
     getSelectedAuth?: (params: { pieceName: string }) => string | undefined
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
+    onEditResource?: (resourceId: string) => Promise<void>
+    // toolName -> id arg ('tableId' | 'flowId'); supplied by getChatConfig (derived from tool
+    // permissions). Membership = "this tool mutates an openable resource, so announce the AI lock".
+    mutatingResourceTools: Record<string, string>
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
 
@@ -201,6 +218,12 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                 const args = injectSelectedAuth({ name, args: rawArgs, getSelectedAuth })
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
+                }
+                if (onEditResource && name in mutatingResourceTools) {
+                    const resourceId = readResourceId(args)
+                    if (resourceId !== undefined) {
+                        await onEditResource(resourceId)
+                    }
                 }
                 const { data: toolResult, error } = await tryCatch(() => chatWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
@@ -245,4 +268,5 @@ export const chatMcpClient = {
     connect: connectMcpClient,
     withToolTimeouts,
     classifyMcpAuthError,
+    injectSelectedAuth,
 }

@@ -1,5 +1,5 @@
 import { Permission, SeekPage } from '@activepieces/core-utils'
-import { CreateRecordsRequest, DeleteRecordsRequest, ListRecordsRequest, PopulatedRecord, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateRecordRequest } from '@activepieces/shared'
+import { CreateRecordsRequest, DeleteRecordsRequest, ListRecordsRequest, PopulatedRecord, PrincipalType, RestoreRecordsRequest, SERVICE_KEY_SECURITY_OPENAPI, SetRecordColorsRequest, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -56,6 +56,15 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
         }, 'updated')
     })
 
+    fastify.post('/set-colors', SetColorsRequest, async (request, reply) => {
+        const records = await recordService.setColors({
+            tableId: request.body.tableId,
+            projectId: request.projectId,
+            request: request.body,
+        })
+        await reply.status(StatusCodes.OK).send(records)
+    })
+
     fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
         const deletedRecords = await recordService.delete({
             ids: request.body.ids,
@@ -69,6 +78,22 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             logger: request.log,
             authorization: request.headers.authorization as string,
         }, 'deleted')
+    })
+
+    fastify.post('/restore', RestoreRecordRequest, async (request, reply) => {
+        const restoredRecords = await recordService.restore({
+            ids: request.body.ids,
+            tableId: request.body.tableId,
+            projectId: request.projectId,
+        })
+        await reply.status(StatusCodes.OK).send(restoredRecords)
+        await recordSideEffects(fastify.log).handleRecordsEvent({
+            tableId: request.body.tableId,
+            projectId: request.projectId,
+            records: restoredRecords,
+            logger: request.log,
+            authorization: request.headers.authorization as string,
+        }, 'created')
     })
 
     fastify.get('/', ListRequest, async (request) => {
@@ -159,6 +184,52 @@ const DeleteRecordRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete records',
         body: DeleteRecordsRequest,
+        response: {
+            [StatusCodes.OK]: z.array(PopulatedRecord),
+        },
+    },
+}
+
+const SetColorsRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
+        }),
+    },
+    schema: {
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Set background colors for records (rows) and cells',
+        body: SetRecordColorsRequest,
+        response: {
+            [StatusCodes.OK]: z.array(PopulatedRecord),
+        },
+    },
+}
+
+const RestoreRecordRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
+        }),
+    },
+    schema: {
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Restore previously deleted records',
+        body: RestoreRecordsRequest,
         response: {
             [StatusCodes.OK]: z.array(PopulatedRecord),
         },

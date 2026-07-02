@@ -1,5 +1,6 @@
 import { BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { UiPreferences } from '../authentication/user-identity'
 import { UserBadge } from './badges'
 
 export enum PlatformRole {
@@ -56,6 +57,7 @@ export const UserWithMetaInformation = z.object({
     updated: DateOrString,
     lastActiveDate: Nullable(DateOrString),
     imageUrl: Nullable(z.string()),
+    uiPreferences: Nullable(UiPreferences),
 })
 
 export type UserWithMetaInformation = z.infer<typeof UserWithMetaInformation>
@@ -82,6 +84,14 @@ export const UpdateMeRequestBody = z.object({
 })
 
 export type UpdateMeRequestBody = z.infer<typeof UpdateMeRequestBody>
+
+export const UpdateUiPreferencesRequestBody = z.object({
+    uiPreferences: UiPreferences,
+})
+
+export type UpdateUiPreferencesRequestBody = z.infer<
+    typeof UpdateUiPreferencesRequestBody
+>
 
 export const UpdateMeResponse = z.object({
     email: z.string(),

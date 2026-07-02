@@ -195,6 +195,59 @@ describe('buildMessageBlocks — one accordion per segment', () => {
     expect(blocks[0].steps.filter((s) => s.kind === 'tool')).toHaveLength(2);
   });
 
+  it('renders ap_open_in_stage as a stage-open chip, not a thinking step or card', () => {
+    const blocks = buildMessageBlocks({
+      parts: [
+        status('Finding your leads table', 's1'),
+        tool({ name: 'ap_list_tables', id: 'list' }),
+        tool({
+          name: 'ap_open_in_stage',
+          id: 'open',
+          input: {
+            resourceType: 'table',
+            resourceId: 'tbl_123',
+            displayName: 'Leads',
+          },
+        }),
+      ],
+      isStreaming: false,
+      toolCallMeta: {},
+      claimedBuildIds: new Set(),
+    }).blocks;
+
+    expect(blocks.map((b) => b.kind)).toEqual(['thinking', 'stage-open']);
+    // the open does NOT appear as a tool step in the accordion
+    if (blocks[0].kind !== 'thinking') throw new Error('expected thinking');
+    expect(blocks[0].steps.filter((s) => s.kind === 'tool')).toHaveLength(1);
+    const chip = blocks[1];
+    if (chip.kind !== 'stage-open') throw new Error('expected stage-open');
+    expect(chip.resourceType).toBe('table');
+    expect(chip.resourceId).toBe('tbl_123');
+    expect(chip.displayName).toBe('Leads');
+  });
+
+  it('ignores an ap_open_in_stage call with an invalid resource type or missing id', () => {
+    const blocks = buildMessageBlocks({
+      parts: [
+        tool({
+          name: 'ap_open_in_stage',
+          id: 'bad-type',
+          input: { resourceType: 'project', resourceId: 'p1' },
+        }),
+        tool({
+          name: 'ap_open_in_stage',
+          id: 'no-id',
+          input: { resourceType: 'flow' },
+        }),
+      ],
+      isStreaming: false,
+      toolCallMeta: {},
+      claimedBuildIds: new Set(),
+    }).blocks;
+
+    expect(blocks.some((b) => b.kind === 'stage-open')).toBe(false);
+  });
+
   it('renders a single write outcome as a lone card, not a group', () => {
     const blocks = buildMessageBlocks({
       parts: [

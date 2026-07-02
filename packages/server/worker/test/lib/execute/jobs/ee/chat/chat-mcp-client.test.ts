@@ -168,3 +168,49 @@ describe('chatMcpClient.withToolTimeouts circuit breaker', () => {
         expect(listRecords.calls()).toBe(1)
     })
 })
+
+const PROPS_TOOL = 'ap_get_piece_props'
+
+describe('chatMcpClient.injectSelectedAuth — authoritative selected connection (BE-07)', () => {
+    it('injects the selected connection externalId for an auth-injectable tool', () => {
+        const args = chatMcpClient.injectSelectedAuth({
+            name: PROPS_TOOL,
+            args: { pieceName: '@activepieces/piece-gmail', actionName: 'send_email' },
+            getSelectedAuth: ({ pieceName }) => (pieceName === '@activepieces/piece-gmail' ? 'conn_gmail' : undefined),
+        })
+        expect(args).toEqual({ pieceName: '@activepieces/piece-gmail', actionName: 'send_email', auth: 'conn_gmail' })
+    })
+
+    it('normalizes the piece name before resolving the selected connection', () => {
+        const seen: string[] = []
+        chatMcpClient.injectSelectedAuth({
+            name: PROPS_TOOL,
+            args: { pieceName: 'gmail' },
+            getSelectedAuth: ({ pieceName }) => { seen.push(pieceName); return undefined },
+        })
+        expect(seen).toEqual(['@activepieces/piece-gmail'])
+    })
+
+    it('does not inject for a tool that is not auth-injectable', () => {
+        const input = { pieceName: '@activepieces/piece-gmail' }
+        const args = chatMcpClient.injectSelectedAuth({ name: 'ap_execute_action', args: input, getSelectedAuth: () => 'conn_gmail' })
+        expect(args).toBe(input)
+    })
+
+    it('returns args unchanged when there is no resolver', () => {
+        const input = { pieceName: '@activepieces/piece-gmail' }
+        expect(chatMcpClient.injectSelectedAuth({ name: PROPS_TOOL, args: input })).toBe(input)
+    })
+
+    it('returns args unchanged when no connection is selected for the piece', () => {
+        const input = { pieceName: '@activepieces/piece-gmail' }
+        const args = chatMcpClient.injectSelectedAuth({ name: PROPS_TOOL, args: input, getSelectedAuth: () => undefined })
+        expect(args).toBe(input)
+    })
+
+    it('does not clobber an auth that already matches the selected connection', () => {
+        const input = { pieceName: '@activepieces/piece-gmail', auth: 'conn_gmail' }
+        const args = chatMcpClient.injectSelectedAuth({ name: PROPS_TOOL, args: input, getSelectedAuth: () => 'conn_gmail' })
+        expect(args).toBe(input)
+    })
+})

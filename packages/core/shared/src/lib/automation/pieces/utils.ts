@@ -24,6 +24,30 @@ export const getPieceNameFromAlias = (alias: string): string => {
 }
 
 /**
+ * Canonicalizes any user/LLM/UI-supplied piece identifier to the exact package name
+ * stored in `app_connection.pieceName` and `piece_metadata.name`. "Attio", "attio",
+ * "Google Sheets", "google_sheets", "piece-attio" and "@activepieces/piece-Attio" all
+ * map to their canonical lowercase package name (e.g. "@activepieces/piece-attio").
+ * Piece package names are always lowercase, so lowercasing is safe and canonical; for
+ * already-scoped names (incl. third-party `@publisher/...`) only the case is normalized
+ * so the scope is preserved. Idempotent.
+ */
+export const normalizePieceName = (pieceName: string): string => {
+    const trimmed = pieceName.trim()
+    if (trimmed.startsWith('@')) {
+        return trimmed.toLowerCase()
+    }
+    const withoutPiecePrefix = trimmed.startsWith('piece-')
+        ? trimmed.slice('piece-'.length)
+        : trimmed
+    const shortName = withoutPiecePrefix
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    return `@activepieces/piece-${shortName}`
+}
+
+/**
  * @param {string} alias - e.g. `@activepieces/piece-activepieces-0.0.1`
  * @returns {string} the piece name, e.g. `@activepieces/piece-activepieces`
  */

@@ -27,6 +27,7 @@ import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
+import { activepiecesTools, deriveMutatingResourceTools } from '../../../../src/app/mcp/tools'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
@@ -2552,5 +2553,62 @@ describe('MCP Tools integration', () => {
         expect(response.statusCode).toBe(StatusCodes.CREATED)
         const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: response.json().id, projectId: ctx.project.id })
         expect(flow.createdBy ?? null).toBeNull()
+    })
+})
+
+describe('AI-lock tool coverage (deriveMutatingResourceTools)', () => {
+    // The worker announces the Stage AI lock — which gates realtime table/flow deltas — for
+    // exactly the tools in the derived map. Tools that carry a flowId/tableId arg but should NOT
+    // lock (read / validate tools) must be listed here so the coverage check below stays exhaustive.
+    const INTENTIONALLY_NOT_LOCKED = new Set([
+        'ap_find_records',
+        'ap_flow_structure',
+        'ap_get_piece_props',
+        'ap_list_runs',
+        'ap_read_step_code',
+        'ap_validate_flow',
+    ])
+
+    const buildLockMap = () => {
+        const tools = activepiecesTools(makeMcp(apId()), undefined, mockLog)
+        return { tools, lockMap: deriveMutatingResourceTools(tools) }
+    }
+
+    it('covers every tool that carries a flowId/tableId arg (lock-eligible or explicitly excluded)', () => {
+        const { tools, lockMap } = buildLockMap()
+        const uncovered = tools
+            .filter((tool) => 'flowId' in tool.inputSchema || 'tableId' in tool.inputSchema)
+            .map((tool) => tool.title)
+            .filter((title) => !(title in lockMap) && !INTENTIONALLY_NOT_LOCKED.has(title))
+        // A new mutating tool with an id arg lands here: give it WRITE_*/UPDATE_FLOW_STATUS
+        // permission (so it locks) or add it to INTENTIONALLY_NOT_LOCKED — never leave it silent.
+        expect(uncovered).toEqual([])
+    })
+
+    it('locks the mutating table + flow tools', () => {
+        const { lockMap } = buildLockMap()
+        const expected = [
+            'ap_update_records', 'ap_insert_records', 'ap_clear_table', 'ap_restore_records',
+            'ap_delete_records', 'ap_update_record', 'ap_manage_fields', 'ap_delete_table',
+            'ap_change_flow_status', 'ap_lock_and_publish', 'ap_add_step', 'ap_test_flow',
+        ]
+        expect(expected.filter((title) => !(title in lockMap))).toEqual([])
+    })
+
+    it('does not lock read-only or create tools', () => {
+        const { lockMap } = buildLockMap()
+        const shouldNotLock = [
+            'ap_find_records', 'ap_list_tables', 'ap_list_flows',
+            'ap_create_table', 'ap_create_flow', 'ap_build_flow',
+        ]
+        expect(shouldNotLock.filter((title) => title in lockMap)).toEqual([])
+    })
+
+    it('maps each tool to the arg holding its resource id', () => {
+        const { lockMap } = buildLockMap()
+        expect(lockMap['ap_update_records']).toBe('tableId')
+        expect(lockMap['ap_clear_table']).toBe('tableId')
+        expect(lockMap['ap_add_step']).toBe('flowId')
+        expect(lockMap['ap_change_flow_status']).toBe('flowId')
     })
 })

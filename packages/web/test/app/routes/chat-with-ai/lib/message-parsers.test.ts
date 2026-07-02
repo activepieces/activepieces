@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 
-import { pickDefaultConnectionExternalId } from '@/app/routes/chat-with-ai/lib/message-parsers';
+import {
+  normalizePieceName,
+  pickDefaultConnectionExternalId,
+} from '@/app/routes/chat-with-ai/lib/message-parsers';
 
 describe('pickDefaultConnectionExternalId', () => {
   it('returns null when there are no healthy connections', () => {
@@ -39,5 +42,17 @@ describe('pickDefaultConnectionExternalId', () => {
       updatedByExternalId: {},
     });
     expect(result).toBe('a');
+  });
+});
+
+describe('normalizePieceName (re-exported from @activepieces/shared)', () => {
+  it.each([
+    ['Attio', '@activepieces/piece-attio'],
+    ['attio', '@activepieces/piece-attio'],
+    ['Google Sheets', '@activepieces/piece-google-sheets'],
+    ['google_sheets', '@activepieces/piece-google-sheets'],
+    ['@activepieces/piece-Attio', '@activepieces/piece-attio'],
+  ])('canonicalizes %s -> %s', (input, expected) => {
+    expect(normalizePieceName(input)).toBe(expected);
   });
 });

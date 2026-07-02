@@ -212,6 +212,7 @@ function Sidebar({
   side = 'left',
   variant = 'sidebar',
   collapsible = 'offcanvas',
+  disableExpandOnClick = false,
   className,
   children,
   ...props
@@ -219,6 +220,7 @@ function Sidebar({
   side?: 'left' | 'right';
   variant?: 'sidebar' | 'floating' | 'inset';
   collapsible?: 'offcanvas' | 'icon' | 'none';
+  disableExpandOnClick?: boolean;
 }) {
   const {
     isMobile,
@@ -313,7 +315,8 @@ function Sidebar({
           hoverMode &&
             isHoverExpanded &&
             (side === 'left' ? 'border-r' : 'border-l'),
-          !hoverMode &&
+          !disableExpandOnClick &&
+            !hoverMode &&
             state === 'collapsed' &&
             collapsible === 'icon' &&
             '[&_*]:!cursor-nesw-resize [&_button]:!cursor-pointer [&_button]:relative [&_button]:z-20 [&_button_*]:!cursor-pointer [&_a]:!cursor-pointer [&_a]:relative [&_a]:z-20 [&_a_*]:!cursor-pointer [&_[role=button]]:!cursor-pointer [&_[role=button]]:relative [&_[role=button]]:z-20 [&_[role=button]_*]:!cursor-pointer [&_[data-sidebar=menu-button]]:!cursor-pointer [&_[data-sidebar=menu-button]]:relative [&_[data-sidebar=menu-button]]:z-20 [&_[data-sidebar=menu-button]_*]:!cursor-pointer cursor-nesw-resize',
@@ -333,13 +336,16 @@ function Sidebar({
               'relative',
           )}
         >
-          {!hoverMode && state === 'collapsed' && collapsible === 'icon' && (
-            <div
-              className="absolute inset-0 z-10 !cursor-nesw-resize"
-              onClick={() => setOpen(true)}
-              aria-hidden="true"
-            />
-          )}
+          {!disableExpandOnClick &&
+            !hoverMode &&
+            state === 'collapsed' &&
+            collapsible === 'icon' && (
+              <div
+                className="absolute inset-0 z-10 !cursor-nesw-resize"
+                onClick={() => setOpen(true)}
+                aria-hidden="true"
+              />
+            )}
           {children}
         </div>
       </div>

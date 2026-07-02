@@ -19,7 +19,12 @@
     "AP_SMTP_USERNAME",
     "AP_SMTP_PASSWORD",
     "AP_SMTP_SENDER_EMAIL",
-    "AP_SMTP_SENDER_NAME"
+    "AP_SMTP_SENDER_NAME",
+    "AP_PORT",
+    "AP_FRONTEND_URL",
+    "AP_DEV_WEB_PORT",
+    "AP_DEV_API_PORT",
+    "AP_REDIS_DB"
   ],
   "tasks": {
     "build": {

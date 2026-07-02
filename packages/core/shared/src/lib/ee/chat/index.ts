@@ -1,4 +1,4 @@
-import { ChatPromptOverride } from '@activepieces/core-execution'
+import { ActiveStageContext, ChatMention, ChatPromptOverride } from '@activepieces/core-execution'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -155,6 +155,7 @@ export const PersistedChatMessageSchema = z.object({
     role: z.enum([PersistedChatRole.USER, PersistedChatRole.ASSISTANT]),
     parts: z.array(PersistedChatPartSchema),
     thinkingDurationMs: z.number().optional(),
+    context: ActiveStageContext.optional(),
 })
 
 export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
@@ -191,6 +192,7 @@ export const ChatConversation = z.object({
     summarizedUpToIndex: Nullable(z.number().int()),
 })
 export type ChatConversation = z.infer<typeof ChatConversation>
+export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
 
 export const CreateChatConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
@@ -204,10 +206,16 @@ export const UpdateChatConversationRequest = z.object({
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 
+export const ChatMessageSource = z.enum(['suggestion'])
+export type ChatMessageSource = z.infer<typeof ChatMessageSource>
+
 export const SendChatMessageRequest = z.object({
     content: z.string().max(51200),
     runId: z.string().optional(),
     files: z.array(ChatMessageFile).max(10).optional(),
+    activeContext: ActiveStageContext.optional(),
+    mentions: z.array(ChatMention).max(10).optional(),
+    source: ChatMessageSource.optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
     { message: formErrors.messageRequiresContentOrFiles },
@@ -254,7 +262,9 @@ export type ChatToolOutputs = {
     ap_show_project_picker: { displayed: boolean }
     ap_show_questions: { displayed: boolean }
     ap_show_quick_replies: { displayed: boolean }
+    ap_show_showcase: { displayed: boolean }
     ap_update_thinking_status: { success: boolean }
+    ap_open_in_stage: { ok: boolean }
 }
 
 export type ConnectionOption = {
@@ -301,6 +311,8 @@ export type BatchProgressData = {
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
+export { ChatMention, ChatMentionType } from '@activepieces/core-execution'
+export { chatHarnessCatalog, type HarnessTool, type HarnessToolCategory } from './chat-harness-catalog'
 export { chatToolClassification } from './tool-classification'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
-export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
+export { chatPositionUtils } from './position-note'

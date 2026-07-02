@@ -4,6 +4,7 @@ import {
   ChatToolName,
   ChatToolOutputs,
   chatToolClassification,
+  normalizePieceName,
 } from '@activepieces/shared';
 import {
   DynamicToolUIPart,
@@ -13,7 +14,11 @@ import {
   UIMessage,
 } from 'ai';
 
-export type ChatUIMessage = UIMessage;
+// The chat-history mapper (`chat-utils.ts`) attaches this alongside the base
+// `UIMessage` fields when reconstructing messages from persisted/legacy history,
+// so it belongs on the message type itself rather than being cast in at each
+// read site.
+export type ChatUIMessage = UIMessage & { context?: ActiveChatContext };
 
 export type AnyToolPart = ToolUIPart | DynamicToolUIPart;
 
@@ -50,6 +55,7 @@ const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_project_picker',
   'ap_show_questions',
   'ap_show_quick_replies',
+  'ap_show_showcase',
 ]);
 
 function isDisplayTool(name: string): boolean {
@@ -142,14 +148,6 @@ function extractToolOutputText(part: AnyToolPart): string | undefined {
     return part.errorText;
   }
   return undefined;
-}
-
-function normalizePieceName(name: string): string {
-  if (name.startsWith('@')) return name;
-  const stripped = name.startsWith('piece-')
-    ? name.slice('piece-'.length)
-    : name;
-  return `@activepieces/piece-${stripped.replace(/_/g, '-')}`;
 }
 
 function extractPieceNames(
@@ -264,6 +262,45 @@ function extractQuickRepliesFromParts(
   return EMPTY_QUICK_REPLIES_DATA;
 }
 
+function isSameActiveContext(
+  a: ActiveChatContext | undefined,
+  b: ActiveChatContext | undefined,
+): boolean {
+  if (!a || !b) return a === b;
+  return a.type === b.type && a.id === b.id && a.projectId === b.projectId;
+}
+
+// Like isSame, but also distinguishes the selected item (focus). Used by the
+// scrollback marker so two messages on the same page but different steps/rows each
+// surface their own item. isSame stays focus-blind on purpose — it mirrors the
+// server's "Switched to" semantics, where selecting a step must NOT read as a switch.
+function isSameActiveContextForMarker(
+  a: ActiveChatContext | undefined,
+  b: ActiveChatContext | undefined,
+): boolean {
+  if (!isSameActiveContext(a, b)) return false;
+  return (
+    (a?.focus?.ref ?? '') === (b?.focus?.ref ?? '') &&
+    (a?.focus?.label ?? '') === (b?.focus?.label ?? '')
+  );
+}
+
+// The human-readable position label shown in the transcript marker and the live
+// chip: the resource/page name plus the selected item (cell/step/range) when one
+// is focused. Mirrors what the live chip renders so both surfaces read the same.
+function formatPositionLabel(context: ActiveChatContext | undefined): string {
+  if (!context) return '';
+  const name = context.name?.trim() || context.type;
+  const focusLabel = context.focus?.label?.trim();
+  return focusLabel ? `${name} · ${focusLabel}` : name;
+}
+
+export const activeContextUtils = {
+  isSame: isSameActiveContext,
+  isSameForMarker: isSameActiveContextForMarker,
+  formatPositionLabel,
+};
+
 export const chatPartUtils = {
   isAnyToolPart,
   getToolPartName,
@@ -287,6 +324,16 @@ export const chatPartUtils = {
   readQuickRepliesInput,
   HIDDEN_TOOL_NAMES,
   DISPLAY_TOOL_NAMES,
+};
+
+export type QuickRepliesData = {
+  replies: string[];
+  offerRecurringAutomation: boolean;
+};
+
+export const EMPTY_QUICK_REPLIES_DATA: QuickRepliesData = {
+  replies: [],
+  offerRecurringAutomation: false,
 };
 
 export type PendingCardKind = 'action-receipt' | 'image';
@@ -313,12 +360,19 @@ export type CreditsWarning = {
   percentage: number;
 };
 
-export type QuickRepliesData = {
-  replies: string[];
-  offerRecurringAutomation: boolean;
+export type ActiveChatContext = {
+  type: string;
+  id?: string;
+  name?: string;
+  projectId?: string;
+  projectName?: string;
+  excerpt?: string;
+  focus?: ActiveChatContextFocus;
 };
 
-export const EMPTY_QUICK_REPLIES_DATA: QuickRepliesData = {
-  replies: [],
-  offerRecurringAutomation: false,
+export type ActiveChatContextFocus = {
+  kind: string;
+  label: string;
+  ref?: string;
+  detail?: string;
 };

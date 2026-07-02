@@ -85,9 +85,13 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 if (result.data.length === 0) {
                     return {
                         content: [{ type: 'text', text: 'No records found.' }],
-                        structuredContent: { records: [], count: 0 },
+                        structuredContent: { records: [], count: 0, totalMatching: 0, hasMore: false, limit: effectiveLimit },
                     }
                 }
+
+                const returned = result.data.length
+                const totalMatching = result.totalMatching
+                const hasMore = returned < totalMatching
 
                 const formatted = result.data.map(r => formatPopulatedRecord(r)).join('\n\n')
                 const structured = {
@@ -97,12 +101,18 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                             Object.entries(r.cells).map(([fieldId, c]) => [c.fieldName ?? fieldId, c.value]),
                         ),
                     })),
-                    count: result.data.length,
+                    count: returned,
+                    totalMatching,
+                    hasMore,
+                    limit: effectiveLimit,
                 }
+                const header = hasMore
+                    ? `Showing ${returned} of ${totalMatching} matching record(s) — capped at your limit of ${effectiveLimit}, ${totalMatching - returned} more match. Raise limit (max 500) or narrow filters to get the rest; do NOT report ${returned} as the total.`
+                    : `Found ${returned} record(s) — this is the complete set (all matches).`
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${result.data.length} record(s):\n\n${formatted}`,
+                        text: `${header}\n\n${formatted}`,
                     }],
                     structuredContent: structured,
                 }

@@ -17,9 +17,9 @@ import { formatUtils } from '@/lib/format-utils';
 import {
   AnyToolPart,
   ChatUIMessage,
+  chatPartUtils,
   EMPTY_QUICK_REPLIES_DATA,
   QuickRepliesData,
-  chatPartUtils,
 } from './chat-types';
 
 function stripPiecePrefix(name: string): string {
@@ -304,6 +304,7 @@ function mapPersistedToUIMessages(
     ...(msg.thinkingDurationMs !== undefined && {
       thinkingDurationMs: msg.thinkingDurationMs,
     }),
+    ...(msg.context !== undefined && { context: msg.context }),
   }));
 }
 

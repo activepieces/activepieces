@@ -22,8 +22,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
-import LargeWidgetWrapper from './large-widget-wrapper';
-
 const PublishFlowReminderWidget = () => {
   const [
     isSaving,
@@ -95,23 +93,23 @@ const PublishFlowReminderWidget = () => {
     isSaving,
   });
   return (
-    <LargeWidgetWrapper>
-      <div className="flex items-center gap-2">
-        <Info className="size-5" />
+    <div className="absolute inset-x-0 top-0 z-40 flex min-h-11 w-full items-center justify-between gap-3 border-b border-warning-300 bg-warning-100 px-4 py-2 animate-fade duration-300">
+      <div className="flex items-center gap-2 text-sm font-medium text-warning-900">
+        <Info className="size-4 shrink-0 text-warning-600" />
         {showLoading ? loadingText : t('You have unpublished changes')}
       </div>
       {showLoading ? (
-        <LoadingSpinner className="size-5 stroke-foreground" />
+        <LoadingSpinner className="size-4 stroke-warning-700" />
       ) : (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {!isNil(flow.publishedVersionId) && !isSaving && (
             <Button
               size="sm"
               variant="ghost"
-              className="hover:bg-gray-300/10 text-foreground"
+              className="h-7 px-2.5 text-warning-900 hover:bg-warning-200"
               onClick={() => discardChange()}
             >
-              {t('Discard changes')}
+              {t('Discard')}
             </Button>
           )}
 
@@ -121,7 +119,7 @@ const PublishFlowReminderWidget = () => {
                 <Button
                   size="sm"
                   variant="default"
-                  className="z-50"
+                  className="z-50 h-7 rounded-full px-3.5"
                   loading={isSaving}
                   //for e2e tests
                   name="Publish"
@@ -139,7 +137,7 @@ const PublishFlowReminderWidget = () => {
           </Tooltip>
         </div>
       )}
-    </LargeWidgetWrapper>
+    </div>
   );
 };
 

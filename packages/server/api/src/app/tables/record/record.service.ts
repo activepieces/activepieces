@@ -1,5 +1,5 @@
-import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
-import { Cell, CreateRecordsRequest, Field, Filter, FilterOperator, PopulatedRecord, TableWebhookEventType, UpdateRecordRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, isNil, SeekPage, unique } from '@activepieces/core-utils'
+import { Cell, CreateRecordsRequest, Field, Filter, FilterOperator, PopulatedRecord, SetRecordColorsRequest, TableColor, TableWebhookEventType, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -10,6 +10,7 @@ import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
+import { tableRealtime } from '../table-realtime'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
 
@@ -63,7 +64,11 @@ export const recordService = {
                 created: 'ASC',
             },
         })
-        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
+        const populatedRecords = await formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
+        for (const record of populatedRecords) {
+            tableRealtime.recordCreated({ projectId, tableId: request.tableId, record })
+        }
+        return populatedRecords
     },
 
     async list({
@@ -72,7 +77,7 @@ export const recordService = {
         filters,
         limit,
         fields: prefetchedFields,
-    }: ListParams): Promise<SeekPage<PopulatedRecord>> {
+    }: ListParams): Promise<SeekPage<PopulatedRecord> & { totalMatching: number }> {
         const fields = prefetchedFields ?? await fieldService.getAll({
             tableId,
             projectId,
@@ -111,13 +116,7 @@ export const recordService = {
             if (!filters || filters.length === 0) {
                 return true
             }
-            return filters.every((filter) => {
-                const cell = record.cells.find(c => c.fieldId === filter.fieldId)
-                if (!cell) {
-                    return filter.operator === FilterOperator.NOT_EXISTS
-                }
-                return doesCellValueMatchFilters(cell, [filter])
-            })
+            return recordMatchesFilters({ record, filters })
         })
 
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId, fields })
@@ -126,6 +125,7 @@ export const recordService = {
             data: populatedRecords.slice(0, limit),
             next: null,
             previous: null,
+            totalMatching: populatedRecords.length,
         }
     },
 
@@ -158,7 +158,7 @@ export const recordService = {
         request,
     }: UpdateParams): Promise<PopulatedRecord> {
         const { tableId } = request
-        return transaction(async (entityManager: EntityManager) => {
+        const updatedRecord = await transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
                 where: { projectId, tableId, id },
             })
@@ -225,6 +225,85 @@ export const recordService = {
             const result = await formatRecordsAndFetchField({ records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId })
             return result[0]
         })
+        tableRealtime.recordUpdated({ projectId, tableId, record: updatedRecord })
+        return updatedRecord
+    },
+
+    async setColors({
+        tableId,
+        projectId,
+        request,
+    }: SetColorsParams): Promise<PopulatedRecord[]> {
+        const rowTargets = request.records ?? []
+        const cellTargets = request.cells ?? []
+        const requestedRecordIds = unique([
+            ...rowTargets.map((target) => target.recordId),
+            ...cellTargets.map((target) => target.recordId),
+        ])
+        if (requestedRecordIds.length === 0) {
+            return []
+        }
+
+        const ownedRecords = await recordRepo().find({
+            where: { id: In(requestedRecordIds), projectId, tableId },
+            select: ['id'],
+        })
+        const ownedRecordIds = new Set(ownedRecords.map((record) => record.id))
+
+        const validRowTargets = rowTargets.filter((target) => ownedRecordIds.has(target.recordId))
+        const validCellTargets = cellTargets.filter((target) => ownedRecordIds.has(target.recordId))
+
+        await transaction(async (entityManager: EntityManager) => {
+            const recordIdsByColor = groupRecordIdsByColor(validRowTargets)
+            for (const [color, recordIds] of recordIdsByColor) {
+                await entityManager.getRepository(RecordEntity).update(
+                    { id: In(recordIds), projectId, tableId },
+                    { color },
+                )
+            }
+
+            if (validCellTargets.length > 0) {
+                const existingFields = await entityManager.getRepository(FieldEntity).find({
+                    where: { projectId, tableId },
+                    select: ['id'],
+                })
+                const existingFieldIds = new Set(existingFields.map((field) => field.id))
+                const cellRows = validCellTargets
+                    .filter((target) => existingFieldIds.has(target.fieldId))
+                    .map((target) => ({
+                        id: apId(),
+                        recordId: target.recordId,
+                        fieldId: target.fieldId,
+                        projectId,
+                        value: '',
+                        color: target.color,
+                    }))
+
+                if (cellRows.length > 0) {
+                    await entityManager.getRepository(CellEntity)
+                        .createQueryBuilder()
+                        .insert()
+                        .values(cellRows)
+                        .orUpdate(['color'], ['projectId', 'fieldId', 'recordId'])
+                        .execute()
+                }
+            }
+        })
+
+        const affectedRecordIds = unique([
+            ...validRowTargets.map((target) => target.recordId),
+            ...validCellTargets.map((target) => target.recordId),
+        ])
+        const updatedRecords = await recordRepo().find({
+            where: { id: In(affectedRecordIds), projectId, tableId },
+            relations: ['cells'],
+            order: { created: 'ASC' },
+        })
+        const populatedRecords = await formatRecordsAndFetchField({ records: updatedRecords, tableId, projectId })
+        for (const record of populatedRecords) {
+            tableRealtime.recordUpdated({ projectId, tableId, record })
+        }
+        return populatedRecords
     },
 
     async delete({
@@ -247,7 +326,7 @@ export const recordService = {
             relations: ['cells'],
         })
 
-        await recordRepo().delete({
+        await recordRepo().softDelete({
             id: In(ids),
             projectId,
             tableId: firstRecord.tableId,
@@ -257,7 +336,42 @@ export const recordService = {
             return []
         }
 
-        return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
+        const populatedRecords = await formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
+        for (const record of populatedRecords) {
+            tableRealtime.recordDeleted({ projectId, tableId: firstRecord.tableId, recordId: record.id })
+        }
+        return populatedRecords
+    },
+
+    async deleteByFilter({
+        tableId,
+        projectId,
+        filters,
+    }: DeleteByFilterParams): Promise<PopulatedRecord[]> {
+        const fields = await fieldService.getAll({ tableId, projectId })
+        const records = await recordRepo().find({
+            where: { projectId, tableId },
+            relations: ['cells'],
+        })
+
+        const matchingRecords = records.filter((record) => recordMatchesFilters({ record, filters }))
+
+        const matchingIds = matchingRecords.map((record) => record.id)
+        if (matchingIds.length === 0) {
+            return []
+        }
+
+        await recordRepo().softDelete({
+            id: In(matchingIds),
+            projectId,
+            tableId,
+        })
+
+        const populatedRecords = await formatRecordsAndFetchField({ records: matchingRecords, tableId, projectId, fields })
+        for (const record of populatedRecords) {
+            tableRealtime.recordDeleted({ projectId, tableId, recordId: record.id })
+        }
+        return populatedRecords
     },
 
     async deleteAll({
@@ -273,7 +387,7 @@ export const recordService = {
             const recordIds = records.map((record) => record.id)
 
             if (recordIds.length > 0) {
-                await entityManager.getRepository(RecordEntity).delete({
+                await entityManager.getRepository(RecordEntity).softDelete({
                     id: In(recordIds),
                     projectId,
                     tableId,
@@ -287,7 +401,44 @@ export const recordService = {
             return []
         }
 
-        return formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId })
+        const populatedRecords = await formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId })
+        for (const record of populatedRecords) {
+            tableRealtime.recordDeleted({ projectId, tableId, recordId: record.id })
+        }
+        return populatedRecords
+    },
+
+    async restore({
+        ids,
+        projectId,
+        tableId,
+    }: RestoreParams): Promise<PopulatedRecord[]> {
+        // Restored rows re-enter the active count, so enforce the same cap as create —
+        // otherwise delete N + insert N + restore N would exceed MAX_RECORDS_PER_TABLE.
+        await this.validateCount({ projectId, tableId }, ids.length)
+        await recordRepo().restore({
+            id: In(ids),
+            projectId,
+            tableId,
+        })
+
+        const records = await recordRepo().find({
+            where: { id: In(ids), projectId, tableId },
+            relations: ['cells'],
+            order: {
+                created: 'ASC',
+            },
+        })
+
+        if (records.length === 0) {
+            return []
+        }
+
+        const populatedRecords = await formatRecordsAndFetchField({ records, tableId, projectId })
+        for (const record of populatedRecords) {
+            tableRealtime.recordCreated({ projectId, tableId, record })
+        }
+        return populatedRecords
     },
 
     async triggerWebhooks({
@@ -333,6 +484,14 @@ export const recordService = {
             where: { projectId, tableId },
         })
     },
+    async countByFilter({ tableId, projectId, filters }: DeleteByFilterParams): Promise<CountByFilterResult> {
+        const records = await recordRepo().find({
+            where: { projectId, tableId },
+            relations: ['cells'],
+        })
+        const matched = records.filter((record) => recordMatchesFilters({ record, filters })).length
+        return { matched, total: records.length }
+    },
     async validateCount(params: CountParams, insertCount: number): Promise<void> {
         const countRes = await this.count(params)
         if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
@@ -373,6 +532,12 @@ type UpdateParams = {
     request: UpdateRecordRequest
 }
 
+type SetColorsParams = {
+    tableId: string
+    projectId: string
+    request: SetRecordColorsRequest
+}
+
 type DeleteParams = {
     ids: string[]
     projectId: string
@@ -381,6 +546,18 @@ type DeleteParams = {
 type DeleteAllParams = {
     tableId: string
     projectId: string
+}
+
+type DeleteByFilterParams = {
+    tableId: string
+    projectId: string
+    filters: Filter[]
+}
+
+type RestoreParams = {
+    ids: string[]
+    projectId: string
+    tableId: string
 }
 
 type TriggerWebhooksParams = {
@@ -394,6 +571,11 @@ type TriggerWebhooksParams = {
 type CountParams = {
     projectId: string
     tableId: string
+}
+
+type CountByFilterResult = {
+    matched: number
+    total: number
 }
 
 type RecordInsertion = {
@@ -446,6 +628,20 @@ function prepareCellInsertions(
     )
 }
 
+function groupRecordIdsByColor(targets: { recordId: string, color: TableColor | null }[]): Map<TableColor | null, string[]> {
+    const recordIdsByColor = new Map<TableColor | null, string[]>()
+    for (const target of targets) {
+        const existing = recordIdsByColor.get(target.color)
+        if (existing) {
+            existing.push(target.recordId)
+        }
+        else {
+            recordIdsByColor.set(target.color, [target.recordId])
+        }
+    }
+    return recordIdsByColor
+}
+
 async function formatRecordsAndFetchField({ records, tableId, projectId, fields: prefetchedFields }: { records: RecordSchema[], tableId: string, projectId: string, fields?: Field[] }): Promise<PopulatedRecord[]> {
     const fields = prefetchedFields ?? await fieldService.getAll({
         tableId,
@@ -466,6 +662,7 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
                 value: cell.value,
                 updated: cell.updated,
                 created: cell.created,
+                color: cell.color,
             }
             return acc
         }, {})
@@ -476,6 +673,7 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
                     value: null,
                     updated: record.updated,
                     created: record.created,
+                    color: null,
                 }
             }
         }
@@ -483,6 +681,16 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
             ...record,
             cells,
         }
+    })
+}
+
+function recordMatchesFilters({ record, filters }: { record: { cells: Cell[] }, filters: Filter[] }): boolean {
+    return filters.every((filter) => {
+        const cell = record.cells.find((c) => c.fieldId === filter.fieldId)
+        if (!cell) {
+            return filter.operator === FilterOperator.NOT_EXISTS
+        }
+        return doesCellValueMatchFilters(cell, [filter])
     })
 }
 

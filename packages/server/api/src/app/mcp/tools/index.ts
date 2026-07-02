@@ -1,10 +1,13 @@
-import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { McpServerType, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { isToolSearchEnabled } from '../../tool-search/tool-search-flag'
 import { apAddBranchTool } from './ap-add-branch'
 import { apAddStepTool } from './ap-add-step'
 import { apBuildFlowTool } from './ap-build-flow'
 import { apChangeFlowStatusTool } from './ap-change-flow-status'
+import { apClearTableTool } from './ap-clear-table'
+import { apColorRecordsTool } from './ap-color-records'
 import { apCreateFlowTool } from './ap-create-flow'
 import { apCreateTableTool } from './ap-create-table'
 import { apDeleteBranchTool } from './ap-delete-branch'
@@ -31,6 +34,7 @@ import { apRenameFlowTool } from './ap-rename-flow'
 import { apResearchPiecesTool } from './ap-research-pieces'
 import { apResolvePropertyChainTool } from './ap-resolve-property-chain'
 import { apResolvePropertyOptionsTool } from './ap-resolve-property-options'
+import { apRestoreRecordsTool } from './ap-restore-records'
 import { apRetryRunTool } from './ap-retry-run'
 import { apRunActionTool } from './ap-run-action'
 import { apSearchActionsTool } from './ap-search-actions'
@@ -40,6 +44,7 @@ import { apTestFlowTool } from './ap-test-flow'
 import { apTestStepTool } from './ap-test-step'
 import { apUpdateBranchTool } from './ap-update-branch'
 import { apUpdateRecordTool } from './ap-update-record'
+import { apUpdateRecordsTool } from './ap-update-records'
 import { apUpdateStepTool } from './ap-update-step'
 import { apUpdateTriggerTool } from './ap-update-trigger'
 import { apValidateFlowTool } from './ap-validate-flow'
@@ -102,7 +107,10 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_manage_fields',
     'ap_insert_records',
     'ap_update_record',
+    'ap_update_records',
     'ap_delete_records',
+    'ap_restore_records',
+    'ap_clear_table',
     'ap_test_flow',
     'ap_test_step',
     'ap_retry_run',
@@ -145,7 +153,11 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apManageFieldsTool(mcp, log),
     apInsertRecordsTool(mcp, log),
     apUpdateRecordTool(mcp, log),
+    apUpdateRecordsTool(mcp, log),
+    apColorRecordsTool(mcp, log),
     apDeleteRecordsTool(mcp, log),
+    apRestoreRecordsTool(mcp, log),
+    apClearTableTool(mcp, log),
     apListRunsTool(mcp, log),
     apGetRunTool(mcp, log),
     apTestFlowTool(mcp, log),
@@ -154,3 +166,40 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apRunActionTool(mcp, log),
     apSetupGuideTool(mcp, log),
 ]
+
+// Single source of truth for "the agent is editing an open resource" — the worker
+// announces the Stage AI lock (which gates realtime deltas) for exactly these tools.
+// Derived from each tool's own permission + id arg so a new mutating tool is covered
+// automatically; a hand-maintained name list silently drifts (it has, repeatedly).
+export function getMutatingResourceTools({ userId, log }: { userId: string | undefined, log: FastifyBaseLogger }): Record<string, ResourceIdArg> {
+    return deriveMutatingResourceTools(activepiecesTools(METADATA_PROBE_MCP, userId, log))
+}
+
+export function deriveMutatingResourceTools(tools: McpToolDefinition[]): Record<string, ResourceIdArg> {
+    return tools.reduce<Record<string, ResourceIdArg>>((acc, tool) => {
+        if (isNil(tool.permission) || !MUTATING_RESOURCE_PERMISSIONS.has(tool.permission)) {
+            return acc
+        }
+        const idArg = RESOURCE_ID_ARGS.find((arg) => arg in tool.inputSchema)
+        return isNil(idArg) ? acc : { ...acc, [tool.title]: idArg }
+    }, {})
+}
+
+// flowId first so a tool carrying both resolves to the flow (matches the worker's readResourceId).
+const RESOURCE_ID_ARGS = ['flowId', 'tableId'] as const
+
+const MUTATING_RESOURCE_PERMISSIONS = new Set<Permission>([
+    Permission.WRITE_TABLE,
+    Permission.WRITE_FLOW,
+    Permission.UPDATE_FLOW_STATUS,
+])
+
+// activepiecesTools only reads `mcp` inside each tool's execute() — title/permission/inputSchema
+// (all this derivation needs) are mcp-independent, so a placeholder context is sufficient.
+const METADATA_PROBE_MCP: ProjectScopedMcpServer = {
+    id: '', created: '', updated: '',
+    platformId: null, projectId: '', type: McpServerType.PROJECT,
+    token: '', disabledTools: null,
+}
+
+type ResourceIdArg = (typeof RESOURCE_ID_ARGS)[number]

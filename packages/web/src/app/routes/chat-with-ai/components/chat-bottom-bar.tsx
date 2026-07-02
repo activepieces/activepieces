@@ -1,3 +1,4 @@
+import { ChatMention } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
@@ -16,7 +17,6 @@ import {
 } from '../lib/message-parsers';
 
 import { ActionPreviewCard } from './action-preview-card';
-import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
@@ -35,6 +35,7 @@ export function ChatBottomBar({
   lastMessageId,
   placeholder,
   banner,
+  contextChip,
 }: ChatBottomBarProps) {
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
@@ -109,14 +110,19 @@ export function ChatBottomBar({
   // Typing a free-text reply abandons the active card. onSend resets interaction
   // state (clearing dismissals); dismissing afterwards re-marks the gate as
   // dismissed/rejected so the card doesn't flash back before the worker unblocks.
-  const handleSend = (text: string, files?: File[]) => {
-    void onSend(text, files);
+  const handleSend = (
+    text: string,
+    files?: File[],
+    mentions?: ChatMention[],
+  ) => {
+    void onSend(text, files, mentions);
     dismissActiveCard?.();
   };
 
   return (
     <div className="flex flex-col gap-2">
       {activeCard}
+      {contextChip}
       <div className="overflow-hidden rounded-2xl border border-foreground/20 transition-colors hover:border-foreground/40 focus-within:border-foreground/40">
         {banner}
         <ChatInput
@@ -156,10 +162,6 @@ function BlockingDisplayCard({
 }) {
   const toolName = chatPartUtils.getToolPartName(toolPart);
   const data = toolPart.input as Record<string, unknown>;
-
-  if (toolPart.state === 'input-streaming') {
-    return <ChatCardSkeleton />;
-  }
 
   switch (toolName) {
     case 'ap_show_questions':
@@ -203,7 +205,7 @@ function BlockingDisplayCard({
 
 type ChatBottomBarProps = {
   isStreaming: boolean;
-  onSend: (text: string, files?: File[]) => void;
+  onSend: (text: string, files?: File[], mentions?: ChatMention[]) => void;
   onStop: () => void;
   onInputChange?: (hasInput: boolean) => void;
   selectedModel: string | null;
@@ -212,4 +214,5 @@ type ChatBottomBarProps = {
   lastMessageId: string | undefined;
   placeholder?: string;
   banner?: ReactNode;
+  contextChip?: ReactNode;
 };

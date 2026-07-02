@@ -5,8 +5,8 @@ import {
   ArrowUpRight,
   ChevronDown,
   MessageSquare,
-  Plus,
   Search,
+  SquarePen,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
@@ -22,25 +22,31 @@ import { cn } from '@/lib/utils';
 import { ConversationStatusDot } from './components/conversation-status-dot';
 import { DelayedTooltip } from './components/delayed-tooltip';
 
+const CONVERSATIONS_PAGE_SIZE = 20;
+
 export function ConversationList({
   onSelect,
   onNewChat,
   selectedId,
   className,
   mobile = false,
+  floating = false,
 }: {
   onSelect?: (id: string) => void;
   onNewChat?: () => void;
   selectedId?: string | null;
   className?: string;
   mobile?: boolean;
+  floating?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(CONVERSATIONS_PAGE_SIZE);
   const listRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { data: conversationsPage, isLoading: isLoadingConversations } =
     useQuery({
@@ -78,6 +84,12 @@ export function ConversationList({
     );
   }, [allConversations, searchQuery]);
 
+  const visibleConversations = useMemo(
+    () => conversations.slice(0, visibleCount),
+    [conversations, visibleCount],
+  );
+  const hasMore = visibleCount < conversations.length;
+
   const checkFades = useCallback(() => {
     const el = listRef.current;
     if (!el) return;
@@ -87,7 +99,23 @@ export function ConversationList({
 
   useEffect(() => {
     checkFades();
-  }, [collapsed, conversations, checkFades]);
+  }, [collapsed, visibleConversations, checkFades]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const root = listRef.current;
+    if (!sentinel || !root || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((count) => count + CONVERSATIONS_PAGE_SIZE);
+        }
+      },
+      { root, rootMargin: '120px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   const { today, yesterday, older } = useMemo(() => {
     const todayStr = new Date().toDateString();
@@ -104,14 +132,14 @@ export function ConversationList({
       yesterday: [],
       older: [],
     };
-    for (const c of conversations) {
+    for (const c of visibleConversations) {
       const dateStr = new Date(c.created).toDateString();
       if (dateStr === todayStr) groups.today.push(c);
       else if (dateStr === yesterdayStr) groups.yesterday.push(c);
       else groups.older.push(c);
     }
     return groups;
-  }, [conversations]);
+  }, [visibleConversations]);
 
   const handleClick = (conv: ChatConversation) => {
     markRead(conv.id);
@@ -131,10 +159,10 @@ export function ConversationList({
     if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
     return (
-      <div className="mb-2 flex flex-col gap-px">
+      <div className="mb-4 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold mb-1 px-3 py-1 uppercase tracking-wider text-muted-foreground/70 transition-colors hover:text-foreground"
           onClick={() => toggleGroup(label)}
         >
           {label}
@@ -154,23 +182,21 @@ export function ConversationList({
                 type="button"
                 key={conv.id}
                 className={cn(
-                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-muted relative',
-                  mobile && 'px-3 py-2.5 text-sm',
+                  'group flex items-center w-full px-3 py-1.5 rounded-lg bg-transparent border-none cursor-pointer text-left text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-foreground relative',
+                  mobile && 'py-2.5',
                   selectedId === conv.id &&
-                    'bg-muted font-semibold border-l-2 border-l-primary',
+                    'bg-muted font-medium text-foreground',
                 )}
                 onClick={() => handleClick(conv)}
               >
+                <span className="mr-2 flex h-1.5 w-1.5 shrink-0 items-center justify-center">
+                  {indicator && <ConversationStatusDot state={indicator} />}
+                </span>
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
                   {conv.title
                     ? chatUtils.sanitizeTitle(conv.title)
                     : t('New conversation')}
                 </span>
-                {indicator && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
-                    <ConversationStatusDot state={indicator} />
-                  </span>
-                )}
                 <DelayedTooltip>
                   <TooltipTrigger asChild>
                     <span
@@ -207,34 +233,43 @@ export function ConversationList({
   };
 
   return (
-    <div className={cn('flex flex-col h-full shrink-0 w-[220px]', className)}>
+    <div
+      className={cn(
+        'flex flex-col min-h-0 w-[220px]',
+        !floating && 'h-full',
+        className,
+      )}
+    >
       <div className="px-2 pt-3 pb-2 space-y-2">
         <button
           type="button"
           className={cn(
-            'flex items-center justify-between gap-1.5 w-full px-2 py-1.5 rounded-md border border-border bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
-            mobile && 'px-3 py-2.5 text-sm',
+            'flex items-center justify-between gap-1.5 w-full px-3 py-2 rounded-lg border border-border bg-transparent cursor-pointer text-sm font-medium text-foreground transition-colors hover:bg-accent',
+            mobile && 'py-2.5',
           )}
           onClick={() => {
             onNewChat?.();
           }}
         >
-          <span className="flex items-center gap-1.5">
-            <Plus size={mobile ? 16 : 14} />
+          <span className="flex items-center gap-2">
+            <SquarePen size={16} />
             {t('New chat')}
           </span>
           {!mobile && <span className="text-[11px] opacity-50">⇧⌘O</span>}
         </button>
         {allConversations.length > 5 && (
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setVisibleCount(CONVERSATIONS_PAGE_SIZE);
+              }}
               placeholder={t('Search...')}
               className={cn(
-                'h-7 pl-7 text-xs rounded-md',
-                mobile && 'h-9 pl-8 text-base',
+                'h-8 pl-8 text-sm rounded-lg',
+                mobile && 'h-9 text-base',
               )}
             />
           </div>
@@ -242,23 +277,31 @@ export function ConversationList({
       </div>
       <div className="flex-1 relative min-h-0">
         {showTopFade && (
-          <div className="absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1] bg-gradient-to-b from-background to-transparent" />
+          <div
+            className={cn(
+              'absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1] bg-gradient-to-b to-transparent',
+              floating ? 'from-popover' : 'from-background',
+            )}
+          />
         )}
         <div
           ref={listRef}
           onScroll={checkFades}
-          className="h-full overflow-y-auto px-2 pb-3 scrollbar-thin"
+          className={cn(
+            'overflow-y-auto px-2 pb-3 scrollbar-thin',
+            floating ? 'max-h-[65vh]' : 'h-full',
+          )}
         >
           {isLoadingConversations ? (
-            <div className="space-y-2 px-2 pt-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-7 w-full rounded-md" />
+            <div className="space-y-1 px-2 pt-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-full rounded-lg" />
               ))}
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-2" />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {searchQuery.trim()
                   ? t('No chats found')
                   : t('Start your first chat')}
@@ -269,11 +312,17 @@ export function ConversationList({
               {renderGroup(t('Today'), today)}
               {renderGroup(t('Yesterday'), yesterday)}
               {renderGroup(t('Older'), older)}
+              {hasMore && <div ref={sentinelRef} className="h-4 w-full" />}
             </>
           )}
         </div>
         {showBottomFade && (
-          <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-background to-transparent" />
+          <div
+            className={cn(
+              'absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t to-transparent',
+              floating ? 'from-popover' : 'from-background',
+            )}
+          />
         )}
       </div>
       {mobile && (

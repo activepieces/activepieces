@@ -9,7 +9,10 @@ const proxyOutfile = path.join(outdir, 'main.js');
 
 const watch = process.argv.includes('--watch');
 
-fs.rmSync(outdir, { recursive: true, force: true });
+// No rmSync here: CI runs two turbo processes in parallel (engine tests + api tests)
+// that both force-execute this build, and one process wiping the shared outdir while
+// the other's onEnd writes main.js.meta.json crashed with ENOENT. esbuild overwrites
+// its fixed-name outputs (main.js/.map/.meta.json), so clearing the dir buys nothing.
 
 const zodLocaleTrim = {
   // Drop zod's 46 unused locale packs (~184KB). The app surfaces validation

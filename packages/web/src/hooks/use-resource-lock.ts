@@ -2,6 +2,7 @@ import {
   ResourceLockedEvent,
   ResourceUnlockedEvent,
   LockResourceResponse,
+  LockerKind,
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
@@ -10,14 +11,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
-function useResourceLock({ resourceId }: UseResourceLockParams) {
+function useResourceLock({ resourceId, onUnlocked }: UseResourceLockParams) {
   const socket = useSocket();
   const currentUserId = authenticationSession.getCurrentUserId();
   const isOwner = useRef(false);
-  const [lockedBy, setLockedBy] = useState<{
-    userId: string;
-    userDisplayName: string;
-  } | null>(null);
+  const [lockedBy, setLockedBy] = useState<LockedByState>(null);
+  const lockedByRef = useRef<LockedByState>(null);
+  lockedByRef.current = lockedBy;
+  const onUnlockedRef = useRef(onUnlocked);
+  onUnlockedRef.current = onUnlocked;
 
   useEffect(() => {
     const handleLocked = (event: ResourceLockedEvent) => {
@@ -25,12 +27,16 @@ function useResourceLock({ resourceId }: UseResourceLockParams) {
         setLockedBy({
           userId: event.userId,
           userDisplayName: event.userDisplayName,
+          lockerKind: event.lockerKind ?? LockerKind.USER,
+          reason: event.reason,
         });
       }
     };
     const handleUnlocked = (event: ResourceUnlockedEvent) => {
       if (event.resourceId === resourceId) {
+        const prev = lockedByRef.current;
         setLockedBy(null);
+        onUnlockedRef.current?.({ lockerKind: prev?.lockerKind });
       }
     };
 
@@ -51,7 +57,12 @@ function useResourceLock({ resourceId }: UseResourceLockParams) {
         if (response.acquired) {
           isOwner.current = true;
         } else if (response.lock) {
-          setLockedBy(response.lock);
+          setLockedBy({
+            userId: response.lock.userId,
+            userDisplayName: response.lock.userDisplayName,
+            lockerKind: response.lock.lockerKind ?? LockerKind.USER,
+            reason: response.lock.reason,
+          });
         }
       },
     );
@@ -66,7 +77,12 @@ function useResourceLock({ resourceId }: UseResourceLockParams) {
         (response: LockResourceResponse) => {
           if (!response.acquired && response.lock) {
             isOwner.current = false;
-            setLockedBy(response.lock);
+            setLockedBy({
+              userId: response.lock.userId,
+              userDisplayName: response.lock.userDisplayName,
+              lockerKind: response.lock.lockerKind ?? LockerKind.USER,
+              reason: response.lock.reason,
+            });
           }
         },
       );
@@ -99,6 +115,14 @@ function useResourceLock({ resourceId }: UseResourceLockParams) {
 
 export { useResourceLock };
 
+type LockedByState = {
+  userId: string;
+  userDisplayName: string;
+  lockerKind: LockerKind;
+  reason?: string;
+} | null;
+
 type UseResourceLockParams = {
   resourceId: string;
+  onUnlocked?: (info: { lockerKind?: LockerKind }) => void;
 };

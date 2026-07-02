@@ -1,0 +1,26 @@
+{
+    "id": "intent-investigate-link-before-asking",
+    "description": "Regression: given a bare domain + an action verb ('apply for mahdif.com at notion'), the agent READS the link first (fetch/scrape/search) and lets what it reads decide the specifics, instead of throwing a clarifying card. Pins the 'a link the user drops is an instruction to LOOK' rule in <interpreting_intent>. The portfolio already answers 'which role' (it's a designer's), so a generic department/role menu is a failure.",
+    "kind": "regression",
+    "initialMessages": [],
+    "userTurns": [
+        "apply for mahdif.com at notion"
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "maxQuestionCards", "n": 0 }
+    ],
+    "judge": [
+        {
+            "dimension": "investigates_then_acts",
+            "rubric": "The user dropped a bare domain plus an action verb: 'apply for mahdif.com at notion'. PASS if the assistant treats this as a job application to Notion AND investigates mahdif.com (fetch/scrape it, or web-search the name) before — or instead of — asking anything, then proceeds toward the application (finding/searching Notion roles, drafting/submitting the application). Reading mahdif.com and inferring the person's field (e.g. that they're a designer, so design roles) is exactly the right move. FAIL if the assistant instead (a) hands back a menu of unrelated interpretations (register the domain, become a Notion partner, set up a workspace), (b) asks the user to pick which Notion role/department to apply for when the portfolio it could read would answer that, or (c) raises any clarifying question card before looking at mahdif.com. Investigating-then-acting = PASS; asking-before-looking or offering an interpretation/department menu = FAIL.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

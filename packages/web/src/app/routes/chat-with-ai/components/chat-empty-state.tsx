@@ -18,11 +18,14 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
+
+import { QuickReplies } from './quick-replies';
 
 export function EmptyState({
   onSuggestionClick,
@@ -36,12 +39,31 @@ export function EmptyState({
 }) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const firstName = currentUser?.firstName ?? '';
+  const stage = useStageOptional();
 
   if (incognito) {
     return (
       <div className="flex min-h-full flex-col justify-center pt-8 pb-6">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
           <Greeting firstName={firstName} incognito />
+        </div>
+      </div>
+    );
+  }
+
+  if (stage?.isStageOpen) {
+    return (
+      <div className="flex min-h-full flex-col justify-center px-4 sm:px-6 py-10">
+        <div className="mx-auto w-full max-w-md flex flex-col gap-6">
+          <Greeting firstName={firstName} incognito={false} compact />
+          <CollapseOnInput collapsed={hasInput}>
+            <QuickReplies
+              replies={EXAMPLE_CARDS.map((card) => t(card.prompt))}
+              onSend={onSuggestionClick}
+              max={EXAMPLE_CARDS.length}
+              className="gap-5"
+            />
+          </CollapseOnInput>
         </div>
       </div>
     );
@@ -129,9 +151,11 @@ export function MessageSkeletons() {
 function Greeting({
   firstName,
   incognito,
+  compact = false,
 }: {
   firstName: string;
   incognito: boolean;
+  compact?: boolean;
 }) {
   const headline = useMemo(
     () =>
@@ -146,18 +170,28 @@ function Greeting({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h1 className="text-4xl sm:text-5xl font-bold leading-[1.1] text-balance font-sentient">
+      <h1
+        className={cn(
+          'font-bold leading-[1.1] text-balance font-sentient',
+          compact ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl',
+        )}
+      >
         {incognito
           ? t('Private Chat')
           : firstName
           ? t(headline.withName, { name: firstName })
           : t(headline.plain)}
       </h1>
-      {!incognito && (
+      {!incognito && !compact && (
         <p className="text-base text-muted-foreground max-w-xl">
           {t(
             "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.",
           )}
+        </p>
+      )}
+      {!incognito && compact && (
+        <p className="text-sm text-muted-foreground">
+          {t("Tell me what you need — I'll handle the rest.")}
         </p>
       )}
     </motion.div>

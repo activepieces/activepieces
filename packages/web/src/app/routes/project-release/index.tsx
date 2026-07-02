@@ -63,6 +63,7 @@ const ProjectReleasesPage = () => {
     {
       accessorKey: 'type',
       size: 150,
+      meta: { responsivePriority: 'secondary' },
       accessorFn: (row) => row.type,
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -96,6 +97,7 @@ const ProjectReleasesPage = () => {
     {
       accessorKey: 'created',
       size: 150,
+      meta: { responsivePriority: 'tertiary' },
       accessorFn: (row) => row.created,
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -113,6 +115,7 @@ const ProjectReleasesPage = () => {
     {
       accessorKey: 'importedBy',
       size: 180,
+      meta: { responsivePriority: 'tertiary' },
       accessorFn: (row) => row.importedBy,
       header: ({ column }) => (
         <DataTableColumnHeader

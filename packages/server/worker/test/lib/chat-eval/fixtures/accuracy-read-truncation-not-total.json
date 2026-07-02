@@ -1,0 +1,55 @@
+{
+    "id": "accuracy-read-truncation-not-total",
+    "description": "ACC-1: a list read that came back at exactly its page size (50 returned of 218 matching) must NOT be reported as the total. The tool result literally says 'Showing 50 of 218'. PASS = the assistant conveys the set is partial (218 total / first 50 / more available / offers the rest); FAIL = it presents 50 as the complete count. Pins the page-is-not-a-total accuracy rule. Judgment-heavy -> capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "how many leads are in my Leads table? list them for me"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "tables": [
+                    { "id": "tbl_leads", "name": "Leads", "projectId": "eval-project", "fieldCount": 4 }
+                ]
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "content": [{ "type": "text", "text": "Showing 50 of 218 matching record(s) — capped at your limit of 50, 168 more match. Raise limit (max 500) or narrow filters to get the rest; do NOT report 50 as the total." }],
+                "structuredContent": {
+                    "count": 50,
+                    "totalMatching": 218,
+                    "hasMore": true,
+                    "limit": 50,
+                    "records": [
+                        { "name": "Acme Corp", "email": "ops@acme.com", "stage": "New" },
+                        { "name": "Globex", "email": "lia@globex.io", "stage": "Trialing" },
+                        { "name": "Initech", "email": "mike@initech.com", "stage": "Demo booked" },
+                        { "name": "Umbrella", "email": "sam@umbrella.co", "stage": "New" },
+                        { "name": "Soylent", "email": "dev@soylent.com", "stage": "Trialing" }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "page_not_reported_as_total",
+            "rubric": "The data read came back at exactly its page size: 50 records returned out of 218 total matching (a truncated page — 168 more exist). PASS when the assistant makes clear the 50 shown are NOT the whole set — e.g. it states the true total is 218, says it is showing the first 50 of 218, says 'at least 50 / there are more', or offers to pull the rest / get the exact count. Showing the 50 sample rows is fine and expected. FAIL when it presents 50 as the complete count — e.g. 'you have 50 leads', 'there are 50 leads in the table', or any phrasing implying 50 is the total with no signal that more exist.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

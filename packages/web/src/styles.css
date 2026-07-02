@@ -410,6 +410,44 @@
 }
 
 /*
+  Live AI flow edits: while the chat agent edits a flow open in the builder, each
+  changed step gets a purple glow pulse (new steps also scale in) so the canvas shows
+  where the change just happened. Top-level (outside @theme) so Tailwind v4 always
+  emits it.
+*/
+@keyframes ap-step-fx-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 hsl(var(--primary) / 0.5),
+      0 0 14px 2px hsl(var(--primary) / 0.45);
+    transform: scale(0.96);
+  }
+  55% {
+    box-shadow:
+      0 0 0 5px hsl(var(--primary) / 0.18),
+      0 0 18px 4px hsl(var(--primary) / 0.28);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 hsl(var(--primary) / 0),
+      0 0 0 0 hsl(var(--primary) / 0);
+    transform: scale(1);
+  }
+}
+
+.ap-step-fx-changed {
+  animation: ap-step-fx-pulse 1.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-step-fx-changed {
+    animation: none;
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.3);
+  }
+}
+
+/*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.
@@ -542,6 +580,18 @@
     --sidebar-progress: 0 0% 50%;
     --builder-background: #fbfbfb;
     --builder-background-pattern: #b2b2b2;
+
+    /* Tables grid (RevoGrid) — accents follow --primary so white-labeled
+       platforms stay on-brand; lines/hover are neutral hairlines. */
+    --grid-line-h: hsl(0 0% 0% / 0.07);
+    --grid-line-v: hsl(0 0% 0% / 0.04);
+    --grid-header-line: hsl(0 0% 0% / 0.1);
+    --grid-header-fg: theme('colors.neutral.500');
+    --grid-row-hover: hsl(0 0% 0% / 0.025);
+    --grid-row-selected: hsl(var(--primary) / 0.07);
+    --grid-focus-fill: hsl(var(--primary) / 0.04);
+    --grid-focus-halo: hsl(var(--primary) / 0.12);
+    --grid-range-fill: hsl(var(--primary) / 0.08);
   }
 
   .dark {
@@ -561,6 +611,17 @@
     --primary: 210 90% 50%;
     --primary-300: 210 100% 85%;
     --primary-foreground: 210 90% 98%;
+
+    /* Tables grid (RevoGrid) — dark hairlines + brand-following accents. */
+    --grid-line-h: hsl(0 0% 100% / 0.08);
+    --grid-line-v: hsl(0 0% 100% / 0.05);
+    --grid-header-line: hsl(0 0% 100% / 0.12);
+    --grid-header-fg: theme('colors.neutral.400');
+    --grid-row-hover: hsl(0 0% 100% / 0.04);
+    --grid-row-selected: hsl(var(--primary) / 0.16);
+    --grid-focus-fill: hsl(var(--primary) / 0.06);
+    --grid-focus-halo: hsl(var(--primary) / 0.18);
+    --grid-range-fill: hsl(var(--primary) / 0.12);
 
     --success: var(--success-400);
     --destructive: var(--destructive-400);
@@ -985,39 +1046,13 @@
   100% { transform: scaleY(1); opacity: 1; }
 }
 
-/* Brand-fixed purple (intentional, not --primary) so the icon matches the gradient. */
-.recurring-chip {
-  color: #8142e3;
+/* ── Floating (popped-out) chat: denser type for the compact window ──
+   Scoped to [data-chat-dense] so the docked panel and /chat page keep the
+   comfortable default sizing. */
+[data-chat-dense] .chat-md {
+  font-size: 13px;
+  line-height: 1.55;
 }
-.recurring-chip:hover {
-  background-color: rgba(129, 66, 227, 0.08);
-}
-
-/* Endpoints repeat the same purple so the 200% tiled background loops seamlessly. */
-.recurring-chip-gradient {
-  background-image: linear-gradient(
-    90deg,
-    #8142e3,
-    #ec2d9c,
-    #f2742b,
-    #4f8fe8,
-    #f2742b,
-    #ec2d9c,
-    #8142e3
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  animation: recurring-gradient-slide 3.5s ease-in-out infinite;
-}
-
-@keyframes recurring-gradient-slide {
-  from { background-position: 200% center; }
-  to { background-position: 0% center; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .recurring-chip-gradient { animation: none; }
+[data-chat-dense] .chat-msg {
+  padding: 0.375rem;
 }

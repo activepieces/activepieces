@@ -1,0 +1,408 @@
+/* RevoGrid renders in the light DOM (no shadow root in v4.23.x), so these global
+   rules reach grid internals directly. Class map: row = .rgRow, cell = .rgCell,
+   header = .rgHeaderCell, focus rect = .focused-cell, range = .selection-border-range.
+   The left gutter is RevoGrid's native row-headers viewport (chrome, not a cell).
+   Accents follow var(--primary) so white-labeled platforms stay on brand. We override
+   RevoGrid's built-in theme with `revo-grid …` selectors + !important where needed. */
+
+/* ── Container shell: a contained, lightly elevated surface ── */
+.ap-grid-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--background);
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.04),
+    0 1px 3px hsl(0 0% 0% / 0.06);
+}
+.dark .ap-grid-shell {
+  box-shadow: inset 0 0 0 1px hsl(0 0% 100% / 0.04);
+}
+
+revo-grid {
+  width: 100%;
+  height: 100%;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: var(--background);
+}
+
+/* ── Cells: compact, 13px, hairline gridlines (horizontal solid, vertical faint) ── */
+revo-grid revogr-data .rgCell {
+  display: flex;
+  align-items: center;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.006em;
+  color: var(--foreground);
+  border-right: 1px solid var(--grid-line-v) !important;
+  border-bottom: 1px solid var(--grid-line-h) !important;
+  transition: background-color 80ms ease-out;
+}
+
+revo-grid revogr-data .rgCell.ap-num-cell {
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Header: muted, medium, sentence-case, sticky, one crisp divider ── */
+revo-grid revogr-header .rgHeaderCell {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.003em;
+  text-transform: none !important;
+  color: var(--grid-header-fg) !important;
+  background: var(--background) !important;
+  border-right: 1px solid var(--grid-line-v) !important;
+  border-bottom: 1px solid var(--grid-header-line) !important;
+}
+
+.ap-th {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  height: 100%;
+  padding-inline: 0.75rem;
+}
+.ap-th-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ap-th-type-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  opacity: 0.65;
+}
+.ap-th-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ap-th-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.rgHeaderCell:hover .ap-th-menu {
+  opacity: 0.7;
+}
+.ap-th-menu:hover {
+  opacity: 1 !important;
+  background-color: var(--grid-row-hover);
+}
+
+/* ── Cell/row color tints (curated soft palette → palette key maps to .ap-tint-<key>).
+      Declared BEFORE .ap-row-selected so an active selection (also !important, equal
+      specificity) wins and reads on top of the tint. !important beats the (non-important)
+      hover rule so a tinted row keeps its color on hover. The .rgCell transition animates
+      the change. ── */
+revo-grid revogr-data .rgCell.ap-tint-gray {
+  background-color: #f5f5f5 !important;
+  color: #404040;
+}
+revo-grid revogr-data .rgCell.ap-tint-red {
+  background-color: #fee2e2 !important;
+  color: #b91c1c;
+}
+revo-grid revogr-data .rgCell.ap-tint-orange {
+  background-color: #ffedd5 !important;
+  color: #c2410c;
+}
+revo-grid revogr-data .rgCell.ap-tint-amber {
+  background-color: #fef3c7 !important;
+  color: #b45309;
+}
+revo-grid revogr-data .rgCell.ap-tint-green {
+  background-color: #dcfce7 !important;
+  color: #15803d;
+}
+revo-grid revogr-data .rgCell.ap-tint-teal {
+  background-color: #ccfbf1 !important;
+  color: #0f766e;
+}
+revo-grid revogr-data .rgCell.ap-tint-blue {
+  background-color: #dbeafe !important;
+  color: #1d4ed8;
+}
+revo-grid revogr-data .rgCell.ap-tint-indigo {
+  background-color: #e0e7ff !important;
+  color: #4338ca;
+}
+revo-grid revogr-data .rgCell.ap-tint-purple {
+  background-color: #f3e8ff !important;
+  color: #7e22ce;
+}
+revo-grid revogr-data .rgCell.ap-tint-pink {
+  background-color: #fce7f3 !important;
+  color: #be185d;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-gray {
+  background-color: rgba(115, 115, 115, 0.25) !important;
+  color: #d4d4d4;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-red {
+  background-color: rgba(239, 68, 68, 0.18) !important;
+  color: #fca5a5;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-orange {
+  background-color: rgba(249, 115, 22, 0.18) !important;
+  color: #fdba74;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-amber {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+  color: #fcd34d;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-green {
+  background-color: rgba(34, 197, 94, 0.18) !important;
+  color: #86efac;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-teal {
+  background-color: rgba(20, 184, 166, 0.18) !important;
+  color: #5eead4;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-blue {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+  color: #93c5fd;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-indigo {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+  color: #a5b4fc;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-purple {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+  color: #d8b4fe;
+}
+.dark revo-grid revogr-data .rgCell.ap-tint-pink {
+  background-color: rgba(236, 72, 153, 0.18) !important;
+  color: #f9a8d4;
+}
+/* A dropdown pill inside a tinted cell defers to the cell color (outline only) so the
+   cell isn't double-tinted. */
+revo-grid revogr-data .rgCell[class*='ap-tint-'] .ap-pill {
+  background: transparent;
+  color: inherit;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+/* ── Row hover + selection (hover toggled per-cell by the JS tracker so the tint
+      spans the frozen gutter + the scrolling body, which don't share :hover) ── */
+revo-grid revogr-data .rgCell.ap-row-hovered {
+  background-color: var(--grid-row-hover);
+}
+revo-grid revogr-data .rgCell.ap-row-selected {
+  background-color: var(--grid-row-selected) !important;
+}
+revo-grid revogr-data .rgCell.ap-gutter-cell.ap-row-selected {
+  box-shadow: inset 2px 0 0 hsl(var(--primary));
+}
+
+/* ── Gutter (native row-headers viewport): number by default, checkbox on hover/selected ── */
+revo-grid revogr-data .rgCell.ap-gutter-cell {
+  padding: 0 !important;
+  justify-content: center;
+}
+.ap-gutter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+.ap-gutter .ap-rownum {
+  font-size: 12px;
+  color: var(--grid-header-fg);
+  font-variant-numeric: tabular-nums;
+}
+.ap-gutter .ap-checkbox {
+  display: none;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: hsl(var(--primary));
+}
+/* select-all in the corner header is always visible */
+.ap-gutter-header .ap-checkbox {
+  display: inline-block;
+}
+.ap-gutter-cell.ap-row-hovered .ap-rownum,
+.ap-gutter-cell.ap-row-selected .ap-rownum {
+  display: none;
+}
+.ap-gutter-cell.ap-row-hovered .ap-checkbox,
+.ap-gutter-cell.ap-row-selected .ap-checkbox {
+  display: inline-block;
+}
+
+/* ── Dropdown values as pills ── */
+.ap-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dark .ap-pill {
+  color: var(--foreground);
+  background: hsl(var(--primary) / 0.22);
+}
+
+/* ── Focus ring + range selection recolored to brand. The data focus rect is the
+      `revogr-focus.focused-cell` overlay element — target it precisely so we don't
+      also hit the header cell, which RevoGrid marks `.rgHeaderCell.focused-cell`. ── */
+revo-grid revogr-focus.focused-cell {
+  border: none !important;
+  border-radius: 3px;
+  background: var(--grid-focus-fill) !important;
+  box-shadow:
+    inset 0 0 0 1.5px hsl(var(--primary)),
+    0 0 0 3px var(--grid-focus-halo) !important;
+}
+revo-grid .selection-border-range {
+  border: none !important;
+  border-radius: 4px;
+  background: var(--grid-range-fill) !important;
+  box-shadow: inset 0 0 0 1.5px hsl(var(--primary) / 0.9) !important;
+}
+revo-grid .temp-bg-range {
+  background: var(--grid-range-fill) !important;
+}
+revo-grid .autofill-handle {
+  background: hsl(var(--primary)) !important;
+  border-color: var(--background) !important;
+}
+
+/* ── Focused column header: a faint tint only, never the cell's ring/halo ── */
+revo-grid revogr-header .rgHeaderCell.focused-cell {
+  background: var(--grid-focus-fill) !important;
+}
+
+/* ── Realtime "fill" animations: rendered as fresh elements in a decoupled overlay
+      injected into the scrolling content (see use-table-grid-dom). One element per
+      event, animated once → identical every time, no flicker, no doubles. ── */
+.ap-fx-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 5;
+}
+.ap-fx {
+  position: absolute;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.ap-fx-flash {
+  border-radius: 3px;
+  animation: ap-fx-flash-kf 1s ease-out forwards;
+}
+@keyframes ap-fx-flash-kf {
+  0% {
+    background: hsl(var(--primary) / 0.34);
+  }
+  100% {
+    background: hsl(var(--primary) / 0);
+  }
+}
+
+.ap-fx-enter {
+  border-radius: 4px;
+  animation: ap-fx-enter-kf 0.55s ease-out forwards;
+}
+@keyframes ap-fx-enter-kf {
+  0% {
+    background: hsl(var(--primary) / 0.3);
+    transform: translateY(-3px);
+  }
+  100% {
+    background: hsl(var(--primary) / 0);
+    transform: translateY(0);
+  }
+}
+
+/* Delete: a cloned row "ghost" disintegrates — a dot-grain mask erodes as
+   --ap-dissolve animates 72% -> 0%, with brand wash, rising blur and upward drift.
+   The real row is removed a frame after the ghost is cloned. */
+@property --ap-dissolve {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 72%;
+}
+.ap-fx-ghost {
+  overflow: hidden;
+  background: hsl(var(--primary) / 0.06);
+  animation: ap-fx-ghost-kf 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  -webkit-mask-image: radial-gradient(
+    circle at center,
+    #000 var(--ap-dissolve),
+    transparent calc(var(--ap-dissolve) + 8%)
+  );
+  -webkit-mask-size: 5px 5px;
+  -webkit-mask-repeat: repeat;
+  mask-image: radial-gradient(
+    circle at center,
+    #000 var(--ap-dissolve),
+    transparent calc(var(--ap-dissolve) + 8%)
+  );
+  mask-size: 5px 5px;
+  mask-repeat: repeat;
+}
+.ap-fx-ghost .rgRow {
+  background: var(--background);
+}
+@keyframes ap-fx-ghost-kf {
+  0% {
+    --ap-dissolve: 72%;
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    filter: blur(0.5px);
+  }
+  100% {
+    --ap-dissolve: 0%;
+    opacity: 0;
+    filter: blur(7px);
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  revo-grid revogr-data .rgCell,
+  .ap-th-menu {
+    transition: none;
+  }
+  .ap-fx-flash,
+  .ap-fx-enter,
+  .ap-fx-ghost {
+    animation: none;
+    opacity: 0;
+  }
+}

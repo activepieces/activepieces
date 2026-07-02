@@ -255,17 +255,16 @@ async function generateInvitationLink(userInvitation: UserInvitation, expireyInS
 }
 const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyInSeconds: number, log: FastifyBaseLogger) => {
     const invitationLink = await generateInvitationLink(userInvitation, expireyInSeconds)
-    if (!smtpEmailSender(log).isSmtpConfigured()) {
-        return {
-            ...userInvitation,
-            link: invitationLink,
-        }
+    if (smtpEmailSender(log).isSmtpConfigured()) {
+        await emailService(log).sendInvitation({
+            userInvitation,
+            invitationLink,
+        })
     }
-    await emailService(log).sendInvitation({
-        userInvitation,
-        invitationLink,
-    })
-    return userInvitation
+    return {
+        ...userInvitation,
+        link: invitationLink,
+    }
 }
 type ListUserParams = {
     platformId: string

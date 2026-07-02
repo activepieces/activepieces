@@ -28,6 +28,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 | Change the streaming loop behavior | `worker/.../ee/chat/run-chat-turn.ts` |
 | Add an endpoint | `ee/chat/chat-controller.ts` |
 
+**Quality & regression gates (don't break what we fixed).** The "must keep working" behaviors and guarantees are catalogued in [`chat-eval/INVARIANTS.md`](../../packages/server/worker/test/lib/chat-eval/INVARIANTS.md) — each row links to the test that pins it. Two tiers: `npm run chat:quality` (deterministic backend tests — phases, classification, MCP client, approval gate, history hygiene; no key; **run on every chat change**) and `npm run chat-evals:ci` (agent-behavior fixtures replayed live + LLM judge; needs an OpenRouter key in `.env.dev`; **run when you touch the prompt or agent behavior**). Add a fixture (`chat-eval/fixtures/`) or a `BE-*` test alongside the change it justifies, and add the matching registry row.
+
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration; gates `/v1/chat` with `chatVisibilityGuard` (per-user visibility, not just the `chatEnabled` flag)
 - `packages/server/api/src/app/ee/chat/chat-visibility-helper.ts` — `chatVisibilityGuard` + `resolveChatEnabledForUser` (edition + embed + rollout/grandfather); also used by the platform endpoint to surface the effective `plan.chatEnabled`

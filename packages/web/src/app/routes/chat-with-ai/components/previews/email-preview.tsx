@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 import { PreviewCard } from './preview-card';
 
-function parseEmail(content: string): { subject: string; body: string } {
+export function parseEmail(content: string): { subject: string; body: string } {
   const lines = content.split('\n');
   for (let i = 0; i < lines.length && i < 5; i++) {
     const match = lines[i].match(

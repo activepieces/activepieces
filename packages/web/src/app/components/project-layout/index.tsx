@@ -80,13 +80,6 @@ export function ProjectDashboardLayout({
       icon: TrophyIcon,
       hasPermission: true,
     },
-    {
-      to: '/chat',
-      label: t('Chat'),
-      show: !isEmbedded,
-      icon: CompassIcon,
-      hasPermission: true,
-    },
   ];
 
   const hideHeader =

@@ -1,6 +1,6 @@
-import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, chatToolClassification, ConnectionState, FileCompression, FileType, FlowRunStatus, FlowStatus, getPieceNameFromAlias, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -111,6 +111,140 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     }
 
     return { pickConnection: true, piece: shortName, displayName, connections: flat, requiredScopes }
+}
+
+async function collectAllConnections({ projects, platformId, log }: {
+    projects: Project[]
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<ConnectionWithScopes[]> {
+    const perProject = await Promise.all(
+        projects.map(async (project) => {
+            const result = await appConnectionService(log).list({
+                projectId: project.id,
+                platformId,
+                pieceName: undefined,
+                cursorRequest: null,
+                displayName: undefined,
+                status: undefined,
+                limit: CROSS_PROJECT_CONNECTION_LIMIT,
+                scope: undefined,
+                externalIds: undefined,
+            })
+            return result.data.map((c) => {
+                const info = resolveConnectionInfo({ status: c.status, type: c.type, value: c.value })
+                return {
+                    label: c.displayName,
+                    externalId: c.externalId,
+                    project: chatPrompt.projectDisplayName(project),
+                    projectId: project.id,
+                    status: info.status,
+                    grantedScopes: info.grantedScopes,
+                }
+            })
+        }),
+    )
+    return perProject.flat()
+}
+
+async function listUserConnectedPieces({ projects, log }: {
+    projects: Project[]
+    log: FastifyBaseLogger
+}): Promise<ConnectionState[]> {
+    const perProject = await Promise.all(
+        projects.map((project) => appConnectionService(log).getManyConnectionStates({ projectId: project.id })),
+    )
+    return perProject.flat()
+}
+
+async function resolveKnownPiece({ pieceName, displayName, projects, platformId, log }: {
+    pieceName: string
+    displayName: string | undefined
+    projects: Project[]
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PickerResolution> {
+    const canonical = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    const found = await findConnectionsForPiece({ pieceName: canonical, projects, platformId, log })
+    const connections = 'connections' in found ? found.connections : []
+    const resolvedDisplayName = displayName
+        ?? ('displayName' in found ? found.displayName : pieceDisplayLabel(pieceShortName(canonical)))
+    return { resolvedPieceName: canonical, resolvedDisplayName, connections, fallback: false }
+}
+
+// Resolves an LLM/UI-supplied piece identifier to the connections the user should pick from, against
+// ground truth (real piece metadata + the user's actual connections). The hint is never trusted as a
+// hard filter: a mis-cased, spaced, aliased or hallucinated name still surfaces real connections, and
+// an unresolvable hint degrades to the user's full connection list — never a false "not connected".
+async function resolvePickerConnections({ pieceHint, displayNameHint, projects, platformId, log }: {
+    pieceHint: string
+    displayNameHint: string | undefined
+    projects: Project[]
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PickerResolution> {
+    const canonical = mcpUtils.normalizePieceName(pieceHint) ?? pieceHint
+    const projectId = projects[0]?.id
+
+    if (!isNil(projectId)) {
+        const realPiece = await pieceMetadataService(log).get({ name: canonical, projectId, platformId })
+        if (!isNil(realPiece)) {
+            return resolveKnownPiece({ pieceName: realPiece.name, displayName: realPiece.displayName, projects, platformId, log })
+        }
+    }
+
+    const userPieces = await listUserConnectedPieces({ projects, log })
+    const hintLower = pieceHint.trim().toLowerCase()
+    const displayLower = displayNameHint?.trim().toLowerCase()
+    const canonicalOf = (name: string): string => mcpUtils.normalizePieceName(name) ?? name
+
+    const exact = userPieces.find((p) =>
+        canonicalOf(p.pieceName) === canonical
+        || p.displayName.trim().toLowerCase() === hintLower
+        || (!isNil(displayLower) && p.displayName.trim().toLowerCase() === displayLower),
+    )
+    if (!isNil(exact)) {
+        return resolveKnownPiece({ pieceName: exact.pieceName, displayName: undefined, projects, platformId, log })
+    }
+
+    const aliasCanonical = canonicalOf(getPieceNameFromAlias(pieceHint))
+    if (aliasCanonical !== canonical) {
+        const aliasMatch = userPieces.find((p) => canonicalOf(p.pieceName) === aliasCanonical)
+        if (!isNil(aliasMatch)) {
+            return resolveKnownPiece({ pieceName: aliasMatch.pieceName, displayName: undefined, projects, platformId, log })
+        }
+    }
+
+    const candidateKeys = unique(
+        userPieces.flatMap((p) => [pieceShortName(canonicalOf(p.pieceName)), p.displayName]),
+    )
+    const closest = mcpUtils.suggestClosestKey(pieceHint, candidateKeys)
+    if (!isNil(closest)) {
+        const fuzzyMatch = userPieces.find((p) =>
+            pieceShortName(canonicalOf(p.pieceName)) === closest || p.displayName === closest,
+        )
+        if (!isNil(fuzzyMatch)) {
+            log.warn({ piece: { name: fuzzyMatch.pieceName }, pieceHint }, 'Chat picker resolved a connection by fuzzy match — model supplied a non-canonical piece identifier')
+            return resolveKnownPiece({ pieceName: fuzzyMatch.pieceName, displayName: undefined, projects, platformId, log })
+        }
+    }
+
+    if (!isNil(projectId)) {
+        const catalogMatches = await pieceMetadataService(log).list({ platformId, projectId, includeHidden: false, searchQuery: pieceHint })
+        const best = catalogMatches[0]
+        if (!isNil(best)) {
+            return resolveKnownPiece({ pieceName: best.name, displayName: best.displayName, projects, platformId, log })
+        }
+    }
+
+    const allConnections = await collectAllConnections({ projects, platformId, log })
+    log.warn({ pieceHint, displayNameHint, connectionCount: allConnections.length }, 'Chat picker could not resolve the piece — falling back to the user\'s full connection list')
+    return {
+        resolvedPieceName: null,
+        resolvedDisplayName: displayNameHint ?? pieceHint,
+        connections: allConnections,
+        fallback: allConnections.length > 0,
+    }
 }
 
 async function listFlowsAcrossProjects({ projects, status, log }: {
@@ -263,7 +397,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         }
         case 'ap_explore_data': {
             const actionName = toolInput.actionName as string
-            const exploreInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : undefined
+            const exploreInput = isObject(toolInput.input) ? toolInput.input : undefined
             if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
@@ -336,6 +470,47 @@ function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }
     }
 }
 
+type AdhocConnectionResolution =
+    | { kind: 'use', externalId: string, label: string, projectId: string }
+    | { kind: 'proceed' }
+    | { kind: 'guidance', result: { content: [{ type: 'text', text: string }] } }
+
+// The agent reaches an action with no connection chosen. For a READ on a piece with exactly one
+// usable connection, use it transiently (never stored — so it can't silently authorize a later
+// write); the one-connection case "just works" with no picker. Everything else (writes, ambiguous
+// multi-connection, or only-broken connections) is pointed at ap_discover_action_auth — NOT the
+// misleading "use ap_list_connections" the validator emits, which the agent has usually already run.
+async function resolveAdhocConnection({ normalizedPiece, actionName, input, projects, platformId, log }: {
+    normalizedPiece: string
+    actionName: string
+    input: unknown
+    projects: Project[]
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<AdhocConnectionResolution> {
+    const discovery = await findConnectionsForPiece({ pieceName: normalizedPiece, projects, platformId, log })
+    if ('noAuthRequired' in discovery) {
+        return { kind: 'proceed' }
+    }
+    const displayName = discovery.displayName
+    const discover = `ap_discover_action_auth({ pieceName: "${normalizedPiece}" })`
+    if ('needsConnection' in discovery) {
+        return { kind: 'guidance', result: { content: [{ type: 'text', text: `❌ No ${displayName} connection is set up yet. Call ${discover} to connect ${displayName}, then retry. (ap_list_connections only lists what exists — it can't create or select the connection an action needs.)` }] } }
+    }
+    const usable = discovery.connections.filter((c) => c.status === AppConnectionStatus.ACTIVE)
+    const isReadOnly = chatToolClassification.isReadOnlyActionCall({ actionName, input: isObject(input) ? input : undefined })
+    if (isReadOnly && usable.length === 1) {
+        return { kind: 'use', externalId: usable[0].externalId, label: usable[0].label, projectId: usable[0].projectId }
+    }
+    const candidates = discovery.connections.map((c) => `"${c.label}" (${c.status})`).join(', ')
+    const reason = !isReadOnly
+        ? `Writing to ${displayName} needs an explicit connection pick`
+        : usable.length === 0
+            ? `The ${displayName} connection isn't usable (needs reconnect)`
+            : `${displayName} has ${discovery.connections.length} connections — choose which to use`
+    return { kind: 'guidance', result: { content: [{ type: 'text', text: `❌ ${reason}. Call ${discover} to select a connection (available: ${candidates}), then retry. (ap_list_connections only lists — it can't make the selection an action needs.)` }] } }
+}
+
 async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
@@ -346,8 +521,16 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
 }): Promise<unknown> {
     const pieceName = toolInput.pieceName as string
     const actionName = toolInput.actionName as string
-
     const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+
+    let parsedInput = toolInput.input
+    if (typeof parsedInput === 'string') {
+        const parsed = parseToJsonIfPossible(parsedInput)
+        if (isObject(parsed)) {
+            parsedInput = parsed
+        }
+    }
+
     let connectionExternalId: string | undefined
     let connectionLabel: string | undefined
     let connectionProjectId: string | undefined
@@ -360,20 +543,24 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
         }
     }
 
+    if (isNil(connectionExternalId) && !isNil(platformId)) {
+        const resolution = await resolveAdhocConnection({ normalizedPiece, actionName, input: parsedInput, projects, platformId, log })
+        if (resolution.kind === 'guidance') {
+            return resolution.result
+        }
+        if (resolution.kind === 'use') {
+            connectionExternalId = resolution.externalId
+            connectionLabel = resolution.label
+            connectionProjectId = resolution.projectId
+        }
+    }
+
     const resolvedProjectId = connectionProjectId ?? projects[0]?.id
     if (!resolvedProjectId) {
         return { success: false, error: 'No projects available. Create a project first.' }
     }
     if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
         return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
-    }
-
-    let parsedInput = toolInput.input
-    if (typeof parsedInput === 'string') {
-        const parsed = parseToJsonIfPossible(parsedInput)
-        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-            parsedInput = parsed as Record<string, unknown>
-        }
     }
     const result = await executeAdhocAction({
         projectId: resolvedProjectId,
@@ -436,9 +623,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
     const inputFiles: { name: string, mimeType: string, base64: string }[] = []
     for (const fileId of inputFileIds) {
         const { data: file, error: lookupError } = await tryCatch(() => fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE }))
-        // Confine to the current conversation's project, not just the platform — otherwise a
-        // model-supplied fileId from another project on the same platform could be read.
-        if (lookupError || isNil(file) || file.platformId !== platformId || file.projectId !== projectId) {
+        if (lookupError || isNil(file) || file.platformId !== platformId) {
             return { text: `❌ Couldn't load attachment ${fileId}. If this is an image you generated, pass its URL into the code and fetch() it instead of using inputFileIds.`, producedFiles: [] }
         }
         const { data: fileData, error: dataError } = await tryCatch(() => fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE }))
@@ -568,6 +753,13 @@ type FindConnectionsResult =
     | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
     | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
 
+type PickerResolution = {
+    resolvedPieceName: string | null
+    resolvedDisplayName: string | null
+    connections: ConnectionWithScopes[]
+    fallback: boolean
+}
+
 type RawProducedFile = {
     name: string
     mimeType: string
@@ -587,4 +779,5 @@ type RunCodeToolResult = {
     producedFiles: ProducedFile[]
 }
 
-export { executeCrossProjectTool, findConnectionsForPiece }
+export { executeCrossProjectTool, findConnectionsForPiece, resolvePickerConnections }
+export type { PickerResolution }

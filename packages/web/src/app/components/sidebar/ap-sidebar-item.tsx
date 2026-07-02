@@ -34,8 +34,11 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const { state } = useSidebar();
   const iconRef = useRef<AnimatedIconHandle | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const isLinkActive =
-    location.pathname.startsWith(item.to) || item.isActive?.(location.pathname);
+  const isLinkActive = item.newWindow
+    ? false
+    : item.isActive
+    ? item.isActive(location.pathname)
+    : location.pathname.startsWith(item.to);
   const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
@@ -48,13 +51,18 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 
   const button = (
     <SidebarMenuButton
+      tooltip={item.label}
       className={cn(
         { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
         item.highlight && !isLinkActive && 'hover:bg-sidebar-accent/60',
       )}
       onClick={() => {
         item.onClick?.();
-        navigate(item.to);
+        if (item.newWindow) {
+          window.open(item.to, '_blank', 'noopener,noreferrer');
+        } else {
+          navigate(item.to);
+        }
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
