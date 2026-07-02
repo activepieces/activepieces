@@ -59,17 +59,10 @@ export const websocketService = {
             }
         }
         for (const [event, handler] of Object.entries(listener[castedType])) {
-            socket.on(event, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log))
-        }
-        for (const handler of Object.values(listener[castedType][WebsocketServerEvent.CONNECT] ?? {})) {
-            handler(socket)
-        }
-    },
-    async onDisconnect(socket: Socket): Promise<void> {
-        const principal = await websocketService.verifyPrincipal(socket)
-        const castedType = principal.type as keyof typeof listener
-        for (const handler of Object.values(listener[castedType][WebsocketServerEvent.DISCONNECT] ?? {})) {
-            handler(socket)
+            // Socket.IO emits the reserved lowercase 'disconnect' per-socket; map our DISCONNECT enum
+            // onto it or the handler never fires (it never did — worker cleanup relied on the 60s sweep).
+            const socketEvent = event === WebsocketServerEvent.DISCONNECT ? 'disconnect' : event
+            socket.on(socketEvent, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log))
         }
     },
     async verifyPrincipal(socket: Socket): Promise<Principal> {

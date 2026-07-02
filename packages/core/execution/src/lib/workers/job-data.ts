@@ -276,6 +276,10 @@ export const ExecuteChatAgentJobData = z.object({
     })).optional(),
     promptOverride: ChatPromptOverride.optional(),
     dryRun: z.boolean().optional(),
+    // Measurement mode: run real discovery (research/get-props/resolve/reads) but neutralize
+    // ap_execute_action and auto-resolve approval gates, so the eval harness can measure how the
+    // agent navigates to a runnable call with zero side effects and no approval stalls.
+    discoveryOnly: z.boolean().optional(),
 })
 export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
 

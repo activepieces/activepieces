@@ -1,0 +1,32 @@
+{
+    "id": "proactive-no-filler-chips",
+    "description": "Capability (deterministic, assertion-only): a simple info request gets a plain answer with NO filler quick-reply chips. Guards the other side of proactivity — proactive next-steps only when genuinely relevant, never reflexively. Assertion-only so it adds no LLM-judge calibration risk. Promote to regression once stable across runs.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "list my automations"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "flows": [
+                    { "id": "flow_aa11", "name": "Daily lead sync to HubSpot", "projectId": "eval-project", "status": "ENABLED" },
+                    { "id": "flow_bb22", "name": "Invoice reminder emails", "projectId": "eval-project", "status": "ENABLED" },
+                    { "id": "flow_cc33", "name": "Slack alert on new signups", "projectId": "eval-project", "status": "DISABLED" }
+                ]
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "maxQuestionCards", "n": 0 }
+    ],
+    "judge": []
+}

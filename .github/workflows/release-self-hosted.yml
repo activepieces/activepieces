@@ -9,7 +9,14 @@ on:
         type: string
 
 jobs:
+  # Preflight: build the image and run functional smoke tests + the perf-regression
+  # gate (throughput / worker CPU / worker memory). Blocks the release on any
+  # regression so we never tag-and-push a build that pegs CPU or tanks throughput.
+  preflight:
+    uses: ./.github/workflows/smoke-test.yml
+
   release:
+    needs: preflight
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5

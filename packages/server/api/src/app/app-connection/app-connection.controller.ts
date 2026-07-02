@@ -1,6 +1,6 @@
 import { ApId, Permission, SeekPage } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionWithoutSensitiveData, ApplicationEventName, GetOAuth2AuthorizationUrlRequestBody, GetOAuth2AuthorizationUrlResponse, ListAppConnectionOwnersRequestQuery, ListAppConnectionsRequestQuery, PLACEHOLDER_CONNECTION_TYPE, PrincipalType, ReplaceAppConnectionsRequestBody, SERVICE_KEY_SECURITY_OPENAPI, UpdateConnectionValueRequestBody, UpsertAppConnectionRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionWithoutSensitiveData, ApplicationEventName, ErrorCode, GetOAuth2AuthorizationUrlRequestBody, GetOAuth2AuthorizationUrlResponse, ListAppConnectionOwnersRequestQuery, ListAppConnectionsRequestQuery, PLACEHOLDER_CONNECTION_TYPE, PrincipalType, ReplaceAppConnectionsRequestBody, SERVICE_KEY_SECURITY_OPENAPI, UpdateConnectionValueRequestBody, UpsertAppConnectionRequestBody } from '@activepieces/shared'
 import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -129,17 +129,25 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             platformId: request.principal.platform.id,
             projectId: request.projectId,
         })
-        applicationEvents(request.log).sendUserEvent(request, {
-            action: ApplicationEventName.CONNECTION_DELETED,
-            data: {
-                connection,
-            },
-        })
+        if (connection.scope === AppConnectionScope.PLATFORM) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Platform connections must be deleted from the platform admin connections page',
+                },
+            })
+        }
         await appConnectionService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PROJECT,
             projectId: request.projectId,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.CONNECTION_DELETED,
+            data: {
+                connection,
+            },
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })

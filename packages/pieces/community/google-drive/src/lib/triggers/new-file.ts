@@ -1,6 +1,5 @@
 import {
   AppConnectionValueForAuthProperty,
-  PiecePropValueSchema,
   Property,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -15,6 +14,7 @@ import dayjs from 'dayjs';
 import { googleDriveAuth } from '../auth';
 import { common } from '../common';
 import { downloadFileFromDrive } from '../common/get-file-content';
+import { newFileTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
@@ -54,6 +54,7 @@ export const newFile = createTrigger({
       defaultValue: false
     }),
   },
+  outputSchema: newFileTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {

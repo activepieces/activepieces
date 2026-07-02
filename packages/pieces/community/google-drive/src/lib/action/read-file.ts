@@ -1,6 +1,7 @@
 import { googleDriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { downloadFileFromDrive } from '../common/get-file-content';
+import { readFileActionOutputSchema } from '../output-schemas';
 
 export const readFile = createAction({
   auth: googleDriveAuth,
@@ -20,6 +21,7 @@ export const readFile = createAction({
       required: false,
     }),
   },
+  outputSchema: readFileActionOutputSchema,
   run: async ({ auth, propsValue, files }) => {
     return downloadFileFromDrive(auth, files, propsValue.fileId, propsValue.fileName)
   },

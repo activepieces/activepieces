@@ -3,8 +3,38 @@
 ## Summary
 A platform-level AI chat assistant that lets users interact with an LLM to manage their Activepieces projects through natural language. The chat connects to the platform's configured AI provider, streams responses via a custom WebSocket chunk reducer, and exposes Activepieces resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations are persisted per-user with support for message compaction, file attachments, multi-project context switching, two-phase (discovery/build) tool gating, and an action-preview gate for ad-hoc write actions. The full tool-call/tool-result history of every turn is persisted (all AI-SDK steps, not just the last), so the agent remembers what it already did within a conversation and does not re-run tools. Inputs are gathered conversationally through connection pickers and multi-question cards during discovery; once understood, the agent builds directly with no separate approval step (flow construction and publishing are not gated; a live test of a flow that contains write/destructive steps is gated behind a confirmation).
 
+## Developer Quickstart
+
+**Execution model (read this first).** The chat LLM loop runs in the **worker**, not the API. Send-message path: `chat-controller.ts` (`POST /conversations/:id/messages`) enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job → worker `execute-chat-agent.ts` calls the `getChatConfig` RPC, assembles tools, and runs `run-chat-turn.ts` (the shared `streamText()` DI loop) → chunks stream back via the `sendChatEvent` RPC → websocket `CHAT_MESSAGE_CHUNK` (filtered by `runId`) → frontend `use-streaming-reducer.ts` + `chunk-reducer.ts`. `chat-service.ts` only does conversation CRUD + persistence.
+
+**Run it locally (EE + chat).** Chat is EE/Cloud-only and refuses to run on the default PGLite dev DB. To bring it up self-hosted:
+- `AP_EDITION=ee` **and** `AP_DB_TYPE=POSTGRES` (+ `AP_POSTGRES_*`) — set in `.env.dev` (Turbo strips ad-hoc env vars unless declared in `globalPassThroughEnv`). Redis is also required.
+- A platform only exists in dev via the **dev seed** (`dev-seeds.ts`, `dev@ap.com` / `12345678`), which is gated off for EE — temporarily allow it, or seed under CE first, then switch to EE on the same Postgres DB.
+- `platform.plan.chatEnabled` must be true. In CE the plan is derived live from `OPEN_SOURCE_PLAN`; in EE it's a DB row in `platform_plan` (set by a license key via Platform Admin → Setup → License Keys, or flip the flags directly for local testing).
+
+**Debugging a chat run (local, full logging).** Given a chat (conversation) id, reconstruct the whole turn — requests, responses, the worker LLM loop, every tool call's full input/output, websocket chunks, and what the user saw — from one NDJSON corpus. Dev-only, off by default; never enabled in cloud/prod.
+- Turn it on: backend `LOG_FILE=true` (api) + `AP_LOG_FILE=true` (worker) + `AP_LOG_LEVEL=debug`/`LOG_LEVEL=debug` (debug captures per-chunk, per-step, and full tool I/O); frontend `localStorage['chat-debug']='1'` then reload the chat page.
+- Where logs land: repo-root `.evlog/logs/<date>.jsonl` (gitignored). The evlog filesystem drain (`evlog/fs`, wired in `packages/server/utils/src/evlog-drains.ts`) collects **both** api and worker events; the browser ships its events to the dev-only `POST /v1/logs/client` ingest (`packages/server/api/src/app/helper/logs/`, registered in `app.ts` only when `LOG_FILE=true` and edition ≠ cloud), which re-emits them into the same file tagged `source:"client"`.
+- Correlation: every chat log line carries `conversation: { id }` + `run: { id }` (the per-message run id, threaded controller → job → worker → RPC; `worker.ts` maps chat `runId` to `run.id`, not `flowRun.id`). The frontend logger (`packages/web/src/lib/chat-debug-logger.ts`) tags the same ids.
+- Read it: `npm run chat:logs -- <conversationId> [runId]` (`scripts/chat-logs.mjs`) merges api/worker/web events and prints a timeline; or use the `analyze-logs` skill; or `jq -c 'select(.conversation.id=="X")' .evlog/logs/*.jsonl | jq -s 'sort_by(.timestamp)'`.
+
+**Extension points (where to edit).**
+| Goal | Edit |
+| --- | --- |
+| Add a local `ap_*` tool | `worker/.../ee/chat/chat-worker-tools.ts` (tool def/factory) + `ee/chat/tools/chat-tools.ts` (server-side logic: connections, RPC) |
+| Change the system prompt / guides | `src/assets/prompts/*.md` (loaded by `prompt/chat-prompt.ts`) |
+| Change tool gating / phases | `core/shared/src/lib/ee/chat/tool-phases.ts` (`BUILD_ONLY_TOOL_NAMES`, `CHAT_HIDDEN_TOOL_NAMES`) |
+| Change write/approval classification | `core/shared/src/lib/ee/chat/tool-classification.ts` |
+| Change the streaming loop behavior | `worker/.../ee/chat/run-chat-turn.ts` |
+| Add an endpoint | `ee/chat/chat-controller.ts` |
+
 ## Key Files
-- `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration with `chatEnabled` plan gate
+- `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration; gates `/v1/chat` with `chatVisibilityGuard` (per-user visibility, not just the `chatEnabled` flag)
+- `packages/server/api/src/app/ee/chat/chat-visibility-helper.ts` — `chatVisibilityGuard` + `resolveChatEnabledForUser` (edition + embed + rollout/grandfather); also used by the platform endpoint to surface the effective `plan.chatEnabled`
+- `packages/server/api/src/app/ee/chat/chat-rollout-service.ts` — cloud rollout cohort: `isRolloutOpen` (cached count vs cap), `hasUserChatted` (grandfather), `recordLanding`/`recordChatted` (deduped upserts into the local `chat_rollout_user` table)
+- `packages/server/api/src/app/ee/chat/chat-rollout-user-entity.ts` — `chat_rollout_user` table (one row per distinct cloud user; `landedAt`/`chattedAt`; `chattedAt` drives the cap)
+- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — `chatAnalyticsTelemetry`: `sendConversationUpdate` (per-save conversation sync) + `sendMessageBillingEvent` + `sendRolloutFunnelUpdate` (pushes the landed/chatted/cap/closed funnel snapshot to console.activepieces.com); all real-time + cloud-only. Conversation sync and the funnel push authenticate with the instance `CONSOLE_API_SECRET_KEY` Bearer (no license key — free cloud users have none)
+- `packages/core/shared/src/lib/ee/chat/chat-visibility.ts` — pure `resolveChatEnabled` (CE never / EE flag / embed never / Cloud `flag || rolloutOpen || userHasChatted`)
 - `packages/server/api/src/app/ee/chat/chat-controller.ts` — HTTP endpoints (conversations CRUD, messages, tool approvals)
 - `packages/server/api/src/app/ee/chat/chat-eval-controller.ts` — admin eval/playground endpoints: prompt-source inspection, batch dry-run simulate, and the interactive single-turn eval (stateful `turn/start` + state-poll) backing the console's live prompt playground
 - `packages/server/worker/src/lib/execute/jobs/ee/chat/run-chat-turn.ts` — pure dependency-injected streaming-loop core shared by the production worker, the replay eval gate, and the live playground
@@ -22,7 +52,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `packages/server/api/src/app/ee/chat/mcp/chat-mcp.ts` — connects to Activepieces MCP server for project-scoped tools with approval wrapping
 - `packages/server/api/src/app/ee/chat/history/chat-history.ts` — reconstructs chat history from AI SDK `ModelMessage` format
 - `packages/server/api/src/app/ee/chat/prompt/chat-prompt.ts` — builds system prompt from markdown templates in `src/assets/prompts/`
-- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — exposes `chatAnalyticsTelemetry` with two fire-and-forget paths (cloud-only): `sendConversationUpdate` syncs the full conversation to console.activepieces.com (grouped by platform, authenticated with each platform's license key from `platform_plan` as a Bearer token; platforms without a license key are skipped), and `sendMessageBillingEvent` emits a PostHog `chat_message` billing event (`BillingEvents.CHAT_MESSAGE`, keyed by license key as `distinctId`, with `provider`/`model`/`toolsUsed` from the latest turn). Also exposes `chatAnalyticsBulkSync` for admin bulk sync; falls back to reconstructing messages from raw ModelMessage[] when uiMessages is null
+- `packages/server/api/src/app/ee/chat/chat-sync-job.ts` — exposes `chatAnalyticsTelemetry` with three fire-and-forget paths (cloud-only): `sendConversationUpdate` syncs the full conversation to console.activepieces.com — **all** cloud conversations are sent (licensed and free), authenticated once with the instance `CONSOLE_API_SECRET_KEY` as a Bearer token; each conversation carries its own platform license key in the payload (`null` for free platforms with no `platform_plan.licenseKey`), which console stamps onto the row. `sendMessageBillingEvent` emits a PostHog `chat_message` billing event (`BillingEvents.CHAT_MESSAGE`, keyed by license key as `distinctId`, with `provider`/`model`/`toolsUsed` from the latest turn). `sendRolloutFunnelUpdate` pushes the rollout funnel snapshot (`landed`/`chatted`/`cap`/`closed` from `chatRolloutService.getFunnelSnapshot`) to `console.activepieces.com/api/chat-analytics/external/rollout-funnel` over the same `CONSOLE_API_SECRET_KEY` channel; triggered on chat-page landing and after every sent message. Also exposes `chatAnalyticsBulkSync` for admin bulk sync; falls back to reconstructing messages from raw ModelMessage[] when uiMessages is null
 - `packages/core/shared/src/lib/ee/chat/index.ts` — shared Zod schemas, types (ChatConversation, request DTOs, ChatHistoryMessage), typed tool outputs (`ChatToolOutputs`); includes `PersistedActionReceiptPartSchema` for persisting action receipts, and `PersistedSourceUrlPartSchema` / `PersistedSourceDocumentPartSchema` for persisting web-search citations, in conversation history; `PersistedToolCallPartSchema` includes optional `title` and `description` fields for UI chip label and conversational status text
 - `packages/web/src/app/routes/chat-with-ai/index.tsx` — main chat page component
 - `packages/web/src/app/routes/chat-with-ai/ai-chat-box.tsx` — chat interface with provider check, message streaming, Zustand store provider; manages suggestion prefill via counter-based key remount on empty-state suggestion clicks
@@ -44,9 +74,12 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Edition Availability
 - Community (CE): not available (module not registered)
 - Enterprise (EE): available when `platform.plan.chatEnabled` is true; the eval/playground endpoints (`/v1/chat/eval/*`) are internal global-API-key dry-runs and do **not** require `chatEnabled` (they run as the platform owner with tools disabled)
-- Cloud: available when `platform.plan.chatEnabled` is true
+- Cloud: shown to all normal (non-embed) cloud users during a capped beta **without** requiring `chatEnabled` — see **Cloud rollout cap**. Embedded cloud sessions never show chat; a platform that has `chatEnabled` (e.g. cloud enterprise) always keeps it
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ChatConversation** — a persisted conversation between a user and the AI assistant, scoped to a platform and user; optionally scoped to a project for tool access
 - **Message compaction** — when a conversation exceeds a token threshold, older messages are summarized by the LLM and replaced with a summary to keep context within the model's window
 - **Tool approval gate** — a Redis pub/sub mechanism that blocks on user input until the user responds in the UI; times out after 5 minutes. Used to wait on display-tool cards (connection picker, multi-question card, project picker), the ad-hoc action-preview gate, and the test-flow write gate. Flow build and publish and most MCP tools are NOT gated; `ap_test_flow` is gated only when the flow contains a write/destructive step (see **Write-check gate**)
@@ -70,12 +103,20 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - **Project context** — the currently selected project for a conversation; determines which MCP tools are available and scopes resource access
 - **Chat tiers** — model configurations (fast/smart/premium) with different thinking budgets; displayed as Fast/Expert/Heavy in the UI with per-tier descriptions. The tier's full thinking budget applies only in the `build` phase; discovery/handoff turns (pickers, questions, confirmations) use a small fixed budget (`DISCOVERY_THINKING_BUDGET` in `run-chat-turn.ts`) so interactive cards and replies appear quickly. When a turn transitions to `build` mid-stream, the discovery stream is stopped and resumed in a fresh `streamText` call at the full budget, so build and one-time-task reasoning is never under-resourced
 - **Credits warning banner** — a dismissible amber banner shown when Activepieces AI credits usage reaches 70%; a non-dismissible red banner is shown when credits are fully exhausted
+- **Cloud rollout cap** — on cloud, chat opens to all non-embed users without the `chatEnabled` flag until **200 distinct users have sent a message** (`CLOUD_CHAT_ROLLOUT_CAP`, overridable via `AP_CLOUD_CHAT_ROLLOUT_CAP`). Enforced cloud-local as a single global cohort counted in `chat_rollout_user`; monotonic (closed state cached in Redis); visibility decided per-user by `chatVisibility.resolveChatEnabled`
+- **Grandfathered users** — once the cap closes, users who already chatted keep chat (`hasUserChatted`); new cloud users no longer see it
+- **Chat rollout cohort** — the cap/grandfathering cohort is tracked in `chat_rollout_user` (cloud-only, deduped, no license key needed): `recordChatted` on first message sets `chattedAt` (drives the cap), `recordLanding` on chat-page open sets `landedAt`. Counts feed `getFunnelSnapshot` (`landed`/`chatted`/`cap`/`closed`), which is pushed to console.activepieces.com via `sendRolloutFunnelUpdate` — triggered by the `/funnel/landing` endpoint and after every sent message (`recordChatted` path). No scheduled job; the push is real-time and over the shared `CONSOLE_API_SECRET_KEY` channel.
+- **Console chat-analytics** — `sendConversationUpdate` ships **all** cloud chat conversations (licensed and free) to console.activepieces.com via `sendConversationUpdate`. Free-tier conversations arrive with `license_key = null` and are distinguishable there by a free-tier filter; licensed conversations carry their platform's real license key.
 
 ## Data Model
 
 **ChatConversation**: id, platformId, userId, projectId (nullable), title (nullable), modelName (nullable), messages (JSONB array of `ModelMessage`), summary (text, nullable — compaction summary), summarizedUpToIndex (int, nullable — index up to which messages are summarized).
 - Relations: platform (many-to-one), project (many-to-one, SET NULL on delete), user (many-to-one, CASCADE on delete)
 - Index: `idx_chat_conversation_platform_user_created_id` on (platformId, userId, created, id)
+
+**ChatRolloutUser** (`chat_rollout_user`, cloud rollout cohort): id, userId (unique), platformId, landedAt (nullable — set by `recordLanding` on chat-page mount), chattedAt (nullable — set on first message; drives the cap).
+- Partial indexes on `chattedAt` and `landedAt` (WHERE NOT NULL); FKs to user + platform (CASCADE on delete).
+- Rows with `chattedAt IS NOT NULL` are the rollout cohort (capped at 200). The cap `COUNT` is **intentionally global** (not tenant-scoped) — a single cloud-wide cohort.
 
 ## Key Service Methods
 - `createConversation()` — creates a new conversation for a user on a platform; accepts an optional explicit `id` (defaults to `apId()`) so the interactive eval can mint a reserved-prefix conversation id
@@ -84,7 +125,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `updateConversation()` — updates title and/or modelName
 - `deleteConversation()` — deletes a conversation after ownership check; blocked while status is STREAMING
 - `getMessages()` — reconstructs `ChatHistoryMessage[]` from stored `ModelMessage[]`
-- `sendMessage()` — the main streaming flow: resolves provider, connects MCP, builds prompt, runs `streamText()` with `stopWhen: isLoopFinished()` (no hard step cap), `prepareStep` (narrows the active toolset to the current discovery/build phase), `experimental_repairToolCall` (auto-fixes malformed JSON), and `experimental_onToolCallFinish` (per-tool logging); retries event delivery with exponential backoff; tools have a 5-minute per-call timeout with AbortSignal propagation; persists assistant response on completion
+- Sending a message does **not** stream inline in `chat-service.ts` anymore. The controller (`chat-controller.ts`) enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job (with `runId`) and returns immediately; the **worker** runs the streaming loop. `chat-service.ts` now owns conversation CRUD + persistence (`saveChatMessages` RPC), not the LLM loop. See **Execution model** in Developer Quickstart.
 
 ## Local Tools
 - `ap_set_session_title` — auto-names the conversation after the first exchange
@@ -114,6 +155,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 - `POST /v1/chat/conversations/:id/messages` — send message; if the conversation is STREAMING the old run is cancelled; response body is `{ conversationId, runId }` — clients use runId to filter stale events
 - `POST /v1/chat/tool-approvals/:gateId` — approve or deny a tool execution
 - `POST /v1/chat/conversations/:id/cancel` — cancel an in-progress streaming response
+- `POST /v1/chat/funnel/landing` — record that the user landed on the chat page (`chatRolloutService.recordLanding`, deduped per user) and push the refreshed funnel snapshot to console via `sendRolloutFunnelUpdate`; cloud-only, no-op off cloud
 - `GET /v1/chat/conversations/:id/connections?pieceName=` — get available connections for connection picker; falls back to `findConnectionsForPiece` when the Redis cache is empty and stores the result for future calls
 - `GET /v1/chat/conversations/:id/pending-gate` — get pending approval gate for refresh resilience (returns gate info so the frontend can re-show display tool cards)
 - `GET /v1/chat/eval/prompt-sources` — returns the raw prompt template sources (core + project-context + on-demand guides); requires the global eval API key
@@ -131,9 +173,11 @@ All chat endpoints require `PrincipalType.USER` authentication at the platform l
 1a. If the conversation is STREAMING, the controller reads the active runId, cancels that run, and resets status to IDLE
 1b. If the platform's chat provider is ACTIVEPIECES and `usageRemaining <= 0`, the endpoint returns a 402 `AI_CREDIT_LIMIT_EXCEEDED` error before queuing the job; the frontend surfaces a non-dismissible error banner
 1c. Controller generates a `runId`, includes it in the job data, and returns it to the frontend
-2. Service resolves AI provider, connects MCP client, builds system prompt with project list
+1d. Controller enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job and returns `{ conversationId, runId }`; all LLM work happens in the worker (`execute-chat-agent.ts`), not the API process
+1e. On cloud, the controller records the user in the rollout/funnel cohort (`chatRolloutService.recordChatted`, deduped, fire-and-forget). The `/v1/chat` `chatVisibilityGuard` preHandler has already enforced per-user visibility (rollout open or grandfathered) before any of this
+2. Worker calls the `getChatConfig` RPC (history, system prompt, resolved provider, MCP credentials, project list), assembles the tool set (local + display + cross-project + web + MCP, phase-gated), and connects the MCP client
 3. If conversation is long, compaction summarizes older messages
-4. `streamText()` streams the LLM response with local tools + display tools + MCP tools available
+4. `run-chat-turn.ts` runs `streamText()` (the shared DI loop) with `stopWhen: isLoopFinished()` (no hard step cap), `prepareStep` (narrows toolset to the current discovery/build phase), and `experimental_repairToolCall`; chunks stream back to the API via the `sendChatEvent` RPC, which emits `CHAT_MESSAGE_CHUNK` over websocket to the user's socket (filtered by `runId`)
 5. Display-tool cards (connection picker, questions) and ad-hoc write actions (`ap_execute_action` previews) pause and emit a gate request to the UI via the stream; flow build and publish run without gating, and `ap_test_flow` is gated only when the flow has write steps (the worker's `__flow_write_check` RPC confirms before a live run)
 6. User responds via `POST /tool-approvals/:gateId`, unblocking the gate via Redis pub/sub
 7. On stream completion, assistant messages are appended to the stored conversation

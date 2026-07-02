@@ -7,6 +7,7 @@ import { NotionFieldMapping } from '../common/models';
 
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
+import { updateDatabaseItemActionOutputSchema } from '../output-schemas';
 export const updateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'update_database_item',
@@ -24,6 +25,7 @@ export const updateDatabaseItem = createAction({
     database_item_id: notionCommon.database_item_id,
     databaseFields: notionCommon.databaseFields,
   },
+  outputSchema: updateDatabaseItemActionOutputSchema,
   async run(context) {
     const { database_id, database_item_id, databaseFields } =
       context.propsValue;

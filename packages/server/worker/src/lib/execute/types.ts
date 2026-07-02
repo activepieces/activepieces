@@ -1,4 +1,4 @@
-import { Resolver, Runtime } from '@activepieces/sandbox-pool'
+import { Resolver, Runtime } from '@activepieces/sandbox'
 import { type ApLogger } from '@activepieces/server-utils'
 import { EngineResponseStatus, JobData, WorkerJobType, WorkerToApiContract } from '@activepieces/shared'
 
