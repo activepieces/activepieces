@@ -254,6 +254,20 @@ function persistedPartToUIPart(
               : JSON.stringify(part.output),
         };
       }
+      if (part.status === PersistedToolCallStatus.SUPERSEDED) {
+        // A gate the user abandoned by sending a new message (Fix R3a). Render it resolved and
+        // non-interactive (output-available, never input-available) so the buttons are gone and it
+        // reads as dismissed — never re-openable.
+        return {
+          type: 'dynamic-tool',
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          title: toolTitle,
+          state: 'output-available',
+          input: part.input,
+          output: JSON.stringify({ superseded: true, dismissed: true }),
+        };
+      }
       return {
         type: 'dynamic-tool',
         toolCallId: part.toolCallId,
@@ -340,6 +354,20 @@ function mapHistoryToUIMessages(
     }
   }
   return result;
+}
+
+// A gate card still awaiting the user's answer (Fix R6b): a tool part rehydrated to input-available
+// on the LATEST assistant message. Lets onStaleCheck tell a parked-gate turn (settle quietly, chip
+// stays) from a genuinely-empty finish (surface the "no response" affordance).
+function hasPendingGateCard(messages: ChatUIMessage[]): boolean {
+  const lastMessage = messages[messages.length - 1];
+  if (!lastMessage || lastMessage.role !== 'assistant') {
+    return false;
+  }
+  return lastMessage.parts.some(
+    (part) =>
+      chatPartUtils.isAnyToolPart(part) && part.state === 'input-available',
+  );
 }
 
 function extractQuickRepliesFromHistory(
@@ -589,6 +617,7 @@ export const chatUtils = {
   formatToolActionName: formatToolActiveTitle,
   formatToolDoneTitle,
   mapHistoryToUIMessages,
+  hasPendingGateCard,
   extractQuickRepliesFromHistory,
   extractReceiptsFromHistory,
   extractImagesFromHistory,

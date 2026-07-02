@@ -437,12 +437,19 @@ export function useAgentChat({
         }
         if (conv.status === ChatConversationStatus.STREAMING) return;
 
-        // Not STREAMING and not ERROR. Before settling, check whether recovery claimed a resume run:
-        // if activeRunId is set (a crash resume / parked-gate resume owns the conversation) the row
-        // will flip back to STREAMING momentarily, so keep the stale-check/poll alive and attach to
-        // that run instead of settling this turn as a failure. Same for a freshly-IDLE row with no
-        // assistant reply yet (the resume job hasn't flipped STREAMING). Only genuine terminal states
-        // (a delivered reply) settle here.
+        // Not STREAMING and not ERROR. Attach to a resume ONLY when a run actually owns the
+        // conversation (Fix R6b): activeRunId set means a crash-resume / parked-gate resume claimed
+        // it and the row will flip back to STREAMING momentarily, so keep the stale-check/poll alive.
+        //
+        // When activeRunId is NULL the turn is settled — do NOT keep polling. A parked gate (IDLE,
+        // activeRunId NULL, a pending card awaiting the user's answer) previously looped here every
+        // 15s forever because it had no reply; it must instead settle into the quiet waiting-for-answer
+        // state (chip visible, no shimmer, no request loop). A genuinely-finished IDLE with no reply
+        // settles with the existing "no response" affordance.
+        if (!isNil(conv.activeRunId)) {
+          attachToResumeRef.current(convId);
+          return;
+        }
         const { data: history } = await tryCatch(() =>
           chatApi.getMessages(convId),
         );
@@ -450,16 +457,14 @@ export function useAgentChat({
         const mapped = history
           ? chatUtils.mapHistoryToUIMessages(history.data)
           : null;
-        const hasReply =
-          mapped !== null &&
-          mapped.findLastIndex((m) => m.role === 'assistant') >
-            mapped.findLastIndex((m) => m.role === 'user');
-        const resumePending = !isNil(conv.activeRunId) || !hasReply;
-        if (resumePending) {
-          attachToResumeRef.current(convId);
-          return;
-        }
-        settleStreamRef.current(convId);
+        // A parked gate is waiting on the user, not on the agent — settle quietly (no "no response"
+        // error). The pending card in history keeps the chip/answer affordance up.
+        const hasPendingGate =
+          mapped !== null && chatUtils.hasPendingGateCard(mapped);
+        settleStreamRef.current(
+          convId,
+          hasPendingGate ? { suppressNoReply: true } : undefined,
+        );
       });
     },
   });
