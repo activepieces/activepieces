@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, CHAT_INTERRUPTED_MESSAGE, ChatConversation, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetProviderConfigResponse, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, Project, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -22,7 +22,7 @@ export function isEvalConversationId(id: string): boolean {
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
-async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }) {
+async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log: FastifyBaseLogger }) {
     const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
     if (isNil(conversation)) {
         throw new ActivepiecesError({
@@ -53,13 +53,13 @@ async function getConversationOrThrow({ id, platformId, userId, log }: { id: str
 // verify-before-redo note) and leave the interrupted note off entirely, so recovery is invisible.
 // Only when the budget is spent do we flip to ERROR and append a persisted assistant message so
 // history alone renders an explanation + retry, instead of an eternal thinking shimmer. Fenced on
-// status so a live turn that just resumed can't be clobbered.
-async function recoverStaleStreamingConversation({ conversation, stuckForMs, log }: { conversation: ChatConversation, stuckForMs: number, log?: FastifyBaseLogger }): Promise<void> {
-    if (!isNil(log)) {
-        const resumed = await chatResume.tryEnqueueCrashResume({ conversation, log }).catch(() => false)
-        if (resumed) {
-            return
-        }
+// status so a live turn that just resumed can't be clobbered. Returns true when recovery actually
+// happened (a crash resume was enqueued or the row flipped to ERROR), false when another writer won
+// the status race.
+async function recoverStaleStreamingConversation({ conversation, stuckForMs, log }: { conversation: ChatConversation, stuckForMs: number, log: FastifyBaseLogger }): Promise<boolean> {
+    const resumed = await chatResume.tryEnqueueCrashResume({ conversation, log }).catch(() => false)
+    if (resumed) {
+        return true
     }
     const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
     const alreadyNoted = previousUiMessages.some((message) => message.role === PersistedChatRole.ASSISTANT
@@ -74,11 +74,13 @@ async function recoverStaleStreamingConversation({ conversation, stuckForMs, log
         .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(uiMessages)))
         .where('id = :id AND status = :streaming', { id: conversation.id, streaming: ChatConversationStatus.STREAMING })
         .execute()
-    if ((result.affected ?? 0) > 0) {
-        conversation.uiMessages = uiMessages
-        await chatApprovalGate.clearPendingGate({ conversationId: conversation.id })
-        log?.warn({ conversation: { id: conversation.id }, stuckForMs }, '[chatHelpers] Recovered stale STREAMING conversation to ERROR with interrupted-message')
+    if ((result.affected ?? 0) === 0) {
+        return false
     }
+    conversation.uiMessages = uiMessages
+    await chatApprovalGate.clearPendingGate({ conversationId: conversation.id })
+    log.warn({ conversation: { id: conversation.id }, stuckForMs }, '[chatHelpers] Recovered stale STREAMING conversation to ERROR with interrupted-message')
+    return true
 }
 
 // Active sweep for the watchdog system job: recover every STREAMING conversation whose heartbeat is
@@ -94,8 +96,14 @@ async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBase
     let recovered = 0
     for (const conversation of stale) {
         const stuckForMs = Date.now() - new Date(conversation.updated).getTime()
-        await recoverStaleStreamingConversation({ conversation, stuckForMs, log })
-        recovered++
+        const { data: didRecover, error } = await tryCatch(() => recoverStaleStreamingConversation({ conversation, stuckForMs, log }))
+        if (!isNil(error)) {
+            log.error({ error, conversation: { id: conversation.id } }, '[chatHelpers] Failed to recover stale STREAMING conversation')
+            continue
+        }
+        if (didRecover) {
+            recovered++
+        }
     }
     if (recovered > 0) {
         log.info({ recoveredCount: recovered }, '[chatHelpers] Sweeper recovered stale STREAMING conversations')

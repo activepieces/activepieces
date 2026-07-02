@@ -54,7 +54,7 @@ async function resumeParkedGate({ conversation, gateId, approved, payload, log }
         return false
     }
 
-    const output = { approved, ...(payload ?? {}) }
+    const output = { ...(payload ?? {}), approved }
     const messages = conversation.messages as ModelMessage[]
     const messagesWithAnswer: ModelMessage[] = [
         ...messages,
@@ -81,7 +81,7 @@ async function resumeParkedGate({ conversation, gateId, approved, payload, log }
         })
         .setParameter('messages', JSON.stringify(sanitizeObjectForPostgresql(messagesWithAnswer)))
         .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(resolvedUiMessages)))
-        .where('id = :id', { id: conversation.id })
+        .where('id = :id AND status != :streaming', { id: conversation.id, streaming: ChatConversationStatus.STREAMING })
         .execute()
     if ((result.affected ?? 0) === 0) {
         return false

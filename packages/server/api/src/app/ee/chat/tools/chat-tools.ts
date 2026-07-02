@@ -524,7 +524,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
 
     let projectId = projects[0]?.id
     if (conversationId) {
-        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log })
         if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
             projectId = conversation.projectId
         }
