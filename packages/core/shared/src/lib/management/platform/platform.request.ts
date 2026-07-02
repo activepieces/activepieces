@@ -55,8 +55,6 @@ export const UpdatePlatformRequestBody = z.object({
     logoIcon: z.optional(ApMultipartFile),
     fullLogo: z.optional(ApMultipartFile),
     favIcon: z.optional(ApMultipartFile),
-    filteredPieceNames: OptionalArrayFromQuery(z.string()),
-    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
     federatedAuthProviders: FederatedAuthnProviderConfig.optional(),
     cloudAuthEnabled: OptionalBooleanFromQuery,
     googleAuthEnabled: OptionalBooleanFromQuery,
@@ -67,11 +65,18 @@ export const UpdatePlatformRequestBody = z.object({
     pieceSelectorConfig: NullablePieceSelectorConfigFromMultipart.optional(),
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
         .optional(),
+})
+
+export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>
+
+export const UpdatePlatformPieceFilterRequestBody = z.object({
+    filteredPieceNames: z.array(z.string()).optional(),
+    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
     filteredActionNames: z.record(z.string(), z.array(z.string())).optional(),
     filteredTriggerNames: z.record(z.string(), z.array(z.string())).optional(),
 })
 
-export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>
+export type UpdatePlatformPieceFilterRequestBody = z.infer<typeof UpdatePlatformPieceFilterRequestBody>
 
 export const AdminRetryRunsRequestBody = z.object({
     runIds: z.array(ApId).optional(),

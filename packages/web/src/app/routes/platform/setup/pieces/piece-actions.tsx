@@ -8,7 +8,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformPiecesMutations } from '@/features/platform-admin';
+import {
+  platformPiecesMutations,
+  platformPieceFilterQueries,
+} from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
@@ -26,13 +29,12 @@ const PieceActions = ({
   isEnabled,
 }: PieceActionsProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { mutate: togglePiece, isPending: isTogglePending } =
     platformPiecesMutations.useTogglePieceVisibility({
-      platformId: platform.id,
-      filteredPieceNames: platform.filteredPieceNames,
-      refetch,
+      filteredPieceNames: pieceFilter.filteredPieceNames,
     });
   const { mutate: togglePin, isPending: isPinPending } =
     platformPiecesMutations.useTogglePiecePin({
@@ -41,11 +43,11 @@ const PieceActions = ({
       refetch,
     });
 
-  const filtered = platform.filteredPieceNames.includes(pieceName);
+  const filtered = pieceFilter.filteredPieceNames.includes(pieceName);
   const pinned = platform.pinnedPieces.includes(pieceName);
   const hasComponentFilters =
-    (platform.filteredActionNames[pieceName]?.length ?? 0) > 0 ||
-    (platform.filteredTriggerNames[pieceName]?.length ?? 0) > 0;
+    (pieceFilter.filteredActionNames[pieceName]?.length ?? 0) > 0 ||
+    (pieceFilter.filteredTriggerNames[pieceName]?.length ?? 0) > 0;
 
   return (
     <>

@@ -12,6 +12,7 @@ The pieces feature manages the metadata catalog of automation integrations (call
 - `packages/server/api/src/app/pieces/piece-install-service.ts` — saves archive, calls engine to extract metadata, stores result
 - `packages/server/api/src/app/pieces/piece-sync-service.ts` — syncs canonical piece registry from NPM/bundled artifacts into DB
 - `packages/server/api/src/app/pieces/tags/` — tag entity, tag service, tag-module for organizing pieces into groups
+- `packages/server/api/src/app/platform/platform-piece-filter.controller.ts` — `GET`/`POST /v1/platform-piece-filter`: reads/updates the **Platform Piece Filter** (global killswitch). The four fields (`filteredPieceNames`, `filteredPieceBehavior`, `filteredActionNames`, `filteredTriggerNames`) live on the `platform` row but are **no longer part of `PlatformWithoutSensitiveData`** — the app-wide platform payload — so only the admin pieces-setup screen fetches them. Served by `platformService.getPieceFilter` / `updatePieceFilter`; FE reads via `platformPieceFilterQueries.usePlatformPieceFilter` (own React Query key)
 - `packages/web/src/features/pieces/api/pieces-api.ts` — frontend HTTP client
 - `packages/web/src/features/pieces/hooks/pieces-hooks.ts` — React Query hooks for piece listing, piece model, piece options
 - `packages/web/src/features/pieces/hooks/use-piece-output-schema.ts` — reads `outputSchema` for a given step (PIECE action or trigger) off the cached piece model; shares the existing `['piece', name, version]` React Query cache so no extra network call is made
@@ -87,8 +88,8 @@ Unique index on `(name, version, platformId)`.
 - `registry({ release? })` — returns lightweight name+version list for all pieces
 
 ### `enterpriseFilteringUtils` (EE/Cloud only — `src/app/ee/pieces/filters/piece-filtering-utils.ts`)
-- `filter({ platformId, projectId, pieces, includeHidden })` — removes entire pieces from the list. Applies platform `filteredPieceNames`/`filteredPieceBehavior` first; then, for a given `projectId`, routes through the project's **piece set** (`disabledPieces`) when `managePiecesEnabled`, otherwise falls back to the legacy project-plan allowlist (`filterBasedOnProject`)
-- `filterComponents({ platformId, projectId, summaries })` — strips entries from `suggestedActions`/`suggestedTriggers` in each `PieceMetadataModelSummary`. Applies platform `filteredActionNames`/`filteredTriggerNames` first; then, for a given `projectId` under `managePiecesEnabled`, strips actions/triggers in the project's piece-set `config`. No-ops on CE or when `platformId` is nil
+- `filter({ platformId, projectId, pieces, includeHidden })` — removes entire pieces from the list. Applies the **Platform Piece Filter** (`filteredPieceNames`/`filteredPieceBehavior`, the global killswitch) first; then, for a given `projectId`, routes through the project's **piece set** (`disabledPieces`) when `managePiecesEnabled`, otherwise falls back to the legacy project-plan allowlist (`filterBasedOnProject`)
+- `filterComponents({ platformId, projectId, summaries })` — strips entries from `suggestedActions`/`suggestedTriggers` in each `PieceMetadataModelSummary`. Applies the **Platform Piece Filter** (`filteredActionNames`/`filteredTriggerNames`) first; then, for a given `projectId` under `managePiecesEnabled`, strips actions/triggers in the project's piece-set `config`. No-ops on CE or when `platformId` is nil. Both read the filter off the `platform` entity directly (`platformService.getOne`), unaffected by the DTO change below
 - `isFiltered({ piece, projectId, platformId })` — convenience wrapper around `filter` that returns a boolean
 
 Both per-project paths resolve the set via `project.pieceSetId`, falling back to the platform Default set. See [piece-sets.md](./piece-sets.md).

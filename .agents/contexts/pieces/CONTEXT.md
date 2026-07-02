@@ -43,3 +43,7 @@ _Avoid_: disabledPieces, includeNewPieces, curatedPieces (all retired)
 **Selected components**:
 A per-piece allow-list of visible actions/triggers (`selectedActions`/`selectedTriggers`). A piece with an entry is "curated" — only listed components are visible and new ones stay hidden; a piece with no entry shows all components including future ones.
 _Avoid_: disabledActions, disabledTriggers
+
+**Platform Piece Filter**:
+The platform-wide global killswitch — a blocklist of pieces (`filteredPieceNames` + `filteredPieceBehavior`) and hidden actions/triggers (`filteredActionNames`/`filteredTriggerNames`) applied to every project before and regardless of any Piece Set (including the Default Set). Stored on the `platform` row but served/edited through the dedicated `/v1/platform-piece-filter` endpoint, not the platform object. Distinct from Piece Set (per-project) and Selected components.
+_Avoid_: platform piece filtering (as a field on the platform payload)

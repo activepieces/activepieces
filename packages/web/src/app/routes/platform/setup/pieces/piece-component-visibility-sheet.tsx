@@ -17,8 +17,10 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
-import { platformPiecesMutations } from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
+import {
+  platformPiecesMutations,
+  platformPieceFilterQueries,
+} from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
 type PieceComponentVisibilitySheetProps = {
@@ -67,7 +69,7 @@ function PieceComponentVisibilitySheetContent({
   onOpenChange,
   pieceSet,
 }: PieceComponentVisibilitySheetProps) {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: pieceName,
     enabled: open,
@@ -91,7 +93,7 @@ function PieceComponentVisibilitySheetContent({
 
   const originalHiddenActions = useMemo(() => {
     if (!pieceSet) {
-      return platform.filteredActionNames[pieceName] ?? [];
+      return pieceFilter.filteredActionNames[pieceName] ?? [];
     }
     if (originalMode !== 'selected') {
       return [];
@@ -100,7 +102,7 @@ function PieceComponentVisibilitySheetContent({
     return allActionNames.filter((n) => !selected.includes(n));
   }, [
     pieceSet,
-    platform.filteredActionNames,
+    pieceFilter.filteredActionNames,
     pieceName,
     originalMode,
     allActionNames,
@@ -108,7 +110,7 @@ function PieceComponentVisibilitySheetContent({
 
   const originalHiddenTriggers = useMemo(() => {
     if (!pieceSet) {
-      return platform.filteredTriggerNames[pieceName] ?? [];
+      return pieceFilter.filteredTriggerNames[pieceName] ?? [];
     }
     if (originalMode !== 'selected') {
       return [];
@@ -117,7 +119,7 @@ function PieceComponentVisibilitySheetContent({
     return allTriggerNames.filter((n) => !selected.includes(n));
   }, [
     pieceSet,
-    platform.filteredTriggerNames,
+    pieceFilter.filteredTriggerNames,
     pieceName,
     originalMode,
     allTriggerNames,
@@ -152,10 +154,8 @@ function PieceComponentVisibilitySheetContent({
 
   const { mutate: setPieceComponentVisibility, isPending: isPlatformSaving } =
     platformPiecesMutations.useSetPieceComponentVisibility({
-      platformId: platform.id,
-      filteredActionNames: platform.filteredActionNames,
-      filteredTriggerNames: platform.filteredTriggerNames,
-      refetch,
+      filteredActionNames: pieceFilter.filteredActionNames,
+      filteredTriggerNames: pieceFilter.filteredTriggerNames,
     });
 
   const { mutate: updatePieceSet, isPending: isPieceSetPending } =

@@ -47,6 +47,7 @@ import {
   piecesApi,
   piecesHooks,
 } from '@/features/pieces';
+import { platformPieceFilterQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 
@@ -56,6 +57,7 @@ type TabValue = 'pieces' | 'piece-sets';
 
 const PiecesListTab = () => {
   const { platform } = platformHooks.useCurrentPlatform();
+  const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
@@ -76,16 +78,16 @@ const PiecesListTab = () => {
   const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
 
   const hiddenPieceNames = useMemo(
-    () => new Set(platform.filteredPieceNames),
-    [platform.filteredPieceNames],
+    () => new Set(pieceFilter.filteredPieceNames),
+    [pieceFilter.filteredPieceNames],
   );
 
   const isPieceHidden = useCallback(
     (pieceName: string) =>
-      platform.filteredPieceBehavior === FilteredPieceBehavior.ALLOWED
+      pieceFilter.filteredPieceBehavior === FilteredPieceBehavior.ALLOWED
         ? !hiddenPieceNames.has(pieceName)
         : hiddenPieceNames.has(pieceName),
-    [platform.filteredPieceBehavior, hiddenPieceNames],
+    [pieceFilter.filteredPieceBehavior, hiddenPieceNames],
   );
 
   const filteredPieces = useMemo(() => {
@@ -275,7 +277,7 @@ const PiecesListTab = () => {
         }}
         isLoading={isLoading}
         getRowClassName={(row) =>
-          isPieceHidden(row.name) ? 'bg-muted/70 opacity-80' : ''
+          isPieceHidden(row.name) ? 'bg-muted/40 opacity-80' : ''
         }
         bulkActions={[
           {

@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/tooltip';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { platformPieceFilterQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
 import { PieceComponentVisibilitySheet } from '../piece-component-visibility-sheet';
@@ -163,7 +163,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
   const { mutate: updateSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
   const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
@@ -172,16 +172,16 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
   >(null);
 
   const hiddenPieceNames = useMemo(
-    () => new Set(platform.filteredPieceNames),
-    [platform.filteredPieceNames],
+    () => new Set(pieceFilter.filteredPieceNames),
+    [pieceFilter.filteredPieceNames],
   );
 
   const isPlatformHidden = useCallback(
     (pieceName: string) =>
-      platform.filteredPieceBehavior === FilteredPieceBehavior.ALLOWED
+      pieceFilter.filteredPieceBehavior === FilteredPieceBehavior.ALLOWED
         ? !hiddenPieceNames.has(pieceName)
         : hiddenPieceNames.has(pieceName),
-    [platform.filteredPieceBehavior, hiddenPieceNames],
+    [pieceFilter.filteredPieceBehavior, hiddenPieceNames],
   );
 
   const togglePiece = useCallback(
