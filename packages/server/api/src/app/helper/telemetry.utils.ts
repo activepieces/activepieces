@@ -92,6 +92,28 @@ export async function shutdownTelemetry(): Promise<void> {
     }
 }
 
+// Best-effort, per-process daily dedupe for high-frequency telemetry call
+// sites (e.g. mcp.server.connected fired on every authenticated MCP request —
+// hundreds of thousands of near-identical events per week). Multi-server
+// deployments still emit one event per instance per day, which is fine: the
+// goal is cutting analytics noise/cost, not exactly-once semantics.
+const DEDUPE_MAX_ENTRIES = 50_000
+const dailyEventDedupe = new Map<string, string>()
+
+function onceToday(key: string): boolean {
+    const today = new Date().toISOString().slice(0, 10)
+    if (dailyEventDedupe.get(key) === today) {
+        return false
+    }
+    if (dailyEventDedupe.size >= DEDUPE_MAX_ENTRIES) {
+        dailyEventDedupe.clear()
+    }
+    dailyEventDedupe.set(key, today)
+    return true
+}
+
+export const telemetryDedupe = { onceToday }
+
 async function getMetadata() {
     const currentVersion = apVersionUtil.getCurrentRelease()
     const edition = system.getEdition()

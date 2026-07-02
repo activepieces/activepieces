@@ -53,6 +53,12 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     }
     posthogInitialized.current = true;
 
+    // Rich capture (autocapture, heatmaps, replay, dead clicks) is Cloud-only:
+    // self-hosted (ce/ee) browsers belong to other companies' end users, whose
+    // screens and interactions we have no legal basis to record. They still
+    // send plain telemetry events, PII-gated via pickTelemetryPii.
+    const isCloud = edition === ApEdition.CLOUD;
+
     posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
       // Same-origin reverse proxy (/ingest) so ad blockers don't drop ingestion.
       api_host: '/ingest',
@@ -60,33 +66,49 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       // Adopt the identity cookie the marketing site sets on `.activepieces.com`.
       cross_subdomain_cookie: true,
       // Limit autocapture to the auth funnel; the rest of the app doesn't need it.
-      autocapture: {
-        url_allowlist: [
-          /\/sign-up/,
-          /\/sign-in/,
-          /\/verify-email/,
-          /\/forget-password/,
-          /\/reset-password/,
-          /\/invitation/,
-          /\/authenticate/,
-        ],
-      },
+      autocapture: isCloud
+        ? {
+            url_allowlist: [
+              /\/sign-up/,
+              /\/sign-in/,
+              /\/verify-email/,
+              /\/forget-password/,
+              /\/reset-password/,
+              /\/invitation/,
+              /\/authenticate/,
+            ],
+          }
+        : false,
       capture_pageview: 'history_change',
       capture_pageleave: true,
-      capture_dead_clicks: true,
-      rageclick: true,
-      enable_heatmaps: true,
+      capture_dead_clicks: isCloud,
+      rageclick: isCloud,
+      enable_heatmaps: isCloud,
       person_profiles: 'identified_only',
       persistence: 'localStorage+cookie',
-      disable_session_recording: false,
+      // Recording starts explicitly below so Cloud can be sampled client-side;
+      // project-level sampling would also throttle the marketing site, which
+      // shares the PostHog project and records at 100%.
+      disable_session_recording: true,
       enable_recording_console_log: false,
+      session_recording: {
+        maskAllInputs: true,
+      },
     });
 
     // Tag at init so even the first event carries it. source_site separates
     // product from marketing traffic; activepiecesEdition is registered in its
     // own effect below so it self-corrects if the EDITION flag resolves late.
     posthog.register({ source_site: 'product' });
-  }, [telemetryEnabled, embedState.isEmbedded]);
+
+    // Stash landing-URL acquisition params before SPA navigation strips them;
+    // signup.submitted and identify read them back later in the session.
+    acquisitionUtils.stashAcquisitionParams();
+
+    if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
+      posthog.startSessionRecording();
+    }
+  }, [telemetryEnabled, embedState.isEmbedded, edition]);
 
   // Keep activepiecesEdition correct even if the EDITION flag resolves after
   // init — the init guard above would otherwise pin a stale value for the whole
@@ -165,6 +187,19 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     </TelemetryContext.Provider>
   );
 };
+
+const RECORDING_SAMPLE_RATE = 0.1;
+
+// Deterministic hash (djb2) so a device keeps the same sampling decision
+// across pageloads, giving complete replays instead of fragments. Sampling is
+// decided on the pre-identify device id at init time.
+function isInRecordingSample(distinctId: string): boolean {
+  let hash = 5381;
+  for (let i = 0; i < distinctId.length; i++) {
+    hash = (hash * 33) ^ distinctId.charCodeAt(i);
+  }
+  return (hash >>> 0) / 0xffffffff < RECORDING_SAMPLE_RATE;
+}
 
 interface TelemetryContextType {
   capture: (event: TelemetryEvent) => void;

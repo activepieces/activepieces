@@ -10,7 +10,7 @@ import { chatHelpers } from '../../ee/chat/chat-helpers'
 import { CONVERSATION_ID_HEADER } from '../../ee/chat/mcp/chat-mcp'
 import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { telemetry } from '../../helper/telemetry.utils'
+import { telemetry, telemetryDedupe } from '../../helper/telemetry.utils'
 import { mcpServerService } from '../mcp-service'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
@@ -130,23 +130,29 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
 async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string }> {
     try {
         if (identity.type === McpServerType.PLATFORM) {
-            rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
-                name: TelemetryEventName.MCP_SERVER_CONNECTED,
-                payload: {
-                    platformId: identity.platformId,
-                    userId: identity.userId,
-                },
-            }), log)
+            // Fires on every authenticated MCP request; dedupe to one event per
+            // user+server per day to keep analytics volume sane.
+            if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
+                rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
+                    name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                    payload: {
+                        platformId: identity.platformId,
+                        userId: identity.userId,
+                    },
+                }), log)
+            }
             const mcp = await mcpServerService(log).getPopulatedByPlatformId(identity.platformId)
             return { mcp, userId: identity.userId }
         }
-        rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
-            name: TelemetryEventName.MCP_SERVER_CONNECTED,
-            payload: {
-                projectId: identity.projectId,
-                userId: identity.userId,
-            },
-        }), log)
+        if (telemetryDedupe.onceToday(`mcp-server-connected:project:${identity.projectId}:${identity.userId}`)) {
+            rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
+                name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                payload: {
+                    projectId: identity.projectId,
+                    userId: identity.userId,
+                },
+            }), log)
+        }
         const mcp = await mcpServerService(log).getPopulatedByProjectId(identity.projectId)
         return { mcp, userId: identity.userId }
     }
