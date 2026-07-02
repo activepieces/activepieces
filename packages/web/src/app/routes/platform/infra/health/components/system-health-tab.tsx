@@ -197,8 +197,8 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
           status === 'failed'
             ? 'bg-destructive-50 text-destructive-700'
             : status === 'passed'
-              ? 'bg-success-50 text-success-700'
-              : 'bg-muted text-muted-foreground',
+            ? 'bg-success-50 text-success-700'
+            : 'bg-muted text-muted-foreground',
         )}
       >
         {row.icon}
@@ -235,7 +235,12 @@ function StatusPill({ status }: { status: Status }) {
   }
   const config = STATUS_CONFIG[status];
   return (
-    <span className={cn('flex items-center gap-1.5 text-xs font-medium', config.text)}>
+    <span
+      className={cn(
+        'flex items-center gap-1.5 text-xs font-medium',
+        config.text,
+      )}
+    >
       <span className={cn('size-1.5 rounded-full', config.dot)} />
       {t(config.label)}
     </span>
