@@ -294,7 +294,12 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             platformId,
         }
         if (!isNil(pieceName)) {
-            querySelector.pieceName = Equal(normalizePieceName(pieceName))
+            // Match the raw name AND its canonical form: normalizing lets loose caller input
+            // (e.g. the chat agent passing "attio") find "@activepieces/piece-attio", but stored
+            // names are whatever the connection was created with, so an exact raw match must
+            // keep working (e.g. third-party pieces that aren't in canonical form).
+            const candidates = unique([pieceName, normalizePieceName(pieceName)])
+            querySelector.pieceName = candidates.length === 1 ? Equal(candidates[0]) : In(candidates)
         }
         if (!isNil(displayName)) {
             querySelector.displayName = ILike(`%${displayName}%`)
