@@ -104,7 +104,12 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
         mutatedFlowVersion.agentIds = flowStructureUtil.extractAgentIds(mutatedFlowVersion)
         const savedFlowVersion = await flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
-        flowRealtime.versionUpdated({ projectId, flowVersion: savedFlowVersion, operation: userOperation })
+        // Only broadcast for the default (auto-commit) save. When the caller passed an
+        // entityManager it owns an open transaction (e.g. lock-and-publish), and emitting here
+        // would ship a pre-commit snapshot that clients keep even if the transaction rolls back.
+        if (isNil(entityManager)) {
+            flowRealtime.versionUpdated({ projectId, flowVersion: savedFlowVersion, operation: userOperation })
+        }
         return savedFlowVersion
     },
 

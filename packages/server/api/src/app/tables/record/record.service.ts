@@ -116,7 +116,7 @@ export const recordService = {
             if (!filters || filters.length === 0) {
                 return true
             }
-            return recordMatchesFilters(record, filters)
+            return recordMatchesFilters({ record, filters })
         })
 
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId, fields })
@@ -354,7 +354,7 @@ export const recordService = {
             relations: ['cells'],
         })
 
-        const matchingRecords = records.filter((record) => recordMatchesFilters(record, filters))
+        const matchingRecords = records.filter((record) => recordMatchesFilters({ record, filters }))
 
         const matchingIds = matchingRecords.map((record) => record.id)
         if (matchingIds.length === 0) {
@@ -413,6 +413,9 @@ export const recordService = {
         projectId,
         tableId,
     }: RestoreParams): Promise<PopulatedRecord[]> {
+        // Restored rows re-enter the active count, so enforce the same cap as create —
+        // otherwise delete N + insert N + restore N would exceed MAX_RECORDS_PER_TABLE.
+        await this.validateCount({ projectId, tableId }, ids.length)
         await recordRepo().restore({
             id: In(ids),
             projectId,
@@ -486,7 +489,7 @@ export const recordService = {
             where: { projectId, tableId },
             relations: ['cells'],
         })
-        const matched = records.filter((record) => recordMatchesFilters(record, filters)).length
+        const matched = records.filter((record) => recordMatchesFilters({ record, filters })).length
         return { matched, total: records.length }
     },
     async validateCount(params: CountParams, insertCount: number): Promise<void> {
@@ -681,7 +684,7 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
     })
 }
 
-function recordMatchesFilters(record: { cells: Cell[] }, filters: Filter[]): boolean {
+function recordMatchesFilters({ record, filters }: { record: { cells: Cell[] }, filters: Filter[] }): boolean {
     return filters.every((filter) => {
         const cell = record.cells.find((c) => c.fieldId === filter.fieldId)
         if (!cell) {

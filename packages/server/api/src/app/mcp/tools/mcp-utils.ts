@@ -127,7 +127,11 @@ function coerceEmptyContainerInputs({ props, input }: { props: PiecePropertyMap,
         // instead of letting validation bounce a harmless empty value.
         const emptyWrongShapeContainer = (prop.type === PropertyType.OBJECT && Array.isArray(value) && value.length === 0)
             || (prop.type === PropertyType.ARRAY && isObject(value) && !Array.isArray(value) && Object.keys(value).length === 0)
-        if (!valueProvided || emptyWrongShapeContainer) {
+        // But a structured ARRAY (one with sub-`properties`) is genuine required data: defaulting an
+        // absent one to [] would mask the missing-required diagnosis and run the action with no rows.
+        const isStructuredArray = prop.type === PropertyType.ARRAY
+            && isObject(prop.properties) && Object.keys(prop.properties).length > 0
+        if (emptyWrongShapeContainer || (!valueProvided && !isStructuredArray)) {
             coerced[propName] = makeDefault()
         }
     }
@@ -711,12 +715,15 @@ async function resolveTransitively({ props, componentProps, auth, providedInput,
             else if (result.status === 'options') {
                 prop.options = result.options
                 prop.note = undefined
-                // Seed the first option so dependent dropdowns unlock next iteration and the example
-                // input stays runnable. Never override a value the caller actually provided.
-                if (accumulated[prop.name] === undefined && result.options.length > 0) {
+                // Seed the first option with a real value so dependent dropdowns unlock next
+                // iteration and the example input stays runnable. Skip empty/placeholder options
+                // (e.g. a "Select…" sentinel) so dependents don't resolve against a blank value.
+                // Never override a value the caller actually provided.
+                const seedOption = result.options.find((option) => option.value !== undefined && option.value !== null && option.value !== '')
+                if (accumulated[prop.name] === undefined && seedOption !== undefined) {
                     accumulated[prop.name] = prop.type === PropertyType.MULTI_SELECT_DROPDOWN
-                        ? [result.options[0].value]
-                        : result.options[0].value
+                        ? [seedOption.value]
+                        : seedOption.value
                 }
             }
         }))
