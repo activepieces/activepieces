@@ -80,6 +80,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         dataManipulationEnabled: {
             type: Boolean,
         },
+        workerGroupsEnabled: {
+            type: Boolean,
+            default: false,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },

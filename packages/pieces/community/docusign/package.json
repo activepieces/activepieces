@@ -6,7 +6,7 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "axios": "1.15.2",
+    "axios": "1.16.0",
     "docusign-esign": "8.1.0",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
