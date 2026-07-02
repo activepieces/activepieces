@@ -28,6 +28,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 | Change the streaming loop behavior | `worker/.../ee/chat/run-chat-turn.ts` |
 | Add an endpoint | `ee/chat/chat-controller.ts` |
 
+**Flow-building guidance (prompts).** When building a flow the agent prefers, in order: a native piece action → a router condition → an **inline formula expression** (`ap-formula-v1::{ … }::ap-formula-v1`; ~100 functions in `core-formula`, evaluated at runtime by the engine props resolver) → a CODE step as a last resort. This lives in `guides/build_flow.md` (the ladder + function vocabulary) and is reinforced in `guides/ai.md`, `guides/control_flow.md`, and the `ap_build_flow` / `ap_add_step` tool descriptions. Formulas go in free-text/value inputs, not dropdowns.
+
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration; gates `/v1/chat` with `chatVisibilityGuard` (per-user visibility, not just the `chatEnabled` flag)
 - `packages/server/api/src/app/ee/chat/chat-visibility-helper.ts` — `chatVisibilityGuard` + `resolveChatEnabledForUser` (edition + embed + rollout/grandfather); also used by the platform endpoint to surface the effective `plan.chatEnabled`
