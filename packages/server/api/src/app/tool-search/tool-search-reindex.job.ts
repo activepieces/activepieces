@@ -3,11 +3,11 @@ import { ApEdition, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
 import { distributedLock } from '../database/redis-connections'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
 import { platformService } from '../platform/platform.service'
 import { isToolSearchEnabled } from './tool-search-flag'
 import { ReindexScope, toolSearchReindexService, toolSearchTableExists } from './tool-search-reindex.service'
@@ -111,6 +111,10 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
      */
     async backfillIfEmpty(): Promise<void> {
         if (!isToolSearchEnabled()) {
+            return
+        }
+        if (shouldSkipReindexOnCloud()) {
+            log.info('[toolSearchReindexJob#backfillIfEmpty] Cloud edition without AP_OPENAI_API_KEY — skipping cold-start backfill; on cloud we never fall back to the oldest platform (keyword floor serves).')
             return
         }
         if (!await toolSearchTableExists()) {
