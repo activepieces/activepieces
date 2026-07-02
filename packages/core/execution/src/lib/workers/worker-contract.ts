@@ -329,11 +329,13 @@ export type ExecuteChatToolResponse = {
 
 export type SendChatEmailRequest = {
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
     to: string[]
     subject: string
     body: string
+    gateId?: string
 }
 
 export type SendChatEmailResponse = {

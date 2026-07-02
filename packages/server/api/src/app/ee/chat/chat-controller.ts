@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, normalizePieceName, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -167,9 +167,13 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const conversationId = request.params.id
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const conversation = await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const gate = await chatApprovalGate.getPendingGate({ conversationId })
-        return reply.status(StatusCodes.OK).send(gate)
+        // A preempted run can leave (or race in) a pending gate keyed by conversation; only surface
+        // the gate when it belongs to the run that currently owns the conversation.
+        const gateRunId = gate?.runId
+        const staleGate = !isNil(gateRunId) && !isNil(conversation.activeRunId) && gateRunId !== conversation.activeRunId
+        return reply.status(StatusCodes.OK).send(staleGate ? null : gate)
     })
 
     app.get('/conversations/:id/connections', GetPickerConnectionsRoute, async (request, reply) => {

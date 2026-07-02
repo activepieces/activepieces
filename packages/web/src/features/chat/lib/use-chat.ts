@@ -32,9 +32,28 @@ import {
   ToolCallMeta,
 } from './chat-store';
 import { useChatStoreApi } from './chat-store-context';
-import { ActiveChatContext, ChatUIMessage, chatPartUtils } from './chat-types';
+import {
+  ActiveChatContext,
+  ChatUIMessage,
+  QuickRepliesData,
+  chatPartUtils,
+} from './chat-types';
 import { chatUtils } from './chat-utils';
 import { useStreamingReducer } from './use-streaming-reducer';
+
+function applyQuickRepliesToStore({
+  setState,
+  data,
+}: {
+  setState: SetChatStore;
+  data: QuickRepliesData;
+}): void {
+  if (data.replies.length === 0 && !data.offerRecurringAutomation) return;
+  setState({
+    quickReplies: data.replies,
+    offerRecurringAutomation: data.offerRecurringAutomation,
+  });
+}
 
 function restoreReceiptsIntoStore({
   data,
@@ -376,10 +395,8 @@ export function useAgentChat({
       if (conversationIdRef.current !== convId) return null;
       if (!result) return null;
       const mapped = chatUtils.mapHistoryToUIMessages(result.data);
-      const restoredReplies = chatUtils.extractQuickRepliesFromHistory(mapped);
-      if (restoredReplies.length > 0) {
-        store.setState({ quickReplies: restoredReplies });
-      }
+      const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
+      applyQuickRepliesToStore({ setState: store.setState, data: restored });
       restoreReceiptsIntoStore({
         data: result.data,
         setState: store.setState,
@@ -486,9 +503,10 @@ export function useAgentChat({
   );
 
   useEffect(() => {
-    if (streamingQuickReplies.length > 0) {
-      store.setState({ quickReplies: streamingQuickReplies });
-    }
+    applyQuickRepliesToStore({
+      setState: store.setState,
+      data: streamingQuickReplies,
+    });
   }, [streamingQuickReplies, store]);
 
   const isStreamActive = streamPhase !== 'idle';
@@ -775,10 +793,8 @@ export function useAgentChat({
         return;
       }
       const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
-      const restoredReplies = chatUtils.extractQuickRepliesFromHistory(mapped);
-      if (restoredReplies.length > 0) {
-        store.setState({ quickReplies: restoredReplies });
-      }
+      const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
+      applyQuickRepliesToStore({ setState: store.setState, data: restored });
       restoreReceiptsIntoStore({
         data: historyResult.data.data,
         setState: store.setState,
@@ -854,11 +870,8 @@ export function useAgentChat({
           mapped.some((m, i) => m.parts.length !== current[i]?.parts.length));
       if (hasChanged) {
         setPersistedMessages(mapped);
-        const restoredReplies =
-          chatUtils.extractQuickRepliesFromHistory(mapped);
-        if (restoredReplies.length > 0) {
-          store.setState({ quickReplies: restoredReplies });
-        }
+        const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
+        applyQuickRepliesToStore({ setState: store.setState, data: restored });
       }
       if (convResult.status !== ChatConversationStatus.STREAMING) {
         setIsPollingForAgentReply(false);

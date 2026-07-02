@@ -55,6 +55,7 @@ export type BuildState = BuildPlanEvent;
 
 export type ChatStoreState = {
   quickReplies: string[];
+  offerRecurringAutomation: boolean;
   toolCallMeta: Record<string, ToolCallMeta>;
   builds: Record<string, BuildState>;
   dismissedGateIds: Record<string, true>;
@@ -83,6 +84,7 @@ function dismissAndCleanup(
 export const createChatStore = () =>
   create<ChatStoreState>((set) => ({
     quickReplies: [],
+    offerRecurringAutomation: false,
     toolCallMeta: {},
     builds: {},
     dismissedGateIds: {},
@@ -105,6 +107,7 @@ export const createChatStore = () =>
     resetInteractions: () => {
       set({
         quickReplies: [],
+        offerRecurringAutomation: false,
         toolCallMeta: {},
         dismissedGateIds: {},
         lastDismissedFormId: null,

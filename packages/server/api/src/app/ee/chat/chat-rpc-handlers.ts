@@ -302,34 +302,47 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         // is reactive and name-keyed (ap_discover_action_auth filters by an exact pieceName the
         // model inferred from the message), so a vague request ("my CRM") could miss a connection
         // that is right there. Best-effort: a lookup failure must not block the turn.
-        const inventoryResult = (!dryRun && !isNil(selectedProjectId))
-            ? await tryCatch(() => appConnectionService(log).list({
-                projectId: selectedProjectId,
-                platformId,
-                pieceName: undefined,
-                displayName: undefined,
-                status: undefined,
-                cursorRequest: null,
-                scope: undefined,
-                externalIds: undefined,
-                limit: CONNECTION_INVENTORY_LIMIT,
-            }))
-            : null
+        // The four context lookups below (connection inventory, account overview, platform brand
+        // name, @-mention resolution) are independent and best-effort, and this runs on every
+        // message — fetch them concurrently rather than stacking their latencies.
+        const accessibleProjectIds = userProjects.map((p) => p.id)
+        const [inventoryResult, overviewResult, platformNameResult, mentionsNoteResult] = await Promise.all([
+            (!dryRun && !isNil(selectedProjectId))
+                ? tryCatch(() => appConnectionService(log).list({
+                    projectId: selectedProjectId,
+                    platformId,
+                    pieceName: undefined,
+                    displayName: undefined,
+                    status: undefined,
+                    cursorRequest: null,
+                    scope: undefined,
+                    externalIds: undefined,
+                    limit: CONNECTION_INVENTORY_LIMIT,
+                }))
+                : null,
+            // A modest, cross-project snapshot of what the user has (flow/table counts, connections by
+            // app, a few recent names) so the agent starts with a sense of the workspace instead of
+            // discovering everything reactively. Scoped to every project the user can access. A clue,
+            // not an inventory — best-effort: a lookup failure must not block the turn.
+            (!dryRun && accessibleProjectIds.length > 0)
+                ? tryCatch(() => chatAccountOverview.fetch({ projectIds: accessibleProjectIds, platformId, log }))
+                : null,
+            // The platform's white-label brand name — best-effort lookup that must not block the turn.
+            !dryRun ? tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null,
+            // Resolve @-mentioned resources (flows/tables/apps) to compact, project-scoped context
+            // the agent can act on directly. Strictly scoped to selectedProjectId/platformId — a
+            // foreign or deleted id resolves to "no longer available", so it can never leak another
+            // project's data. Best-effort: a resolution failure must not block the turn.
+            (!isNil(mentions) && mentions.length > 0 && !isNil(selectedProjectId))
+                ? tryCatch(() => mentionContext.resolveMentionsNote({ mentions, projectId: selectedProjectId, platformId, log }))
+                : null,
+        ])
         const inventoryNote = inventoryResult && !inventoryResult.error
             ? buildConnectionInventoryNote({
                 connections: inventoryResult.data.data,
                 truncated: inventoryResult.data.data.length >= CONNECTION_INVENTORY_LIMIT,
             })
             : ''
-
-        // A modest, cross-project snapshot of what the user has (flow/table counts, connections by
-        // app, a few recent names) so the agent starts with a sense of the workspace instead of
-        // discovering everything reactively. Scoped to every project the user can access. A clue,
-        // not an inventory — best-effort: a lookup failure must not block the turn.
-        const accessibleProjectIds = userProjects.map((p) => p.id)
-        const overviewResult = (!dryRun && accessibleProjectIds.length > 0)
-            ? await tryCatch(() => chatAccountOverview.fetch({ projectIds: accessibleProjectIds, platformId, log }))
-            : null
         const accountOverviewNote = overviewResult && !overviewResult.error
             ? chatAccountOverview.buildNote({ overview: overviewResult.data })
             : ''
@@ -337,8 +350,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         // Tell the agent who it's actually talking to — the real person's name + email (for
         // personalisation and as the "email me" destination), a company hint from the email
         // domain, and the platform's white-label brand name. The name/email come from userMeta
-        // (always loaded); the brand is a best-effort lookup that must not block the turn.
-        const platformNameResult = !dryRun ? await tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null
+        // (always loaded).
         const userIdentityNote = chatUserIdentity.buildNote({
             firstName: userMeta.firstName,
             lastName: userMeta.lastName,
@@ -349,13 +361,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
         const previousCommittedContext = findLastCommittedContext({ uiMessages: previousUiMessages })
 
-        // Resolve @-mentioned resources (flows/tables/apps) to compact, project-scoped context
-        // the agent can act on directly. Strictly scoped to selectedProjectId/platformId — a
-        // foreign or deleted id resolves to "no longer available", so it can never leak another
-        // project's data. Best-effort: a resolution failure must not block the turn.
-        const mentionsNoteResult = (!isNil(mentions) && mentions.length > 0 && !isNil(selectedProjectId))
-            ? await tryCatch(() => mentionContext.resolveMentionsNote({ mentions, projectId: selectedProjectId, platformId, log }))
-            : null
         const mentionedResourcesNote = mentionsNoteResult && !mentionsNoteResult.error ? mentionsNoteResult.data : ''
 
         // The user tapped a "Dream big" starter card rather than typing. The visible message is a
@@ -656,7 +661,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             return { result: decision }
         }
         if (input.toolName === '__store_pending_gate') {
-            const { conversationId: convId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
+            const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
             if (typeof convId === 'string' && typeof gateId === 'string' && typeof gateTool === 'string') {
                 await chatApprovalGate.storePendingGate({
                     conversationId: convId,
@@ -665,6 +670,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                         toolName: gateTool,
                         displayName: typeof displayName === 'string' ? displayName : gateTool,
                         toolInput: typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {},
+                        ...(typeof gateRunId === 'string' ? { runId: gateRunId } : {}),
                     },
                 })
             }
@@ -808,13 +814,14 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         return { result }
     },
 
-    // Security boundary for the chat agent's ap_send_email tool. Recipients may be any
-    // valid address (incl. external), but the abuse controls are re-enforced here so a
-    // manipulated LLM (e.g. via prompt injection) can't quietly fan out mail on the
-    // platform's SMTP reputation: recipient addresses are format-validated, recipient
-    // count and per-conversation/per-hour volume are capped, the email is rendered through
-    // a branded template with Reply-To set to the real user, and the worker still puts any
-    // non-self recipient behind an explicit user confirmation before this is ever called.
+    // Security boundary for the chat agent's ap_send_email tool. Recipients may be any valid
+    // address (incl. external), but the abuse controls are re-enforced here so a manipulated LLM
+    // (e.g. via prompt injection) can't quietly fan out mail on the platform's SMTP reputation:
+    // recipient addresses are format-validated, recipient count and per-platform/per-conversation/
+    // per-hour volume are capped, and the email is rendered through a branded template with
+    // Reply-To set to the real user. The system prompt further constrains the agent to send only
+    // on the user's direct request — never because an email instruction appeared in fetched page
+    // or tool content.
     async sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse> {
         const { conversationId, platformId, userId, to, subject, body } = input
 
@@ -822,7 +829,18 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             return { sent: false, message: 'Email is not configured on this instance.' }
         }
 
-        await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+
+        // Fence the send to the active streaming owner. A run parked on an email approval must not
+        // resume and send once it's been superseded (activeRunId changed) OR cancelled/finished
+        // (status left STREAMING). Cancellation flips status to IDLE without touching activeRunId,
+        // so the status check is what rejects an approved-then-cancelled send.
+        const ownsActiveTurn = conversation.status === ChatConversationStatus.STREAMING
+            && (isNil(conversation.activeRunId) || conversation.activeRunId === input.runId)
+        if (!isNil(input.runId) && !ownsActiveTurn) {
+            log.warn({ conversation: { id: conversationId }, run: { id: input.runId }, status: conversation.status }, '[chatRpc#sendChatEmail] Blocked send from a superseded or cancelled run')
+            return { sent: false, message: 'This turn is no longer active, so the email was not sent.' }
+        }
 
         const recipients = unique(to.map((email) => email.toLowerCase().trim()).filter((email) => email.length > 0))
         if (recipients.length === 0) {
@@ -849,7 +867,22 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const sender = await userService(log).getMetaInformation({ id: userId })
         const selfEmail = sender.email.toLowerCase().trim()
 
-        const conversationLimit = await incrementAndCheckLimit({ key: `chat-email-count:conv:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
+        // Defense in depth at the SMTP boundary: a recipient other than the user's own address may
+        // only be emailed after the user approved this exact tool call. The worker shows an approval
+        // card and waits, but the server independently verifies the recorded (user-authenticated)
+        // decision, so a prompt-injected or buggy caller can't exfiltrate externally without it.
+        const externalRecipients = recipients.filter((email) => email !== selfEmail)
+        if (externalRecipients.length > 0) {
+            const decision = isNil(input.gateId) ? 'pending' : await chatApprovalGate.checkDecision({ gateId: input.gateId })
+            const approved = decision !== 'pending' && decision.approved
+                && emailApprovalMatches({ approvedInput: decision.approvedInput, recipients, subject, body })
+            if (!approved) {
+                log.warn({ conversation: { id: conversationId }, user: { id: userId }, recipientCount: externalRecipients.length }, '[chatRpc#sendChatEmail] Blocked external send without an approval matching the current recipients/content')
+                return { sent: false, message: 'Sending to anyone other than your own address needs your explicit approval first.', blockedRecipients: externalRecipients }
+            }
+        }
+
+        const conversationLimit = await incrementAndCheckLimit({ key: `chat-email-count:conv:${platformId}:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
         const hourlyLimit = await incrementAndCheckLimit({ key: `chat-email-count:user:${userId}`, limit: EMAILS_PER_USER_PER_HOUR, ttlSeconds: HOURLY_LIMIT_TTL_SECONDS })
         if (!conversationLimit.allowed || !hourlyLimit.allowed) {
             log.warn({ conversation: { id: conversationId }, user: { id: userId }, conversationCount: conversationLimit.count, hourlyCount: hourlyLimit.count }, '[chatRpc#sendChatEmail] Email rate limit reached')
@@ -878,6 +911,24 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
 
 function isLikelyEmailAddress(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+// The approval is only valid for the exact recipients/subject/body the user saw in the preview.
+// A different payload reusing an approved gate id (stale/replayed within the TTL) must not pass.
+function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
+    approvedInput?: Record<string, unknown>
+    recipients: string[]
+    subject: string
+    body: string
+}): boolean {
+    if (isNil(approvedInput)) {
+        return false
+    }
+    const approvedRecipients = Array.isArray(approvedInput.to)
+        ? unique(approvedInput.to.filter((email): email is string => typeof email === 'string').map((email) => email.toLowerCase().trim()))
+        : []
+    const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
+    return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
 }
 
 async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {

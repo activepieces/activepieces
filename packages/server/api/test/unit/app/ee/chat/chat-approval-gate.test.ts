@@ -66,14 +66,16 @@ describe('chatApprovalGate.resolveGate — first decision wins (BE-15)', () => {
         expect(mockDelete).toHaveBeenCalledWith('chat-pending-gate:gate:g1')
     })
 
-    it('ignores a duplicate resolve — does not publish or touch pending keys again', async () => {
+    it('ignores a duplicate resolve — does not publish or delete pending keys again', async () => {
         mockPutIfAbsent.mockResolvedValue(false)
 
         await resolveGate({ gateId: 'g1', approved: false })
 
+        // The pending-gate lookup (binding approvedInput to the decision) runs before the
+        // putIfAbsent race is decided, so reads are expected — but a losing resolve must
+        // never publish or clear the pending keys.
         expect(mockPutIfAbsent).toHaveBeenCalledTimes(1)
         expect(mockPublish).not.toHaveBeenCalled()
-        expect(mockGet).not.toHaveBeenCalled()
         expect(mockDelete).not.toHaveBeenCalled()
     })
 })

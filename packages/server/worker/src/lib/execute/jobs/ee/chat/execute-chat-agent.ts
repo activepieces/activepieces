@@ -25,7 +25,10 @@ const STREAM_IDLE_TIMEOUT_MS = 90_000
 // legitimate single wait — the approval/display-tool timeout is 15m — so set well above it.
 const MAX_TURN_WALL_CLOCK_MS = 20 * 60 * 1_000
 // The single side-effecting piece-execution tool, neutralized under discovery-only eval runs.
-const DISCOVERY_ONLY_NEUTRALIZED_TOOL = 'ap_execute_action'
+// Discovery-only eval must not touch the environment: neutralize every side-effecting execute
+// tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
+// `chat-evals` run could still execute ap_run_code against the developer's project.
+const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
@@ -179,7 +182,8 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
             const allTools = buildToolSet({
                 ctx, eventEmitter, log, phaseState, mcpToolSet, webTools,
-                projects: config.projects, projectId, conversationId, platformId, userId,
+                projects: config.projects, projectId, conversationId, runId, platformId, userId,
+                userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
@@ -330,7 +334,8 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             turnFailed = true
             log.error({ error: err, conversation: { id: conversationId } }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-            const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
+            const isCreditError = isCreditExhaustedError(errorMessage)
+            const errorCode = isCreditError ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveChatMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateChatProgress) and only flips status, so an errored turn keeps
@@ -344,6 +349,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             await sendEventWithRetry({
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
             })
+            // Running out of AI credits is a user/billing condition, not an engine failure — the error has
+            // already been delivered to the user. Complete the job (OK); re-throwing would mark it
+            // INTERNAL_ERROR and fail+retry it (pointlessly — the user is still out of credits) and page.
+            if (isCreditError) {
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
             throw err
         }
         finally {
@@ -378,7 +389,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, platformId, userId, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, lockedResources, mutatingResourceTools }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, lockedResources, mutatingResourceTools }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -388,8 +399,10 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     projects: Array<{ id: string, displayName: string, type: string }>
     projectId: string | null
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
+    userEmail: string
     guides: Record<string, string>
     dryRun: boolean
     discoveryOnly: boolean
@@ -406,7 +419,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         }
         // Discovery-only eval: real discovery/reads still run, but neutralize the side-effecting
         // execute so we can measure how the agent reaches a runnable call without firing it.
-        if (discoveryOnly && toolName === DISCOVERY_ONLY_NEUTRALIZED_TOOL) {
+        if (discoveryOnly && DISCOVERY_ONLY_NEUTRALIZED_TOOLS.has(toolName)) {
             return { content: [{ type: 'text', text: `🧪 Discovery-only run — ${toolName} was not executed. The agent reached a runnable call.` }] }
         }
         const response = await ctx.apiClient.executeChatTool({ toolName, toolInput, platformId, userId, conversationId })
@@ -476,7 +489,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     }) => {
         await tryCatch(() => ctx.apiClient.executeChatTool({
             toolName: '__store_pending_gate',
-            toolInput: { conversationId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
+            toolInput: { conversationId, runId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
             platformId, userId, conversationId,
         }))
     }
@@ -538,8 +551,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     })
     const emailTools = emailEnabled && !dryRun && !discoveryOnly
         ? chatWorkerTools.createEmailTools({
-            sendEmail: ({ to, subject, body }) => ctx.apiClient.sendChatEmail({ conversationId, platformId, userId, to, subject, body }),
+            sendEmail: ({ to, subject, body, gateId }) => ctx.apiClient.sendChatEmail({ conversationId, runId, platformId, userId, to, subject, body, gateId }),
             eventEmitter,
+            userEmail,
+            waitForApproval,
+            onGateOpened: storePendingGate,
         })
         : {}
 

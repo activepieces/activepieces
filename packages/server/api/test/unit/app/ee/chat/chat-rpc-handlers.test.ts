@@ -24,8 +24,11 @@ vi.mock('../../../../../src/app/ee/chat/chat-sync-job', () => ({
 
 const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
 
+// Static import (mocks above are hoisted by vitest) so the heavy module graph loads
+// during collection — a first `await import()` inside a test blows the 5s test timeout.
+import { chatRpcHandlers } from '../../../../../src/app/ee/chat/chat-rpc-handlers'
+
 async function callUpdateChatProgress(input: { conversationId: string, runId?: string, uiMessages: unknown[], messages?: unknown[] }): Promise<void> {
-    const { chatRpcHandlers } = await import('../../../../../src/app/ee/chat/chat-rpc-handlers')
     await chatRpcHandlers(noopLogger as never).updateChatProgress(input)
 }
 
@@ -69,7 +72,6 @@ describe('chatRpcHandlers.updateChatProgress — incremental LLM message persist
 })
 
 async function callSaveChatMessages(input: { conversationId: string, runId?: string, messages: unknown[], uiMessages: unknown[] }): Promise<void> {
-    const { chatRpcHandlers } = await import('../../../../../src/app/ee/chat/chat-rpc-handlers')
     await chatRpcHandlers(noopLogger as never).saveChatMessages(input as never)
 }
 

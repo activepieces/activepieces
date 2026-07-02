@@ -491,7 +491,9 @@ describe('chatWorkerTools', () => {
     describe('createEmailTools / ap_send_email', () => {
         const callOptions = { messages: [], abortSignal: undefined as unknown as AbortSignal }
 
-        function setup(sendImpl?: () => Promise<SendChatEmailResponse>) {
+        const SELF_EMAIL = 'me@acme.com'
+
+        function setup({ sendImpl, approved = true }: { sendImpl?: () => Promise<SendChatEmailResponse>, approved?: boolean } = {}) {
             const previews: ActionPreviewEvent[] = []
             const receipts: ActionReceiptEvent[] = []
             const eventEmitter: ChatEventEmitter = {
@@ -500,27 +502,52 @@ describe('chatWorkerTools', () => {
                 emitActionReceipt: (data: ActionReceiptEvent) => { receipts.push(data) },
             }
             const sendEmail = vi.fn(sendImpl ?? (async () => ({ sent: true, message: 'Email sent to x.' })))
-            const tools = chatWorkerTools.createEmailTools({ sendEmail, eventEmitter })
-            return { tools, previews, receipts, sendEmail }
+            const waitForApproval = vi.fn().mockResolvedValue({ approved })
+            const tools = chatWorkerTools.createEmailTools({ sendEmail, eventEmitter, userEmail: SELF_EMAIL, waitForApproval })
+            return { tools, previews, receipts, sendEmail, waitForApproval }
         }
 
-        it('sends immediately with no confirmation card, for any recipient', async () => {
-            const { tools, previews, receipts, sendEmail } = setup()
+        it('sends to the user\'s own address immediately, with no confirmation card', async () => {
+            const { tools, previews, receipts, sendEmail, waitForApproval } = setup()
             await tools.ap_send_email.execute(
-                { to: ['teammate@acme.com'], subject: 'FYI', body: 'hi' },
+                { to: [SELF_EMAIL], subject: 'FYI', body: 'hi' },
                 { ...callOptions, toolCallId: 'e1' },
             )
             expect(previews).toHaveLength(0)
+            expect(waitForApproval).not.toHaveBeenCalled()
             expect(sendEmail).toHaveBeenCalledOnce()
-            expect(sendEmail.mock.calls[0][0]).toMatchObject({ to: ['teammate@acme.com'], subject: 'FYI' })
             expect(receipts[0].status).toBe('success')
         })
 
+        it('requires confirmation for an external recipient and sends once approved', async () => {
+            const { tools, previews, sendEmail, waitForApproval } = setup({ approved: true })
+            await tools.ap_send_email.execute(
+                { to: ['teammate@acme.com'], subject: 'FYI', body: 'hi' },
+                { ...callOptions, toolCallId: 'e2' },
+            )
+            expect(previews).toHaveLength(1)
+            expect(previews[0]).toMatchObject({ toolCallId: 'e2', actionName: 'ap_send_email' })
+            expect(waitForApproval).toHaveBeenCalledOnce()
+            expect(sendEmail).toHaveBeenCalledOnce()
+            expect(sendEmail.mock.calls[0][0]).toMatchObject({ to: ['teammate@acme.com'], subject: 'FYI' })
+        })
+
+        it('does not send an external email when the user cancels', async () => {
+            const { tools, previews, sendEmail } = setup({ approved: false })
+            const result = await tools.ap_send_email.execute(
+                { to: ['out@gmail.com'], subject: 'Hi', body: 'hi' },
+                { ...callOptions, toolCallId: 'e3' },
+            )
+            expect(previews).toHaveLength(1)
+            expect(sendEmail).not.toHaveBeenCalled()
+            expect(JSON.stringify(result)).toContain('cancelled')
+        })
+
         it('reports failure when the send fails server-side', async () => {
-            const { tools, receipts, sendEmail } = setup(async () => ({ sent: false, message: 'rate limit reached' }))
+            const { tools, receipts, sendEmail } = setup({ sendImpl: async () => ({ sent: false, message: 'rate limit reached' }) })
             await tools.ap_send_email.execute(
                 { to: ['out@gmail.com'], subject: 'Hi', body: 'hi' },
-                { ...callOptions, toolCallId: 'e2' },
+                { ...callOptions, toolCallId: 'e4' },
             )
             expect(sendEmail).toHaveBeenCalledOnce()
             expect(receipts[0].status).toBe('failed')

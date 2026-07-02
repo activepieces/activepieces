@@ -14,7 +14,13 @@ import {
 
 import { formatUtils } from '@/lib/format-utils';
 
-import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
+import {
+  AnyToolPart,
+  ChatUIMessage,
+  chatPartUtils,
+  EMPTY_QUICK_REPLIES_DATA,
+  QuickRepliesData,
+} from './chat-types';
 
 function stripPiecePrefix(name: string): string {
   return name.replace(/^@activepieces\/piece-/, '');
@@ -325,9 +331,13 @@ function mapHistoryToUIMessages(
   return result;
 }
 
-function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
+function extractQuickRepliesFromHistory(
+  messages: ChatUIMessage[],
+): QuickRepliesData {
   const lastMessage = messages[messages.length - 1];
-  if (!lastMessage || lastMessage.role !== 'assistant') return [];
+  if (!lastMessage || lastMessage.role !== 'assistant') {
+    return EMPTY_QUICK_REPLIES_DATA;
+  }
 
   for (let i = lastMessage.parts.length - 1; i >= 0; i--) {
     const p = lastMessage.parts[i];
@@ -335,13 +345,10 @@ function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
       chatPartUtils.isAnyToolPart(p) &&
       chatPartUtils.getToolPartName(p) === 'ap_show_quick_replies'
     ) {
-      const input = p.input as { replies?: string[] } | undefined;
-      if (input?.replies) {
-        return input.replies;
-      }
+      return chatPartUtils.readQuickRepliesInput(p.input);
     }
   }
-  return [];
+  return EMPTY_QUICK_REPLIES_DATA;
 }
 
 function formatToolActiveTitle({ part }: { part: AnyToolPart }): string {

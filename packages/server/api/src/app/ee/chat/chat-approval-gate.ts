@@ -28,10 +28,14 @@ function channelName(gateId: string): string {
 }
 
 async function resolveGate({ gateId, approved, payload, log }: { gateId: string, approved: boolean, payload?: Record<string, unknown>, log?: FastifyBaseLogger }): Promise<void> {
-    const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload }, GATE_TTL_SECONDS)
+    // Bind the decision to the exact inputs the user saw in the preview, so a consumer can verify
+    // the action it's about to run matches what was approved (not a different payload reusing the id).
+    const conversationId = await distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
+    const pendingGate = conversationId ? await distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`) : null
+    const approvedInput = pendingGate?.gateId === gateId ? pendingGate.toolInput : undefined
+    const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload, approvedInput }, GATE_TTL_SECONDS)
     if (wasSet) {
         await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
-        const conversationId = await distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
         if (conversationId) {
             await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
             await distributedStore.delete(`${PENDING_GATE_PREFIX}gate:${gateId}`)
@@ -46,7 +50,7 @@ async function resolveGate({ gateId, approved, payload, log }: { gateId: string,
 async function checkDecision({ gateId }: { gateId: string }): Promise<GateDecision | 'pending'> {
     const raw = await distributedStore.get<GateDecision>(decisionKey(gateId))
     if (!raw) return 'pending'
-    return { approved: raw.approved === true, payload: raw.payload }
+    return { approved: raw.approved === true, payload: raw.payload, approvedInput: raw.approvedInput }
 }
 
 async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutMs: number }): Promise<GateDecision | 'pending'> {
@@ -181,6 +185,7 @@ async function clearBrowserSession({ conversationId }: { conversationId: string 
 export const chatApprovalGate = {
     resolveGate,
     waitForDecision,
+    checkDecision,
     requestCancel,
     isCancelled,
     clearCancel,
@@ -201,6 +206,7 @@ export const chatApprovalGate = {
 type GateDecision = {
     approved: boolean
     payload?: Record<string, unknown>
+    approvedInput?: Record<string, unknown>
 }
 
 type StoredConnection = {
@@ -219,6 +225,7 @@ type PendingGate = {
     toolName: string
     displayName: string
     toolInput: Record<string, unknown>
+    runId?: string
 }
 
 type StoredBrowserSession = {
