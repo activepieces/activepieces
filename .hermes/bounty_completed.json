@@ -1,0 +1,14 @@
+{
+  "saved_at": "2026-07-02T11:36:10.439645",
+  "url": "https://github.com/activepieces/activepieces/pull/14031",
+  "pr_url": "https://github.com/activepieces/activepieces/pull/14032",
+  "repo": "activepieces/activepieces",
+  "number": 14031,
+  "title": "feat(chat): onboard free cloud users to managed AI with a $10 first-chat grant",
+  "amount": 10,
+  "local_path": "/home/ubuntu/bounty_work/auto_activepieces_activepieces_14031",
+  "fork_url": "https://github.com/xuhongchen521-debug/activepieces.git",
+  "status": "completed",
+  "completed_at": "2026-07-02T12:00:00.000000",
+  "commit": "4694de06da"
+}

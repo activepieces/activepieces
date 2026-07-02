@@ -78,7 +78,7 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 
 ## Admin Endpoints (Cloud only, API_KEY auth)
 
-- `POST /v1/admin/pieces` — register piece metadata
+- `POST /v1/admin/pieces` — register piece metadata; its action/trigger body schema mirrors the framework's `ActionBase`/`TriggerBase` (incl. `outputSchema`, `aiMetadata`, `audience`) so no fields are stripped on ingest. Keep it in sync when the framework contract gains fields.
 - `POST /v1/admin/platforms/runs/retry` — batch retry failed runs
 - `POST /v1/admin/platforms/apply-license-key` — activate license by email
 - `POST /v1/admin/platforms/increase-ai-credits` — manually add credits

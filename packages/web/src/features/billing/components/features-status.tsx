@@ -66,6 +66,9 @@ const LICENSE_PROPS_MAP = {
   chatEnabled: {
     label: 'Chat',
   },
+  workerGroupsEnabled: {
+    label: 'Worker Groups',
+  },
 };
 
 export const FeatureStatus = ({

@@ -1,5 +1,6 @@
 import {
     ConnectionNotFoundError,
+    EngineFileNotFoundError,
     EngineGenericError,
     EngineResponseStatus,
     ExecutionType,
@@ -492,6 +493,25 @@ describe('flow operation invariants', () => {
                 fileId: 'payload-file-1',
             })
         })
+
+        it('surfaces a gone trigger-payload file as a FAILED run + OK engine response (instead of INTERNAL_ERROR)', async () => {
+            mockDownload.mockReset()
+            mockSendUpdate.mockClear()
+            mockBackup.mockClear()
+            mockDownload.mockRejectedValue(new EngineFileNotFoundError('payload-file-gone'))
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'ref', fileId: 'payload-file-gone' },
+            })
+
+            const response = await flowOperation.execute(operation)
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+            const finalSendUpdate = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0]
+            const finalCtx = finalSendUpdate.flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(finalCtx.verdict.failedStep.name).toBe('trigger_1')
+            expect(mockBackup).toHaveBeenCalled()
+        })
     })
 
     describe('trigger input resolution failure', () => {
@@ -532,6 +552,24 @@ describe('flow operation invariants', () => {
             })
 
             await expect(flowOperation.execute(operation)).rejects.toThrow(EngineGenericError)
+        })
+
+        it('surfaces a plain TypeError thrown by the trigger run() hook as a FAILED run + OK engine response (instead of INTERNAL_ERROR)', async () => {
+            mockSendUpdate.mockClear()
+            mockBackup.mockClear()
+            mockExecuteTrigger.mockRejectedValue(new TypeError("Cannot read 'toLowerCase' of undefined"))
+            const operation = makeBeginOperation({
+                triggerPayload: { type: 'inline', value: {} },
+                executeTrigger: true,
+            })
+
+            const response = await flowOperation.execute(operation)
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(finalCtx.verdict.failedStep.name).toBe('trigger_1')
+            expect(finalCtx.steps.trigger_1.errorMessage).toEqual(expect.stringContaining('toLowerCase'))
         })
     })
 
