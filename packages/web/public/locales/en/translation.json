@@ -916,7 +916,7 @@
   "RAM": "RAM",
   "CPU": "CPU",
   "At least 30GB of disk space is required.": "At least 30GB of disk space is required.",
-  "At least 4GB of RAM is required.": "At least 4GB of RAM is required.",
+  "At least 2GB of RAM is required.": "At least 2GB of RAM is required.",
   "At least 1 CPU core is required.": "At least 1 CPU core is required.",
   "At least 1GB of RAM is required per worker.": "At least 1GB of RAM is required per worker.",
   "At least 0.5 CPU core is required per worker.": "At least 0.5 CPU core is required per worker.",

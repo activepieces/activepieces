@@ -36,10 +36,8 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   const { data: currentVersion } = flagsHooks.useFlag<string>(
     ApFlagId.CURRENT_VERSION,
   );
-  const { data: latestVersion } = flagsHooks.useFlag<string>(
-    ApFlagId.LATEST_VERSION,
-  );
   const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
+  const latestVersion = systemHealth?.latestVersion;
 
   const isVersionUpToDate = React.useMemo(() => {
     if (!currentVersion || !latestVersion) return false;
