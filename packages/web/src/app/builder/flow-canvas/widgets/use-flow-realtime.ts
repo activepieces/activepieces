@@ -3,6 +3,7 @@ import {
   FlowEntityUpdatedEvent,
   FlowRun,
   FlowVersionUpdatedEvent,
+  PopulatedFlow,
   UpdateRunProgressRequest,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -12,6 +13,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 import { flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
+import { useAiLockDeltaStream } from '@/hooks/use-ai-lock-delta-stream';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
@@ -25,7 +27,8 @@ import { useBuilderStateContext } from '../../builder-hooks';
  * apply (a whole-version snapshot is naturally last-write-wins) → catch-up reconcile.
  * On both edges of the lock we re-fetch an authoritative snapshot; on the rising edge
  * we buffer deltas that arrive during the fetch (so opening the flow mid-run doesn't
- * miss anything) and drain them after.
+ * miss anything) and drain them after. The queue/timer/ready/buffer plumbing is
+ * shared with `use-table-realtime` via `useAiLockDeltaStream`.
  */
 function useFlowRealtime({ flowId, isAiActive }: UseFlowRealtimeParams) {
   const socket = useSocket();
@@ -52,16 +55,6 @@ function useFlowRealtime({ flowId, isAiActive }: UseFlowRealtimeParams) {
   // (same merge the human test path uses) so the run view fills in progressively.
   const lastRunRef = useRef<FlowRun | null>(null);
 
-  const isAiActiveRef = useRef(isAiActive);
-  const readyRef = useRef(true);
-  const bufferRef = useRef<FlowVersionUpdatedEvent[]>([]);
-
-  // A sequence of operations (e.g. ap_build_flow adding steps one-by-one) arrives as a
-  // burst of snapshots. Drain them through a fixed stagger so the steps reveal one after
-  // another: the first applies immediately, the rest follow ~STAGGER_MS apart, applied in
-  // arrival order so a newer snapshot never regresses to an older one.
-  const streamQueueRef = useRef<FlowVersionUpdatedEvent[]>([]);
-  const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pruneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const followStep = useCallback(
@@ -98,31 +91,32 @@ function useFlowRealtime({ flowId, isAiActive }: UseFlowRealtimeParams) {
     [applyServerVersion, followStep, clearExpiredChangedSteps],
   );
 
-  const enqueueApply = useCallback(
-    (event: FlowVersionUpdatedEvent) => {
-      const drain = () => {
-        const next = streamQueueRef.current.shift();
-        if (next === undefined) {
-          streamTimerRef.current = null;
-          return;
-        }
-        apply(next);
-        streamTimerRef.current = setTimeout(drain, STAGGER_MS);
-      };
-      streamQueueRef.current.push(event);
-      if (streamTimerRef.current === null) {
-        drain();
-      }
+  const fetchSnapshot = useCallback(() => flowsApi.get(flowId), [flowId]);
+
+  const reconcile = useCallback(
+    (flow: PopulatedFlow) => {
+      // Silent reconcile (no canvas reset): version content + flow-level fields.
+      reconcileServerVersion(flow.version);
+      applyServerFlow({
+        status: flow.status,
+        publishedVersionId: flow.publishedVersionId ?? null,
+        folderId: flow.folderId ?? null,
+      });
     },
-    [apply],
+    [reconcileServerVersion, applyServerFlow],
   );
+
+  const { enqueueApply, bufferDelta, isAiActiveRef, readyRef } =
+    useAiLockDeltaStream<FlowVersionUpdatedEvent, PopulatedFlow>({
+      isAiActive,
+      staggerMs: STAGGER_MS,
+      fetchSnapshot,
+      reconcile,
+      applyDelta: apply,
+    });
 
   useEffect(() => {
     return () => {
-      if (streamTimerRef.current !== null) {
-        clearTimeout(streamTimerRef.current);
-        streamTimerRef.current = null;
-      }
       if (pruneTimerRef.current !== null) {
         clearTimeout(pruneTimerRef.current);
         pruneTimerRef.current = null;
@@ -136,7 +130,7 @@ function useFlowRealtime({ flowId, isAiActive }: UseFlowRealtimeParams) {
         return;
       }
       if (!readyRef.current) {
-        bufferRef.current.push(event);
+        bufferDelta(event);
         return;
       }
       enqueueApply(event);
@@ -188,46 +182,15 @@ function useFlowRealtime({ flowId, isAiActive }: UseFlowRealtimeParams) {
       socket.off(WebsocketClientEvent.FLOW_UPDATED, onFlowUpdated);
       socket.off(WebsocketClientEvent.UPDATE_RUN_PROGRESS, onRunProgress);
     };
-  }, [socket, flowId, enqueueApply, applyServerFlow, setRun]);
-
-  useEffect(() => {
-    const wasActive = isAiActiveRef.current;
-    isAiActiveRef.current = isAiActive;
-    if (isAiActive === wasActive) {
-      return;
-    }
-    let cancelled = false;
-    if (isAiActive) {
-      readyRef.current = false;
-      bufferRef.current = [];
-    }
-    void (async () => {
-      const { data: flow } = await tryCatch(() => flowsApi.get(flowId));
-      if (!cancelled && flow) {
-        // Silent reconcile (no canvas reset): version content + flow-level fields.
-        reconcileServerVersion(flow.version);
-        applyServerFlow({
-          status: flow.status,
-          publishedVersionId: flow.publishedVersionId ?? null,
-          folderId: flow.folderId ?? null,
-        });
-      }
-      if (isAiActive) {
-        readyRef.current = true;
-        const buffered = bufferRef.current;
-        bufferRef.current = [];
-        buffered.forEach(enqueueApply);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
   }, [
-    isAiActive,
+    socket,
     flowId,
     enqueueApply,
-    reconcileServerVersion,
     applyServerFlow,
+    setRun,
+    bufferDelta,
+    isAiActiveRef,
+    readyRef,
   ]);
 }
 

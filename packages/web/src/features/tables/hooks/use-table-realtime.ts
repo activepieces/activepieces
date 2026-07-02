@@ -1,5 +1,7 @@
-import { tryCatch } from '@activepieces/core-utils';
 import {
+  Field,
+  SeekPage,
+  PopulatedRecord,
   TableFieldCreatedEvent,
   TableFieldDeletedEvent,
   TableFieldUpdatedEvent,
@@ -11,6 +13,7 @@ import {
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useSocket } from '@/components/providers/socket-provider';
+import { useAiLockDeltaStream } from '@/hooks/use-ai-lock-delta-stream';
 
 import { fieldsApi } from '../api/fields-api';
 import { recordsApi } from '../api/records-api';
@@ -33,8 +36,13 @@ import { TableServerDelta } from '../stores/store/ap-tables-client-state';
  * since the grid store is built once at mount and react-query invalidation never
  * reaches it.
  *
- * The same shape can be reused for flows later: subscribe → gate on AI lock →
- * idempotent apply → catch-up reconcile.
+ * On turn end we DON'T abruptly clear anything client-local: the falling-edge
+ * snapshot is authoritative, and any in-flight exit timer (see below) still
+ * fires — its delete is idempotent against the snapshot — so a row caught
+ * mid-disintegration finishes cleanly instead of snapping away.
+ *
+ * The queue/timer/ready/buffer plumbing (staggered apply, lock-edge reconcile)
+ * is shared with `use-flow-realtime` via `useAiLockDeltaStream`.
  */
 function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
   const socket = useSocket();
@@ -44,52 +52,44 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
     (state) => state.reconcileServerSnapshot,
   );
 
-  const isAiActiveRef = useRef(isAiActive);
-  const readyRef = useRef(true);
-  const bufferRef = useRef<TableServerDelta[]>([]);
   // One keyed timer per exiting row — so the delete animation is deterministic and a
   // superseding event / unmount can cancel it cleanly (no anonymous setTimeout soup).
   const exitTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
   );
 
-  // A burst of deltas from one agent write (e.g. ap_insert_records inserting many
-  // rows) is emitted back-to-back and would otherwise land in a single frame — all
-  // rows popping in at once. Drain them through a small stagger so they cascade in
-  // one after another: the first applies immediately (responsive), the rest follow
-  // ~STREAM_STAGGER_MS apart, capped so a large insert never feels sluggish.
-  const streamQueueRef = useRef<TableServerDelta[]>([]);
-  const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const enqueueApply = useCallback(
-    (delta: TableServerDelta) => {
-      const drain = () => {
-        // Drain at a FIXED cadence so a burst always cascades identically. Past a cap we
-        // apply the remainder in one frame rather than dragging a huge insert out forever.
-        const overCap = streamQueueRef.current.length > STAGGER_MAX_QUEUE;
-        const next = streamQueueRef.current.shift();
-        if (next === undefined) {
-          streamTimerRef.current = null;
-          return;
-        }
-        applyServerDelta(next);
-        streamTimerRef.current = setTimeout(drain, overCap ? 0 : STAGGER_MS);
-      };
-      streamQueueRef.current.push(delta);
-      if (streamTimerRef.current === null) {
-        drain();
-      }
-    },
-    [applyServerDelta],
+  const fetchSnapshot = useCallback(
+    () =>
+      Promise.all([
+        recordsApi.list({ tableId, limit: 99999999, cursor: undefined }),
+        fieldsApi.list({ tableId }),
+      ]),
+    [tableId],
   );
+
+  const reconcile = useCallback(
+    ([records, fields]: [SeekPage<PopulatedRecord>, Field[]]) => {
+      reconcileServerSnapshot({ fields, records: records.data });
+    },
+    [reconcileServerSnapshot],
+  );
+
+  const { enqueueApply, bufferDelta, isAiActiveRef, readyRef } =
+    useAiLockDeltaStream<
+      TableServerDelta,
+      [SeekPage<PopulatedRecord>, Field[]]
+    >({
+      isAiActive,
+      staggerMs: STAGGER_MS,
+      staggerMaxQueue: STAGGER_MAX_QUEUE,
+      fetchSnapshot,
+      reconcile,
+      applyDelta: applyServerDelta,
+    });
 
   useEffect(() => {
     const exitTimers = exitTimersRef.current;
     return () => {
-      if (streamTimerRef.current !== null) {
-        clearTimeout(streamTimerRef.current);
-        streamTimerRef.current = null;
-      }
       exitTimers.forEach((timer) => clearTimeout(timer));
       exitTimers.clear();
     };
@@ -101,7 +101,7 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
         return;
       }
       if (!readyRef.current) {
-        bufferRef.current.push(delta);
+        bufferDelta(delta);
         return;
       }
       // Delete is a deterministic two-beat: mark the row exiting (takeover border +
@@ -164,44 +164,15 @@ function useTableRealtime({ tableId, isAiActive }: UseTableRealtimeParams) {
       socket.off(WebsocketClientEvent.TABLE_FIELD_UPDATED, onFieldUpdated);
       socket.off(WebsocketClientEvent.TABLE_FIELD_DELETED, onFieldDeleted);
     };
-  }, [socket, tableId, enqueueApply, setRowsExiting]);
-
-  useEffect(() => {
-    const wasActive = isAiActiveRef.current;
-    isAiActiveRef.current = isAiActive;
-    if (isAiActive === wasActive) {
-      return;
-    }
-    let cancelled = false;
-    if (isAiActive) {
-      readyRef.current = false;
-      bufferRef.current = [];
-    }
-    void (async () => {
-      const { data } = await tryCatch(() =>
-        Promise.all([
-          recordsApi.list({ tableId, limit: 99999999, cursor: undefined }),
-          fieldsApi.list({ tableId }),
-        ]),
-      );
-      if (!cancelled && data) {
-        const [records, fields] = data;
-        reconcileServerSnapshot({ fields, records: records.data });
-      }
-      if (isAiActive) {
-        readyRef.current = true;
-        const buffered = bufferRef.current;
-        bufferRef.current = [];
-        buffered.forEach(enqueueApply);
-      }
-      // On turn end we DON'T abruptly clear: the snapshot above is authoritative, and any
-      // in-flight exit timer still fires (its delete is idempotent against the snapshot), so
-      // a row caught mid-disintegration finishes cleanly instead of snapping away.
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isAiActive, tableId, enqueueApply, reconcileServerSnapshot]);
+  }, [
+    socket,
+    tableId,
+    enqueueApply,
+    setRowsExiting,
+    bufferDelta,
+    isAiActiveRef,
+    readyRef,
+  ]);
 }
 
 export { useTableRealtime };

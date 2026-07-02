@@ -68,7 +68,7 @@ const TILE: Record<
   },
 };
 
-export function ItemTile({
+function ItemTile({
   type,
   size = 28,
 }: {
@@ -89,7 +89,7 @@ export function ItemTile({
   );
 }
 
-export function ResultRow({
+function ResultRow({
   item,
   selected,
   onClick,
@@ -152,7 +152,7 @@ export function ResultRow({
   );
 }
 
-export function EmptyState({ hasQuery }: { hasQuery: boolean }) {
+function EmptyState({ hasQuery }: { hasQuery: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -170,7 +170,7 @@ export function EmptyState({ hasQuery }: { hasQuery: boolean }) {
   );
 }
 
-export function Skeletons({ density = 'cozy' }: { density?: Density }) {
+function Skeletons({ density = 'cozy' }: { density?: Density }) {
   const d = DENSITY[density];
   return (
     <div className="flex flex-col">
@@ -430,7 +430,7 @@ export function ProjectActions({
   );
 }
 
-export function ProjectMenu({
+function ProjectMenu({
   controller,
   align = 'left',
 }: {

@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { piecesHooks } from '@/features/pieces';
+import { mathUtils } from '@/lib/math-utils';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../utils/consts';
@@ -149,12 +150,12 @@ export const StepPreviewCard = ({
   const rawLeft = fitsRight
     ? nodeScreenRight + CARD_VIEWPORT_MARGIN
     : nodeTopLeft.x - CARD_VIEWPORT_MARGIN - cardWidth;
-  const left = clamp(
+  const left = mathUtils.clamp(
     rawLeft,
     boundsLeft,
     Math.max(boundsLeft, boundsRight - cardWidth),
   );
-  const top = clamp(
+  const top = mathUtils.clamp(
     nodeTopLeft.y,
     boundsTop,
     Math.max(boundsTop, boundsBottom - maxHeight),
@@ -226,10 +227,6 @@ const StepPreviewCardBody = ({ step }: { step: Step }) => {
     </>
   );
 };
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 const PREVIEW_CARD_MAX_WIDTH = 360;
 const PREVIEW_CARD_MIN_WIDTH = 280;

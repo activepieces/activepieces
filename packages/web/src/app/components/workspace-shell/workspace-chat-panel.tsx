@@ -51,6 +51,7 @@ import {
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { mathUtils } from '@/lib/math-utils';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_PINNED_STORAGE_KEY = 'chat-sidebar-pinned';
@@ -684,10 +685,6 @@ export function WorkspaceChatPanel({
   );
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
 function clampPos(
   pos: { x: number; y: number },
   width: number,
@@ -702,8 +699,8 @@ function clampPos(
     window.innerHeight - height - FLOAT_VIEWPORT_MARGIN,
   );
   return {
-    x: clamp(pos.x, FLOAT_VIEWPORT_MARGIN, maxX),
-    y: clamp(pos.y, FLOAT_VIEWPORT_MARGIN, maxY),
+    x: mathUtils.clamp(pos.x, FLOAT_VIEWPORT_MARGIN, maxX),
+    y: mathUtils.clamp(pos.y, FLOAT_VIEWPORT_MARGIN, maxY),
   };
 }
 
@@ -748,8 +745,12 @@ function readFloatSize(): { width: number; height: number } {
     window.innerHeight - 2 * FLOAT_VIEWPORT_MARGIN,
   );
   const fit = (size: { width: number; height: number }) => ({
-    width: clamp(size.width, Math.min(FLOAT_MIN_WIDTH, maxWidth), maxWidth),
-    height: clamp(
+    width: mathUtils.clamp(
+      size.width,
+      Math.min(FLOAT_MIN_WIDTH, maxWidth),
+      maxWidth,
+    ),
+    height: mathUtils.clamp(
       size.height,
       Math.min(FLOAT_MIN_HEIGHT, maxHeight),
       maxHeight,

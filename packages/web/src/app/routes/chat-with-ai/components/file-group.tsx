@@ -9,6 +9,8 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
 import { cn } from '@/lib/utils';
 
+import { byteFormatUtils } from '../lib/format-bytes';
+
 import { previewUtils } from './previews/preview-utils';
 
 export function FileGroup({ files }: { files: FileProducedEvent[] }) {
@@ -120,7 +122,7 @@ function FileTile({
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-medium">{label}</p>
         <p className="truncate text-[11px] text-muted-foreground">
-          {formatBytes(file.byteSize)}
+          {byteFormatUtils.formatBytes(file.byteSize)}
         </p>
       </div>
       <a href={file.url} download target="_blank" rel="noreferrer">
@@ -134,19 +136,6 @@ function FileTile({
 
 function isImage(file: FileProducedEvent): boolean {
   return previewUtils.detectFileKind(file.mediaType, file.fileName) === 'image';
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes <= 0) return '';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const exponent = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1,
-  );
-  const value = bytes / Math.pow(1024, exponent);
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${
-    units[exponent]
-  }`;
 }
 
 const FILE_INLINE_MAX = 6;

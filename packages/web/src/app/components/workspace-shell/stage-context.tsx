@@ -38,9 +38,8 @@ function computeStageTier(width: number): StageTier {
 }
 
 // The Stage is closed on the chat landing: /chat (canonical, project-agnostic) and
-// the legacy bare /projects/:projectId (which redirects to /chat). Single-sourced so
-// the Stage state and the sidebar's project highlight agree on when it's closed.
-export function isChatLandingPath(pathname: string): boolean {
+// the legacy bare /projects/:projectId (which redirects to /chat).
+function isChatLandingPath(pathname: string): boolean {
   return pathname === CHAT_ROUTE || /^\/projects\/[^/]+\/?$/.test(pathname);
 }
 
