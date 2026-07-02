@@ -534,12 +534,28 @@ function createProgressGuard() {
     }
 }
 
+// The exact toolInput shape ap_execute_action's gate persists AND re-issues on resume. Both the
+// stored pre-approval identity and the re-issue must hash the SAME object, so the two sites share
+// this builder (Fix R1) — a divergence would make every re-issue mismatch and re-open a card.
+function buildExecuteActionGateInput({ toolInput, isBatch }: {
+    toolInput: { pieceName?: string, actionName?: string, input?: Record<string, unknown>, items?: Record<string, unknown>[] }
+    isBatch: boolean
+}): Record<string, unknown> {
+    return {
+        pieceName: toolInput.pieceName,
+        actionName: toolInput.actionName,
+        input: toolInput.input ?? {},
+        items: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+        batchCount: isBatch ? toolInput.items!.length : undefined,
+    }
+}
+
 function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, consumePreApproval, guides }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    consumePreApproval?: (params: { toolName: string }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
+    consumePreApproval?: (params: { toolName: string, reissuedInput?: Record<string, unknown> }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     guides: Record<string, string>
 }): ToolSet {
     const progressGuard = createProgressGuard()
@@ -591,8 +607,11 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 })
 
                 // A resume turn re-issuing a late-approved action consumes the one-shot pre-approval
-                // instead of opening a second card (Fix 1). Only when there is none do we open the gate.
-                const preApproved = needsPreview && consumePreApproval ? (await consumePreApproval({ toolName: 'ap_execute_action' })).approved : false
+                // instead of opening a second card (Fix 1/R1). The re-issued input is hashed and
+                // compared against the approved identity server-side, so build the SAME shape the gate
+                // stored (buildExecuteActionGateInput) — a different action fails closed and re-opens.
+                const gateInput = buildExecuteActionGateInput({ toolInput, isBatch: !!isBatch })
+                const preApproved = needsPreview && consumePreApproval ? (await consumePreApproval({ toolName: 'ap_execute_action', reissuedInput: gateInput })).approved : false
                 if (needsPreview && !preApproved) {
                     const previewData: ActionPreviewEvent = {
                         toolCallId: options.toolCallId,
@@ -610,13 +629,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                             gateId: options.toolCallId,
                             toolName: 'ap_execute_action',
                             displayName: toolInput.title ?? toolInput.actionName,
-                            toolInput: {
-                                pieceName: toolInput.pieceName,
-                                actionName: toolInput.actionName,
-                                input: toolInput.input ?? {},
-                                items: isBatch ? toolInput.items!.slice(0, 3) : undefined,
-                                batchCount: isBatch ? toolInput.items!.length : undefined,
-                            },
+                            toolInput: gateInput,
                         }))
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
@@ -1292,7 +1305,7 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
     checkFlowWrites: (flowId: string) => Promise<unknown>
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    consumePreApproval?: (params: { toolName: string }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
+    consumePreApproval?: (params: { toolName: string, reissuedInput?: Record<string, unknown> }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     eventEmitter: ChatEventEmitter
     log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
 }): Record<string, unknown> {
@@ -1311,13 +1324,15 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
                     log?.warn({ error, flow: { id: flowId } }, 'ap_test_flow write-check failed, running test without confirmation gate')
                 }
                 else if (isObject(check) && check['hasWrites'] === true) {
+                    const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
                     // Resume re-issuing a late-approved live test consumes the one-shot pre-approval
-                    // instead of opening a second confirmation card (Fix 1).
-                    const preApproved = consumePreApproval ? (await consumePreApproval({ toolName: 'ap_test_flow' })).approved : false
+                    // instead of opening a second confirmation card (Fix 1/R1). The token binds this
+                    // flowId (Fix R1e): the re-issued input mirrors what the gate stored ({ flowId,
+                    // writeSteps }), so a token for a DIFFERENT flow's test fails closed and re-opens.
+                    const preApproved = consumePreApproval ? (await consumePreApproval({ toolName: 'ap_test_flow', reissuedInput: { flowId, writeSteps } })).approved : false
                     if (preApproved) {
                         return originalExecute(args, options)
                     }
-                    const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
                     const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
                     const gateLabel = writeSteps.length > 0
                         ? `Run a live test of "${flowName}" — performs: ${writeSteps.join(', ')}`

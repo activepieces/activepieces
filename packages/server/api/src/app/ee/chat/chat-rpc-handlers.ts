@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, isObject, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PersistedToolCallPart, PersistedToolCallStatus, ProjectType, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
@@ -479,6 +479,12 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const isSuccessfulCompletion = input.messages.length > 0
         const updates: Record<string, unknown> = {
             status: isSuccessfulCompletion ? ChatConversationStatus.IDLE : ChatConversationStatus.ERROR,
+            // Clear the active run on terminal completion (Fix R6a): this is the final save for the
+            // turn, so no run owns the conversation afterwards. Leaving it set left a stale activeRunId
+            // that made a settled IDLE row look like it still had a resume in flight — the client's
+            // onStaleCheck then polled forever (Fix R6b). The write is fenced on this run below, so it
+            // only nulls when THIS run still owns the row (a newer run's claim is left intact).
+            activeRunId: null,
         }
 
         // No-shrink guard against silent context loss. The LLM history only ever grows within a
@@ -615,6 +621,17 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             const rawTimeout = input.toolInput.timeoutMs
             const timeoutMs = Math.min(typeof rawTimeout === 'number' ? rawTimeout : MAX_APPROVAL_BLOCK_MS, MAX_APPROVAL_BLOCK_MS)
             const decision = await chatApprovalGate.waitForDecision({ gateId, timeoutMs })
+            // A real (non-pending) decision handed back here means THIS live worker just consumed the
+            // answer. Mark it so the controller's dead-STREAMING handshake (Fix R2) sees the live path
+            // took it and does not park+resume the same turn (double-execution). Also clear the
+            // pending-gate mapping (Fix R5d): the live path owns this gate now, so GET /pending-gate
+            // must not resurrect the answered card after a mid-run reload (it only TTL'd out before).
+            if (decision !== 'pending') {
+                await tryCatch(() => chatApprovalGate.markGateConsumed({ gateId }))
+                if (typeof input.conversationId === 'string') {
+                    await tryCatch(() => chatApprovalGate.clearPendingGate({ conversationId: input.conversationId! }))
+                }
+            }
             return { result: decision }
         }
         if (input.toolName === '__store_pending_gate') {
@@ -657,8 +674,17 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (typeof input.conversationId !== 'string' || typeof gateTool !== 'string') {
                 return { result: { approved: false } }
             }
-            const preApproval = await chatApprovalGate.consumePreApproval({ conversationId: input.conversationId, toolName: gateTool })
-            if (isNil(preApproval)) {
+            // Verify the re-issued action matches the approved identity AND this resume run (Fix R1):
+            // the worker passes the re-issued action's identity fields (piece/action or flowId) and
+            // input, plus its runId. A mismatch fails closed (a normal card opens instead).
+            const reissuedInput = isObject(input.toolInput.reissuedInput) ? input.toolInput.reissuedInput as Record<string, unknown> : undefined
+            const preApproval = await chatApprovalGate.consumePreApproval({
+                conversationId: input.conversationId,
+                toolName: gateTool,
+                toolInput: reissuedInput,
+                ...spreadIfDefined('runId', input.runId),
+            })
+            if (isNil(preApproval) || !preApproval.approved) {
                 return { result: { approved: false } }
             }
             log.info({ conversation: { id: input.conversationId }, tool: { name: gateTool } }, '[chatRpc#executeChatTool] Consumed one-shot pre-approval — proceeding without a new gate')

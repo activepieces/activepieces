@@ -433,11 +433,13 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     // One-shot pre-approval check (Fix 1): a resume turn re-issuing a late-approved approval-gate
     // action consumes the stored pre-approval instead of opening a second card. Returns the decision
     // so the caller can proceed as approved without asking the user again.
-    const consumePreApproval = async ({ toolName: gateTool }: { toolName: string }): Promise<{ approved: boolean, payload?: Record<string, unknown> }> => {
+    const consumePreApproval = async ({ toolName: gateTool, reissuedInput }: { toolName: string, reissuedInput?: Record<string, unknown> }): Promise<{ approved: boolean, payload?: Record<string, unknown> }> => {
+        // Pass the re-issued action's input + this run's id (Fix R1) so the server can verify the token
+        // was minted for the SAME action the user approved and belongs to THIS resume run.
         const { data: response } = await tryCatch(() => ctx.apiClient.executeChatTool({
             toolName: '__consume_pre_approval',
-            toolInput: { toolName: gateTool },
-            platformId, userId, conversationId,
+            toolInput: { toolName: gateTool, ...(isObject(reissuedInput) ? { reissuedInput } : {}) },
+            platformId, userId, conversationId, runId,
         }))
         const result = isObject(response?.result) ? response.result as Record<string, unknown> : {}
         return { approved: result['approved'] === true, ...(isObject(result['payload']) ? { payload: result['payload'] as Record<string, unknown> } : {}) }

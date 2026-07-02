@@ -45,6 +45,10 @@ export enum PersistedToolCallStatus {
     // opens so the interactive card survives a page reload from history alone (independent of the
     // in-memory pending-gate cache). Replaced in place by COMPLETED/ERROR once the gate resolves.
     PENDING = 'pending',
+    // A PENDING gate the user abandoned by sending a NEW message instead of answering it. Flipped
+    // on the next send so an ignored card can't hijack every future crash-recovery (Fix R3): it
+    // renders as a non-interactive, dismissed card and is invisible to gate/recovery routing.
+    SUPERSEDED = 'superseded',
 }
 
 export enum PersistedChatRole {
@@ -70,7 +74,7 @@ const PersistedToolCallPartSchema = z.object({
     description: z.string().optional(),
     input: z.record(z.string(), z.unknown()),
     output: z.unknown().optional(),
-    status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR, PersistedToolCallStatus.PENDING]),
+    status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR, PersistedToolCallStatus.PENDING, PersistedToolCallStatus.SUPERSEDED]),
     errorText: z.string().optional(),
 })
 
@@ -211,6 +215,17 @@ export const CHAT_LATE_APPROVAL_MARKER = {
     approved: true,
     executed: false,
     note: 'The user approved this after the original run ended — the action was NOT executed. Re-run it now; it is pre-approved, so do not ask again.',
+} as const
+
+// Email's late-approve marker (Fix R1d). ap_send_email deliberately re-opens its confirmation card
+// on resume (the SMTP boundary re-verifies the exact recipients/subject/body against the recorded
+// decision), so — unlike the generic marker above — this one must NOT say "do not ask again". No
+// pre-approval token is stored for email; the resumed model re-issues the send and the user confirms
+// it once more on the card that reappears.
+export const CHAT_LATE_APPROVAL_MARKER_EMAIL = {
+    approved: true,
+    executed: false,
+    note: 'The user approved this after the original run ended — the email was NOT sent. Re-issue the send now. A confirmation card will be shown again to confirm the recipients and content before it goes out.',
 } as const
 
 export const ChatConversation = z.object({
