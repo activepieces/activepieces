@@ -389,6 +389,7 @@ import { AddAiToolConfigTable1797000000000 } from './migration/postgres/17970000
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
+import { AddGrantedFreeCreditAtAndBackfillEnabledForChat1802000000000 } from './migration/postgres/1802000000000-AddGrantedFreeCreditAtAndBackfillEnabledForChat'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -793,6 +794,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatRolloutUserTable1799000000000,
         AddTimelineToFlowRun1800000000000,
         AddToolSearchIndexTable1801000000000,
+        AddGrantedFreeCreditAtAndBackfillEnabledForChat1802000000000,
     ]
     return migrations
 }

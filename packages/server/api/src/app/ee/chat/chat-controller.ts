@@ -89,6 +89,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
         rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
 
+        // Grant $10 credit on first chat for free cloud users
+        await chatRolloutService.claimFirstChatGrant({ userId, platformId, log })
+
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 

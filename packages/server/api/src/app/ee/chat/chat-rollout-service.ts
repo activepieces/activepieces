@@ -1,11 +1,14 @@
 import { apId, isNil } from '@activepieces/core-utils'
 import { ApEdition } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Not } from 'typeorm'
+import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { distributedStore } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { openRouterApi } from '../platform/platform-plan/openrouter/openrouter-api'
 import { ChatRolloutUserEntity } from './chat-rollout-user-entity'
 
 const DEFAULT_ROLLOUT_CAP = 200
@@ -21,6 +24,10 @@ function getCap(): number {
 
 function isCloud(): boolean {
     return !isNotOneOfTheseEditions([ApEdition.CLOUD])
+}
+
+function getFreeCreditUsd(): number {
+    return system.getNumber(AppSystemProp.CLOUD_CHAT_FREE_CREDIT_USD) ?? 10
 }
 
 async function countChatted(): Promise<number> {
@@ -65,5 +72,33 @@ export const chatRolloutService = {
                  "updated" = now()`,
             [apId(), userId, platformId],
         )
+    },
+
+    async claimFirstChatGrant({ userId, platformId, log }: { userId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
+        if (!isCloud()) {
+            return
+        }
+        const result = await rolloutRepo().query(
+            `UPDATE "chat_rollout_user"
+             SET "grantedFreeCreditAt" = now(), "updated" = now()
+             WHERE "userId" = $1 AND "grantedFreeCreditAt" IS NULL`,
+            [userId],
+        )
+        if (result.rowCount > 0) {
+            await this.recordFirstChatGrant({ platformId, log })
+        }
+    },
+
+    async recordFirstChatGrant({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+        if (!isCloud()) {
+            return
+        }
+        const auth = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
+        const { data: key } = await openRouterApi.getKey({ hash: auth.apiKeyHash })
+        await openRouterApi.updateKey({
+            hash: auth.apiKeyHash,
+            limit: key.limit! + getFreeCreditUsd(),
+        })
+        log.info({ platform: { id: platformId }, grantAmount: getFreeCreditUsd() }, '[chatRolloutService] Granted free chat credit to first-time chatter')
     },
 }

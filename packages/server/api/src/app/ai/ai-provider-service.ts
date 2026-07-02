@@ -41,6 +41,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 provider: AIProviderName.ACTIVEPIECES,
                 displayName: 'Activepieces',
                 platformId,
+                enabledForChat: true,
             })
         }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
@@ -242,6 +243,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 provider: AIProviderName.ACTIVEPIECES,
                 displayName: 'Activepieces',
                 platformId,
+                enabledForChat: true,
             })
         }
 
