@@ -65,7 +65,7 @@ const SANDBOX_INFO_REFRESH_MS = 15_000
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
-        const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? false
+        const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
         socket = io(socketUrl.url, {
             auth: { token: workerToken, workerId, workerGroupId, projectWorker },
             path: socketUrl.path,
