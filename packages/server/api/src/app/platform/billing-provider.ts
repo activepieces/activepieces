@@ -69,6 +69,9 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     getConsumablesUsage: async () => {
         return { credits: null, appSumo: null }
     },
+    getCreditUsage: async () => {
+        return { total: 0, byProject: [] }
+    },
 }))
 
 export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
@@ -118,6 +121,22 @@ export type TrackAppSumoAiUsageParams = {
     value: number
     idempotencyKey: string
     properties?: Record<string, unknown>
+}
+
+export type CreditUsageByProjectParams = {
+    platformId: string
+    startDate?: string
+    endDate?: string
+}
+
+export type ProjectCreditsAggregate = {
+    projectId: string
+    creditsUsed: number
+}
+
+export type CreditUsage = {
+    total: number
+    byProject: ProjectCreditsAggregate[]
 }
 
 export type ReportUsageCountsParams = {
@@ -240,4 +259,5 @@ export type BillingProvider = {
     shouldBlockOnCredits(platformId: string): Promise<boolean>
     getCreditsAndAppSumoState(platformId: string): Promise<CreditsAndAppSumoState>
     getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
+    getCreditUsage(params: CreditUsageByProjectParams): Promise<CreditUsage>
 }

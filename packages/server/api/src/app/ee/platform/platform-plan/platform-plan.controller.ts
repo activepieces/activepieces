@@ -1,4 +1,4 @@
-import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, isNil, PlatformBillingInformation, PrincipalType, PurchasablePlan } from '@activepieces/shared'
+import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -17,11 +17,15 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
             billingProvider.get(request.log).getBillingOverview(platform.id),
         ])
 
-        const { endDate: nextBillingDate, nextBillingAmount, cancelAt, planId: currentPlanId, planName: currentPlanName, scheduledPlanName, billingPortalAvailable, autoTopUps, topUpFeatures } = overview
+        const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, planId: currentPlanId, planName: currentPlanName, scheduledPlanName, billingPortalAvailable, autoTopUps, topUpFeatures } = overview
+
+        const usageWithCredits = usage.creditsRemaining === null
+            ? { ...usage, creditsUsed: (await billingProvider.get(request.log).getCreditUsage({ platformId: platform.id, startDate: billingPeriodStart, endDate: nextBillingDate })).total }
+            : usage
 
         const response: PlatformBillingInformation = {
             plan: platformPlan,
-            usage,
+            usage: usageWithCredits,
             currentPlanId,
             currentPlanName,
             scheduledPlanName,
@@ -37,6 +41,14 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
 
     fastify.get('/plans', ListPlansRequest, async (request) => {
         return billingProvider.get(request.log).listPlans(request.principal.platform.id)
+    })
+
+    fastify.get('/projects-usage', ProjectsUsageRequest, async (request) => {
+        return platformPlanService(request.log).getCreditUsageByProject({
+            platformId: request.principal.platform.id,
+            startDate: request.query.startDate,
+            endDate: request.query.endDate,
+        })
     })
 
     fastify.post('/checkout', CheckoutRequest, async (request) => {
@@ -107,6 +119,21 @@ const InfoRequest = {
     },
     response: {
         [StatusCodes.OK]: PlatformBillingInformation,
+    },
+}
+
+const ProjectsUsageRequest = {
+    schema: {
+        querystring: z.object({
+            startDate: z.string().optional(),
+            endDate: z.string().optional(),
+        }),
+        response: {
+            [StatusCodes.OK]: z.array(ProjectCreditUsage),
+        },
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 

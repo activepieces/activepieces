@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, ProjectType } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
@@ -102,6 +102,24 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             appSumoAiCredits: isNil(appSumo) ? null : appSumo.usage,
             appSumoAiCreditsRemaining: isNil(appSumo) ? null : Math.max(0, appSumo.limit - appSumo.usage),
         }
+    },
+    async getCreditUsageByProject({ platformId, startDate, endDate }: { platformId: string, startDate?: string, endDate?: string }): Promise<ProjectCreditUsage[]> {
+        const { byProject: usage } = await billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate })
+        if (usage.length === 0) {
+            return []
+        }
+        const namesByProjectId = await projectService(log).getDisplayNamesByIds({
+            platformId,
+            projectIds: usage.map((entry) => entry.projectId),
+        })
+        return usage
+            .filter((entry) => namesByProjectId.has(entry.projectId))
+            .map((entry): ProjectCreditUsage => ({
+                projectId: entry.projectId,
+                projectName: namesByProjectId.get(entry.projectId) ?? entry.projectId,
+                creditsUsed: entry.creditsUsed,
+            }))
+            .sort((a, b) => b.creditsUsed - a.creditsUsed)
     },
     checkActiveFlowsExceededLimit: async (platformId: string): Promise<void> => {
         if (ApEdition.COMMUNITY === edition) {

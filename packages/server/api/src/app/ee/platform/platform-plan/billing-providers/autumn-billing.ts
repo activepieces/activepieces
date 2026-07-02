@@ -188,6 +188,13 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             appSumo: toAppSumoAiCreditsUsage(appSumo),
         }
     },
+    getCreditUsage: async ({ platformId, startDate, endDate }) => {
+        const creds = await autumnConsole.getCreds(log, platformId)
+        if (isNil(creds)) {
+            return { total: 0, byProject: [] }
+        }
+        return autumnConsole.creditUsage({ ...creds, startDate, endDate })
+    },
 })
 
 function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthEnd: string): BillingInfo {

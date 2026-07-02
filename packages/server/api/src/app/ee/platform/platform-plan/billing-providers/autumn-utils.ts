@@ -15,7 +15,7 @@ import { BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getBilling
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
-import { AppSumoAction } from '../../../../platform/billing-provider'
+import { AppSumoAction, CreditUsage } from '../../../../platform/billing-provider'
 import { platformPlanService } from '../platform-plan.service'
 
 const AUTUMN_CONSOLE_URL = 'https://ribbon-knowledgestorm-zope-forgotten.trycloudflare.com'
@@ -258,6 +258,14 @@ export const autumnConsole = {
             { autumnCustomerId },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
+    },
+    async creditUsage({ autumnCustomerId, autumnApiKey, startDate, endDate }: ConsoleCustomerCall & { startDate?: string, endDate?: string }): Promise<CreditUsage> {
+        const response = await safeHttp.axios.post<{ data: CreditUsage }>(
+            `${AUTUMN_CONSOLE_URL}/api/billing/credit-usage`,
+            { autumnCustomerId, startDate, endDate },
+            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
+        )
+        return response.data.data
     },
     async compAppSumo({ platformId, planId, action }: { platformId: string, planId?: string, action: AppSumoAction }): Promise<void> {
         const token = system.get(AppSystemProp.APPSUMO_TOKEN)
