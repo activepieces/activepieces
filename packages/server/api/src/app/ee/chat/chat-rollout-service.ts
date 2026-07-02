@@ -8,6 +8,7 @@ import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { distributedStore } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { openRouterApi } from '../platform/platform-plan/openrouter/openrouter-api'
 import { ChatRolloutUserEntity } from './chat-rollout-user-entity'
 
@@ -76,6 +77,11 @@ export const chatRolloutService = {
 
     async claimFirstChatGrant({ userId, platformId, log }: { userId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
         if (!isCloud()) {
+            return
+        }
+        // Free-tier cloud only: skip if platform has a license key (paid)
+        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (!isNil(plan.licenseKey)) {
             return
         }
         const result = await rolloutRepo().query(
