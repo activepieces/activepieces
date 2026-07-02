@@ -135,5 +135,8 @@ COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
 LABEL service=activepieces
 
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
+    CMD curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/faillll" || exit 1
+
 ENTRYPOINT ["./docker-entrypoint.sh"]
 EXPOSE 80
