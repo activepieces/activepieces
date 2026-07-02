@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { cn } from '@/lib/utils';
 
 import { NewProjectDialog } from './new-project-dialog';
 
@@ -142,7 +143,7 @@ function MenuItemVariant({
   if (disabled) {
     return (
       <UpgradeTooltip>
-        <button type="button" disabled className={`${rowClass} opacity-50`}>
+        <button type="button" disabled className={cn(rowClass, 'opacity-50')}>
           <Plus className="size-4 shrink-0" />
           <span>{t('New project')}</span>
         </button>
@@ -153,7 +154,7 @@ function MenuItemVariant({
     <NewProjectDialog onCreate={onCreate}>
       <button
         type="button"
-        className={`${rowClass} hover:bg-muted hover:text-foreground`}
+        className={cn(rowClass, 'hover:bg-muted hover:text-foreground')}
       >
         <Plus className="size-4 shrink-0" />
         <span>{t('New project')}</span>

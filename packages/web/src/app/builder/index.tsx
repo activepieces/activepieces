@@ -16,6 +16,7 @@ import {
   computeFitViewport,
   fitZoomFloorForTier,
 } from '@/app/builder/flow-canvas/canvas-controls/use-fit-to-view';
+import { ApNode } from '@/app/builder/flow-canvas/utils/types';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
 import { RightSideBarType } from '@/app/builder/types';
 import { useChatDockOptional } from '@/app/components/workspace-shell/chat-dock-context';
@@ -73,7 +74,7 @@ const BuilderPage = () => {
     ),
     state.canvasOrientation,
   ]);
-  const { getNodes, getViewport, setViewport } = useReactFlow();
+  const { getNodes, getViewport, setViewport } = useReactFlow<ApNode>();
   const stageTier = useStageOptional()?.stageTier ?? 'comfortable';
   useReportFlowFocus();
   useEffect(() => {

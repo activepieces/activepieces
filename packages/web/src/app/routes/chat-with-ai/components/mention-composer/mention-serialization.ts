@@ -118,14 +118,19 @@ function parseTokens(
         value: content.slice(lastIndex, matchIndex),
       });
     }
-    segments.push({
-      kind: 'mention',
-      mention: {
-        type: match[1] as ChatMentionType,
-        id: match[2],
-        label: match[3],
-      },
-    });
+    // The regex alternation only matches flow|table|app, so this is always true —
+    // the guard keeps the type narrowing sound without a cast.
+    const mentionType = match[1];
+    if (isMentionType(mentionType)) {
+      segments.push({
+        kind: 'mention',
+        mention: {
+          type: mentionType,
+          id: match[2],
+          label: match[3],
+        },
+      });
+    }
     lastIndex = matchIndex + match[0].length;
   }
   if (lastIndex < content.length) {

@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, DownloadIcon } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -121,8 +121,10 @@ export const InviteUserDialog = ({
     Permission.WRITE_INVITATION,
   );
   const { data: platformUsersData } = platformUserHooks.useUsers();
-  const platformUserEmails = new Set(
-    platformUsersData?.data.map((u) => u.email.toLowerCase()) ?? [],
+  const platformUserEmails = useMemo(
+    () =>
+      new Set(platformUsersData?.data.map((u) => u.email.toLowerCase()) ?? []),
+    [platformUsersData],
   );
   const { projectMembers } = projectMembersHooks.useProjectMembers();
 
@@ -143,10 +145,14 @@ export const InviteUserDialog = ({
   const targetProjectName = isProjectScope ? resolvedScope.projectName : '';
   const targetIsCurrentProject =
     isProjectScope && resolvedScope.projectId === currentProject?.id;
-  const projectMemberEmails = new Set(
-    targetIsCurrentProject
-      ? projectMembers?.map((m) => m.user.email.toLowerCase()) ?? []
-      : [],
+  const projectMemberEmails = useMemo(
+    () =>
+      new Set(
+        targetIsCurrentProject
+          ? projectMembers?.map((m) => m.user.email.toLowerCase()) ?? []
+          : [],
+      ),
+    [targetIsCurrentProject, projectMembers],
   );
 
   const resultsWithLinks = invitationResults.filter((r) => r.link);

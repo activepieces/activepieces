@@ -1,3 +1,4 @@
+import { isObject } from '@activepieces/core-utils';
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
@@ -301,10 +302,14 @@ export function useStreamingReducer({
           onBuildPlanRef.current(event.data as BuildPlanEvent);
         } else if (event.type === ChatAgentEventType.STAGE_OPEN) {
           lastChunkTimeRef.current = Date.now();
-          onStageOpenRef.current(event.data as StageOpenEvent);
+          if (isStageOpenEvent(event.data)) {
+            onStageOpenRef.current(event.data);
+          }
         } else if (event.type === ChatAgentEventType.BROWSER_VIEW) {
           lastChunkTimeRef.current = Date.now();
-          onBrowserViewRef.current(event.data as BrowserViewEvent);
+          if (isBrowserViewEvent(event.data)) {
+            onBrowserViewRef.current(event.data);
+          }
         }
       };
 
@@ -370,6 +375,28 @@ export function useStreamingReducer({
     stopStream,
     clearStreamingState,
   };
+}
+
+function isStageOpenEvent(data: unknown): data is StageOpenEvent {
+  return (
+    isObject(data) &&
+    (data.resourceType === 'flow' ||
+      data.resourceType === 'table' ||
+      data.resourceType === 'run') &&
+    typeof data.resourceId === 'string'
+  );
+}
+
+function isBrowserViewEvent(data: unknown): data is BrowserViewEvent {
+  return (
+    isObject(data) &&
+    typeof data.sessionId === 'string' &&
+    typeof data.liveViewUrl === 'string' &&
+    typeof data.interactive === 'boolean' &&
+    (data.status === 'live' ||
+      data.status === 'idle' ||
+      data.status === 'closed')
+  );
 }
 
 type SocketEvent = {

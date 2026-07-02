@@ -1,4 +1,4 @@
-import { Node, Viewport, useReactFlow } from '@xyflow/react';
+import { Viewport, useReactFlow } from '@xyflow/react';
 import { useCallback, useEffect } from 'react';
 
 import {
@@ -40,7 +40,7 @@ function computeFitViewport({
   orientation,
   zoomFloor,
 }: {
-  nodes: Node[];
+  nodes: ApNode[];
   canvasWidth: number;
   canvasHeight: number;
   orientation: CanvasOrientation;
@@ -74,7 +74,7 @@ function computeFitViewport({
   }
   const boundingBox = flowCanvasUtils.calculateGraphBoundingBox({
     graph: {
-      nodes: nodes as ApNode[],
+      nodes,
       edges: [],
     },
     orientation,
@@ -159,7 +159,8 @@ const useFitToView = ({
   hasCanvasBeenInitialised: boolean;
   selectedStep: string | null;
 }) => {
-  const { setViewport, getNodes, getNode, getViewport } = useReactFlow();
+  const { setViewport, getNodes, getNode, getViewport } =
+    useReactFlow<ApNode>();
   const canvasOrientation = useBuilderStateContext(
     (state) => state.canvasOrientation,
   );
@@ -245,7 +246,7 @@ const useFitToView = ({
 
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
-  node: Node,
+  node: ApNode,
   zoom: number,
 ) => ({
   x:

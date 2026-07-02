@@ -32,6 +32,19 @@ type PickerConnection = NonNullable<
   ConnectionPickerData['connections']
 >[number];
 
+const APP_CONNECTION_STATUS_VALUES = Object.values(AppConnectionStatus);
+
+function isAppConnectionStatus(status: string): status is AppConnectionStatus {
+  return APP_CONNECTION_STATUS_VALUES.some((value) => value === status);
+}
+
+// The server sends the connection status as a raw string; validate it against
+// the known enum values so an unrecognized value degrades to MISSING (treated
+// as unhealthy, prompting reconnect) rather than being trusted blindly.
+function toAppConnectionStatus(status: string): AppConnectionStatus {
+  return isAppConnectionStatus(status) ? status : AppConnectionStatus.MISSING;
+}
+
 function connectionStatusLabel(status: AppConnectionStatus): string | null {
   if (status === AppConnectionStatus.ERROR) return t('Expired');
   if (status === AppConnectionStatus.MISSING) return t('Missing');
@@ -189,7 +202,7 @@ export function ConnectionPickerCard({
     () =>
       (resolution?.connections ?? []).map((c) => ({
         ...c,
-        status: c.status as AppConnectionStatus,
+        status: toAppConnectionStatus(c.status),
       })),
     [resolution],
   );

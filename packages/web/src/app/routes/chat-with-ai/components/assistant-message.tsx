@@ -1,3 +1,4 @@
+import { isObject } from '@activepieces/core-utils';
 import { ActionReceiptEvent, ImageGeneratedEvent } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, Volume2, VolumeOff } from 'lucide-react';
@@ -57,6 +58,7 @@ import { ProjectPickerCard } from './project-picker-card';
 import { ReceiptListGroup } from './receipt-list-group';
 import { ShowcaseCard, ShowcaseContent } from './showcase-card/showcase-card';
 import { ShowcaseCardSkeleton } from './showcase-card/showcase-skeleton';
+import { ShowcaseTileData } from './showcase-card/showcase-tile';
 import { StageOpenChip } from './stage-open-chip';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
@@ -685,13 +687,13 @@ function DisplayToolCard({
       if (!answersText) return null;
       return <AnsweredQuestionsCard answersText={answersText} />;
     }
-    case 'ap_show_showcase':
+    case 'ap_show_showcase': {
+      const showcaseContent = parseShowcaseContent(data);
+      if (!showcaseContent) return null;
       return (
-        <ShowcaseCard
-          content={data as unknown as ShowcaseContent}
-          onSendPrompt={onSendPrompt}
-        />
+        <ShowcaseCard content={showcaseContent} onSendPrompt={onSendPrompt} />
       );
+    }
     default:
       return null;
   }
@@ -739,4 +741,27 @@ function parseAnswerPairs(
       return { question: match[1], answer: match[2] };
     })
     .filter((p): p is { question: string; answer: string } => p !== null);
+}
+
+function isShowcaseTileData(tile: unknown): tile is ShowcaseTileData {
+  return (
+    isObject(tile) &&
+    typeof tile.title === 'string' &&
+    typeof tile.description === 'string'
+  );
+}
+
+// The showcase card renders from raw model tool-input, which can be partial
+// (streaming) or malformed (a validation-errored call). Validate the minimal
+// shape here rather than trusting a cast, so a bad payload degrades to "render
+// nothing" instead of crashing the page.
+function parseShowcaseContent(input: unknown): ShowcaseContent | null {
+  if (!isObject(input)) return null;
+  if (typeof input.headline !== 'string') return null;
+  if (!Array.isArray(input.tiles)) return null;
+  return {
+    headline: input.headline,
+    subhead: typeof input.subhead === 'string' ? input.subhead : undefined,
+    tiles: input.tiles.filter(isShowcaseTileData),
+  };
 }
