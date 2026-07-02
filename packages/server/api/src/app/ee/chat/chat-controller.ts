@@ -6,7 +6,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
@@ -87,7 +86,13 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
 
         // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
-        rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
+        // Idempotent per user — subsequent messages return { firstChat: false }.
+        const { firstChat } = await chatRolloutService.recordChatted({ userId, platformId })
+
+        // Grant free credits on first chat for free-tier cloud users (no license key).
+        if (firstChat) {
+            await chatRolloutService.grantFreeCreditIfEligible({ userId, platformId, log })
+        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
