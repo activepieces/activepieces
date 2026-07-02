@@ -8,16 +8,23 @@ import { chatHelpers } from './chat-helpers'
 
 // Enqueues one resume turn — a normal EXECUTE_CHAT_AGENT job with no user message. getChatConfig
 // keys off resumeKind to rebuild the LLM history from what we just persisted (an answered gate's
-// tool result, or a crash-resume note) instead of appending a user bubble. Claims a fresh runId as
-// the conversation's active run so late writes from the dead/parked run are fenced out.
+// tool result, or a crash-resume note) instead of appending a user bubble. A fresh runId is claimed
+// as the conversation's active run BEFORE enqueue so the worker (which fences on activeRunId in
+// getChatConfig) can never pick the job up before it owns the conversation and self-reject.
+//
+// Because the claim lands first, a failing jobQueue.add would otherwise leave the row pointing at a
+// runId with no live job — an IDLE conversation the sweep ignores and no user action can unstick. So
+// on enqueue failure we roll the claim back to what it was (typically null) and rethrow, keeping the
+// gate path as recoverable as tryEnqueueCrashResume's .catch(() => false).
 async function enqueueResumeTurn({ conversation, resumeKind, log }: {
     conversation: ChatConversation
     resumeKind: 'gate' | 'crash'
     log: FastifyBaseLogger
 }): Promise<void> {
     const runId = apId()
+    const previousActiveRunId = conversation.activeRunId ?? null
     await chatHelpers.conversationRepo().update(conversation.id, { activeRunId: runId })
-    await jobQueue(log).add({
+    const { error } = await tryCatch(() => jobQueue(log).add({
         id: apId(),
         type: JobType.ONE_TIME,
         data: {
@@ -32,7 +39,12 @@ async function enqueueResumeTurn({ conversation, resumeKind, log }: {
             modelName: conversation.modelName ?? null,
             resumeKind,
         },
-    })
+    }))
+    if (!isNil(error)) {
+        await tryCatch(() => chatHelpers.conversationRepo().update(conversation.id, { activeRunId: previousActiveRunId }))
+        log.error({ error, conversation: { id: conversation.id }, run: { id: runId }, resumeKind }, '[chatResume] Failed to enqueue resume turn — rolled back activeRunId')
+        throw error
+    }
     log.info({ conversation: { id: conversation.id }, run: { id: runId }, resumeKind }, '[chatResume] Enqueued resume turn')
 }
 

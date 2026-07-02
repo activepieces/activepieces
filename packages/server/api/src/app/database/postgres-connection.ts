@@ -392,6 +392,7 @@ import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/179
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
+import { AddChatConversationStreamingUpdatedIndex1803000000000 } from './migration/postgres/1803000000000-AddChatConversationStreamingUpdatedIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -799,6 +800,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddTimelineToFlowRun1800000000000,
         AddToolSearchIndexTable1801000000000,
         AddChatRolloutFreeCreditGrant1802000000000,
+        AddChatConversationStreamingUpdatedIndex1803000000000,
     ]
     return migrations
 }

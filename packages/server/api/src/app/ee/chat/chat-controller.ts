@@ -178,7 +178,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             log: request.log,
         })
         if (!isNil(conversationId)) {
-            const conversation = await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+            // skipStaleRecovery: a stale STREAMING read here would fire a crash resume (spurious crash
+            // note + orphaned resume job) and then still fall into resumeParkedGate below — two racing
+            // resumes. The answered gate must win, so read the raw row and let resumeParkedGate drive.
+            const conversation = await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId, skipStaleRecovery: true })
             if (conversation.status !== ChatConversationStatus.STREAMING) {
                 await chatResume.resumeParkedGate({
                     conversation,

@@ -10,6 +10,9 @@ import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatResume } from './chat-resume'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
+// Cap per-sweep work so a backlog of stuck rows can't blow up memory in one cron tick; the
+// remainder is picked up next minute (oldest-first), and lazy per-read recovery covers the rest.
+const STALE_SWEEP_BATCH_SIZE = 100
 const FAST_TIER_ID = 'fast'
 
 // Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
@@ -22,7 +25,11 @@ export function isEvalConversationId(id: string): boolean {
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
-async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log: FastifyBaseLogger }) {
+// skipStaleRecovery: fetch without the lazy stale-STREAMING recovery side effect. The gate-answer
+// path needs this — resumeParkedGate must own the resume for an answered gate, so we must not let a
+// read fire a competing crash resume (which would inject a spurious crash note into LLM history and
+// orphan the crash-resume job when resumeParkedGate later reclaims activeRunId). The answer wins.
+async function getConversationOrThrow({ id, platformId, userId, log, skipStaleRecovery = false }: { id: string, platformId: string, userId: string, log: FastifyBaseLogger, skipStaleRecovery?: boolean }) {
     const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
     if (isNil(conversation)) {
         throw new ActivepiecesError({
@@ -30,7 +37,7 @@ async function getConversationOrThrow({ id, platformId, userId, log }: { id: str
             params: { entityId: id, entityType: 'ChatConversation' },
         })
     }
-    if (conversation.status === ChatConversationStatus.STREAMING) {
+    if (!skipStaleRecovery && conversation.status === ChatConversationStatus.STREAMING) {
         const msSinceUpdate = Date.now() - new Date(conversation.updated).getTime()
         if (msSinceUpdate > STREAMING_STALENESS_TIMEOUT_MS) {
             await recoverStaleStreamingConversation({ conversation, stuckForMs: msSinceUpdate, log })
@@ -92,6 +99,8 @@ async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBase
         .createQueryBuilder('chat_conversation')
         .where('chat_conversation.status = :streaming', { streaming: ChatConversationStatus.STREAMING })
         .andWhere('chat_conversation.updated < :staleCutoff', { staleCutoff })
+        .orderBy('chat_conversation.updated', 'ASC')
+        .take(STALE_SWEEP_BATCH_SIZE)
         .getMany()
     let recovered = 0
     for (const conversation of stale) {
