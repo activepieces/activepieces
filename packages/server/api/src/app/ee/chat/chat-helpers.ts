@@ -41,12 +41,16 @@ async function getConversationOrThrow({ id, platformId, userId, log, skipStaleRe
         const msSinceUpdate = Date.now() - new Date(conversation.updated).getTime()
         if (msSinceUpdate > STREAMING_STALENESS_TIMEOUT_MS) {
             await recoverStaleStreamingConversation({ conversation, stuckForMs: msSinceUpdate, log })
-            // Recovery either enqueued a crash resume (status now IDLE, a resume job in flight) or,
-            // once the budget is spent, flipped to ERROR. Reflect the persisted status so the caller
-            // and UI don't see a phantom STREAMING; re-read since recovery may have left either.
+            // Recovery may have parked the turn (IDLE, card kept), enqueued a crash resume (IDLE,
+            // fresh activeRunId, note appended to messages), or flipped to ERROR. Refresh every field
+            // recovery can touch — status, activeRunId, messages, uiMessages — so the returned row is
+            // the authoritative post-recovery snapshot and callers fencing on activeRunId (Fix 5)
+            // don't act on a stale pre-recovery value.
             const recovered = await conversationRepo().findOneBy({ id })
             if (!isNil(recovered)) {
                 conversation.status = recovered.status
+                conversation.activeRunId = recovered.activeRunId
+                conversation.messages = recovered.messages
                 conversation.uiMessages = recovered.uiMessages
             }
         }
@@ -64,8 +68,14 @@ async function getConversationOrThrow({ id, platformId, userId, log, skipStaleRe
 // happened (a crash resume was enqueued or the row flipped to ERROR), false when another writer won
 // the status race.
 async function recoverStaleStreamingConversation({ conversation, stuckForMs, log }: { conversation: ChatConversation, stuckForMs: number, log: FastifyBaseLogger }): Promise<boolean> {
-    const resumed = await chatResume.tryEnqueueCrashResume({ conversation, log }).catch(() => false)
-    if (resumed) {
+    // 'parked' (dead worker on an open gate) and 'resumed' (gateless crash resume enqueued) are both
+    // successful recoveries — the row is no longer a phantom STREAMING. Only 'exhausted' (budget spent
+    // or lost the status race) falls through to the ERROR + interrupted-message path below.
+    const { data: outcome, error } = await tryCatch(() => chatResume.tryEnqueueCrashResume({ conversation, log }))
+    if (!isNil(error)) {
+        log.error({ error, conversation: { id: conversation.id } }, '[chatHelpers] Crash-resume attempt threw — falling back to ERROR path')
+    }
+    if (outcome === 'parked' || outcome === 'resumed') {
         return true
     }
     const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
@@ -97,6 +107,20 @@ async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBase
     const staleCutoff = new Date(Date.now() - STREAMING_STALENESS_TIMEOUT_MS)
     const stale = await conversationRepo()
         .createQueryBuilder('chat_conversation')
+        // Only the columns recovery touches — skip the big summary text and the title/created/
+        // summarizedUpToIndex columns the crash-resume/park path never reads.
+        .select([
+            'chat_conversation.id',
+            'chat_conversation.platformId',
+            'chat_conversation.projectId',
+            'chat_conversation.userId',
+            'chat_conversation.modelName',
+            'chat_conversation.status',
+            'chat_conversation.activeRunId',
+            'chat_conversation.messages',
+            'chat_conversation.uiMessages',
+            'chat_conversation.updated',
+        ])
         .where('chat_conversation.status = :streaming', { streaming: ChatConversationStatus.STREAMING })
         .andWhere('chat_conversation.updated < :staleCutoff', { staleCutoff })
         .orderBy('chat_conversation.updated', 'ASC')
