@@ -286,10 +286,14 @@ async function tryEnqueueCrashResume({ conversation, log }: {
         // fence loses, the new turn owns the row; we walk away. Any crash note we appended is harmless:
         // it is a benign system-style user line the new turn will simply carry as prior context — never
         // a dangling status/lock, which is what would actually break the user's turn.
+        // Restore the crashed worker's activeRunId too — leaving it NULL would turn every
+        // "activeRunId IS NULL OR = :runId" fence into a no-op while the row sits STREAMING, letting
+        // any stale re-delivered job write through until the sweeper retries. STREAMING + the original
+        // runId is the exact pre-crash state, which the sweeper handles on the next cycle.
         const revert = await tryCatch(() => conversationRepo()
             .createQueryBuilder()
             .update()
-            .set({ messages: () => ':messages', status: ChatConversationStatus.STREAMING })
+            .set({ messages: () => ':messages', status: ChatConversationStatus.STREAMING, activeRunId: conversation.activeRunId ?? null })
             .setParameter('messages', JSON.stringify(sanitizeObjectForPostgresql(messages)))
             .where('id = :id AND status = :idle AND "activeRunId" IS NULL', { id: conversation.id, idle: ChatConversationStatus.IDLE })
             .execute())
