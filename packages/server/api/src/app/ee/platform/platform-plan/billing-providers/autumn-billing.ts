@@ -1,12 +1,12 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId } from '@activepieces/shared'
-import { AutumnError } from 'autumn-js'
+import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { getBillingEnforcedKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
-import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingProvider, CreditsGateState, CreditsUsage, ReportUsageCountsParams, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, ReportUsageCountsParams, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
 import { platformPlanService } from '../platform-plan.service'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, CreditsBalanceCache } from './autumn-utils'
 
@@ -19,26 +19,20 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     listPlans: async (platformId: string) => {
         return autumnConsole.listPlans({ platformId })
     },
-    getTopUpSettings: async (platformId: string) => {
+    getBillingOverview: async (platformId: string) => {
+        const monthStart = apDayjs().startOf('month').toISOString()
+        const monthEnd = apDayjs().endOf('month').toISOString()
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         const creds = await autumnConsole.getCreds(log, platformId)
         if (isNil(client) || isNil(creds)) {
-            return { autoTopUps: [], topUpFeatures: [] }
+            return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, autoTopUps: [], topUpFeatures: [] }
         }
-        const customer = await client.getCustomer({ expand: ['billing_controls.auto_topups.purchase_limit'] })
-        const autoTopUps: AutoTopUpConfig[] = (customer.billingControls?.autoTopups ?? []).flatMap((autoTopUp) => {
-            if (!autumnUtils.isAutumnFeatureId(autoTopUp.featureId)) {
-                return []
-            }
-            return [{
-                featureId: autoTopUp.featureId,
-                enabled: autoTopUp.enabled,
-                threshold: autoTopUp.threshold,
-                quantity: autoTopUp.quantity,
-                maxMonthlyTopUps: autoTopUp.purchaseLimit?.limit ?? null,
-            }]
-        })
-        return { autoTopUps, topUpFeatures: await autumnConsole.toppableFeatures(creds) }
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'payment_method', 'billing_controls.auto_topups.purchase_limit'] })
+        return {
+            ...toBillingInfo(customer, monthStart, monthEnd),
+            autoTopUps: toAutoTopUps(customer),
+            topUpFeatures: await autumnConsole.toppableFeatures(creds),
+        }
     },
     createCheckoutSession: async ({ platformId, planId, successUrl }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
@@ -56,28 +50,6 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         }
         const { url } = await autumnConsole.portal({ ...creds, returnUrl })
         return { url: url ?? '' }
-    },
-    getBillingInfo: async (platformId) => {
-        const monthStart = apDayjs().startOf('month').unix()
-        const monthEnd = apDayjs().endOf('month').unix()
-        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-        if (isNil(client)) {
-            return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
-        }
-        const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'payment_method'] })
-        const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
-        const basePlan = baseSubscriptions.find((subscription) => subscription.status === 'active') ?? baseSubscriptions[0]
-        const scheduledPlan = baseSubscriptions.find((subscription) => subscription !== basePlan)
-        return {
-            planId: basePlan?.planId ?? null,
-            planName: basePlan?.plan?.name ?? null,
-            startDate: msToUnixSeconds(basePlan?.currentPeriodStart) ?? monthStart,
-            endDate: msToUnixSeconds(basePlan?.currentPeriodEnd) ?? monthEnd,
-            nextBillingAmount: basePlan?.plan?.price?.amount ?? 0,
-            cancelAt: msToUnixSeconds(basePlan?.expiresAt) ?? null,
-            scheduledPlanName: scheduledPlan?.plan?.name ?? null,
-            billingPortalAvailable: !isNil(customer.paymentMethod),
-        }
     },
     topUpFeature: async ({ platformId, featureId, quantity, successUrl }) => {
         if (AUTO_TOP_UP_ONLY_FEATURE_IDS.includes(featureId)) {
@@ -198,7 +170,6 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const credentials = await autumnConsole.activate({ licenseKey, platformId })
         await platformPlanService(log).update({ platformId, licenseKey })
         await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
-        autumnUtils.evictCredentials(platformId)
         await autumnUtils.refreshEntitlements(log, platformId)
     },
     isBillingEnforced: async (platformId: string) => {
@@ -207,15 +178,8 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     shouldBlockOnCredits: async (platformId: string) => {
         return (await computeCreditsState(log, platformId)).blocked
     },
-    getCreditsState: async (platformId: string) => {
-        return computeCreditsState(log, platformId)
-    },
-    getAppSumoAiCreditsState: async (platformId: string) => {
-        const { appSumo: balance } = await resolveCreditsCache(log, platformId)
-        if (isNil(balance) || balance.unlimited) {
-            return { blocked: false, usage: balance?.usage ?? 0, limit: balance?.granted ?? 0, remaining: balance?.remaining ?? 0, unlimited: balance?.unlimited ?? false }
-        }
-        return { blocked: balance.remaining <= 0, usage: balance.usage, limit: balance.granted, remaining: balance.remaining, unlimited: false }
+    getCreditsAndAppSumoState: async (platformId: string) => {
+        return computeCreditsAndAppSumoState(log, platformId)
     },
     getConsumablesUsage: async (platformId: string) => {
         const { credits, appSumo } = await resolveCreditsCache(log, platformId)
@@ -226,11 +190,42 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
 })
 
+function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthEnd: string): BillingInfo {
+    const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
+    const basePlan = baseSubscriptions.find((subscription) => subscription.status === 'active') ?? baseSubscriptions[0]
+    const scheduledPlan = baseSubscriptions.find((subscription) => subscription !== basePlan)
+    return {
+        planId: basePlan?.planId ?? null,
+        planName: basePlan?.plan?.name ?? null,
+        startDate: msToIso(basePlan?.currentPeriodStart) ?? monthStart,
+        endDate: msToIso(basePlan?.currentPeriodEnd) ?? monthEnd,
+        nextBillingAmount: basePlan?.plan?.price?.amount ?? 0,
+        cancelAt: msToIso(basePlan?.expiresAt) ?? null,
+        scheduledPlanName: scheduledPlan?.plan?.name ?? null,
+        billingPortalAvailable: !isNil(customer.paymentMethod),
+    }
+}
+
+function toAutoTopUps(customer: GetCustomerResponse): AutoTopUpConfig[] {
+    return (customer.billingControls?.autoTopups ?? []).flatMap((autoTopUp) => {
+        if (!autumnUtils.isAutumnFeatureId(autoTopUp.featureId)) {
+            return []
+        }
+        return [{
+            featureId: autoTopUp.featureId,
+            enabled: autoTopUp.enabled,
+            threshold: autoTopUp.threshold,
+            quantity: autoTopUp.quantity,
+            maxMonthlyTopUps: autoTopUp.purchaseLimit?.limit ?? null,
+        }]
+    })
+}
+
 function toCreditsUsage(balance: CreditsBalanceCache | null): CreditsUsage | null {
     if (isNil(balance)) {
         return null
     }
-    return { usage: balance.usage, remaining: balance.unlimited ? null : balance.remaining, nextResetAt: msToUnixSeconds(balance.nextResetAt) }
+    return { usage: balance.usage, remaining: balance.unlimited ? null : balance.remaining, nextResetAt: msToIso(balance.nextResetAt) }
 }
 
 function toAppSumoAiCreditsUsage(balance: CreditsBalanceCache | null): AppSumoAiCreditsUsage | null {
@@ -244,18 +239,42 @@ function isDuplicateTrack(error: unknown): boolean {
     return error instanceof AutumnError && error.statusCode === 409
 }
 
-function msToUnixSeconds(ms: number | null | undefined): number | null {
-    return isNil(ms) ? null : Math.floor(ms / 1000)
+function msToIso(ms: number | null | undefined): string | null {
+    return isNil(ms) ? null : apDayjs(ms).toISOString()
 }
 
 async function computeCreditsState(log: FastifyBaseLogger, platformId: string): Promise<CreditsGateState> {
-    const [billingEnforced, { credits: balance }] = await Promise.all([
+    return (await computeCreditsAndAppSumoState(log, platformId)).credits
+}
+
+async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId: string): Promise<CreditsAndAppSumoState> {
+    const [billingEnforced, { credits, appSumo }] = await Promise.all([
         distributedStore.get<boolean>(getBillingEnforcedKey(platformId)),
         resolveCreditsCache(log, platformId),
     ])
+    return {
+        credits: toCreditsGateState(credits, billingEnforced ?? false),
+        appSumo: toAppSumoGateState(appSumo),
+    }
+}
+
+function toCreditsGateState(balance: CreditsBalanceCache | null, billingEnforced: boolean): CreditsGateState {
     const exhausted = !isNil(balance) && !balance.unlimited && balance.remaining <= 0
     return {
-        blocked: (billingEnforced ?? false) && exhausted,
+        blocked: billingEnforced && exhausted,
+        usage: balance?.usage ?? 0,
+        limit: balance?.granted ?? 0,
+        remaining: balance?.remaining ?? 0,
+        unlimited: balance?.unlimited ?? false,
+    }
+}
+
+// AppSumo AI credits are a hard cap independent of metered billing enforcement, so unlike
+// AP credits their exhaustion blocks even when billingEnforced is false (lifetime-deal customers).
+function toAppSumoGateState(balance: CreditsBalanceCache | null): CreditsGateState {
+    const exhausted = !isNil(balance) && !balance.unlimited && balance.remaining <= 0
+    return {
+        blocked: exhausted,
         usage: balance?.usage ?? 0,
         limit: balance?.granted ?? 0,
         remaining: balance?.remaining ?? 0,

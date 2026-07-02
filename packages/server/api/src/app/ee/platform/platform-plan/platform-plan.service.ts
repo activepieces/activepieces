@@ -2,7 +2,7 @@ import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric, tryCatc
 import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getEnrollAttemptKey, getEntitlementsRefreshKey, getForcedEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -24,7 +24,6 @@ const environment = system.get(AppSystemProp.ENVIRONMENT)
 const ENROLL_ATTEMPT_TTL_SECONDS = 300
 const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
 const REFRESH_CLAIM_TTL_SECONDS = 60
-const FORCED_REFRESH_DEBOUNCE_SECONDS = 15
 const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
@@ -73,15 +72,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             await distributedStore.delete(getPlatformPlanNameKey(platformId))
         }
         return updatedPlatformPlan
-    },
-    async forceRefreshEntitlements(platformId: string): Promise<void> {
-        if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
-            return
-        }
-        await distributedStore.runOnceWithin(getForcedEntitlementsRefreshKey(platformId), FORCED_REFRESH_DEBOUNCE_SECONDS, async () => {
-            await billingProvider.get(log).refreshEntitlements(platformId)
-            await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
-        })
     },
     async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
         const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })

@@ -5,24 +5,21 @@ import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
 
 function defaultBillingInfo(): BillingInfo {
-    return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix(), nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
+    return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
 }
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     listPlans: async () => {
         return []
     },
-    getTopUpSettings: async () => {
-        return { autoTopUps: [], topUpFeatures: [] }
+    getBillingOverview: async () => {
+        return { ...defaultBillingInfo(), autoTopUps: [], topUpFeatures: [] }
     },
     createCheckoutSession: async () => {
         return { checkoutUrl: null }
     },
     getBillingPortalUrl: async () => {
         return { url: '' }
-    },
-    getBillingInfo: async () => {
-        return defaultBillingInfo()
     },
     topUpFeature: async () => {
         return { checkoutUrl: null }
@@ -63,26 +60,25 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     shouldBlockOnCredits: async () => {
         return false
     },
-    getAppSumoAiCreditsState: async () => {
-        return { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false }
-    },
-    getCreditsState: async () => {
-        return { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false }
+    getCreditsAndAppSumoState: async () => {
+        return {
+            credits: { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
+            appSumo: { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
+        }
     },
     getConsumablesUsage: async () => {
         return { credits: null, appSumo: null }
     },
 }))
 
-export async function assertCreditsNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const appSumoAiCredits = await billingProvider.get(log).getAppSumoAiCreditsState(platformId)
-    if (appSumoAiCredits.blocked) {
+export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { credits, appSumo } = await billingProvider.get(log).getCreditsAndAppSumoState(platformId)
+    if (appSumo.blocked) {
         throw new ActivepiecesError({
             code: ErrorCode.QUOTA_EXCEEDED,
-            params: { metric: PlatformUsageMetric.CREDITS, usage: appSumoAiCredits.usage, limit: appSumoAiCredits.limit },
+            params: { metric: PlatformUsageMetric.CREDITS, usage: appSumo.usage, limit: appSumo.limit },
         })
     }
-    const credits = await billingProvider.get(log).getCreditsState(platformId)
     if (credits.blocked) {
         throw new ActivepiecesError({
             code: ErrorCode.QUOTA_EXCEEDED,
@@ -140,6 +136,11 @@ export type CreditsGateState = {
     unlimited: boolean
 }
 
+export type CreditsAndAppSumoState = {
+    credits: CreditsGateState
+    appSumo: CreditsGateState
+}
+
 export type AppSumoAiCreditsUsage = {
     usage: number
     limit: number
@@ -148,7 +149,7 @@ export type AppSumoAiCreditsUsage = {
 export type CreditsUsage = {
     usage: number
     remaining: number | null
-    nextResetAt: number | null
+    nextResetAt: string | null
 }
 
 export type ConsumablesUsage = {
@@ -168,14 +169,19 @@ export type BillingPortalParams = {
 }
 
 export type BillingInfo = {
-    startDate: number
-    endDate: number
+    startDate: string
+    endDate: string
     nextBillingAmount: number
-    cancelAt: number | null
+    cancelAt: string | null
     planId: string | null
     planName: string | null
     scheduledPlanName: string | null
     billingPortalAvailable: boolean
+}
+
+export type BillingOverview = BillingInfo & {
+    autoTopUps: AutoTopUpConfig[]
+    topUpFeatures: ToppableFeature[]
 }
 
 export type TopUpFeatureParams = {
@@ -216,10 +222,9 @@ export type ActivateLicenseParams = {
 
 export type BillingProvider = {
     listPlans(platformId: string): Promise<PurchasablePlan[]>
-    getTopUpSettings(platformId: string): Promise<{ autoTopUps: AutoTopUpConfig[], topUpFeatures: ToppableFeature[] }>
+    getBillingOverview(platformId: string): Promise<BillingOverview>
     createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{ checkoutUrl: string | null }>
     getBillingPortalUrl(params: BillingPortalParams): Promise<{ url: string }>
-    getBillingInfo(platformId: string): Promise<BillingInfo>
     topUpFeature(params: TopUpFeatureParams): Promise<{ checkoutUrl: string | null }>
     configureAutoTopUp(params: ConfigureAutoTopUpParams): Promise<{ setupPaymentUrl?: string }>
     cancelSubscription(params: CancelSubscriptionParams): Promise<void>
@@ -233,7 +238,6 @@ export type BillingProvider = {
     activateLicense(params: ActivateLicenseParams): Promise<void>
     isBillingEnforced(platformId: string): Promise<boolean>
     shouldBlockOnCredits(platformId: string): Promise<boolean>
-    getAppSumoAiCreditsState(platformId: string): Promise<CreditsGateState>
-    getCreditsState(platformId: string): Promise<CreditsGateState>
+    getCreditsAndAppSumoState(platformId: string): Promise<CreditsAndAppSumoState>
     getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
 }

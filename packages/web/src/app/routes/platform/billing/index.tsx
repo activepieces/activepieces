@@ -286,8 +286,8 @@ const SubscriptionScheduleNotice = ({
   );
 };
 
-function dayjsCancelDate(cancelAtUnix: number): string {
-  return dayjs.unix(cancelAtUnix).format('MMM D, YYYY');
+function dayjsCancelDate(cancelAt: string): string {
+  return dayjs(cancelAt).format('MMM D, YYYY');
 }
 
 const LinkButton = ({

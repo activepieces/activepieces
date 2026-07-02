@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { assertCreditsNotExceeded } from '../../platform/billing-provider'
+import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
@@ -114,7 +114,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             await chatApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertCreditsNotExceeded({ platformId, log })
+        await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({
             id: apId(),

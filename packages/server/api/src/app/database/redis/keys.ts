@@ -6,7 +6,6 @@ export const getAppSumoAiCreditsBalanceKey = (platformId: PlatformId): string =>
 export const getBillingEnforcedKey = (platformId: PlatformId): string => `platform_plan:billing-enforced:${platformId}`
 export const getEntitlementsRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-refresh:${platformId}`
 export const getCustomerStateRefreshKey = (platformId: PlatformId): string => `platform_plan:customer-state-refresh:${platformId}`
-export const getForcedEntitlementsRefreshKey = (platformId: PlatformId): string => `platform_plan:forced-entitlements-refresh:${platformId}`
 export const getEnrollAttemptKey = (platformId: PlatformId): string => `platform_plan:autumn-enroll-attempt:${platformId}`
 export const getProjectConcurrencyPoolKey = (projectId: ProjectId): string => `project:concurrency-pool:${projectId}` // gets pool id for the project
 export const getConcurrencyPoolLimitKey = (poolId: string): string => `concurrency-pool:limit:${poolId}` // gets limit value for the pool

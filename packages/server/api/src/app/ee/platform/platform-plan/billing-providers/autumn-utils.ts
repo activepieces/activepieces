@@ -11,7 +11,6 @@ import {
     type TrackParams,
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { lru, LRU } from 'tiny-lru'
 import { BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { system } from '../../../../helper/system/system'
@@ -23,10 +22,6 @@ const AUTUMN_CONSOLE_URL = 'https://ribbon-knowledgestorm-zope-forgotten.tryclou
 const AUTUMN_FREE_PLAN_ID = 'free'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
-const CREDENTIALS_CACHE_TTL_MS = 5 * 60 * 1000
-const CREDENTIALS_CACHE_MAX_ENTRIES = 10000
-
-const credentialsCache: LRU<ResolvedAutumnCredentials> = lru(CREDENTIALS_CACHE_MAX_ENTRIES, CREDENTIALS_CACHE_TTL_MS)
 
 const AUTUMN_FLAG_FEATURE_IDS = [
     'tablesEnabled',
@@ -77,19 +72,11 @@ export const autumnUtils = {
         }
     },
     async resolveClientForPlatform(log: FastifyBaseLogger, platformId: string) {
-        const cached = credentialsCache.get(platformId)
-        if (!isNil(cached)) {
-            return autumnUtils.client({ secretKey: cached.autumnApiKey, customerId: cached.autumnCustomerId })
-        }
         const { autumnCustomerId, autumnApiKey } = await platformPlanService(log).getAutumnCredentials(platformId)
         if (isNil(autumnCustomerId) || isNil(autumnApiKey)) {
             return null
         }
-        credentialsCache.set(platformId, { autumnCustomerId, autumnApiKey })
         return autumnUtils.client({ secretKey: autumnApiKey, customerId: autumnCustomerId })
-    },
-    evictCredentials(platformId: string): void {
-        credentialsCache.delete(platformId)
     },
     async ensureEnrolled(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
@@ -156,9 +143,6 @@ export const autumnUtils = {
     billingEnforcedFromCustomer(customer: GetCustomerResponse): boolean {
         return !isNil(customer.flags[AutumnFeatureId.BILLING_ENFORCED])
     },
-    // Writes the Autumn-sourced customer-state caches (billing-enforced flag + credit balances) to Redis.
-    // billingEnforced lives only here — no DB column. The gate reads it and fails open when absent, so a
-    // cache miss never blocks and never triggers a synchronous fetch; the next background refresh repopulates.
     async writeCustomerStateCaches(platformId: string, customer: GetCustomerResponse): Promise<BalanceCacheSnapshot> {
         const creditsBalance = customer.balances[AutumnFeatureId.AP_CREDITS]
         const appSumoBalance = customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]
@@ -329,11 +313,6 @@ function toProjectedLimit(balance: AutumnFeatureBalance | undefined, whenAbsent:
 }
 
 type WithoutCustomerId<T> = Omit<T, 'customerId'>
-
-type ResolvedAutumnCredentials = {
-    autumnCustomerId: string
-    autumnApiKey: string
-}
 
 type AutumnClientParams = {
     secretKey: string

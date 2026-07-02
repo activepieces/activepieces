@@ -40,7 +40,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
               {isPaid ? t('Resets at ') : t('Resets in ')}
               <span className="font-semibold text-foreground">
                 {isPaid
-                  ? dayjs.unix(resetAt).format('MMM D, YYYY, h:mm A')
+                  ? dayjs(resetAt).format('MMM D, YYYY, h:mm A')
                   : formatCountdown(resetAt)}
               </span>
             </span>
@@ -57,21 +57,18 @@ function resolveResetAt({
 }: {
   info: PlatformBillingInformation;
   isPaid: boolean;
-}): number | null {
+}): string | null {
   if (!isNil(info.usage.creditsNextResetAt)) {
     return info.usage.creditsNextResetAt;
   }
   if (isPaid) {
     return info.nextBillingDate ?? null;
   }
-  return dayjs().add(1, 'day').startOf('day').unix();
+  return dayjs().add(1, 'day').startOf('day').toISOString();
 }
 
-function formatCountdown(resetAtUnix: number): string {
-  const totalMinutes = Math.max(
-    0,
-    dayjs.unix(resetAtUnix).diff(dayjs(), 'minute'),
-  );
+function formatCountdown(resetAt: string): string {
+  const totalMinutes = Math.max(0, dayjs(resetAt).diff(dayjs(), 'minute'));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   return `${hours}:${String(minutes).padStart(2, '0')}h`;
