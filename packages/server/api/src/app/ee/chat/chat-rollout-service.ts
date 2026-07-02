@@ -1,4 +1,4 @@
-import { apId, isNil } from '@activepieces/core-utils'
+import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { ApEdition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Not } from 'typeorm'
@@ -166,20 +166,27 @@ export const chatRolloutService = {
             [userId],
         )
         if (result.rowCount > 0) {
-            await this.recordFirstChatGrant({ platformId, log })
+            await this.recordFirstChatGrant({ userId, platformId, log })
         }
     },
 
-    async recordFirstChatGrant({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    async recordFirstChatGrant({ userId, platformId, log }: { userId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
         if (!isCloud()) {
             return
         }
-        const auth = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
-        const { data: key } = await openRouterApi.getKey({ hash: auth.apiKeyHash })
-        await openRouterApi.updateKey({
-            hash: auth.apiKeyHash,
-            limit: key.limit! + getFreeCreditUsd(),
+        const { error } = await tryCatch(async () => {
+            const auth = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
+            const { data: key } = await openRouterApi.getKey({ hash: auth.apiKeyHash })
+            await openRouterApi.updateKey({
+                hash: auth.apiKeyHash,
+                limit: (key.limit ?? 0) + getFreeCreditUsd(),
+            })
         })
+        if (!isNil(error)) {
+            await tryCatch(() => this.releaseFreeCreditGrant({ userId }))
+            log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatRolloutService] Failed to record first chat grant, rolled back grantedFreeCreditAt')
+            return
+        }
         log.info({ platform: { id: platformId }, grantAmount: getFreeCreditUsd() }, '[chatRolloutService] Granted free chat credit to first-time chatter')
     },
 }
