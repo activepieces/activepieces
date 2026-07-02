@@ -39,17 +39,24 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
     },
     getSystemHealthChecks: async (platformId: string): Promise<GetSystemHealthChecksResponse> => {
         const workers = await machineService(log).list(platformId)
-        const allWorkersPassedHealthcheck = workers.every(worker => worker.information.totalCpuCores >= 1)
-        const allWorkersHaveEnoughRam = workers.every(worker => worker.information.totalAvailableRamInBytes >= gigaBytes(4))
+        const hasWorkers = workers.length > 0
         const databaseHealthy = await healthStatusService(log).checkDatabaseHealth()
 
         return {
-            cpu: await systemUsage.getCpuCores() >= 1 && allWorkersPassedHealthcheck,
-            disk: (await systemUsage.getDiskInfo()).total >= gigaBytes(30),
-            ram: (await systemUsage.getContainerMemoryUsage()).totalRamInBytes >= gigaBytes(4) && allWorkersHaveEnoughRam,
+            appCpu: await systemUsage.getCpuCores() >= APP_MIN_CPU_CORES,
+            appRam: (await systemUsage.getContainerMemoryUsage()).totalRamInBytes >= gigaBytes(APP_MIN_RAM_GB),
+            disk: (await systemUsage.getDiskInfo()).total >= gigaBytes(APP_MIN_DISK_GB),
+            workerCpu: hasWorkers ? workers.every(worker => worker.information.totalCpuCores >= WORKER_MIN_CPU_CORES) : null,
+            workerRam: hasWorkers ? workers.every(worker => worker.information.totalAvailableRamInBytes >= gigaBytes(WORKER_MIN_RAM_GB)) : null,
             database: databaseHealthy,
         }
     },
 })
 
 const gigaBytes = (value: number) => value * 1024 * 1024 * 1024
+
+const APP_MIN_CPU_CORES = 1
+const APP_MIN_RAM_GB = 2
+const APP_MIN_DISK_GB = 30
+const WORKER_MIN_CPU_CORES = 0.5
+const WORKER_MIN_RAM_GB = 1
