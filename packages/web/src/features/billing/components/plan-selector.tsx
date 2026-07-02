@@ -33,8 +33,11 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
     platform.id,
     enabled,
   );
-  const { mutate: checkout, isPending } =
-    billingMutations.useCheckout(onSelected);
+  const {
+    mutate: checkout,
+    isPending,
+    variables: checkoutVariables,
+  } = billingMutations.useCheckout(onSelected);
   const { mutateAsync: cancelSubscription } =
     billingMutations.useCancelSubscription(onSelected);
   const { data: subscription } = billingQueries.usePlatformSubscription(
@@ -107,6 +110,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
               })}
               currentPlanId={currentPlanId}
               isPending={isPending}
+              checkoutPlanId={isPending ? checkoutVariables?.planId : undefined}
               onCheckout={(planId, action) =>
                 checkout({
                   planId,
@@ -130,6 +134,7 @@ function PlanColumn({
   pricing,
   currentPlanId,
   isPending,
+  checkoutPlanId,
   onCheckout,
   onDowngrade,
 }: {
@@ -138,6 +143,7 @@ function PlanColumn({
   pricing: PlanPricing | null;
   currentPlanId: string | null | undefined;
   isPending: boolean;
+  checkoutPlanId: string | undefined;
   onCheckout: (planId: string, action: CheckoutAction) => void;
   onDowngrade: () => Promise<void>;
 }) {
@@ -200,6 +206,7 @@ function PlanColumn({
         apiPlan={apiPlan}
         currentPlanId={currentPlanId}
         isPending={isPending}
+        checkoutPlanId={checkoutPlanId}
         onCheckout={onCheckout}
         onDowngrade={onDowngrade}
       />
@@ -241,6 +248,7 @@ function PlanCta({
   apiPlan,
   currentPlanId,
   isPending,
+  checkoutPlanId,
   onCheckout,
   onDowngrade,
 }: {
@@ -252,6 +260,7 @@ function PlanCta({
   apiPlan?: PurchasablePlan;
   currentPlanId: string | null | undefined;
   isPending: boolean;
+  checkoutPlanId: string | undefined;
   onCheckout: (planId: string, action: CheckoutAction) => void;
   onDowngrade: () => Promise<void>;
 }) {
@@ -314,6 +323,7 @@ function PlanCta({
       variant={highlighted ? 'default' : 'outline'}
       className="w-full"
       disabled={isPending}
+      loading={apiPlan.id === checkoutPlanId}
       onClick={() => onCheckout(apiPlan.id, action)}
     >
       {t('Purchase Now')}
