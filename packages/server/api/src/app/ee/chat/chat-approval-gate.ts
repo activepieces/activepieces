@@ -12,6 +12,8 @@ const CANCEL_KEY_PREFIX = 'chat-cancel:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
 const PENDING_GATE_PREFIX = 'chat-pending-gate:'
+const PRE_APPROVAL_PREFIX = 'chat-pre-approval:'
+const PRE_APPROVAL_TTL_SECONDS = 15 * 60
 
 function decisionKey(gateId: string): string {
     return `${KEY_PREFIX}${gateId}`
@@ -21,6 +23,16 @@ function channelName(gateId: string): string {
     return `${CHANNEL_PREFIX}${gateId}`
 }
 
+function preApprovalKey({ conversationId, toolName }: { conversationId: string, toolName: string }): string {
+    return `${PRE_APPROVAL_PREFIX}${conversationId}:${toolName}`
+}
+
+// Records the decision and wakes any live worker still blocking on the gate. It is intentionally
+// NON-DESTRUCTIVE: it never deletes the pending-gate mapping, so the caller can still resolve which
+// conversation the gate belongs to and drive the correct path (live consume vs park vs recover)
+// afterwards (Fix 3). The mapping is deleted only at a real consumption point — the live worker
+// consuming the decision, or a successful parked-gate card-flip. Returns the owning conversation
+// (mapping first) so the controller can route even after the fast-path window.
 async function resolveGate({ gateId, approved, payload, log }: { gateId: string, approved: boolean, payload?: Record<string, unknown>, log?: FastifyBaseLogger }): Promise<{ conversationId: string | null }> {
     // Bind the decision to the exact inputs the user saw in the preview, so a consumer can verify
     // the action it's about to run matches what was approved (not a different payload reusing the id).
@@ -30,16 +42,24 @@ async function resolveGate({ gateId, approved, payload, log }: { gateId: string,
     const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload, approvedInput }, GATE_TTL_SECONDS)
     if (wasSet) {
         await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
-        if (conversationId) {
-            await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
-            await distributedStore.delete(`${PENDING_GATE_PREFIX}gate:${gateId}`)
-        }
         log?.info({ gate: { id: gateId }, decision: approved ? 'approved' : 'denied' }, '[chatApprovalGate] Gate decided')
     }
     else {
         log?.info({ gate: { id: gateId } }, '[chatApprovalGate] Gate decision ignored (already decided)')
     }
     return { conversationId: conversationId ?? null }
+}
+
+// One-shot, single-use pre-approval for a late-approved approval-gate (Fix 1). The resumed model
+// re-issues the action; the worker's gate-opening path consumes this instead of opening a second
+// card, so the user is never asked twice. Keyed by (conversationId, toolName) — the pending
+// approval-gate for a given tool is single at a time in a conversation.
+async function storePreApproval({ conversationId, toolName, payload }: { conversationId: string, toolName: string, payload?: Record<string, unknown> }): Promise<void> {
+    await distributedStore.put(preApprovalKey({ conversationId, toolName }), { approved: true, payload: payload ?? {} }, PRE_APPROVAL_TTL_SECONDS)
+}
+
+async function consumePreApproval({ conversationId, toolName }: { conversationId: string, toolName: string }): Promise<{ approved: boolean, payload?: Record<string, unknown> } | null> {
+    return distributedStore.consume<{ approved: boolean, payload?: Record<string, unknown> }>(preApprovalKey({ conversationId, toolName }))
 }
 
 async function checkDecision({ gateId }: { gateId: string }): Promise<GateDecision | 'pending'> {
@@ -150,8 +170,16 @@ async function getPendingGate({ conversationId }: { conversationId: string }): P
     return distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`)
 }
 
+// Deletes BOTH the conversation-keyed pending-gate record AND its reverse gate:{gateId}→conversationId
+// index. resolveGate no longer prunes the mapping (Fix 3), so a leftover reverse key here would let a
+// stale gateId keep resolving to a conversation after the gate is gone — clear both together.
 async function clearPendingGate({ conversationId }: { conversationId: string }): Promise<void> {
-    await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
+    const pendingGate = await distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`)
+    const keys = [`${PENDING_GATE_PREFIX}${conversationId}`]
+    if (pendingGate?.gateId) {
+        keys.push(`${PENDING_GATE_PREFIX}gate:${pendingGate.gateId}`)
+    }
+    await distributedStore.delete(keys)
 }
 
 export const chatApprovalGate = {
@@ -168,6 +196,8 @@ export const chatApprovalGate = {
     storePendingGate,
     getPendingGate,
     clearPendingGate,
+    storePreApproval,
+    consumePreApproval,
 }
 
 type GateDecision = {

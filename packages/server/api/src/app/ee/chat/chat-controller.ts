@@ -1,16 +1,17 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { ChatConversationStatus, CreateChatConversationRequest, PersistedChatMessage, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
+import { chatGateUtils } from './chat-gate-utils'
 import { chatHelpers } from './chat-helpers'
+import { chatJob } from './chat-job'
 import { chatResume } from './chat-resume'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
@@ -139,21 +140,16 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         await assertAiCreditsNotExhausted({ platformId, log })
 
-        await jobQueue(runLog).add({
-            id: apId(),
-            type: JobType.ONE_TIME,
-            data: {
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
-                conversationId,
-                runId,
-                projectId: conversation.projectId ?? null,
-                platformId,
-                userId,
-                userMessage: content,
-                modelName: conversation.modelName ?? null,
-                files,
-            },
+        await chatJob.enqueueChatAgentJob({
+            conversationId,
+            runId,
+            projectId: conversation.projectId ?? null,
+            platformId,
+            userId,
+            userMessage: content,
+            modelName: conversation.modelName ?? null,
+            files,
+            log: runLog,
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
 
@@ -164,33 +160,50 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const gateId = request.params.gateId
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        request.log.info({ gate: { id: gateId }, approved: request.body.approved }, '[chatController] Tool approval received')
-        // Publish the decision for a live worker still blocking on the gate (fast path — same-turn
-        // continuation). resolveGate returns the conversation the gate belongs to (resolved from the
-        // pending-gate store). If that conversation has since parked (worker gone, status not
-        // STREAMING), no worker is listening; resumeParkedGate persists the answer as the gate's
-        // tool result and enqueues a resume turn. Both paths are idempotent, so a live pickup racing
-        // a park is safe.
-        const { conversationId } = await chatApprovalGate.resolveGate({
-            gateId,
-            approved: request.body.approved,
-            payload: request.body.payload,
-            log: request.log,
-        })
-        if (!isNil(conversationId)) {
-            // skipStaleRecovery: a stale STREAMING read here would fire a crash resume (spurious crash
-            // note + orphaned resume job) and then still fall into resumeParkedGate below — two racing
-            // resumes. The answered gate must win, so read the raw row and let resumeParkedGate drive.
-            const conversation = await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId, skipStaleRecovery: true })
-            if (conversation.status !== ChatConversationStatus.STREAMING) {
-                await chatResume.resumeParkedGate({
-                    conversation,
-                    gateId,
-                    approved: request.body.approved,
-                    payload: request.body.payload,
-                    log: request.log,
-                })
-            }
+        const { approved, payload, conversationId: bodyConversationId } = request.body
+        request.log.info({ gate: { id: gateId }, approved }, '[chatController] Tool approval received')
+
+        // Step 1: record the decision and wake any live worker blocking on the gate (fast-path,
+        // same-turn continuation). Non-destructive (Fix 3): the pending-gate mapping is NOT deleted
+        // here, so we can still resolve routing below and pick the correct path — deletion happens
+        // only at a real consumption point.
+        const { conversationId: mappedConversationId } = await chatApprovalGate.resolveGate({ gateId, approved, payload, log: request.log })
+
+        // Step 2: resolve routing mapping-first, body-conversationId fallback (Fix 2) so a parked
+        // answer survives the Redis mapping's 15-min TTL / a Redis restart. The fallback is validated
+        // by the usual platform/user scoping AND by finding the persisted PENDING gate part with this
+        // gateId in that conversation's uiMessages — the card is the source of truth.
+        const conversation = await resolveGateConversation({ mappedConversationId, bodyConversationId, gateId, platformId, userId, log: request.log })
+        if (isNil(conversation)) {
+            // Nothing routes: no live worker (decision was published but unconsumed) and no parked
+            // card to flip. Return an explicit failure so the client keeps the card up rather than
+            // dismissing an answer that went nowhere.
+            request.log.warn({ gate: { id: gateId } }, '[chatController] Tool approval could not be routed to a conversation')
+            return reply.status(StatusCodes.OK).send({ success: false })
+        }
+
+        if (conversation.status !== ChatConversationStatus.STREAMING) {
+            // Parked/dead turn — no worker is listening. resumeParkedGate flips the card and enqueues
+            // a resume (idempotent via the fenced flip).
+            await chatResume.resumeParkedGate({ conversation, gateId, approved, payload, log: request.log })
+            return reply.status(StatusCodes.OK).send({ success: true })
+        }
+
+        // STREAMING: distinguish a live worker (fresh heartbeat) from a dead one (stale heartbeat).
+        const msSinceUpdate = Date.now() - new Date(conversation.updated).getTime()
+        if (msSinceUpdate <= STREAMING_HEARTBEAT_FRESH_MS) {
+            // A live worker will consume the decision we just published; its consumption clears the
+            // gate state as today. Nothing more to do.
+            return reply.status(StatusCodes.OK).send({ success: true })
+        }
+        // Dead worker still marked STREAMING and the sweeper hasn't fired yet (Fix 3): run the
+        // gate-aware recovery to park the turn (keeps the card, no crash note/budget), then resume it
+        // from the answer we just recorded.
+        request.log.info({ gate: { id: gateId }, conversation: { id: conversation.id }, msSinceUpdate }, '[chatController] Answer arrived during dead-STREAMING window — recovering then resuming')
+        await chatResume.tryEnqueueCrashResume({ conversation, log: request.log })
+        const parked = await chatService(request.log).getConversationOrThrow({ id: conversation.id, platformId, userId, skipStaleRecovery: true })
+        if (parked.status !== ChatConversationStatus.STREAMING) {
+            await chatResume.resumeParkedGate({ conversation: parked, gateId, approved, payload, log: request.log })
         }
         return reply.status(StatusCodes.OK).send({ success: true })
     })
@@ -249,6 +262,46 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send([])
     })
 
+}
+
+// A STREAMING conversation whose `updated` was bumped within this window has a live heartbeat, so a
+// live worker is presumed to be consuming the gate decision. Past it, the worker is dead and the
+// answer must drive recovery itself. Kept below the sweeper's staleness window so a dead worker in
+// the answer path is handled here rather than waiting a full sweep cycle.
+const STREAMING_HEARTBEAT_FRESH_MS = 60 * 1_000
+
+// Resolve which conversation a gate answer belongs to. Mapping-first (Redis gate:{gateId}); on a
+// miss (TTL expiry / Redis restart) fall back to the client-supplied conversationId — but only after
+// validating it: the conversation must be scoped to this platform/user AND still carry the PENDING
+// gate card for this gateId. Returns null when nothing safely routes.
+async function resolveGateConversation({ mappedConversationId, bodyConversationId, gateId, platformId, userId, log }: {
+    mappedConversationId: string | null
+    bodyConversationId?: string
+    gateId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}) {
+    const conversationId = mappedConversationId ?? bodyConversationId
+    if (isNil(conversationId)) {
+        return null
+    }
+    // skipStaleRecovery: recovery is decided explicitly by the caller below (park vs resume), so a
+    // read here must not fire a competing crash resume.
+    const { data: conversation } = await tryCatch(() => chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId, skipStaleRecovery: true }))
+    if (isNil(conversation)) {
+        return null
+    }
+    // The mapping is trusted (it was written for this gate). The body fallback is not, so require the
+    // persisted PENDING card to prove this gate really belongs to this conversation.
+    if (isNil(mappedConversationId)) {
+        const uiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
+        if (isNil(chatGateUtils.findPendingGatePart({ uiMessages, gateId }))) {
+            log.warn({ gate: { id: gateId }, conversation: { id: conversationId } }, '[chatController] Body-fallback conversationId has no pending gate card for this gate — rejecting')
+            return null
+        }
+    }
+    return conversation
 }
 
 const FREE_CHAT_CREDIT_USD = 10
@@ -397,7 +450,7 @@ const ToolApprovalRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({ gateId: z.string() }),
-        body: z.object({ approved: z.boolean(), payload: z.record(z.string(), z.unknown()).optional() }),
+        body: z.object({ approved: z.boolean(), payload: z.record(z.string(), z.unknown()).optional(), conversationId: z.string().optional() }),
     },
 }
 

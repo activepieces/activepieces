@@ -382,6 +382,11 @@ export function useAgentChat({
     ) => void
   >(() => {});
 
+  // Assigned after startStream/isStreamActiveRef exist (they come from useStreamingReducer below).
+  // Called from onStaleCheck when a resume run is pending, so the client re-attaches to the
+  // conversation's live stream instead of settling the turn as a failure.
+  const attachToResumeRef = useRef<(convId: string) => void>(() => {});
+
   const {
     streamingMessage,
     streamPhase,
@@ -428,9 +433,33 @@ export function useAgentChat({
             errorMessage: t(CHAT_INTERRUPTED_MESSAGE),
             suppressNoReply: true,
           });
-        } else if (conv.status !== ChatConversationStatus.STREAMING) {
-          settleStreamRef.current(convId);
+          return;
         }
+        if (conv.status === ChatConversationStatus.STREAMING) return;
+
+        // Not STREAMING and not ERROR. Before settling, check whether recovery claimed a resume run:
+        // if activeRunId is set (a crash resume / parked-gate resume owns the conversation) the row
+        // will flip back to STREAMING momentarily, so keep the stale-check/poll alive and attach to
+        // that run instead of settling this turn as a failure. Same for a freshly-IDLE row with no
+        // assistant reply yet (the resume job hasn't flipped STREAMING). Only genuine terminal states
+        // (a delivered reply) settle here.
+        const { data: history } = await tryCatch(() =>
+          chatApi.getMessages(convId),
+        );
+        if (conversationIdRef.current !== convId) return;
+        const mapped = history
+          ? chatUtils.mapHistoryToUIMessages(history.data)
+          : null;
+        const hasReply =
+          mapped !== null &&
+          mapped.findLastIndex((m) => m.role === 'assistant') >
+            mapped.findLastIndex((m) => m.role === 'user');
+        const resumePending = !isNil(conv.activeRunId) || !hasReply;
+        if (resumePending) {
+          attachToResumeRef.current(convId);
+          return;
+        }
+        settleStreamRef.current(convId);
       });
     },
   });
@@ -489,6 +518,13 @@ export function useAgentChat({
 
   const isStreamActiveRef = useRef(isStreamActive);
   isStreamActiveRef.current = isStreamActive;
+
+  attachToResumeRef.current = (convId) => {
+    if (!isStreamActiveRef.current) {
+      startStream(convId);
+    }
+    setIsPollingForAgentReply(true);
+  };
   // Answering a gate whose turn had parked (worker gone) enqueues a resume turn server-side. If we
   // aren't already connected to a live stream, reconnect to the conversation's stream so the resume
   // streams in without a reload; the poll below is a fallback that reconciles the final history.
@@ -501,6 +537,12 @@ export function useAgentChat({
     });
     return () => store.getState().setOnGateAnswered(null);
   }, [store, startStream]);
+
+  // Keep the store's conversationId in sync so a gate answer carries it to the server (parked-answer
+  // routing fallback that survives the Redis gate mapping's TTL / a Redis restart).
+  useEffect(() => {
+    store.getState().setConversationId(conversationId);
+  }, [store, conversationId]);
 
   const isAwaitingResponse =
     streamPhase === 'awaiting-stream' ||

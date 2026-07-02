@@ -21,15 +21,27 @@ function sendApprovalDecision({
   gateId,
   approved,
   payload,
+  conversationId,
   onAnswered,
+  onRouteFailed,
 }: {
   gateId: string;
   approved: boolean;
   payload?: Record<string, unknown>;
+  conversationId: string;
   onAnswered?: () => void;
+  onRouteFailed?: () => void;
 }): void {
   void chatApi
-    .approveToolCall({ gateId, approved, payload })
+    .approveToolCall({ gateId, approved, payload, conversationId })
+    .then((result) => {
+      // The server couldn't route this answer (no live worker and no parked card) — bring the card
+      // back so the user can retry rather than losing their answer silently.
+      if (result && result.success === false) {
+        onRouteFailed?.();
+      }
+    })
+    .catch(() => onRouteFailed?.())
     .finally(() => onAnswered?.());
 }
 
@@ -68,12 +80,16 @@ export type ChatStoreState = {
   // (its worker gone), answering enqueues a resume turn server-side — this reconnects the client to
   // the conversation's live stream so the resume streams in without a reload. A no-op mid-stream.
   onGateAnswered: (() => void) | null;
+  // The conversation this panel is bound to; sent with a gate answer so the server can route a
+  // parked answer even after the Redis gate mapping's TTL / a Redis restart.
+  conversationId: string | null;
 
   approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
   rejectGate: (gateId: string) => void;
   dismissGate: (gateId: string) => void;
   dismissForm: (messageId: string) => void;
   setOnGateAnswered: (handler: (() => void) | null) => void;
+  setConversationId: (conversationId: string | null) => void;
   resetInteractions: () => void;
   resetBuilds: () => void;
 };
@@ -90,6 +106,18 @@ function dismissAndCleanup(
   };
 }
 
+// Reverse of the optimistic dismiss: restore the card when the server reports the answer routed
+// nowhere, so the user can retry instead of losing it. Only clears the dismissed flag — the
+// toolCallMeta rehydrates from history/pending-gate polling.
+function undismissGate(
+  prev: ChatStoreState,
+  gateId: string,
+): Partial<ChatStoreState> {
+  return {
+    dismissedGateIds: omit(prev.dismissedGateIds, [gateId]),
+  };
+}
+
 export const createChatStore = () =>
   create<ChatStoreState>((set, get) => ({
     quickReplies: [],
@@ -99,16 +127,34 @@ export const createChatStore = () =>
     dismissedGateIds: {},
     lastDismissedFormId: null,
     onGateAnswered: null,
+    conversationId: null,
 
     approveGate: (gateId: string, payload?: Record<string, unknown>) => {
+      const conversationId = get().conversationId;
+      if (!conversationId) return;
       const onAnswered = get().onGateAnswered ?? undefined;
       set((prev) => dismissAndCleanup(prev, gateId));
-      sendApprovalDecision({ gateId, approved: true, payload, onAnswered });
+      sendApprovalDecision({
+        gateId,
+        approved: true,
+        payload,
+        conversationId,
+        onAnswered,
+        onRouteFailed: () => set((prev) => undismissGate(prev, gateId)),
+      });
     },
     rejectGate: (gateId: string) => {
+      const conversationId = get().conversationId;
+      if (!conversationId) return;
       const onAnswered = get().onGateAnswered ?? undefined;
       set((prev) => dismissAndCleanup(prev, gateId));
-      sendApprovalDecision({ gateId, approved: false, onAnswered });
+      sendApprovalDecision({
+        gateId,
+        approved: false,
+        conversationId,
+        onAnswered,
+        onRouteFailed: () => set((prev) => undismissGate(prev, gateId)),
+      });
     },
     dismissGate: (gateId: string) => {
       set((prev) => dismissAndCleanup(prev, gateId));
@@ -118,6 +164,9 @@ export const createChatStore = () =>
     },
     setOnGateAnswered: (handler: (() => void) | null) => {
       set({ onGateAnswered: handler });
+    },
+    setConversationId: (conversationId: string | null) => {
+      set({ conversationId });
     },
     resetInteractions: () => {
       set({
