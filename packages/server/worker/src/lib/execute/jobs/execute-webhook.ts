@@ -44,6 +44,17 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         const flowVersion: FlowVersion = resolved.flowVersion
         const pieceName = (flowVersion.trigger as PieceTrigger).settings?.pieceName
 
+        const saveTriggerStats = async (status: TriggerRunStatus) => {
+            if (isNil(pieceName)) return
+            const { error: statsError } = await tryCatch(() =>
+                ctx.apiClient.saveTriggerRunStats({ platformId: data.platformId, pieceName, status }),
+            )
+            if (statsError) {
+                ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
+            }
+        }
+
+
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
         const { data: execResult, error } = await tryCatch(async () => {
@@ -115,6 +126,8 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         })
 
         if (error) {
+            await saveTriggerStats(TriggerRunStatus.FAILED)
+
             if (isSandboxTimeout(error)) {
                 ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
@@ -140,32 +153,10 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     failParentOnFailure: data.failParentOnFailure,
                 })
             }
-            if (!isNil(pieceName)) {
-                const { error: statsError } = await tryCatch(() =>
-                    ctx.apiClient.saveTriggerRunStats({
-                        platformId: data.platformId,
-                        pieceName,
-                        status: TriggerRunStatus.COMPLETED,
-                    }),
-                )
-                if (statsError) {
-                    ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
-                }
-            }
+            await saveTriggerStats(TriggerRunStatus.COMPLETED)
         }
         else {
-            if (!isNil(pieceName)) {
-                const { error: statsError } = await tryCatch(() =>
-                    ctx.apiClient.saveTriggerRunStats({
-                        platformId: data.platformId,
-                        pieceName,
-                        status: TriggerRunStatus.FAILED,
-                    }),
-                )
-                if (statsError) {
-                    ctx.log.warn({ error: String(statsError) }, 'Failed to save trigger run stats, non-fatal')
-                }
-            }
+            await saveTriggerStats(TriggerRunStatus.FAILED)
         }
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }
