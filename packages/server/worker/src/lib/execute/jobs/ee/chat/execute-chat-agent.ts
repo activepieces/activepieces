@@ -378,7 +378,15 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
                 return { approved: decision.approved, payload: decision.payload }
             }
         }
-        return { approved: false }
+        // Reached the deadline without a decision or an abort — a genuine timeout. Persist a spoken
+        // note so the turn doesn't end silently ("dismissed"); the user sees why it paused and that
+        // replying resumes. Best-effort: a failed persist must not change the dismissal outcome.
+        await tryCatch(() => ctx.apiClient.executeChatTool({
+            toolName: '__gate_timed_out',
+            toolInput: { conversationId, runId, gateId },
+            platformId, userId, conversationId,
+        }))
+        return { approved: false, timedOut: true }
     }
 
     // Restore the conversation's already-chosen project so a continued turn doesn't
@@ -645,4 +653,5 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
 type GateDecision = {
     approved: boolean
     payload?: Record<string, unknown>
+    timedOut?: boolean
 }

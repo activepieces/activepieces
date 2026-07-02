@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, ProjectType, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { CHAT_GATE_TIMEOUT_MESSAGE, ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PersistedToolCallPart, PersistedToolCallStatus, ProjectType, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -51,6 +51,156 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
     }
     return builder.execute()
+}
+
+// Merges a just-opened gate into the conversation's stored uiMessages as a PENDING tool-call part,
+// so a page reload mid-gate rebuilds the interactive card from history alone. Idempotent: keyed by
+// gateId (== toolCallId), so re-opening the same gate never double-adds. Fenced on the owning run.
+async function persistPendingGatePart({ conversationId, runId, gateId, toolName, displayName, toolInput }: {
+    conversationId: string
+    runId?: string
+    gateId: string
+    toolName: string
+    displayName: string
+    toolInput: Record<string, unknown>
+}): Promise<void> {
+    const conversation = await chatHelpers.conversationRepo().findOneBy({ id: conversationId })
+    if (isNil(conversation)) {
+        return
+    }
+    const uiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
+    const gatePart: PersistedToolCallPart = {
+        type: PersistedChatPartType.TOOL_CALL,
+        toolCallId: gateId,
+        toolName,
+        title: displayName,
+        input: toolInput,
+        status: PersistedToolCallStatus.PENDING,
+    }
+    const nextUiMessages = mergeGatePartIntoUiMessages({ uiMessages, gatePart })
+    if (isNil(nextUiMessages)) {
+        return
+    }
+    await updateConversationForRun({
+        conversationId,
+        runId,
+        updates: { uiMessages: JSON.parse(JSON.stringify(nextUiMessages)) },
+    })
+}
+
+// A gate that timed out with no answer: retire its still-interactive PENDING card (flip to ERROR so
+// it stops rendering as answerable) and speak a note, instead of the turn ending silently. Both
+// edits land in one write, fenced on the owning run and idempotent on the canned note.
+async function resolveTimedOutGate({ conversationId, runId, gateId }: {
+    conversationId: string
+    runId?: string
+    gateId: string
+}): Promise<void> {
+    const conversation = await chatHelpers.conversationRepo().findOneBy({ id: conversationId })
+    if (isNil(conversation)) {
+        return
+    }
+    const uiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
+    const resolvedGate = uiMessages.map((message) => ({
+        ...message,
+        parts: message.parts.map((part) => part.type === PersistedChatPartType.TOOL_CALL
+            && part.toolCallId === gateId
+            && part.status === PersistedToolCallStatus.PENDING
+            ? { ...part, status: PersistedToolCallStatus.ERROR, errorText: CHAT_GATE_TIMEOUT_MESSAGE }
+            : part),
+    }))
+    const alreadyNoted = resolvedGate.some((message) => message.role === PersistedChatRole.ASSISTANT
+        && message.parts.some((part) => part.type === PersistedChatPartType.TEXT && part.text === CHAT_GATE_TIMEOUT_MESSAGE))
+    const nextUiMessages = alreadyNoted
+        ? resolvedGate
+        : [...resolvedGate, { role: PersistedChatRole.ASSISTANT, parts: [{ type: PersistedChatPartType.TEXT, text: CHAT_GATE_TIMEOUT_MESSAGE }] }]
+    await updateConversationForRun({
+        conversationId,
+        runId,
+        updates: { uiMessages: JSON.parse(JSON.stringify(nextUiMessages)) },
+    })
+    await chatApprovalGate.clearPendingGate({ conversationId })
+}
+
+// Attaches the pending gate part to the trailing assistant message (or opens a fresh one when the
+// last message is the user's), skipping when a part with this gateId is already present. Returns
+// null when nothing needs to change so callers can avoid a no-op write.
+function mergeGatePartIntoUiMessages({ uiMessages, gatePart }: {
+    uiMessages: PersistedChatMessage[]
+    gatePart: PersistedToolCallPart
+}): PersistedChatMessage[] | null {
+    const alreadyPresent = uiMessages.some((message) => message.parts.some((part) =>
+        part.type === PersistedChatPartType.TOOL_CALL && part.toolCallId === gatePart.toolCallId))
+    if (alreadyPresent) {
+        return null
+    }
+    const lastMessage = uiMessages[uiMessages.length - 1]
+    if (lastMessage?.role === PersistedChatRole.ASSISTANT) {
+        return [
+            ...uiMessages.slice(0, -1),
+            { ...lastMessage, parts: [...lastMessage.parts, gatePart] },
+        ]
+    }
+    return [...uiMessages, { role: PersistedChatRole.ASSISTANT, parts: [gatePart] }]
+}
+
+// A gate part the worker persisted as PENDING (Fix 2) lives in the DB's trailing assistant message
+// but is absent from the worker's in-memory uiParts until the gate resolves at step-finish. A raw
+// overwrite from updateChatProgress would drop it and the card would vanish mid-gate. Carry any
+// still-PENDING gate parts from the stored message forward, unless the incoming parts already
+// include the same tool-call id (i.e. the gate resolved and the real part supersedes it).
+function preservePendingGateParts({ storedUiMessages, incomingUiMessages }: {
+    storedUiMessages: PersistedChatMessage[]
+    incomingUiMessages: PersistedChatMessage[]
+}): PersistedChatMessage[] {
+    const storedLast = storedUiMessages[storedUiMessages.length - 1]
+    if (isNil(storedLast) || storedLast.role !== PersistedChatRole.ASSISTANT) {
+        return incomingUiMessages
+    }
+    const pendingGateParts = storedLast.parts.filter((part): part is PersistedToolCallPart =>
+        part.type === PersistedChatPartType.TOOL_CALL && part.status === PersistedToolCallStatus.PENDING)
+    if (pendingGateParts.length === 0) {
+        return incomingUiMessages
+    }
+    const incomingToolCallIds = new Set(incomingUiMessages.flatMap((message) => message.parts
+        .filter((part): part is PersistedToolCallPart => part.type === PersistedChatPartType.TOOL_CALL)
+        .map((part) => part.toolCallId)))
+    const survivingGateParts = pendingGateParts.filter((part) => !incomingToolCallIds.has(part.toolCallId))
+    if (survivingGateParts.length === 0) {
+        return incomingUiMessages
+    }
+    const incomingLast = incomingUiMessages[incomingUiMessages.length - 1]
+    if (incomingLast?.role === PersistedChatRole.ASSISTANT) {
+        return [
+            ...incomingUiMessages.slice(0, -1),
+            { ...incomingLast, parts: [...incomingLast.parts, ...survivingGateParts] },
+        ]
+    }
+    return [...incomingUiMessages, { role: PersistedChatRole.ASSISTANT, parts: survivingGateParts }]
+}
+
+// The API appends the gate-timeout note (Fix 3) into the trailing assistant message out-of-band from
+// the worker, whose uiParts snapshot never contains it — so a later worker save would drop it. Carry
+// a trailing canned note forward unless the incoming parts already reproduce it.
+function preserveCannedNotes({ storedUiMessages, incomingUiMessages }: {
+    storedUiMessages: PersistedChatMessage[]
+    incomingUiMessages: PersistedChatMessage[]
+}): PersistedChatMessage[] {
+    const storedLast = storedUiMessages[storedUiMessages.length - 1]
+    if (isNil(storedLast) || storedLast.role !== PersistedChatRole.ASSISTANT) {
+        return incomingUiMessages
+    }
+    const cannedNotes = storedLast.parts.filter((part) => part.type === PersistedChatPartType.TEXT
+        && part.text === CHAT_GATE_TIMEOUT_MESSAGE)
+    if (cannedNotes.length === 0) {
+        return incomingUiMessages
+    }
+    const incomingHasNote = incomingUiMessages.some((message) => message.parts.some((part) =>
+        part.type === PersistedChatPartType.TEXT && part.text === CHAT_GATE_TIMEOUT_MESSAGE))
+    if (incomingHasNote) {
+        return incomingUiMessages
+    }
+    return [...incomingUiMessages, { role: PersistedChatRole.ASSISTANT, parts: cannedNotes }]
 }
 
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
@@ -350,13 +500,23 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         // that case — keep the richer history that updateChatProgress persisted incrementally. The
         // status still reflects success/error so the UI is correct; only the destructive content
         // overwrite is suppressed. (uiMessages tracks messages, so we gate both on the same check.)
-        const storedMessageCount = ((await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId }))?.messages as unknown[] | undefined)?.length ?? 0
+        const storedConversation = await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        const storedMessageCount = (storedConversation?.messages as unknown[] | undefined)?.length ?? 0
         const wouldShrinkHistory = input.messages.length < storedMessageCount
         const persistContent = isSuccessfulCompletion && !wouldShrinkHistory
 
         if (persistContent) {
+            // Carry any still-open gate card forward: a turn can complete a step-finish save while an
+            // earlier gate is unresolved. Resolved gates dedupe by tool-call id, so this only keeps
+            // cards that are genuinely still pending.
+            const storedUiForMerge = (storedConversation?.uiMessages ?? []) as PersistedChatMessage[]
+            const withGates = preservePendingGateParts({
+                storedUiMessages: storedUiForMerge,
+                incomingUiMessages: input.uiMessages as PersistedChatMessage[],
+            })
+            const mergedUiMessages = preserveCannedNotes({ storedUiMessages: storedUiForMerge, incomingUiMessages: withGates })
             updates.messages = input.messages
-            updates.uiMessages = sanitizeObjectForPostgresql(input.uiMessages)
+            updates.uiMessages = sanitizeObjectForPostgresql(mergedUiMessages)
             if (input.title) updates.title = input.title
             if (input.modelName) updates.modelName = input.modelName
         }
@@ -392,14 +552,17 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async updateChatProgress(input: UpdateChatProgressRequest): Promise<void> {
+        const storedUiMessages = ((await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId }))?.uiMessages ?? []) as PersistedChatMessage[]
+        const withGates = preservePendingGateParts({ storedUiMessages, incomingUiMessages: input.uiMessages as PersistedChatMessage[] })
+        const mergedUiMessages = preserveCannedNotes({ storedUiMessages, incomingUiMessages: withGates })
         const updates: Record<string, unknown> = {
-            uiMessages: JSON.parse(JSON.stringify(input.uiMessages)),
+            uiMessages: JSON.parse(JSON.stringify(mergedUiMessages)),
         }
         if (!isNil(input.messages)) {
             updates.messages = input.messages
         }
         await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
-        log.debug({ conversation: { id: input.conversationId }, uiMessageCount: input.uiMessages.length, messageCount: input.messages?.length }, '[chatRpc#updateChatProgress] Progress persisted')
+        log.debug({ conversation: { id: input.conversationId }, uiMessageCount: mergedUiMessages.length, messageCount: input.messages?.length }, '[chatRpc#updateChatProgress] Progress persisted')
     },
 
     async heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void> {
@@ -445,15 +608,37 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         if (input.toolName === '__store_pending_gate') {
             const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
             if (typeof convId === 'string' && typeof gateId === 'string' && typeof gateTool === 'string') {
+                const normalizedInput = typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {}
                 await chatApprovalGate.storePendingGate({
                     conversationId: convId,
                     gate: {
                         gateId,
                         toolName: gateTool,
                         displayName: typeof displayName === 'string' ? displayName : gateTool,
-                        toolInput: typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {},
+                        toolInput: normalizedInput,
                         ...(typeof gateRunId === 'string' ? { runId: gateRunId } : {}),
                     },
+                })
+                // Persist the card into history the instant the gate opens, so it survives a page
+                // reload from stored uiMessages alone — not only from the in-memory pending-gate cache.
+                await persistPendingGatePart({
+                    conversationId: convId,
+                    runId: typeof gateRunId === 'string' ? gateRunId : undefined,
+                    gateId,
+                    toolName: gateTool,
+                    displayName: typeof displayName === 'string' ? displayName : gateTool,
+                    toolInput: normalizedInput,
+                })
+            }
+            return { result: { success: true } }
+        }
+        if (input.toolName === '__gate_timed_out') {
+            const { conversationId: convId, runId: gateRunId, gateId } = input.toolInput
+            if (typeof convId === 'string' && typeof gateId === 'string') {
+                await resolveTimedOutGate({
+                    conversationId: convId,
+                    runId: typeof gateRunId === 'string' ? gateRunId : undefined,
+                    gateId,
                 })
             }
             return { result: { success: true } }

@@ -228,6 +228,18 @@ function persistedPartToUIPart(
       };
     case PersistedChatPartType.TOOL_CALL: {
       const toolTitle = part.title ?? part.toolName;
+      if (part.status === PersistedToolCallStatus.PENDING) {
+        // A gate card persisted the moment it opened (Fix 2). Rehydrate it in the interactive
+        // input-available state so it renders and can be answered from history alone after a reload.
+        return {
+          type: 'dynamic-tool',
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          title: toolTitle,
+          state: 'input-available',
+          input: part.input,
+        };
+      }
       if (part.status === PersistedToolCallStatus.COMPLETED) {
         return {
           type: 'dynamic-tool',

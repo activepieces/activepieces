@@ -9,6 +9,7 @@ import {
   ChatConversationStatus,
   ChatHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
+  CHAT_INTERRUPTED_MESSAGE,
   DEFAULT_CHAT_TIER_ID,
   PersistedChatMessage,
   ToolProgressEvent,
@@ -420,7 +421,14 @@ export function useAgentChat({
         const conv = await chatApi.getConversation(convId);
         if (isNil(conv) || conversationIdRef.current !== convId) return;
 
-        if (conv.status !== ChatConversationStatus.STREAMING) {
+        if (conv.status === ChatConversationStatus.ERROR) {
+          // The watchdog reclaimed a turn whose worker went silent — the interrupted note is
+          // already persisted as a bubble; surface the retry banner so one click re-sends.
+          settleStreamRef.current(convId, {
+            errorMessage: t(CHAT_INTERRUPTED_MESSAGE),
+            suppressNoReply: true,
+          });
+        } else if (conv.status !== ChatConversationStatus.STREAMING) {
           settleStreamRef.current(convId);
         }
       });
@@ -756,8 +764,20 @@ export function useAgentChat({
         const baseParts = isCurrentStreamingResponse
           ? mapped[lastAssistantIdx].parts
           : undefined;
+        // The gate card may already live in persisted history (Fix 2 persists it PENDING on open).
+        // Only synthesize it from the pending-gate endpoint when history doesn't already carry it,
+        // so a reload mid-gate never renders the card twice.
+        const gateAlreadyInHistory =
+          !!gate &&
+          !!baseParts?.some(
+            (p) =>
+              chatPartUtils.isAnyToolPart(p) &&
+              chatPartUtils.getToolCallId(p) === gate.gateId,
+          );
         const displayGatePart =
-          gate && chatPartUtils.isDisplayTool(gate.toolName)
+          gate &&
+          chatPartUtils.isDisplayTool(gate.toolName) &&
+          !gateAlreadyInHistory
             ? {
                 type: 'dynamic-tool' as const,
                 toolCallId: gate.gateId,
@@ -782,6 +802,20 @@ export function useAgentChat({
         }
       } else {
         setPersistedMessages(mapped);
+        // Reopening a conversation the watchdog reclaimed: the interrupted note is already in
+        // history; also surface the retry banner so the user can re-send in one click.
+        if (convResult.data.status === ChatConversationStatus.ERROR) {
+          const lastAssistant = mapped.findLast((m) => m.role === 'assistant');
+          const wasInterrupted = lastAssistant?.parts.some(
+            (p) => p.type === 'text' && p.text === CHAT_INTERRUPTED_MESSAGE,
+          );
+          if (wasInterrupted) {
+            updateSendStatus({
+              type: 'error',
+              message: t(CHAT_INTERRUPTED_MESSAGE),
+            });
+          }
+        }
       }
       setIsLoadingHistory(false);
     },

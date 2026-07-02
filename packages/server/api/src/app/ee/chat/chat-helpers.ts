@@ -1,13 +1,14 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetProviderConfigResponse, Project, ProjectType } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, CHAT_INTERRUPTED_MESSAGE, ChatConversation, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetProviderConfigResponse, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, Project, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { chatApprovalGate } from './chat-approval-gate'
 import { ChatConversationEntity } from './chat-conversation-entity'
 
-const STREAMING_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
+const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
 const FAST_TIER_ID = 'fast'
 
 // Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
@@ -31,12 +32,59 @@ async function getConversationOrThrow({ id, platformId, userId, log }: { id: str
     if (conversation.status === ChatConversationStatus.STREAMING) {
         const msSinceUpdate = Date.now() - new Date(conversation.updated).getTime()
         if (msSinceUpdate > STREAMING_STALENESS_TIMEOUT_MS) {
-            await conversationRepo().update(id, { status: ChatConversationStatus.IDLE })
-            conversation.status = ChatConversationStatus.IDLE
-            log?.warn({ conversation: { id }, stuckForMs: msSinceUpdate }, '[chatHelpers] Recovered stale STREAMING conversation to IDLE')
+            await recoverStaleStreamingConversation({ conversation, stuckForMs: msSinceUpdate, log })
+            conversation.status = ChatConversationStatus.ERROR
         }
     }
     return conversation
+}
+
+// A STREAMING conversation whose heartbeat went silent past the staleness window has lost its
+// worker (deploy/crash/tsx reload dropped the job) — nothing else will ever finish it. Flip it to
+// ERROR and append a persisted assistant message so history alone renders an explanation + retry,
+// instead of an eternal thinking shimmer. Fenced on status so a live turn that just resumed can't
+// be clobbered; the append preserves whatever was persisted incrementally and only tacks on the note.
+async function recoverStaleStreamingConversation({ conversation, stuckForMs, log }: { conversation: ChatConversation, stuckForMs: number, log?: FastifyBaseLogger }): Promise<void> {
+    const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
+    const alreadyNoted = previousUiMessages.some((message) => message.role === PersistedChatRole.ASSISTANT
+        && message.parts.some((part) => part.type === PersistedChatPartType.TEXT && part.text === CHAT_INTERRUPTED_MESSAGE))
+    const uiMessages: PersistedChatMessage[] = alreadyNoted
+        ? previousUiMessages
+        : [...previousUiMessages, { role: PersistedChatRole.ASSISTANT, parts: [{ type: PersistedChatPartType.TEXT, text: CHAT_INTERRUPTED_MESSAGE }] }]
+    const result = await conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: ChatConversationStatus.ERROR, uiMessages: () => ':uiMessages', activeRunId: null })
+        .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(uiMessages)))
+        .where('id = :id AND status = :streaming', { id: conversation.id, streaming: ChatConversationStatus.STREAMING })
+        .execute()
+    if ((result.affected ?? 0) > 0) {
+        conversation.uiMessages = uiMessages
+        await chatApprovalGate.clearPendingGate({ conversationId: conversation.id })
+        log?.warn({ conversation: { id: conversation.id }, stuckForMs }, '[chatHelpers] Recovered stale STREAMING conversation to ERROR with interrupted-message')
+    }
+}
+
+// Active sweep for the watchdog system job: recover every STREAMING conversation whose heartbeat is
+// older than the staleness window, even when no one is polling the conversation. Complements the
+// lazy per-read recovery in getConversationOrThrow so a dead turn can never linger.
+async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
+    const staleCutoff = new Date(Date.now() - STREAMING_STALENESS_TIMEOUT_MS)
+    const stale = await conversationRepo()
+        .createQueryBuilder('chat_conversation')
+        .where('chat_conversation.status = :streaming', { streaming: ChatConversationStatus.STREAMING })
+        .andWhere('chat_conversation.updated < :staleCutoff', { staleCutoff })
+        .getMany()
+    let recovered = 0
+    for (const conversation of stale) {
+        const stuckForMs = Date.now() - new Date(conversation.updated).getTime()
+        await recoverStaleStreamingConversation({ conversation, stuckForMs, log })
+        recovered++
+    }
+    if (recovered > 0) {
+        log.info({ recoveredCount: recovered }, '[chatHelpers] Sweeper recovered stale STREAMING conversations')
+    }
+    return { recovered }
 }
 
 async function getUserProjects({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<Project[]> {
@@ -87,6 +135,7 @@ function resolveFastModelId({ provider }: { provider: AIProviderName }): string 
 
 export const chatHelpers = {
     getConversationOrThrow,
+    recoverAllStaleStreamingConversations,
     getUserProjects,
     resolveChatProvider,
     resolveTier,

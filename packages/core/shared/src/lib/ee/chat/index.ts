@@ -41,6 +41,10 @@ export enum PersistedChatPartType {
 export enum PersistedToolCallStatus {
     COMPLETED = 'completed',
     ERROR = 'error',
+    // A gate/approval card that has opened but not yet resolved. Persisted the moment the gate
+    // opens so the interactive card survives a page reload from history alone (independent of the
+    // in-memory pending-gate cache). Replaced in place by COMPLETED/ERROR once the gate resolves.
+    PENDING = 'pending',
 }
 
 export enum PersistedChatRole {
@@ -66,7 +70,7 @@ const PersistedToolCallPartSchema = z.object({
     description: z.string().optional(),
     input: z.record(z.string(), z.unknown()),
     output: z.unknown().optional(),
-    status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR]),
+    status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR, PersistedToolCallStatus.PENDING]),
     errorText: z.string().optional(),
 })
 
@@ -175,6 +179,15 @@ export enum ChatConversationStatus {
     STREAMING = 'STREAMING',
     ERROR = 'ERROR',
 }
+
+// Shown to the user (and persisted as a normal assistant text bubble) when a turn is reclaimed
+// because its worker went silent — a deploy, crash, or reload dropped the in-flight job. Shared so
+// the API writes it, the sweeper de-dupes on it, and the web can key its retry affordance off it.
+export const CHAT_INTERRUPTED_MESSAGE = 'This response was interrupted — the run stopped unexpectedly. Send your last message again to retry.'
+
+// Spoken instead of ending the turn silently when an approval/question gate times out with no
+// answer — so the user understands the turn paused waiting on them and that replying resumes it.
+export const CHAT_GATE_TIMEOUT_MESSAGE = 'I asked for your input and didn\'t hear back, so I paused here — reply to continue.'
 
 export const ChatConversation = z.object({
     ...BaseModelSchema,
