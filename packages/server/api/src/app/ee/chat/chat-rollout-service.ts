@@ -1,15 +1,11 @@
-import { apId, isNil, tryCatch } from '@activepieces/core-utils'
+import { apId, isNil } from '@activepieces/core-utils'
 import { ApEdition } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Not } from 'typeorm'
-import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { distributedStore } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { openRouterApi } from '../platform/platform-plan/openrouter/openrouter-api'
 import { ChatRolloutUserEntity } from './chat-rollout-user-entity'
 
 const DEFAULT_ROLLOUT_CAP = 200
@@ -150,43 +146,5 @@ export const chatRolloutService = {
         )
     },
 
-    async claimFirstChatGrant({ userId, platformId, log }: { userId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
-        if (!isCloud()) {
-            return
-        }
-        // Free-tier cloud only: skip if platform has a license key (paid)
-        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (!isNil(plan.licenseKey)) {
-            return
-        }
-        const result = await rolloutRepo().query(
-            `UPDATE "chat_rollout_user"
-             SET "grantedFreeCreditAt" = now(), "updated" = now()
-             WHERE "userId" = $1 AND "grantedFreeCreditAt" IS NULL`,
-            [userId],
-        )
-        if (result.rowCount > 0) {
-            await this.recordFirstChatGrant({ userId, platformId, log })
-        }
-    },
 
-    async recordFirstChatGrant({ userId, platformId, log }: { userId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
-        if (!isCloud()) {
-            return
-        }
-        const { error } = await tryCatch(async () => {
-            const auth = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
-            const { data: key } = await openRouterApi.getKey({ hash: auth.apiKeyHash })
-            await openRouterApi.updateKey({
-                hash: auth.apiKeyHash,
-                limit: (key.limit ?? 0) + getFreeCreditUsd(),
-            })
-        })
-        if (!isNil(error)) {
-            await tryCatch(() => this.releaseFreeCreditGrant({ userId }))
-            log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatRolloutService] Failed to record first chat grant, rolled back grantedFreeCreditAt')
-            return
-        }
-        log.info({ platform: { id: platformId }, grantAmount: getFreeCreditUsd() }, '[chatRolloutService] Granted free chat credit to first-time chatter')
-    },
 }

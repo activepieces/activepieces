@@ -109,9 +109,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         // Refresh the console rollout funnel snapshot (chatted count just changed).
         chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
 
-        // Grant $10 credit on first chat for free cloud users
-        await chatRolloutService.claimFirstChatGrant({ userId, platformId, log })
-
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 
