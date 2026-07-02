@@ -17,6 +17,9 @@ Audit Logging records security-relevant actions taken within a platform for comp
 Enterprise and Cloud. Gated by `platform.plan.auditLogEnabled`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ApplicationEvent**: A discriminated union of all auditable event types.
 - **ApplicationEventName**: Enum of 27 event action strings (e.g., `flow.created`, `flow.published`, `user.signed.in`, `variable.value.revealed`).
 - **userEvent / workerEvent**: Two listener types registered on the event bus; both persist records to `audit_event`.

@@ -32,6 +32,9 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - Cloud: available
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **McpServer** — the per-project MCP server record (token, disabledTools)
 - **Locked tools** — tools that are always active when the MCP server is enabled; cannot be disabled
 - **Controllable tools** — tools that platform or project owners can enable/disable individually

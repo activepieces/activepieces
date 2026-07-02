@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAuth } from '../auth';
 import { supabaseCommon } from '../common/props';
+import { getTableSchemaActionOutputSchema } from '../output-schemas';
 
 export const getTableSchema = createAction({
     name: 'get_table_schema',
@@ -13,6 +14,7 @@ export const getTableSchema = createAction({
     props: {
         table_name: supabaseCommon.table_name,
     },
+    outputSchema: getTableSchemaActionOutputSchema,
     async run(context) {
         const { table_name } = context.propsValue;
         const { url, apiKey } = context.auth.props;

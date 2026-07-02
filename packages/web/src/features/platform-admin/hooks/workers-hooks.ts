@@ -1,10 +1,11 @@
 import { WorkerMachineWithStatus } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 
-import { workersApi } from '../api/workers-api';
+import { workersApi, WorkerPoolCapacity } from '../api/workers-api';
 
 export const workersKeys = {
   all: ['worker-machines'] as const,
+  groups: ['worker-groups'] as const,
 };
 
 export const workersQueries = {
@@ -15,5 +16,11 @@ export const workersQueries = {
       gcTime: 0,
       refetchInterval: 5000,
       queryFn: () => workersApi.list(),
+    }),
+  useWorkerGroups: (enabled: boolean) =>
+    useQuery<WorkerPoolCapacity>({
+      queryKey: workersKeys.groups,
+      queryFn: () => workersApi.listWorkerGroups(),
+      enabled,
     }),
 };

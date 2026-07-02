@@ -17,6 +17,9 @@ The Enterprise Edition extends the Community Edition with commercial features gr
 - **Cloud**: All modules available; some modules registered for Cloud but not self-hosted EE (e.g., AppSumo integration, cloud admin).
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **PlatformPlan**: Entity with 40+ boolean flags representing purchased features; drives all `platformMustHaveFeatureEnabled` checks.
 - **LicenseKey**: Activates a preset bundle of plan flags; supports trial mode with expiry date.
 - **hooksFactory**: CE/EE integration point — CE declares the interface with a no-op default; EE sets the real implementation; callers are edition-agnostic.

@@ -473,6 +473,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://yusufgurdogan.com"><img src="https://avatars.githubusercontent.com/u/13736056?v=4?s=100" width="100px;" alt="Yusuf Gürdoğan"/><br /><sub><b>Yusuf Gürdoğan</b></sub></a><br /><a href="#plugin-yusufgurdogan" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nirajmchauhan"><img src="https://avatars.githubusercontent.com/u/1540451?v=4?s=100" width="100px;" alt="Niraj Chauhan"/><br /><sub><b>Niraj Chauhan</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=nirajmchauhan" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

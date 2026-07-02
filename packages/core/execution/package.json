@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/core-execution",
-  "version": "0.4.1",
+  "version": "0.6.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "@types/node": "24.11.0",
     "@types/semver": "7.5.6",
     "typescript": "5.5.4",
-    "vitest": "3.0.8"
+    "vitest": "3.2.6"
   },
   "typings": "./dist/src/index.d.ts"
 }
