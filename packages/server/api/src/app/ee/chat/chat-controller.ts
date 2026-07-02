@@ -1,5 +1,5 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, PersistedChatMessage, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ChatConversationStatus, CreateChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedToolCallStatus, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -140,6 +140,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         await assertAiCreditsNotExhausted({ platformId, log })
 
+        // Supersede any card the user abandoned by sending this new message instead of answering it
+        // (Fix R3a). Left PENDING, a fossil card could make crash recovery park every future crash
+        // forever (silent lost turns). Flip it to a terminal, non-interactive SUPERSEDED status
+        // and clear the pending-gate store so recovery/answer routing no longer treats it as live.
+        await supersedePendingGateCards({ conversationId, log })
+
         await chatJob.enqueueChatAgentJob({
             conversationId,
             runId,
@@ -184,9 +190,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         if (conversation.status !== ChatConversationStatus.STREAMING) {
             // Parked/dead turn — no worker is listening. resumeParkedGate flips the card and enqueues
-            // a resume (idempotent via the fenced flip).
-            await chatResume.resumeParkedGate({ conversation, gateId, approved, payload, log: request.log })
-            return reply.status(StatusCodes.OK).send({ success: true })
+            // a resume (idempotent via the fenced flip). Plumb its boolean into the response (Fix R5b):
+            // false → the flip lost or the resume enqueue failed, so keep the card up (success:false).
+            const resumed = await chatResume.resumeParkedGate({ conversation, gateId, approved, payload, log: request.log })
+            return reply.status(StatusCodes.OK).send({ success: resumed })
         }
 
         // STREAMING: distinguish a live worker (fresh heartbeat) from a dead one (stale heartbeat).
@@ -196,6 +203,30 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             // gate state as today. Nothing more to do.
             return reply.status(StatusCodes.OK).send({ success: true })
         }
+
+        // Heartbeat looks stale — BUT heartbeats are fire-and-forget with swallowed errors, so an API
+        // outage >60s can make a genuinely LIVE gated worker look dead (Fix R2). Before parking (which
+        // would double-execute: wake the live worker AND resume a second run), wait briefly for the
+        // live path to consume the decision we just published. If it does, the live worker handled it
+        // — return success and DO NOT park.
+        const consumed = await waitForLiveConsumption({ gateId })
+        if (consumed) {
+            request.log.info({ gate: { id: gateId }, conversation: { id: conversation.id }, msSinceUpdate }, '[chatController] Stale heartbeat but decision consumed by a live worker — not parking')
+            return reply.status(StatusCodes.OK).send({ success: true })
+        }
+
+        // A truly dead worker: recovery must only run for a live gate whose card still exists (Fix
+        // R5a). If the persisted PENDING card is gone, there is nothing to resume — return failure so
+        // the client keeps/undismisses its card rather than burning resume budget on a phantom gate.
+        const stillPending = chatGateUtils.findPendingGatePart({
+            uiMessages: (conversation.uiMessages ?? []) as PersistedChatMessage[],
+            gateId,
+        })
+        if (isNil(stillPending)) {
+            request.log.warn({ gate: { id: gateId }, conversation: { id: conversation.id } }, '[chatController] Dead-STREAMING answer but no persisted pending card — refusing recovery')
+            return reply.status(StatusCodes.OK).send({ success: false })
+        }
+
         // Dead worker still marked STREAMING and the sweeper hasn't fired yet (Fix 3): run the
         // gate-aware recovery to park the turn (keeps the card, no crash note/budget), then resume it
         // from the answer we just recorded.
@@ -203,7 +234,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         await chatResume.tryEnqueueCrashResume({ conversation, log: request.log })
         const parked = await chatService(request.log).getConversationOrThrow({ id: conversation.id, platformId, userId, skipStaleRecovery: true })
         if (parked.status !== ChatConversationStatus.STREAMING) {
-            await chatResume.resumeParkedGate({ conversation: parked, gateId, approved, payload, log: request.log })
+            const resumed = await chatResume.resumeParkedGate({ conversation: parked, gateId, approved, payload, log: request.log })
+            return reply.status(StatusCodes.OK).send({ success: resumed })
         }
         return reply.status(StatusCodes.OK).send({ success: true })
     })
@@ -223,8 +255,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
         }
         await Promise.all(cancelPromises)
+        // Clear activeRunId on cancel (Fix R6a): the turn is over, so no run owns the conversation.
+        // A settled IDLE row with a stale activeRunId would make the client's onStaleCheck think a
+        // resume is still in flight and poll forever (Fix R6b).
         await chatHelpers.conversationRepo().update(conversationId, {
             status: ChatConversationStatus.IDLE,
+            activeRunId: null,
         })
         await chatApprovalGate.clearPendingGate({ conversationId })
         return reply.status(StatusCodes.OK).send({ success: true })
@@ -270,6 +306,24 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 // the answer path is handled here rather than waiting a full sweep cycle.
 const STREAMING_HEARTBEAT_FRESH_MS = 60 * 1_000
 
+// Consumption handshake (Fix R2). After publishing a decision to a stale-looking STREAMING turn, poll
+// briefly for a live worker's consumed marker (__approval_wait sets it the moment it hands the
+// decision to the worker). A live-but-network-starved worker consumes within this window, so we can
+// tell it apart from a truly dead one and avoid parking (which would double-execute).
+const LIVE_CONSUMPTION_WAIT_MS = 4_000
+const LIVE_CONSUMPTION_POLL_MS = 500
+
+async function waitForLiveConsumption({ gateId }: { gateId: string }): Promise<boolean> {
+    const deadline = Date.now() + LIVE_CONSUMPTION_WAIT_MS
+    while (Date.now() < deadline) {
+        if (await chatApprovalGate.wasGateConsumed({ gateId })) {
+            return true
+        }
+        await new Promise((resolve) => setTimeout(resolve, LIVE_CONSUMPTION_POLL_MS))
+    }
+    return chatApprovalGate.wasGateConsumed({ gateId })
+}
+
 // Resolve which conversation a gate answer belongs to. Mapping-first (Redis gate:{gateId}); on a
 // miss (TTL expiry / Redis restart) fall back to the client-supplied conversationId — but only after
 // validating it: the conversation must be scoped to this platform/user AND still carry the PENDING
@@ -302,6 +356,43 @@ async function resolveGateConversation({ mappedConversationId, bodyConversationI
         }
     }
     return conversation
+}
+
+// Flip any PENDING gate cards to SUPERSEDED when the user sends a new message instead of answering
+// the card (Fix R3a). Idempotent and no-op when there is nothing pending. Clears the pending-gate
+// store too, so neither crash recovery (findLiveGatePart) nor answer routing treats the abandoned
+// card as a live gate afterwards.
+async function supersedePendingGateCards({ conversationId, log }: { conversationId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { error } = await tryCatch(async () => {
+        const conversation = await chatHelpers.conversationRepo().findOneBy({ id: conversationId })
+        const uiMessages = (conversation?.uiMessages ?? []) as PersistedChatMessage[]
+        let flipped = false
+        const nextUiMessages = uiMessages.map((message) => ({
+            ...message,
+            parts: message.parts.map((part) => {
+                if (part.type === PersistedChatPartType.TOOL_CALL && part.status === PersistedToolCallStatus.PENDING) {
+                    flipped = true
+                    return { ...part, status: PersistedToolCallStatus.SUPERSEDED }
+                }
+                return part
+            }),
+        }))
+        if (!flipped) {
+            return
+        }
+        await chatHelpers.conversationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ uiMessages: () => ':uiMessages' })
+            .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(nextUiMessages)))
+            .where('id = :id', { id: conversationId })
+            .execute()
+        await chatApprovalGate.clearPendingGate({ conversationId })
+        log.info({ conversation: { id: conversationId } }, '[chatController] Superseded abandoned pending gate card on new message')
+    })
+    if (!isNil(error)) {
+        log.warn({ error, conversation: { id: conversationId } }, '[chatController] Failed to supersede pending gate cards')
+    }
 }
 
 const FREE_CHAT_CREDIT_USD = 10

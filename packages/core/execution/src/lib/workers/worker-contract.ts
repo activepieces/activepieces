@@ -182,6 +182,9 @@ export type ExecuteChatToolRequest = {
     platformId: string
     userId: string
     conversationId?: string
+    // The owning run of the caller. Threaded so control RPCs that fence on the resume run — e.g.
+    // __consume_pre_approval verifying a one-shot token belongs to THIS run (Fix R1) — can match it.
+    runId?: string
 }
 
 export type ExecuteChatToolResponse = {
