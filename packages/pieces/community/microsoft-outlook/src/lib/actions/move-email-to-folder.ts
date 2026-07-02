@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown, messageIdDropdown } from '../common/props';
 
 export const moveEmailToFolderAction = createAction({
@@ -26,15 +25,9 @@ export const moveEmailToFolderAction = createAction({
 	async run(context) {
 		const { messageId, destinationFolderId } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = outlookCommon.createClient(context.auth);
 
-		const response = await client.api(`/me/messages/${messageId}/move`).post({
+		const response = await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/messages/${messageId}/move`).post({
 			destinationId: destinationFolderId,
 		});
 
