@@ -18,7 +18,7 @@ import { AppSystemProp } from '../../../../helper/system/system-props'
 import { AppSumoAction, CreditUsage } from '../../../../platform/billing-provider'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://ribbon-knowledgestorm-zope-forgotten.trycloudflare.com'
+const AUTUMN_CONSOLE_URL = 'https://sir-highly-incentive-latitude.trycloudflare.com'
 const AUTUMN_FREE_PLAN_ID = 'free'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60

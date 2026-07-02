@@ -64,6 +64,9 @@ export const platformHooks = {
         queryClient.invalidateQueries({
           queryKey: flagsHooks.queryKey,
         });
+        queryClient.invalidateQueries({
+          queryKey: ['platform-billing-subscription'],
+        });
         toast.success(t('License activated successfully!'));
       },
       onError: () => {

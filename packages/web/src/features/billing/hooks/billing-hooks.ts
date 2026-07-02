@@ -21,6 +21,10 @@ export const billingKeys = {
     ['platform-billing-subscription', platformId] as const,
   plans: (platformId: string) =>
     ['platform-billing-plans', platformId] as const,
+  projectsUsage: (
+    platformId: string,
+    range: { startDate?: string; endDate?: string },
+  ) => ['platform-billing-projects-usage', platformId, range] as const,
 };
 
 export const billingMutations = {
@@ -139,6 +143,17 @@ export const billingQueries = {
       queryKey: billingKeys.plans(platformId),
       queryFn: platformBillingApi.listPlans,
       staleTime: 60 * 1000,
+      enabled,
+    });
+  },
+  useProjectsUsage: (
+    platformId: string,
+    range: { startDate?: string; endDate?: string },
+    enabled = true,
+  ) => {
+    return useQuery({
+      queryKey: billingKeys.projectsUsage(platformId, range),
+      queryFn: () => platformBillingApi.getProjectsUsage(range),
       enabled,
     });
   },

@@ -249,6 +249,13 @@ export const ToppableFeature = z.object({
 })
 export type ToppableFeature = z.infer<typeof ToppableFeature>
 
+export const ProjectCreditUsage = z.object({
+    projectId: z.string(),
+    projectName: z.string(),
+    creditsUsed: z.number(),
+})
+export type ProjectCreditUsage = z.infer<typeof ProjectCreditUsage>
+
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,

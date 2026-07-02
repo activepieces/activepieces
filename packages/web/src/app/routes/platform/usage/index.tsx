@@ -5,7 +5,11 @@ import { t } from 'i18next';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Separator } from '@/components/ui/separator';
-import { FeatureUsageCards, billingQueries } from '@/features/billing';
+import {
+  FeatureUsageCards,
+  ProjectsUsageTable,
+  billingQueries,
+} from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -62,6 +66,8 @@ function UsagePageDetails() {
       </div>
       <Separator />
       <FeatureUsageCards platformSubscription={info} />
+      <Separator />
+      <ProjectsUsageTable platformId={platform.id} />
     </div>
   );
 }

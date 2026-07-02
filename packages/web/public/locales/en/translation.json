@@ -1,5 +1,12 @@
 {
   "0": "0",
+  "Included in plan": "Included in plan",
+  "Used": "Used",
+  "Usage by Projects": "Usage by Projects",
+  "Credits Used": "Credits Used",
+  "No project usage yet": "No project usage yet",
+  "Once your projects consume credits, their usage will appear here.": "Once your projects consume credits, their usage will appear here.",
+  "Resets {date}": "Resets {date}",
   "Support": "Support",
   "Runs": "Runs",
   "Edit flow": "Edit flow",

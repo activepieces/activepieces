@@ -54,6 +54,21 @@ export const projectService = (log: FastifyBaseLogger) => ({
         return projects.map((project) => project.id)
     },
 
+    async getDisplayNamesByIds({ platformId, projectIds }: { platformId: string, projectIds: string[] }): Promise<Map<string, string>> {
+        if (projectIds.length === 0) {
+            return new Map()
+        }
+        const rows = await projectRepo()
+            .createQueryBuilder('project')
+            .select('project.id', 'id')
+            .addSelect('project.displayName', 'displayName')
+            .where('project."platformId" = :platformId', { platformId })
+            .andWhere('project.id IN (:...projectIds)', { projectIds })
+            .withDeleted()
+            .getRawMany<{ id: string, displayName: string }>()
+        return new Map(rows.map((row): [string, string] => [row.id, row.displayName]))
+    },
+
     async countByPlatformIdAndType(platformId: string, type: ProjectType): Promise<number> {
         return projectRepo().countBy({
             platformId,

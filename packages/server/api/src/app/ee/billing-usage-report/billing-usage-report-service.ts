@@ -42,10 +42,6 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
             const dayStart = utcMidnight(1)
             const dayEnd = utcMidnight(0)
 
-            // Run the aggregates sequentially rather than in parallel: this is a background report, and
-            // firing all four heavy GROUP BY queries at once would hold several connections from the shared
-            // pool simultaneously, starving live request traffic. One at a time keeps the report to a single
-            // connection so the app server stays responsive while it runs.
             const activeFlowsByPlatform = await queryActiveFlowsByPlatform(platformIds)
             const usersByPlatform = await queryUsersByPlatform(platformIds)
             const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)

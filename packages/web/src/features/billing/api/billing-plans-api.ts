@@ -2,6 +2,7 @@ import {
   ConsumableProductTopupParams,
   ConsumableProductAutoTopupParams,
   PlatformBillingInformation,
+  ProjectCreditUsage,
   PurchasablePlan,
   CheckoutPlanParams,
   CheckoutSessionResponse,
@@ -40,6 +41,12 @@ export const platformBillingApi = {
   updateAutoTopUp(params: ConsumableProductAutoTopupParams) {
     return api.post<{ paymentUrl?: string }>(
       '/v1/platform-billing/consumable-product-topups/auto-topup',
+      params,
+    );
+  },
+  getProjectsUsage(params: { startDate?: string; endDate?: string }) {
+    return api.get<ProjectCreditUsage[]>(
+      '/v1/platform-billing/projects-usage',
       params,
     );
   },
