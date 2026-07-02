@@ -34,6 +34,9 @@ Manages user identity, platform membership, roles, session security, and a gamif
 - Cloud: same as EE for multi-tenant platform management
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **User** — a platform-scoped membership record; one identity can have many users across platforms
 - **UserIdentity** — the canonical credential record (email, hashed password, OAuth provider, verified flag, tokenVersion)
 - **PlatformRole** — `ADMIN` (full control), `MEMBER` (own projects only), `OPERATOR` (read access to all projects)

@@ -1,12 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  SecretsManagerClient,
   GetRandomPasswordCommand,
 } from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
 
 export const getARandomPassword = createAction({
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   name: 'getARandomPassword',
   displayName: 'Generate Random Password',
   description: 'Generates a random password using AWS Secrets Manager.',
@@ -58,14 +58,8 @@ export const getARandomPassword = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
-    });
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 
     try {
       const command = new GetRandomPasswordCommand({

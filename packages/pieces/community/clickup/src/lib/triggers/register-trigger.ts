@@ -8,6 +8,7 @@ import {
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
 import { clickupAuth } from '../auth';
+import { clickupTriggerOutputSchemas } from '../output-schemas';
 
 export const clickupRegisterTrigger = ({
   name,
@@ -37,6 +38,7 @@ export const clickupRegisterTrigger = ({
       list_id: clickupCommon.list_id(false), // Optional, depends on folder or space
       task_id: clickupCommon.task_id(false), // Optional, depends on list
     },
+    outputSchema: clickupTriggerOutputSchemas[name],
     sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {

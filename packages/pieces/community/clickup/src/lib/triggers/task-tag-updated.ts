@@ -10,6 +10,7 @@ import {
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
 import { clickupAuth } from '../auth';
+import { taskEventTriggerOutputSchema } from '../output-schemas';
 
 export const triggerTaskTagUpdated = createTrigger({
   auth: clickupAuth,
@@ -59,6 +60,7 @@ export const triggerTaskTagUpdated = createTrigger({
     list_id: clickupCommon.list_id(false),
     task_id: clickupCommon.task_id(false),
   },
+  outputSchema: taskEventTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const { workspace_id } = context.propsValue
