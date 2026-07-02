@@ -11,6 +11,9 @@ import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
 import { gmailNewLabelTrigger } from './lib/triggers/new-label';
 import { gmailSearchMailAction } from './lib/actions/search-email-action';
 import { gmailGetEmailAction } from './lib/actions/get-mail-action';
+import { gmailArchiveEmailAction } from './lib/actions/archive-email-action';
+import { gmailDeleteEmailAction } from './lib/actions/delete-email-action';
+import { gmailLabelEmailAction } from './lib/actions/label-email-action';
 import { gmailAuth, getAccessToken, GmailAuthValue } from './lib/auth';
 
 export {
@@ -34,6 +37,9 @@ export const gmail = createPiece({
     gmailCreateDraftReplyAction,
     gmailGetEmailAction,
     gmailSearchMailAction,
+    gmailArchiveEmailAction,
+    gmailDeleteEmailAction,
+    gmailLabelEmailAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
@@ -44,7 +50,6 @@ export const gmail = createPiece({
   ],
   displayName: 'Gmail',
   description: 'Email service by Google',
-
   authors: [
     'kanarelo',
     'abdullahranginwala',
