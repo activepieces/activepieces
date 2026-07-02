@@ -1,9 +1,8 @@
 import { t } from 'i18next';
-import { ArrowLeft, Info, Layers, Loader2 } from 'lucide-react';
+import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -22,7 +21,15 @@ const PieceSetDetailsPage = () => {
 
   const handleToggle = (value: boolean) => {
     if (!pieceSet) return;
-    updateSet({ id: pieceSet.id, request: { includeNewPieces: value } });
+    updateSet({
+      id: pieceSet.id,
+      request: {
+        pieces: {
+          mode: value ? 'include_all' : 'exclude_all',
+          exceptions: pieceSet.config.pieces.exceptions,
+        },
+      },
+    });
   };
 
   if (isLoading || !pieceSet) {
@@ -60,16 +67,6 @@ const PieceSetDetailsPage = () => {
 
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
         <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
-          <Alert variant="primary" className="items-start">
-            <Info className="size-4" />
-            <AlertTitle>{t('A piece is open by default')}</AlertTitle>
-            <AlertDescription>
-              {t(
-                'Curating a piece — choosing only some of its actions and triggers — is what switches it to a closed list. Closed lists don’t auto-include new actions until you revisit them. The only global policy left is whether brand-new pieces show up at all.',
-              )}
-            </AlertDescription>
-          </Alert>
-
           <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -86,7 +83,7 @@ const PieceSetDetailsPage = () => {
               </span>
               <AutoIncludePill
                 label={t('New pieces')}
-                checked={pieceSet.includeNewPieces}
+                checked={pieceSet.config.pieces.mode === 'include_all'}
                 disabled={isPending}
                 onCheckedChange={handleToggle}
               />

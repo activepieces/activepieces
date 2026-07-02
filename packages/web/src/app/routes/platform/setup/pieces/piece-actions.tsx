@@ -66,16 +66,16 @@ const PieceActions = ({
               }}
             >
               {filtered ? (
-                <EyeOff className="size-4" />
+                <Eye className="size-4 text-primary" />
               ) : (
-                <Eye className="size-4" />
+                <EyeOff className="size-4" />
               )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
             {filtered
-              ? t('Hide this piece from all projects')
-              : t('Show this piece for all projects')}
+              ? t('Show this piece for all projects')
+              : t('Hide this piece from all projects')}
           </TooltipContent>
         </Tooltip>
 

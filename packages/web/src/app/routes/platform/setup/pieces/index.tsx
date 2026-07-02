@@ -3,7 +3,12 @@ import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { OAuth2GrantType, PieceScope, PieceType } from '@activepieces/shared';
+import {
+  FilteredPieceBehavior,
+  OAuth2GrantType,
+  PieceScope,
+  PieceType,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -15,7 +20,7 @@ import {
   Puzzle,
   Trash,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -29,6 +34,7 @@ import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +72,29 @@ const PiecesListTab = () => {
 
   const { refetch: refetchPiecesOAuth2AppsMap } =
     oauthAppsQueries.usePiecesOAuth2AppsMap();
+
+  const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
+
+  const hiddenPieceNames = useMemo(
+    () => new Set(platform.filteredPieceNames),
+    [platform.filteredPieceNames],
+  );
+
+  const isPieceHidden = useCallback(
+    (pieceName: string) =>
+      platform.filteredPieceBehavior === FilteredPieceBehavior.ALLOWED
+        ? !hiddenPieceNames.has(pieceName)
+        : hiddenPieceNames.has(pieceName),
+    [platform.filteredPieceBehavior, hiddenPieceNames],
+  );
+
+  const filteredPieces = useMemo(() => {
+    const allPieces = pieces ?? [];
+    if (selectedStatuses.size === 0) return allPieces;
+    return allPieces.filter((piece) =>
+      selectedStatuses.has(isPieceHidden(piece.name) ? 'hidden' : 'visible'),
+    );
+  }, [pieces, selectedStatuses, isPieceHidden]);
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
@@ -191,7 +220,7 @@ const PiecesListTab = () => {
           },
         },
       ],
-      [],
+      [isEnabled, refetchPieces, refetchPiecesOAuth2AppsMap],
     );
 
   return (
@@ -225,12 +254,29 @@ const PiecesListTab = () => {
             icon: CheckIcon,
           },
         ]}
+        customFilters={[
+          <DataTableSelectPopover
+            key="status-filter"
+            title={t('Status')}
+            selectedValues={new Set(selectedStatuses)}
+            options={[
+              { label: t('Visible'), value: 'visible' },
+              { label: t('Hidden'), value: 'hidden' },
+            ]}
+            handleFilterChange={(values) =>
+              setSelectedStatuses(new Set(values))
+            }
+          />,
+        ]}
         page={{
-          data: pieces ?? [],
+          data: filteredPieces,
           next: null,
           previous: null,
         }}
         isLoading={isLoading}
+        getRowClassName={(row) =>
+          isPieceHidden(row.name) ? 'bg-muted/70 opacity-80' : ''
+        }
         bulkActions={[
           {
             render: (selectedRows) => (

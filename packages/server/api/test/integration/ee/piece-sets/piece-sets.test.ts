@@ -41,7 +41,7 @@ async function setupPlatformWithoutPieceSets() {
     return { mockOwner, mockPlatform, token }
 }
 
-const emptyConfig = { disabledPieces: [], disabledActions: {}, disabledTriggers: {}, curatedPieces: [] }
+const emptyConfig = { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
 
 describe('Piece Sets API', () => {
     describe('Feature Gate', () => {
@@ -103,7 +103,6 @@ describe('Piece Sets API', () => {
             const body = response.json<PieceSet>()
             expect(body.name).toBe('Engineering')
             expect(body.isDefault).toBe(false)
-            expect(body.includeNewPieces).toBe(true)
             expect(body.config).toEqual(emptyConfig)
         })
 
@@ -151,7 +150,7 @@ describe('Piece Sets API', () => {
     })
 
     describe('Update', () => {
-        it('applies piece enable/disable patch ops', async () => {
+        it('replaces the piece-level selection wholesale', async () => {
             const { token } = await setupPlatformWithPieceSets()
             const created = await app!.inject({
                 method: 'POST',
@@ -166,57 +165,49 @@ describe('Piece Sets API', () => {
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
-                    disablePieces: ['@activepieces/piece-gmail'],
+                    pieces: { mode: 'include_all', exceptions: ['@activepieces/piece-gmail'] },
                 },
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json<PieceSet>()
-            expect(body.config.disabledPieces).toContain('@activepieces/piece-gmail')
-            expect(body.config.disabledPieces).not.toContain('@activepieces/piece-slack')
+            expect(body.config.pieces.mode).toBe('include_all')
+            expect(body.config.pieces.exceptions).toContain('@activepieces/piece-gmail')
+            expect(body.config.pieces.exceptions).not.toContain('@activepieces/piece-slack')
 
             const reenabledResponse = await app!.inject({
                 method: 'POST',
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
-                    enablePieces: ['@activepieces/piece-gmail'],
+                    pieces: { mode: 'include_all', exceptions: [] },
                 },
             })
             expect(reenabledResponse.statusCode).toBe(StatusCodes.OK)
-            expect(reenabledResponse.json<PieceSet>().config.disabledPieces).not.toContain('@activepieces/piece-gmail')
+            expect(reenabledResponse.json<PieceSet>().config.pieces.exceptions).not.toContain('@activepieces/piece-gmail')
         })
 
-        it('toggling includeNewPieces does not modify existing disabled pieces', async () => {
+        it('switching to exclude_all preserves the exceptions list', async () => {
             const { token } = await setupPlatformWithPieceSets()
             const created = await app!.inject({
                 method: 'POST',
                 url: '/api/v1/piece-sets',
                 headers: { authorization: `Bearer ${token}` },
-                body: { name: 'Toggle Test', includeNewPieces: true },
+                body: { name: 'Toggle Test' },
             })
             const id = created.json<PieceSet>().id
-
-            await app!.inject({
-                method: 'POST',
-                url: `/api/v1/piece-sets/${id}`,
-                headers: { authorization: `Bearer ${token}` },
-                body: { disablePieces: ['@activepieces/piece-slack'] },
-            })
 
             const response = await app!.inject({
                 method: 'POST',
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
-                body: { includeNewPieces: false },
+                body: { pieces: { mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] } },
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json<PieceSet>()
-            // Only the explicitly disabled piece remains; no backfill of other pieces
-            expect(body.config.disabledPieces).toEqual(['@activepieces/piece-slack'])
-            expect(body.includeNewPieces).toBe(false)
+            expect(body.config.pieces).toEqual({ mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] })
         })
 
-        it('curating a piece marks it closed and disabling actions is preserved', async () => {
+        it('selecting actions on a piece stores the allow-list; other component maps stay empty', async () => {
             const { token } = await setupPlatformWithPieceSets()
             const created = await app!.inject({
                 method: 'POST',
@@ -231,18 +222,16 @@ describe('Piece Sets API', () => {
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
-                    curatePieces: ['@activepieces/piece-slack'],
-                    disableActions: { '@activepieces/piece-slack': ['send-message'] },
+                    actions: { '@activepieces/piece-slack': { mode: 'selected', selected: ['send-message'] } },
                 },
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json<PieceSet>()
-            expect(body.config.curatedPieces).toEqual(['@activepieces/piece-slack'])
-            expect(body.config.disabledActions['@activepieces/piece-slack']).toEqual(['send-message'])
-            expect(body.config.disabledTriggers).toEqual({})
+            expect(body.config.selectedActions['@activepieces/piece-slack']).toEqual(['send-message'])
+            expect(body.config.selectedTriggers).toEqual({})
         })
 
-        it('uncurating a piece reopens it and clears its disabled actions and triggers', async () => {
+        it('resetting a piece to "all" removes its selection key', async () => {
             const { token } = await setupPlatformWithPieceSets()
             const created = await app!.inject({
                 method: 'POST',
@@ -257,8 +246,7 @@ describe('Piece Sets API', () => {
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
-                    curatePieces: ['@activepieces/piece-slack'],
-                    disableActions: { '@activepieces/piece-slack': ['send-message'] },
+                    actions: { '@activepieces/piece-slack': { mode: 'selected', selected: ['send-message'] } },
                 },
             })
 
@@ -266,13 +254,12 @@ describe('Piece Sets API', () => {
                 method: 'POST',
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
-                body: { uncuratePieces: ['@activepieces/piece-slack'] },
+                body: { actions: { '@activepieces/piece-slack': { mode: 'all' } } },
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json<PieceSet>()
-            expect(body.config.curatedPieces).toEqual([])
-            expect(body.config.disabledActions).toEqual({})
-            expect(body.config.disabledTriggers).toEqual({})
+            expect(body.config.selectedActions).toEqual({})
+            expect(body.config.selectedTriggers).toEqual({})
         })
     })
 
@@ -285,7 +272,6 @@ describe('Piece Sets API', () => {
                 name: 'Default',
                 externalId: null,
                 isDefault: true,
-                includeNewPieces: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             })
@@ -306,7 +292,6 @@ describe('Piece Sets API', () => {
                 name: 'Default',
                 externalId: null,
                 isDefault: true,
-                includeNewPieces: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             })
@@ -344,7 +329,6 @@ describe('Piece Sets API', () => {
                 headers: { authorization: `Bearer ${token}` },
                 body: {
                     name: 'Original',
-                    includeNewPieces: false,
                 },
             })).json<PieceSet>()
 
@@ -352,7 +336,7 @@ describe('Piece Sets API', () => {
                 method: 'POST',
                 url: `/api/v1/piece-sets/${original.id}`,
                 headers: { authorization: `Bearer ${token}` },
-                body: { disablePieces: ['@activepieces/piece-slack'] },
+                body: { pieces: { mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] } },
             })
 
             const response = await app!.inject({
@@ -368,8 +352,8 @@ describe('Piece Sets API', () => {
             expect(clone.externalId).toBeNull()
             expect(clone.generatedForProjectId).toBeNull()
             expect(clone.id).not.toBe(original.id)
-            expect(clone.includeNewPieces).toBe(false)
-            expect(clone.config.disabledPieces).toContain('@activepieces/piece-slack')
+            expect(clone.config.pieces.mode).toBe('exclude_all')
+            expect(clone.config.pieces.exceptions).toContain('@activepieces/piece-slack')
         })
     })
 
@@ -440,7 +424,6 @@ describe('Piece Sets API', () => {
                 name: 'Default',
                 externalId: null,
                 isDefault: true,
-                includeNewPieces: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             })

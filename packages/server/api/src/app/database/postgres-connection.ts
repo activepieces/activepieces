@@ -391,9 +391,7 @@ import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/17990
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { AddFilteredComponentNamesToPlatform1803000000000 } from './migration/postgres/1803000000000-AddFilteredComponentNamesToPlatform'
-import { AddPieceSetTable1804000000000 } from './migration/postgres/1804000000000-AddPieceSetTable'
-import { MigratePieceSetConfig1805000000000 } from './migration/postgres/1805000000000-MigratePieceSetConfig'
-import { BackfillPieceSets1806000000000 } from './migration/postgres/1806000000000-BackfillPieceSets'
+import { CreatePieceSetTable1804000000000 } from './migration/postgres/1804000000000-CreatePieceSetTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -800,9 +798,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddToolSearchIndexTable1801000000000,
         AddChatRolloutFreeCreditGrant1802000000000,
         AddFilteredComponentNamesToPlatform1803000000000,
-        AddPieceSetTable1804000000000,
-        MigratePieceSetConfig1805000000000,
-        BackfillPieceSets1806000000000,
+        CreatePieceSetTable1804000000000,
     ]
     return migrations
 }

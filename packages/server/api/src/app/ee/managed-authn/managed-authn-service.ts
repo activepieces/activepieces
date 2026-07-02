@@ -5,9 +5,6 @@ import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, 
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
-import { distributedLock } from '../../database/redis-connections'
-import { pieceRepos } from '../../pieces/metadata/piece-metadata-service'
-import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -103,27 +100,24 @@ type AssignProjectPieceSetParams = {
 }
 
 const assignProjectPieceSet = async ({ platformId, projectId, pieceSetExternalId, piecesTags, piecesFilterType, log }: AssignProjectPieceSetParams): Promise<void> => {
-    // New SDK field: assign by externalId directly
-    if (!isNil(pieceSetExternalId)) {
-        const set = await pieceSetRepo().findOneBy({ platformId, externalId: pieceSetExternalId })
-        if (isNil(set)) {
-            log.warn({ platform: { id: platformId }, project: { id: projectId } }, `[managedAuthn] pieceSet externalId "${pieceSetExternalId}" not found — falling back to default`)
-            const defaultSet = await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
-            await pieceSetService(log).assignProject({ pieceSetId: defaultSet.id, platformId, projectId })
-        }
-        else {
-            await pieceSetService(log).assignProject({ pieceSetId: set.id, platformId, projectId })
-        }
+    // Resolve which named set to assign: the explicit SDK externalId, or (legacy) the first
+    // pieces tag. Multi-tag is unused, so only the first tag is honored; each tag maps to a
+    // named set (externalId = tagName) created by the backfill migration.
+    const targetExternalId = pieceSetExternalId
+        ?? (piecesFilterType === PiecesFilterType.ALLOWED ? piecesTags[0] : undefined)
+
+    const set = isNil(targetExternalId)
+        ? null
+        : await pieceSetRepo().findOneBy({ platformId, externalId: targetExternalId })
+
+    if (!isNil(set)) {
+        await pieceSetService(log).assignProject({ pieceSetId: set.id, platformId, projectId })
         return
     }
 
-    // Legacy compat: piecesTags → upsert a dedicated managed set for this project
-    if (piecesFilterType === PiecesFilterType.ALLOWED && piecesTags.length > 0) {
-        await upsertTagManagedSet({ platformId, projectId, piecesTags, log })
-        return
+    if (!isNil(targetExternalId)) {
+        log.warn({ platform: { id: platformId }, project: { id: projectId } }, `[managedAuthn] pieceSet externalId "${targetExternalId}" not found — falling back to default`)
     }
-
-    // No restriction (NONE / empty tags) → assign to the platform default set
     const defaultSet = await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
     await pieceSetService(log).assignProject({ pieceSetId: defaultSet.id, platformId, projectId })
 }
@@ -195,57 +189,6 @@ const getOrCreateProject = async ({
     })
 
     return { project, isNewProject: true }
-}
-
-type UpsertTagManagedSetParams = {
-    platformId: string
-    projectId: string
-    piecesTags: string[]
-    log: FastifyBaseLogger
-}
-
-// Creates or updates a "managed" piece set generated for this project from the legacy piecesTags field.
-// Uses generatedForProjectId as the idempotency key so repeated calls converge on the same set.
-const upsertTagManagedSet = async ({ platformId, projectId, piecesTags, log }: UpsertTagManagedSetParams): Promise<void> => {
-    const [taggedPieces, allPieceNames] = await Promise.all([
-        pieceTagService.findByPlatformAndTags(platformId, piecesTags),
-        fetchAllPieceNamesForPlatform(platformId),
-    ])
-
-    const taggedSet = new Set(taggedPieces)
-    const disabledPieces = allPieceNames.filter((name) => !taggedSet.has(name))
-    const config = { disabledPieces, disabledActions: {}, disabledTriggers: {}, curatedPieces: [] }
-
-    await distributedLock(log).runExclusive({
-        key: `piece_set_managed_${platformId}_${projectId}`,
-        timeoutInSeconds: 60,
-        fn: async () => {
-            const existing = await pieceSetRepo().findOneBy({ platformId, generatedForProjectId: projectId })
-            if (!isNil(existing)) {
-                await pieceSetRepo().update({ id: existing.id }, { config })
-                await pieceSetService(log).assignProject({ pieceSetId: existing.id, platformId, projectId })
-                return
-            }
-            const created = await pieceSetService(log).create({
-                platformId,
-                name: `Managed (${projectId})`,
-                externalId: undefined,
-                isDefault: false,
-                includeNewPieces: false,
-                generatedForProjectId: projectId,
-                config,
-            })
-            await pieceSetService(log).assignProject({ pieceSetId: created.id, platformId, projectId })
-        },
-    })
-}
-
-async function fetchAllPieceNamesForPlatform(platformId: string): Promise<string[]> {
-    const rows: Array<{ name: string }> = await pieceRepos().manager.query(
-        'SELECT DISTINCT name FROM piece_metadata WHERE "platformId" = $1 OR "platformId" IS NULL ORDER BY name ASC',
-        [platformId],
-    )
-    return rows.map((r) => r.name)
 }
 
 function generateEmailHash(params: { platformId: string, externalUserId: string }): string {

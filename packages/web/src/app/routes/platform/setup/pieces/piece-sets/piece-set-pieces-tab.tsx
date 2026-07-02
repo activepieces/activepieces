@@ -1,5 +1,11 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { FilteredPieceBehavior, PieceSet } from '@activepieces/shared';
+import {
+  FilteredPieceBehavior,
+  isPieceVisible,
+  PieceSelection,
+  PieceSet,
+  UpdatePieceSetRequestBody,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -33,6 +39,35 @@ import { cn } from '@/lib/utils';
 
 import { PieceComponentVisibilitySheet } from '../piece-component-visibility-sheet';
 
+function setPieceVisible(
+  pieces: PieceSelection,
+  name: string,
+  visible: boolean,
+): PieceSelection {
+  const isException = pieces.exceptions.includes(name);
+  const shouldBeException = pieces.mode === 'include_all' ? !visible : visible;
+  if (isException === shouldBeException) {
+    return pieces;
+  }
+  return {
+    mode: pieces.mode,
+    exceptions: shouldBeException
+      ? [...pieces.exceptions, name]
+      : pieces.exceptions.filter((n) => n !== name),
+  };
+}
+
+function setPiecesVisible(
+  pieces: PieceSelection,
+  names: string[],
+  visible: boolean,
+): PieceSelection {
+  return names.reduce(
+    (acc, name) => setPieceVisible(acc, name, visible),
+    pieces,
+  );
+}
+
 type PieceSetPiecesTabProps = {
   pieceSet: PieceSet;
 };
@@ -58,27 +93,35 @@ const BulkPieceSetActions = ({
     (p) => !isPlatformHidden(p.name),
   );
   const selectedNames = actionablePieces.map((p) => p.name);
-  const allIncluded = actionablePieces.every(
-    (p) => !pieceSet.config.disabledPieces.includes(p.name),
+  const allIncluded = actionablePieces.every((p) =>
+    isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }),
   );
-  const allExcluded = actionablePieces.every((p) =>
-    pieceSet.config.disabledPieces.includes(p.name),
+  const allExcluded = actionablePieces.every(
+    (p) => !isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }),
   );
+
+  const pendingRequest = (variables as { request: UpdatePieceSetRequestBody })
+    ?.request;
 
   return (
     <>
       <Button
         variant="ghost"
         size="sm"
-        loading={
-          isPending &&
-          !!(variables as { request: { enablePieces?: string[] } })?.request
-            ?.enablePieces
-        }
+        loading={isPending && !!pendingRequest?.pieces}
         disabled={allIncluded}
         onClick={() =>
           updateSet(
-            { id: pieceSet.id, request: { enablePieces: selectedNames } },
+            {
+              id: pieceSet.id,
+              request: {
+                pieces: setPiecesVisible(
+                  pieceSet.config.pieces,
+                  selectedNames,
+                  true,
+                ),
+              },
+            },
             { onSuccess: resetSelection },
           )
         }
@@ -89,15 +132,20 @@ const BulkPieceSetActions = ({
       <Button
         variant="ghost"
         size="sm"
-        loading={
-          isPending &&
-          !!(variables as { request: { disablePieces?: string[] } })?.request
-            ?.disablePieces
-        }
+        loading={isPending && !!pendingRequest?.pieces}
         disabled={allExcluded}
         onClick={() =>
           updateSet(
-            { id: pieceSet.id, request: { disablePieces: selectedNames } },
+            {
+              id: pieceSet.id,
+              request: {
+                pieces: setPiecesVisible(
+                  pieceSet.config.pieces,
+                  selectedNames,
+                  false,
+                ),
+              },
+            },
             { onSuccess: resetSelection },
           )
         }
@@ -138,13 +186,18 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
 
   const togglePiece = useCallback(
     (pieceName: string, currentlyIncluded: boolean) => {
-      if (currentlyIncluded) {
-        updateSet({ id: pieceSet.id, request: { disablePieces: [pieceName] } });
-      } else {
-        updateSet({ id: pieceSet.id, request: { enablePieces: [pieceName] } });
-      }
+      updateSet({
+        id: pieceSet.id,
+        request: {
+          pieces: setPieceVisible(
+            pieceSet.config.pieces,
+            pieceName,
+            !currentlyIncluded,
+          ),
+        },
+      });
     },
-    [updateSet, pieceSet.id],
+    [updateSet, pieceSet.id, pieceSet.config.pieces],
   );
 
   const filteredPieces = useMemo(() => {
@@ -154,7 +207,10 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
       if (isPlatformHidden(piece.name)) {
         return selectedStatuses.has('hidden');
       }
-      const included = !pieceSet.config.disabledPieces.includes(piece.name);
+      const included = isPieceVisible({
+        pieces: pieceSet.config.pieces,
+        name: piece.name,
+      });
       return selectedStatuses.has(included ? 'enabled' : 'disabled');
     });
   }, [pieces, pieceSet, selectedStatuses, isPlatformHidden]);
@@ -247,19 +303,21 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                 </span>
               );
             }
-            const included = !pieceSet.config.disabledPieces.includes(
-              row.original.name,
-            );
-            const curated = (pieceSet.config.curatedPieces ?? []).includes(
-              row.original.name,
-            );
+            const included = isPieceVisible({
+              pieces: pieceSet.config.pieces,
+              name: row.original.name,
+            });
+            const selectedActions =
+              pieceSet.config.selectedActions[row.original.name];
+            const selectedTriggers =
+              pieceSet.config.selectedTriggers[row.original.name];
+            const curated =
+              row.original.name in pieceSet.config.selectedActions ||
+              row.original.name in pieceSet.config.selectedTriggers;
             const total = row.original.actions + row.original.triggers;
-            const disabledCount =
-              (pieceSet.config.disabledActions[row.original.name]?.length ??
-                0) +
-              (pieceSet.config.disabledTriggers[row.original.name]?.length ??
-                0);
-            const selectedCount = Math.max(total - disabledCount, 0);
+            const selectedCount =
+              (selectedActions?.length ?? row.original.actions) +
+              (selectedTriggers?.length ?? row.original.triggers);
             return (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -273,7 +331,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                       'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
                     )}
                   >
-                    <Badge variant={curated ? 'default' : 'secondary'}>
+                    <Badge variant={curated ? 'default' : 'accent'}>
                       {curated
                         ? t('{count} of {total} selected', {
                             count: selectedCount,
@@ -297,9 +355,10 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             if (isPlatformHidden(row.original.name)) {
               return null;
             }
-            const included = !pieceSet.config.disabledPieces.includes(
-              row.original.name,
-            );
+            const included = isPieceVisible({
+              pieces: pieceSet.config.pieces,
+              name: row.original.name,
+            });
             return (
               <div className="flex items-center justify-end">
                 <Switch

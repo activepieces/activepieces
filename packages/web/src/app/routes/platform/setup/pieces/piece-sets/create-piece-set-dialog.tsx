@@ -24,12 +24,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { pieceSetMutations } from '@/features/piece-sets';
 
-const formSchema = CreatePieceSetRequestBody.extend({
-  includeNewPieces: z.boolean(),
-});
+const formSchema = CreatePieceSetRequestBody;
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -48,7 +45,6 @@ const CreatePieceSetForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      includeNewPieces: true,
     },
     mode: 'onChange',
   });
@@ -81,21 +77,6 @@ const CreatePieceSetForm = ({
                 <Input {...field} placeholder={t('e.g. Engineering')} />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="includeNewPieces"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
-              <FormLabel>{t('Include new pieces by default')}</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value ?? true}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
             </FormItem>
           )}
         />

@@ -22,13 +22,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { pieceSetMutations } from '@/features/piece-sets';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: formErrors.required }),
   externalId: z.string().optional(),
-  includeNewPieces: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -39,7 +37,6 @@ type EditPieceSetDialogProps = {
   id: string;
   currentName: string;
   currentExternalId: string | null;
-  currentIncludeNewPieces: boolean;
 };
 
 const EditPieceSetForm = ({
@@ -47,20 +44,17 @@ const EditPieceSetForm = ({
   id,
   currentName,
   currentExternalId,
-  currentIncludeNewPieces,
 }: {
   onOpenChange: (open: boolean) => void;
   id: string;
   currentName: string;
   currentExternalId: string | null;
-  currentIncludeNewPieces: boolean;
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: currentName,
       externalId: currentExternalId ?? '',
-      includeNewPieces: currentIncludeNewPieces,
     },
     mode: 'onChange',
   });
@@ -68,14 +62,13 @@ const EditPieceSetForm = ({
   const { mutate: updateSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
 
-  const handleSubmit = ({ name, externalId, includeNewPieces }: FormValues) => {
+  const handleSubmit = ({ name, externalId }: FormValues) => {
     updateSet(
       {
         id,
         request: {
           name,
           externalId: externalId || null,
-          includeNewPieces,
         },
       },
       { onSuccess: () => onOpenChange(false) },
@@ -117,28 +110,6 @@ const EditPieceSetForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="includeNewPieces"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between gap-4">
-              <div>
-                <FormLabel>{t('Include new pieces')}</FormLabel>
-                <FormDescription>
-                  {t(
-                    'Automatically include newly installed pieces in this set',
-                  )}
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
         <DialogFooter>
           <Button
             type="button"
@@ -162,7 +133,6 @@ export const EditPieceSetDialog = ({
   id,
   currentName,
   currentExternalId,
-  currentIncludeNewPieces,
 }: EditPieceSetDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -176,7 +146,6 @@ export const EditPieceSetDialog = ({
           id={id}
           currentName={currentName}
           currentExternalId={currentExternalId}
-          currentIncludeNewPieces={currentIncludeNewPieces}
         />
       </DialogContent>
     </Dialog>

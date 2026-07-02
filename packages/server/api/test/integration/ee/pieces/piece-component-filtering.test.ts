@@ -175,9 +175,9 @@ describe('Piece Component Filtering (EE)', () => {
     })
 
     describe('GET /v1/pieces (with piece sets)', () => {
-        const emptyConfig = { disabledPieces: [], disabledActions: {}, disabledTriggers: {} }
+        const emptyConfig = { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
 
-        async function setupPieceSetScenario(disabledPieces: string[]) {
+        async function setupPieceSetScenario(hiddenPieces: string[]) {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
                 platform: { filteredPieceNames: [], filteredActionNames: {}, filteredTriggerNames: {} },
@@ -191,9 +191,8 @@ describe('Piece Component Filtering (EE)', () => {
                 name: 'Test Set',
                 externalId: null,
                 isDefault: false,
-                includeNewPieces: true,
                 generatedForProjectId: null,
-                config: { disabledPieces, disabledActions: {}, disabledTriggers: {} },
+                config: { pieces: { mode: 'include_all', exceptions: hiddenPieces }, selectedActions: {}, selectedTriggers: {} },
             }
             await databaseConnection().getRepository('piece_set').save(pieceSet)
             await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
@@ -221,7 +220,6 @@ describe('Piece Component Filtering (EE)', () => {
                 name: 'Default',
                 externalId: null,
                 isDefault: true,
-                includeNewPieces: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             }
@@ -240,7 +238,7 @@ describe('Piece Component Filtering (EE)', () => {
             expect(pieces.find((p: { name: string }) => p.name === 'visible-piece')).toBeDefined()
         })
 
-        it('piece in disabledPieces is hidden', async () => {
+        it('a hidden piece is not returned', async () => {
             const { mockProject, token } = await setupPieceSetScenario(['hidden-piece'])
 
             const piece = createMockPieceMetadata({ name: 'hidden-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
@@ -254,7 +252,7 @@ describe('Piece Component Filtering (EE)', () => {
             expect(pieces.find((p: { name: string }) => p.name === 'hidden-piece')).toBeUndefined()
         })
 
-        it('only the piece in disabledPieces is hidden; others remain visible', async () => {
+        it('only the hidden piece is excluded; others remain visible', async () => {
             const { mockProject, token } = await setupPieceSetScenario(['blocked-piece'])
 
             const allowed = createMockPieceMetadata({ name: 'allowed-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
@@ -270,7 +268,7 @@ describe('Piece Component Filtering (EE)', () => {
             expect(pieces.find((p: { name: string }) => p.name === 'blocked-piece')).toBeUndefined()
         })
 
-        it('piece not in disabledPieces remains visible alongside a disabled one', async () => {
+        it('a visible piece remains alongside a hidden one', async () => {
             const { mockProject, token } = await setupPieceSetScenario(['excluded-piece'])
 
             const excluded = createMockPieceMetadata({ name: 'excluded-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
@@ -286,7 +284,7 @@ describe('Piece Component Filtering (EE)', () => {
             expect(pieces.find((p: { name: string }) => p.name === 'visible-piece-2')).toBeDefined()
         })
 
-        it('platform-blocked piece stays hidden even when not in piece-set disabledPieces', async () => {
+        it('platform-blocked piece stays hidden even when the piece set is permissive', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
                 platform: { filteredPieceNames: ['platform-blocked'], filteredActionNames: {}, filteredTriggerNames: {}, filteredPieceBehavior: 'BLOCKED' },
@@ -300,7 +298,6 @@ describe('Piece Component Filtering (EE)', () => {
                 name: 'Permissive Set',
                 externalId: null,
                 isDefault: false,
-                includeNewPieces: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             }
@@ -333,7 +330,6 @@ describe('Piece Component Filtering (EE)', () => {
                 name: 'Default',
                 externalId: null,
                 isDefault: true,
-                includeNewPieces: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             }
@@ -353,11 +349,11 @@ describe('Piece Component Filtering (EE)', () => {
     })
 
     describe('GET /v1/pieces (component filters via piece sets)', () => {
-        const emptyConfig = { disabledPieces: [], disabledActions: {}, disabledTriggers: {} }
+        const emptyConfig = { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
 
         async function setupComponentPieceSetScenario(opts: {
-            disabledActions?: Record<string, string[]>
-            disabledTriggers?: Record<string, string[]>
+            selectedActions?: Record<string, string[]>
+            selectedTriggers?: Record<string, string[]>
         }) {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
@@ -372,12 +368,11 @@ describe('Piece Component Filtering (EE)', () => {
                 name: 'Component Test Set',
                 externalId: null,
                 isDefault: false,
-                includeNewPieces: true,
                 generatedForProjectId: null,
                 config: {
-                    disabledPieces: [],
-                    disabledActions: opts.disabledActions ?? {},
-                    disabledTriggers: opts.disabledTriggers ?? {},
+                    pieces: { mode: 'include_all', exceptions: [] },
+                    selectedActions: opts.selectedActions ?? {},
+                    selectedTriggers: opts.selectedTriggers ?? {},
                 },
             }
             await databaseConnection().getRepository('piece_set').save(pieceSet)
@@ -392,7 +387,7 @@ describe('Piece Component Filtering (EE)', () => {
             return { mockPlatform, mockProject, token }
         }
 
-        it('empty disabledActions shows all suggestedActions', async () => {
+        it('no selected list shows all suggestedActions', async () => {
             const { mockProject, token } = await setupComponentPieceSetScenario({})
 
             const piece = createMockPieceMetadata({
@@ -419,9 +414,9 @@ describe('Piece Component Filtering (EE)', () => {
             expect(actionNames).toContain('action_b')
         })
 
-        it('action in disabledActions is hidden', async () => {
+        it('action not in the selected list is hidden', async () => {
             const { mockProject, token } = await setupComponentPieceSetScenario({
-                disabledActions: { 'my-piece': ['excluded_action'] },
+                selectedActions: { 'my-piece': ['visible_action'] },
             })
 
             const piece = createMockPieceMetadata({
@@ -447,9 +442,9 @@ describe('Piece Component Filtering (EE)', () => {
             expect(actionNames).toContain('visible_action')
         })
 
-        it('only actions listed in disabledActions are hidden; others remain visible', async () => {
+        it('only actions in the selected list are visible; others are hidden', async () => {
             const { mockProject, token } = await setupComponentPieceSetScenario({
-                disabledActions: { 'my-piece': ['blocked_action'] },
+                selectedActions: { 'my-piece': ['allowed_action'] },
             })
 
             const piece = createMockPieceMetadata({
@@ -475,7 +470,7 @@ describe('Piece Component Filtering (EE)', () => {
             expect(actionNames).not.toContain('blocked_action')
         })
 
-        it('platform-blocked action stays hidden even when not in piece-set disabledActions', async () => {
+        it('platform-blocked action stays hidden even when the piece set is permissive', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
                 platform: {
@@ -493,7 +488,6 @@ describe('Piece Component Filtering (EE)', () => {
                 name: 'Permissive Set',
                 externalId: null,
                 isDefault: false,
-                includeNewPieces: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
             }
@@ -524,9 +518,9 @@ describe('Piece Component Filtering (EE)', () => {
             expect(actionNames).toContain('allowed_action')
         })
 
-        it('trigger in disabledTriggers is hidden; others remain visible', async () => {
+        it('trigger not in the selected list is hidden; others remain visible', async () => {
             const { mockProject, token } = await setupComponentPieceSetScenario({
-                disabledTriggers: { 'my-piece': ['blocked_trigger'] },
+                selectedTriggers: { 'my-piece': ['allowed_trigger'] },
             })
 
             const piece = createMockPieceMetadata({

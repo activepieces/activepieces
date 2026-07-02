@@ -73,27 +73,82 @@ function PieceComponentVisibilitySheetContent({
     enabled: open,
   });
 
-  const originalHiddenActions = pieceSet
-    ? pieceSet.config.disabledActions[pieceName] ?? []
-    : platform.filteredActionNames[pieceName] ?? [];
-  const originalHiddenTriggers = pieceSet
-    ? pieceSet.config.disabledTriggers[pieceName] ?? []
-    : platform.filteredTriggerNames[pieceName] ?? [];
+  const allActionNames = useMemo(
+    () => (pieceModel ? Object.keys(pieceModel.actions) : []),
+    [pieceModel],
+  );
+  const allTriggerNames = useMemo(
+    () => (pieceModel ? Object.keys(pieceModel.triggers) : []),
+    [pieceModel],
+  );
 
   const originalMode: VisibilityMode =
-    pieceSet && (pieceSet.config.curatedPieces ?? []).includes(pieceName)
+    pieceSet &&
+    (pieceName in pieceSet.config.selectedActions ||
+      pieceName in pieceSet.config.selectedTriggers)
       ? 'selected'
       : 'all';
+
+  const originalHiddenActions = useMemo(() => {
+    if (!pieceSet) {
+      return platform.filteredActionNames[pieceName] ?? [];
+    }
+    if (originalMode !== 'selected') {
+      return [];
+    }
+    const selected = pieceSet.config.selectedActions[pieceName] ?? [];
+    return allActionNames.filter((n) => !selected.includes(n));
+  }, [
+    pieceSet,
+    platform.filteredActionNames,
+    pieceName,
+    originalMode,
+    allActionNames,
+  ]);
+
+  const originalHiddenTriggers = useMemo(() => {
+    if (!pieceSet) {
+      return platform.filteredTriggerNames[pieceName] ?? [];
+    }
+    if (originalMode !== 'selected') {
+      return [];
+    }
+    const selected = pieceSet.config.selectedTriggers[pieceName] ?? [];
+    return allTriggerNames.filter((n) => !selected.includes(n));
+  }, [
+    pieceSet,
+    platform.filteredTriggerNames,
+    pieceName,
+    originalMode,
+    allTriggerNames,
+  ]);
 
   const [mode, setMode] = useState<VisibilityMode>(
     pieceSet ? originalMode : 'selected',
   );
-  const [localHiddenActions, setLocalHiddenActions] = useState<string[]>(
-    () => originalHiddenActions,
-  );
-  const [localHiddenTriggers, setLocalHiddenTriggers] = useState<string[]>(
-    () => originalHiddenTriggers,
-  );
+  const [touchedHiddenActions, setTouchedHiddenActions] = useState<
+    string[] | null
+  >(null);
+  const [touchedHiddenTriggers, setTouchedHiddenTriggers] = useState<
+    string[] | null
+  >(null);
+
+  const localHiddenActions = touchedHiddenActions ?? originalHiddenActions;
+  const localHiddenTriggers = touchedHiddenTriggers ?? originalHiddenTriggers;
+  const setLocalHiddenActions = (
+    updater: string[] | ((prev: string[]) => string[]),
+  ) =>
+    setTouchedHiddenActions((prev) => {
+      const current = prev ?? originalHiddenActions;
+      return typeof updater === 'function' ? updater(current) : updater;
+    });
+  const setLocalHiddenTriggers = (
+    updater: string[] | ((prev: string[]) => string[]),
+  ) =>
+    setTouchedHiddenTriggers((prev) => {
+      const current = prev ?? originalHiddenTriggers;
+      return typeof updater === 'function' ? updater(current) : updater;
+    });
 
   const { mutate: setPieceComponentVisibility, isPending: isPlatformSaving } =
     platformPiecesMutations.useSetPieceComponentVisibility({
@@ -193,24 +248,20 @@ function PieceComponentVisibilitySheetContent({
       updatePieceSet(
         {
           id: pieceSet.id,
-          request:
-            originalMode === 'selected' ? { uncuratePieces: [pieceName] } : {},
+          request: {
+            actions: { [pieceName]: { mode: 'all' } },
+            triggers: { [pieceName]: { mode: 'all' } },
+          },
         },
         { onSuccess: () => onOpenChange(false) },
       );
       return;
     }
 
-    const newlyDisabledActions = localHiddenActions.filter(
-      (n) => !originalHiddenActions.includes(n),
-    );
-    const newlyEnabledActions = originalHiddenActions.filter(
+    const selectedActionNames = allActionNames.filter(
       (n) => !localHiddenActions.includes(n),
     );
-    const newlyDisabledTriggers = localHiddenTriggers.filter(
-      (n) => !originalHiddenTriggers.includes(n),
-    );
-    const newlyEnabledTriggers = originalHiddenTriggers.filter(
+    const selectedTriggerNames = allTriggerNames.filter(
       (n) => !localHiddenTriggers.includes(n),
     );
 
@@ -218,19 +269,15 @@ function PieceComponentVisibilitySheetContent({
       {
         id: pieceSet.id,
         request: {
-          ...(originalMode === 'all' && { curatePieces: [pieceName] }),
-          ...(newlyDisabledActions.length > 0 && {
-            disableActions: { [pieceName]: newlyDisabledActions },
-          }),
-          ...(newlyEnabledActions.length > 0 && {
-            enableActions: { [pieceName]: newlyEnabledActions },
-          }),
-          ...(newlyDisabledTriggers.length > 0 && {
-            disableTriggers: { [pieceName]: newlyDisabledTriggers },
-          }),
-          ...(newlyEnabledTriggers.length > 0 && {
-            enableTriggers: { [pieceName]: newlyEnabledTriggers },
-          }),
+          actions: {
+            [pieceName]: { mode: 'selected', selected: selectedActionNames },
+          },
+          triggers: {
+            [pieceName]: {
+              mode: 'selected',
+              selected: selectedTriggerNames,
+            },
+          },
         },
       },
       { onSuccess: () => onOpenChange(false) },

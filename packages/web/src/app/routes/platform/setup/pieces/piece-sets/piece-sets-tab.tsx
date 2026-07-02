@@ -86,7 +86,7 @@ export const PieceSetsTab = () => {
           ),
       },
       {
-        accessorKey: 'includeNewPieces',
+        id: 'includeNewPieces',
         size: 160,
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -95,13 +95,15 @@ export const PieceSetsTab = () => {
             icon={ToggleLeft}
           />
         ),
-        cell: ({ row }) => (
-          <Badge
-            variant={row.original.includeNewPieces ? 'success' : 'outline'}
-          >
-            {row.original.includeNewPieces ? t('Yes') : t('No')}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const includesNewPieces =
+            row.original.config.pieces.mode === 'include_all';
+          return (
+            <Badge variant={includesNewPieces ? 'success' : 'outline'}>
+              {includesNewPieces ? t('Yes') : t('No')}
+            </Badge>
+          );
+        },
       },
       {
         id: 'actions',
@@ -205,7 +207,6 @@ export const PieceSetsTab = () => {
           id={editingSet.id}
           currentName={editingSet.name}
           currentExternalId={editingSet.externalId ?? null}
-          currentIncludeNewPieces={editingSet.includeNewPieces}
         />
       )}
     </>

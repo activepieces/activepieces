@@ -117,7 +117,7 @@ const AssignProjectsForm = ({
       </DialogHeader>
       <Command className="rounded-md border">
         <CommandInput placeholder={t('Search projects')} />
-        <CommandList className="max-h-72">
+        <CommandList className="max-h-72 overflow-y-auto">
           <CommandEmpty>{t('No projects found')}</CommandEmpty>
           <CommandGroup>
             {allProjects.map((project) => {

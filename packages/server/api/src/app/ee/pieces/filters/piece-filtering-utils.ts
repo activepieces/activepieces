@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ApEdition, FilteredPieceBehavior, PiecesFilterType, PlatformWithoutFederatedAuth } from '@activepieces/shared'
+import { ApEdition, FilteredPieceBehavior, isComponentVisible, isPieceVisible, PiecesFilterType, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
@@ -121,10 +121,10 @@ async function filterComponentsBasedOnPieceSet({ log, projectId, platformId, sum
     return summaries.map((summary) => ({
         ...summary,
         suggestedActions: summary.suggestedActions?.filter(
-            (action) => !(resolvedSet.config.disabledActions[summary.name] ?? []).includes(action.name),
+            (action) => isComponentVisible({ selected: resolvedSet.config.selectedActions[summary.name], name: action.name }),
         ),
         suggestedTriggers: summary.suggestedTriggers?.filter(
-            (trigger) => !(resolvedSet.config.disabledTriggers[summary.name] ?? []).includes(trigger.name),
+            (trigger) => isComponentVisible({ selected: resolvedSet.config.selectedTriggers[summary.name], name: trigger.name }),
         ),
     }))
 }
@@ -138,7 +138,7 @@ async function filterBasedOnPieceSet({ log, projectId, platformId, pieces }: Fil
         : (await pieceSetRepo().findOneBy({ id: pieceSetId, platformId }))
             ?? await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
 
-    return pieces.filter((p) => !resolvedSet.config.disabledPieces.includes(p.name))
+    return pieces.filter((p) => isPieceVisible({ pieces: resolvedSet.config.pieces, name: p.name }))
 }
 
 async function filterBasedOnProject(

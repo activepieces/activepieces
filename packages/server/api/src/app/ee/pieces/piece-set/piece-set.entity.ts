@@ -27,17 +27,13 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
             type: Boolean,
             default: false,
         },
-        includeNewPieces: {
-            type: Boolean,
-            default: true,
-        },
         generatedForProjectId: {
             ...ApIdSchema,
             nullable: true,
         },
         config: {
             type: 'jsonb',
-            default: { disabledPieces: [], disabledActions: {}, disabledTriggers: {} },
+            default: { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} },
         },
     },
     indices: [
