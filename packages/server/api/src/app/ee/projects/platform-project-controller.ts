@@ -9,6 +9,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { machineService } from '../../workers/machine/machine-service'
 import { platformProjectService } from './platform-project-service'
 
 const DEFAULT_LIMIT_SIZE = 50
@@ -34,6 +35,19 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
             alertReceiverEmail: request.body.alertReceiverEmail ?? undefined,
         })
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
+    })
+
+    app.get('/worker-groups', ListWorkerGroupsRequest, async (request) => {
+        const platform = await platformService(request.log).getOneWithPlanOrThrow(request.principal.platform.id)
+        if (!platform.plan.workerGroupsEnabled) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: {
+                    message: 'Isolated workers are not enabled for this platform',
+                },
+            })
+        }
+        return machineService(request.log).listProjectWorkerGroups()
     })
 
     app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {
@@ -195,6 +209,25 @@ const UpdateProjectRequest = {
             [StatusCodes.OK]: ProjectWithLimits,
         },
         body: UpdateProjectPlatformRequest,
+    },
+}
+
+const ListWorkerGroupsRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['projects'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: z.object({
+                groups: z.array(z.object({
+                    label: z.string(),
+                    slots: z.number(),
+                })),
+                sharedSlots: z.number(),
+            }),
+        },
     },
 }
 

@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, PiecePackage, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, PiecePackage, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
@@ -21,12 +21,17 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getWorkerGroupQueueName, QueueName } from '../job'
+import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-const getPollQueueName = (workerGroupId?: string): string => {
-    return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
+const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
+    if (isNil(assignment)) {
+        return QueueName.WORKER_JOBS
+    }
+    return assignment.scope === WorkerGroupScope.PROJECT
+        ? getProjectGroupQueueName(assignment.id)
+        : getPlatformGroupQueueName(assignment.id)
 }
 
 let pagedForUnreadableAppVersion = false
@@ -45,11 +50,11 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
     })
 }
 
-export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string, connectionId?: string): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ worker: { id: input.workerId }, workerGroupId }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, workerGroupId)
+            log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection(input, assignment)
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
             if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
@@ -65,7 +70,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string, c
                 }
                 return null
             }
-            const pollQueueName = getPollQueueName(workerGroupId)
+            const pollQueueName = getPollQueueName(assignment)
             const job = await jobBroker(log).poll(pollQueueName, connectionId)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
@@ -254,13 +259,13 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string, c
         },
 
         async getUsedPieces() {
-            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
+            const redisKey = `usedPieces:${isNil(assignment) ? 'shared' : `${assignment.scope}:${assignment.id}`}`
             const pieces = await distributedStore.get<PiecePackage[]>(redisKey)
             return pieces ?? []
         },
 
         async markPieceAsUsed(input) {
-            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
+            const redisKey = `usedPieces:${isNil(assignment) ? 'shared' : `${assignment.scope}:${assignment.id}`}`
             const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
             const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
             const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))
