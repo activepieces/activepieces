@@ -22,6 +22,9 @@ Ingests inbound HTTP requests from external services and routes them to flows fo
 - Cloud: same as CE; payload size and timeout configurable per environment
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Sync webhook** (`/:flowId/sync`) — blocks the HTTP connection until the flow completes and returns the flow's response payload
 - **Async webhook** (`/:flowId`) — queues execution and returns 200 immediately with an `x-webhook-id` header
 - **Draft webhook** — routes to the latest (draft) flow version instead of the published version; used for testing

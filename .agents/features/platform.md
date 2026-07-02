@@ -18,6 +18,9 @@ A Platform is the top-level tenant namespace in Activepieces. Every installation
 All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, `ssoEnabled`, `agentsEnabled`) control which capabilities are active. Community edition uses `OPEN_SOURCE_PLAN` with all booleans set to their CE defaults. `usage` is only populated on non-Community editions.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Platform** — tenant root; owns branding, auth config, piece filters
 - **PlatformPlan** — separate record (in EE module) storing feature flags, limits, Stripe subscription state
 - **FilteredPieceBehavior** — `ALLOWED` (allowlist) or `BLOCKED` (blocklist) applied to `filteredPieceNames`

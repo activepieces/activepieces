@@ -59,6 +59,13 @@ export type ProvisionInput = {
 
 export type RuntimeExecutionResult = EngineResponse<unknown> & {
     logs: string | undefined
+    timings: RuntimePhaseTimings
+}
+
+export type RuntimePhaseTimings = {
+    provisionMs: number
+    bootMs: number
+    runMs: number
 }
 
 export type RuntimeExecutorInfo = {

@@ -3,6 +3,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { websocketService } from '../../core/websockets.service'
+import { parseWorkerGroupValue } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { jobQueue } from '../job-queue/job-queue'
 import { createHandlers } from '../rpc/worker-rpc-service'
@@ -12,11 +13,12 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
-            const rawWorkerGroupId = socket.handshake.auth?.workerGroupId
-            const workerGroupId = typeof rawWorkerGroupId === 'string' ? rawWorkerGroupId : undefined
-            const response = await machineService(app.log).onConnection(request, workerGroupId)
+            const rawWorkerGroupValue = socket.handshake.auth?.workerGroupId
+            const projectWorker = socket.handshake.auth?.projectWorker === true
+            const assignment = parseWorkerGroupValue({ value: typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined, projectWorker })
+            const response = await machineService(app.log).onConnection(request, assignment)
             callback?.(response)
-            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, workerGroupId, socket.id))
+            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, assignment, socket.id))
         }
     })
 
