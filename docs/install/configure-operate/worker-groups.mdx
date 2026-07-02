@@ -21,16 +21,16 @@ Use both together to guarantee capacity for busy projects and cap the rest.
 
 A worker joins a group by setting its group ID at startup. `AP_PROJECT_WORKER` selects the group's scope:
 
-- **Project** group — set `AP_PROJECT_WORKER=true`. Assign individual projects to it from the platform's Workers → Assigqnments page.
-- **Platform** group — leave `AP_PROJECT_WORKER=false` (the default). Serves the whole platform's runs; used for dedicated/canary fleets.
+- **Project** group — leave `AP_PROJECT_WORKER=true` (the default). Assign individual projects to it from the platform's Workers → Assignments page.
+- **Platform** group — set `AP_PROJECT_WORKER=false`. Serves the whole platform's runs; used for dedicated/canary fleets.
 
 ```bash
-# Project group, e.g. 1cpu_machine
+# Project group, e.g. 1cpu_machine (AP_PROJECT_WORKER defaults to true)
 AP_WORKER_GROUP_ID=1cpu_machine
-AP_PROJECT_WORKER=true
 
-# Platform group (AP_PROJECT_WORKER defaults to false)
+# Platform group
 AP_WORKER_GROUP_ID=canary
+AP_PROJECT_WORKER=false
 ```
 
 Grouped workers run in a process-isolated execution mode, so set:
