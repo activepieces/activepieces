@@ -249,7 +249,7 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
 }
 
 function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened }: {
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onConnectorReconnected?: (connectorUuid: string) => void
@@ -273,6 +273,13 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 }))
             }
             const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
+            // Park: the grace window expired and onGateParked() has aborted the turn. The AI SDK's
+            // abort gate discards this tool result before it is finalized into history, so returning
+            // the never-persisted sentinel (rather than the canned dismissal) keeps the parked PENDING
+            // card intact — the later resume answers it, never showing a "user skipped" message.
+            if (decision.parked) {
+                return PARKED_GATE_SENTINEL
+            }
             if (!decision.approved) {
                 return { dismissed: true, message: typeof dismissMessage === 'function' ? dismissMessage(input) : dismissMessage }
             }
@@ -527,11 +534,12 @@ function createProgressGuard() {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, consumePreApproval, guides }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    consumePreApproval?: (params: { toolName: string }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     guides: Record<string, string>
 }): ToolSet {
     const progressGuard = createProgressGuard()
@@ -582,7 +590,10 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     needsConfirmation: toolInput.needsConfirmation,
                 })
 
-                if (needsPreview) {
+                // A resume turn re-issuing a late-approved action consumes the one-shot pre-approval
+                // instead of opening a second card (Fix 1). Only when there is none do we open the gate.
+                const preApproved = needsPreview && consumePreApproval ? (await consumePreApproval({ toolName: 'ap_execute_action' })).approved : false
+                if (needsPreview && !preApproved) {
                     const previewData: ActionPreviewEvent = {
                         toolCallId: options.toolCallId,
                         pieceName: toolInput.pieceName,
@@ -609,6 +620,9 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                         }))
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
+                    if (decision.parked) {
+                        return PARKED_GATE_SENTINEL
+                    }
                     if (!decision.approved) {
                         return { content: [{ type: 'text', text: 'Action cancelled by user.' }] }
                     }
@@ -956,7 +970,7 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
     sendEmail: (params: { to: string[], subject: string, body: string, gateId?: string }) => Promise<SendChatEmailResponse>
     eventEmitter: ChatEventEmitter
     userEmail: string
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
 }): ToolSet {
     const normalizedSelf = userEmail.toLowerCase().trim()
@@ -975,6 +989,10 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
                 // Require user approval for any non-self recipient — injected content (a fetched page
                 // or tool result) could otherwise steer the model into emailing data to an attacker.
                 const hasExternalRecipient = toolInput.to.some((email) => email.toLowerCase().trim() !== normalizedSelf)
+                // Note: ap_send_email re-verifies the approval at the SMTP boundary (chatRpc#sendChatEmail
+                // checks the per-gate decision matches the exact recipients/subject/body), so a
+                // late-approved external send re-opens its card on resume rather than consuming a
+                // pre-approval — the marker still records that nothing was sent originally.
                 if (hasExternalRecipient) {
                     const previewData: ActionPreviewEvent = {
                         toolCallId: options.toolCallId,
@@ -994,6 +1012,9 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
                         }))
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
+                    if (decision.parked) {
+                        return PARKED_GATE_SENTINEL
+                    }
                     if (!decision.approved) {
                         return { content: [{ type: 'text', text: 'Email cancelled by user.' }] }
                     }
@@ -1266,11 +1287,12 @@ function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, u
     return typeof tool['execute'] === 'function'
 }
 
-function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, eventEmitter, log }: {
+function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, consumePreApproval, eventEmitter, log }: {
     mcpTools: Record<string, unknown>
     checkFlowWrites: (flowId: string) => Promise<unknown>
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    consumePreApproval?: (params: { toolName: string }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
     eventEmitter: ChatEventEmitter
     log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
 }): Record<string, unknown> {
@@ -1289,6 +1311,12 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
                     log?.warn({ error, flow: { id: flowId } }, 'ap_test_flow write-check failed, running test without confirmation gate')
                 }
                 else if (isObject(check) && check['hasWrites'] === true) {
+                    // Resume re-issuing a late-approved live test consumes the one-shot pre-approval
+                    // instead of opening a second confirmation card (Fix 1).
+                    const preApproved = consumePreApproval ? (await consumePreApproval({ toolName: 'ap_test_flow' })).approved : false
+                    if (preApproved) {
+                        return originalExecute(args, options)
+                    }
                     const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
                     const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
                     const gateLabel = writeSteps.length > 0
@@ -1312,6 +1340,9 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
                     }))
                     log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, flow: { id: flowId }, writeStepCount: writeSteps.length }, 'Test-flow write gate opened, awaiting approval')
                     const decision = await waitForApproval({ gateId })
+                    if (decision.parked) {
+                        return PARKED_GATE_SENTINEL
+                    }
                     log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, decision: decision.approved ? 'approved' : 'denied' }, 'Test-flow write gate resolved')
                     if (!decision.approved) {
                         const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
@@ -1398,6 +1429,19 @@ function createPhaseTools({ onPhaseChange }: {
             },
         }),
     }
+}
+
+// Returned by a gate consumer when the grace window expired and the turn was parked (aborted). The
+// AI SDK abort gate discards it before it reaches history, so it is never persisted; branching on
+// decision.parked to return this — instead of the canned dismissal — is what keeps a parked gate's
+// PENDING card intact for the later resume. Making the park explicit (rather than relying on the
+// abort race alone) means a canned "user skipped/cancelled" message can never leak into history.
+export const PARKED_GATE_SENTINEL = { __parked: true } as const
+
+export type GateDecision = {
+    approved: boolean
+    payload?: Record<string, unknown>
+    parked?: boolean
 }
 
 export type ChatEventEmitter = {

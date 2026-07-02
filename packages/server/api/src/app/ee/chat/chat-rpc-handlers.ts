@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PersistedToolCallPart, PersistedToolCallStatus, ProjectType, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
@@ -71,6 +71,7 @@ async function persistPendingGatePart({ conversationId, runId, gateId, toolName,
     await chatHelpers.conversationRepo().manager.transaction(async (manager) => {
         const conversation = await manager
             .createQueryBuilder(ChatConversationEntity, 'c')
+            .select(['c.id', 'c.activeRunId', 'c.uiMessages'])
             .setLock('pessimistic_write')
             .where('c.id = :id', { id: conversationId })
             .getOne()
@@ -370,9 +371,15 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text: userMessage }] },
             ]
         if (!isResume) {
-            await chatHelpers.conversationRepo().update(conversationId, {
-                messages: allMessages,
-                uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
+            // Fence on the owning run so a run superseded between the STREAMING lock above and this
+            // write can't overwrite the newer run's messages/uiMessages (Fix 5).
+            await updateConversationForRun({
+                conversationId,
+                runId: input.runId,
+                updates: {
+                    messages: allMessages,
+                    uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
+                },
             })
         }
         await chatApprovalGate.clearCancel({ conversationId })
@@ -533,16 +540,41 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async updateChatProgress(input: UpdateChatProgressRequest): Promise<void> {
-        const storedUiMessages = ((await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId }))?.uiMessages ?? []) as PersistedChatMessage[]
-        const mergedUiMessages = preservePendingGateParts({ storedUiMessages, incomingUiMessages: input.uiMessages as PersistedChatMessage[] })
-        const updates: Record<string, unknown> = {
-            uiMessages: sanitizeObjectForPostgresql(mergedUiMessages),
-        }
-        if (!isNil(input.messages)) {
-            updates.messages = input.messages
-        }
-        await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
-        log.debug({ conversation: { id: input.conversationId }, uiMessageCount: mergedUiMessages.length, messageCount: input.messages?.length }, '[chatRpc#updateChatProgress] Progress persisted')
+        // Same pessimistic_write row-lock as persistPendingGatePart so the two writers serialize: a
+        // progress save reads the stored uiMessages, merges any still-PENDING gate card forward, and
+        // writes back atomically. Without the lock, a gate-open write and a progress write can read the
+        // same stale uiMessages and clobber each other — dropping the gate card mid-turn. Still fenced
+        // on the owning run inside the lock.
+        await chatHelpers.conversationRepo().manager.transaction(async (manager) => {
+            const conversation = await manager
+                .createQueryBuilder(ChatConversationEntity, 'c')
+                .select(['c.id', 'c.activeRunId', 'c.uiMessages'])
+                .setLock('pessimistic_write')
+                .where('c.id = :id', { id: input.conversationId })
+                .getOne()
+            if (isNil(conversation)) {
+                return
+            }
+            if (!isNil(input.runId) && !isNil(conversation.activeRunId) && conversation.activeRunId !== input.runId) {
+                return
+            }
+            const storedUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
+            const mergedUiMessages = preservePendingGateParts({ storedUiMessages, incomingUiMessages: input.uiMessages as PersistedChatMessage[] })
+            const updates: Record<string, unknown> = {
+                uiMessages: () => ':uiMessages',
+            }
+            if (!isNil(input.messages)) {
+                updates.messages = input.messages
+            }
+            await manager
+                .createQueryBuilder()
+                .update(ChatConversationEntity)
+                .set(updates)
+                .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(mergedUiMessages)))
+                .where('id = :id', { id: input.conversationId })
+                .execute()
+            log.debug({ conversation: { id: input.conversationId }, uiMessageCount: mergedUiMessages.length, messageCount: input.messages?.length }, '[chatRpc#updateChatProgress] Progress persisted')
+        })
     },
 
     async heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void> {
@@ -615,6 +647,22 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 }
             }
             return { result: { success: true } }
+        }
+        if (input.toolName === '__consume_pre_approval') {
+            // A late-approved approval-gate (Fix 1) left a one-shot pre-approval. When the resumed
+            // model re-issues the action, the worker calls this BEFORE opening a new card: if a
+            // pre-approval exists it is consumed (single-use) and the worker proceeds as approved
+            // without asking the user again.
+            const gateTool = input.toolInput.toolName
+            if (typeof input.conversationId !== 'string' || typeof gateTool !== 'string') {
+                return { result: { approved: false } }
+            }
+            const preApproval = await chatApprovalGate.consumePreApproval({ conversationId: input.conversationId, toolName: gateTool })
+            if (isNil(preApproval)) {
+                return { result: { approved: false } }
+            }
+            log.info({ conversation: { id: input.conversationId }, tool: { name: gateTool } }, '[chatRpc#executeChatTool] Consumed one-shot pre-approval — proceeding without a new gate')
+            return { result: { approved: true, ...spreadIfDefined('payload', preApproval.payload) } }
         }
         if (input.toolName === '__store_selected_connection') {
             const { pieceName, connectionExternalId, label, projectId } = input.toolInput

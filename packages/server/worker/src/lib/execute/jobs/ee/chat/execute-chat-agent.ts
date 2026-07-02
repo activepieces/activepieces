@@ -430,6 +430,19 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         }))
     }
 
+    // One-shot pre-approval check (Fix 1): a resume turn re-issuing a late-approved approval-gate
+    // action consumes the stored pre-approval instead of opening a second card. Returns the decision
+    // so the caller can proceed as approved without asking the user again.
+    const consumePreApproval = async ({ toolName: gateTool }: { toolName: string }): Promise<{ approved: boolean, payload?: Record<string, unknown> }> => {
+        const { data: response } = await tryCatch(() => ctx.apiClient.executeChatTool({
+            toolName: '__consume_pre_approval',
+            toolInput: { toolName: gateTool },
+            platformId, userId, conversationId,
+        }))
+        const result = isObject(response?.result) ? response.result as Record<string, unknown> : {}
+        return { approved: result['approved'] === true, ...(isObject(result['payload']) ? { payload: result['payload'] as Record<string, unknown> } : {}) }
+    }
+
     const displayTools = chatWorkerTools.createDisplayTools({
         waitForApproval,
         displayToolTimeoutMs: GATE_GRACE_MS,
@@ -444,7 +457,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, consumePreApproval, guides })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -473,6 +486,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         },
         waitForApproval,
         storePendingGate,
+        consumePreApproval,
         eventEmitter,
         log,
     })

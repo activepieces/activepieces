@@ -202,6 +202,17 @@ export const CHAT_CRASH_RESUME_NOTE = [
 // user message — no DB column, and it survives a full worker restart.
 export const CHAT_MAX_AUTO_RESUMES = 3
 
+// Persisted as the tool result of an approval-gate (ap_execute_action / ap_send_email / ap_test_flow)
+// that the user approved AFTER its worker died. The side-effecting execution died with the worker, so
+// this is explicitly NOT an execution — it tells the resumed model the action is pre-approved and must
+// be re-issued now. Paired with a one-shot pre-approval in the store so the re-issued call runs
+// without opening a second card. `executed: false` keeps the flipped card from reading as "done".
+export const CHAT_LATE_APPROVAL_MARKER = {
+    approved: true,
+    executed: false,
+    note: 'The user approved this after the original run ended — the action was NOT executed. Re-run it now; it is pre-approved, so do not ask again.',
+} as const
+
 export const ChatConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
