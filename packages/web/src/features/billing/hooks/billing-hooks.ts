@@ -1,10 +1,14 @@
 import {
+  AiCreditsAutoTopUpState,
+  AutoTopUpConfig,
   ConsumableProductTopupParams,
   ConsumableProductAutoTopupParams,
   CheckoutPlanParams,
+  PlatformBillingInformation,
 } from '@activepieces/shared';
 import {
   QueryClient,
+  QueryKey,
   useMutation,
   useQuery,
   useQueryClient,
@@ -15,10 +19,15 @@ import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 
 import { platformBillingApi } from '../api/billing-plans-api';
+import { usePlanSwitchSuccessDialogStore } from '../stores/plan-switch-success-dialog-state';
+
+const PLATFORM_BILLING_SUBSCRIPTION_KEY = [
+  'platform-billing-subscription',
+] as const;
 
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
-    ['platform-billing-subscription', platformId] as const,
+    [...PLATFORM_BILLING_SUBSCRIPTION_KEY, platformId] as const,
   plans: (platformId: string) =>
     ['platform-billing-plans', platformId] as const,
   projectsUsage: (
@@ -33,12 +42,12 @@ export const billingMutations = {
     return useMutation({
       mutationFn: (params: CheckoutPlanParams) =>
         platformBillingApi.checkout(params),
-      onSuccess: ({ checkoutUrl }) => {
+      onSuccess: ({ checkoutUrl }, { planId }) => {
         if (checkoutUrl) {
           window.open(checkoutUrl, '_blank');
         } else {
           refreshBillingCaches(queryClient);
-          toast.success(t('Subscription updated'));
+          usePlanSwitchSuccessDialogStore.getState().openDialog(planId);
         }
         setIsOpen?.(false);
       },
@@ -115,14 +124,32 @@ export const billingMutations = {
         if (paymentUrl) {
           window.open(paymentUrl, '_blank');
         }
+        return { paymentUrl };
       },
-      onSuccess: () => {
+      onMutate: async (params) => {
+        await queryClient.cancelQueries({
+          queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
+        });
+        const previous = queryClient.getQueriesData<PlatformBillingInformation>(
+          { queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY },
+        );
+        queryClient.setQueriesData<PlatformBillingInformation>(
+          { queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY },
+          (old) => old && applyOptimisticAutoTopUp(old, params),
+        );
+        return { previous };
+      },
+      onSuccess: (data, _params, context) => {
+        if (data.paymentUrl) {
+          restoreBillingSubscription(queryClient, context?.previous);
+        }
         queryClient.invalidateQueries({
-          queryKey: ['platform-billing-subscription'],
+          queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
         });
         toast.success(t('Auto top-up config saved'));
       },
-      onError: () => {
+      onError: (_error, _params, context) => {
+        restoreBillingSubscription(queryClient, context?.previous);
         toast.error(t('Auto top-up config change failed'));
         internalErrorToast();
       },
@@ -163,6 +190,49 @@ function refreshBillingCaches(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: ['platform'] });
   queryClient.invalidateQueries({ queryKey: ['flags'] });
   queryClient.invalidateQueries({
-    queryKey: ['platform-billing-subscription'],
+    queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
   });
+}
+
+function applyOptimisticAutoTopUp(
+  info: PlatformBillingInformation,
+  params: ConsumableProductAutoTopupParams,
+): PlatformBillingInformation {
+  if (params.state === AiCreditsAutoTopUpState.DISABLED) {
+    return {
+      ...info,
+      autoTopUps: info.autoTopUps.map((topUp) =>
+        topUp.featureId === params.featureId
+          ? { ...topUp, enabled: false }
+          : topUp,
+      ),
+    };
+  }
+  const entry: AutoTopUpConfig = {
+    featureId: params.featureId,
+    enabled: true,
+    threshold: params.minThreshold,
+    quantity: params.creditsToAdd,
+    maxMonthlyTopUps: params.maxMonthlyTopUps,
+  };
+  const exists = info.autoTopUps.some(
+    (topUp) => topUp.featureId === params.featureId,
+  );
+  return {
+    ...info,
+    autoTopUps: exists
+      ? info.autoTopUps.map((topUp) =>
+          topUp.featureId === params.featureId ? entry : topUp,
+        )
+      : [...info.autoTopUps, entry],
+  };
+}
+
+function restoreBillingSubscription(
+  queryClient: QueryClient,
+  previous: [QueryKey, PlatformBillingInformation | undefined][] | undefined,
+): void {
+  previous?.forEach(([key, data]) =>
+    queryClient.setQueryData<PlatformBillingInformation>(key, data),
+  );
 }

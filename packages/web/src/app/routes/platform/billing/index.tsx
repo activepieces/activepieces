@@ -20,6 +20,8 @@ import {
   CurrentSubscriptionCard,
   CreditsCard,
   AutoRechargeCard,
+  DROP_TO_FREE_MESSAGE,
+  DROP_TO_FREE_WARNING,
   LicenseKey,
   billingMutations,
   billingQueries,
@@ -186,12 +188,8 @@ function BillingPageDetails() {
                 {isNil(info.cancelAt) ? (
                   <ConfirmationDeleteDialog
                     title={t('Cancel subscription')}
-                    message={t(
-                      'This takes effect at the end of your current billing period.',
-                    )}
-                    warning={t(
-                      'Your workspace will move to the Free plan and lose its current limits and paid features. You keep your current plan until the period ends.',
-                    )}
+                    message={t(DROP_TO_FREE_MESSAGE)}
+                    warning={t(DROP_TO_FREE_WARNING)}
                     buttonText={t('Cancel subscription')}
                     entityName={t('subscription')}
                     mutationFn={async () => {
@@ -256,7 +254,7 @@ const BillingSection = ({
   description: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <section className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] md:gap-10">
+  <section className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_400px] md:gap-20 pr-4">
     <div className="flex flex-col gap-1">
       <h2 className="text-base font-semibold">{title}</h2>
       <div className="text-sm text-muted-foreground">{description}</div>

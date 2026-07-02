@@ -7,7 +7,8 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
+import { ChevronsUpDown, Info } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -28,12 +29,18 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 
@@ -88,7 +95,7 @@ export function AutoTopUpConfigDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px]">
+      <DialogContent className="max-w-[480px] gap-2">
         <DialogHeader>
           <DialogTitle>{t('Auto recharge')}</DialogTitle>
           <DialogDescription>
@@ -97,10 +104,7 @@ export function AutoTopUpConfigDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSave)}
-            className="space-y-6 py-4"
-          >
+          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
             <div className="space-y-4">
               <FormField
                 control={form.control}
@@ -135,23 +139,13 @@ export function AutoTopUpConfigDialog({
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel>{t('Add credits')}</FormLabel>
-                    <Select
-                      value={String(field.value)}
-                      onValueChange={(value) => field.onChange(Number(value))}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {creditOptions.map((option) => (
-                          <SelectItem key={option} value={String(option)}>
-                            {option.toLocaleString()}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <CreditsAmountSelect
+                        value={field.value}
+                        options={creditOptions}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />
@@ -224,7 +218,7 @@ export function AutoTopUpConfigDialog({
               <Info className="size-3.5 mt-0.5 shrink-0" />
               <span>
                 {t(
-                  'Changes apply on your next usage — credits are topped up the next time your balance falls below the threshold, not immediately when you save.',
+                  'Changes apply on your next usage — credits are charged the next time your balance falls below the threshold, not immediately when you save.',
                 )}
               </span>
             </div>
@@ -249,7 +243,106 @@ export function AutoTopUpConfigDialog({
   );
 }
 
-// Simple-mode credit options: start at 1,000, then every 5,000 up to the cap (½ of the plan's included credits).
+function CreditsAmountSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: number;
+  options: number[];
+  onChange: (value: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [custom, setCustom] = useState('');
+
+  const pick = (amount: number) => {
+    onChange(amount);
+    setOpen(false);
+    setCustom('');
+  };
+
+  const commitCustom = () => {
+    const parsed = Number(custom);
+    if (custom.trim() === '' || !Number.isFinite(parsed)) {
+      return;
+    }
+    pick(clampToStep(parsed));
+  };
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          commitCustom();
+        }
+        setOpen(next);
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+          )}
+        >
+          <span>{value.toLocaleString()}</span>
+          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-[var(--radix-popover-trigger-width)] p-1"
+      >
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => pick(option)}
+            className="flex w-full items-center rounded-sm px-3 py-2 text-sm hover:bg-accent"
+          >
+            {option.toLocaleString()}
+          </button>
+        ))}
+        <div className="mt-1 flex items-center gap-2 rounded-md border border-input px-3 py-2 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
+          <input
+            type="number"
+            min={CREDITS_MIN}
+            max={CREDITS_MAX}
+            step={CREDITS_STEP}
+            value={custom}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setCustom(raw);
+              const parsed = Number(raw);
+              if (raw.trim() !== '' && Number.isFinite(parsed)) {
+                onChange(parsed);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                commitCustom();
+              }
+            }}
+            onBlur={commitCustom}
+            placeholder={t('Custom amount')}
+            className="w-full bg-transparent text-sm outline-none"
+          />
+          <span className="shrink-0 text-sm text-muted-foreground">
+            {t('credits')}
+          </span>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function clampToStep(value: number): number {
+  const snapped = Math.round(value / CREDITS_STEP) * CREDITS_STEP;
+  return Math.min(CREDITS_MAX, Math.max(CREDITS_MIN, snapped));
+}
+
 function simpleCreditOptions(cap: number): number[] {
   const options = [SIMPLE_BASE];
   for (let value = SIMPLE_STEP; value <= cap; value += SIMPLE_STEP) {
@@ -278,6 +371,9 @@ function normalizeTopUps(value: number | null | undefined): number | null {
 const DEFAULT_CREDITS_TO_ADD = 1000;
 const SIMPLE_BASE = 1000;
 const SIMPLE_STEP = 5000;
+const CREDITS_MIN = 1000;
+const CREDITS_MAX = 1000000;
+const CREDITS_STEP = 1000;
 const MONTHLY_TOPUP_OPTIONS = [1, 2, 4, 6];
 const UNLIMITED_VALUE = 'unlimited';
 

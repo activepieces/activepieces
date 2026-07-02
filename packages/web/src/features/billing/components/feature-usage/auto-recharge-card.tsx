@@ -9,8 +9,8 @@ import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 
@@ -26,110 +26,77 @@ export const AutoRechargeCard = ({
   const { mutate: updateAutoTopUp, isPending } =
     billingMutations.useUpdateAutoTopUp(queryClient);
 
-  const enabled = autoTopUp?.enabled ?? false;
+  const enabled = (autoTopUp?.enabled ?? false) && !isNil(autoTopUp);
 
-  const dialog = (
-    <AutoTopUpConfigDialog
-      key={isDialogOpen ? 'auto-open' : 'auto-closed'}
-      isOpen={isDialogOpen}
-      onOpenChange={setIsDialogOpen}
-      feature={feature}
-      includedCredits={includedCredits}
-      currentThreshold={enabled ? autoTopUp?.threshold : undefined}
-      currentCreditsToAdd={enabled ? autoTopUp?.quantity : undefined}
-      currentMaxMonthlyTopUps={
-        enabled ? autoTopUp?.maxMonthlyTopUps : undefined
-      }
-    />
-  );
-
-  if (!enabled || isNil(autoTopUp)) {
-    return (
-      <>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => setIsDialogOpen(true)}
-        >
-          {t('Enable auto recharge')}
-        </Button>
-        {dialog}
-      </>
-    );
-  }
-
-  const costPerRecharge =
-    (autoTopUp.quantity / feature.billingUnits) * feature.pricePerUnit;
-  const maxMonthlyCost = isNil(autoTopUp.maxMonthlyTopUps)
-    ? null
-    : costPerRecharge * autoTopUp.maxMonthlyTopUps;
+  const toggle = (checked: boolean) => {
+    if (checked) {
+      setIsDialogOpen(true);
+      return;
+    }
+    updateAutoTopUp({
+      state: AiCreditsAutoTopUpState.DISABLED,
+      featureId: feature.featureId,
+    });
+  };
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border p-5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Switch
+          checked={enabled}
+          disabled={isPending}
+          onCheckedChange={toggle}
+        />
         <span className="text-sm font-medium text-foreground">
-          {t('Auto recharge')}
+          {t('Enable auto recharge')}
         </span>
-        <Badge variant="success" className="rounded-sm">
-          {t('Active')}
-        </Badge>
       </div>
-      <div className="flex flex-col gap-2 text-sm">
-        <AutoRechargeRow
-          label={t('When credits below')}
-          value={autoTopUp.threshold.toLocaleString()}
-        />
-        <AutoRechargeRow
-          label={t('Add')}
-          value={t('{credits} credits (${cost})', {
-            credits: autoTopUp.quantity.toLocaleString(),
-            cost: costPerRecharge.toFixed(2),
-          })}
-        />
-        <AutoRechargeRow
-          label={t('Monthly limit')}
-          value={
-            isNil(autoTopUp.maxMonthlyTopUps)
-              ? t('No limit')
-              : t(
-                  '{count, plural, =1 {1 auto recharge} other {# auto recharges}}',
-                  { count: autoTopUp.maxMonthlyTopUps },
-                )
-          }
-        />
-        <AutoRechargeRow
-          label={t('Max monthly cost')}
-          value={
-            isNil(maxMonthlyCost)
-              ? t('No limit')
-              : `$${maxMonthlyCost.toFixed(2)}`
-          }
-        />
-      </div>
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsDialogOpen(true)}
-        >
-          <Pencil className="size-4 mr-2" />
-          {t('Edit')}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          loading={isPending}
-          onClick={() =>
-            updateAutoTopUp({
-              state: AiCreditsAutoTopUpState.DISABLED,
-              featureId: feature.featureId,
-            })
-          }
-        >
-          {t('Turn off')}
-        </Button>
-      </div>
-      {dialog}
+      {enabled && (
+        <>
+          <div className="flex flex-col gap-2 text-sm">
+            <AutoRechargeRow
+              label={t('When credits below')}
+              value={autoTopUp.threshold.toLocaleString()}
+            />
+            <AutoRechargeRow
+              label={t('Add')}
+              value={autoTopUp.quantity.toLocaleString()}
+            />
+            <AutoRechargeRow
+              label={t('Monthly limit')}
+              value={
+                isNil(autoTopUp.maxMonthlyTopUps)
+                  ? t('No limit')
+                  : t(
+                      '{count, plural, =1 {1 auto recharge} other {# auto recharges}}',
+                      { count: autoTopUp.maxMonthlyTopUps },
+                    )
+              }
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => setIsDialogOpen(true)}
+          >
+            <Pencil className="mr-2 size-4" />
+            {t('Edit')}
+          </Button>
+        </>
+      )}
+      <AutoTopUpConfigDialog
+        key={isDialogOpen ? 'auto-open' : 'auto-closed'}
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        feature={feature}
+        includedCredits={includedCredits}
+        currentThreshold={enabled ? autoTopUp.threshold : undefined}
+        currentCreditsToAdd={enabled ? autoTopUp.quantity : undefined}
+        currentMaxMonthlyTopUps={
+          enabled ? autoTopUp.maxMonthlyTopUps : undefined
+        }
+      />
     </div>
   );
 };

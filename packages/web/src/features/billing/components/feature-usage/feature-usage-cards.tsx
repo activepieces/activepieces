@@ -6,6 +6,8 @@ import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
+const HIDE_WHEN_UNLIMITED = ['active-flows', 'team-projects'];
+
 export function FeatureUsageCards({
   platformSubscription,
 }: {
@@ -136,7 +138,10 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
       included: usage.appSumoAiCredits + (usage.appSumoAiCreditsRemaining ?? 0),
     });
   }
-  return metrics;
+  return metrics.filter(
+    (metric) =>
+      !(HIDE_WHEN_UNLIMITED.includes(metric.key) && isNil(metric.included)),
+  );
 }
 
 function resolveCreditsResetLabel(

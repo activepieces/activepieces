@@ -20,6 +20,8 @@ import { cn } from '@/lib/utils';
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
 
 import {
+  DROP_TO_FREE_MESSAGE,
+  DROP_TO_FREE_WARNING,
   planSelectorUtils,
   type BillingCycle,
   type CheckoutAction,
@@ -297,12 +299,8 @@ function PlanCta({
     return (
       <ConfirmationDeleteDialog
         title={t('Downgrade to the Free plan')}
-        message={t(
-          'This takes effect at the end of your current billing period.',
-        )}
-        warning={t(
-          'Your workspace will move to the Free plan and lose its current limits and paid features. You keep your current plan until the period ends.',
-        )}
+        message={t(DROP_TO_FREE_MESSAGE)}
+        warning={t(DROP_TO_FREE_WARNING)}
         buttonText={t('Downgrade to Free')}
         entityName={t('subscription')}
         mutationFn={onDowngrade}

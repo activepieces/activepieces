@@ -4,48 +4,57 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
 
+import { Progress } from '@/components/ui/progress';
+
 export const CreditsCard = ({ info }: CreditsCardProps) => {
   const { plan, usage } = info;
   const isPaid =
     !isNil(info.currentPlanId) && info.currentPlanId !== PlanName.FREE;
   const remaining = usage.creditsRemaining;
-  const periodLabel = isPaid ? t('per month') : t('per day');
+  const isUnlimited = isNil(remaining);
+  const total = plan.includedCredits;
+  const used = isUnlimited ? usage.creditsUsed : Math.max(0, total - remaining);
+  const percentUsed =
+    isUnlimited || total <= 0
+      ? 0
+      : Math.min(100, Math.round((used / total) * 100));
   const resetAt = resolveResetAt({ info, isPaid });
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border p-5">
-      <div className="flex flex-col gap-1">
-        <span className="text-sm text-muted-foreground">
-          {t('Your credits')}
+    <div className="flex flex-col rounded-xl border">
+      <div className="flex flex-col gap-3 p-5">
+        <span className="text-muted-foreground text-sm">
+          {isUnlimited ? t('Credits used') : t('Included in your plan')}
         </span>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-semibold text-foreground">
-            {isNil(remaining)
-              ? t('Unlimited')
-              : Math.round(remaining).toLocaleString()}
-          </span>
-          {!isNil(remaining) && (
-            <span className="text-sm text-muted-foreground">
-              / {plan.includedCredits.toLocaleString()} {periodLabel}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-3xl font-bold text-foreground">
+              {(isUnlimited ? used : total).toLocaleString()}
             </span>
-          )}
+            <span className="text-muted-foreground">{t('credits')}</span>
+          </div>
         </div>
+        {!isUnlimited && (
+          <>
+            <Progress value={percentUsed} />
+            <span className="text-sm text-muted-foreground">
+              {t('{amount} remaining', {
+                amount: Math.round(remaining).toLocaleString(),
+              })}
+            </span>
+          </>
+        )}
       </div>
       {!isNil(resetAt) && (
-        <>
-          <div className="border-t" />
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="size-4 shrink-0" />
-            <span>
-              {isPaid ? t('Resets at ') : t('Resets in ')}
-              <span className="font-semibold text-foreground">
-                {isPaid
-                  ? dayjs(resetAt).format('MMM D, YYYY, h:mm A')
-                  : formatCountdown(resetAt)}
-              </span>
+        <div className="flex items-center gap-2 border-t p-4 text-sm text-muted-foreground">
+          <Clock className="size-4 shrink-0" />
+          <span>
+            {t('Resets in')}{' '}
+            <span className="font-semibold text-foreground">
+              {dayjs(resetAt).format('D MMM YYYY, h:mm A')}
             </span>
-          </div>
-        </>
+          </span>
+        </div>
       )}
     </div>
   );
@@ -65,13 +74,6 @@ function resolveResetAt({
     return info.nextBillingDate ?? null;
   }
   return dayjs().add(1, 'day').startOf('day').toISOString();
-}
-
-function formatCountdown(resetAt: string): string {
-  const totalMinutes = Math.max(0, dayjs(resetAt).diff(dayjs(), 'minute'));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${hours}:${String(minutes).padStart(2, '0')}h`;
 }
 
 type CreditsCardProps = {

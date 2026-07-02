@@ -9,4 +9,8 @@ export { Error } from './components/error';
 export { LicenseKey } from './components/license-key';
 export { Success } from './components/success';
 export { billingMutations, billingQueries } from './hooks/billing-hooks';
+export {
+  DROP_TO_FREE_MESSAGE,
+  DROP_TO_FREE_WARNING,
+} from './components/plan-selector-utils';
 export { useManagePlanDialogStore } from './stores/manage-plan-dialog-state';

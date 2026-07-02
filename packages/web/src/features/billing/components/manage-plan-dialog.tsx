@@ -10,18 +10,22 @@ import {
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 
 import { PlanSelector } from './plan-selector';
+import { PlanSwitchSuccessDialog } from './plan-switch-success-dialog';
 
 export function ManagePlanDialog() {
   const { isOpen, closeDialog } = useManagePlanDialogStore();
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
-      <DialogContent className="max-w-[1100px]">
-        <DialogHeader>
-          <DialogTitle>{t('Explore plans')}</DialogTitle>
-        </DialogHeader>
-        <PlanSelector enabled={isOpen} onSelected={closeDialog} />
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="max-w-[1100px]">
+          <DialogHeader>
+            <DialogTitle>{t('Explore plans')}</DialogTitle>
+          </DialogHeader>
+          <PlanSelector enabled={isOpen} onSelected={closeDialog} />
+        </DialogContent>
+      </Dialog>
+      <PlanSwitchSuccessDialog />
+    </>
   );
 }

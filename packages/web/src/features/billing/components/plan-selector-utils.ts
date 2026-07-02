@@ -196,6 +196,13 @@ export const planSelectorUtils = {
   SALES_URL,
 };
 
+// Shared copy for the "drop to Free" confirmation, reused by the plan-selector downgrade and the
+// cancel-subscription flow so the two stay in sync (i18n keys — see en/translation.json).
+export const DROP_TO_FREE_MESSAGE =
+  'This takes effect at the end of your current billing period.';
+export const DROP_TO_FREE_WARNING =
+  'Your workspace will move to the Free plan and lose its current limits and paid features. You keep your current plan until the period ends.';
+
 export type BillingCycle = 'month' | 'year';
 export type CheckoutAction = 'create' | 'upgrade' | 'downgrade';
 
