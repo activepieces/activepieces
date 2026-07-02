@@ -250,6 +250,21 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             : []
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
+        // A worker killed mid-turn leaves its BullMQ job stalled; BullMQ re-delivers it (up to
+        // maxStalledCount) with the ORIGINAL data — same runId, original userMessage, no resumeKind.
+        // By the time it re-runs, the crash watchdog has already claimed a fresh activeRunId for the
+        // resume turn, so this replay no longer owns the conversation. Rejecting it here is what stops
+        // the re-delivered original from re-appending the user bubble a second time (the duplicate
+        // uiMessage). Only fence a run that carries a runId (dryRun/eval have none) and only when the
+        // conversation has a different owner — a NULL activeRunId or a match writes freely.
+        if (!isNil(input.runId) && !isNil(conversation.activeRunId) && conversation.activeRunId !== input.runId) {
+            log.warn({ conversation: { id: conversationId }, run: { id: input.runId } }, '[chatRpc#getChatConfig] Rejected superseded run (stalled-job re-delivery) — a newer run owns this conversation')
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'This run has been superseded by a newer one' },
+            })
+        }
+
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const emailEnabled = !dryRun && smtpEmailSender(log).isSmtpConfigured()
         const fetchAvailable = !dryRun
