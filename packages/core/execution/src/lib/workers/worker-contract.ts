@@ -101,6 +101,7 @@ export type GetChatConfigRequest = {
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: ChatPromptOverride
     dryRun?: boolean
+    resumeKind?: 'gate' | 'crash'
 }
 
 export type ResolvedAiToolConfig = {

@@ -21,12 +21,16 @@ function sendApprovalDecision({
   gateId,
   approved,
   payload,
+  onAnswered,
 }: {
   gateId: string;
   approved: boolean;
   payload?: Record<string, unknown>;
+  onAnswered?: () => void;
 }): void {
-  void chatApi.approveToolCall({ gateId, approved, payload });
+  void chatApi
+    .approveToolCall({ gateId, approved, payload })
+    .finally(() => onAnswered?.());
 }
 
 function extractQuestionsFromInput(part: AnyToolPart | null): MultiQuestion[] {
@@ -60,11 +64,16 @@ export type ChatStoreState = {
   builds: Record<string, BuildState>;
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
+  // Set by use-chat: called after a gate decision is delivered. When the conversation had parked
+  // (its worker gone), answering enqueues a resume turn server-side — this reconnects the client to
+  // the conversation's live stream so the resume streams in without a reload. A no-op mid-stream.
+  onGateAnswered: (() => void) | null;
 
   approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
   rejectGate: (gateId: string) => void;
   dismissGate: (gateId: string) => void;
   dismissForm: (messageId: string) => void;
+  setOnGateAnswered: (handler: (() => void) | null) => void;
   resetInteractions: () => void;
   resetBuilds: () => void;
 };
@@ -82,27 +91,33 @@ function dismissAndCleanup(
 }
 
 export const createChatStore = () =>
-  create<ChatStoreState>((set) => ({
+  create<ChatStoreState>((set, get) => ({
     quickReplies: [],
     offerRecurringAutomation: false,
     toolCallMeta: {},
     builds: {},
     dismissedGateIds: {},
     lastDismissedFormId: null,
+    onGateAnswered: null,
 
     approveGate: (gateId: string, payload?: Record<string, unknown>) => {
+      const onAnswered = get().onGateAnswered ?? undefined;
       set((prev) => dismissAndCleanup(prev, gateId));
-      sendApprovalDecision({ gateId, approved: true, payload });
+      sendApprovalDecision({ gateId, approved: true, payload, onAnswered });
     },
     rejectGate: (gateId: string) => {
+      const onAnswered = get().onGateAnswered ?? undefined;
       set((prev) => dismissAndCleanup(prev, gateId));
-      sendApprovalDecision({ gateId, approved: false });
+      sendApprovalDecision({ gateId, approved: false, onAnswered });
     },
     dismissGate: (gateId: string) => {
       set((prev) => dismissAndCleanup(prev, gateId));
     },
     dismissForm: (messageId: string) => {
       set({ lastDismissedFormId: messageId });
+    },
+    setOnGateAnswered: (handler: (() => void) | null) => {
+      set({ onGateAnswered: handler });
     },
     resetInteractions: () => {
       set({

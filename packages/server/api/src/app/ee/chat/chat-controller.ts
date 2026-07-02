@@ -10,6 +10,7 @@ import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
+import { chatResume } from './chat-resume'
 import { chatService } from './chat-service'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
@@ -135,13 +136,34 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
-        request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[chatController] Tool approval received')
-        await chatApprovalGate.resolveGate({
-            gateId: request.params.gateId,
+        const gateId = request.params.gateId
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        request.log.info({ gate: { id: gateId }, approved: request.body.approved }, '[chatController] Tool approval received')
+        // Publish the decision for a live worker still blocking on the gate (fast path — same-turn
+        // continuation). resolveGate returns the conversation the gate belongs to (resolved from the
+        // pending-gate store). If that conversation has since parked (worker gone, status not
+        // STREAMING), no worker is listening; resumeParkedGate persists the answer as the gate's
+        // tool result and enqueues a resume turn. Both paths are idempotent, so a live pickup racing
+        // a park is safe.
+        const { conversationId } = await chatApprovalGate.resolveGate({
+            gateId,
             approved: request.body.approved,
             payload: request.body.payload,
             log: request.log,
         })
+        if (!isNil(conversationId)) {
+            const conversation = await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+            if (conversation.status !== ChatConversationStatus.STREAMING) {
+                await chatResume.resumeParkedGate({
+                    conversation,
+                    gateId,
+                    approved: request.body.approved,
+                    payload: request.body.payload,
+                    log: request.log,
+                })
+            }
+        }
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 

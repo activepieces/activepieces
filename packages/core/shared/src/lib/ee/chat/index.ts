@@ -185,9 +185,22 @@ export enum ChatConversationStatus {
 // the API writes it, the sweeper de-dupes on it, and the web can key its retry affordance off it.
 export const CHAT_INTERRUPTED_MESSAGE = 'This response was interrupted — the run stopped unexpectedly. Send your last message again to retry.'
 
-// Spoken instead of ending the turn silently when an approval/question gate times out with no
-// answer — so the user understands the turn paused waiting on them and that replying resumes it.
-export const CHAT_GATE_TIMEOUT_MESSAGE = 'I asked for your input and didn\'t hear back, so I paused here — reply to continue.'
+// Injected (as a system-role message in the LLM history, never shown to the user) when a resume
+// turn picks up after the previous run was interrupted mid-flight by a crash/deploy/reload. Tells
+// the model the transcript above is everything already done and to verify-before-redo any write
+// whose result is missing, rather than blindly re-executing side effects.
+export const CHAT_CRASH_RESUME_NOTE = [
+    '[system note — not from the user] The previous run handling this task was interrupted before it finished (a deploy, crash, or reload dropped it).',
+    'The transcript above is everything that was already done — treat it as the source of truth.',
+    'For any action you were about to take or may have started but whose result is not visible above AND which could have a side effect (sent an email, created/updated a record, triggered a run), VERIFY the current state with a read BEFORE doing it again — never blindly re-execute a write, to avoid duplicates.',
+    'Then continue the task to completion from where it left off.',
+].join(' ')
+
+// How many times the watchdog will auto-resume a single user turn after crashes before giving up
+// and falling back to the ERROR + interrupted-message banner. The spent count is derived durably by
+// counting CHAT_CRASH_RESUME_NOTE occurrences in the conversation's LLM history since the last real
+// user message — no DB column, and it survives a full worker restart.
+export const CHAT_MAX_AUTO_RESUMES = 3
 
 export const ChatConversation = z.object({
     ...BaseModelSchema,

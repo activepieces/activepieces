@@ -487,6 +487,21 @@ export function useAgentChat({
     sendStatusRef.current.type === 'submitting' ||
     isPollingForAgentReply;
 
+  const isStreamActiveRef = useRef(isStreamActive);
+  isStreamActiveRef.current = isStreamActive;
+  // Answering a gate whose turn had parked (worker gone) enqueues a resume turn server-side. If we
+  // aren't already connected to a live stream, reconnect to the conversation's stream so the resume
+  // streams in without a reload; the poll below is a fallback that reconciles the final history.
+  useEffect(() => {
+    store.getState().setOnGateAnswered(() => {
+      const convId = conversationIdRef.current;
+      if (!convId || isStreamActiveRef.current) return;
+      startStream(convId);
+      setIsPollingForAgentReply(true);
+    });
+    return () => store.getState().setOnGateAnswered(null);
+  }, [store, startStream]);
+
   const isAwaitingResponse =
     streamPhase === 'awaiting-stream' ||
     streamPhase === 'streaming' ||

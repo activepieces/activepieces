@@ -7,6 +7,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { ChatConversationEntity } from './chat-conversation-entity'
+import { chatResume } from './chat-resume'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
 const FAST_TIER_ID = 'fast'
@@ -33,18 +34,33 @@ async function getConversationOrThrow({ id, platformId, userId, log }: { id: str
         const msSinceUpdate = Date.now() - new Date(conversation.updated).getTime()
         if (msSinceUpdate > STREAMING_STALENESS_TIMEOUT_MS) {
             await recoverStaleStreamingConversation({ conversation, stuckForMs: msSinceUpdate, log })
-            conversation.status = ChatConversationStatus.ERROR
+            // Recovery either enqueued a crash resume (status now IDLE, a resume job in flight) or,
+            // once the budget is spent, flipped to ERROR. Reflect the persisted status so the caller
+            // and UI don't see a phantom STREAMING; re-read since recovery may have left either.
+            const recovered = await conversationRepo().findOneBy({ id })
+            if (!isNil(recovered)) {
+                conversation.status = recovered.status
+                conversation.uiMessages = recovered.uiMessages
+            }
         }
     }
     return conversation
 }
 
 // A STREAMING conversation whose heartbeat went silent past the staleness window has lost its
-// worker (deploy/crash/tsx reload dropped the job) — nothing else will ever finish it. Flip it to
-// ERROR and append a persisted assistant message so history alone renders an explanation + retry,
-// instead of an eternal thinking shimmer. Fenced on status so a live turn that just resumed can't
-// be clobbered; the append preserves whatever was persisted incrementally and only tacks on the note.
+// worker (deploy/crash/tsx reload dropped the job) — nothing else will ever finish it. First try to
+// auto-resume: if this user turn still has resume budget, enqueue a crash resume (with a
+// verify-before-redo note) and leave the interrupted note off entirely, so recovery is invisible.
+// Only when the budget is spent do we flip to ERROR and append a persisted assistant message so
+// history alone renders an explanation + retry, instead of an eternal thinking shimmer. Fenced on
+// status so a live turn that just resumed can't be clobbered.
 async function recoverStaleStreamingConversation({ conversation, stuckForMs, log }: { conversation: ChatConversation, stuckForMs: number, log?: FastifyBaseLogger }): Promise<void> {
+    if (!isNil(log)) {
+        const resumed = await chatResume.tryEnqueueCrashResume({ conversation, log }).catch(() => false)
+        if (resumed) {
+            return
+        }
+    }
     const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
     const alreadyNoted = previousUiMessages.some((message) => message.role === PersistedChatRole.ASSISTANT
         && message.parts.some((part) => part.type === PersistedChatPartType.TEXT && part.text === CHAT_INTERRUPTED_MESSAGE))

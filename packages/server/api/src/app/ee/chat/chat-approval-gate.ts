@@ -21,7 +21,7 @@ function channelName(gateId: string): string {
     return `${CHANNEL_PREFIX}${gateId}`
 }
 
-async function resolveGate({ gateId, approved, payload, log }: { gateId: string, approved: boolean, payload?: Record<string, unknown>, log?: FastifyBaseLogger }): Promise<void> {
+async function resolveGate({ gateId, approved, payload, log }: { gateId: string, approved: boolean, payload?: Record<string, unknown>, log?: FastifyBaseLogger }): Promise<{ conversationId: string | null }> {
     // Bind the decision to the exact inputs the user saw in the preview, so a consumer can verify
     // the action it's about to run matches what was approved (not a different payload reusing the id).
     const conversationId = await distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
@@ -39,6 +39,7 @@ async function resolveGate({ gateId, approved, payload, log }: { gateId: string,
     else {
         log?.info({ gate: { id: gateId } }, '[chatApprovalGate] Gate decision ignored (already decided)')
     }
+    return { conversationId: conversationId ?? null }
 }
 
 async function checkDecision({ gateId }: { gateId: string }): Promise<GateDecision | 'pending'> {

@@ -58,7 +58,6 @@
   "The assistant did not respond. Please try again.": "The assistant did not respond. Please try again.",
   "This response was interrupted — the run stopped unexpectedly. Send your last message again to retry.": "This response was interrupted — the run stopped unexpectedly. Send your last message again to retry.",
   "Waiting for your answer": "Waiting for your answer",
-  "I asked for your input and didn't hear back, so I paused here — reply to continue.": "I asked for your input and didn't hear back, so I paused here — reply to continue.",
   "Too many requests": "Too many requests",
   "The service is rate-limiting this account. Wait a few minutes and try again, or reduce how frequently this flow runs.": "The service is rate-limiting this account. Wait a few minutes and try again, or reduce how frequently this flow runs.",
   "The service is unavailable": "The service is unavailable",
