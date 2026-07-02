@@ -26,12 +26,12 @@ export const googleDriveCreateNewTextFile = createAction({
       displayName: 'Content type',
       description: 'Select file type',
       required: true,
-      defaultValue: 'plain/text',
+      defaultValue: 'text/plain',
       options: {
         options: [
           {
             label: 'Text',
-            value: 'plain/text',
+            value: 'text/plain',
           },
           {
             label: 'CSV',
@@ -52,16 +52,23 @@ export const googleDriveCreateNewTextFile = createAction({
     const authClient = await createGoogleClient(context.auth);
     const drive = googleDrive({ version: 'v3', auth: authClient });
 
+    // Normalize the legacy 'plain/text' value saved by existing flows to the
+    // valid 'text/plain' MIME type Google Drive expects.
+    const mimeType =
+      context.propsValue.fileType === 'plain/text'
+        ? 'text/plain'
+        : context.propsValue.fileType;
+
     const response = await drive.files.create({
       requestBody: {
         name: context.propsValue.fileName,
-        mimeType: context.propsValue.fileType,
+        mimeType,
         ...(context.propsValue.parentFolder
           ? { parents: [context.propsValue.parentFolder] }
           : {}),
       },
       media: {
-        mimeType: context.propsValue.fileType,
+        mimeType,
         body: context.propsValue.text,
       },
       supportsAllDrives: context.propsValue.include_team_drives ?? false,
