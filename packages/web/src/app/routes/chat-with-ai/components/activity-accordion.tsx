@@ -353,8 +353,8 @@ function ContextCompressionBadge({
 }) {
   const detail = compressionMethodLabel(compression.method);
   const summary = t('{from} → {to}', {
-    from: formatCompressionBytes(compression.originalBytes),
-    to: formatCompressionBytes(compression.returnedBytes),
+    from: chatUtils.formatKbBytes(compression.originalBytes),
+    to: chatUtils.formatKbBytes(compression.returnedBytes),
   });
   return (
     <DelayedTooltip>
@@ -384,13 +384,6 @@ function compressionMethodLabel(
     case 'truncated':
       return t('Result truncated to fit the context budget');
   }
-}
-
-function formatCompressionBytes(bytes: number): string {
-  if (bytes <= 0) return t('0 KB');
-  const kb = bytes / 1024;
-  if (kb < 1) return t('<1 KB');
-  return t('{kb} KB', { kb: Math.round(kb) });
 }
 
 function formatThinkingDuration(ms: number | undefined): string {

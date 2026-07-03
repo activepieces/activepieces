@@ -1,19 +1,13 @@
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import {
-  Archive,
-  Braces,
-  ChevronDown,
-  Code2,
-  TriangleAlert,
-} from 'lucide-react';
-import { motion } from 'motion/react';
+import { ChevronDown, Code2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { AnyToolPart, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { cn } from '@/lib/utils';
 
 import { previewUtils } from './previews/preview-utils';
@@ -25,115 +19,89 @@ export function CodeModeCard({ part }: { part: AnyToolPart }) {
     const parsed = previewUtils.parseJsonSafe(data.resultText);
     return parsed.ok ? parsed.value : data.resultText;
   }, [data]);
-  const [codeOpen, setCodeOpen] = useState(false);
-  const [resultOpen, setResultOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   if (!data) return null;
 
-  const savings = buildSavingsLine(data);
+  const title =
+    data.reason && data.reason.trim().length > 0
+      ? data.reason
+      : t('Ran a multi-step task');
+  const meta = buildMetaLine(data);
+  const hasDetails =
+    Boolean(data.code) ||
+    (data.ok && parsedResult !== undefined) ||
+    (!data.ok && Boolean(data.error));
 
   return (
-    <motion.div
-      className="my-2 overflow-hidden rounded-xl border bg-background"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="flex items-start gap-2.5 px-3.5 pb-2.5 pt-3">
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <Braces className="size-4" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground">
-              {t('Code Mode')}
+    <div className="py-1">
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <div
+          className={cn(
+            'inline-flex max-w-full items-center gap-2 rounded-lg border border-border px-4 py-1.5 text-sm',
+            hasDetails && 'cursor-pointer',
+          )}
+          onClick={() => hasDetails && setOpen(!open)}
+        >
+          {data.ok ? (
+            <Code2 className="size-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <X
+              className="size-4 shrink-0 text-muted-foreground"
+              strokeWidth={2.5}
+            />
+          )}
+          <TextWithTooltip tooltipMessage={title}>
+            <span className="min-w-0 truncate text-sm text-muted-foreground">
+              {title}
             </span>
-            {!data.ok && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                <TriangleAlert className="size-3" />
-                {t('Failed')}
-              </span>
-            )}
-          </div>
-          {data.reason && (
-            <TextWithTooltip tooltipMessage={data.reason}>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {data.reason}
-              </p>
-            </TextWithTooltip>
+          </TextWithTooltip>
+          {meta && (
+            <span className="shrink-0 text-xs text-muted-foreground/70">
+              {meta}
+            </span>
+          )}
+          {hasDetails && (
+            <ChevronDown
+              className={cn(
+                'size-3 shrink-0 opacity-50 transition-transform duration-300',
+                open && 'rotate-180',
+              )}
+            />
           )}
         </div>
-      </div>
 
-      {data.ok && (
-        <div className="flex items-center gap-1.5 px-3.5 pb-2.5 text-xs text-muted-foreground">
-          <Archive className="size-3 shrink-0 text-primary/70" />
-          <span className="min-w-0">{savings}</span>
-        </div>
-      )}
-
-      {data.code && (
-        <div className="px-3.5 pb-2.5">
-          <Collapsible open={codeOpen} onOpenChange={setCodeOpen}>
-            <button
-              type="button"
-              onClick={() => setCodeOpen(!codeOpen)}
-              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Code2 className="size-3 shrink-0" />
-              {codeOpen ? t('Hide code') : t('View code')}
-              <ChevronDown
-                className={cn(
-                  'size-3 shrink-0 opacity-60 transition-transform duration-300',
-                  codeOpen && 'rotate-180',
-                )}
-              />
-            </button>
-            <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-              <pre className="mt-1.5 max-h-72 overflow-auto rounded-lg bg-muted/40 px-3 py-2 font-mono text-[11px] leading-relaxed text-foreground/80">
-                {data.code}
-              </pre>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-      )}
-
-      {data.ok && parsedResult !== undefined ? (
-        <div className="border-t border-border/60 px-3.5 py-3">
-          <Collapsible open={resultOpen} onOpenChange={setResultOpen}>
-            <button
-              type="button"
-              onClick={() => setResultOpen(!resultOpen)}
-              className="flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ChevronDown
-                className={cn(
-                  'size-3 shrink-0 opacity-60 transition-transform duration-300',
-                  resultOpen && 'rotate-180',
-                )}
-              />
-              {resultOpen ? t('Hide result') : t('Show result')}
-            </button>
-            <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-              <div className="mt-1.5 overflow-hidden rounded-lg bg-muted/30">
-                <SimpleJsonViewer
-                  data={parsedResult}
-                  hideCopyButton={true}
-                  maxHeight={220}
-                  fontSize="11px"
-                />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-      ) : null}
-
-      {!data.ok && data.error && (
-        <p className="border-t border-border/60 px-3.5 py-2.5 text-[11px] leading-relaxed text-muted-foreground/80 break-words">
-          {data.error}
-        </p>
-      )}
-    </motion.div>
+        {hasDetails && (
+          <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+            <div className="mt-1 space-y-2 rounded-lg bg-muted/30 px-3 py-2 text-[11px]">
+              <p className="text-muted-foreground/70">
+                {buildDetailLine(data)}
+              </p>
+              {data.code && (
+                <pre className="max-h-72 overflow-auto rounded-md bg-muted/40 px-3 py-2 font-mono leading-relaxed text-foreground/80">
+                  {data.code}
+                </pre>
+              )}
+              {data.ok && parsedResult !== undefined && (
+                <div className="overflow-hidden rounded-md bg-muted/40">
+                  <SimpleJsonViewer
+                    data={parsedResult}
+                    hideCopyButton={true}
+                    maxHeight={220}
+                    fontSize="11px"
+                  />
+                </div>
+              )}
+              {!data.ok && data.error && (
+                <p className="leading-relaxed text-muted-foreground/80 break-words">
+                  {data.error}
+                </p>
+              )}
+            </div>
+          </CollapsibleContent>
+        )}
+      </Collapsible>
+    </div>
   );
 }
 
@@ -162,19 +130,21 @@ function numberOr(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
-function formatKb(bytes: number): string {
-  if (bytes <= 0) return '0 KB';
-  const kb = bytes / 1024;
-  return kb < 1 ? '<1 KB' : `${Math.round(kb)} KB`;
+function buildMetaLine(data: CodeModeContent): string {
+  if (data.bridgedCallCount <= 0) return t('ran as code');
+  return t(
+    'ran as code · {count, plural, =1 {1 tool call} other {# tool calls}}',
+    { count: data.bridgedCallCount },
+  );
 }
 
-function buildSavingsLine(data: CodeModeContent): string {
+function buildDetailLine(data: CodeModeContent): string {
   return t(
-    'Context compressed · ran {count, plural, =1 {1 tool call} other {# tool calls}} in code · ~{serverKb} processed server-side · ~{returnedKb} returned to context',
+    '{count, plural, =1 {1 tool call} other {# tool calls}} · {serverKb} processed server-side · {returnedKb} returned',
     {
       count: data.bridgedCallCount,
-      serverKb: formatKb(data.serverSideBytes),
-      returnedKb: formatKb(data.returnedBytes),
+      serverKb: chatUtils.formatKbBytes(data.serverSideBytes),
+      returnedKb: chatUtils.formatKbBytes(data.returnedBytes),
     },
   );
 }
