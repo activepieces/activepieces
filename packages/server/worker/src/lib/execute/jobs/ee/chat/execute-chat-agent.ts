@@ -374,7 +374,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
             const blockMs = Math.min(remainingMs, APPROVAL_BLOCK_MS)
             const { data: response, error } = await tryCatch(() => Promise.race([
                 ctx.apiClient.executeChatTool({
-                    toolName: '__approval_wait', toolInput: { gateId, timeoutMs: blockMs }, platformId, userId,
+                    toolName: '__approval_wait', toolInput: { gateId, timeoutMs: blockMs }, platformId, userId, conversationId, runId,
                 }),
                 waitForAbort(abortSignal).then(() => ({ result: 'aborted' as const })),
             ]))

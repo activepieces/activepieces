@@ -283,8 +283,16 @@ async function getPendingGate({ conversationId }: { conversationId: string }): P
 // Deletes BOTH the conversation-keyed pending-gate record AND its reverse gate:{gateId}→conversationId
 // index. resolveGate no longer prunes the mapping (Fix 3), so a leftover reverse key here would let a
 // stale gateId keep resolving to a conversation after the gate is gone — clear both together.
-async function clearPendingGate({ conversationId }: { conversationId: string }): Promise<void> {
+//
+// Optional gateId guard (Fix 2): when the live __approval_wait path consumes a decision it clears the
+// mapping scoped to the gate it just consumed. A preempted run returning late for an OLD gate must not
+// wipe the mapping of the NEWER gate that has since taken the conversation slot — so when gateId is
+// passed we no-op unless the stored mapping is still that gate.
+async function clearPendingGate({ conversationId, gateId }: { conversationId: string, gateId?: string }): Promise<void> {
     const pendingGate = await distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`)
+    if (!isNil(gateId) && !isNil(pendingGate) && pendingGate.gateId !== gateId) {
+        return
+    }
     const keys = [`${PENDING_GATE_PREFIX}${conversationId}`]
     if (pendingGate?.gateId) {
         keys.push(`${PENDING_GATE_PREFIX}gate:${pendingGate.gateId}`)

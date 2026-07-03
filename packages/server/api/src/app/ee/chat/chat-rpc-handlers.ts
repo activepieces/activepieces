@@ -628,8 +628,12 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             // must not resurrect the answered card after a mid-run reload (it only TTL'd out before).
             if (decision !== 'pending') {
                 await tryCatch(() => chatApprovalGate.markGateConsumed({ gateId }))
+                // Now that the worker threads conversationId (Fix 2), the live path clears the pending-gate
+                // mapping the instant it consumes the answer — so an answered gate no longer lingers until
+                // TTL and recovery can't re-ask (which would re-run the action → double email). Scoped to
+                // THIS gateId so a preempted run's late return can't wipe a newer gate's mapping.
                 if (typeof input.conversationId === 'string') {
-                    await tryCatch(() => chatApprovalGate.clearPendingGate({ conversationId: input.conversationId! }))
+                    await tryCatch(() => chatApprovalGate.clearPendingGate({ conversationId: input.conversationId!, gateId }))
                 }
             }
             return { result: decision }
