@@ -8,7 +8,11 @@ services:
     depends_on:
       - app
     networks:
-      - bench
+      bench:
+        # Static IP so the SANDBOX_PROCESS engine (whose sandbox /etc/resolv.conf points at public
+        # DNS 8.8.8.8 and can't resolve the docker-internal "nginx" name) can still reach the server
+        # by IP to report flow results. AP_FRONTEND_URL points here.
+        ipv4_address: 172.30.0.10
 
   app:
     image: activepieces-benchmark:local
@@ -27,7 +31,7 @@ services:
       AP_POSTGRES_PORT: 5432
       AP_JWT_SECRET: benchmark-secret-key-for-testing
       AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
-      AP_FRONTEND_URL: http://nginx:80
+      AP_FRONTEND_URL: http://172.30.0.10:80
       AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_CODE_ONLY}
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
@@ -59,7 +63,7 @@ services:
       - app
     environment:
       AP_CONTAINER_TYPE: WORKER
-      AP_FRONTEND_URL: http://nginx:80
+      AP_FRONTEND_URL: http://172.30.0.10:80
       AP_JWT_SECRET: benchmark-secret-key-for-testing
       AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
       AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_CODE_ONLY}
@@ -111,3 +115,6 @@ volumes:
 
 networks:
   bench:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16

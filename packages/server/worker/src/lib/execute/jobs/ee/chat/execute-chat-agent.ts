@@ -276,7 +276,8 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         catch (err) {
             log.error({ error: err, conversation: { id: conversationId } }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-            const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
+            const isCreditError = isCreditExhaustedError(errorMessage)
+            const errorCode = isCreditError ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveChatMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateChatProgress) and only flips status, so an errored turn keeps
@@ -290,6 +291,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             await sendEventWithRetry({
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
             })
+            // Running out of AI credits is a user/billing condition, not an engine failure — the error has
+            // already been delivered to the user. Complete the job (OK); re-throwing would mark it
+            // INTERNAL_ERROR and fail+retry it (pointlessly — the user is still out of credits) and page.
+            if (isCreditError) {
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
             throw err
         }
         finally {

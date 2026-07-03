@@ -18,6 +18,7 @@ import {
   listEventsWithSyncToken,
 } from '../common/helper';
 import { GoogleWatchResponse, GoogleCalendarEvent } from '../common/types';
+import { eventOutputSchema } from '../output-schemas';
 
 const WATCH_STORE_KEY = 'google_calendar_watch';
 const SYNC_TOKEN_STORE_KEY = 'google_calendar_sync_token';
@@ -106,6 +107,7 @@ export const newEvent = createTrigger({
       defaultValue: false,
     }),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   renewConfiguration: {
     strategy: WebhookRenewStrategy.CRON,

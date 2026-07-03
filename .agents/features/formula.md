@@ -49,6 +49,9 @@ Formulas let users transform input values inside any text input in the flow buil
 **The engine path is not gated.** The editor gate (the plan flag alone) only affects the editor UI: slash trigger, popovers, type checker, and slash insertion. Bracket nodes always render so saved formulas display read-only even when the gate is off. Existing saved formulas continue to evaluate regardless of the gate's current value.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Formula** — a function-based expression inserted into a text input that transforms data at runtime.
 - **Wrapper** — `ap-formula-v1::{<expression>}::ap-formula-v1`. Versioned (`v\d+`) so future format changes can coexist with v1 data in saved flows.
 - **Function badge** — the visual representation of a function call in the editor: a `function_start` node + arg slots + `function_sep` nodes + `function_end` node. Stored as three TipTap inline atoms with a shared `openId` attribute linking start/sep/end.

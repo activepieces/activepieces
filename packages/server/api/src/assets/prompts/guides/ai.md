@@ -39,9 +39,9 @@ For "AI decides, a human only handles the hard ones": AI emits a confidence scor
 
 This is your call, not the user's — never surface it as a question. The rule:
 - **Language, drafting, summarizing, classifying, extracting, judgment** → use the native AI piece (`@activepieces/piece-ai`). When a task could plausibly go either way (e.g. "draft a reply", "summarize these", "categorize this"), **default to the AI piece** — don't quietly build a CODE step that hard-codes rules for something that's really a language/judgment task.
-- **Deterministic comparisons, arithmetic, reshaping/formatting data** → use a router condition or a `CODE` step. They run instantly, free, and exactly.
+- **Deterministic comparisons, arithmetic, reshaping/formatting data** → use a router condition or an **inline formula expression** (`filter_list`, `if`, `round`, `format_currency`, … — see the expression ladder in `build_flow`). Reach for a `CODE` step only when the logic is genuinely beyond those functions. They run instantly, free, and exactly.
 
-Don't use `askAi` as a comparison or arithmetic engine (e.g. "did the price change?", "is this number bigger?"). A router condition or a `CODE` step does it deterministically, instantly, and free. Use AI for language, extraction, and judgment — not exact comparisons or math.
+Don't use `askAi` as a comparison or arithmetic engine (e.g. "did the price change?", "is this number bigger?"). A router condition or an inline formula expression does it deterministically, instantly, and free. Use AI for language, extraction, and judgment — not exact comparisons or math.
 
 ## Feeding AI output into an email (or other formatted destination)
 
