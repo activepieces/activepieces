@@ -12,7 +12,8 @@ import { z } from 'zod'
 //
 // PRODUCTION NOTE (demo vs. hardening): the runner below is an in-worker `node:vm` context. `vm`
 // is NOT a security boundary — a determined script can escape it (e.g. via constructor walks).
-// That is acceptable for this trusted-model demo. For production the SAME `BridgedTools` interface
+// The context disables runtime string code-generation (`codeGeneration: { strings: false }`),
+// which closes the trivial `Function('...')` constructor-walk path, but subtler escapes remain. For production the SAME `BridgedTools` interface
 // should be implemented over an IPC/RPC channel to #13909's isolated engine sandbox: the code runs
 // in the sandbox, and `tools.x(args)` round-trips back to the worker where `allTools` lives. The
 // bridge is deliberately a narrow async interface (one method: callTool) so that swap is feasible
@@ -382,7 +383,11 @@ async function runCodeWithBridge({ code, data, bridge, log }: {
         },
     }
 
-    const context = vm.createContext(sandbox)
+    // Disallow runtime string-eval inside the context (`eval`, `Function('...')`) — it closes the
+    // classic constructor-walk escape (`({}).constructor.constructor('return process.env')()`).
+    // The module itself is unaffected: it's compiled host-side via `new vm.Script` below. vm is
+    // still not a hard boundary (see file header); #13909's engine sandbox remains the real fix.
+    const context = vm.createContext(sandbox, { codeGeneration: { strings: false, wasm: false } })
     // The model writes ESM (`export const run = …`), but vm.Script runs a classic script and can't
     // parse `export`. Strip the export keyword at statement boundaries (turning `export default X`
     // into a module.exports.default assignment) so the same code runs unchanged. A demo-grade
