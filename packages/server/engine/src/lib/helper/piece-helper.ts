@@ -37,6 +37,7 @@ export const pieceHelper = {
             engineToken: operation.engineToken,
             sampleData: operation.sampleData,
             engineConstants: constants,
+            unresolvedInput: operation.input,
         })
         const { property, piece } = await pieceLoader.getPropOrThrow({ pieceName: operation.pieceName, pieceVersion: operation.pieceVersion, actionOrTriggerName: operation.actionOrTriggerName, propertyName: operation.propertyName, devPieces: EngineConstants.DEV_PIECES })
     

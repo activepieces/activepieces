@@ -2,16 +2,15 @@
  * Reproduces a production incident: a single EXECUTE_PROPERTY request stalls
  * for minutes (then hits the sandbox timeout → SIGKILL → retry storm) under
  * SANDBOX_CODE_ONLY when the flow contains a step with a huge, deeply-nested
- * sample output (e.g. a full Google Docs `documents.get` response, ~17 MB) —
- * even though the property being resolved never references that step.
+ * sample output (e.g. a full Google Docs `documents.get` response, ~17 MB)
+ * that is referenced by a loop step — even though the property being resolved
+ * never references that step.
  *
- * Root cause: utils.sizeof deduplicated visited objects with a linear
- * objectList.indexOf scan — O(n²) over the ~750k tiny objects such a
- * document contains — and upsertStep runs trimExecutionInput → sizeof over
- * the whole step map on every upsert while stateFromFlowVersion builds the
- * property-resolution state. Before the fix this test took ~164s on an
- * M-series laptop; after, well under a second of sizeof time (the remaining
- * seconds are the loop settings resolving through isolated-vm).
+ * Mechanism: testExecutionContext.stateFromFlowVersion() eagerly resolves
+ * EVERY loop step's settings through the props resolver. Each `{{...}}` token
+ * pushes the whole referenced state through JSON.stringify + JSON.parse +
+ * ivm.ExternalCopy into a fresh 128 MB isolate, twice (resolved + censored
+ * pass) — regardless of what the EXECUTE_PROPERTY input actually references.
  *
  * AP_EXECUTION_MODE must be set before the engine's code-sandbox module is
  * evaluated (it captures the env var at import time), hence the dynamic
@@ -28,10 +27,7 @@ import {
 
 const HUGE_STEP_NAME = 'step_1'
 const PARAGRAPH_COUNT = 25_000
-// Post-fix cost is dominated by the two loops copying the 31MB sample into
-// isolated-vm (~4s locally); pre-fix the quadratic sizeof took ~164s. The
-// threshold sits between the two with headroom for slow CI machines.
-const MAX_ACCEPTABLE_DURATION_MS = 20_000
+const MAX_ACCEPTABLE_DURATION_MS = 5_000
 
 describe('executeProps with huge sample data on an unreferenced step', () => {
     it('resolves a property that does not reference the huge step without stalling', async () => {
@@ -67,6 +63,7 @@ describe('executeProps with huge sample data on an unreferenced step', () => {
             engineToken: constants.engineToken,
             sampleData,
             engineConstants: constants,
+            unresolvedInput,
         })
 
         const { resolvedInput } = await createPropsResolver({
@@ -102,8 +99,8 @@ describe('executeProps with huge sample data on an unreferenced step', () => {
         const stepNames = ['trigger', HUGE_STEP_NAME, 'step_2', 'step_3', 'step_4']
         const constants = generateMockEngineConstants({ stepNames })
 
-        // References the loop's item: guards that loop settings still resolve
-        // into the state used for property resolution.
+        // References the loop's item: the loop must resolve even though the
+        // huge step is only referenced transitively through the loop settings.
         const unresolvedInput = {
             paragraphStart: '{{step_2[\'item\'][\'startIndex\']}}',
         }
@@ -115,6 +112,7 @@ describe('executeProps with huge sample data on an unreferenced step', () => {
             engineToken: constants.engineToken,
             sampleData,
             engineConstants: constants,
+            unresolvedInput,
         })
 
         const { resolvedInput } = await createPropsResolver({
