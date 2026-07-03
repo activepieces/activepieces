@@ -5,8 +5,8 @@ import { Migration } from '../../migration'
 // keeps the build subsecond, while CONCURRENTLY would run outside a transaction and stall on
 // concurrent snapshots — which desyncs parallel migration runners (CI runs suites in parallel
 // against one database) and risks committed-DDL/rolled-back-bookkeeping divergence.
-export class AddChatConversationStreamingUpdatedIndex1803000000000 implements Migration {
-    name = 'AddChatConversationStreamingUpdatedIndex1803000000000'
+export class AddChatConversationStreamingUpdatedIndex1804000000000 implements Migration {
+    name = 'AddChatConversationStreamingUpdatedIndex1804000000000'
     breaking = false
     release = '0.86.0'
 
