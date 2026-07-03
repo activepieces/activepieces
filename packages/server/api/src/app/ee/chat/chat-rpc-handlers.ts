@@ -235,7 +235,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const isResume = !isNil(resumeKind)
 
         const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta] = await Promise.all([
-            chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log }),
+            // skipStaleRecovery: getChatConfig is the worker claiming this turn (it flips the row to
+            // STREAMING and handles resume itself below). A lazy crash-resume fired from this read would
+            // race the very run that is starting — recovery is owned here, not by the read.
+            chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log, skipStaleRecovery: true }),
             chatHelpers.resolveChatProvider({ platformId, log }),
             chatHelpers.getUserProjects({ platformId, userId, log }),
             chatMcp.getCredentials({ platformId, userId, log }),
@@ -712,7 +715,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {
                 return { result: { hasWrites: false } }
             }
-            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId, log })
+            // skipStaleRecovery: this RPC is called by the live worker mid-turn, so the owning run is
+            // this read's caller. A lagged heartbeat must not let this read crash-resume the very turn
+            // that is asking — recovery is never wanted from a worker-internal read.
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId, log, skipStaleRecovery: true })
             if (isNil(conversation.projectId)) {
                 return { result: { hasWrites: false } }
             }
@@ -766,7 +772,10 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             return { sent: false, message: 'Email is not configured on this instance.' }
         }
 
-        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log })
+        // skipStaleRecovery: this read feeds the STREAMING+activeRunId ownership fence below. Lazy
+        // recovery would flip the row IDLE (or reclaim activeRunId via crash-resume) and spuriously
+        // fail ownsActiveTurn, blocking a legitimate live send. The owning worker is this read's caller.
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log, skipStaleRecovery: true })
 
         // Fence the send to the active streaming owner. A run parked on an email approval must not
         // resume and send once it's been superseded (activeRunId changed) OR cancelled/finished

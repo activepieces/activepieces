@@ -94,10 +94,15 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         log.info({ filesCount: files?.length ?? 0, contentLength: content.length }, '[chatController] Chat message received')
 
+        // skipStaleRecovery: the send path does its own cancel + activeRunId claim below, so a stale
+        // STREAMING row is handled here. Letting the read fire lazy crash-resume would let that resume
+        // win the run lock first, and the new user message would then be rejected by the activeRunId
+        // fence and never persisted (lost message).
         const conversation = await chatService(log).getConversationOrThrow({
             id: conversationId,
             platformId,
             userId,
+            skipStaleRecovery: true,
         })
 
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
