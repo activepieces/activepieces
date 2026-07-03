@@ -62,10 +62,40 @@ export function fromAttributeMap(
 }
 
 export function parseExpressionValues(value: unknown): Record<string, AttributeValue> | undefined {
-  if (!value || (typeof value === 'object' && Object.keys(value as object).length === 0)) {
+  if (isEmptyRecord(value)) {
     return undefined;
   }
   return toAttributeMap(value, 'Expression attribute values');
+}
+
+export function parseExpressionNames(value: unknown): Record<string, string> | undefined {
+  if (isEmptyRecord(value)) {
+    return undefined;
+  }
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Expression attribute names must be a JSON object.');
+  }
+  const result: Record<string, string> = {};
+  for (const [name, placeholder] of Object.entries(value)) {
+    result[name] = String(placeholder);
+  }
+  return result;
+}
+
+export function parseExclusiveStartKey(
+  value: unknown,
+): Record<string, AttributeValue> | undefined {
+  if (isEmptyRecord(value)) {
+    return undefined;
+  }
+  return toAttributeMap(value, 'Exclusive start key');
+}
+
+function isEmptyRecord(value: unknown): boolean {
+  return (
+    !value ||
+    (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
+  );
 }
 
 function clampPositiveInt(value: unknown, defaultValue: number, maxValue: number): number {

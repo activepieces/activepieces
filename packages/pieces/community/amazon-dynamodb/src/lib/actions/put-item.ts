@@ -1,6 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { dynamodbAuth } from '../auth';
-import { createDynamoDBClient, PutItemCommand, toAttributeMap } from '../common';
+import {
+  createDynamoDBClient,
+  parseExpressionNames,
+  parseExpressionValues,
+  PutItemCommand,
+  toAttributeMap,
+} from '../common';
 
 export const putItemAction = createAction({
   auth: dynamodbAuth,
@@ -14,6 +20,16 @@ export const putItemAction = createAction({
       displayName: 'Condition Expression',
       required: false,
     }),
+    expressionAttributeNames: Property.Json({
+      displayName: 'Expression Attribute Names',
+      required: false,
+      defaultValue: {},
+    }),
+    expressionAttributeValues: Property.Json({
+      displayName: 'Expression Attribute Values',
+      required: false,
+      defaultValue: {},
+    }),
   },
   async run({ auth, propsValue }) {
     const client = createDynamoDBClient(auth);
@@ -22,6 +38,8 @@ export const putItemAction = createAction({
         TableName: propsValue.tableName,
         Item: toAttributeMap(propsValue.item, 'Item'),
         ConditionExpression: propsValue.conditionExpression,
+        ExpressionAttributeNames: parseExpressionNames(propsValue.expressionAttributeNames),
+        ExpressionAttributeValues: parseExpressionValues(propsValue.expressionAttributeValues),
       }),
     );
     return {

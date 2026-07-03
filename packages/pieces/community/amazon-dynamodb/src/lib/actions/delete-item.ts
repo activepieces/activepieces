@@ -4,6 +4,8 @@ import {
   createDynamoDBClient,
   DeleteItemCommand,
   fromAttributeMap,
+  parseExpressionNames,
+  parseExpressionValues,
   toAttributeMap,
 } from '../common';
 
@@ -19,6 +21,16 @@ export const deleteItemAction = createAction({
       displayName: 'Condition Expression',
       required: false,
     }),
+    expressionAttributeNames: Property.Json({
+      displayName: 'Expression Attribute Names',
+      required: false,
+      defaultValue: {},
+    }),
+    expressionAttributeValues: Property.Json({
+      displayName: 'Expression Attribute Values',
+      required: false,
+      defaultValue: {},
+    }),
   },
   async run({ auth, propsValue }) {
     const client = createDynamoDBClient(auth);
@@ -27,6 +39,8 @@ export const deleteItemAction = createAction({
         TableName: propsValue.tableName,
         Key: toAttributeMap(propsValue.key, 'Key'),
         ConditionExpression: propsValue.conditionExpression,
+        ExpressionAttributeNames: parseExpressionNames(propsValue.expressionAttributeNames),
+        ExpressionAttributeValues: parseExpressionValues(propsValue.expressionAttributeValues),
         ReturnValues: 'ALL_OLD',
       }),
     );

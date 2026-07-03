@@ -7,9 +7,10 @@ import {
   enforceDynamoDBOutputLimit,
   fromAttributeMap,
   MAX_DYNAMODB_QUERY_LIMIT,
+  parseExclusiveStartKey,
+  parseExpressionNames,
   parseExpressionValues,
   QueryCommand,
-  toAttributeMap,
 } from '../common';
 
 const queryLimitProperty = Object.assign(
@@ -62,18 +63,10 @@ export const queryItemsAction = createAction({
         IndexName: propsValue.indexName,
         KeyConditionExpression: propsValue.keyConditionExpression,
         FilterExpression: propsValue.filterExpression,
-        ExpressionAttributeNames:
-          propsValue.expressionAttributeNames &&
-          Object.keys(propsValue.expressionAttributeNames as object).length > 0
-            ? (propsValue.expressionAttributeNames as Record<string, string>)
-            : undefined,
+        ExpressionAttributeNames: parseExpressionNames(propsValue.expressionAttributeNames),
         ExpressionAttributeValues: parseExpressionValues(propsValue.expressionAttributeValues),
         Limit: limit,
-        ExclusiveStartKey:
-          propsValue.exclusiveStartKey &&
-          Object.keys(propsValue.exclusiveStartKey as object).length > 0
-            ? toAttributeMap(propsValue.exclusiveStartKey, 'Exclusive start key')
-            : undefined,
+        ExclusiveStartKey: parseExclusiveStartKey(propsValue.exclusiveStartKey),
       }),
     );
     const result = {

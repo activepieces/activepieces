@@ -3,6 +3,7 @@ import { dynamodbAuth } from '../auth';
 import {
   createDynamoDBClient,
   fromAttributeMap,
+  parseExpressionNames,
   parseExpressionValues,
   toAttributeMap,
   UpdateItemCommand,
@@ -43,11 +44,7 @@ export const updateItemAction = createAction({
         TableName: propsValue.tableName,
         Key: toAttributeMap(propsValue.key, 'Key'),
         UpdateExpression: propsValue.updateExpression,
-        ExpressionAttributeNames:
-          propsValue.expressionAttributeNames &&
-          Object.keys(propsValue.expressionAttributeNames as object).length > 0
-            ? (propsValue.expressionAttributeNames as Record<string, string>)
-            : undefined,
+        ExpressionAttributeNames: parseExpressionNames(propsValue.expressionAttributeNames),
         ExpressionAttributeValues: parseExpressionValues(propsValue.expressionAttributeValues),
         ConditionExpression: propsValue.conditionExpression,
         ReturnValues: 'ALL_NEW',
