@@ -11,6 +11,7 @@ import {
   PersistedChatPartType,
   PersistedToolCallStatus,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
 
@@ -569,6 +570,13 @@ function sanitizeTitle(title: string): string {
   return title.replace(/[*_`~#]/g, '').trim();
 }
 
+function formatKbBytes(bytes: number): string {
+  if (bytes <= 0) return t('0 KB');
+  const kb = bytes / 1024;
+  if (kb < 1) return t('<1 KB');
+  return t('{kb} KB', { kb: Math.round(kb) });
+}
+
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
   sanitizeTitle,
@@ -582,4 +590,5 @@ export const chatUtils = {
   extractImagesFromHistory,
   extractFilesFromHistory,
   extractBuildsFromHistory,
+  formatKbBytes,
 };

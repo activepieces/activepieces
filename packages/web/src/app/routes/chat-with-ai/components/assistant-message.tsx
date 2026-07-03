@@ -382,7 +382,7 @@ function MessageBlocks({
           }
           case 'code-mode':
             return (
-              <div key={`code-mode-${block.toolCallId}`} className="py-2">
+              <div key={`code-mode-${block.toolCallId}`} className="py-1">
                 <CodeModeCard part={block.part} />
               </div>
             );
