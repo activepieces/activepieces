@@ -87,12 +87,38 @@ function isValidPlivoSignature(params: {
   authToken: string;
 }): boolean {
   const { url, body, signatureHeader, nonce, authToken } = params;
+  // Reconstruct the signed string exactly as Plivo does (see plivo SDK
+  // signature_v3 construct_post_url): strip the URL query, then append "?",
+  // the sorted URL-query params, a "." only if the URL carried a query, and
+  // finally the body params as a sorted separator-less key+value string.
+  const parsed = new URL(url);
+  const base = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
+  const urlQuery = [...new Set(parsed.searchParams.keys())]
+    .sort()
+    .map((key) =>
+      parsed.searchParams
+        .getAll(key)
+        .sort()
+        .map((value) => `${key}=${value}`)
+        .join('&')
+    )
+    .join('&');
   const sortedParams = Object.keys(body)
     .sort()
     .map((key) => `${key}${String(body[key])}`)
     .join('');
+  const hasUrlQuery = urlQuery.length > 0;
+  const hasBody = Object.keys(body).length > 0;
+  let signedUrl = base;
+  if (hasUrlQuery || hasBody) {
+    signedUrl += `?${urlQuery}`;
+  }
+  if (hasUrlQuery && hasBody) {
+    signedUrl += '.';
+  }
+  signedUrl += sortedParams;
   const expected = createHmac('sha256', authToken)
-    .update(`${url}${sortedParams}.${nonce}`)
+    .update(`${signedUrl}.${nonce}`)
     .digest('base64');
   const expectedBuffer = Buffer.from(expected);
   return signatureHeader.split(',').some((candidate) => {
