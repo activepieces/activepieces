@@ -15,6 +15,7 @@ export const describeTableAction = createAction({
   },
   async run({ auth, propsValue }) {
     const client = createDynamoDBClient(auth);
-    return client.send(new DescribeTableCommand({ TableName: propsValue.tableName }));
+    const out = await client.send(new DescribeTableCommand({ TableName: propsValue.tableName }));
+    return { table: out.Table };
   },
 });
