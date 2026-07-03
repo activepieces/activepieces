@@ -372,7 +372,16 @@ function writeToolResultCache({ key, result }: { key: string, result: unknown })
     if (isResultUncacheable(result)) {
         return
     }
-    toolResultCache.set(key, { result, expiresAt: Date.now() + TOOL_RESULT_CACHE_TTL_MS })
+    // Active eviction: TTL cleanup on read alone lets entries for finished conversations sit
+    // until displaced by the LRU cap. The map is small (<= TOOL_RESULT_CACHE_MAX_ENTRIES), so a
+    // full sweep per write is cheap and keeps idle retention bounded by the TTL, not the cap.
+    const now = Date.now()
+    for (const [entryKey, entry] of toolResultCache) {
+        if (entry.expiresAt <= now) {
+            toolResultCache.delete(entryKey)
+        }
+    }
+    toolResultCache.set(key, { result, expiresAt: now + TOOL_RESULT_CACHE_TTL_MS })
     while (toolResultCache.size > TOOL_RESULT_CACHE_MAX_ENTRIES) {
         const oldestKey = toolResultCache.keys().next().value
         if (oldestKey === undefined) {
