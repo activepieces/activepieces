@@ -2,7 +2,7 @@ import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, ContextVersion, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
+import { ExecutionError, ExecutionErrorType, isNil, Result, tryCatch } from '@activepieces/shared'
 import { createConnectionService } from './services/connections.service'
 
 export type FileEntry = {
@@ -82,7 +82,10 @@ export const utils = {
         }
     },
     sizeof(object: unknown): number {
-        const objectList = []
+        // A Set keeps the seen-object lookup O(1); the previous
+        // objectList.indexOf() scan made this quadratic and pinned the CPU
+        // for minutes on multi-megabyte deeply-nested step outputs.
+        const seenObjects = new Set<object>()
         const stack = [object]
         let bytes = 0
 
@@ -98,8 +101,8 @@ export const utils = {
             else if (typeof value === 'number') {
                 bytes += 8
             }
-            else if (typeof value === 'object' && objectList.indexOf( value ) === -1) {
-                objectList.push(value)
+            else if (typeof value === 'object' && !isNil(value) && !seenObjects.has(value)) {
+                seenObjects.add(value)
                 // if the object is not an array, add the sizes of the keys
                 if (Object.prototype.toString.call(value) != '[object Array]') {
                     for (const key in value) bytes += 2 * key.length
