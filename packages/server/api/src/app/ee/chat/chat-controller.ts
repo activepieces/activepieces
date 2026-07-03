@@ -9,6 +9,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
+import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatGateUtils } from './chat-gate-utils'
 import { chatHelpers } from './chat-helpers'
 import { chatJob } from './chat-job'
@@ -369,29 +370,47 @@ async function resolveGateConversation({ mappedConversationId, bodyConversationI
 // card as a live gate afterwards.
 async function supersedePendingGateCards({ conversationId, log }: { conversationId: string, log: FastifyBaseLogger }): Promise<void> {
     const { error } = await tryCatch(async () => {
-        const conversation = await chatHelpers.conversationRepo().findOneBy({ id: conversationId })
-        const uiMessages = (conversation?.uiMessages ?? []) as PersistedChatMessage[]
-        let flipped = false
-        const nextUiMessages = uiMessages.map((message) => ({
-            ...message,
-            parts: message.parts.map((part) => {
-                if (part.type === PersistedChatPartType.TOOL_CALL && part.status === PersistedToolCallStatus.PENDING) {
-                    flipped = true
-                    return { ...part, status: PersistedToolCallStatus.SUPERSEDED }
-                }
-                return part
-            }),
-        }))
+        // Read-merge-write under a pessimistic row lock (Fix 4), matching persistPendingGatePart /
+        // updateChatProgress. A plain findOneBy + unfenced UPDATE here could clobber a concurrent
+        // worker write (or resurrect a card the worker just resolved) — the exact lost-update class
+        // this PR fixed. Select only the columns we touch.
+        const flipped = await chatHelpers.conversationRepo().manager.transaction(async (manager) => {
+            const conversation = await manager
+                .createQueryBuilder(ChatConversationEntity, 'c')
+                .select(['c.id', 'c.uiMessages'])
+                .setLock('pessimistic_write')
+                .where('c.id = :id', { id: conversationId })
+                .getOne()
+            if (isNil(conversation)) {
+                return false
+            }
+            const uiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
+            let didFlip = false
+            const nextUiMessages = uiMessages.map((message) => ({
+                ...message,
+                parts: message.parts.map((part) => {
+                    if (part.type === PersistedChatPartType.TOOL_CALL && part.status === PersistedToolCallStatus.PENDING) {
+                        didFlip = true
+                        return { ...part, status: PersistedToolCallStatus.SUPERSEDED }
+                    }
+                    return part
+                }),
+            }))
+            if (!didFlip) {
+                return false
+            }
+            await manager
+                .createQueryBuilder()
+                .update(ChatConversationEntity)
+                .set({ uiMessages: () => ':uiMessages' })
+                .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(nextUiMessages)))
+                .where('id = :id', { id: conversationId })
+                .execute()
+            return true
+        })
         if (!flipped) {
             return
         }
-        await chatHelpers.conversationRepo()
-            .createQueryBuilder()
-            .update()
-            .set({ uiMessages: () => ':uiMessages' })
-            .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(nextUiMessages)))
-            .where('id = :id', { id: conversationId })
-            .execute()
         await chatApprovalGate.clearPendingGate({ conversationId })
         log.info({ conversation: { id: conversationId } }, '[chatController] Superseded abandoned pending gate card on new message')
     })
