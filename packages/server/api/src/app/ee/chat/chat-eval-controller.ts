@@ -59,10 +59,14 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         const platform = await platformService(log).getOneOrThrow(platformId)
         const evalUserId = platform.ownerId
 
+        // Carry the eval id prefix (Fix 3) so the stale-STREAMING sweeper skips this conversation — a
+        // resume would re-run it as a REAL (non-dry) turn. simulate polls the row directly and owns its
+        // own timeout, so it needs no recovery. turn/start already prefixes; this makes both uniform.
         const conversation = await chatService(log).createConversation({
             platformId,
             userId: evalUserId,
             request: {},
+            id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21),
         })
 
         // Replay the turns sequentially in one conversation: each turn's history accumulates,

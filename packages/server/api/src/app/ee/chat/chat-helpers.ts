@@ -123,6 +123,12 @@ async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBase
         ])
         .where('chat_conversation.status = :streaming', { streaming: ChatConversationStatus.STREAMING })
         .andWhere('chat_conversation.updated < :staleCutoff', { staleCutoff })
+        // Never resume eval/dry-run conversations (Fix 3): a resume enqueues a REAL turn (no
+        // dryRun/discoveryOnly), so a dead eval run would fire real tools/credits/side effects. Eval
+        // callers poll the row directly and own their own timeout, so they need no recovery. Both eval
+        // paths (interactive turn/start AND simulate) carry the eval id prefix, so this one filter skips
+        // them all — the sweeper is the only recovery path that could reach an eval row.
+        .andWhere('chat_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
         .orderBy('chat_conversation.updated', 'ASC')
         .take(STALE_SWEEP_BATCH_SIZE)
         .getMany()
