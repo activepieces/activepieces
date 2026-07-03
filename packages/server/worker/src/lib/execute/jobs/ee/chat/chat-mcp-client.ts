@@ -462,16 +462,19 @@ function condenseEmbeddedSchemaJson(text: string): string {
 }
 
 function condenseSchemaObject(schema: Record<string, unknown>): Record<string, unknown> {
-    const condensed: Record<string, unknown> = { ...schema }
-    if (Array.isArray(schema['props'])) {
-        condensed['props'] = schema['props'].map(condensePropSummary)
-    }
-    if (isObject(schema['outputSchema'])) {
-        condensed['outputSchema'] = condenseOutputSchema(schema['outputSchema'])
-    }
-    for (const key of Object.keys(condensed)) {
+    const condensed: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(schema)) {
         if (SCHEMA_ROOT_VERBOSE_KEYS.has(key)) {
-            delete condensed[key]
+            continue
+        }
+        if (key === 'props' && Array.isArray(value)) {
+            condensed[key] = value.map(condensePropSummary)
+        }
+        else if (key === 'outputSchema' && isObject(value)) {
+            condensed[key] = condenseOutputSchema(value)
+        }
+        else {
+            condensed[key] = value
         }
     }
     return condensed
