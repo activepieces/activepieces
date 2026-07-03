@@ -603,6 +603,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 }
                 const needsPreview = chatToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
+                    input: toolInput.input,
                     needsConfirmation: toolInput.needsConfirmation,
                 })
 
