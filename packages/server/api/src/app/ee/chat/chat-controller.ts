@@ -106,24 +106,16 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             skipStaleRecovery: true,
         })
 
-        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
-        // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
-        // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
-        // Awaited before the credit check below so the managed key is created (and topped up) once.
-        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
-        if (needsCreditDecision) {
-            await maybeGrantFreeChatCredits({ platformId, userId, log })
-        }
-        // Refresh the console rollout funnel snapshot (chatted count just changed).
-        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
-
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 
-        // Claim ownership atomically in the DB — the single source of truth that
-        // saveChatMessages/updateChatProgress/heartbeat fence against. A late write from the
-        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
-        // with no Redis/DB split to race through. The prior owner is read from the same row.
+        // Claim ownership atomically in the DB BEFORE any slow await below — the single source of
+        // truth that saveChatMessages/updateChatProgress/heartbeat fence against. A late write from
+        // the preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
+        // with no Redis/DB split to race through. The prior owner is read from the same row. Claiming
+        // first also bumps `updated` and resets a stale STREAMING row to IDLE immediately, so the
+        // per-minute CHAT_STALE_SWEEP can't match this row mid-send (during the credit awaits below)
+        // and inject a CHAT_CRASH_RESUME_NOTE into this fresh turn's history.
         const preemptedRunId = conversation.status === ChatConversationStatus.STREAMING
             ? conversation.activeRunId
             : null
@@ -143,6 +135,17 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             })
             await chatApprovalGate.clearPendingGate({ conversationId })
         }
+
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
+        // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
+        // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
+        // Awaited before the credit check below so the managed key is created (and topped up) once.
+        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
+        if (needsCreditDecision) {
+            await maybeGrantFreeChatCredits({ platformId, userId, log })
+        }
+        // Refresh the console rollout funnel snapshot (chatted count just changed).
+        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
 
         await assertAiCreditsNotExhausted({ platformId, log })
 
