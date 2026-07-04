@@ -343,7 +343,7 @@ function buildToolCacheKey({ conversationId, toolName, args }: { conversationId:
         pieceName,
         actionOrTriggerName,
         type,
-        auth: typeof args['auth'] === 'string' && args['auth'].length > 0,
+        auth: typeof args['auth'] === 'string' && args['auth'].length > 0 ? args['auth'] : null,
         flowId: typeof args['flowId'] === 'string' ? args['flowId'] : null,
         propertyName: typeof args['propertyName'] === 'string' ? args['propertyName'] : null,
         propertyChain: Array.isArray(args['propertyChain']) ? JSON.stringify(args['propertyChain']) : null,
