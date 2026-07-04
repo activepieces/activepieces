@@ -17,6 +17,8 @@ import { gmailCreateLabelAction } from './lib/actions/create-label-action';
 import { gmailArchiveEmailAction } from './lib/actions/archive-email-action';
 import { gmailDeleteEmailAction } from './lib/actions/delete-email-action';
 import { gmailRemoveLabelFromThreadAction } from './lib/actions/remove-label-from-thread-action';
+import { gmailNewStarredEmailTrigger } from './lib/triggers/new-starred-email';
+import { gmailNewConversationTrigger } from './lib/triggers/new-conversation';
 import { gmailAuth, getAccessToken, GmailAuthValue } from './lib/auth';
 
 export {
@@ -76,6 +78,8 @@ export const gmail = createPiece({
     gmailNewLabeledEmailTrigger,
     gmailNewAttachmentTrigger,
     gmailNewLabelTrigger,
+    gmailNewStarredEmailTrigger,
+    gmailNewConversationTrigger,
   ],
   auth: gmailAuth,
 });
