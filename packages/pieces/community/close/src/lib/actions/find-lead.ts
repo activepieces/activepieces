@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../../';
+import { closeAuth } from '../auth';
 import { CloseCRMSearchQuery } from '../common/types';
 import { closeApiCall } from '../common/client';
 
@@ -9,6 +9,11 @@ export const findLead = createAction({
 	name: 'find_lead',
 	displayName: 'Find Lead',
 	description: 'Search for leads with advanced filtering options',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Searches leads in Close CRM and returns all matching records (auto-paginated). The search type selects which field to match on — lead name, a related contact email, or status label — and the match mode controls how the query string is compared. Use to look up leads by a known attribute before creating or updating related records. Read-only and idempotent. Requires a search query value.',
+		idempotent: true,
+	},
 	props: {
 		search_type: Property.StaticDropdown({
 			displayName: 'Search Type',
@@ -59,7 +64,7 @@ export const findLead = createAction({
 					cursor?: string;
 					data: Record<string, any>[];
 				}>({
-					accessToken: context.auth,
+					accessToken: context.auth.secret_text,
 					method: HttpMethod.POST,
 					resourceUri: '/data/search/',
 					body: {

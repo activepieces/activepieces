@@ -72,11 +72,11 @@ export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
             ON DELETE SET NULL ON UPDATE NO ACTION
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[addUserEmailToReferral1709500213947#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
         await queryRunner.query(`
@@ -118,7 +118,7 @@ export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
             ON DELETE CASCADE ON UPDATE NO ACTION
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[addUserEmailToReferral1709500213947#down]')
     }
 
 }

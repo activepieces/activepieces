@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const delete_vehicle = createAction({
@@ -8,6 +8,8 @@ export const delete_vehicle = createAction({
     auth: simplirouteAuth,
     displayName: 'Delete Vehicle',
     description: 'Delete a vehicle by its ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently delete a vehicle by its ID. Destructive and not safely repeatable: a repeat call fails once the vehicle is gone, so confirm the ID first.', idempotent: false },
     props: {
         vehicle_id: Property.Number({ 
             displayName: 'vehicle_id', 
@@ -22,7 +24,7 @@ export const delete_vehicle = createAction({
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

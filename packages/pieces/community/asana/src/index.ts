@@ -4,16 +4,9 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { asanaCreateTaskAction } from './lib/actions/create-task';
-
-export const asanaAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://app.asana.com/-/oauth_authorize',
-  tokenUrl: 'https://app.asana.com/-/oauth_token',
-  required: true,
-  scope: ['default'],
-});
+import { asanaAuth } from './lib/auth';
 
 export const asana = createPiece({
   displayName: 'Asana',

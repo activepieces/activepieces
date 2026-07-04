@@ -1,12 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
-import { odooAuth } from "../..";
+import { odooAuth } from '../auth';
 
 export default createAction({
     name: 'create_record',
     auth: odooAuth,
     displayName: 'Custom Create Record',
     description: 'Create a new record in the specified model',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new record in any Odoo model via the XML-RPC create call, given a model name and a JSON object of field names to values, and returns the new record id. Use this generic writer when no model-specific create action fits. Not idempotent — each call inserts a new record.', idempotent: false },
     props: {
         model: Property.ShortText({
             displayName: 'Model',
@@ -26,11 +28,11 @@ export default createAction({
     },
     async run(context) {
         const odoo = new Odoo({
-            url: context.auth.base_url,
+            url: context.auth.props.base_url,
             port: 443,
-            db: context.auth.database,
-            username: context.auth.username,
-            password: context.auth.api_key,
+            db: context.auth.props.database,
+            username: context.auth.props.username,
+            password: context.auth.props.api_key,
         });
 
         try {

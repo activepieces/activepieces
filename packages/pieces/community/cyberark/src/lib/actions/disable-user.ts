@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { cyberarkAuth } from '../../index';
+import { cyberarkAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { userIdDropdown } from '../common/user-dropdown';
 import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
@@ -9,11 +9,16 @@ export const disableUser = createAction({
   name: 'disable_user',
   displayName: 'Disable User',
   description: 'Disables a specific user in the Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Disables a Vault user identified by user ID so they can no longer authenticate, without deleting the account. Use to temporarily revoke access. Idempotent: disabling an already-disabled user leaves it disabled.',
+    idempotent: true,
+  },
   props: {
     userId: userIdDropdown
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     try {
       const response = await httpClient.sendRequest({

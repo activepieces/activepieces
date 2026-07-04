@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { retableCreateProjectAction } from './lib/actions/create-project';
 import { retableCreateWorkspaceAction } from './lib/actions/create-workspace';
 import { retableGetAllProjectsAction } from './lib/actions/get-all-projects';
@@ -51,8 +51,8 @@ export const retable = createPiece({
       baseUrl: () => retableCommon.baseUrl,
       auth: retableAuth,
       authMapping: async (auth) => ({
-        ApiKey: auth as string,
-      }),
+        ApiKey: auth.secret_text,
+      }), 
     }),
   ],
   triggers: [],

@@ -5,13 +5,19 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { stableDiffusionAuth, StableDiffusionAuthType } from '../../index';
-import { kebabCase } from '@activepieces/shared';
+import { stableDiffusionAuth } from '../auth';
+import { kebabCase } from '@activepieces/pieces-framework';
 
 export const textToImage = createAction({
   name: 'textToImage',
   displayName: 'Text to Image',
   description: '',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate one or more images from a text prompt by calling a Stable Diffusion web UI (AUTOMATIC1111) txt2img endpoint, selecting the checkpoint model and optionally passing raw API parameters (sampler, steps, dimensions, etc.) as key/value overrides. Use when an agent needs to synthesize new imagery from a description against a self-hosted Stable Diffusion server. Requires the server base URL via auth and a model from the connected instance; each call produces fresh images, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: stableDiffusionAuth,
   props: {
     prompt: Property.LongText({
@@ -20,6 +26,7 @@ export const textToImage = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
+      auth: stableDiffusionAuth,
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
@@ -30,7 +37,7 @@ export const textToImage = createAction({
             placeholder: 'Please authenticate first',
           };
         }
-        const { baseUrl } = auth as StableDiffusionAuthType;
+        const { baseUrl } = auth.props;
         const request: HttpRequest = {
           method: HttpMethod.GET,
           url: `${baseUrl}/sdapi/v1/sd-models`,
@@ -63,7 +70,7 @@ export const textToImage = createAction({
   async run({ auth, propsValue, files }) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${auth.baseUrl}/sdapi/v1/txt2img`,
+      url: `${auth.props.baseUrl}/sdapi/v1/txt2img`,
       headers: {
         'Content-Type': 'application/json',
       },

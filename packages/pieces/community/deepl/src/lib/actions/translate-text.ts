@@ -7,6 +7,8 @@ export const translateText = createAction({
   auth: deeplAuth,
   displayName: 'Translate text',
   description: 'Translate a text to the target language',
+  audience: 'both',
+  aiMetadata: { description: 'Translates a block of plain text into a target language using DeepL\'s neural machine translation. Source language is auto-detected unless explicitly set, and an optional glossary, formality level, and XML/HTML tag handling can be supplied. Choose this to translate natural-language content; the target language is required. Idempotent: re-translating the same text with the same settings yields the same result and creates no resource.', idempotent: true },
   props: {
     text: Property.LongText({
       displayName: 'Text',
@@ -210,9 +212,9 @@ export const translateText = createAction({
     } = context.propsValue;
     const request = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: context.auth.type === 'free' ? DEEPL_FREE_URL : DEEPL_PAID_URL,
+      url: context.auth.props.type === 'free' ? DEEPL_FREE_URL : DEEPL_PAID_URL,
       headers: {
-        Authorization: `DeepL-Auth-Key ${context.auth.key}`,
+        Authorization: `DeepL-Auth-Key ${context.auth.props.key}`,
         'Content-Type': 'application/json',
       },
       body: {

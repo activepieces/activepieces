@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -20,7 +21,7 @@ import { makeRequest } from '../common/client';
 dayjs.extend(timezone);
 dayjs.extend(utc);
 
-const polling: Polling<PiecePropValueSchema<typeof formStackAuth>, any> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof formStackAuth>, any> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const authentication = auth as OAuth2PropertyValue;
@@ -111,6 +112,9 @@ export const newSubmission = createTrigger({
   name: 'newSubmission',
   displayName: 'New Submission',
   description: 'Triggers when a form receives a new submission',
+  aiMetadata: {
+    description: 'Fires when the selected Formstack form receives a new submission, emitting that submission with its field values and metadata. Polls the form for entries newer than the last check.',
+  },
   props: {
     form_id: formIdDropdown,
   },

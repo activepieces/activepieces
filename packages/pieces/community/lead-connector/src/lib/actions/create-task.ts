@@ -11,8 +11,11 @@ export const createTaskAction = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Create a new task.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a task attached to a GoHighLevel/LeadConnector contact, with a title, due date, optional description, assignee, and completed flag. Use to schedule follow-up work against a contact. Requires contact, title, and due date; not idempotent — each call creates a separate task.', idempotent: false },
   props: {
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: true,
@@ -49,6 +52,7 @@ export const createTaskAction = createAction({
       required: false,
     }),
     assignedTo: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Assigned To',
       required: false,
       refreshers: [],

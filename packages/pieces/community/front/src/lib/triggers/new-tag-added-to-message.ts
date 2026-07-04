@@ -4,6 +4,7 @@ import {
   PiecePropValueSchema,
   Property,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -19,13 +20,13 @@ const props = {
   conversation_id: conversationIdDropdown,
 };
 
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof   frontAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const params: string[] = ['q[types]=tag', 'limit=50'];
     const query = params.join('&');
     const response = await makeRequest(
-      auth as string,
+      auth,
       HttpMethod.GET,
       `/events?${query}`
     );
@@ -56,6 +57,10 @@ export const newTagAddedToMessage = createTrigger({
   name: 'newTagAddedToMessage',
   displayName: 'New Tag Added to Message',
   description: 'Fires when a tag is applied to a conversation.',
+  aiMetadata: {
+    description:
+      'Fires when a tag is added to the selected Front conversation, whether applied manually by a teammate or automatically by a rule. Represents a single tagging event and emits the applied tag along with the parent conversation, enabling an agent to react to categorization or labeling changes on a thread.',
+  },
   props,
   sampleData: {
     _links: {

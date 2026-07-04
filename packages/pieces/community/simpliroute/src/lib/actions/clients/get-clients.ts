@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const get_clients = createAction({
@@ -8,6 +8,8 @@ export const get_clients = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Clients',
     description: 'Retrieves the list of clients associated with the account. Can filter by client key.',
+    audience: 'both',
+    aiMetadata: { description: 'Look up account clients, filtered to the given unique client key. Use to find a client and its stored details (id, address, coordinates, contacts) before creating visits or routes. Read-only and idempotent.', idempotent: true },
     props: {
         key: Property.ShortText({ 
             displayName: 'Client Key', 
@@ -27,7 +29,7 @@ export const get_clients = createAction({
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

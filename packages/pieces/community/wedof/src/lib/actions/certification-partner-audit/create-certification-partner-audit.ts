@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../../index';
+import { wedofAuth } from '../../auth';
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../../common/wedof';
@@ -8,6 +8,12 @@ export const createCertificationPartnerAudit = createAction({
   name: 'createCertificationPartnerAudit',
   displayName: "Créer un audit sur un partenariat de certification",
   description: "Permet de créer un audit sur un partenariat de certification",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Create an audit on a single certification partnership in Wedof, using an audit template chosen from those available for the certification. Pick this to audit one specific partner identified by SIRET; use create-general-audit to audit all active partners of a certification at once. Each call creates a new audit, so it is not idempotent. Requires the certification's certifInfo, the partner's SIRET, and a template id.",
+    idempotent: false,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',
@@ -21,6 +27,7 @@ export const createCertificationPartnerAudit = createAction({
       required: true,
     }),
     templateId: Property.DynamicProperties({
+      auth: wedofAuth,
       displayName: "Type du modèle d'audit",
       refreshers: ['certifInfo'],
       required: true,
@@ -77,7 +84,7 @@ export const createCertificationPartnerAudit = createAction({
           body: message,
           headers: {
             'Content-Type': 'application/json',
-            'X-Api-Key': context.auth as string,
+            'X-Api-Key': context.auth.secret_text,
           },
         })
       ).body;

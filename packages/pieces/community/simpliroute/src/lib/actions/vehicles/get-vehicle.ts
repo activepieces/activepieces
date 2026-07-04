@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const get_vehicle = createAction({
@@ -8,6 +8,8 @@ export const get_vehicle = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Vehicle',
     description: 'Retrieve information of a specific vehicle.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve a single vehicle by its ID. Read-only and idempotent. Use when you already know the vehicle ID; to list all vehicles use the get-vehicles action.', idempotent: true },
     props: {
         vehicle_id: Property.Number({ 
             displayName: 'vehicle_id', 
@@ -22,7 +24,7 @@ export const get_vehicle = createAction({
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

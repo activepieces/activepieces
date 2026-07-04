@@ -8,6 +8,9 @@ export const newCampaignTrigger = createTrigger({
   name: 'new_campaign',
   displayName: 'New Campaign',
   description: 'Fires when a new campaign is created in Sender',
+  aiMetadata: {
+    description: 'Fires when a new campaign is created in the connected Sender account, representing the newly created campaign (including drafts).',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
@@ -18,7 +21,7 @@ export const newCampaignTrigger = createTrigger({
     };
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/account/webhooks',
       HttpMethod.POST,
       webhookData
@@ -31,7 +34,7 @@ export const newCampaignTrigger = createTrigger({
     
     if (webhookId) {
       await makeSenderRequest(
-        context.auth,
+        context.auth.secret_text,
         `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
@@ -45,7 +48,7 @@ export const newCampaignTrigger = createTrigger({
   async test(context) {
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/campaigns?limit=1',
       HttpMethod.GET
     );

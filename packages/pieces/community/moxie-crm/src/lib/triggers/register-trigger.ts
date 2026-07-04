@@ -2,19 +2,22 @@ import {
   TriggerStrategy,
   createTrigger,
   Property,
+  AiMetadata,
 } from '@activepieces/pieces-framework';
 import { MoxieCRMEventType } from '.';
-import { moxieCRMAuth } from '../../';
+import { moxieCRMAuth } from '../auth';
 export const moxieCRMRegisterTrigger = ({
   name,
   displayName,
   description,
+  aiMetadata,
   eventType,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: AiMetadata;
   eventType: MoxieCRMEventType;
   sampleData: unknown;
 }) =>
@@ -23,6 +26,7 @@ export const moxieCRMRegisterTrigger = ({
     name: `moxie_trigger_${name}`,
     displayName,
     description,
+    aiMetadata,
     props: {
       md: Property.MarkDown({
         value: `

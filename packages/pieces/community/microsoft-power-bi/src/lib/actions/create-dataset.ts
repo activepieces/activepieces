@@ -1,6 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { microsoftPowerBiAuth } from '../../index';
+import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
+import { microsoftPowerBiAuth } from '../auth';
 
 type ColumnDefinition = {
     name: string;
@@ -19,6 +20,8 @@ export const createDatasetAction = createAction({
     name: 'create_dataset',
     displayName: 'Create Dataset',
     description: 'Create a new dataset in Power BI with custom schema (Push, Streaming, or PushStreaming mode).',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new Power BI dataset in the user\'s default workspace, defining its tables and column schema. Choose this to provision a fresh push/streaming dataset before pushing rows into it. The defaultMode prop selects between Push, Streaming, and PushStreaming behavior, and the tables prop must be a JSON array of table definitions (each with a name and typed columns). Not idempotent: each call creates a new dataset even if one with the same name already exists.', idempotent: false },
     props: {
         dataset_name: Property.ShortText({
             displayName: 'Dataset Name',
@@ -80,8 +83,8 @@ export const createDatasetAction = createAction({
             throw new Error(`Invalid tables JSON format. Received value: ${JSON.stringify(context.propsValue.tables)}`);
         }
 
-        // Always use My Workspace URL
-        const baseUrl = 'https://api.powerbi.com/v1.0/myorg';
+        const cloud = getMicrosoftCloudFromAuth(auth as OAuth2PropertyValue);
+        const baseUrl = getPowerBiBaseUrl(cloud);
 
         // Define the dataset schema
         const datasetDefinition = {

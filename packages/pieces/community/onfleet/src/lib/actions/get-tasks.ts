@@ -9,6 +9,12 @@ export const getTasks = createAction({
   name: 'get_tasks',
   displayName: 'Get Tasks',
   description: 'Get many task',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List Onfleet tasks within a required time window (from a start time, optionally to an end time), optionally filtered by state (unassigned, assigned, active, completed). Read-only and idempotent. Use to find or enumerate tasks; use Get Task when you already have a single task ID.',
+    idempotent: true,
+  },
   props: {
     from: Property.DateTime({
       displayName: 'From',
@@ -19,6 +25,7 @@ export const getTasks = createAction({
       required: false,
     }),
     state: Property.MultiSelectDropdown({
+      auth: onfleetAuth,
       displayName: 'State',
       required: false,
       refreshers: [],
@@ -48,7 +55,7 @@ export const getTasks = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     const from = context.propsValue.from
       ? dayjs(context.propsValue.from).valueOf()

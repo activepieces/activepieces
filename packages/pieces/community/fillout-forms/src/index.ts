@@ -5,29 +5,9 @@ import { findFormByTitle } from './lib/actions/find-form-by-title';
 import { newFormResponse } from './lib/triggers/new-form-response';
 import { createCustomApiCallAction, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { makeRequest } from './lib/common';
-
-export const filloutFormsAuth = PieceAuth.SecretText({
-	displayName: 'API Key',
-	required: true,
-	description: `To get your API key:
-1. Go to your Fillout account settings.
-2. Click on "Developer settings".
-3. Generate and copy your API key.
-4. Paste it here.`,
-	validate: async ({ auth }) => {
-		try {
-			await makeRequest(auth as string, HttpMethod.GET, '/forms', undefined);
-			return { valid: true };
-		} catch (error: any) {
-			return {
-				valid: false,
-				error: error.message || 'Invalid API Key. Please check your API key and try again.',
-			};
-		}
-	},
-});
+import { filloutFormsAuth } from './lib/auth';
 
 export const filloutForms = createPiece({
 	displayName: 'Fillout Forms',
@@ -46,7 +26,7 @@ export const filloutForms = createPiece({
 			baseUrl: () => 'https://api.fillout.com/v1/api',
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 				};
 			},
 		}),

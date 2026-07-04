@@ -1,4 +1,4 @@
-import { taskadeAuth } from '../../';
+import { taskadeAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { taskadeProps } from '../common/props';
 import { TaskadeAPIClient } from '../common/client';
@@ -8,6 +8,8 @@ export const completeTaskAction = createAction({
 	name: 'taskade-complete-task',
 	displayName: 'Complete Task',
 	description: 'Complete a task in a project.',
+	audience: 'both',
+	aiMetadata: { description: 'Marks an existing Taskade task as completed within a given project. Use when an agent needs to check off or close out a task; requires the project id and task id. Idempotent, since re-running leaves the task in the same completed state.', idempotent: true },
 	props: {
 		workspace_id: taskadeProps.workspace_id,
 		folder_id: taskadeProps.folder_id,
@@ -17,7 +19,7 @@ export const completeTaskAction = createAction({
 	async run(context) {
 		const { project_id, task_id } = context.propsValue;
 
-		const client = new TaskadeAPIClient(context.auth);
+		const client = new TaskadeAPIClient(context.auth.secret_text);
 
 		return await client.completeTask(project_id, task_id);
 	},

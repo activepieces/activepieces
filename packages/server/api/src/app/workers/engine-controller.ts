@@ -1,22 +1,23 @@
 
-import { EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
-import { flowRunService } from '../flows/flow-run/flow-run-service'
-import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
+import { engineRunCallbackService } from '../flows/flow-run/engine-run-callback-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { engineResponseWatcher } from './engine-response-watcher'
+import { pieceBundle } from '../pieces/piece-bundle'
 
-export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
+export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.get('/populated-flows', GetAllFlowsByProjectParams, async (request) => {
         return flowService(request.log).list({
-            projectId: request.principal.projectId,
+            projectIds: [request.principal.projectId],
             limit: request.query.limit ?? 1000000,
             cursorRequest: request.query.cursor ?? null,
             folderId: request.query.folderId,
@@ -29,156 +30,91 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, stepNameToTest, logsFileId } = request.body
-
-        const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
-        if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
-            await engineResponseWatcher(request.log).publish(
-                httpRequestId,
-                workerHandlerId,
-                await getFlowResponse(runDetails),
-            )
-        }
-
-        await flowRunService(request.log).updateRun({
-            flowRunId: runId,
-            status: runDetails.status,
-            tasks: runDetails.tasks,
-            duration: runDetails.duration,
-            projectId: request.principal.projectId,
-            tags: runDetails.tags ?? [],
-            failedStepName,
-            logsFileId,
-        })
-
-
-        if (!isNil(stepNameToTest)) {
-            const response = await stepRunProgressHandler(request.log).extractStepResponse({
-                logsFileId: logsFileId ?? '',
-                projectId: request.principal.projectId,
-                status: runDetails.status,
-                runId,
-                stepNameToTest,
-            })
-            if (!isNil(response)) {
-                app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
-            }
-        }
-        return reply.status(StatusCodes.NO_CONTENT).send()
-    })
-
-    app.post('/update-flow-response', UpdateFlowResponseParams, async (request) => {
-        const { workerHandlerId, httpRequestId, runResponse } = request.body
-        await engineResponseWatcher(request.log).publish(
-            httpRequestId,
-            workerHandlerId,
-            runResponse,
-        )
-        return {}
-    })
-
     app.get('/flows', GetLockedVersionRequest, async (request) => {
         const flowVersion = await flowVersionService(request.log).getOneOrThrow(request.query.versionId)
         await flowService(request.log).getOneOrThrow({
             id: flowVersion.flowId,
             projectId: request.principal.projectId,
         })
-        return flowVersionService(request.log).lockPieceVersions({
-            flowVersion,
-            projectId: request.principal.projectId,
-        })
+        return flowVersion
     })
 
-    app.get('/files/:fileId', GetFileRequestParams, async (request, reply) => {
-        const { fileId } = request.params
+    // The pool downloads this with the engine token in the Authorization header (Bearer) and follows
+    // the redirect. The engine token is platform-scoped, which scopes custom-piece resolution.
+    app.get('/pieces/bundle', PieceBundleRequest, async (request, reply) => {
+        if (request.principal.type !== PrincipalType.ENGINE) {
+            return reply.status(StatusCodes.UNAUTHORIZED).send()
+        }
+        const resolution = await pieceBundle(request.log).resolve({
+            name: request.query.name,
+            version: request.query.version,
+            archiveId: request.query.archiveId,
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+        })
+        if (resolution.type === 'not-found') {
+            return reply.status(StatusCodes.NOT_FOUND).send()
+        }
+        if (resolution.type === 'redirect') {
+            return reply.status(StatusCodes.TEMPORARY_REDIRECT).header('Location', resolution.url).send()
+        }
         const { data } = await fileService(request.log).getDataOrThrow({
-            fileId,
+            fileId: resolution.archiveId,
+            projectId: undefined,
             type: FileType.PACKAGE_ARCHIVE,
         })
         return reply
-            .type('application/zip')
             .status(StatusCodes.OK)
+            .header('Content-Type', 'application/octet-stream')
             .send(data)
     })
-}
 
+    app.post('/run-progress', RunProgressRequest, async (request, reply) => {
+        engineRunCallbackService(request.log).updateRunProgress({
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
+        return reply.status(StatusCodes.OK).send()
+    })
 
-async function getFlowResponse(
-    result: FlowRunResponse,
-): Promise<EngineHttpResponse> {
-    switch (result.status) {
-        case FlowRunStatus.INTERNAL_ERROR:
-            return {
-                status: StatusCodes.INTERNAL_SERVER_ERROR,
-                body: {
-                    message: 'An internal error has occurred',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.FAILED:
-        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
-            return {
-                status: StatusCodes.INTERNAL_SERVER_ERROR,
-                body: {
-                    message: 'The flow has failed and there is no response returned',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.TIMEOUT:
-            return {
-                status: StatusCodes.GATEWAY_TIMEOUT,
-                body: {
-                    message: 'The request took too long to reply',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.QUOTA_EXCEEDED:
-            return {
-                status: StatusCodes.NO_CONTENT,
-                body: {},
-                headers: {},
-            }
-        // Case that should be handled before
-        default:
-            throw new Error(`Unexpected flow run status: ${result.status}`)
-    }
+    app.post('/step-progress', StepProgressRequest, async (request, reply) => {
+        engineRunCallbackService(request.log).updateStepProgress({
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
+        return reply.status(StatusCodes.OK).send()
+    })
+
+    app.post('/run-logs', RunLogsRequest, async (request, reply) => {
+        await engineRunCallbackService(request.log).uploadRunLog({
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
+        return reply.status(StatusCodes.OK).send()
+    })
+
+    app.post('/flow-response', FlowResponseRequest, async (request, reply) => {
+        await engineRunCallbackService(request.log).sendFlowResponse({
+            request: request.body,
+        })
+        return reply.status(StatusCodes.OK).send()
+    })
+
 }
 
 
 const GetAllFlowsByProjectParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        security: securityAccess.engine(),
     },
     schema: {
-        querystring: Type.Omit(ListFlowsRequest, ['projectId']),
-    },
-}
-
-const GetFileRequestParams = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        params: Type.Object({
-            fileId: Type.String(),
-        }),
-    },
-}
-
-
-const UpdateRunProgress = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        body: UpdateRunProgressRequest,
+        querystring: ListFlowsRequest.omit({ projectId: true }),
     },
 }
 
 const GetLockedVersionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        security: securityAccess.engine(),
     },
     schema: {
         querystring: GetFlowVersionForWorkerRequest,
@@ -188,10 +124,49 @@ const GetLockedVersionRequest = {
     },
 }
 
-
-const UpdateFlowResponseParams = {
+const PieceBundleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        security: securityAccess.engine(),
+    },
+    schema: {
+        querystring: z.object({
+            name: z.string().optional(),
+            version: z.string().optional(),
+            archiveId: z.string().optional(),
+        }),
+    },
+}
+
+const RunProgressRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        body: z.unknown(),
+    },
+}
+
+const StepProgressRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        body: UpdateStepProgressRequest,
+    },
+}
+
+const RunLogsRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        body: UploadRunLogsRequest,
+    },
+}
+
+const FlowResponseRequest = {
+    config: {
+        security: securityAccess.engine(),
     },
     schema: {
         body: SendFlowResponseRequest,

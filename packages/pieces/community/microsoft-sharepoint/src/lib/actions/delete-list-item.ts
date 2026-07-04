@@ -1,5 +1,6 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
 
@@ -8,6 +9,11 @@ export const deleteListItemAction = createAction({
   name: 'microsoft_sharepoint_delete_list_item',
   displayName: 'Delete List Item',
   description: 'Deletes an existing item from a list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently removes an item from a SharePoint list, identified by its list item ID on a given site. Use to clean up or retract a specific row. Destructive but idempotent: once the item is gone, repeating the call with the same ID leaves the list unchanged.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     listId: microsoftSharePointCommon.listId,
@@ -16,10 +22,12 @@ export const deleteListItemAction = createAction({
   async run(context) {
     const { siteId, listId, listItemId } = context.propsValue;
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     return await client

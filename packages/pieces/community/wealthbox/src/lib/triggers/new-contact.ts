@@ -14,6 +14,7 @@ import {
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { fetchUsers, fetchTags, WEALTHBOX_API_BASE, handleApiError } from '../common';
+import { wealthboxAuth } from '../..';
 
 const polling: Polling<any, any> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -58,7 +59,7 @@ const polling: Polling<any, any> = {
         method: HttpMethod.GET,
         url: url,
         headers: {
-          'ACCESS_TOKEN': auth as unknown as string,
+          'ACCESS_TOKEN': auth.secret_text,
           'Accept': 'application/json'
         }
       });
@@ -90,6 +91,9 @@ export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Fires when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact is created in Wealthbox, optionally narrowed by contact type, entity type, household title, assignee, tags, or active status. Each fired item represents one newly created contact record.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     contact_type: Property.StaticDropdown({
@@ -142,6 +146,7 @@ export const newContact = createTrigger({
     }),
 
     assigned_to: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Assigned To',
       description: 'Only trigger for contacts assigned to this user (optional)',
       required: false,
@@ -150,7 +155,7 @@ export const newContact = createTrigger({
         if (!auth) return { options: [] };
 
         try {
-          const users = await fetchUsers(auth as unknown as string);
+          const users = await fetchUsers(auth.secret_text);
           return {
             options: users.map((user: any) => ({
               label: `${user.name} (${user.email})`,
@@ -167,6 +172,7 @@ export const newContact = createTrigger({
     }),
 
     tags_filter: Property.MultiSelectDropdown({
+      auth: wealthboxAuth,
       displayName: 'Tags Filter',
       description: 'Only trigger for contacts with one of these tags (optional)',
       required: false,
@@ -181,7 +187,7 @@ export const newContact = createTrigger({
         }
 
         try {
-          const availableTags = await fetchTags(auth as unknown as string, 'Contact');
+          const availableTags = await fetchTags(auth.secret_text, 'Contact');
           const tagOptions = availableTags.map((tag: any) => ({
             label: tag.name,
             value: tag.name

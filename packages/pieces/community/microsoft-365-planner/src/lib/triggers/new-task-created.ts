@@ -4,6 +4,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+    AppConnectionValueForAuthProperty,
     createTrigger,
     PiecePropValueSchema,
     StaticPropsValue,
@@ -18,7 +19,7 @@ const props = {
 };
 
 const polling: Polling<
-  PiecePropValueSchema<typeof microsoft365PlannerAuth>,
+  AppConnectionValueForAuthProperty<typeof microsoft365PlannerAuth>,
   StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -42,6 +43,9 @@ export const newTaskCreated = createTrigger({
   name: 'newTaskCreated',
   displayName: 'New Task Created',
   description: 'Triggers when a new Task is created in Microsoft 365 Planner.',
+  aiMetadata: {
+    description: 'Fires when a new task is created within a specified Planner plan. Polls periodically and emits each newly created task for the configured plan.',
+  },
   props,
   sampleData: {
     '@odata.etag': 'W/"JzEtVGFzayAgQEBAffEBAQEBAQEBARCc="',

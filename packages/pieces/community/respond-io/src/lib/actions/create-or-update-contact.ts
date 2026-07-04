@@ -8,6 +8,8 @@ export const createOrUpdateContact = createAction({
   name: 'create_or_update_contact',
   displayName: 'Create or Update Contact',
   description: 'Create a new contact or update an existing one by email, phone, or ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Upserts a Respond.io contact keyed by a unique identifier in `id:...`, `email:...`, or `phone:...` form: updates the matching contact if it exists, otherwise creates one. Prefer this over Create Contact when the contact may already exist. Requires the identifier and first name; optional email, phone, language, country, profile picture, and custom fields. Idempotent — repeating with the same input converges to the same record.', idempotent: true },
   props: {
     identifier: Property.ShortText({
       displayName: 'Identifier',

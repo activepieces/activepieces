@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { dumplingAuth } from '../../index';
+import { dumplingAuth } from '../auth';
 
 export const webSearch = createAction({
 	name: 'web_search',
 	auth: dumplingAuth,
 	displayName: 'Web Search',
 	description: 'Search the web and optionally retrieve content from top results.',
+	audience: 'both',
+	aiMetadata: { description: 'Runs a live web search on Dumpling AI for a query, with optional country/location/language and date-range filtering. Can operate in two modes: results-only, or with "Scrape Results" enabled it also fetches and returns the page content of the top N results (markdown, HTML, or screenshot). Use to find current web pages or grab their content in one step. Not idempotent: each call is a fresh billed search whose results reflect live web state.', idempotent: false },
 	props: {
 		query: Property.ShortText({
 			displayName: 'Search Query',
@@ -118,7 +120,7 @@ export const webSearch = createAction({
 			url: 'https://app.dumplingai.com/api/v1/search',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

@@ -1,13 +1,14 @@
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { chunk } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
@@ -17,7 +18,8 @@ type Props = {
 	propertyName?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
@@ -42,10 +44,10 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		}
 		//fetch updated tickets
 		const updatedTickets = [];
-		let after;
+		let after: string | undefined;
 		do {
 			const response = await client.crm.tickets.searchApi.doSearch({
-				limit: 100,
+				limit: MAX_SEARCH_PAGE_SIZE,
 				sorts: ['-hs_lastmodifieddate'],
 				after,
 				filterGroups: [
@@ -66,6 +68,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			});
 			after = response.paging?.next?.after;
 			updatedTickets.push(...response.results);
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		if (updatedTickets.length === 0) {
@@ -118,6 +128,10 @@ export const newTicketPropertyChangeTrigger = createTrigger({
 	name: 'new-ticket-property-change',
 	displayName: 'New Ticket Property Change',
 	description: 'Triggers when a specified property is updated on a ticket.',
+	aiMetadata: {
+		description:
+			'Fires when the chosen property changes on any HubSpot support ticket. Each event represents one ticket whose selected property was modified since the last poll, returning the ticket record (subject, pipeline, stage, priority, owner, etc.). Use to react to specific field updates rather than every ticket change.',
+	},
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
 			{

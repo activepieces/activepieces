@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
 import { API_ENDPOINTS } from '../common/constants';
@@ -10,6 +10,8 @@ export const createEvent = createAction({
   name: 'createEvent',
   displayName: 'Create Event',
   description: 'Creates a new event in Bigin',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a calendar event in Bigin CRM with a title, start and end date/time (end must be after start), plus optional all-day flag, venue, participants, description, and tags. Supports optional recurrence (daily/weekly/monthly/yearly RRULE) and reminders, and can be linked to a related Contact, Pipeline, or Company record. Use to schedule a meeting or appointment. Not idempotent: each call creates a new event.', idempotent: false },
   props: {
     eventTitle: Property.ShortText({
       displayName: 'Event Title',
@@ -38,6 +40,7 @@ export const createEvent = createAction({
       required: false,
     }),
     recurringInfo: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Recurring Info',
       refreshers: ['enableRecurring'],
       required: false,
@@ -125,10 +128,12 @@ export const createEvent = createAction({
       required: false,
     }),
     reminderInfo: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Reminder Information',
       refreshers: ['enableReminder'],
       required: false,
       props: (propsValue, ctx): any => {
+
         if (propsValue['enableReminder']) {
           return {
             reminderList: Property.Array({
@@ -179,6 +184,7 @@ export const createEvent = createAction({
       },
     }),
     relatedTo: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Related To',
       description: 'Select the specific record the event is related to',
       required: false,
@@ -188,7 +194,8 @@ export const createEvent = createAction({
         if (!auth) return handleDropdownError('Please connect your account first');
         if (!relatedModule) return { options: [] };
 
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const fetchMap: Record<string, () => Promise<any>> = {
           Contacts: () =>
@@ -243,7 +250,8 @@ export const createEvent = createAction({
     tag: tagsDropdown('Events'),
   },
   async run({ auth, propsValue }) {
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
     const startDate = new Date(propsValue.startDateTime);
     const endDate = new Date(propsValue.endDateTime);
 

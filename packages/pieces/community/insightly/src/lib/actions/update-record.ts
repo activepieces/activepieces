@@ -22,6 +22,8 @@ export const updateRecord = createAction({
     displayName: 'Update Record',
     description:
         "Update an existing record's fields in a specified Insightly object",
+    audience: 'both',
+    aiMetadata: { description: 'Updates field values on an existing record in a chosen Insightly CRM object (Contact, Lead, Opportunity, etc.), identified by its record ID. Use to modify an entity that already exists. Sending the same field values repeatedly leaves the record in the same state, but the call always overwrites the targeted fields. Requires the matching Insightly pod (e.g. "na1") and the record ID.', idempotent: false },
     props: {
         pod: Property.ShortText({
             displayName: 'Pod',
@@ -48,12 +50,13 @@ export const updateRecord = createAction({
             }
         }),
         recordId: Property.Dropdown({
+            auth: insightlyAuth,
             displayName: 'Record ID',
             description: 'Select the record to update',
             required: true,
             refreshers: ['objectName', 'pod'],
             options: async ({ auth, objectName, pod }) => {
-                if (!objectName || !pod) {
+                if (!objectName || !pod || !auth) {
                     return {
                         disabled: true,
                         placeholder: 'Please select an object type and pod first',
@@ -62,7 +65,7 @@ export const updateRecord = createAction({
                 }
 
                 const response = await makeInsightlyRequest(
-                    auth as string,
+                    auth,
                     `/${objectName}?top=100&brief=true`,
                     pod as string
                 );
@@ -90,19 +93,20 @@ export const updateRecord = createAction({
             }
         }),
         fields: Property.DynamicProperties({
+            auth: insightlyAuth,
             displayName: 'Fields',
             description: 'The new field values to update.',
             required: true,
             refreshers: ['objectName', 'recordId', 'pod'],
             props: async ({ auth, objectName, recordId, pod }) => {
-                if (!objectName || !recordId || !pod) {
+                if (!objectName || !recordId || !pod || !auth) {
                     return {};
                 }
                 const objName = objectName as unknown as string;
                 const podName = pod as unknown as string;
 
                 const record = await makeInsightlyRequest(
-                    auth as unknown as string,
+                    auth,
                     `/${objName}/${recordId as unknown as string}`,
                     podName
                 );

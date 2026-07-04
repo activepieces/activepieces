@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { projectId, tagIds, taskId, workspaceId } from '../common/props';
 
@@ -9,6 +9,12 @@ export const startTimerAction = createAction({
 	name: 'start-timer',
 	displayName: 'Start Timer',
 	description: 'Starts a new time entry.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Starts a live, currently-running timer on a Clockify workspace from the current moment, optionally tied to a project, task, tags, and billable flag. Use to begin tracking ongoing work; use Stop Timer to end it and Create Time Entry to log a finished interval. Not idempotent: each call starts a new running entry.',
+		idempotent: false,
+	},
 	props: {
 		workspaceId: workspaceId({
 			displayName: 'Workspace',
@@ -40,7 +46,7 @@ export const startTimerAction = createAction({
 		const tagIds = context.propsValue.tagIds ?? [];
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/time-entries`,
 			body: {

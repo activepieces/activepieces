@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
-import { jinaAiAuth } from '../../index';
+import { jinaAiAuth } from '../auth';
 
 export const webSearchSummarizationAction = createAction({
   auth:jinaAiAuth,
@@ -9,6 +9,12 @@ export const webSearchSummarizationAction = createAction({
   displayName: 'Web Search Summarization',
   description:
     'Perform a web search and retrieve summarized results using the Reader API.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Run a web search through the Jina Reader search API and return the result list, optionally visiting every hit to include full page content; supports country/language/location targeting, in-site (single-domain) search, and pagination. Pick this to discover pages by keyword — use Extract Webpage Content for a known URL or DeepSearch Query for multi-step research questions. Read-only search, so repeat calls are idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Query',
@@ -198,7 +204,7 @@ export const webSearchSummarizationAction = createAction({
     const responseBody = await JinaAICommon.makeRequest({
       url: finalUrl,
       method: HttpMethod.GET,
-      auth: apiKey as string,
+      auth: apiKey.secret_text,
       headers,
     });
 

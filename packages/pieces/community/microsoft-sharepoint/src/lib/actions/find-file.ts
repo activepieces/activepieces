@@ -1,10 +1,12 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import {
   createAction,
+  OAuth2PropertyValue,
   Property,
   DropdownOption,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection, GraphError } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
@@ -14,6 +16,11 @@ export const findFileAction = createAction({
   name: 'microsoft_sharepoint_find_file',
   displayName: 'Find File',
   description: 'Look up a file by its name or path.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Locates files in a SharePoint document library (drive) on a given site, either by exact path from the drive root or by keyword search on the file name (optionally scoped to a folder). Use to resolve a file ID/metadata before downloading, moving, or copying. Read-only and idempotent; path mode returns an empty result rather than erroring when the file is missing.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,
@@ -40,6 +47,7 @@ export const findFileAction = createAction({
         required: false,
     }),
     searchFolderId: Property.Dropdown({
+      auth: microsoftSharePointAuth,
       displayName: 'Folder to Search In (Optional)',
       description: 'The folder to search within. If not specified, the entire drive will be searched. **Only applies when searching by name.**',
       required: false,
@@ -55,10 +63,12 @@ export const findFileAction = createAction({
         const authValue = auth as PiecePropValueSchema<
           typeof microsoftSharePointAuth
         >;
+        const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
         const client = Client.initWithMiddleware({
           authProvider: {
             getAccessToken: () => Promise.resolve(authValue.access_token),
           },
+          baseUrl: getGraphBaseUrl(cloud),
         });
         const options: DropdownOption<string>[] = [];
         let response: PageCollection = await client
@@ -84,10 +94,12 @@ export const findFileAction = createAction({
   async run(context) {
     const { driveId, findMethod, filePath, searchQuery, searchFolderId } = context.propsValue;
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     if (findMethod === 'path') {

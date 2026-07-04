@@ -17,8 +17,11 @@ export const updateTaskAction = createAction({
   name: 'update_task',
   displayName: 'Update Task',
   description: 'Update a task.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing task on a GoHighLevel/LeadConnector contact, identified by contact ID and task ID, changing title, due date, description, assignee, or completed flag. Use to edit or complete a known task. Idempotent — repeating with the same input leaves the task in the same state.', idempotent: true },
   props: {
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: true,
@@ -43,6 +46,7 @@ export const updateTaskAction = createAction({
       },
     }),
     task: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Task',
       required: true,
       refreshers: ['contact'],
@@ -80,6 +84,7 @@ export const updateTaskAction = createAction({
       required: false,
     }),
     assignedTo: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Assigned To',
       required: false,
       refreshers: [],

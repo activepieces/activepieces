@@ -5,14 +5,14 @@ import {
   HttpMessageBody,
   AuthenticationType
 } from '@activepieces/pieces-common';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { respondIoAuth } from './auth';
 
 export type RespondIoApiCallParams = {
   method: HttpMethod;
   url: string;
   body?: unknown;
-  auth: PiecePropValueSchema<typeof respondIoAuth>;
+  auth: AppConnectionValueForAuthProperty<typeof respondIoAuth>;
 };
 
 export async function respondIoApiCall<T extends HttpMessageBody>({
@@ -26,7 +26,7 @@ export async function respondIoApiCall<T extends HttpMessageBody>({
     url: `https://api.respond.io/v2${url}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth.token
+      token: auth.props.token
     },
     headers: {
       'Content-Type': 'application/json',

@@ -3,13 +3,18 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId } from '../common/props';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const createNewBrowserWindowAction = createAction({
 	name: 'create-browser-window',
 	auth: airtopAuth,
 	displayName: 'Create New Browser Window',
 	description: 'Opens a new window within a session, optionally navigating to a URL.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Opens a new browser window inside an existing Airtop session, optionally navigating to a starting URL and setting screen resolution and page-load wait strategy. Requires a session id from Create Session; the returned window id is needed for page interactions like clicking, typing, scraping, and screenshots. Not idempotent: each call creates an additional window.',
+		idempotent: false,
+	},
 	props: {
 		sessionId: sessionId,
 		url: Property.ShortText({
@@ -68,9 +73,9 @@ export const createNewBrowserWindowAction = createAction({
 		} = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			url: z.string().url().optional(),
-			customResolution: z.string().regex(/^\d+x\d+$/, 'Must be in format "widthxheight" (e.g., "1920x1080")').optional(),
-			waitUntilTimeoutSeconds: z.number().positive().optional(),
+			url: z.optional(z.string().check(z.url())),
+			customResolution: z.optional(z.string().check(z.regex(/^\d+x\d+$/, 'Must be in format "widthxheight" (e.g., "1920x1080")'))),
+			waitUntilTimeoutSeconds: z.optional(z.number().check(z.positive())),
 		});
 
 		const body: Record<string, any> = {};
@@ -84,7 +89,7 @@ export const createNewBrowserWindowAction = createAction({
 		if (waitUntilTimeoutSeconds) body['waitUntilTimeoutSeconds'] = waitUntilTimeoutSeconds;
 
 		const response = await airtopApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows`,
 			body,

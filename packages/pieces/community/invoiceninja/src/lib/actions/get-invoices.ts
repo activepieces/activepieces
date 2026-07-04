@@ -7,6 +7,8 @@ export const getInvoices = createAction({
   name: 'getinvoices_task',
   displayName: 'Get Invoices',
   description: 'Gets data for invoices.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves invoices from Invoice Ninja filtered by status (unpaid, paid, overdue, or all) and optionally by client id, capped by a max-results limit. Use to list or report on invoices; omitting the client id returns invoices across all clients. Read-only and idempotent.', idempotent: true },
 
   props: {
     invoiceStatus: Property.StaticDropdown({
@@ -47,7 +49,7 @@ export const getInvoices = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
 
     const headers = {
       'X-Api-Token': INapiToken,
@@ -72,7 +74,7 @@ export const getInvoices = createAction({
     ); // otherwise it only returns 20 per page hopefully
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v1/invoices/?${queryParams.toString()}`;
     // console.log("INVOICENINJA: " + url);
     const httprequestdata = {

@@ -1,13 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 
 export const mollieCreatePayment = createAction({
   auth: mollieAuth,
   name: 'create_payment',
   displayName: 'Create Payment',
   description: 'Creates a new payment in Mollie',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a payment in Mollie and returns a hosted checkout URL the customer is redirected to; a redirect URL is required. Supports one-off, first (to set up a mandate), and recurring sequences — recurring requires a customer ID and mandate. This is the recommended way to collect a payment. Not idempotent: each call creates a new payment.',
+    idempotent: false,
+  },
   props: {
     description: Property.ShortText({
       displayName: 'Description',
@@ -426,7 +432,7 @@ export const mollieCreatePayment = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth;
 
     const paymentData: Record<string, unknown> = {
       description: propsValue.description,

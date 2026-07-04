@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { activityCommonProps } from '../common/props';
 import { pipedriveApiCall } from '../common';
@@ -9,7 +9,13 @@ export const updateActivityAction = createAction({
     auth: pipedriveAuth,
     name: 'update-activity',
     displayName: 'Update Activity',
-    description: 'Updates an existing activity.', 
+    description: 'Updates an existing activity.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Updates fields on an existing activity identified by its activity ID, such as subject, type, due date/time, owner, done state, and linked records; only supplied fields change. Use to reschedule or mark an activity done (use Create Activity to add a new one). Idempotent: repeating the same update converges to the same activity state.',
+        idempotent: true,
+    },
     props: {
         activityId: Property.Number({
             displayName: 'Activity ID', 

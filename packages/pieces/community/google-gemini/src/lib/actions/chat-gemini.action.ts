@@ -5,12 +5,14 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
-import { z } from 'zod';
-import { googleGeminiAuth } from '../../index';
+import * as z from 'zod/mini'
+import { googleGeminiAuth } from '../auth';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { propsValidation } from '@activepieces/pieces-common';
+import { chatGeminiActionOutputSchema } from '../output-schemas';
 
 export const chatGemini = createAction({
+  audience: 'human',
   auth: googleGeminiAuth,
   name: 'chat_gemini',
   displayName: 'Chat Gemini',
@@ -21,6 +23,7 @@ export const chatGemini = createAction({
       required: true,
       description: 'The model which will generate the completion',
       refreshers: [],
+      auth: googleGeminiAuth,
       defaultValue: defaultLLM,
       options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),
@@ -36,13 +39,14 @@ export const chatGemini = createAction({
       required: false,
     }),
   },
+  outputSchema: chatGeminiActionOutputSchema,
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      memoryKey: z.string().max(128).optional(),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
 
-    const { model, prompt, memoryKey } = propsValue;
-    const genAI = new GoogleGenerativeAI(auth);
+    const { model, prompt, memoryKey } = propsValue;  
+    const genAI = new GoogleGenerativeAI(auth.secret_text);
     const geminiModel = genAI.getGenerativeModel({ model });
     let history: Content[] = [];
 

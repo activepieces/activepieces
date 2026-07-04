@@ -8,15 +8,18 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { constantContactAuth } from '../../';
+import { constantContactAuth } from '../auth';
 
 export const createOrUpdateContact = createAction({
   auth: constantContactAuth,
   name: 'create_or_update_contact',
   displayName: 'Create or Update Contact',
   description: 'Create or Update a contact in Constant Contact',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a contact in Constant Contact or updates the existing one matching the email address, and adds it to one or more contact lists. Use this to add subscribers or keep contact details and list memberships in sync. The email address is required and is the key the upsert matches on, so repeating the call with the same email updates rather than duplicates.', idempotent: true },
   props: {
     list: Property.MultiSelectDropdown({
+      auth: constantContactAuth,
       displayName: 'List',
       description: 'The list of the contact',
       required: true,
@@ -40,7 +43,7 @@ export const createOrUpdateContact = createAction({
               method: HttpMethod.GET,
               authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: (auth as OAuth2PropertyValue)['access_token'],
+                token: (auth)['access_token'],
               },
             })
           ).body.lists.map((list) => {

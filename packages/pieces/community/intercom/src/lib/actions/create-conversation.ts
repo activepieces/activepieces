@@ -1,17 +1,22 @@
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 import {
 	createAction,
 	DropdownOption,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
-import { intercomClient } from '../common';
+import { intercomClient, IntercomAuthValue } from '../common';
 
 export const createConversationAction = createAction({
 	auth: intercomAuth,
 	name: 'create-conversation',
 	displayName: 'Create Conversation',
 	description: 'Creates a new conversation from a contact.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Start a new Intercom conversation on behalf of an existing contact by sending an initial message body from that contact. Pick this to open a fresh thread tied to a known user or lead; it does not reply to or search existing conversations. Requires a valid contact ID and the matching contact type (user or lead). Not idempotent — each call creates a separate conversation.',
+		idempotent: false,
+	},
 	props: {
 		contactType: Property.StaticDropdown({
 			displayName: 'Contact Type',
@@ -26,6 +31,7 @@ export const createConversationAction = createAction({
 			},
 		}),
 		contactId: Property.Dropdown({
+			auth: intercomAuth,
 			displayName: 'Contact ID',
 			required: true,
 			refreshers: ['contactType'],
@@ -39,7 +45,7 @@ export const createConversationAction = createAction({
 				}
 
 				const type = contactType as 'user' | 'lead';
-				const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+				const authValue = auth as IntercomAuthValue;
 				const client = intercomClient(authValue);
 
 				const response = await client.contacts.list();

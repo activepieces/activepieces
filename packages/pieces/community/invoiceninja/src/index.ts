@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createTask } from './lib/actions/create-task';
 import { getClient } from './lib/actions/get-client';
 import { getInvoices } from './lib/actions/get-invoices';
@@ -54,10 +54,10 @@ export const invoiceninja = createPiece({
     actionRecurringInvoice,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `${(auth as { base_url: string }).base_url.replace(/\/$/, '')}/api/v1`,
+        auth ? `${(auth).props.base_url.replace(/\/$/, '')}/api/v1` : '',
       auth: invoiceninjaAuth,
       authMapping: async (auth) => ({
-        'X-Api-Token': (auth as { access_token: string }).access_token,
+        'X-Api-Token': (auth).props.access_token,
       }),
     }),
   ],

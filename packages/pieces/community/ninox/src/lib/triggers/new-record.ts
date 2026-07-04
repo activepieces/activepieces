@@ -8,7 +8,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import {
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	StaticPropsValue,
 	TriggerStrategy,
 	createTrigger,
@@ -23,7 +23,7 @@ const props = {
 	tid: tableIdDropdown,
 };
 
-const polling: Polling<PiecePropValueSchema<typeof NinoxAuth>, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof NinoxAuth>, StaticPropsValue<typeof props>> = {
 	strategy: DedupeStrategy.LAST_ITEM,
 	async items({ auth, propsValue, lastItemId }) {
 		const { teamid, dbid, tid } = propsValue;
@@ -39,7 +39,7 @@ const polling: Polling<PiecePropValueSchema<typeof NinoxAuth>, StaticPropsValue<
 			url: BASE_URL + `/teams/${teamid}/databases/${dbid}/tables/${tid}/records`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			queryParams: qs,
 		});
@@ -56,6 +56,9 @@ export const newRecord = createTrigger({
 	name: 'newRecord',
 	displayName: 'New Record',
 	description: 'Triggers when a new record is created in a table.',
+	aiMetadata: {
+		description: 'Fires when a new record is added to the selected Ninox table (team, database, and table), polling for records created since the last seen one. Represents a newly created row.',
+	},
 	props,
 	sampleData: {
 		id: 10,

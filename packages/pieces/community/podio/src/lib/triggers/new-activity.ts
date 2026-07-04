@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const newActivityTrigger = createTrigger({
@@ -8,6 +8,9 @@ export const newActivityTrigger = createTrigger({
   name: 'new_activity',
   displayName: 'New Status',
   description: 'Fires when a new status is created in a workspace stream',
+  aiMetadata: {
+    description: 'Fires when a new status update is posted to the selected Podio workspace (space) stream, via a status.create webhook on that space. Represents a newly shared status update.',
+  },
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,

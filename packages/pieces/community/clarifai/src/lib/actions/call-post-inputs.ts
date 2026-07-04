@@ -1,4 +1,4 @@
-import { clarifaiAuth } from '../../';
+import { clarifaiAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   CommonClarifaiProps,
@@ -12,6 +12,12 @@ export const postInputsAction = createAction({
   auth: clarifaiAuth,
   name: 'post_inputs',
   description: 'Add inputs to your clarifai app',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads a file (image, video, audio, or text) as a new input into a specific Clarifai app, where it is stored for indexing, search, or training. Use to add data to a Clarifai dataset; requires the target user ID, app ID, and the file as a URL or base64 bytes. Each call appends a new input, so it is not idempotent.',
+    idempotent: false,
+  },
   displayName: 'Add Inputs',
   props: {
     userId: Property.ShortText({
@@ -37,7 +43,7 @@ export const postInputsAction = createAction({
     const input = fileToInput(file);
 
     const inputs = await callPostInputs({
-      auth,
+      auth: auth.secret_text,
       userId,
       appId,
       input,

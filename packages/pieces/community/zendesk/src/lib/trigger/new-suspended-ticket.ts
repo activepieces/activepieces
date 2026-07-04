@@ -36,6 +36,9 @@ export const newSuspendedTicket = createTrigger({
   name: 'new_suspended_ticket',
   displayName: 'New Suspended Ticket',
   description: 'Fires when a ticket is suspended. Requires a Zendesk Trigger with Notify active webhook. Suspended tickets auto-delete after 14 days.',
+  aiMetadata: {
+    description: 'Fires when a ticket transitions to suspended status in Zendesk, delivered via a registered webhook. Represents a ticket flagged as suspended (which auto-deletes after 14 days); can optionally be scoped to a single organization ID. Requires a Zendesk Trigger configured to notify the active webhook.',
+  },
   auth: zendeskAuth,
   props: {
     organization_filter: Property.ShortText({
@@ -108,21 +111,21 @@ export const newSuspendedTicket = createTrigger({
     },
   },
   async onEnable(context) {
-    const authentication = context.auth as AuthProps;
+    const authentication = context.auth;
     
     try {
       const response = await httpClient.sendRequest<{
         webhook: { id: string };
       }>({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/webhooks`,
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/webhooks`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
         body: {
           webhook: {
@@ -143,18 +146,18 @@ export const newSuspendedTicket = createTrigger({
   },
 
   async onDisable(context) {
-    const authentication = context.auth as AuthProps;
+    const authentication = context.auth;
     const webhookId = await context.store.get<string>(WEBHOOK_TRIGGER_KEY);
 
     if (webhookId) {
       try {
         await httpClient.sendRequest({
-          url: `https://${authentication.subdomain}.zendesk.com/api/v2/webhooks/${webhookId}`,
+          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/webhooks/${webhookId}`,
           method: HttpMethod.DELETE,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: authentication.email + '/token',
-            password: authentication.token,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
           },
         });
       } catch (error) {

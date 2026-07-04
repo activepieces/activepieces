@@ -1,15 +1,18 @@
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 import { FilterOperatorEnum } from '../common/types';
+import { MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 
 export const findCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-custom-object',
 	displayName: 'Find Custom Object',
 	description: 'Finds a custom object by searching.',
+	audience: 'both',
+	aiMetadata: { description: 'Search records of a selected HubSpot custom object type by one or two property/value pairs (matched with equality) and return the matches. Read-only and repeatable. Requires choosing the custom object type; use Create Custom Object to add a new record.', idempotent: true },
 	props: {
 		customObjectType: customObjectDropdown,
 		firstSearchPropertyName: customObjectPropertiesDropdown(
@@ -88,7 +91,7 @@ export const findCustomObjectAction = createAction({
 		const client = new Client({ accessToken: context.auth.access_token });
 
 		const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
-			limit: 100,
+			limit: MAX_SEARCH_PAGE_SIZE,
 			properties: propertiesToRetrieve,
 			filterGroups: [{ filters }],
 		});

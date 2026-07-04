@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { tagService } from '../tag-service'
@@ -22,6 +22,9 @@ export const pieceTagService = {
             acc[pieceTag.pieceName].push(tags[pieceTag.tagId])
             return acc
         }, {} as Record<string, string[]>)
+    },
+    async deleteByTagId(tagId: string): Promise<void> {
+        await pieceTagsRepo().delete({ tagId })
     },
     async findByPlatformAndTags(platformId: string, pieceTags: string[]): Promise<string[]> {
         const tagIds = await tagService.convertIdsToNames(platformId, pieceTags)

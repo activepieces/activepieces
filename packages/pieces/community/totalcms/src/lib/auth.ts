@@ -1,9 +1,10 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { saveContent } from './api';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
-export type TotalCMSAuthType = { license: string; domain: string };
+export type TotalCMSAuthType = AppConnectionValueForAuthProperty<typeof cmsAuth>;
 
 export const cmsAuth = PieceAuth.CustomAuth({
   description: 'Setup your Total CMS connection',
@@ -22,11 +23,14 @@ export const cmsAuth = PieceAuth.CustomAuth({
   required: true,
   async validate({ auth }) {
     await propsValidation.validateZod(auth, {
-      domain: z.string().url(),
+      domain: z.string().check(z.url()),
       license: z.string(),
     });
 
-    const response = await saveContent(auth, 'text', 'activepieces', {
+    const response = await saveContent({
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: auth,
+    }, 'text', 'activepieces', {
       text: 'verified',
     });
     if (response.success !== true) {

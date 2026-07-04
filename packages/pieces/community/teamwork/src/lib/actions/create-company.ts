@@ -7,6 +7,8 @@ export const createCompany = createAction({
 	name: 'create_company',
 	displayName: 'Create Company',
 	description: 'Create a new company in Teamwork.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new company record in Teamwork. Use to register a client or organization before associating projects or people with it; requires a name and accepts optional address, contact, profile, and custom-field details. Not idempotent — each call creates a separate company even with the same name.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		name: Property.ShortText({ displayName: 'Name', description: 'Name of the company.', required: true }),
@@ -29,6 +31,7 @@ export const createCompany = createAction({
 		profile: Property.LongText({ displayName: 'Profile', description: "Public company profile or 'About Us' text.", required: false }),
 		privateNotes: Property.LongText({ displayName: 'Private Notes', description: 'Notes visible only to internal users.', required: false }),
 		customFields: Property.DynamicProperties({
+			auth: teamworkAuth,
 			displayName: 'Custom Fields',
 			description: 'Custom fields for this company.',
 			required: false,
@@ -37,7 +40,7 @@ export const createCompany = createAction({
 				if (!auth) return {};
 
 				const fields: DynamicPropsValue = {};
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/customfields.json',
 					query: {

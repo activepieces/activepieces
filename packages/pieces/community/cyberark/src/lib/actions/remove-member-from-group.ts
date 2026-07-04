@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { cyberarkAuth } from '../../index';
+import { cyberarkAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { groupIdDropdown } from '../common/group-dropdown';
 import { memberIdDropdown } from '../common/member-dropdown';
@@ -10,12 +10,17 @@ export const removeMemberFromGroup = createAction({
   name: 'remove_member_from_group',
   displayName: 'Remove Member from Group',
   description: 'Removes a specific user from a user group in the Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Removes a member from a Vault user group, identified by group ID and member ID. Use to revoke a user\'s group-based permissions. Effectively idempotent: once removed, repeating the call has no further effect on the membership.',
+    idempotent: true,
+  },
   props: {
     groupId: groupIdDropdown,
     memberId: memberIdDropdown,
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     if (!context.propsValue.memberId) {
       return {

@@ -3,7 +3,7 @@ import {
   SESClient,
   CreateCustomVerificationEmailTemplateCommand,
 } from '@aws-sdk/client-ses';
-import { amazonSesAuth } from '../../index';
+import { amazonSesAuth } from '../auth';
 import {
   getVerifiedIdentities,
   getCustomVerificationTemplates,
@@ -22,6 +22,12 @@ export const createCustomVerificationEmailTemplate = createAction({
   name: 'create_custom_verification_email_template',
   displayName: 'Create Custom Verification Email Template',
   description: 'Create custom email template for identity verification',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a custom Amazon SES verification email template — the message sent to recipients to confirm an email identity — with a verified from-address, subject, HTML content (should contain the verification link), and success/failure redirect URLs. Use when defining the verification email before calling Send Custom Verification Email. The template name must be unique; by default it fails if one already exists. Not idempotent: it registers a new template and errors on a duplicate name.',
+    idempotent: false,
+  },
   props: {
     templateName: Property.ShortText({
       displayName: 'Template Name',
@@ -30,6 +36,7 @@ export const createCustomVerificationEmailTemplate = createAction({
       required: true,
     }),
     fromEmailAddress: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'From Email',
       description: 'Verified sender email address',
       required: true,
@@ -85,7 +92,7 @@ export const createCustomVerificationEmailTemplate = createAction({
       validateUrls,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     validateCustomVerificationTemplateName(templateName);
 

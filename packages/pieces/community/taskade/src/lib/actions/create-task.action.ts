@@ -1,4 +1,4 @@
-import { taskadeAuth } from '../../';
+import { taskadeAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { taskadeProps } from '../common/props';
 import { TaskadeAPIClient } from '../common/client';
@@ -8,6 +8,8 @@ export const createTaskAction = createAction({
 	name: 'taskade-create-task',
 	displayName: 'Create Task',
 	description: 'Creates a new task.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds a new task to a Taskade project, with the task body supplied as markdown or plain text and positioned at the start or end of the project. Use to append work items to an existing project; requires the target project id. Creates a new task on every call, so it is not idempotent.', idempotent: false },
 	props: {
 		workspace_id: taskadeProps.workspace_id,
 		folder_id: taskadeProps.folder_id,
@@ -57,7 +59,7 @@ export const createTaskAction = createAction({
 	async run(context) {
 		const { project_id, content_type, content, placement } = context.propsValue;
 
-		const client = new TaskadeAPIClient(context.auth);
+		const client = new TaskadeAPIClient(context.auth.secret_text);
 
 		return await client.createTask(project_id, {
 			content,

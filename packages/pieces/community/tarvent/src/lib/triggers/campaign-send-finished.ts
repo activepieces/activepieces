@@ -1,5 +1,5 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 
@@ -8,6 +8,9 @@ export const campaignSendFinishedTrigger = createTrigger({
   name: 'tarvent_campaign_send_finished',
   displayName: 'Campaign Sent',
   description: 'Triggers when a campaign has been sent to a contact. WARNING: This will fire for every contact the campaign is sent to, please be careful using this trigger.',
+  aiMetadata: {
+    description: 'Fires once per contact each time a campaign is delivered to them, optionally scoped to a specific audience, group, or tag. High volume: it fires for every recipient of the campaign.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

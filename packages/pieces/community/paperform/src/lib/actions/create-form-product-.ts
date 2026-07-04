@@ -4,13 +4,15 @@ import { paperformCommon } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PaperformCreateProductResponse, PaperformField } from '../common/types';
 import { paperformCommonProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const createFormProduct = createAction({
   auth: paperformAuth,
   name: 'createFormProduct',
   displayName: 'Create Form Product',
   description: 'Creates a form product.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new purchasable product (name, SKU, price, optional quantity/min/max and image) on a product field of a specified Paperform form. Use to add an item to a form-based store; each call creates a separate product, so it is not idempotent.', idempotent: false },
   props: {
     formId:paperformCommonProps.formId,
     productFieldKey: paperformCommonProps.productFieldKey,
@@ -143,7 +145,7 @@ export const createFormProduct = createAction({
         method: HttpMethod.POST,
         url: `/forms/${formId}/products`,
         body: requestBody,
-        auth: auth as string,
+        auth: auth.secret_text,
       });
       
       return response.results.product;

@@ -11,6 +11,10 @@ export const subscriptionInvoicePaid = createTrigger({
   name: 'subscriptionInvoicePaid',
   displayName: MODULE_NAME,
   description: 'Triggers when a subscription invoice is paid.',
+  aiMetadata: {
+    description:
+      'Fires when a subscription invoice is paid in the selected ClickFunnels workspace, representing a successful recurring-billing payment. Delivers the invoice payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),
@@ -24,7 +28,7 @@ export const subscriptionInvoicePaid = createTrigger({
 
     try {
       const response: any = await clickfunnelsApiService.createWebhook(
-        auth,
+        auth.props,
         workspaceId as string,
         {
           webhooks_outgoing_endpoint: {
@@ -52,7 +56,7 @@ export const subscriptionInvoicePaid = createTrigger({
 
     if (cachedData) {
       await clickfunnelsApiService
-        .deleteWebhook(auth, cachedData.webhookId)
+        .deleteWebhook(auth.props, cachedData.webhookId)
         .then(async () => {
           await store.delete(CACHE_KEY);
         });

@@ -16,6 +16,12 @@ export const embedQuestion = createAction({
   displayName: 'Embed question',
   description:
     'Enable embedding for a Metabase question and configure parameters',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Updates a Metabase question (card) by its ID to toggle static embedding on or off and set how each parameter is exposed in the embed (disabled, editable, or locked). Use when configuring a question for external embedding. This mutates the card's settings, but is idempotent — re-running with the same inputs leaves the card in the same configured state.",
+    idempotent: true,
+  },
   props: {
     questionId: Property.ShortText({
       displayName: 'Metabase question ID',
@@ -27,24 +33,25 @@ export const embedQuestion = createAction({
       required: true,
       defaultValue: true,
     }),
-    parameterSettings: Property.DynamicProperties({
+    parameterSettings: Property.DynamicProperties<false, typeof metabaseAuth>({
       displayName: 'Parameter settings',
+      auth: metabaseAuth,
       description:
         'Configure how each parameter should be handled in the embed',
       required: false,
       refreshers: ['questionId', 'enableEmbedding'],
       props: async ({ auth, questionId, enableEmbedding }) => {
-        if (!questionId || !enableEmbedding) {
+        if (!questionId || !enableEmbedding || !auth) {
           return {};
         }
 
         try {
           const card = await queryMetabaseApi(
             {
-              endpoint: `card/${questionId.split('-')[0]}`,
+              endpoint: `card/${(questionId as string).split('-')[0]}`,
               method: HttpMethod.GET,
             },
-            { baseUrl: auth.baseUrl, apiKey: auth.apiKey }
+            auth
           );
 
           const parameters = (card['parameters'] as MetabaseParam[]) || [];

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { memAuth } from '../../index';
+import { memAuth } from '../auth';
 import { makeRequest } from '../common';
 
 export const createMemAction = createAction({
@@ -8,6 +8,11 @@ export const createMemAction = createAction({
   name: 'create_mem',
   displayName: 'Create Mem',
   description: 'Save any content to Mem.ai for intelligent processing and future reference.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends raw content (HTML, emails, transcripts, or plain notes) to Mem.ai\'s "mem-it" endpoint, where it is intelligently processed and filed into the knowledge base; optionally accepts processing instructions and background context. Use to capture unstructured material and let Mem decide how to organize it, rather than writing a specific note. Not idempotent: each call ingests the content anew.',
+    idempotent: false,
+  },
   props: {
     input: Property.LongText({
       displayName: 'Input',
@@ -27,7 +32,7 @@ export const createMemAction = createAction({
   },
   async run(context) {
     const { input, instructions, context: contextInfo } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const body = {
       input,

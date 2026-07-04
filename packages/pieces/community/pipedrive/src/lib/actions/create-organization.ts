@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { organizationCommonProps } from '../common/props';
 import {
@@ -9,13 +9,19 @@ import {
 } from '../common';
 import { GetField, GetOrganizationResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const createOrganizationAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-organization',
 	displayName: 'Create Organization',
 	description: 'Creates a new organization.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new organization (company) with a required name and optional owner, address, visibility, labels, and custom fields. Use to add a company record (use Update Organization to edit one, or Find Organization to check for an existing match). Not idempotent: each call creates a separate organization, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

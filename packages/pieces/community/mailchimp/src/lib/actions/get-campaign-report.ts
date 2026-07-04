@@ -10,6 +10,8 @@ export const getCampaignReport = createAction({
   name: 'get_campaign_report',
   displayName: 'Get Campaign Report',
   description: 'Get comprehensive report details for a specific sent campaign including opens, clicks, bounces, and performance metrics',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the analytics report for a single sent campaign by campaign ID, covering opens, clicks, bounces, unsubscribes, and engagement metrics; optional field include/exclude lists narrow the payload. Use to read performance for a campaign that has already been sent. Read-only and idempotent. Returns a not-found result if the campaign has not been sent or the ID is wrong.', idempotent: true },
   props: {
     campaign_id: mailchimpCommon.mailChimpCampaignIdDropdown,
     fields: Property.LongText({

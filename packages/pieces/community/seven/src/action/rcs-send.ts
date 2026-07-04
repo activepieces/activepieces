@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { sevenAuth } from '../index';
+import { sevenAuth } from '../lib/auth';
 import { callSevenApi } from '../common';
 
 export const sendRcsAction = createAction({
@@ -8,6 +8,11 @@ export const sendRcsAction = createAction({
   name: 'send-rcs',
   displayName: 'Send RCS',
   description: 'Sends a Rich Communication Services message.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a Rich Communication Services (RCS) message via the seven gateway to a single recipient phone number, optionally falling back to SMS or webview if RCS is unavailable. Use when sending a rich messaging payload rather than plain SMS; supports scheduled dispatch (delay), TTL, and performance tracking. Each call dispatches a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     to: Property.ShortText({
       displayName: 'To',
@@ -87,7 +92,7 @@ export const sendRcsAction = createAction({
         foreign_id
       },
       method: HttpMethod.POST
-    }, 'rcs/messages', context.auth as string);
+    }, 'rcs/messages', context.auth.secret_text);
 
     return response.body;
   }

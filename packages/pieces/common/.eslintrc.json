@@ -1,0 +1,30 @@
+{
+  "extends": ["../../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": {}
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@activepieces/shared",
+                "message": "pieces-common must not import @activepieces/shared (it bundles into every piece). Use @activepieces/core-utils or @activepieces/core-piece-types."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "rules": {}
+    }
+  ]
+}

@@ -7,6 +7,8 @@ export const publishToTopic = createAction({
   auth: googlePubsubAuth,
   displayName: 'Publish to topic',
   description: 'Publish message to topic',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a message to a Google Cloud Pub/Sub topic, base64-encoding the provided JSON object as the message payload. Use to emit an event or hand data to downstream Pub/Sub subscribers. The topic must already exist (selected from the project), and each call delivers a new message, so it is not idempotent.', idempotent: false },
   props: {
     message: Property.Object({
       displayName: 'Message',
@@ -15,15 +17,23 @@ export const publishToTopic = createAction({
     topic: Property.Dropdown({
       displayName: 'Topic',
       required: true,
-      refreshers: ['auth'],
+      refreshers: ['auth'], 
+      auth: googlePubsubAuth,
       options: async ({ auth }) => {
-        const json = (auth as { json: string }).json;
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const json = auth.props.json;
         return common.getTopics(json);
       },
     }),
   },
   async run(context) {
-    const client = common.getClient(context.auth.json);
+    const client = common.getClient(context.auth.props.json);
     const topic = context.propsValue.topic;
 
     const url = `https://pubsub.googleapis.com/v1/${topic}:publish`;

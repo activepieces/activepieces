@@ -1,4 +1,4 @@
-import { acumbamailAuth } from '../../';
+import { acumbamailAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { acumbamailCommon } from '../common';
 import {
@@ -14,6 +14,12 @@ export const duplicateTemplateAction = createAction({
   displayName: 'Duplicate Template',
   description:
     'Duplicates an existing template to use it on a email marketing campaign shipping.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a copy of an existing Acumbamail email template under a new name, leaving the original untouched. Use to derive a working template for a campaign from a known good one; requires the source template id and the new template name. Not idempotent: each call produces another duplicate.',
+    idempotent: false,
+  },
   props: {
     template_name: Property.ShortText({
       displayName: 'New Template Name',
@@ -25,7 +31,7 @@ export const duplicateTemplateAction = createAction({
     const { templateId, template_name } = context.propsValue;
 
     const formData = new FormData();
-    formData.append('auth_token', context.auth);
+    formData.append('auth_token', context.auth.secret_text);
     formData.append('template_name', template_name);
     formData.append('origin_template_id', templateId.toString());
 

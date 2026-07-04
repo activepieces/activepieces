@@ -13,6 +13,12 @@ export const stripeCreatePrice = createAction({
   displayName: 'Create Price',
   description:
     'Create a price (one-time or recurring), associated with a product.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a price for an existing Stripe product, in either one-time or recurring mode depending on the selected billing interval. Use after creating a product to define what to charge before building a subscription or payment link. Requires the product ID; not idempotent, as each call creates a new price.',
+    idempotent: false,
+  },
   props: {
     product: stripeCommon.product, 
     unit_amount: Property.Number({
@@ -92,7 +98,7 @@ export const stripeCreatePrice = createAction({
       url: `${stripeCommon.baseUrl}/prices`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

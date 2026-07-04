@@ -1,7 +1,5 @@
 # pieces-kizeo-forms
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-kizeo-forms` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-kizeo-forms` to build the library.

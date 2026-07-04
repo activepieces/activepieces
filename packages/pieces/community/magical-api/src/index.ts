@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { magicalApiAuth } from './lib/common/auth';
 import { BASE_URL } from './lib/common/client';
@@ -32,7 +32,7 @@ export const magicalApi = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          'api-key': auth as string,
+          'api-key': auth.secret_text,
         };
       },
     }),

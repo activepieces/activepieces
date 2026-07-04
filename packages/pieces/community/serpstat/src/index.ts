@@ -5,7 +5,7 @@ import { serpstatAuth } from "./lib/common/auth";
 import { getKeywords } from "./lib/actions/keyword-analysis/get-keywords";
 import { getSuggestions } from "./lib/actions/keyword-analysis/get-suggestions";
 import { BASE_URL } from "./lib/common/client";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const serpstat = createPiece({
   displayName: "Serpstat",
@@ -23,7 +23,7 @@ export const serpstat = createPiece({
       authLocation: 'queryParams',
       authMapping: async (auth) => {
         return {
-          token: auth as string,
+          token: auth.secret_text,
         };
       },
     }),

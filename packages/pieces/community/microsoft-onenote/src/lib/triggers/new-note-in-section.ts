@@ -1,19 +1,34 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
-import { oneNoteAuth } from '../../index';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { oneNoteAuth } from '../auth';
+import { Client, PageCollection, ResponseType } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 
-const polling: Polling<OAuth2PropertyValue, { notebook_id: string; section_id: string }> = {
+async function fetchPageContent(client: Client, pageId: string): Promise<string | null> {
+	try {
+		return await client
+			.api(`/me/onenote/pages/${pageId}/content`)
+			.responseType(ResponseType.TEXT)
+			.get();
+	} catch (error) {
+		console.error(`Failed to fetch content for page ${pageId}:`, error);
+		return null;
+	}
+}
+
+const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { notebook_id: string; section_id: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, store, lastFetchEpochMS }) => {
 		const sectionId = propsValue.section_id;
+		const cloud = auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		try {
@@ -43,7 +58,14 @@ const polling: Polling<OAuth2PropertyValue, { notebook_id: string; section_id: s
 				}
 			}
 
-			return pages.map((page) => ({
+			const pagesWithContent = await Promise.all(
+				pages.map(async (page) => ({
+					...page,
+					content: await fetchPageContent(client, page.id),
+				})),
+			);
+
+			return pagesWithContent.map((page) => ({
 				epochMilliSeconds: dayjs(page.createdDateTime).valueOf(),
 				data: page,
 			}));
@@ -58,9 +80,13 @@ export const newNoteInSectionTrigger = createTrigger({
 	name: 'new_note_in_section',
 	displayName: 'New Note in Section',
 	description: 'Fires when a new note is created in a specified section.',
+	aiMetadata: {
+		description: 'Fires when a new page (note) is created in a specific OneNote notebook section, detected by polling for pages newer than the last check ordered by creation time. Each event represents one newly created page.',
+	},
 	auth: oneNoteAuth,
 	props: {
-		notebook_id: Property.Dropdown({
+		notebook_id: Property.Dropdown({	
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook to monitor for new notes.',
 			required: true,
@@ -77,6 +103,7 @@ export const newNoteInSectionTrigger = createTrigger({
 			},
 		}),
 		section_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Section',
 			description: 'The section to monitor for new notes.',
 			required: true,
@@ -128,6 +155,7 @@ export const newNoteInSectionTrigger = createTrigger({
 		lastModifiedDateTime: '2025-01-09T01:00:00Z',
 		createdByAppId: 'app-id-example',
 		contentUrl: 'https://graph.microsoft.com/v1.0/me/onenote/pages/page-id-example/content',
+		content: '<html><head><title>Sample Page Title</title></head><body><p>Sample note content.</p></body></html>',
 		links: {
 			oneNoteClientUrl: {
 				href: 'onenote:https://example.com/page'

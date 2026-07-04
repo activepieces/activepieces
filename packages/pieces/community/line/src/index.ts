@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { pushMessage } from './lib/actions/push-message';
 import { newMessage } from './lib/trigger/new-message';
 
@@ -24,7 +24,7 @@ export const line = createPiece({
       baseUrl: () => 'https://api.line.me/v2',
       auth: lineAuth2,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

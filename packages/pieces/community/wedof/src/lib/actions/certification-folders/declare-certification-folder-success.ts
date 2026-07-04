@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { wedofCommon } from '../../common/wedof';
 import dayjs from 'dayjs';
 
@@ -9,6 +9,12 @@ export const declareCertificationFolderSuccess = createAction({
   name: 'declareCertificationFolderSuccess',
   displayName: "Passer un dossier de certification à l'état : Réussi",
   description: "Change l'état d'un dossier de certification vers : Réussi",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transition a Wedof certification folder into the 'success' (passed) state, recording the required issue date plus optional detailed result, European language level, digital-proof link, and grade. Pick this when the candidate has obtained the certification; use the 'failed' or 'toRetake' actions for other outcomes. Follows the certification-folder state machine and is not idempotent. Requires the folder's externalId.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
@@ -59,7 +65,7 @@ export const declareCertificationFolderSuccess = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

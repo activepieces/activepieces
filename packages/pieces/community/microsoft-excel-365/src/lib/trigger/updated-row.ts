@@ -1,11 +1,13 @@
 import {
-    OAuth2PropertyValue,
+    AppConnectionValueForAuthProperty,
     Property,
     createTrigger,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
-import { excelAuth } from '../..';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
+import { excelAuth } from '../auth';
 import {
     DedupeStrategy,
     Polling,
@@ -21,9 +23,9 @@ function createRowHash(rowData: unknown[]): string {
 }
 
 // Helper function to get all worksheet rows with error handling
-async function getWorksheetRows(auth: OAuth2PropertyValue, workbookId: string, worksheetId: string): Promise<(string | number | boolean)[][]> {
+async function getWorksheetRows(auth: AppConnectionValueForAuthProperty<typeof excelAuth>, workbookId: string, worksheetId: string, drivePath: string): Promise<(string | number | boolean)[][]> {
     try {
-        return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token);
+        return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token, drivePath);
     } catch (error) {
         throw new Error(`Failed to fetch worksheet rows: ${error}`);
     }
@@ -31,16 +33,21 @@ async function getWorksheetRows(auth: OAuth2PropertyValue, workbookId: string, w
 
 // Polling implementation using the framework's best practices
 const polling: Polling<
-    OAuth2PropertyValue,
+    AppConnectionValueForAuthProperty<typeof excelAuth>,
     {
-        workbook_id: string;
-        worksheet_id: string;
+        storageSource: string;
+        siteId?: string;
+        documentId?: string;
+        workbookId: string;
+        worksheetId: string;
         has_headers: boolean;
     }
 > = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue, store }) => {
-        const allRows = await getWorksheetRows(auth, propsValue.workbook_id, propsValue.worksheet_id);
+        const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
+        const drivePath = getDrivePath(storageSource, siteId, documentId);
+        const allRows = await getWorksheetRows(auth, workbookId, worksheetId, drivePath);
         
         if (allRows.length === 0) {
             return [];
@@ -101,9 +108,15 @@ export const updatedRowTrigger = createTrigger({
     name: triggerName,
     displayName: 'Updated Row',
     description: 'Fires when a row (in a worksheet) is added or updated.',
+    aiMetadata: {
+        description: 'Fires when a row in the selected worksheet is added or its cell values change, detected by comparing row content hashes between polls. Each event represents one changed row and returns its 1-based row index, the cell values (keyed by header names when headers are enabled, otherwise by column letters), and a changeType of "added" or "updated". Use this to react to edits or new entries in worksheet rows.',
+    },
     props: {
-        workbook_id: excelCommon.workbook_id,
-        worksheet_id: excelCommon.worksheet_id,
+        storageSource: commonProps.storageSource,
+        siteId: commonProps.siteId,
+        documentId: commonProps.documentId,
+        workbookId: commonProps.workbookId,
+        worksheetId: commonProps.worksheetId,
         has_headers: Property.Checkbox({
             displayName: "First row has headers",
             description: "Enable this if the first row of your worksheet should be treated as headers.",
@@ -118,7 +131,10 @@ export const updatedRowTrigger = createTrigger({
     },
 
     onEnable: async (context) => {
-
+        const { storageSource, siteId, documentId } = context.propsValue as any;
+        if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+            throw new Error('please select SharePoint site and document library.');
+        }
         await pollingHelper.onEnable(polling, {
             auth: context.auth,
             store: context.store,

@@ -17,6 +17,8 @@ export const findUserAction = createAction({
   name: 'find-user',
   displayName: 'Find User(s)',
   description: 'Search users by email, name, role, or other criteria.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Zendesk users and returns matching records. A required search-type selector chooses the mode: match by email, name, role, organization, tag, or external ID, or pass a raw Zendesk search-syntax string via the Custom Query mode. Use to look up a user or resolve their ID before assigning tickets or adding comments; no matches returns an empty result set rather than an error. Read-only and idempotent.', idempotent: true },
   props: {
     search_type: Property.StaticDropdown({
       displayName: 'Search Type',
@@ -106,7 +108,7 @@ export const findUserAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       search_type,
       email,
@@ -187,13 +189,13 @@ export const findUserAction = createAction({
     try {
       const response = await httpClient.sendRequest({
         url: `https://${
-          authentication.subdomain
+          authentication.props.subdomain
         }.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
       });
 

@@ -13,6 +13,9 @@ export const newSubscriberTrigger = createTrigger({
   name: 'new_subscriber',
   displayName: 'New Subscriber',
   description: 'Fires when new subscriber is added',
+  aiMetadata: {
+    description: 'Fires when a new email contact is added to the selected SendPulse mailing list (address book), via any source such as a subscription form or import. Each event represents one newly added subscriber and includes their email, source, and variables.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     mailingListId: mailingListDropdown,
@@ -27,7 +30,7 @@ export const newSubscriberTrigger = createTrigger({
         data: Array<{ id: number; action: string; url: string }>;
       }>({
         method: HttpMethod.POST,
-        auth: context.auth,
+        auth: context.auth.props,
         resourceUri: '/v2/email-service/webhook',
         body: {
           url: context.webhookUrl,
@@ -56,7 +59,7 @@ export const newSubscriberTrigger = createTrigger({
       if (webhookId) {
         await sendpulseApiCall({
           method: HttpMethod.DELETE,
-          auth: context.auth,
+          auth: context.auth.props,
           resourceUri: `/v2/email-service/webhook/${webhookId}`,
         });
         

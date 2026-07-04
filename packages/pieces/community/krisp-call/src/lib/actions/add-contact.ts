@@ -1,12 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
+import { krispcallAuth } from '../auth';
 
 export const addContact = createAction({
   name: 'addContact',
   displayName: 'Add Contact',
   auth: krispcallAuth,
   description: 'Add contact in Krispcall',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a contact in the connected KrispCall account, keyed by phone number. Use when an agent needs to register a new contact (name, company, email, address are optional; only the contact number is required). Not idempotent — calling it again with the same number creates or re-submits another contact entry.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -39,7 +45,7 @@ export const addContact = createAction({
       method: HttpMethod.POST,
       url: 'https://app.krispcall.com/api/v3/platform/activepiece/add-contact',
       headers: {
-        'X-API-KEY': auth.apiKey,
+        'X-API-KEY': auth.props.apiKey,
       },
       body: {
         name: propsValue.name,

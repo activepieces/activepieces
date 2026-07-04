@@ -1,13 +1,16 @@
 import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { netlifyAuth } from "../common/auth";
 
 export const getSite = createAction({
   name: "get_site",
   displayName: "Get Site",
   description: "Get a specified site. Note: Environment variable keys and values have moved from build_settings.env and repo.env to a new endpoint. Please use getEnvVars to retrieve site environment variables.",
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the configuration and metadata for a single Netlify site by its site ID. Use it to look up details such as the site URL, build settings, or deploy info. Read-only and idempotent. Note: site environment variables are no longer included here and must be fetched from the dedicated env-vars endpoint.', idempotent: true },
   props: {
     siteId: Property.Dropdown({
-      displayName: "Site",
+      auth: netlifyAuth,      displayName: "Site",
       description: "Select the site to retrieve information for",
       required: true,
       refreshers: ['auth'],

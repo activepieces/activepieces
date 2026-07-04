@@ -1,0 +1,26 @@
+{
+  "name": "@activepieces/sandbox",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@activepieces/core-utils": "workspace:*",
+    "@activepieces/server-utils": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "nanoid": "3.3.8",
+    "socket.io": "4.7.5",
+    "tree-kill": "1.2.2",
+    "write-file-atomic": "5.0.1"
+  },
+  "devDependencies": {
+    "@types/write-file-atomic": "4.0.3",
+    "@types/node": "24.11.0",
+    "vitest": "3.2.6"
+  }
+}

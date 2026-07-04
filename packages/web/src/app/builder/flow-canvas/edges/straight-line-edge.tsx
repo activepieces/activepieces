@@ -1,0 +1,61 @@
+import { StepLocationRelativeToParent } from '@activepieces/shared';
+import { BaseEdge, EdgeProps } from '@xyflow/react';
+
+import { flowCanvasConsts } from '../utils/consts';
+import { ApStraightLineEdge } from '../utils/types';
+
+import { ApAddButton } from './add-button';
+import { useEdgeLayoutSpace } from './use-edge-layout-space';
+
+export const ApStraightLineCanvasEdge = ({
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  data,
+  id,
+}: EdgeProps & ApStraightLineEdge) => {
+  const { layoutSource, layoutTarget, toCanvasPath } = useEdgeLayoutSpace({
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+  });
+
+  const lineLength = layoutTarget.y - layoutSource.y;
+  const layoutPath = `M ${layoutSource.x} ${layoutSource.y} v${lineLength}
+   ${data.drawArrowHead ? flowCanvasConsts.ARROW_DOWN : ''}`;
+  const path = toCanvasPath(layoutPath);
+  const buttonCenter = {
+    x: (sourceX + targetX) / 2,
+    y: (sourceY + targetY) / 2,
+  };
+
+  return (
+    <>
+      <BaseEdge
+        path={path}
+        style={{ strokeWidth: `${flowCanvasConsts.LINE_WIDTH}px` }}
+      />
+      {!data.hideAddButton && (
+        <foreignObject
+          x={
+            buttonCenter.x - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2
+          }
+          y={
+            buttonCenter.y - flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2
+          }
+          width={flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width}
+          height={flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height}
+          className="overflow-visible cursor-default"
+        >
+          <ApAddButton
+            edgeId={id}
+            parentStepName={data.parentStepName}
+            stepLocationRelativeToParent={StepLocationRelativeToParent.AFTER}
+          ></ApAddButton>
+        </foreignObject>
+      )}
+    </>
+  );
+};

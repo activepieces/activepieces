@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { oktaAuth } from './lib/common/common';
 import { createUserAction } from './lib/actions/create-user';
 import { activateUserAction } from './lib/actions/activate-user';
@@ -31,10 +31,10 @@ export const okta = createPiece({
     findUserByEmailAction,
     findGroupByNameAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => `${(auth as any).domain}/api/v1`,
+      baseUrl: (auth) => `${(auth)?.props.domain}/api/v1`,
       auth: oktaAuth,
       authMapping: async (auth) => ({
-        Authorization: `SSWS ${(auth as any).apiToken}`,
+        Authorization: `SSWS ${(auth).props.apiToken}`,
       }),
     }),
   ],

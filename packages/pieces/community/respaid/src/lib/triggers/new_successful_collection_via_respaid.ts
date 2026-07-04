@@ -1,6 +1,6 @@
 
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { respaidAuth } from '../../index';
+import { respaidAuth } from '../auth';
 import { respaidTriggersCommon } from '../common';
 
 
@@ -21,6 +21,9 @@ export const newSuccessfulCollectionViaRespaid = createTrigger({
     name: 'new_successful_collection_via_respaid',
     displayName: 'New Successful Collection via Respaid',
     description: "Triggers when a debt is paid online via Respaid's payment link.",
+    aiMetadata: {
+      description: "Fires when a debt is paid in full online through Respaid's payment link, carrying the debtor/invoice details, amount, payment mode, and timestamp. Use to react to a full settlement collected via Respaid.",
+    },
     auth: respaidAuth,
     props: {},
     sampleData: {

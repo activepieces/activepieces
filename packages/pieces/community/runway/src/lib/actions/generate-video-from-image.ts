@@ -2,13 +2,15 @@ import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-
 import { propsValidation } from '@activepieces/pieces-common';
 import { runwayAuth } from '../common';
 import RunwayML from '@runwayml/sdk';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const generateVideoFromImage = createAction({
 	auth: runwayAuth,
 	name: 'generate_video_from_image',
 	displayName: 'Generate Video From Image',
 	description: 'Generates a video based on image(s) and text prompt using Runway\'s AI models',
+	audience: 'both',
+	aiMetadata: { description: 'Submits an image-to-video generation job to Runway from a starting frame and optional prompt, returning the created task ID; the video is produced asynchronously, so poll Get Task Details with that ID for the result. Provide the starting frame as exactly one of an uploaded file or an HTTPS image URL (not both). Choose when an agent needs to animate an image into a clip. Each call starts a new billable generation, so it is not idempotent.', idempotent: false },
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',
@@ -50,6 +52,7 @@ export const generateVideoFromImage = createAction({
 			required: false 
 		}),
 		ratio: Property.DynamicProperties({
+			auth: runwayAuth,
 			displayName: 'Video Resolution',
 			description: 'Available resolutions depend on the selected model',
 			required: true,
@@ -110,6 +113,7 @@ export const generateVideoFromImage = createAction({
 			},
 		}),
 		duration: Property.DynamicProperties({
+			auth: runwayAuth,
 			displayName: 'Video Duration',
 			description: 'Available durations depend on the selected model',
 			required: true,
@@ -160,6 +164,7 @@ export const generateVideoFromImage = createAction({
 			required: false 
 		}),
 		contentModeration: Property.DynamicProperties({
+			auth: runwayAuth,
 			displayName: 'Content Moderation',
 			description: 'Content moderation settings (not available for veo3)',
 			required: false,
@@ -193,9 +198,9 @@ export const generateVideoFromImage = createAction({
 	async run({ auth, propsValue, files }) {
 		// Zod validation
 		await propsValidation.validateZod(propsValue, {
-			promptText: z.string().max(1000, 'Prompt text must be 1000 characters or fewer').optional(),
-			seed: z.number().min(0, 'Seed must be at least 0').max(4294967295, 'Seed must be at most 4294967295').optional(),
-			promptImageUrl: z.string().url('Prompt image URL must be a valid HTTPS URL').optional(),
+			promptText: z.optional(z.string().check(z.maxLength(1000, 'Prompt text must be 1000 characters or fewer'))),
+			seed: z.optional(z.number().check(z.minimum(0, 'Seed must be at least 0'), z.maximum(4294967295, 'Seed must be at most 4294967295'))),
+			promptImageUrl: z.optional(z.string().check(z.url('Prompt image URL must be a valid HTTPS URL'))),
 		});
 
 		// Input validation
@@ -246,7 +251,7 @@ export const generateVideoFromImage = createAction({
 			imageUrl = propsValue.promptImageUrl as string;
 		}
 
-		const apiKey = auth as string;
+		const apiKey = auth.secret_text;
 		const client = new RunwayML({ apiKey });
 
 		// Build request body according to SDK specification

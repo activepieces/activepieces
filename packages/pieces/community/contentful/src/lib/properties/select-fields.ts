@@ -1,9 +1,10 @@
 import { DropdownState, Property } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../common';
-import { isEmpty, isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@activepieces/pieces-framework';
 
 const SelectFields = Property.MultiSelectDropdown({
-  displayName: 'Return Fields',
+  displayName: 'Return Fields', 
+  auth: ContentfulAuth,
   description: 'The fields to return for each record.',
   refreshers: [PropertyKeys.CONTENT_MODEL],
   required: false,
@@ -14,10 +15,10 @@ const SelectFields = Property.MultiSelectDropdown({
       placeholder: '',
     };
 
-    if (isEmpty(auth) || isNil(model)) return searchFields;
+    if (isEmpty(auth) || !auth || isNil(model)) return searchFields;
 
     try {
-      const { client } = makeClient(auth as ContentfulAuth);
+      const { client } = makeClient(auth);
       const contentType = await client.contentType.get({
         contentTypeId: model as unknown as string,
       });

@@ -1,17 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { googleDriveAuth } from '../../index';
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { drive as googleDrive } from '@googleapis/drive';
 import { Stream } from 'stream';
 import { common } from '../common';
+import { saveFileAsPdfActionOutputSchema } from '../output-schemas';
 
 export const saveFileAsPdf = createAction({
   displayName: 'Save Document as PDF',
   auth: googleDriveAuth,
   name: 'save_file_as_pdf',
   description: 'Save a document as PDF in a Google Drive folder',
+  audience: 'both',
+  aiMetadata: { description: 'Exports a Google document to PDF and saves it as a new file in a target Drive folder. Use to produce a PDF rendition of a Google Doc/Sheet/Slides for sharing or archival. Requires the source document ID and destination folder ID. Not idempotent: each call creates a new PDF file.', idempotent: false },
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',
@@ -30,15 +32,15 @@ export const saveFileAsPdf = createAction({
     }),
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: saveFileAsPdfActionOutputSchema,
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const documentId = context.propsValue.documentId;
     const folderId = context.propsValue.folderId;
     const nameForNewFile = context.propsValue.name;
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const result = await drive.files.export(
       {

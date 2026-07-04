@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
-import { instantlyAiAuth } from '../../index';
+import { instantlyAiAuth } from '../auth';
 
 export const searchCampaignsAction = createAction({
   auth: instantlyAiAuth,
   name: 'search_campaigns',
   displayName: 'Search Campaigns',
   description: 'Searchs for campaigns using various filters.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Instantly campaigns by name and returns all matching campaigns, paginating through every page of results. Use to look up a campaign and its ID before adding leads or referencing it elsewhere. A name is required; matching is by search term. Read-only and idempotent.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Campaign Name',

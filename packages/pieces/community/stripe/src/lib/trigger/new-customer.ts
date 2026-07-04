@@ -3,13 +3,17 @@ import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const stripeNewCustomer = createTrigger({
   auth: stripeAuth,
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created',
+  aiMetadata: {
+    description:
+      'Fires when a new customer is created in Stripe (the customer.created event), emitting the new customer record. Use to react to customer onboarding, such as syncing them to a CRM or sending a welcome flow.',
+  },
   props: {},
   sampleData: {
     id: 'cus_NGtyEf4hNGTj3p',
@@ -46,7 +50,7 @@ export const stripeNewCustomer = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'customer.created',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<WebhookInformation>('_new_customer_trigger', {
       webhookId: webhook.id,
@@ -57,16 +61,17 @@ export const stripeNewCustomer = createTrigger({
       '_new_customer_trigger'
     );
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth.secret_text);
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/customers',
+      url: 'https://api.stripe.com/v1/customers',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Stripe-Version': "2026-02-25.clover",
       },
       queryParams: {
         limit: '5',

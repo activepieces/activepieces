@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { upgradechatAuth } from '../../';
+import { upgradechatAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 // Helper function to get current date in the required format
@@ -11,6 +11,12 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in the CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an invoice in the Sperse/Upgrade.chat CRM for a contact, including a single line item, billing/shipping addresses, totals, and an associated payment transaction. Choose this to bill a contact or record a payment against them. Requires the contact (Contact ID or External Contact ID), a status, invoice number, dates, currency, description, quantity, and the transaction date. Not idempotent: each call records a new invoice and transaction, so repeating it produces duplicates.',
+    idempotent: false,
+  },
   auth: upgradechatAuth,
   props: {
     contactId: Property.Number({
@@ -456,9 +462,9 @@ export const createInvoice = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportInvoice`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportInvoice`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

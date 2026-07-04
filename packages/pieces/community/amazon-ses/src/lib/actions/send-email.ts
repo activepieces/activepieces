@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import { amazonSesAuth } from '../../index';
+import { amazonSesAuth } from '../auth';
 import {
   getVerifiedIdentities,
   getConfigurationSets,
@@ -21,14 +21,28 @@ export const sendEmail = createAction({
   displayName: 'Send Email',
   description:
     'Send a customizable email via Amazon SES with verified sender addresses',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a one-off email through Amazon SES from a verified sender, with HTML or plain-text body (HTML mode auto-generates a text fallback), plus optional CC/BCC, reply-to, return path, configuration set, and tags. Use to deliver ad-hoc messages where the content is supplied inline rather than from a stored template. The sender address must already be verified in SES, and the chosen body format requires its matching content field. Not idempotent: each call dispatches a new email.',
+    idempotent: false,
+  },
   props: {
     fromEmailAddress: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'From Email',
       description: 'Verified sender email address',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const verifiedIdentities = await getVerifiedIdentities(auth as any);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const verifiedIdentities = await getVerifiedIdentities(auth.props);
         return createIdentityDropdownOptions(verifiedIdentities);
       },
     }),
@@ -85,12 +99,20 @@ export const sendEmail = createAction({
       required: false,
     }),
     configurationSetName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Configuration Set',
       description: 'SES configuration set for tracking',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
-        const configSets = await getConfigurationSets(auth as any);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const configSets = await getConfigurationSets(auth.props);
         return createConfigSetDropdownOptions(configSets);
       },
     }),
@@ -128,7 +150,7 @@ export const sendEmail = createAction({
       returnPathArn,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     if (bodyFormat === 'html' && !htmlBody) {
       throw new Error('HTML content is required when using HTML format');

@@ -1,11 +1,11 @@
-import { googleDocsAuth } from '../../index';
-import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { google, drive_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { googleDocsAuth, createGoogleClient, GoogleDocsAuthValue } from '../auth';
+import { DropdownOption, Property } from '@activepieces/pieces-framework';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 
 export const folderIdProp = Property.Dropdown({
 	displayName: 'Folder',
 	refreshers: [],
+	auth: googleDocsAuth,
 	required: false,
 	options: async ({ auth }) => {
 		if (!auth) {
@@ -15,12 +15,11 @@ export const folderIdProp = Property.Dropdown({
 				options: [],
 			};
 		}
-		const authValue = auth as PiecePropValueSchema<typeof googleDocsAuth>;
+		const authValue = auth as GoogleDocsAuthValue;
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(authValue);
+		const authClient = await createGoogleClient(authValue);
 
-		const drive = google.drive({ version: 'v3', auth: authClient });
+		const drive = googleDrive({ version: 'v3', auth: authClient });
 
 		const options: DropdownOption<string>[] = [];
 
@@ -32,6 +31,7 @@ export const folderIdProp = Property.Dropdown({
 				supportsAllDrives: true,
                 orderBy:'createdTime desc',
 				includeItemsFromAllDrives: true,
+				corpora: 'allDrives',
 				pageToken: nextPageToken,
 			});
 

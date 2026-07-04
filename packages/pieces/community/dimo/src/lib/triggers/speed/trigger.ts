@@ -1,8 +1,8 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
-import { dimoAuth } from '../../../index';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
-import { DimoClient } from '../../common/helpers';
+import { dimoAuth } from '../../auth';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
+import { DimoClient, getNumberExpression } from '../../common/helpers';
 import { CreateWebhookParams, WebhookInfo, WebhookPayload } from '../../common/types';
 import { TriggerField } from '../../common/constants';
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
@@ -14,6 +14,10 @@ export const speedTrigger = createTrigger({
 	name: 'speed-trigger',
 	displayName: 'Speed Trigger',
 	description: 'Triggers when vehicle speed meets specified conditions.',
+	aiMetadata: {
+		description:
+			'Fires via DIMO webhook when a monitored vehicle reports a speed reading (km/h) that satisfies the configured comparison operator against the threshold. Each event represents a single speed telemetry signal and includes the vehicle token ID, timestamp, and the measured speed value. Use to detect speeding, movement, or a vehicle coming to a stop.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 
 	props: {
@@ -29,17 +33,11 @@ export const speedTrigger = createTrigger({
 			description: 'Speed value to compare against in kilometers per hour',
 			required: true,
 		}),
-		triggerFrequency: Property.StaticDropdown({
-			displayName: 'Trigger Frequency',
-			description: 'How often the webhook should fire when condition is met',
+		coolDownPeriod: Property.Number({
+			displayName: 'Cool Down Period (seconds)',
+			description: 'Minimum number of seconds between successive webhook firings',
 			required: true,
-			defaultValue: 'Realtime',
-			options: {
-				options: [
-					{ label: 'Real-time', value: 'Realtime' },
-					{ label: 'Hourly', value: 'Hourly' },
-				],
-			},
+			defaultValue: 30,
 		}),
 		verificationToken: verificationTokenInput,
 	},
@@ -58,9 +56,9 @@ export const speedTrigger = createTrigger({
 	},
 
 	async onEnable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
-		const { vehicleTokenIds, operator, speedValue, triggerFrequency, verificationToken } =
+		const { vehicleTokenIds, operator, speedValue, coolDownPeriod, verificationToken } =
 			context.propsValue;
 
 		const dimo = new DimoClient({
@@ -75,18 +73,14 @@ export const speedTrigger = createTrigger({
 				: [];
 
 		const webhookPayload: CreateWebhookParams = {
-			service: 'Telemetry',
-			data: TriggerField.Speed,
-			trigger: {
-				field: TriggerField.Speed,
-				operator,
-				value: speedValue,
-			},
-			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			service: 'telemetry.signals',
+			metricName: TriggerField.Speed,
+			condition: getNumberExpression(operator, speedValue),
+			coolDownPeriod,
 			description: `Speed trigger: ${operator} ${speedValue} km/h`,
-			target_uri: context.webhookUrl,
-			status: 'Active',
-			verification_token: verificationToken,
+			targetURL: context.webhookUrl,
+			status: 'enabled',
+			verificationToken: verificationToken,
 		};
 
 		try {
@@ -98,18 +92,12 @@ export const speedTrigger = createTrigger({
 
 			const webhookId = createWebhookResponse.id;
 
-			if (ids.length === 0) {
-				await dimo.subscribeAllVehicles({
-					developerJwt,
-					webhookId,
-				});
-			} else {
-				await Promise.all(
-					ids.map(async (tokenId) => {
-						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
-					}),
-				);
-			}
+			await dimo.subscribeVehiclesToWebhook({
+				developerJwt,
+				webhookId,
+				vehicleTokenIds: ids,
+			});
+
 			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
 				webhookId,
 				verificationToken,
@@ -120,7 +108,7 @@ export const speedTrigger = createTrigger({
 		}
 	},
 	async onDisable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const dimo = new DimoClient({
 			clientId,
 			apiKey,

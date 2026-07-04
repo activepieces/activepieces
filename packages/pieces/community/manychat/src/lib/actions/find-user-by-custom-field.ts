@@ -1,15 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { BASE_URL } from '../common/props';
-import { manychatAuth } from '../../index';
+import { manychatAuth } from '../auth';
 
 export const findUserByCustomFieldAction = createAction({
 	auth: manychatAuth,
 	name: 'findUserByCustomField',
 	displayName: 'Find User by Custom Field',
 	description: 'Finds a user by custom field.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Manychat subscribers by a custom field (text or number type) matching a given value, returning whether any matched and the list of matches. Use to look up a subscriber by a stored attribute when you do not have their subscriber ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		field: Property.Dropdown({
+			auth: manychatAuth,
 	displayName: 'Custom Field',
 	refreshers: [],
 	required: true,
@@ -29,7 +32,7 @@ export const findUserByCustomFieldAction = createAction({
 			method: HttpMethod.GET,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth as string,
+				token: auth.secret_text
 			},
 		});
 		return {
@@ -64,7 +67,7 @@ export const findUserByCustomFieldAction = createAction({
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 		});
 

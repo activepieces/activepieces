@@ -1,14 +1,14 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     try {
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
       const session = agent.session;
       if (!session?.did) {
@@ -66,6 +66,9 @@ export const newFollowerOnAccount = createTrigger({
   name: 'newFollowerOnAccount',
   displayName: 'New Follower on Account',
   description: 'Triggers when someone new follows your Bluesky account',
+  aiMetadata: {
+    description: 'Fires when a new account follows the authenticated Bluesky account; each event represents one new follower and carries that follower\'s profile details.',
+  },
   props: {},
   sampleData: {
     did: 'did:plc:example123',

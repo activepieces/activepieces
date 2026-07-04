@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { fireberryAuth } from '../../index';
+import { fireberryAuth } from '../auth';
 import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
@@ -8,12 +8,12 @@ const fieldsToReturn = Property.DynamicProperties({
   displayName: 'Fields to Return',
   refreshers: ['objectType'],
   required: false,
+  auth: fireberryAuth,
   props: async ({ auth, objectType }) => {
     if (!auth || !objectType) return {};
     
-    const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
     const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-    const client = new FireberryClient(authStr);
+    const client = new FireberryClient(auth);
     
     try {
       const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
@@ -47,6 +47,8 @@ export const findRecordAction = createAction({
   name: 'find_record',
   displayName: 'Find Records',
   description: 'Search for records in Fireberry.',
+  audience: 'both',
+  aiMetadata: { description: 'Queries records of a given Fireberry object type with optional pagination, sorting, and field selection. Leave the search query empty to fetch all records, or supply criteria (e.g. "accountname=John") to filter to matches. Use to look up or list records before acting on them. Read-only and idempotent.', idempotent: true },
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,
@@ -87,7 +89,7 @@ export const findRecordAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, searchQuery, fieldsToReturn, sortBy, sortOrder, pageSize, pageNumber } = propsValue;
     
     const selectedFields: string[] = [];

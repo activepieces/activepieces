@@ -1,8 +1,8 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -14,12 +14,11 @@ import dayjs from 'dayjs';
 import { oracleDbAuth } from '../common/auth';
 import { OracleDbClient } from '../common/client';
 import { oracleDbProps } from '../common/props';
-import oracledb from 'oracledb';
 
 type OrderDirection = 'ASC' | 'DESC';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof oracleDbAuth>,
+  AppConnectionValueForAuthProperty<typeof oracleDbAuth>,
   {
     tableName: string;
     orderBy: string;
@@ -28,19 +27,14 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
-    const client = new OracleDbClient(auth);
-    await client['connect']();
-
-    if (!client['connection']) {
-      throw new Error('Database connection failed');
-    }
+    const client = new OracleDbClient(auth.props);
 
     const lastItem = lastItemId as string;
     const lastOrderKey = lastItem ? lastItem.split('|')[0] : null;
     const direction = propsValue.orderDirection || 'DESC';
-    
+
     let sql: string;
-    const binds: oracledb.BindParameters = {};
+    const binds: Record<string, unknown> = {};
 
     if (lastOrderKey === null) {
       sql = `SELECT * FROM "${propsValue.tableName}" ORDER BY "${propsValue.orderBy}" ${direction} FETCH FIRST 5 ROWS ONLY`;
@@ -50,29 +44,22 @@ const polling: Polling<
       binds['lastKey'] = lastOrderKey;
     }
 
-    const result = await client['connection'].execute(sql, binds, {
-      outFormat: oracledb.OUT_FORMAT_OBJECT,
-    });
+    const { rows } = await client.execute(sql, binds);
 
-    await client.close();
-
-    const rows = (result.rows as Record<string, any>[]) || [];
-    const items = rows.map((row) => {
+    return (rows as Record<string, unknown>[]).map((row) => {
       const rowHash = crypto
         .createHash('md5')
         .update(JSON.stringify(row))
         .digest('hex');
-      const isTimestamp = dayjs(row[propsValue.orderBy]).isValid();
+      const isTimestamp = dayjs(row[propsValue.orderBy] as string).isValid();
       const orderValue = isTimestamp
-        ? dayjs(row[propsValue.orderBy]).toISOString()
+        ? dayjs(row[propsValue.orderBy] as string).toISOString()
         : row[propsValue.orderBy];
       return {
         id: orderValue + '|' + rowHash,
         data: row,
       };
     });
-
-    return items;
   },
 };
 
@@ -81,6 +68,9 @@ export const newRowTrigger = createTrigger({
   name: 'new_row',
   displayName: 'New Row',
   description: 'Triggers when a new row is created',
+  aiMetadata: {
+    description: 'Fires when a new row appears in the configured Oracle Database table. Polls the table ordered by the chosen order column (defaulting to newest first) and emits each newly seen row; represents a freshly inserted record detected by the ordering key.',
+  },
   props: {
     description: Property.MarkDown({
       value: `**NOTE:** Fetches latest rows using the order column (newest first), then keeps polling for new rows.`,

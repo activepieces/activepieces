@@ -1,10 +1,12 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import {
   DropdownOption,
   DynamicPropsValue,
+  OAuth2PropertyValue,
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from './microsoft-cloud';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import {
   Site,
@@ -21,6 +23,7 @@ const createDriveDropdown = (params: {
   refreshers: string[];
 }) =>
   Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: params.displayName,
     required: true,
     refreshers: params.refreshers,
@@ -37,10 +40,12 @@ const createDriveDropdown = (params: {
       const authValue = auth as PiecePropValueSchema<
         typeof microsoftSharePointAuth
       >;
+      const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
 
       const options: DropdownOption<string>[] = [];
@@ -68,7 +73,8 @@ const createDriveDropdown = (params: {
   });
 
 export const microsoftSharePointCommon = {
-  siteId: Property.Dropdown({
+  siteId: Property.Dropdown({ 
+    auth: microsoftSharePointAuth,
     displayName: 'Site',
     required: true,
     refreshers: [],
@@ -83,10 +89,12 @@ export const microsoftSharePointCommon = {
       const authValue = auth as PiecePropValueSchema<
         typeof microsoftSharePointAuth
       >;
+      const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
       const options: DropdownOption<string>[] = [];
       let response: PageCollection = await client
@@ -119,6 +127,7 @@ export const microsoftSharePointCommon = {
   createDriveDropdown,
 
   itemId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'Source File or Folder',
     required: true,
     refreshers: ['siteId', 'driveId'],
@@ -133,10 +142,12 @@ export const microsoftSharePointCommon = {
       const authValue = auth as PiecePropValueSchema<
         typeof microsoftSharePointAuth
       >;
+      const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
 
       const options: DropdownOption<string>[] = [];
@@ -166,6 +177,7 @@ export const microsoftSharePointCommon = {
 
 
   destinationFolderId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'Destination Folder',
     description: 'The folder to copy the item into. Defaults to the root of the drive.',
     required: false,
@@ -184,10 +196,12 @@ export const microsoftSharePointCommon = {
       const authValue = auth as PiecePropValueSchema<
         typeof microsoftSharePointAuth
       >;
+      const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
 
       const options: DropdownOption<string>[] = [];
@@ -215,6 +229,7 @@ export const microsoftSharePointCommon = {
   }),
 
   listId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'List',
     required: true,
     refreshers: ['siteId'],
@@ -229,10 +244,12 @@ export const microsoftSharePointCommon = {
       const authValue = auth as PiecePropValueSchema<
         typeof microsoftSharePointAuth
       >;
+      const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
       const options: DropdownOption<string>[] = [];
       let response: PageCollection = await client
@@ -257,6 +274,7 @@ export const microsoftSharePointCommon = {
   }),
 
   listColumns: Property.DynamicProperties({
+    auth: microsoftSharePointAuth,
     displayName: 'List Columns',
     refreshers: ['siteId', 'listId'],
     required: true,
@@ -266,10 +284,12 @@ export const microsoftSharePointCommon = {
       const authValue = auth as PiecePropValueSchema<
         typeof microsoftSharePointAuth
       >;
+      const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
       const columns: ColumnDefinition[] = [];
       let response: PageCollection = await client
@@ -338,6 +358,7 @@ export const microsoftSharePointCommon = {
   }),
 
   listItemId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'List Item',
     required: true,
     refreshers: ['siteId', 'listId'],
@@ -352,10 +373,12 @@ export const microsoftSharePointCommon = {
       const authValue = auth as PiecePropValueSchema<
         typeof microsoftSharePointAuth
       >;
+      const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
       const options: DropdownOption<string>[] = [];
       let response: PageCollection = await client
@@ -384,6 +407,7 @@ export const microsoftSharePointCommon = {
   }),
 
   pageId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'Page',
     required: true,
     refreshers: ['siteId'],
@@ -398,10 +422,12 @@ export const microsoftSharePointCommon = {
       const authValue = auth as PiecePropValueSchema<
         typeof microsoftSharePointAuth
       >;
+      const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
       const options: DropdownOption<string>[] = [];
       let response: PageCollection = await client

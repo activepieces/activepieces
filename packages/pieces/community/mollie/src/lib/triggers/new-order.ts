@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
@@ -10,7 +11,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 import dayjs from 'dayjs';
 
 interface MollieOrderResponse {
@@ -53,12 +54,12 @@ interface MollieOrderResponse {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof mollieAuth>,
+  AppConnectionValueForAuthProperty<typeof mollieAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const apiKey = auth as string;
+    const apiKey = auth;
     const isTest = lastFetchEpochMS === 0;
 
     let from: string | undefined;
@@ -148,6 +149,10 @@ export const mollieNewOrder = createTrigger({
   name: 'new_order',
   displayName: 'New Order',
   description: 'Fires when a new order is created in Mollie',
+  aiMetadata: {
+    description:
+      'Fires when a new order is created in Mollie via the legacy Orders API. Polls the order list and emits each newly created order. Relevant only for the deprecated Orders API; for current payment flows use the New Payment trigger.',
+  },
 
   type: TriggerStrategy.POLLING,
 

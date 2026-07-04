@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 
 export const getAudienceGroups = createAction({
@@ -7,6 +7,8 @@ export const getAudienceGroups = createAction({
   name: 'tarvent_get_audience_groups',
   displayName: 'Find Audience Group',
   description: 'Finds an audience group by name.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the groups within a given Tarvent audience, optionally filtered by name; leaving the name empty returns all groups in that audience. Use to look up a group or its ID before assigning contacts. Idempotent read-only lookup.', idempotent: true },
   props: {
     audienceId: tarventCommon.audienceId(true, ''),
     name: Property.ShortText({

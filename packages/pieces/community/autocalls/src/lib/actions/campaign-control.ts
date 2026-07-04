@@ -1,14 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth, baseApiUrl } from '../..';
+import { autocallsAuth } from '../..';
+import { baseApiUrl } from '../..';
 
 export const campaignControl = createAction({
   auth:autocallsAuth,
   name: 'campaignControl',
   displayName: 'Start/Stop Campaign',
   description: "Start or stop an outbound campaign from our platform.",
+  audience: 'both',
+  aiMetadata: { description: 'Sets the run status of an Autocalls outbound campaign, choosing one of two modes via the action input: start (begin dialing leads) or stop (halt dialing). Use to control whether a campaign is actively calling. Requires a campaign id; idempotent since repeating the same start/stop request leaves the campaign in the same state.', idempotent: true },
   props: {
     campaign: Property.Dropdown({
+      auth: autocallsAuth,
       displayName: 'Campaign',
       description: 'Select a campaign',
       required: true,
@@ -19,7 +23,7 @@ export const campaignControl = createAction({
           method: HttpMethod.GET,
           url: baseApiUrl + 'api/user/campaigns',
           headers: {
-            Authorization: "Bearer " + auth,
+            Authorization: "Bearer " + auth?.secret_text,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
@@ -68,7 +72,7 @@ export const campaignControl = createAction({
         action: context.propsValue['action'],
       },
       headers: {
-        Authorization: "Bearer " + context.auth,
+        Authorization: "Bearer " + context.auth.secret_text,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },

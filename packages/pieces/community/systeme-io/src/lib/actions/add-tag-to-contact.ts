@@ -9,6 +9,8 @@ export const addTagToContact = createAction({
   name: 'addTagToContact',
   displayName: 'Add Tag to Contact',
   description: 'Assign a tag to an existing contact - select an existing tag or create a new one',
+  audience: 'both',
+  aiMetadata: { description: 'Assigns a tag to an existing Systeme.io contact, identified by contact id. Operates in two modes: reference an existing tag by id, or create a brand-new tag by name and then assign it. Use to label or segment a known contact; assigning an existing tag is effectively idempotent, but the create-new-tag mode creates a fresh tag on each call, so this is not idempotent overall.', idempotent: false },
   props: {
     contactId: systemeIoProps.contactIdDropdown,
     tagSource: Property.StaticDropdown({
@@ -25,6 +27,7 @@ export const addTagToContact = createAction({
       },
     }),
     existingTagId: Property.Dropdown({
+      auth: systemeIoAuth,
       displayName: 'Existing Tag',
       description: 'Select an existing tag',
       required: false,
@@ -40,7 +43,7 @@ export const addTagToContact = createAction({
 
         try {
           const response = await systemeIoCommon.getTags({
-            auth: auth as string,
+            auth: auth.secret_text,
           });
 
           let tags: any[] = [];
@@ -102,7 +105,7 @@ export const addTagToContact = createAction({
           body: {
             name: newTagName.trim(),
           },
-          auth: context.auth,
+          auth: context.auth.secret_text,
         });
         
         tagId = newTag.id;
@@ -123,7 +126,7 @@ export const addTagToContact = createAction({
       body: {
         tagId: tagId,
       },
-      auth: context.auth,
+      auth: context.auth.secret_text,
     });
 
     return {

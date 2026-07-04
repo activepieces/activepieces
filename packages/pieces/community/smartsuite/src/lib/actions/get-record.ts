@@ -8,6 +8,11 @@ export const getRecord = createAction({
 	name: 'get_record',
 	displayName: 'Get a Record',
 	description: 'Retrieves a specific record by ID',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Fetches a single SmartSuite record by its record ID, with field values resolved against the live table schema. Use when an agent already has a record ID and needs its current field values; requires the solution, table, and record ID. Idempotent — it only reads data.',
+		idempotent: true,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,
@@ -21,15 +26,15 @@ export const getRecord = createAction({
 			const tableResponse = await smartSuiteApiCall<{
 				structure: TableStucture[];
 			}>({
-				apiKey: auth.apiKey,
-				accountId: auth.accountId,
+				apiKey: auth.props.apiKey,
+				accountId: auth.props.accountId,
 				method: HttpMethod.GET,
 				resourceUri: `/applications/${tableId}`,
 			});
 			const tableSchema = tableResponse.structure;
 			const response = await smartSuiteApiCall<Record<string, any>>({
-				apiKey: auth.apiKey,
-				accountId: auth.accountId,
+				apiKey: auth.props.apiKey,
+				accountId: auth.props.accountId,
 				method: HttpMethod.GET,
 				resourceUri: `/applications/${tableId}/records/${recordId}/`,
 			});

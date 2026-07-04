@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -9,6 +9,12 @@ export const getRegistrationFolder = createAction({
   displayName: 'Récupérer un dossier de formation',
   description:
     'Récupérer un dossier de formation à partir de son n° de dossier',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single training registration folder by its folder number (externalId). Read-only and safe to repeat. Use when you already know the folder number; to find folders by criteria use the search-folders action instead.',
+    idempotent: true,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -28,7 +34,7 @@ export const getRegistrationFolder = createAction({
           context.propsValue.externalId,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

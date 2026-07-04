@@ -8,6 +8,8 @@ export const createPost = createAction({
   auth: nuelinkAuth,
   displayName: 'Create Post',
   description: 'Creates a post on nuelink.',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a social media post through Nuelink to the connected social channels, with a required caption and optional media URL, title (for Reels/videos/Pinterest), alt text, and flags to share Instagram Reels to the feed or treat videos as short-form vertical content. Choose this to publish or schedule content via Nuelink. Not idempotent: each call creates a new post.', idempotent: false },
   props: {
     body: Property.LongText({
       displayName: 'Caption',
@@ -48,7 +50,7 @@ export const createPost = createAction({
       method: HttpMethod.POST,
       url: 'https://nuelink.com/api/v1/pabbly',
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
       },
       body: {
         body: context.propsValue.body,

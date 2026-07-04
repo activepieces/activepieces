@@ -6,7 +6,7 @@ import {
 	PdfCoImageAnnotation,
 	PdfCoAddImagesRequestBody,
 } from '../common/types';
-import { pdfCoAuth } from '../../index';
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from '../common/props';
 
 // Interface for /barcode/generate request
@@ -46,6 +46,12 @@ export const addBarcodeToPdf = createAction({
 	name: 'add_barcode_to_pdf',
 	displayName: 'Add Barcode to PDF',
 	description: 'Generate a barcode image and add it to a specific location on a PDF.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Generates a barcode (QR, DataMatrix, Code 128/39, PDF417, EAN-13, or UPC-A) and stamps it onto a source PDF (referenced by URL) at the given x/y coordinates. Use when an agent needs to embed a scannable code into an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+		idempotent: false,
+	},
 	auth: pdfCoAuth,
 	props: {
 		sourcePdfUrl: Property.ShortText({
@@ -129,7 +135,7 @@ export const addBarcodeToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/barcode/generate`,
 				headers: {
-					'x-api-key': auth as string,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: generateBarcodeBody,
@@ -189,7 +195,7 @@ export const addBarcodeToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/pdf/edit/add`,
 				headers: {
-					'x-api-key': auth as string,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: addImageBody,

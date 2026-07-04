@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,10 @@ export const registrationFolderTobill = createTrigger({
   displayName: 'Dossier de formation à facturer',
   description:
     "Se déclenche lorsqu'un dossier de formation est prêt à être facturé (service fait validé)",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof training registration folder (dossier de formation) becomes ready to bill, i.e. its service-done declaration has been validated. Emits the full folder record so an invoice can be raised.",
+  },
   props: {},
   sampleData: {
     withPoleEmploi: false,
@@ -220,7 +224,7 @@ export const registrationFolderTobill = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

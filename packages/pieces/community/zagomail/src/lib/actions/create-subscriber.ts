@@ -1,8 +1,8 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { listFields, listUId } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 
 export const createSubscriber = createAction({
@@ -10,6 +10,8 @@ export const createSubscriber = createAction({
 	name: 'createSubscriber',
 	displayName: 'Create Subscriber',
 	description: 'Creates a new subscriber in a list.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds a new subscriber to a specific Zagomail list, identified by its list UID, populating the list custom fields you provide. Use to enroll a contact into a mailing list. Not idempotent: each call creates another subscriber record, so guard against duplicates if re-running.', idempotent: false },
 	props: {
 		listUId: listUId,
 		fields: listFields(true),
@@ -36,6 +38,6 @@ export const createSubscriber = createAction({
 			payload[field] = formattedValue;
 		}
 
-		return await zagoMailApiService.createSubscriber(auth, listUId, payload);
+		return await zagoMailApiService.createSubscriber(auth.secret_text, listUId, payload);
 	},
 });

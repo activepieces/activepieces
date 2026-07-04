@@ -1,5 +1,5 @@
 
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { smooveAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
@@ -36,7 +36,7 @@ interface ContactData {
     [key: string]: any;
 }
 
-const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, {
     fields?: string;
     includeCustomFields?: boolean;
     includeLinkedLists?: boolean;
@@ -78,7 +78,7 @@ const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, {
             
             const endpoint = `/Contacts?${queryParams.join('&')}`;
             
-            const response = await makeRequest(auth, HttpMethod.GET, endpoint);
+            const response = await makeRequest(auth.secret_text, HttpMethod.GET, endpoint);
             
             if (!response) {
                 return [];
@@ -165,6 +165,9 @@ export const newSubscriber = createTrigger({
     name: 'newSubscriber',
     displayName: 'New Subscriber',
     description: 'Fires when a new subscriber is added to your Smoove account',
+    aiMetadata: {
+      description: 'Fires when a new contact signs up in the connected Smoove account, detected by polling contacts for recent signup timestamps; can be filtered to a specific join source (e.g. landing page, form, API, import).',
+    },
     props: {
         fields: Property.ShortText({
             displayName: 'Fields to Include',
@@ -272,7 +275,7 @@ export const newSubscriber = createTrigger({
     
     async test(context) {
         try {
-            const response = await makeRequest(context.auth, HttpMethod.GET, '/Contacts?take=1&sort=-timestampSignup');
+            const response = await makeRequest(context.auth.secret_text, HttpMethod.GET, '/Contacts?take=1&sort=-timestampSignup');
             const item = Array.isArray(response) ? response[0] : response;
             
             if (!item) {

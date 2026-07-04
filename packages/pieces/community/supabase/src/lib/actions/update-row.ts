@@ -1,12 +1,15 @@
-import { createAction, Property, DynamicPropsValue } from "@activepieces/pieces-framework";
-import { supabaseAuth } from "../../index";
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { updateRowActionOutputSchema } from '../output-schemas';
 
 export const updateRow = createAction({
     name: 'update_row',
     displayName: 'Update Row',
     description: 'Update rows in a table based on filter criteria',
+    audience: 'both',
+    aiMetadata: { description: 'Updates existing rows in a Supabase table by applying the same field values to every row matching a filter (equals, in-list, or greater-than on a chosen column). Use to modify records you can identify by a filter; it does not create rows that do not exist. Idempotent: re-running with the same filter and values leaves the matched rows in the same state.', idempotent: true },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,
@@ -24,6 +27,7 @@ export const updateRow = createAction({
             }
         }),
         filter_column: Property.Dropdown({
+            auth: supabaseAuth,
             displayName: 'Filter Column',
             description: 'Select the column to filter on',
             required: true,
@@ -38,7 +42,7 @@ export const updateRow = createAction({
                 }
                 
                 try {
-                    const { url, apiKey } = auth as { url: string; apiKey: string };
+                    const { url, apiKey } = auth.props;
                     const supabase = createClient(url, apiKey);
                     
                     try {
@@ -127,6 +131,7 @@ export const updateRow = createAction({
             defaultValue: false,
         })
     },
+    outputSchema: updateRowActionOutputSchema,
     async run(context) {
         const { 
             table_name, 
@@ -138,7 +143,7 @@ export const updateRow = createAction({
             count_updated, 
             return_updated 
         } = context.propsValue;
-        const { url, apiKey } = context.auth;
+        const { url, apiKey } = context.auth.props;
 
         const supabase = createClient(url, apiKey);
         

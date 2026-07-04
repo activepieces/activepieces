@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firefliesAiAuth } from '../../index';
+import { firefliesAiAuth } from '../auth';
 import { getTranscript } from '../common/queries';
 import { BASE_URL } from '../common';
 
@@ -9,6 +9,8 @@ export const findMeetingByIdAction = createAction({
 	name: 'find-meeting-by-id',
 	displayName: 'Find Meeting by ID',
 	description: 'Finds a specific meeting by ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches a single Fireflies meeting transcript (with summary, speakers, attendees, and media URLs) by its exact transcript/meeting ID. Use when you already have a known meeting ID and want its full details; if you only have search criteria like title or date, use the search action instead. Read-only and idempotent.', idempotent: true },
 	props: {
 		meetingId: Property.ShortText({
 			displayName: 'Meeting ID',
@@ -22,7 +24,7 @@ export const findMeetingByIdAction = createAction({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			body: {
 				query: getTranscript,

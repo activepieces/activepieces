@@ -23,6 +23,8 @@ export const extractFileData = createAction({
   name: 'extract_file_data',
   displayName: 'Extract File Data',
   description: 'Upload a file and immediately receive extracted content',
+  audience: 'both',
+  aiMetadata: { description: 'Runs an end-to-end Extracta.ai extraction in one call: creates a new extraction configuration from the schema of fields you define (each with a key, type, and description), uploads the given file (PDF, image, Word doc, or text), and returns the resulting extraction/batch identifiers. Choose this when you have a file in hand and want structured data out without managing the extraction and upload steps separately. The field schema and the file are required; not idempotent, since each call provisions a fresh extraction and upload.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',
@@ -287,7 +289,7 @@ export const extractFileData = createAction({
         url: 'https://api.extracta.ai/api/v1/createExtraction',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`
+          Authorization: `Bearer ${apiKey.secret_text}`
         },
         body: { extractionDetails }
       });
@@ -309,7 +311,7 @@ export const extractFileData = createAction({
         method: HttpMethod.POST,
         url: 'https://api.extracta.ai/api/v1/uploadFiles',
         headers: {
-          Authorization: `Bearer ${apiKey}`
+          Authorization: `Bearer ${apiKey.secret_text}`
         },
         body: formData
       });

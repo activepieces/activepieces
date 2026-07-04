@@ -1,20 +1,27 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { vadooAiAuth } from '../../index';
+import { vadooAiAuth } from '../auth';
 import {
   httpClient,
   HttpMethod,
   propsValidation,
 } from '@activepieces/pieces-common';
 import { generateAiImageSchema } from '../schemas';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const generateAiImage = createAction({
   auth: vadooAiAuth,
   name: 'generate_ai_image',
   displayName: 'Generate AI Image',
   description: 'Generates AI generated image based on prompt for a character.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates an AI image for an existing Vadoo character from a text prompt and waits (polls up to ~5 minutes) for it to finish, returning the completed image URL. Requires the character ID (selected from the account character list), an aspect ratio, and a prompt. Each call starts a new generation job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     id: Property.Dropdown({
+  auth: vadooAiAuth,
       displayName: 'Character',
       description: 'Select the character to generate an image for',
       required: true,
@@ -33,7 +40,7 @@ export const generateAiImage = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_all_characters',
             headers: {
-              'X-API-KEY': auth as string,
+              'X-API-KEY': auth.secret_text,
             },
           });
 
@@ -100,7 +107,7 @@ export const generateAiImage = createAction({
       method: HttpMethod.POST,
       url: 'https://viralapi.vadoo.tv/api/generate_character_image',
       headers: {
-        'X-API-KEY': context.auth,
+        'X-API-KEY': context.auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,
@@ -123,7 +130,7 @@ export const generateAiImage = createAction({
         method: HttpMethod.GET,
         url: 'https://viralapi.vadoo.tv/api/get_character_image',
         headers: {
-          'X-API-KEY': context.auth,
+          'X-API-KEY': context.auth.secret_text,
           'Content-Type': 'application/json',
         },
         queryParams: {

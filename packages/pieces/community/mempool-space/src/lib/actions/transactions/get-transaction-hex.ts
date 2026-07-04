@@ -1,11 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getTransactionHex = createAction({
+ auth:PieceAuth.None(),
   name: 'get_transaction_hex',
   displayName: 'Get Transaction Hex',
   description: 'Get the raw transaction in hex format',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the hex-encoded serialized form of a transaction by its transaction ID from the /hex endpoint. Functionally equivalent to Get Raw Transaction; use Get Transaction instead for parsed/structured detail. Read-only.', idempotent: true },
   // category: 'Transactions',
   props: {
     txid: Property.ShortText({

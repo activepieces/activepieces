@@ -8,6 +8,8 @@ export const completeTask = createAction({
   name: 'complete_task',
   displayName: 'Force Complete Task',
   description: 'Force completes a task',
+  audience: 'both',
+  aiMetadata: { description: 'Force-completes an Onfleet task by task ID on behalf of the worker, marking it success or failure with optional notes, without the driver completing it in-app. Not idempotent and a state transition: only valid on a started/active task, and once completed it cannot be re-completed. Use update-task for non-completion edits.', idempotent: false },
   props: {
     task: Property.ShortText({
       displayName: 'Task ID',
@@ -26,7 +28,7 @@ export const completeTask = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.tasks.forceComplete(context.propsValue.task, {
       completionDetails: {

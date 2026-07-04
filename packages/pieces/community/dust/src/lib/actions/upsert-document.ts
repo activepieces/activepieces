@@ -5,8 +5,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { DUST_BASE_URL } from '../common';
-import { dustAuth, DustAuthType } from '../..';
-import mimeTypes from 'mime-types';
+import { dustAuth } from '../..';
 
 export const upsertDocument = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -14,6 +13,12 @@ export const upsertDocument = createAction({
   displayName: 'Add or update document',
   description:
     'Insert a new document to a Data Source (or update an existing one)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upsert a text document into a Dust Data Source: creates the document if the given Document ID is new, or overwrites it if it already exists. Requires the Data Source name, Document ID, and content. Idempotent because it is keyed on the stable Document ID — repeating with the same input yields the same stored document.',
+    idempotent: true,
+  },
   auth: dustAuth,
   props: {
     datasource: Property.ShortText({
@@ -46,7 +51,7 @@ export const upsertDocument = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const dustAuth = auth as DustAuthType;
+    const dustAuth = auth.props;
     const tags = propsValue.title
       ? [`title:${propsValue.title}`, ...(propsValue.tags as string[])]
       : (propsValue.tags as string[]);
@@ -59,7 +64,7 @@ export const upsertDocument = createAction({
       )}`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${auth.apiKey}`,
+        Authorization: `Bearer ${auth.props.apiKey}`,
       },
       body: JSON.stringify(
         {

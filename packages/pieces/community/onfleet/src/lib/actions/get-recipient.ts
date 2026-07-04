@@ -8,6 +8,8 @@ export const getRecipient = createAction({
   name: 'get_recipient',
   displayName: 'Get Recipient',
   description: 'Gets a single recipient',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single Onfleet recipient (the customer receiving a delivery) by recipient ID. Read-only and idempotent. Requires a known recipient ID; this action only looks up by ID, not by name or phone.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Recipient ID',
@@ -16,7 +18,7 @@ export const getRecipient = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.recipients.get(context.propsValue['id']);
   },

@@ -7,6 +7,8 @@ export const searchInvoices = createAction({
     name: 'search_invoices',
     displayName: 'Search Invoices',
     description: 'List or filter invoices',
+    audience: 'both',
+    aiMetadata: { description: 'Look up invoices in Teamleader, optionally narrowing by a free-text term, invoice number, customer, department, associated deal/project/subscription, status (draft/outstanding/matched), purchase order or payment reference, or invoice-date/updated date ranges, with paging and sorting. With no filters it lists all invoices; supply filters to find specific matches. Read-only and idempotent.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         term: Property.ShortText({
@@ -31,6 +33,7 @@ export const searchInvoices = createAction({
             }
         }),
         customer_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Customer',
             description: 'Filter invoices by specific customer',
             required: false,
@@ -51,7 +54,7 @@ export const searchInvoices = createAction({
                 try {
                     if (customer_type === 'company') {
                         const response = await teamleaderCommon.apiCall({
-                            auth: auth as any,
+                            auth,
                             method: HttpMethod.POST,
                             resourceUri: '/companies.list',
                             body: {}
@@ -66,7 +69,7 @@ export const searchInvoices = createAction({
                         };
                     } else {
                         const response = await teamleaderCommon.apiCall({
-                            auth: auth as any,
+                            auth,
                             method: HttpMethod.POST,
                             resourceUri: '/contacts.list',
                             body: {}
@@ -90,6 +93,7 @@ export const searchInvoices = createAction({
             }
         }),
         department_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Department',
             description: 'Filter by department (company entity)',
             required: false,
@@ -103,7 +107,7 @@ export const searchInvoices = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/departments.list',
                         body: {
@@ -130,6 +134,7 @@ export const searchInvoices = createAction({
             }
         }),
         deal_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Deal',
             description: 'Filter by associated deal',
             required: false,
@@ -143,7 +148,7 @@ export const searchInvoices = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/deals.list',
                         body: {}
@@ -166,6 +171,7 @@ export const searchInvoices = createAction({
             }
         }),
         project_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Project',
             description: 'Filter by associated project',
             required: false,
@@ -179,7 +185,7 @@ export const searchInvoices = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/projects.list',
                         body: {}
@@ -202,6 +208,7 @@ export const searchInvoices = createAction({
             }
         }),
         subscription_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Subscription',
             description: 'Filter by associated subscription',
             required: false,
@@ -215,7 +222,7 @@ export const searchInvoices = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/subscriptions.list',
                         body: {}

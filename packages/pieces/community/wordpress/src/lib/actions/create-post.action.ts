@@ -16,6 +16,8 @@ export const createWordPressPost = createAction({
   auth: wordpressAuth,
   name: 'create_post',
   description: 'Create new post on WordPress',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a new blog post on a WordPress site via the REST API, with optional status (draft/publish/etc.), categories, tags, excerpt, featured image, and custom ACF fields. Choose this to add fresh content; for editing an existing post use Update Post. Requires a title and HTML content; not idempotent — each call creates a separate post.', idempotent: false },
   displayName: 'Create Post',
   props: {
     title: Property.ShortText({
@@ -63,8 +65,8 @@ export const createWordPressPost = createAction({
     }),
   },
   async run(context) {
-    if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
-      throw new Error('Website url is invalid: ' + context.auth.website_url);
+    if (!(await wordpressCommon.urlExists(context.auth.props.website_url.trim()))) {
+      throw new Error('Website url is invalid: ' + context.auth.props.website_url);
     }
     const requestBody: Record<string, unknown> = {};
     if (context.propsValue.date) {
@@ -112,15 +114,15 @@ export const createWordPressPost = createAction({
       formData.append('file', Buffer.from(base64, 'base64'), filename);
       const uploadMediaResponse = await httpClient.sendRequest<{ id: string }>({
         method: HttpMethod.POST,
-        url: `${context.auth.website_url.trim()}/wp-json/wp/v2/media`,
+        url: `${context.auth.props.website_url.trim()}/wp-json/wp/v2/media`,
         body: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
         },
         authentication: {
           type: AuthenticationType.BASIC,
-          username: context.auth.username,
-          password: context.auth.password,
+          username: context.auth.props.username,
+          password: context.auth.props.password,
         },
       });
       requestBody['featured_media'] = uploadMediaResponse.body.id;
@@ -129,11 +131,11 @@ export const createWordPressPost = createAction({
     requestBody['title'] = context.propsValue.title;
     return await httpClient.sendRequest<{ id: string; name: string }[]>({
       method: HttpMethod.POST,
-      url: `${context.auth.website_url.trim()}/wp-json/wp/v2/posts`,
+      url: `${context.auth.props.website_url.trim()}/wp-json/wp/v2/posts`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: context.auth.username,
-        password: context.auth.password,
+        username: context.auth.props.username,
+        password: context.auth.props.password,
       },
       body: requestBody,
     });

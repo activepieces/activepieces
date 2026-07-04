@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import {
 	smartsheetCommon,
 	findOrCreateWebhook,
@@ -7,7 +7,7 @@ import {
 	verifyWebhookSignature,
 	getAttachmentFullDetails,
 } from '../common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'smartsheet_new_attachment_trigger';
 
@@ -16,6 +16,9 @@ export const newAttachmentTrigger = createTrigger({
 	name: 'new_attachment_',
 	displayName: 'New Attachment Added',
 	description: 'Triggers when a new attachment is added to a row or sheet.',
+	aiMetadata: {
+		description: 'Fires when a new attachment (file or link) is added within the configured Smartsheet sheet, delivering the attachment event with fetched full attachment details. The attachment may be parented to a row, comment, or the sheet itself.',
+	},
 	props: {
 		sheet_id: smartsheetCommon.sheet_id(),
 	},
@@ -52,7 +55,7 @@ export const newAttachmentTrigger = createTrigger({
 
 		const triggerIdentifier = context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
 		const webhook = await findOrCreateWebhook(
-			context.auth as string,
+			context.auth.secret_text,
 			context.webhookUrl,
 			sheet_id as string,
 			triggerIdentifier,
@@ -71,7 +74,7 @@ export const newAttachmentTrigger = createTrigger({
 
 		const triggerIdentifier = context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
 		const webhook = await findOrCreateWebhook(
-			context.auth as string,
+			context.auth.secret_text,
 			context.webhookUrl,
 			sheet_id as string,
 			triggerIdentifier,
@@ -120,7 +123,7 @@ export const newAttachmentTrigger = createTrigger({
 				if (objectSheetId) {
 					try {
 						eventOutput.attachmentData = await getAttachmentFullDetails(
-							context.auth as string,
+							context.auth.secret_text,
 							objectSheetId,
 							event.id.toString(),
 						);

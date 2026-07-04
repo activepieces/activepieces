@@ -7,12 +7,19 @@ import {
 } from '@activepieces/pieces-common';
 import { Image, linkedinCommon, santizeText } from '../common';
 import { linkedinAuth } from '../..';
+import { createCompanyUpdateActionOutputSchema } from '../output-schemas';
 
 export const createCompanyUpdate = createAction({
   auth: linkedinAuth,
   name: 'create_company_update',
   displayName: 'Create Company Update',
   description: 'Create a new company update for Company Page',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Publishes a new post to a LinkedIn organization (company) page, with optional image and link preview; posts are always public. Use this to share content on behalf of a company rather than a personal profile, and requires the target organization id plus admin access to that page. Not idempotent: each call creates a separate post, so repeating it with the same text produces a duplicate.',
+    idempotent: false,
+  },
   props: {
     company: linkedinCommon.company,
     imageUrl: linkedinCommon.imageUrl,
@@ -21,6 +28,7 @@ export const createCompanyUpdate = createAction({
     linkTitle: linkedinCommon.linkTitle,
     linkDescription: linkedinCommon.linkDescription,
   },
+  outputSchema: createCompanyUpdateActionOutputSchema,
 
   run: async (context) => {
     const imageUrl = context.propsValue.imageUrl;

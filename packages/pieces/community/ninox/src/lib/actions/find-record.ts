@@ -14,6 +14,11 @@ export const findRecord = createAction({
 	name: 'findRecord',
 	displayName: 'Find Record',
 	description: 'Finds records by field values.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Searches a Ninox table for records whose chosen field matches a given value, addressed by team, database, and table. Use to look up records by a single field; returns whether a match was found along with the matching data. Idempotent — a read-only query with no side effect.',
+		idempotent: true,
+	},
 	props: {
 		teamid: teamidDropdown,
 		dbid: databaseIdDropdown,
@@ -31,8 +36,8 @@ export const findRecord = createAction({
 		const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/record`;
 
 		try {
-			const response = await makeRequest(auth as string, HttpMethod.POST, path, {
-				filters: { [searchField]: searchValue },
+			const response = await makeRequest(auth.secret_text, HttpMethod.POST, path, {
+				filters: { [searchField as string]: searchValue },
 			});
 
 			const found = Array.isArray(response) && response.length === 0 ? false : true;

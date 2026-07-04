@@ -7,6 +7,8 @@ export const claimOffer = createAction({
   auth: talkableAuth,
   displayName: 'Share and claim offer',
   description: "Using this action, you can share and get a friend's reward",
+  audience: 'both',
+  aiMetadata: { description: 'Create an offer claim in Talkable on behalf of an advocate sharing a campaign with a friend, generating the friend\'s referral reward. Use to programmatically trigger a share-and-claim within a referral campaign; requires advocate email, friend email, and the campaign tag. Not idempotent: each call creates a new offer claim.', idempotent: false },
   props: {
     advocate_email: Property.ShortText({
       displayName: 'Advocate email',
@@ -26,7 +28,7 @@ export const claimOffer = createAction({
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
+    const { site, api_key } = context.auth.props;
     const claimOffer = await httpClient
       .sendRequest<string[]>({
         method: HttpMethod.POST,

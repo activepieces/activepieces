@@ -3,7 +3,7 @@ import {
   PieceAuth,
   Property
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createUser } from './lib/actions/create-user';
 import { updateUser } from './lib/actions/update-user';
 import { deleteUser } from './lib/actions/delete-user';
@@ -13,28 +13,15 @@ import { disableUser } from './lib/actions/disable-user';
 import { findUser } from './lib/actions/find-user';
 import { addMemberToGroup } from './lib/actions/add-member-to-group';
 import { removeMemberFromGroup } from './lib/actions/remove-member-from-group';
-
-export const cyberarkAuth = PieceAuth.CustomAuth({
-  description: 'CyberArk PVWA Authentication',
-  props: {
-    serverUrl: Property.ShortText({
-      displayName: 'PVWA Server URL',
-      description: 'The PVWA server URL (e.g., https://pvwa-server)',
-      required: true
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      description: 'CyberArk username',
-      required: true
-    }),
-    password: Property.ShortText({
-      displayName: 'Password',
-      description: 'CyberArk password',
-      required: true
-    })
-  },
-  required: true
-});
+import { getPasswordValue } from './lib/actions/get-password-value';
+import { retrievePrivateSSHKey } from './lib/actions/retrieve-private-ssh-key';
+import { changeCredentialsInVault } from './lib/actions/change-credentials-in-vault';
+import { verifyCredentialsBulk } from './lib/actions/verify-credentials-bulk';
+import { changeCredentialsBulk } from './lib/actions/change-credentials-bulk';
+import { setNextPasswordBulk } from './lib/actions/set-next-password-bulk';
+import { changeCredentialsInVaultBulk } from './lib/actions/change-credentials-in-vault-bulk';
+import { reconcileCredentialsBulk } from './lib/actions/reconcile-credentials-bulk';
+import { cyberarkAuth } from './lib/auth';
 
 export const cyberark = createPiece({
   displayName: 'CyberArk',
@@ -53,7 +40,15 @@ export const cyberark = createPiece({
     disableUser,
     findUser,
     addMemberToGroup,
-    removeMemberFromGroup
+    removeMemberFromGroup,
+    getPasswordValue,
+    retrievePrivateSSHKey,
+    changeCredentialsInVault,
+    verifyCredentialsBulk,
+    changeCredentialsBulk,
+    setNextPasswordBulk,
+    changeCredentialsInVaultBulk,
+    reconcileCredentialsBulk
   ],
   triggers: []
 });

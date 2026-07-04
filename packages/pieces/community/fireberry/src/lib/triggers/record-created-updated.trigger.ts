@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { fireberryAuth } from '../../index';
+import { fireberryAuth } from '../auth';
 import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
@@ -8,6 +8,9 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
   name: 'record_created_or_updated',
   displayName: 'Record Created or Updated',
   description: 'Fires when a record is created or updated in Fireberry.',
+  aiMetadata: {
+    description: 'Polls a chosen Fireberry object type and fires for records that were recently created or modified. The trigger type selects which events qualify: created only, updated only, or both. Each emitted item represents one matching record.',
+  },
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,
@@ -40,7 +43,7 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
     accountid: "12345678-1234-1234-1234-123456789abc",
   },
   async test({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType } = propsValue;
     
     if (!objectType) {
@@ -132,7 +135,7 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
     await store.delete('lastPollTime');
   },
   async run({ auth, propsValue, store }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, triggerType, lookbackMinutes } = propsValue;
     
     let lastPollTime = await store.get<string>('lastPollTime');

@@ -12,6 +12,11 @@ export const updateTask = createAction({
   displayName: 'Update Task',
   description:
     'Modify existing task fields: title, due date, assignments, descriptions.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates fields on an existing Planner task identified by task ID, such as title, assignees, due/start dates, priority, and percent complete. Use to edit a task; only provided fields are changed. Idempotent: applying the same field values repeatedly leaves the task in the same end state.',
+    idempotent: true,
+  },
   props: {
     planId: PlanDropdown({ required: true }),
     id: TaskDropdown({ required: true }),
@@ -26,7 +31,8 @@ export const updateTask = createAction({
         'Select users to assign the task to. If left empty, the task will be unassigned.',
       required: false,
       refreshers: ['auth'],
-      options: async ({ auth }: { auth?: OAuth2PropertyValue | null }) => {
+      auth: microsoft365PlannerAuth,
+      options: async ({ auth }) => {
         if (!auth) {
           return {
             options: [],

@@ -1,33 +1,40 @@
 import {
   DedupeStrategy,
+  httpClient,
+  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-  PieceAuthProperty,
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
+  PieceAuth,
   Store,
-  StoreScope,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { rssFeedUrl } from '../common/props';
 import FeedParser from 'feedparser';
-import axios from 'axios';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { getId } from '../common/getId';
 import { sampleData } from '../common/sampleData';
+import { newItemTriggerOutputSchema } from '../output-schemas';
 
 export const rssNewItemTrigger = createTrigger({
   name: 'new-item',
   displayName: 'New Item In Feed',
   description: 'Runs when a new item is added in the RSS feed',
+  aiMetadata: {
+    description:
+      'Fires when a new entry is published in a single monitored RSS/Atom feed. Polls the configured feed URL and emits each newly detected item (deduplicated by item id and publish date), representing a freshly published article, post, or update from that feed.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: sampleData,
+  auth: PieceAuth.None(),
   props: {
     rss_feed_url: rssFeedUrl,
   },
+  outputSchema: newItemTriggerOutputSchema,
   async test({ auth, propsValue, store, files }): Promise<unknown[]> {
     return await pollingHelper.test(polling, {
       auth,
@@ -113,7 +120,7 @@ export const rssNewItemTrigger = createTrigger({
 });
 
 const polling: Polling<
-  PiecePropValueSchema<PieceAuthProperty>,
+  AppConnectionValueForAuthProperty<undefined>,
   { rss_feed_url: string }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -131,37 +138,36 @@ const polling: Polling<
   },
 };
 
-function getRssItems(url: string): Promise<any[]> {
+async function getRssItems(url: string): Promise<any[]> {
+  const response = await httpClient.sendRequest<Buffer>({
+    method: HttpMethod.GET,
+    url,
+    responseType: 'arraybuffer',
+  });
+
   return new Promise((resolve, reject) => {
-    axios
-      .get(url, {
-        responseType: 'stream',
-      })
-      .then((response) => {
-        const feedparser = new FeedParser({
-          addmeta: true,
-        });
-        response.data.pipe(feedparser);
-        const items: any[] = [];
+    const feedparser = new FeedParser({
+      addmeta: true,
+    });
+    const items: any[] = [];
 
-        feedparser.on('readable', () => {
-          let item = feedparser.read();
-          while (item) {
-            items.push(item);
-            item = feedparser.read();
-          }
-        });
+    feedparser.on('readable', () => {
+      let item = feedparser.read();
+      while (item) {
+        items.push(item);
+        item = feedparser.read();
+      }
+    });
 
-        feedparser.on('end', () => {
-          resolve(items);
-        });
+    feedparser.on('end', () => {
+      resolve(items);
+    });
 
-        feedparser.on('error', (error: any) => {
-          reject(error);
-        });
-      })
-      .catch((error) => {
-        reject(error);
-      });
+    feedparser.on('error', (error: any) => {
+      reject(error);
+    });
+
+    feedparser.write(response.body);
+    feedparser.end();
   });
 }

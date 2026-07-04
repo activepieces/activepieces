@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, StaticPropsValue } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, StaticPropsValue, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { makeRequest } from '../common/client';
@@ -7,14 +7,14 @@ import { chatbotIdDropdown } from '../common/dropdown';
 const props = {
     chatbotId: chatbotIdDropdown,
 }
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof SiteSpeakAuth>, StaticPropsValue<typeof props>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue }) => {
         if (!propsValue.chatbotId) {
             return [];
         }
         const response = await makeRequest(
-            auth as string,
+            auth.secret_text,
             HttpMethod.GET,
             `/${propsValue.chatbotId}/leads`,
             undefined,
@@ -39,6 +39,10 @@ export const newLead = createTrigger({
     name: 'newLead',
     displayName: 'New Lead',
     description: 'Triggers when a new lead with an email address is created in SiteSpeakAI.',
+    aiMetadata: {
+      description:
+        'Fires when a SiteSpeakAI chatbot captures a new lead that includes an email address. Polls the selected chatbot for newly created leads; each event represents one captured visitor contact.',
+    },
     props,
     sampleData: {
         id: 'lead_12345',

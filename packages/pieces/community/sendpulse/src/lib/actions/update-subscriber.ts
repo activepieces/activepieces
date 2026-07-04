@@ -9,6 +9,8 @@ export const updateSubscriberAction = createAction({
   name: 'update-subscriber',
   displayName: 'Update Subscriber',
   description: 'Update subscriber details and variables',
+  audience: 'both',
+  aiMetadata: { description: "Updates an existing subscriber, identified by email, within a specific SendPulse mailing list by setting their phone number and/or one or more variables (custom fields) to new values. Use to overwrite a contact's details; at least one of phone or variables must be supplied. Idempotent — repeating with the same values leaves the contact unchanged.", idempotent: true },
   props: {
     mailingListId: mailingListDropdown,
     email: Property.ShortText({
@@ -38,7 +40,7 @@ export const updateSubscriberAction = createAction({
       try {
         const phoneResult = await sendpulseApiCall<{ result: boolean }>({
           method: HttpMethod.PUT,
-          auth: context.auth,
+          auth: context.auth.props,
           resourceUri: `/addressbooks/${mailingListId}/phone`,
           body: { email, phone },
         });
@@ -63,7 +65,7 @@ export const updateSubscriberAction = createAction({
       try {
         const variableResult = await sendpulseApiCall<{ result: boolean }>({
           method: HttpMethod.POST,
-          auth: context.auth,
+          auth: context.auth.props,
           resourceUri: `/addressbooks/${mailingListId}/emails/variable`,
           body: { email, variables: variableUpdates },
         });

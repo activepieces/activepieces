@@ -6,10 +6,13 @@ import {
   blocks,
   threadTs,
   singleSelectChannelInfo,
+  mentionOriginFlow,
+  iconEmoji,
 } from '../common/props';
-import { processMessageTimestamp, slackSendMessage } from '../common/utils';
-import { slackAuth } from '../../';
+import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from '../common/utils';
+import { slackAuth } from '../auth';
 import { Block,KnownBlock } from '@slack/web-api';
+import { getBotToken, requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 
 export const slackSendMessageAction = createAction({
@@ -17,46 +20,81 @@ export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
   displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
+  audience: 'both',
+  aiMetadata: { description: 'Post a message to a channel, with optional Block Kit blocks, file attachment, custom username/icon, and link unfurling; can post as the bot or as the authenticated user. Provide a thread timestamp to reply within a thread (and optionally broadcast that reply to the channel). Each call posts a new message, so it is not idempotent; requires either message text or blocks. Use Send Message To A User for a private DM.', idempotent: false },
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The text of your message',
-      required: true,
+      description: 'The text of your message. When using Block Kit blocks, this is used as a fallback for notifications.',
+      required: false,
     }),
+    sendAsBot:Property.Checkbox({
+      displayName:'Send as a bot?',
+      required:true,
+      defaultValue:true
+    }),
+    threadTs,
     username,
     profilePicture,
+    iconEmoji,
     file: Property.File({
       displayName: 'Attachment',
       required: false,
     }),
-    threadTs,
     replyBroadcast: Property.Checkbox({
       displayName: 'Broadcast reply to channel',
       description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
       required: false,
       defaultValue: false,
     }),
+    mentionOriginFlow,
+    unfurlLinks: Property.Checkbox({
+      displayName: 'Unfurl Links',
+      description: 'Enable link unfurling for this message',
+      required: false,
+      defaultValue: true,
+    }),
     blocks,
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file, blocks, replyBroadcast } =
+    const { text, channel,sendAsBot, username, profilePicture, iconEmoji, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
 
-    const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
+    const token = sendAsBot ? getBotToken(context.auth as SlackAuthValue) : requireUserToken(context.auth as SlackAuthValue);
+
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
+
+    const blockList: (KnownBlock | Block)[] = [];
+
+
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
+    }
+
+    if(blocks && Array.isArray(blocks) && blocks.length > 0) {
+      blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
+    }
+
+    if(mentionOriginFlow) {
+      blockList.push(buildFlowOriginContextBlock(context));
+    }
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       username,
       profilePicture,
+      iconEmoji,
       conversationId: channel,
       threadTs: threadTs ? processMessageTimestamp(threadTs) : undefined,
       file,
-      blocks: blockList,
+      blocks: blockList.length > 0 ? blockList : undefined,
       replyBroadcast,
+      unfurlLinks,
     });
   },
 });

@@ -2,7 +2,7 @@ import {
   createPiece,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { smartsuiteAuth } from './lib/auth';
 
 // Actions
@@ -39,10 +39,10 @@ export const smartsuite = createPiece({
       auth: smartsuiteAuth,
       baseUrl: () => SMARTSUITE_API_URL,
       authMapping: async (auth) => {
-        const authValue = auth as PiecePropValueSchema<typeof smartsuiteAuth>;
+        const authValue = auth
         return {
-          Authorization: `Token ${authValue.apiKey}`,
-          'ACCOUNT-ID': authValue.accountId,
+          Authorization: `Token ${auth.props.apiKey}`,
+          'ACCOUNT-ID': auth.props.accountId,
         };
       },
     }),

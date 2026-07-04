@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { redditAuth } from '../../index';
+import { redditAuth } from '../auth';
 
 export const deleteRedditComment = createAction({
   auth: redditAuth,
   name: 'deleteRedditComment',
   displayName: 'Delete Comment',
   description: 'Delete a specific Reddit comment by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a comment owned by the authenticated account, identified by comment ID. Use it to permanently remove a comment you previously posted. Requires the comment ID (with or without the t1_ prefix). Idempotent — once deleted, repeating the call leaves the same end state.', idempotent: true },
   props: {
     comment_id: Property.ShortText({
       displayName: 'Comment ID',

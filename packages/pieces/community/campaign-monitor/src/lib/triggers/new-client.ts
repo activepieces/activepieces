@@ -1,13 +1,17 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
-import { campaignMonitorAuth } from '../../index';
+import { campaignMonitorAuth } from '../auth';
 
 export const newClientTrigger = createTrigger({
   auth: campaignMonitorAuth,
   name: 'new_client',
   displayName: 'New Client',
   description: 'Triggered when a new client is added to Campaign Monitor.',
+  aiMetadata: {
+    description:
+      'Fires when a new client account appears in the authenticated Campaign Monitor login, detected by polling the account client list for IDs not previously seen.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {
@@ -17,7 +21,7 @@ export const newClientTrigger = createTrigger({
   async onEnable(context) {
     // Store the list of existing clients
     const response = await makeRequest(
-      { apiKey: context.auth as string },
+      { apiKey: context.auth.secret_text },
       HttpMethod.GET,
       '/clients.json'
     );
@@ -34,7 +38,7 @@ export const newClientTrigger = createTrigger({
   },
   async test(context) {
     const response = await makeRequest(
-      { apiKey: context.auth as string },
+      { apiKey: context.auth.secret_text },
       HttpMethod.GET,
       '/clients.json'
     );
@@ -50,7 +54,7 @@ export const newClientTrigger = createTrigger({
 
     // Get all clients
     const response = await makeRequest(
-      { apiKey: context.auth as string },
+      { apiKey: context.auth.secret_text },
       HttpMethod.GET,
       '/clients.json'
     );

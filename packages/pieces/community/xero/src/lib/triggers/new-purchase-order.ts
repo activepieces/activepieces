@@ -3,6 +3,7 @@ import {
   createTrigger,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { xeroAuth } from '../..';
 import {
@@ -28,7 +29,7 @@ function parseXeroDateToEpoch(dateVal: unknown): number {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof xeroAuth>,
+AppConnectionValueForAuthProperty<typeof xeroAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -107,6 +108,9 @@ export const xeroNewPurchaseOrder = createTrigger({
   name: 'xero_new_purchase_order',
   displayName: 'New Purchase Order',
   description: 'Fires when a new purchase order is created or enters a specific status for the first time.',
+  aiMetadata: {
+    description: 'Fires when a new purchase order is created in the connected Xero organisation, and optionally also when a purchase order enters a chosen status (DRAFT, SUBMITTED, AUTHORISED, BILLED, DELETED) for the first time since the trigger was enabled. Polls the Xero PurchaseOrders endpoint and emits each purchase order the first time its PurchaseOrderID is seen, optionally filtered by status, contact, or date range. Each item is a full purchase order record (number, status, supplier contact, line items, totals).',
+  },
   props: {
     tenant_id: props.tenant_id,
     statuses: Property.StaticMultiSelectDropdown({

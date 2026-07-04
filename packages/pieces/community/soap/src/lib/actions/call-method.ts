@@ -19,6 +19,12 @@ export const callMethod = createAction({
   name: 'call_method',
   displayName: 'Call SOAP Method',
   description: 'Call a SOAP from a given wsdl specification',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Invokes a SOAP web-service operation against a WSDL endpoint: provide the WSDL URL, the method name (one of the operations the WSDL exposes), and the method arguments. Use to integrate with legacy/enterprise SOAP APIs. Returns parsed output when the Parsed flag is set, otherwise the raw request/response XML. Not idempotent in general — the invoked operation may create or mutate remote state on each call.',
+    idempotent: false,
+  },
   auth: soapAuth(),
   props: {
     wsdl: Property.ShortText({
@@ -26,6 +32,7 @@ export const callMethod = createAction({
       required: true,
     }),
     method: Property.Dropdown({
+      auth: soapAuth(),
       description: 'The SOAP Method',
       displayName: 'Method',
       required: true,
@@ -57,6 +64,7 @@ export const callMethod = createAction({
       },
     }),
     args: Property.DynamicProperties({
+      auth: soapAuth(),
       description: 'Arguments for the SOAP method',
       displayName: 'Parameters',
       required: true,
@@ -113,7 +121,7 @@ export const callMethod = createAction({
         );
         break;
       case 'Header': // eslint-disable-next-line no-case-declarations
-        client.addSoapHeader(ctx.auth['customHeader'] as string);
+        client.addSoapHeader(ctx.auth.props.customHeader);
         break;
     }
 

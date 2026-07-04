@@ -1,5 +1,5 @@
-import { hunterAuth } from '../../index';
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { hunterAuth } from '../auth';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
 import { Lead } from '../common/types';
@@ -9,6 +9,9 @@ export const newLeadTrigger = createTrigger({
     name: 'new-lead',
     displayName: 'New Lead',
     description: 'Fires when a new lead is created.',
+    aiMetadata: {
+        description: 'Fires when a new lead is created in the connected Hunter account, emitting that lead record. Polls the account leads list and detects entries by creation time.',
+    },
     type: TriggerStrategy.POLLING,
     props: {},
     async onEnable(context) {
@@ -42,7 +45,7 @@ export const newLeadTrigger = createTrigger({
     }
 });
 
-const polling: Polling<PiecePropValueSchema<typeof hunterAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hunterAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     async items({ auth }) {
         const response = await hunterApiCall({

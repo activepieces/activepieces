@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { dripCommon } from '../common';
-import { dripAuth } from '../../';
+import { dripAuth } from '../auth';
 
 const triggerNameInStore = 'drip_new_subscriber_trigger';
 export const dripNewSubscriberEvent = createTrigger({
@@ -13,6 +13,9 @@ export const dripNewSubscriberEvent = createTrigger({
   name: 'new_subscriber',
   displayName: 'New Subscriber',
   description: 'Triggers when a subscriber is created in your Drip account.',
+  aiMetadata: {
+    description: 'Fires when a new subscriber is created in the selected Drip account, emitting the subscriber.created event. Represents a contact being added to the list.',
+  },
   props: {
     account_id: dripCommon.account_id,
   },

@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -38,12 +38,15 @@ interface AgentUpdateResponse {
 }
 
 export const agentUpdate = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent_update',
   displayName: 'Update Agent',
   description: 'Update the details of a specific agent',
   props: {
     agentId: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Agent',
       required: true,
       description: 'Select the agent to update',
@@ -68,7 +71,7 @@ export const agentUpdate = createAction({
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
         });
 
@@ -106,6 +109,8 @@ export const agentUpdate = createAction({
       description: 'New custom prompt for the agent',
     }),
     defaultLlm: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Default LLM',
       required: false,
       description: 'New default LLM for the agent',
@@ -132,7 +137,7 @@ export const agentUpdate = createAction({
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as string,
+              token: auth.secret_text,
             },
           });
           return {
@@ -220,7 +225,7 @@ export const agentUpdate = createAction({
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
     });
 

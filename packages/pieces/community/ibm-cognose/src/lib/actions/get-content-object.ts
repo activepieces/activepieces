@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 import { contentObjectDropdown } from '../common/content-object-dropdown';
 
@@ -9,6 +9,8 @@ export const getContentObjectAction = createAction({
   name: 'get_content_object',
   displayName: 'Get Content Object',
   description: 'Get content object details',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of a single content-store object (report, dashboard, folder, etc.) by its id from the IBM Cognos content tree. Use to inspect an object before moving, copying, or updating it; optionally request extra fields such as owner, permissions, or children. Idempotent read-only lookup.', idempotent: true },
   props: {
     objectId: contentObjectDropdown,
     fields: Property.ShortText({
@@ -21,7 +23,7 @@ export const getContentObjectAction = createAction({
     const { objectId, fields } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const queryParams = [];
       if (fields && fields.trim()) {

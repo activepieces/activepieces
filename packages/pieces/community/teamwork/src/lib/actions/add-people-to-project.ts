@@ -7,9 +7,13 @@ export const addPeopleToProject = createAction({
 	name: 'add_people_to_project',
 	displayName: 'Add People to Project',
 	description: 'Add existing users to a project.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds existing Teamwork users to a project as members. Use to grant people access to a project after both the project and the users exist. Requires the target project and a list of user IDs. Idempotent — re-adding users already on the project leaves the membership unchanged.', idempotent: true },
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
+			
 			displayName: 'Project',
 			description: 'The project to add people to.',
 			required: true,
@@ -22,7 +26,7 @@ export const addPeopleToProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});
@@ -37,6 +41,7 @@ export const addPeopleToProject = createAction({
 			},
 		}),
 		userIdList: Property.MultiSelectDropdown({
+auth: teamworkAuth,
 			displayName: 'Users',
 			description: 'The users to add to the project.',
 			required: true,
@@ -49,7 +54,7 @@ export const addPeopleToProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/people.json',
 				});

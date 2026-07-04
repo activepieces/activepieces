@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const update_user = createAction({
@@ -8,6 +8,8 @@ export const update_user = createAction({
     auth: simplirouteAuth,
     displayName: 'Update User',
     description: 'Update information of an existing user.',
+    audience: 'both',
+    aiMetadata: { description: 'Fully update an existing user/driver (PUT) by ID, requiring username and name along with the user_id. Idempotent for a fixed payload since it overwrites the user record. Use the get-drivers action to find the user_id first.', idempotent: true },
     props: {
         user_id: Property.Number({ displayName: 'user_id', description: 'User ID to update.', required: true }),
         username: Property.ShortText({ displayName: 'username', description: 'Username (login).', required: true }),
@@ -30,7 +32,7 @@ export const update_user = createAction({
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

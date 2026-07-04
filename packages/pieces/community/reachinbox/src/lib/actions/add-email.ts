@@ -8,15 +8,29 @@ export const addEmail = createAction({
   name: 'addEmail',
   displayName: 'Add Email',
   description: 'Add an email to a specific account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attaches a sending email address to a specific ReachInbox campaign so that account is used for outreach. Use to assign which connected mailbox a campaign sends from. Requires both a campaign id and the email address.',
+    idempotent: false,
+  },
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description:
         'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((campaign) => ({
@@ -47,7 +61,7 @@ export const addEmail = createAction({
         method: HttpMethod.POST,
         url: url,
         headers: {
-          Authorization: `Bearer ${context.auth as string}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body: {

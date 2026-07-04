@@ -1,0 +1,76 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  CreateSecretCommand,
+} from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
+
+export const createSecret = createAction({
+  auth: awsSecretsManagerCombinedAuth,
+  name: 'createSecret',
+  displayName: 'Create Secret',
+  description: 'Creates a new secret.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new secret in AWS Secrets Manager in the connection\'s region, storing the supplied text value under a given name with optional description and tags. Use when provisioning a brand-new credential or config value to store. Not idempotent: the name must be unique, and re-running fails (or duplicates) rather than updating — use Update Secret to change an existing secret.',
+    idempotent: false,
+  },
+  props: {
+    name: Property.ShortText({
+      displayName: 'Secret Name',
+      description: 'The name of the secret',
+      required: true,
+    }),
+    secretValue: Property.LongText({
+      displayName: 'Secret Value',
+      description: 'The secret value (text)',
+      required: true,
+    }),
+    description: Property.LongText({
+      displayName: 'Description',
+      description: 'A description of the secret (optional)',
+      required: false,
+    }),
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'Tags',
+      required: false,
+      properties: {
+        key: Property.ShortText({
+          displayName: 'Tag Key',
+          description: 'The key of the tag',
+          required: true,
+        }),
+        value: Property.ShortText({
+          displayName: 'Tag Value',
+          description: 'The value of the tag',
+          required: true,
+        }),
+      },
+    }),
+  },
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
+
+    try {
+      const command = new CreateSecretCommand({
+        Name: propsValue.name,
+        SecretString: propsValue.secretValue,
+        Description: propsValue.description,
+        Tags: propsValue.tags?.map((tag: any) => ({
+          Key: tag.key,
+          Value: tag.value,
+        })),
+      });
+
+      const response = await client.send(command);
+
+      return response;
+    } catch (error: any) {
+      throw new Error(
+        `Failed to create secret: ${error.message ?? 'Unknown error'}`
+      );
+    }
+  },
+});

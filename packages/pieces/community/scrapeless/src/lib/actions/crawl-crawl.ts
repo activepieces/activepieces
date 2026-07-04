@@ -1,4 +1,4 @@
-import { scrapelessApiAuth } from '../../index';
+import { scrapelessApiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createScrapelessClient } from '../services/scrapeless-api-client';
 
@@ -7,6 +7,8 @@ export const crawlCrawlApi = createAction({
   name: 'crawl_crawl',
   displayName: 'Crawl Data from All Pages',
   description: 'Crawls a website and its linked pages to extract comprehensive data.',
+  audience: 'both',
+  aiMetadata: { description: 'Crawls a website starting from the given URL, following linked subpages up to a configurable page limit, and returns the extracted content from all visited pages. Choose this when you need data across multiple pages of a site rather than a single page (use the scrape action for one page). Requires a starting URL and a subpage limit; read-only and idempotent with no side effects.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'URL to Crawl',
@@ -23,7 +25,7 @@ export const crawlCrawlApi = createAction({
   },
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth);
+      const client = createScrapelessClient(auth.secret_text);
 
       const url = propsValue.url;
       const limit = propsValue.limit;

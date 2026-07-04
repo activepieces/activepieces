@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import {
 	smartsheetCommon,
 	findOrCreateWebhook,
@@ -8,7 +8,7 @@ import {
 	verifyWebhookSignature,
 	unsubscribeWebhook,
 } from '../common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'smartsheet_updated_row_trigger';
 
@@ -17,6 +17,9 @@ export const updatedRowTrigger = createTrigger({
 	name: 'updated_row',
 	displayName: 'Row Updated',
 	description: 'Triggers when an existing row is updated.',
+	aiMetadata: {
+		description: 'Fires when an existing row is modified in the configured Smartsheet sheet, delivering the update event with the fetched full row details. Represents any edit to a row on that sheet, such as changed cell values.',
+	},
 	props: {
 		sheet_id: smartsheetCommon.sheet_id(),
 	},
@@ -51,7 +54,7 @@ export const updatedRowTrigger = createTrigger({
 
 		const triggerIdentifier = context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
 		const webhook = await findOrCreateWebhook(
-			context.auth as string,
+			context.auth.secret_text,
 			context.webhookUrl,
 			sheet_id as string,
 			triggerIdentifier,
@@ -69,7 +72,7 @@ export const updatedRowTrigger = createTrigger({
 
 		if (webhookInfo && webhookInfo.webhookId) {
 			try {
-				await unsubscribeWebhook(context.auth as string, webhookInfo.webhookId);
+				await unsubscribeWebhook(context.auth.secret_text, webhookInfo.webhookId);
 			} catch (error: any) {
 				if (error.response?.status !== 404) {
 					console.error(`Error unsubscribing webhook ${webhookInfo.webhookId}: ${error.message}`);
@@ -115,7 +118,7 @@ export const updatedRowTrigger = createTrigger({
 				if (objectSheetId) {
 					try {
 						eventOutput.rowData = await getSheetRowDetails(
-							context.auth as string,
+							context.auth.secret_text,
 							objectSheetId,
 							event.id.toString(),
 						);

@@ -17,6 +17,9 @@ export const eventOnData = createTrigger({
   name: 'event_on_data',
   displayName: 'Event On Data',
   description: 'Handle EventOnData events via webhooks',
+  aiMetadata: {
+    description: 'Fires when a data event occurs on a chosen Kizeo Forms form, for any of up to five configurable event types selected together (data deleted, data saved/finished, data updated, push received, or push sent). Use this when you want one trigger to react to several event kinds on the same form; for a single event kind use the dedicated event-specific triggers instead.',
+  },
   props: {
     format: Property.StaticDropdown({
       displayName: 'Output Format',
@@ -250,7 +253,7 @@ export const eventOnData = createTrigger({
         third_party_id: workflowId,
       },
       headers: {
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
       queryParams: {},
     };
@@ -271,7 +274,7 @@ export const eventOnData = createTrigger({
           endpoint +
           `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
         headers: {
-          Authorization: context.auth,
+          Authorization: context.auth.secret_text,
         },
       };
       await httpClient.sendRequest(request);

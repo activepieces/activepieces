@@ -11,6 +11,10 @@ export const courseEnrollmentCreatedForContact = createTrigger({
   name: 'courseEnrollmentCreatedForContact',
   displayName: `${MODULE_NAME} for contact`,
   description: 'Triggers when a course enrollment is created for a contact.',
+  aiMetadata: {
+    description:
+      'Fires when a contact is enrolled into a course in the selected ClickFunnels workspace, representing newly granted course access. Delivers the course enrollment payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),
@@ -24,7 +28,7 @@ export const courseEnrollmentCreatedForContact = createTrigger({
 
     try {
       const response: any = await clickfunnelsApiService.createWebhook(
-        auth,
+        auth.props,
         workspaceId as string,
         {
           webhooks_outgoing_endpoint: {
@@ -52,7 +56,7 @@ export const courseEnrollmentCreatedForContact = createTrigger({
 
     if (cachedData) {
       await clickfunnelsApiService
-        .deleteWebhook(auth, cachedData.webhookId)
+        .deleteWebhook(auth.props, cachedData.webhookId)
         .then(async () => {
           await store.delete(CACHE_KEY);
         });

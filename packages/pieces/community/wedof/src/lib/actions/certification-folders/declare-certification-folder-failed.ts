@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,12 @@ export const declareCertificationFolderFailed = createAction({
   name: 'declareCertificationFolderFailed',
   displayName: 'Passer un dossier de certification à l’état : Échoué',
   description: "Change l'état d'un dossier de certification vers : Échoué",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transition a Wedof certification folder into the 'failed' state, optionally recording the detailed result, European language level, and a comment. Pick this when the candidate did not pass and will not resit; use 'toRetake' instead if a retake is planned. Follows the certification-folder state machine and is not idempotent. Requires the folder's externalId.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
@@ -44,7 +50,7 @@ export const declareCertificationFolderFailed = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

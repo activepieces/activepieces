@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     fromObjectTypeAssociationDropdown,
@@ -8,13 +8,15 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { AssociationSpecAssociationCategoryEnum } from '../common/types';
-import { chunk } from '@activepieces/shared';
+import { chunk } from '@activepieces/pieces-framework';
 
 export const removeAssociationsAction = createAction({
     auth: hubspotAuth,
     name: 'remove-associations',
     displayName: 'Remove Associations',
     description: 'Removes associations between objects',
+    audience: 'both',
+    aiMetadata: { description: 'Remove the labeled association of a specific type between one source HubSpot object and one or more target objects, batching the targets. Removing an already-absent association is harmless, so it is idempotent on the end state. Use Create Associations to add links.', idempotent: true },
     props: {
         fromObjectId: Property.ShortText({
             displayName: 'From Object ID',

@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addAnnotationAction } from './lib/actions/add-annotation';
 import { matomoAuth } from './lib/auth';
 
@@ -16,10 +16,10 @@ export const matomo = createPiece({
   actions: [
     addAnnotationAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { domain: string }).domain,
+      baseUrl: (auth) => (auth?.props .domain ?? ''),
       auth: matomoAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { tokenAuth: string }).tokenAuth}`,
+        Authorization: `Bearer ${(auth ).props .tokenAuth}`,
       }),
     }),
   ],

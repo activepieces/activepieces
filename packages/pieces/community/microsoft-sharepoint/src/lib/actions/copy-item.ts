@@ -1,5 +1,6 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, ResponseType } from '@microsoft/microsoft-graph-client';
 
@@ -16,6 +17,11 @@ export const copyItemAction = createAction({
   displayName: 'Copy File or Folder (Across Sites)',
   description:
     'Copy a file or folder from one site to another within the same tenant, with overwrite option.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Copies a file or folder from one SharePoint site/drive to a destination site, drive, and folder within the same tenant, optionally renaming the copy. Use to duplicate content across sites; for same-site copies use the within-site variant. The conflict behavior (fail, replace, or rename) controls what happens on a name clash. Not idempotent: each run produces another copy (rename mode) or overwrites the target (replace mode).',
+    idempotent: false,
+  },
   props: {
 
     siteId: microsoftSharePointCommon.siteId,
@@ -59,10 +65,12 @@ export const copyItemAction = createAction({
       conflict_behavior,
     } = context.propsValue;
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     const body: { parentReference: { driveId: string; id?: string }; name?: string } = {

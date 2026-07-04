@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { wufooAuth } from '../../index';
+import { wufooAuth } from '../auth';
 import { wufooApiCall } from '../common/client';
 
 const LAST_FORM_IDS_KEY = 'wufoo-last-form-ids';
@@ -10,6 +10,9 @@ export const newFormTrigger = createTrigger({
   name: 'new_form_created',
   displayName: 'New Form Created',
   description: 'Triggers when a new form is created in your Wufoo account.',
+  aiMetadata: {
+    description: 'Fires when a new form appears in the connected Wufoo account, detected by polling the account\'s form list. Can optionally be limited to forms whose name contains given text and to public/active forms only.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     pollingInterval: Property.StaticDropdown({
@@ -59,11 +62,10 @@ export const newFormTrigger = createTrigger({
 
   async onEnable(context) {
     const { responseFormat } = context.propsValue;
-    const { apiKey, subdomain } = context.auth;
 
     try {
       const response = await wufooApiCall<{ Forms: WufooForm[] }>({
-        auth: { apiKey, subdomain },
+        auth: context.auth,
         method: HttpMethod.GET,
         resourceUri: `/forms.${responseFormat || 'json'}`,
       });
@@ -97,13 +99,12 @@ export const newFormTrigger = createTrigger({
 
   async run(context) {
     const { nameFilter, includeInactive, responseFormat } = context.propsValue;
-    const { apiKey, subdomain } = context.auth;
     
     try {
       const previousHashes = await context.store.get<string[]>(LAST_FORM_IDS_KEY) || [];
 
       const response = await wufooApiCall<{ Forms: WufooForm[] }>({
-        auth: { apiKey, subdomain },
+        auth: context.auth,
         method: HttpMethod.GET,
         resourceUri: `/forms.${responseFormat || 'json'}`,
       });
@@ -180,11 +181,10 @@ export const newFormTrigger = createTrigger({
 
   async test(context) {
     const { responseFormat } = context.propsValue;
-    const { apiKey, subdomain } = context.auth;
 
     try {
       const response = await wufooApiCall<{ Forms: WufooForm[] }>({
-        auth: { apiKey, subdomain },
+        auth: context.auth,
         method: HttpMethod.GET,
         resourceUri: `/forms.${responseFormat || 'json'}`,
       });

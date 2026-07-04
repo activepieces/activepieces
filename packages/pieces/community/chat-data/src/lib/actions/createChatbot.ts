@@ -1,12 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ChatDataClient } from '../common/client';
-import { CreateChatbotDto } from '../common/types';
+import { chatDataAuth, CreateChatbotDto } from '../common/types';
 
 export const createChatbot = createAction({
+  auth: chatDataAuth,
   name: 'create_chatbot',
   displayName: 'Create Chatbot',
   description:
     'Create and train a chatbot using custom data, medical models, or custom models. Training takes 1-2 minutes.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Chat Data chatbot and kicks off training. The model prop selects the mode: custom-data-upload trains on supplied source text, scraped URLs, products, and Q&As; medical-chat-human / medical-chat-vet use prebuilt medical models; custom-model proxies to your own backend (the data-source props are ignored for the medical and custom-model modes). Use to provision a brand-new bot. Not idempotent — each call creates a separate chatbot.',
+    idempotent: false,
+  },
   props: {
     chatbotName: Property.ShortText({
       displayName: 'Chatbot Name',
@@ -97,7 +104,7 @@ export const createChatbot = createAction({
     }),
   },
   async run(context) {
-    const client = new ChatDataClient(context.auth as string);
+    const client = new ChatDataClient(context.auth.secret_text);
 
     const payload = CreateChatbotDto.parse({
       chatbotName: context.propsValue.chatbotName,

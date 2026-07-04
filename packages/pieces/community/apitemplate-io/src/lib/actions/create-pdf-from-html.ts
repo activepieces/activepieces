@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
-import { ApitemplateAuthConfig, makeRequest } from '../common/client';
+import { ApitemplateAuthConfig, ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createPdfFromHtml = createAction({
@@ -8,6 +8,8 @@ export const createPdfFromHtml = createAction({
   name: 'createPdfFromHtml',
   displayName: 'Create PDF From HTML',
   description: 'Creates a PDF from HTML.',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a new PDF directly from raw HTML (with optional CSS, templating data, and page settings such as size, orientation, margins, and headers/footers). Use when you have ad-hoc HTML markup rather than a saved template or a live URL. Requires the HTML body. Not idempotent: each call generates and stores a new PDF.', idempotent: false },
   props: {
     html: Property.LongText({
       displayName: 'HTML Content',
@@ -121,7 +123,7 @@ export const createPdfFromHtml = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const authConfig = auth as ApitemplateAuthConfig;
+    const authConfig = auth.props;
     const {
       html,
       css,
@@ -235,7 +237,7 @@ export const createPdfFromHtml = createAction({
         endpoint,
         requestBody,
         undefined,
-        authConfig.region
+        authConfig.region as ApitemplateRegion
       );
 
       return response;

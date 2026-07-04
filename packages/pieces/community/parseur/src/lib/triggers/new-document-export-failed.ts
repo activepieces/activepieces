@@ -9,18 +9,22 @@ export const newDocumentExportFailed = createTrigger({
   displayName: 'New Document Export Failed',
   description:
     'Fires when an automated export endpoint (webhook / integration) fails for a processed document.',
+  aiMetadata: {
+    description:
+      'Fires when delivering a successfully parsed document to a configured export target (webhook or downstream integration) fails for the selected Parseur mailbox. Use to detect and handle export/delivery failures.',
+  },
   props: { mailboxId: parserDropdown({ required: true }) },
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const response = await parseurCommon.createWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       event: 'document.export_failed',
       target: context.webhookUrl,
       category: 'CUSTOM',
     });
     await parseurCommon.enableWebhook({
-      apiKey: context.auth as string,
+      apiKey: context.auth.secret_text,
       webhookId: response.id,
       mailboxId: context.propsValue.mailboxId as number,
     });
@@ -36,7 +40,7 @@ export const newDocumentExportFailed = createTrigger({
       return;
     }
     await parseurCommon.deleteWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newDocumentExportFailed');

@@ -4,13 +4,19 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
+import { activePieceAuth } from '../auth';
 
 export const createProject = createAction({
   name: 'create_project',
   auth: activePieceAuth,
   displayName: 'Create Project',
   description: 'Create a new project',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new project on an Activepieces platform (requires a platform-edition API key). Use when provisioning a fresh project workspace; the only input is its display name. Not idempotent — each call creates a separate project even with the same name.',
+    idempotent: false,
+  },
   props: {
     display_name: Property.ShortText({
       displayName: 'Display Name',
@@ -21,10 +27,10 @@ export const createProject = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: `${auth.baseApiUrl}/projects`,
+      url: `${auth.props.baseApiUrl}/projects`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.apiKey,
+        token: auth.props.apiKey,
       },
       body: {
         displayName: propsValue['display_name'],

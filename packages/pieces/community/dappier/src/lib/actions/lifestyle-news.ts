@@ -9,6 +9,12 @@ export const lifestyleNewsSearch = createAction({
   displayName: 'Lifestyle News',
   description:
     'Real-time updates, analysis, and personalized content from top sources like The Mix, Snipdaily, Nerdable, and Familyproof.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches Dappier lifestyle-news sources for articles matching a natural-language query or URL. Choose this for lifestyle content rather than the general web search, stock, or sports actions. Optionally tune result count, restrict to a preferred domain, and pick the search algorithm (semantic, most recent, most recent + semantic, or trending) to control whether matching is contextual or recency-driven. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
@@ -49,7 +55,7 @@ export const lifestyleNewsSearch = createAction({
       method: HttpMethod.POST,
       url: `${dappierCommon.baseUrl}/app/v2/search?data_model_id=dm_01j0q82s4bfjmsqkhs3ywm3x6y`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         'Content-Type': 'application/json',
       },
       body: {

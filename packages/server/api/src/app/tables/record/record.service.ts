@@ -1,28 +1,12 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    apId,
-    Cell,
-    chunk,
-    CreateRecordsRequest,
-    Cursor,
-    ErrorCode,
-    Field,
-    Filter,
-    FilterOperator,
-    isNil,
-    PopulatedRecord,
-    SeekPage,
-    TableWebhookEventType,
-    UpdateRecordRequest,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
+import { Cell, CreateRecordsRequest, Field, Filter, FilterOperator, PopulatedRecord, TableWebhookEventType, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
-import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
-import { webhookService } from '../../webhooks/webhook.service'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
@@ -38,9 +22,10 @@ export const recordService = {
     async create({
         request,
         projectId,
+        fields,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
-        const existingFields = await fieldService.getAll({
+        const existingFields = fields ?? await fieldService.getAll({
             tableId: request.tableId,
             projectId,
         })
@@ -78,7 +63,7 @@ export const recordService = {
                 created: 'ASC',
             },
         })
-        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
+        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
     },
 
     async list({
@@ -86,8 +71,9 @@ export const recordService = {
         projectId,
         filters,
         limit,
+        fields: prefetchedFields,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-        const fields = await fieldService.getAll({
+        const fields = prefetchedFields ?? await fieldService.getAll({
             tableId,
             projectId,
         })
@@ -108,25 +94,33 @@ export const recordService = {
                 recordId: In(records.map((record) => record.id)),
             },
         })
-        records.map((record) => {
-            record.cells = cells.filter((cell) => cell.recordId === record.id)
-        })
+        const cellsByRecordId = new Map<string, typeof cells>()
+        for (const cell of cells) {
+            const group = cellsByRecordId.get(cell.recordId)
+            if (group) {
+                group.push(cell)
+            }
+            else {
+                cellsByRecordId.set(cell.recordId, [cell])
+            }
+        }
+        for (const record of records) {
+            record.cells = cellsByRecordId.get(record.id) ?? []
+        }
         const filteredOutRecords = records.filter((record) => {
             if (!filters || filters.length === 0) {
                 return true
             }
-
-            const relevantCells = record.cells.filter(cell => 
-                filters.some(filter => filter.fieldId === cell.fieldId),
-            )
-
-            if (relevantCells.length === 0) {
-                return false
-            }
-            return relevantCells.every((cell) => doesCellValueMatchFilters(cell, filters))
+            return filters.every((filter) => {
+                const cell = record.cells.find(c => c.fieldId === filter.fieldId)
+                if (!cell) {
+                    return filter.operator === FilterOperator.NOT_EXISTS
+                }
+                return doesCellValueMatchFilters(cell, [filter])
+            })
         })
 
-        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
+        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId, fields })
 
         return {
             data: populatedRecords.slice(0, limit),
@@ -197,7 +191,7 @@ export const recordService = {
                         recordId: id,
                         fieldId: cellData.fieldId,
                         projectId,
-                        value: cellData.value,
+                        value: cellData.value ?? '',
                         id: apId(),
                     }
                 })
@@ -266,6 +260,36 @@ export const recordService = {
         return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
     },
 
+    async deleteAll({
+        tableId,
+        projectId,
+    }: DeleteAllParams): Promise<PopulatedRecord[]> {
+        const deletedRecords = await transaction(async (entityManager: EntityManager) => {
+            const records = await entityManager.getRepository(RecordEntity).find({
+                where: { projectId, tableId },
+                relations: ['cells'],
+            })
+
+            const recordIds = records.map((record) => record.id)
+
+            if (recordIds.length > 0) {
+                await entityManager.getRepository(RecordEntity).delete({
+                    id: In(recordIds),
+                    projectId,
+                    tableId,
+                })
+            }
+
+            return records
+        })
+
+        if (deletedRecords.length === 0) {
+            return []
+        }
+
+        return formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId })
+    },
+
     async triggerWebhooks({
         projectId,
         tableId,
@@ -326,6 +350,7 @@ type CreateParams = {
     request: CreateRecordsRequest
     projectId: string
     logger: FastifyBaseLogger
+    fields?: Field[]
 }
 
 type ListParams = {
@@ -334,6 +359,7 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     filters: Filter[] | null
+    fields?: Field[]
 }
 
 type GetByIdParams = {
@@ -349,6 +375,11 @@ type UpdateParams = {
 
 type DeleteParams = {
     ids: string[]
+    projectId: string
+}
+
+type DeleteAllParams = {
+    tableId: string
     projectId: string
 }
 
@@ -381,7 +412,7 @@ type CellInsertion = {
 }
 
 function prepareRecordInsertions(
-    records: Array<Array<{ fieldId: string, value: string }>>,
+    records: Array<Array<{ fieldId: string, value: string | null }>>,
     tableId: string,
     projectId: string,
     baseDate: Date,
@@ -398,7 +429,7 @@ function prepareRecordInsertions(
 }
 
 function prepareCellInsertions(
-    records: Array<Array<{ fieldId: string, value: string }>>,
+    records: Array<Array<{ fieldId: string, value: string | null }>>,
     recordInsertions: RecordInsertion[],
     projectId: string,
 ): CellInsertion[] {
@@ -408,15 +439,15 @@ function prepareCellInsertions(
                 recordId: recordInsertions[index].id,
                 fieldId: cellData.fieldId,
                 projectId,
-                value: cellData.value,
+                value: cellData.value ?? '',
                 id: apId(),
             }
         }),
     )
 }
 
-async function formatRecordsAndFetchField({ records, tableId, projectId }: { records: RecordSchema[], tableId: string, projectId: string }): Promise<PopulatedRecord[]> {
-    const fields = await fieldService.getAll({
+async function formatRecordsAndFetchField({ records, tableId, projectId, fields: prefetchedFields }: { records: RecordSchema[], tableId: string, projectId: string, fields?: Field[] }): Promise<PopulatedRecord[]> {
+    const fields = prefetchedFields ?? await fieldService.getAll({
         tableId,
         projectId,
     })
@@ -429,17 +460,28 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
         return acc
     }, {} as Record<string, string>)
     return records.map((record) => {
+        const cells = record.cells.reduce<PopulatedRecord['cells']>((acc, cell) => {
+            acc[cell.fieldId] = {
+                fieldName: fieldsNamesMap[cell.fieldId],
+                value: cell.value,
+                updated: cell.updated,
+                created: cell.created,
+            }
+            return acc
+        }, {})
+        for (const field of fields) {
+            if (!(field.id in cells)) {
+                cells[field.id] = {
+                    fieldName: field.name,
+                    value: null,
+                    updated: record.updated,
+                    created: record.created,
+                }
+            }
+        }
         return {
             ...record,
-            cells: record.cells.reduce<PopulatedRecord['cells']>((acc, cell) => {
-                acc[cell.fieldId] = {
-                    fieldName: fieldsNamesMap[cell.fieldId],
-                    value: cell.value,
-                    updated: cell.updated,
-                    created: cell.created,
-                }
-                return acc
-            }, {}),
+            cells,
         }
     })
 }
@@ -452,10 +494,13 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
         if (filter.fieldId !== cell.fieldId) {
             return true
         }
-        if (filter.operator === undefined) {
-            return true
-        }
         switch (filter.operator) {
+            case FilterOperator.EXISTS: {
+                return cell.value !== null && cell.value !== ''
+            }
+            case FilterOperator.NOT_EXISTS: {
+                return cell.value === null || cell.value === ''
+            }
             case FilterOperator.EQ: {
                 return cell.value === filter.value
             }
@@ -480,7 +525,6 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
                 }
                 return false
             }
-
         }
     })
 

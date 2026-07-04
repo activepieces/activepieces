@@ -1,9 +1,10 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { motionAuth } from '../../index';
+import { motionAuth } from '../auth';
 import {
   DedupeStrategy,
   httpClient,
@@ -16,7 +17,7 @@ import { BASE_URL, workspaceId } from '../common/props';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof motionAuth>,
+  AppConnectionValueForAuthProperty<typeof motionAuth>,
   { workspaceId: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -41,7 +42,7 @@ const polling: Polling<
         method: HttpMethod.GET,
         url: `${BASE_URL}/tasks`,
         headers: {
-          'X-API-Key': auth as string,
+          'X-API-Key': auth.secret_text,
         },
         queryParams: qs,
       });
@@ -66,6 +67,9 @@ export const taskCreated = createTrigger({
   name: 'task-created',
   displayName: 'Task Created',
   description: 'Triggers when a new task is created.',
+  aiMetadata: {
+    description: 'Fires when a new task is created in the specified Motion workspace, emitting one event per newly created task. Polls the workspace tasks and deduplicates by creation time.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     workspaceId: workspaceId('Workspace ID'),

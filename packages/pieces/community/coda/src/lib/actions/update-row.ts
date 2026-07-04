@@ -1,14 +1,16 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { codaAuth } from '../..';
+import { codaAuth } from '../auth';
 import { codaClient } from '../common/types';
 import { docIdDropdown, tableIdDropdown, tableRowsDynamicProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const updateRowAction = createAction({
 	auth: codaAuth,
 	name: 'update-row',
 	displayName: 'Update Row',
 	description: 'Updates an existing row in the selected table.',
+	audience: 'both',
+	aiMetadata: { description: 'Overwrite cell values on an existing Coda table row, identified by its row ID or a unique row name. Use when you already know which row to change; use Upsert Row instead when the row may not yet exist. Idempotent — repeating with the same values leaves the row in the same state.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,
@@ -20,7 +22,7 @@ export const updateRowAction = createAction({
 	},
 	async run(context) {
 		const { docId, tableId, rowIdOrName, rowData } = context.propsValue;
-		const client = codaClient(context.auth as string);
+		const client = codaClient(context.auth);
 
 		const cells = Object.entries(rowData as Record<string, any>)
 			.filter(([, value]) => value !== undefined && value !== null && value !== '')

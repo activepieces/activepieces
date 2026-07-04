@@ -12,6 +12,8 @@ export const addGreetAction = createAction({
   auth: bonjoroAuth,
   displayName: 'Create a Greet',
   description: 'Create a new Greet in Bonjoro',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a personal-video Greet task in Bonjoro for a recipient identified by email (upserting their profile first), with a note and optional assignee, campaign, and message template. Use to queue a new outreach video for a customer. Not idempotent: each call creates a new Greet, so repeating it produces duplicates.', idempotent: false },
   props: {
     note: Property.LongText({
       displayName: 'Note',
@@ -34,28 +36,58 @@ export const addGreetAction = createAction({
       required: false,
     }),
     assignee: Property.Dropdown({
+      auth: bonjoroAuth,
       displayName: 'Assignee',
       description: 'Who to assign the greet to',
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildUserDropdown(auth as BonjoroAuthType),
+        {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your Bonjoro account first',
+          };
+        }
+        return await buildUserDropdown(auth.props);
+        }
     }),
     campaign: Property.Dropdown({
+      auth: bonjoroAuth,
       displayName: 'Campaign',
       description: 'The campaign to add the greet to',
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildCampaignDropdown(auth as BonjoroAuthType),
+        {
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please connect your Bonjoro account first',
+            };
+          }
+          return await buildCampaignDropdown(auth.props);
+        }
     }),
     template: Property.Dropdown({
+      auth: bonjoroAuth,
       displayName: 'Template',
       description: 'The template to use for the greet',
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildTemplateDropdown(auth as BonjoroAuthType),
+        {
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please connect your Bonjoro account first',
+            };
+          }
+          return  await buildTemplateDropdown(auth.props);
+        }
     }),
     custom: Property.Json({
       displayName: 'Custom Attributes',
@@ -70,7 +102,7 @@ export const addGreetAction = createAction({
       first_name: context.propsValue.first,
       last_name: context.propsValue.last,
     };
-    addProfile(context.auth, user);
+    addProfile(context.auth.props, user);
 
     const greet = {
       profiles: [context.propsValue.email],
@@ -86,6 +118,6 @@ export const addGreetAction = createAction({
     if (!greet.template_id) delete greet.template_id;
     if (!greet.custom_attributes) delete greet.custom_attributes;
 
-    return await addGreet(context.auth, greet);
+    return await addGreet(context.auth.props, greet);
   },
 });

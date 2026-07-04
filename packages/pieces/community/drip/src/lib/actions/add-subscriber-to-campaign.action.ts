@@ -5,17 +5,20 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { dripCommon } from '../common';
-import { dripAuth } from '../../';
+import { dripAuth } from '../auth';
 
 export const dripAddSubscriberToCampaign = createAction({
   auth: dripAuth,
   name: 'add_subscriber_to_campaign',
   description: 'Add a subscriber to a campaign (Email series)',
+  audience: 'both',
+  aiMetadata: { description: 'Subscribes a contact (by email) to a Drip email-series campaign in the given account, optionally attaching tags and custom fields. Use to enroll someone into an automated email sequence. Requires an existing campaign id (selectable from the account). Not idempotent: each call re-subscribes and can re-trigger the series.', idempotent: false },
   displayName: 'Add a subscriber to a campaign',
   props: {
     account_id: dripCommon.account_id,
     campaign_id: Property.Dropdown({
       displayName: 'Email Series Campaign',
+      auth: dripAuth,
       refreshers: ['account_id'],
       required: true,
       options: async ({ auth, account_id }) => {
@@ -37,7 +40,7 @@ export const dripAddSubscriberToCampaign = createAction({
           method: HttpMethod.GET,
           url: `${dripCommon.baseUrl(account_id as string)}/campaigns`,
           headers: {
-            Authorization: `Basic ${Buffer.from(auth as string).toString(
+            Authorization: `Basic ${Buffer.from(auth .secret_text).toString(
               'base64'
             )}`,
           },

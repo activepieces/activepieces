@@ -1,13 +1,13 @@
 import {
+  AppConnectionValueForAuthProperty,
   PieceAuth,
   Property,
-  ShortTextProperty,
-  StaticPropsValue,
 } from '@activepieces/pieces-framework';
-import { getUsers, sendJiraRequest } from './lib/common';
+import { sendJiraRequest } from './lib/common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export const jiraCloudAuth = PieceAuth.CustomAuth({
   description: `
@@ -36,12 +36,15 @@ You can generate your API token from:
   validate: async ({ auth }) => {
     try {
       await propsValidation.validateZod(auth, {
-        instanceUrl: z.string().url(),
-        email: z.string().email(),
+        instanceUrl: z.string().check(z.url()),
+        email: z.string().check(z.email()),
       });
 
       await sendJiraRequest({
-        auth: auth,
+        auth: {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        },
         method: HttpMethod.GET,
         url: 'myself',
       });
@@ -58,9 +61,4 @@ You can generate your API token from:
   },
 });
 
-export type JiraAuth = {
-  instanceUrl: string;
-  email: string;
-  apiToken: string;
-
-}
+export type JiraAuth = AppConnectionValueForAuthProperty<typeof jiraCloudAuth>;

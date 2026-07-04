@@ -1,11 +1,16 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { createTask, googleTasksCommon, Task, TaskStatus } from '../common';
-import { googleTasksAuth } from '../../';
+import { googleTasksAuth } from '../auth';
 
 export const googleTasksAddNewTaskAction = createAction({
   auth: googleTasksAuth,
   name: 'add_task',
   description: 'Add a new task to a specified task list',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new task in a specific Google Tasks list, with optional notes, due date, and a completed flag. Use to add a to-do item for the authenticated user; requires a valid task-list ID (resolve it first if you only have a list name). Not idempotent: each call appends a separate task even with identical input.',
+    idempotent: false,
+  },
   displayName: 'Add Task',
   props: {
     tasks_list: googleTasksCommon.tasksList,

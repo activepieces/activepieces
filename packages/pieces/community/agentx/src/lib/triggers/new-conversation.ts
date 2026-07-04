@@ -1,7 +1,7 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from "@activepieces/pieces-framework";
 import {
   DedupeStrategy,
@@ -22,7 +22,7 @@ type Conversation = {
 };
 
 const polling: Polling<
-  PiecePropValueSchema<typeof AgentXAuth>,
+  AppConnectionValueForAuthProperty<typeof AgentXAuth>,
   { agentId?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -35,7 +35,7 @@ const polling: Polling<
 
     try {
       const conversations = (await makeRequest(
-        auth,
+        auth.secret_text,
         HttpMethod.GET,
         `/agents/${agentId}/conversations`
       )) as Conversation[];
@@ -60,6 +60,9 @@ export const newConversation = createTrigger({
   name: "new_conversation",
   displayName: "New Conversation",
   description: "Triggers when a new conversation begins with a specific Agent. Only detects conversations created after the trigger is enabled.",
+  aiMetadata: {
+    description: 'Fires when a new conversation begins with the configured AgentX agent (selected by agent ID), emitting the new conversation. Polls periodically and only detects conversations created after the trigger was enabled.',
+  },
   type: TriggerStrategy.POLLING,
 
   props: {

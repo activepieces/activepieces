@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -9,10 +9,13 @@ export const newDealTaskTrigger = createTrigger({
 	name: 'activecampaign_new_deal_task',
 	displayName: 'New Deal Task',
 	description: 'Triggers when a new deal task is created.',
+	aiMetadata: {
+		description: 'Fires when a task is created on a deal. The payload includes the task (type, title, due date) and the associated deal and contact.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		const res = await client.subscribeWebhook({
 			name: `Activepieces New Deal Task Hook`,
 			url: context.webhookUrl,
@@ -27,7 +30,7 @@ export const newDealTaskTrigger = createTrigger({
 	async onDisable(context) {
 		const webhook = await context.store.get<CreateWebhookResponse>('activecampaign_new_deal_task');
 		if (webhook != null) {
-			const client = makeClient(context.auth);
+			const client = makeClient(context.auth.props);
 			await client.unsubscribeWebhook(webhook.webhook.id);
 		}
 	},

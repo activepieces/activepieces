@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { fireberryAuth } from '../../index';
+import { fireberryAuth } from '../auth';
 import { objectTypeDropdown, objectFields } from '../common/props';
 import { FireberryClient } from '../common/client';
 
@@ -7,13 +7,15 @@ export const createRecordAction = createAction({
   name: 'create_record',
   displayName: 'Create Record',
   description: 'Create a new record in Fireberry.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new record of a given Fireberry object type (Account, Contact, etc.), with field values supplied as an object/JSON. Use when adding a new CRM record. Not idempotent: each call inserts another record, so repeating it produces duplicates.', idempotent: false },
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,
     fields: objectFields,
   },
   async run({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, fields } = propsValue;
 
     const fieldsObj = typeof fields === 'string' ? JSON.parse(fields) : fields;
@@ -22,6 +24,6 @@ export const createRecordAction = createAction({
       throw new Error('Fields must be an object');
     }
 
-    return await client.batchCreate(objectType, [fieldsObj]);
+    return await client.batchCreate(objectType as string, [fieldsObj]);
   },
 }); 

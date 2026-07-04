@@ -9,13 +9,8 @@ import {
 	extractTablesFromPdf,
 	addBarcodeToPdf,
 } from './lib/actions';
-import { PieceCategory } from '@activepieces/shared';
-
-export const pdfCoAuth = PieceAuth.SecretText({
-	displayName: 'API Key',
-	description: `To get your PDF.co API key please [click here to create your account](https://app.pdf.co/).`,
-	required: true,
-});
+import { PieceCategory } from '@activepieces/pieces-framework';
+import { pdfCoAuth } from './lib/auth';
 
 export const pdfCo = createPiece({
 	displayName: 'PDF.co',

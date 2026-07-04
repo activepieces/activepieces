@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpError } from '@activepieces/pieces-common';
 import { PdfCoSuccessResponse, PdfCoErrorResponse } from '../common/types';
-import { pdfCoAuth } from '../../index';
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from '../common/props';
 
 // Interface for a single text annotation object based on PDF.co docs
@@ -44,6 +44,12 @@ export const addTextToPdf = createAction({
 	name: 'add_text_to_pdf',
 	displayName: 'Add Text to PDF',
 	description: 'Adds text to PDF.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Stamps a text annotation onto a source PDF (referenced by URL) at the given x/y coordinates, with optional font, size, color, and styling. Use when an agent needs to write text onto an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+		idempotent: false,
+	},
 	auth: pdfCoAuth,
 	props: {
 		url: Property.ShortText({
@@ -175,7 +181,7 @@ export const addTextToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/pdf/edit/add`,
 				headers: {
-					'x-api-key': auth,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: requestBody,

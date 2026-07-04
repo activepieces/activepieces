@@ -7,6 +7,8 @@ export const readBackBlazeFileAction = createAction({
   name: 'read-backblaze-file',
   displayName: 'Read File',
   description: 'Read a file from Backblaze bucket to use it in other steps.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches an object from the configured Backblaze B2 (S3-compatible) bucket by its key and writes it to a downstream file reference for use in later steps. Use to retrieve previously stored file content. Requires the exact object key including any extension. Idempotent: it only reads, leaving the bucket unchanged.', idempotent: true },
   props: {
     key: Property.ShortText({
       displayName: 'Key',
@@ -15,9 +17,9 @@ export const readBackBlazeFileAction = createAction({
     }),
   },
   async run(context) {
-    const { bucket } = context.auth;
+    const { bucket } = context.auth.props;
     const { key } = context.propsValue;
-    const s3 = createBackBlazeS3(context.auth);
+    const s3 = createBackBlazeS3(context.auth.props);
 
     const file = await s3.getObject({
       Bucket: bucket,

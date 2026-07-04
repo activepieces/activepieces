@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -9,6 +9,7 @@ import { baseUrlv0 } from '../common/common';
 import { agentIdDropdown } from '../common/props';
 
 export const agentPromptCompletion = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent_prompt_completion',
   displayName: 'Agent Prompt Completion',
@@ -110,7 +111,7 @@ export const agentPromptCompletion = createAction({
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
     });
 

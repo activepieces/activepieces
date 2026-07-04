@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon, MollieOrder } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 
 export const mollieCreateOrder = createAction({
   auth: mollieAuth,
@@ -9,6 +9,12 @@ export const mollieCreateOrder = createAction({
   displayName: 'Create Order',
   description:
     '⚠️ We no longer recommend using the Orders API. Please refer to the Payments API instead.\n\nCreate a new order in Mollie',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new order in Mollie via the legacy Orders API, with required order lines and a billing address. Use only when an integration specifically needs the deprecated Orders API; for new payment flows prefer Create Payment or Create Payment Link instead. Not idempotent: each call creates a separate order even with an identical order number.',
+    idempotent: false,
+  },
   props: {
     orderNumber: Property.ShortText({
       displayName: 'Order Number',
@@ -380,7 +386,7 @@ export const mollieCreateOrder = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth;
 
     const billingAddress = {
       givenName: propsValue.billingGivenName,

@@ -1,4 +1,24 @@
 {
   "name": "@activepieces/piece-google-docs",
-  "version": "0.2.11"
+  "version": "0.4.4",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@googleapis/docs": "9.3.0",
+    "@googleapis/drive": "20.2.0",
+    "dayjs": "1.11.9",
+    "google-auth-library": "10.5.0",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

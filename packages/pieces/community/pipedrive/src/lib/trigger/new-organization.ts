@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../';
+import { pipedriveAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
@@ -8,7 +8,7 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedriveOrganizationV2 {
@@ -80,6 +80,10 @@ export const newOrganizationTrigger = createTrigger({
 	name: 'new-organization',
 	displayName: 'New Organization',
 	description: 'Triggers when a new organization is created.',
+	aiMetadata: {
+		description:
+			'Fires the moment a new organization (company) record is created in Pipedrive, with its name, owner, address, labels, and custom fields. Use to start automations whenever a company is added to the CRM.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

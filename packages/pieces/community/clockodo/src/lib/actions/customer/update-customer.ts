@@ -1,12 +1,14 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { clockodoCommon, emptyToNull, makeClient } from '../../common';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
   name: 'update_customer',
   displayName: 'Update Customer',
   description: 'Updates a customer in clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing clockodo customer identified by their numeric customer ID, changing only the fields you supply (name, number, active flag, billable default, note, color). Idempotent: re-sending the same values leaves the customer unchanged. Requires a customer ID; use Create Customer to add a new one.', idempotent: true },
   props: {
     customer_id: clockodoCommon.customer_id(true, undefined),
     name: Property.ShortText({
@@ -32,7 +34,7 @@ export default createAction({
     color: clockodoCommon.color(false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.updateCustomer(propsValue.customer_id as number, {
       name: propsValue.name,
       number: emptyToNull(propsValue.number),

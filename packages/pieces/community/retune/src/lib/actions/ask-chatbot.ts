@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { retuneAuth } from '../../index';
+import { retuneAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const askChatbot = createAction({
@@ -7,18 +7,28 @@ export const askChatbot = createAction({
   name: 'ask_chatbot',
   displayName: 'Ask Chatbot',
   description: 'Sends a message to an existing thread with a chatbot.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a user message to an existing re:tune chatbot conversation thread and returns the bot\'s generated reply. Use this to interact with a configured re:tune chatbot; requires both a thread ID (a conversation context that must already exist) and the message text. Not idempotent — each call appends a turn to the thread and produces a fresh AI response.', idempotent: false },
   props: {
     thread: Property.Dropdown({
+      auth: retuneAuth,
       displayName: 'Thread',
       description: 'The thread you want to send the message to.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         const options = await httpClient.sendRequest({
-          url: `https://retune.so/api/chat/${(auth as any).chatId}/threads`,
+          url: `https://retune.so/api/chat/${(auth).props.chatId}/threads`,
           method: HttpMethod.POST,
           headers: {
-            'X-Workspace-API-Key': (auth as any).apiKey,
+            'X-Workspace-API-Key': (auth).props.apiKey,
           },
           body: {},
         });
@@ -43,10 +53,10 @@ export const askChatbot = createAction({
     const { thread, message } = propsValue;
 
     const response = await httpClient.sendRequest({
-      url: `https://retune.so/api/chat/${auth.chatId}/response`,
+      url: `https://retune.so/api/chat/${auth.props.chatId}/response`,
       method: HttpMethod.POST,
       headers: {
-        'X-Workspace-API-Key': auth.apiKey,
+        'X-Workspace-API-Key': auth.props.apiKey,
       },
       body: {
         threadId: thread,

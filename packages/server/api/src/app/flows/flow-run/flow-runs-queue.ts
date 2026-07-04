@@ -1,76 +1,65 @@
-import { apAxios, apDayjsDuration, AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { ApId, assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, ProjectId, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { apId, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
+import { FlowRun, FlowRunStatus, isFlowRunStateTerminal, RunTimeline } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
-import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { websocketService } from '../../core/websockets.service'
-import { distributedLock, redisConnections } from '../../database/redis-connections'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { distributedStore } from '../../helper/key-value'
+import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
+import { domainHelper } from '../../helper/domain-helper'
+import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
+import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
+import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
+import { buildRunTimeline } from './run-timeline'
+import { resumeService } from './waitpoint/resume-service'
+import { waitpointService } from './waitpoint/waitpoint-service'
+import { WaitpointStatus } from './waitpoint/waitpoint-types'
 
-let runsMetadataQueueInstance: Queue<RunsMetadataJobData> | undefined = undefined
 let runsMetadataWorker: Worker<RunsMetadataJobData> | undefined = undefined
 
-const redisMetadaKey = (runId: ApId) => `runs_metadata:${runId}`
+const queue = runsMetadataQueueFactory({ createRedisConnection: redisConnections.create, distributedStore })
 
 export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const queueName = 'runsMetadata'
-        const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
-        runsMetadataQueueInstance = new Queue<RunsMetadataJobData>(queueName, {
-            connection: await redisConnections.create(),
-            telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
-            defaultJobOptions: {
-                attempts: 5,
-                backoff: {
-                    type: 'exponential',
-                    delay: apDayjsDuration(8, 'minute').asMilliseconds(),
-                },
-                removeOnComplete: true,
-                removeOnFail: {
-                    age: apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds(),
-                    count: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
-                },
-            },
-        })
-        await runsMetadataQueueInstance.waitUntilReady()
+        const queueName = QueueName.RUNS_METADATA
+
+        const config: RunsMetadataQueueConfig = {
+            redisFailedJobRetentionDays: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
+            redisFailedJobRetentionMaxCount: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
+        }
+        await queue.init(config)
         runsMetadataWorker = new Worker<RunsMetadataJobData>(
             queueName,
             async (job) => {
                 log.info({
-                    jobId: job.id,
-                    runId: job.data.runId,
+                    job: { id: job.id },
+                    flowRun: { id: job.data.runId },
                 }, '[runsMetadataQueue#worker] Saving runs metadata')
-                const key = redisMetadaKey(job.data.runId)
+                const key = redisMetadataKey(job.data.runId)
                 await distributedLock(log).runExclusive({
                     key: `runs_metadata_${job.data.runId}`,
                     timeoutInSeconds: 30,
                     fn: async () => {
                         try {
-                            log.info({
-                                jobId: job.id,
-                                runId: job.data.runId,
-                            }, '[runsMetadataQueue#worker] Acquired lock')
-
-                            assertNotNullOrUndefined(runsMetadataQueueInstance, 'Queue not initialized')
-                            await runsMetadataQueueInstance.removeDeduplicationKey(job.data.runId)
-                            const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
-                            if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
+                            await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
+                            const rawRunMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
+                            if (isNil(rawRunMetadata) || Object.keys(rawRunMetadata).length === 0) {
                                 log.info({
-                                    jobId: job.id,
-                                    runId: job.data.runId,
+                                    job: { id: job.id },
+                                    flowRun: { id: job.data.runId },
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
-                            const runExists = await flowRunRepo().existsBy({ id: job.data.runId })
+                            const runMetadata = sanitizeObjectForPostgresql(rawRunMetadata)
+
+                            const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
                             let savedFlowRun: FlowRun
-                            if (runExists) {
+                            if (!isNil(existingFlowRun)) {
+                                const timeline = buildTimeline({ existingFlowRun, runMetadata })
                                 await flowRunRepo().update(job.data.runId, {
+                                    ...spreadIfDefined('timeline', timeline),
                                     ...spreadIfDefined('projectId', runMetadata.projectId),
                                     ...spreadIfDefined('flowId', runMetadata.flowId),
                                     ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
@@ -79,42 +68,68 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('finishTime', runMetadata.finishTime),
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
-                                    ...spreadIfDefined('duration', runMetadata.duration),
-                                    ...spreadIfDefined('tasks', runMetadata.tasks),
-                                    ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
-                                    ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
+                                    ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
-                                    ...spreadIfDefined('created', runMetadata.created),
                                     ...spreadIfDefined('updated', runMetadata.updated),
+                                    ...spreadIfDefined('stepsCount', runMetadata.stepsCount),
                                 })
-                                savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
+                                const updatedFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
+                                if (isNil(updatedFlowRun)) {
+                                    log.info({
+                                        job: { id: job.id },
+                                        flowRun: { id: job.data.runId },
+                                    }, '[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
+                                    return
+                                }
+                                savedFlowRun = updatedFlowRun
                             }
                             else {
+                                const flowId = runMetadata.flowId
+                                const flowExists = !isNil(flowId) && await flowService(log).exists(flowId)
+                                if (!flowExists) {
+                                    log.info({
+                                        job: { id: job.id },
+                                        flowRun: { id: job.data.runId },
+                                    }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
+                                    return
+                                }
                                 savedFlowRun = await flowRunRepo().save(runMetadata)
                             }
 
-
-                            const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
+                            const parentRunId = savedFlowRun.parentRunId
+                            const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {
-                                const platformId = await projectService.getPlatformId(savedFlowRun.projectId)
                                 await markParentRunAsFailed({
-                                    parentRunId: savedFlowRun.parentRunId!,
+                                    parentRunId,
                                     childRunId: savedFlowRun.id,
                                     projectId: savedFlowRun.projectId,
-                                    platformId,
+                                    log,
                                 })
                             }
 
+                            if (!isNil(runMetadata.requestId)) {
+                                await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
+                            }
                             if (!isNil(runMetadata.finishTime)) {
-                                await flowRunSideEffects(log).onFinish(savedFlowRun)
+                                const platformId = await projectService(log).getPlatformId(savedFlowRun.projectId)
+                                await flowRunSideEffects(log).onFinish({ flowRun: savedFlowRun, platformId })
                             }
 
-                            websocketService.to(savedFlowRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
-                                runId: savedFlowRun.id,
-                            })
+                            if (savedFlowRun.status === FlowRunStatus.PAUSED) {
+                                const latestWaitpoint = await waitpointService(log).getByFlowRunId(savedFlowRun.id)
+                                const isPreCompleted = !isNil(latestWaitpoint)
+                                    && latestWaitpoint.status === WaitpointStatus.COMPLETED
+                                if (isPreCompleted) {
+                                    await resumeService(log).resumeFromWaitpoint({
+                                        flowRunId: savedFlowRun.id,
+                                        waitpointId: latestWaitpoint.id,
+                                        resumePayload: latestWaitpoint.resumePayload,
+                                    })
+                                }
+                            }
                         }
                         catch (error) {
                             log.error({
@@ -130,7 +145,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
             },
             {
                 connection: await redisConnections.create(),
-                telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
                 concurrency: system.getNumberOrThrow(AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY),
                 autorun: true,
             },
@@ -140,65 +154,92 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     },
 
     async add(params: RunsMetadataUpsertData): Promise<void> {
-
-        assertNotNullOrUndefined(runsMetadataQueueInstance, 'Runs metadata queue not initialized')
-        await distributedStore.merge(redisMetadaKey(params.id), params)
-
-        await runsMetadataQueueInstance.add(
-            'update-run-metadata',
-            { runId: params.id, projectId: params.projectId },
-            { deduplication: { id: params.id } },
-        )
+        log.info({
+            flowRun: { id: params.id },
+            project: { id: params.projectId },
+        }, '[runsMetadataQueue#add] Adding runs metadata to queue')
+        await queue.add(params)
     },
 
     get(): Queue<RunsMetadataJobData> {
-        assertNotNullOrUndefined(runsMetadataQueueInstance, 'Runs metadata queue not initialized')
-        return runsMetadataQueueInstance
+        return queue.get()
+    },
+    async close(): Promise<void> {
+        if (queue.get()) {
+            await queue.get().close()
+        }
+
+        if (runsMetadataWorker) {
+            await runsMetadataWorker.close()
+        }
     },
 
 })
 
-
+function buildTimeline({ existingFlowRun, runMetadata }: BuildTimelineParams): RunTimeline | undefined {
+    return buildRunTimeline({
+        existingTimeline: existingFlowRun.timeline,
+        created: existingFlowRun.created,
+        startTime: runMetadata.startTime ?? existingFlowRun.startTime,
+        finishTime: runMetadata.finishTime ?? existingFlowRun.finishTime,
+        provisionMs: runMetadata.provisionMs,
+        bootMs: runMetadata.bootMs,
+        runMs: runMetadata.runMs,
+    })
+}
 
 async function markParentRunAsFailed({
     parentRunId,
     childRunId,
     projectId,
-    platformId,
+    log,
 }: MarkParentRunAsFailedParams): Promise<void> {
-    const flowRun = await flowRunRepo().findOneByOrFail({
+    const flowRun = await flowRunRepo().findOneBy({
         id: parentRunId,
     })
 
-    const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
-    assertNotNullOrUndefined(requestId, 'Parent run has no request id')
+    if (isNil(flowRun) || isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
+        return
+    }
 
-    const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
-    const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
-    await apAxios.post(callbackUrl, {
-        status: 'error',
-        data: {
-            message: 'Subflow execution failed',
-            link: childRunUrl,
+    const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}` })
+    const errorPayload = {
+        body: {
+            status: 'error',
+            data: {
+                message: 'Subflow execution failed',
+                link: childRunUrl,
+            },
         },
+        headers: {},
+        queryParams: {},
+    }
+
+    const existingWaitpoint = await waitpointService(log).getByFlowRunId(parentRunId)
+    const result = await waitpointService(log).complete({
+        flowRunId: parentRunId,
+        projectId: flowRun.projectId,
+        waitpointId: existingWaitpoint?.id ?? apId(),
+        resumePayload: errorPayload,
     })
+
+    if (result.completedExisting && !isNil(result.waitpoint)) {
+        await resumeService(log).resumeFromWaitpoint({
+            flowRunId: parentRunId,
+            waitpointId: result.waitpoint.id,
+            resumePayload: result.waitpoint.resumePayload,
+        })
+    }
+}
+
+type BuildTimelineParams = {
+    existingFlowRun: FlowRun
+    runMetadata: RunsMetadataUpsertData
 }
 
 type MarkParentRunAsFailedParams = {
     parentRunId: string
     childRunId: string
     projectId: string
-    platformId: string
-}
-
-export const RunsMetadataJobData = Type.Object({
-    runId: Type.String(),
-    projectId: Type.String(),
-})
-
-export type RunsMetadataJobData = Static<typeof RunsMetadataJobData>
-
-export type RunsMetadataUpsertData = Partial<FlowRun> & {
-    id: ApId
-    projectId: ProjectId
+    log: FastifyBaseLogger
 }

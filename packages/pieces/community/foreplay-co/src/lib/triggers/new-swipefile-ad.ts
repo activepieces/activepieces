@@ -1,10 +1,11 @@
-import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
+import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
 import { foreplayCoApiCall } from "../common";
 import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
 import { newSwipefileAd as newSwipefileAdProperties } from "../properties";
 import { newSwipefileAdSchema } from "../schemas";
+import { foreplayCoAuth } from "../..";
 
-const polling: Polling<string, Record<string, any>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof foreplayCoAuth>, Record<string, any>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     console.log(`[New Swipefile Ad Polling] Fetching swipefile ads, lastFetch: ${new Date(lastFetchEpochMS || 0).toISOString()}`);
@@ -68,6 +69,9 @@ export const newSwipefileAd = createTrigger({
   name: 'newSwipefileAd',
   displayName: 'New Swipefile Ad',
   description: 'Triggers when a new ad is added to your swipefile collection.',
+  aiMetadata: {
+    description: 'Fires when a new ad is saved to the authenticated account\'s swipefile collection, optionally narrowed by filters such as date range, platform, format, niche, market, language, and live-only status. Each event represents one ad newly added to the swipefile.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: "ad_123456789",
@@ -92,7 +96,7 @@ export const newSwipefileAd = createTrigger({
   },
 
   props: newSwipefileAdProperties(),
-
+  auth: foreplayCoAuth,
   async test(context) {
     // Validate props using Zod schema
     const validation = newSwipefileAdSchema.safeParse(context.propsValue);
@@ -101,7 +105,7 @@ export const newSwipefileAd = createTrigger({
     }
 
     return await pollingHelper.test(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
@@ -110,7 +114,7 @@ export const newSwipefileAd = createTrigger({
 
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
@@ -120,7 +124,7 @@ export const newSwipefileAd = createTrigger({
     await pollingHelper.onDisable(polling, {
       store: context.store,
       propsValue: context.propsValue,
-      auth: context.auth as string,
+      auth: context.auth,
     });
   },
 
@@ -132,7 +136,7 @@ export const newSwipefileAd = createTrigger({
     }
 
     const result = await pollingHelper.poll(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,

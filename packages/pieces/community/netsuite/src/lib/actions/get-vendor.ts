@@ -1,13 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { netsuiteAuth } from '../..';
-import { createOAuthHeader } from '../oauth';
+import { NetSuiteClient } from '../common/client';
 
 export const getVendor = createAction({
   name: 'getVendor',
   auth: netsuiteAuth,
   displayName: 'Get Vendor',
   description: 'Gets vendor details from NetSuite.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single vendor record from NetSuite by its internal record ID. Use when you already have the vendor ID and need its full details; this is a read-only lookup that is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     vendorId: Property.ShortText({
       displayName: 'Vendor ID',
@@ -16,33 +22,12 @@ export const getVendor = createAction({
     }),
   },
   async run(context) {
-    const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
-      context.auth;
+    const client = new NetSuiteClient(context.auth.props);
     const { vendorId } = context.propsValue;
 
-    const requestUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/vendor/${vendorId}`;
-    const httpMethod = HttpMethod.GET;
-
-    const authHeader = createOAuthHeader(
-      accountId,
-      consumerKey,
-      consumerSecret,
-      tokenId,
-      tokenSecret,
-      requestUrl,
-      httpMethod
-    );
-
-    const response = await httpClient.sendRequest({
-      method: httpMethod,
-      url: requestUrl,
-      headers: {
-        Authorization: authHeader,
-        prefer: 'transient',
-        Cookie: 'NS_ROUTING_VERSION=LAGGING',
-      },
+    return client.makeRequest({
+      method: HttpMethod.GET,
+      url: `${client.baseUrl}/services/rest/record/v1/vendor/${vendorId}`,
     });
-
-    return response.body;
   },
 });

@@ -1,0 +1,31 @@
+{
+  "extends": [
+    "../../../../.eslintrc.json"
+  ],
+  "ignorePatterns": [
+    "!**/*"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "*.ts",
+        "*.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "lodash",
+              "lodash/*",
+              "@activepieces/core-*",
+              "@activepieces/server*",
+              "@activepieces/engine",
+              "@activepieces/shared"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

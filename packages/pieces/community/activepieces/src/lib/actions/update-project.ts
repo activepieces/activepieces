@@ -4,13 +4,19 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
+import { activePieceAuth } from '../auth';
 
 export const updateProject = createAction({
   name: 'update_project',
   auth: activePieceAuth,
   displayName: 'Update Project',
   description: 'Update a project',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing project on an Activepieces platform, identified by its project id, setting its display name, notification status, and team-member limit. Use when reconfiguring a known project rather than creating one. Requires the target project id; idempotent — repeating with the same values leaves the project in the same state.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Id',
@@ -39,11 +45,6 @@ export const updateProject = createAction({
         ],
       },
     }),
-    tasks: Property.Number({
-      displayName: 'Tasks',
-      description: undefined,
-      required: true,
-    }),
     team_members: Property.Number({
       displayName: 'Team Members',
       description: undefined,
@@ -53,16 +54,14 @@ export const updateProject = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: `${auth.baseApiUrl}/projects/${propsValue['id']}`,
+      url: `${auth.props.baseApiUrl}/projects/${propsValue['id']}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.apiKey,
+        token: auth.props.apiKey,
       },
       body: {
         displayName: propsValue['display_name'],
-        notifyStatus: propsValue['notify_status'],
         plan: {
-          tasks: propsValue['tasks'],
           teamMembers: propsValue['team_members'],
         },
       },

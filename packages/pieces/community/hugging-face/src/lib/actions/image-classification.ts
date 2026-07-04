@@ -7,9 +7,10 @@ import type {
   ZeroShotImageClassificationOutput,
 } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const imageClassification = createAction({
+  audience: 'human',
   name: 'image_classification',
   auth: huggingFaceAuth,
   displayName: 'Image Classification',
@@ -71,6 +72,7 @@ export const imageClassification = createAction({
       defaultValue: 'general',
     }),
     model: Property.Dropdown({
+      auth: huggingFaceAuth,
       displayName: 'Classification Model',
       description: 'Select the best model for your use case',
       required: true,
@@ -423,7 +425,7 @@ export const imageClassification = createAction({
       }
     }
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
     const startTime = Date.now();
 
     try {

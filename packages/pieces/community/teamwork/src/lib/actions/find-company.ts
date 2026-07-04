@@ -7,6 +7,8 @@ export const findCompany = createAction({
 	name: 'find_company',
 	displayName: 'Find Company',
 	description: 'Search for a company by name or domain.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Teamwork companies by name or domain, optionally scoped to a single project. Use to look up a company and obtain its ID before associating projects or people with it. Requires a search term. Idempotent — a read-only search with no side effects.', idempotent: true },
 	auth: teamworkAuth,
 	props: {
 		searchTerm: Property.ShortText({
@@ -15,6 +17,7 @@ export const findCompany = createAction({
 			required: true,
 		}),
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'Limit the search to a specific project.',
 			required: false,
@@ -27,7 +30,7 @@ export const findCompany = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});

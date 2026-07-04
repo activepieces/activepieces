@@ -1,14 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
-import { blocks, singleSelectChannelInfo, slackChannel } from '../common/props';
-import { processMessageTimestamp } from '../common/utils';
+import { slackAuth } from '../auth';
+import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
+import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'updateMessage',
   displayName: 'Update message',
   description: 'Update an existing message',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Edit an already-posted Slack message in place, replacing its text and blocks, identified by channel and message timestamp (ts). Pick this to revise content the flow previously sent rather than posting a new one; use Delete Message to remove it instead. Idempotent: re-running with the same inputs leaves the message in the same final state.',
+    idempotent: true,
+  },
   auth: slackAuth,
   props: {
     info: singleSelectChannelInfo,
@@ -24,17 +31,26 @@ export const updateMessage = createAction({
       description: 'The updated text of your message',
       required: true,
     }),
+    mentionOriginFlow,
     blocks,
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
+    const { auth, propsValue } = context;
     const messageTimestamp = processMessageTimestamp(propsValue.ts);
     if (!messageTimestamp) {
       throw new Error('Invalid Timestamp Value.');
     }
-    const client = new WebClient(auth.access_token);
+    const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
+    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
 
-    const blockList = propsValue.blocks ?[{ type: 'section', text: { type: 'mrkdwn', text:propsValue.text } }, ...(propsValue.blocks as unknown as (KnownBlock | Block)[])] :undefined
+    if (propsValue.blocks && Array.isArray(propsValue.blocks) && propsValue.blocks.length > 0) {
+      blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));
+    }
+
+    if (propsValue.mentionOriginFlow) {
+      blockList.push(buildFlowOriginContextBlock(context));
+    }
 
     return await client.chat.update({
       channel: propsValue.channel,

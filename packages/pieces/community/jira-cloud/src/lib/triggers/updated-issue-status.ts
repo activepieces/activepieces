@@ -1,5 +1,4 @@
 import {
-  PiecePropValueSchema,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -9,12 +8,12 @@ import {
   DedupeStrategy,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { jiraCloudAuth } from '../../auth';
+import { JiraAuth, jiraCloudAuth } from '../../auth';
 import { searchIssuesByJql } from '../common';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof jiraCloudAuth>,
+  JiraAuth,
   { jql?: string; sanitizeJql?: boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -23,13 +22,13 @@ const polling: Polling<
     const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${dayjs(
       lastFetchEpochMS
     ).format('YYYY-MM-DD HH:mm')}'`;
-    const issues = await searchIssuesByJql({
+    const response = await searchIssuesByJql({
       auth,
       jql: searchQuery,
       maxResults: 50,
       sanitizeJql: sanitizeJql ?? false,
     });
-    return issues.map((issue) => ({
+    return response.issues.map((issue: any) => ({
       epochMilliSeconds: Date.parse(issue.fields.statuscategorychangedate),
       data: issue,
     }));
@@ -40,6 +39,10 @@ export const updatedIssueStatus = createTrigger({
   name: 'updated_issue_status',
   displayName: 'Updated Issue Status',
   description: 'Triggers when an issue status is updated',
+  aiMetadata: {
+    description:
+      "Fires when a Jira issue's status changes (e.g. To Do -> In Progress -> Done), optionally limited to issues matching a JQL filter. Each event represents one issue whose status was updated and includes the issue's current field data. Polling-based; events arrive on the next poll, not instantly.",
+  },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
   props: {

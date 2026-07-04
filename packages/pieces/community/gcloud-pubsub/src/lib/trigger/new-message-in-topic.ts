@@ -9,6 +9,9 @@ export const newMessageInTopic = createTrigger({
   name: 'new_message_in_topic',
   displayName: 'New Message',
   description: 'Trigger when a new message is sended.',
+  aiMetadata: {
+    description: 'Fires when a new message is published to the configured Google Cloud Pub/Sub topic. On enable it creates a push subscription pointing at the flow webhook, so each delivered message represents one event published to that topic.',
+  },
   props: {
     subscription: Property.ShortText({
       displayName: 'Subscription name',
@@ -17,9 +20,17 @@ export const newMessageInTopic = createTrigger({
     topic: Property.Dropdown({
       displayName: 'Topic',
       required: true,
+      auth: googlePubsubAuth, 
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const json = (auth as { json: string }).json;
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const json = auth.props.json;
         return common.getTopics(json);
       },
     }),
@@ -31,11 +42,11 @@ export const newMessageInTopic = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   onEnable: async (context) => {
-    const json = (context.auth as { json: string }).json;
+    const json = context.auth.props.json;
     const client = common.getClient(json);
 
     const { topic, subscription } = context.propsValue;
-    const project = common.getProjectId(context.auth.json as string);
+    const project = common.getProjectId(context.auth.props.json);
 
     const url = `https://pubsub.googleapis.com/v1/projects/${project}/subscriptions/${subscription}`;
     const body = {
@@ -62,7 +73,7 @@ export const newMessageInTopic = createTrigger({
     const response = await context.store.get<ISubscriptionInfo>('_trigger');
 
     if (response !== null && response !== undefined) {
-      const json = (context.auth as { json: string }).json;
+      const json = context.auth.props.json;
       const client = common.getClient(json);
       const { project, subscription } = response;
       const url = `https://pubsub.googleapis.com/v1/projects/${project}/subscriptions/${subscription}`;

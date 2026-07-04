@@ -8,6 +8,8 @@ export const transformResource = createAction({
   name: 'transformResource',
   displayName: 'Transform Resource',
   description: 'Apply transformations (resize, crop, watermark, etc.) to an asset and generate a new URL.',
+  audience: 'both',
+  aiMetadata: { description: 'Builds a Cloudinary delivery URL for an existing asset with the requested transformations (resize, crop, format, quality, border, rotation, raw string, etc.), and optionally pre-warms the rendered derivative with a HEAD request. Use to produce a transformed image/video link for a known public ID. Idempotent: the same inputs always yield the same URL and no asset is mutated.', idempotent: true },
   props: {
     resource_type: resourceTypeDropdown,
     public_ids_dropdown: publicIdsDropdown,
@@ -164,7 +166,7 @@ export const transformResource = createAction({
       throw new Error('Please select an asset from dropdown or enter a public ID manually.');
     }
 
-    const cloud_name = auth.cloud_name.trim();
+    const cloud_name = auth.props.cloud_name.trim();
     
     const transformations: string[] = [];
     

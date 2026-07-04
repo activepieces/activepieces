@@ -7,7 +7,7 @@ import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 type StripeWebhookPayload = {
   data: {
@@ -22,6 +22,10 @@ export const stripeInvoicePaymentFailed = createTrigger({
   name: 'invoice_payment_failed',
   displayName: 'Invoice Payment Failed',
   description: 'Fires when a payment against an invoice fails.',
+  aiMetadata: {
+    description:
+      'Fires when a payment against an invoice fails in Stripe (the invoice.payment_failed event), emitting the affected invoice including the finalization error. An optional customer ID filter narrows firing to one customer. Use to react to failed invoice payments, such as starting a dunning or retry flow.',
+  },
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',
@@ -68,7 +72,7 @@ export const stripeInvoicePaymentFailed = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'invoice.payment_failed',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>(
       '_invoice_payment_failed_trigger',
@@ -85,20 +89,20 @@ export const stripeInvoicePaymentFailed = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/invoices',
+      url: 'https://api.stripe.com/v1/invoices',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        status: 'failed',
+        status : 'open',
         limit: '5',
       },
     });

@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -7,6 +7,10 @@ export const certificationPartnerRevoked = createTrigger({
   name: 'certificationPartnerRevoked',
   displayName: 'Partenariat révoqué',
   description: "Se déclenche Lorsqu'un partenariat est révoqué",
+  aiMetadata: {
+    description:
+      "Fires when a certification partnership (partenariat) is revoked in Wedof, permanently ending the partner organisation's authorisation to manage certification folders for the certifier. The payload describes the partnership webhook event and links to the organisation involved.",
+  },
   props: {},
   sampleData: {
     id: 0,
@@ -56,7 +60,7 @@ export const certificationPartnerRevoked = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

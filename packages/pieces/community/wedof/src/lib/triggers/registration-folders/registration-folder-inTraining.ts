@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,10 @@ export const registrationFolderInTraining = createTrigger({
   displayName: 'Dossier de formation entre en formation',
   description:
     "Se déclenche lorsqu'un dossier de formation passe à l'état en formation",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof training registration folder (dossier de formation) transitions to the 'in training' (en formation) state, meaning the learner has started the training. Emits the full folder record.",
+  },
   props: {},
   sampleData: {
     withPoleEmploi: false,
@@ -220,7 +224,7 @@ export const registrationFolderInTraining = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

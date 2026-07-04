@@ -10,6 +10,8 @@ export const unsubscribeEmail = createAction({
   name: 'unsubscribe_email',
   displayName: 'Unsubscribe Email',
   description: 'Unsubscribe an email address from an audience',
+  audience: 'both',
+  aiMetadata: { description: 'Sets an email address to unsubscribed status within an audience (list) via a batch upsert; with "update existing" on, it changes an existing member, otherwise it can add the address as unsubscribed. Use to opt a contact out of a specific audience. Idempotent: repeating converges to the same unsubscribed state.', idempotent: true },
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email_address: Property.ShortText({

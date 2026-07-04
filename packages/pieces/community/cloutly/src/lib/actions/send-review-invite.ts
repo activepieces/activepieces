@@ -1,4 +1,4 @@
-import { cloutlyAuth } from '../../index';
+import { cloutlyAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -7,6 +7,8 @@ export const sendReviewInvite = createAction({
   name: 'sendReviewInvite',
   displayName: 'Send Review Invite',
   description: 'Sends a review invite to your customer.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a Cloutly review-invitation to a customer via email and/or SMS, scoped to a specific business and review campaign. Use to solicit a review from a customer after a purchase or interaction. Requires businessId and campaignId, plus at least one of email or phone number to deliver the invite; an optional delay defers sending by N days. Not idempotent — each call dispatches a new invite.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',
@@ -65,7 +67,7 @@ export const sendReviewInvite = createAction({
       salesRepEmail: context.propsValue.salesRepEmail,
     };
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

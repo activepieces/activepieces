@@ -5,7 +5,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-    OAuth2PropertyValue,
+    AppConnectionValueForAuthProperty,
     TriggerStrategy,
     createTrigger,
 } from '@activepieces/pieces-framework';
@@ -19,6 +19,9 @@ export const newLead = createTrigger({
     name: 'new_lead',
     displayName: 'New Lead',
     description: 'Fires when a new Lead record is created in Salesforce.',
+    aiMetadata: {
+        description: 'Fires once for each new Lead record created in Salesforce, emitting all fields of the created Lead. Detected by polling for records whose CreatedDate is later than the last poll. Does not fire on updates to existing Leads or when a Lead is converted.',
+    },
     props: {},
     sampleData: {
         "Id": "00Q7Q000003x4aXUAQ",
@@ -41,7 +44,7 @@ export const newLead = createTrigger({
     },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
         const isoDate = dayjs(lastFetchEpochMS).toISOString();

@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { manychatAuth } from '../../index';
+import { manychatAuth } from '../auth';
 import { BASE_URL } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const createSubscriberAction = createAction({
 	auth: manychatAuth,
 	name: 'createSubscriber',
 	displayName: 'Create Subscriber',
 	description: 'Creates a Unified or a Whatsapp subscriber.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new Manychat subscriber from contact details such as name, email, phone, or WhatsApp phone. Use when onboarding a new contact into Manychat. At least one of phone, email, or WhatsApp phone must be provided. Not idempotent: each call creates another subscriber.', idempotent: false },
 	props: {
 		first_name: Property.ShortText({
 			displayName: 'First Name',
@@ -73,7 +75,7 @@ export const createSubscriberAction = createAction({
 			url: `${BASE_URL}/subscriber/createSubscriber`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			body: {
 				first_name,

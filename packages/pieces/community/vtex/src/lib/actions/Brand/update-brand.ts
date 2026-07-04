@@ -8,6 +8,12 @@ export const updateBrand = createAction({
   name: 'update-brand',
   displayName: 'Update Brand',
   description: 'Update a Brand in your catalog',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing brand in a VTEX store catalog, identified by its brand ID. Replaces the brand record, so all core fields (name, site title, link ID, text, menu home, keywords, active, score) must be supplied. Idempotent: repeating with the same input leaves the brand in the same state.',
+    idempotent: true,
+  },
   props: {
     Id: Property.Number({
       displayName: 'Brand ID',
@@ -49,7 +55,7 @@ export const updateBrand = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const {
       Id,
       Name,

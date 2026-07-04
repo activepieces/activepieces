@@ -7,8 +7,9 @@ import {
 	pollingHelper,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import {
+	AppConnectionValueForAuthProperty,
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
@@ -20,7 +21,7 @@ type SubscriptionTimeLineResponse = {
 	timeline: Array<Record<string, any>>;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Record<string, any>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Record<string, any>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
 		const qs: QueryParams = { limit: '100' };
@@ -59,6 +60,10 @@ export const newEmailSubscriptionsTimelineTrigger = createTrigger({
 	name: 'new-email-subscriptions-timeline',
 	displayName: 'New Email Subscriptions Timeline',
 	description: 'Triggers when a new email timeline subscription added for the portal.',
+	aiMetadata: {
+		description:
+			'Fires when a new email-subscription timeline event is recorded for the HubSpot portal. Each event represents one subscription change (such as a bounce, unsubscribe, or opt-in) for a recipient, including the change type, source, and the underlying event that caused it. Polls the portal-wide email subscription timeline by timestamp.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {},
 	async onEnable(context) {

@@ -1,0 +1,119 @@
+---
+title: "Connect Claude to Chrome"
+icon: 'link'
+---
+This guide explains how to set up the Chrome DevTools MCP server so Claude Code can inspect and control your Chrome browser.
+
+## Linux
+
+### 1. Start Chrome with remote debugging
+
+```bash
+google-chrome --remote-debugging-port=4222 --user-data-dir=/tmp/chrome-debug
+```
+
+### 2. Install Claude Code
+
+```bash
+npm i -g @anthropic-ai/claude-code
+```
+
+### 3. Add the Chrome DevTools MCP
+
+```bash
+claude mcp add chrome-devtools --scope user -- npx chrome-devtools-mcp@latest --browserUrl=http://localhost:4222
+```
+
+> Make sure the port in `--browserUrl` matches the `--remote-debugging-port` you used when launching Chrome.
+
+---
+
+## Windows + WSL
+
+### 1. Configure WSL mirrored networking
+
+Create a file called `.wslconfig` in your Windows user profile directory (`%USERPROFILE%`, e.g. `C:\Users\YourName\.wslconfig`) with the following content:
+
+```ini
+[wsl2]
+networkingMode = mirrored
+```
+
+> **Important:** The file must be named exactly `.wslconfig` — not `.wslconfig.txt`. If you created it with Notepad, double-check that it didn't append `.txt` to the filename.
+
+After creating or editing the file, restart WSL:
+
+```powershell
+wsl --shutdown
+```
+
+### 2. Install Claude Code and add the MCP (inside WSL)
+
+Open your WSL terminal and run:
+
+```bash
+npm i -g @anthropic-ai/claude-code
+claude mcp add chrome-devtools --scope user -- npx chrome-devtools-mcp@latest --browserUrl=http://localhost:4222
+```
+
+### 3. Start Chrome on Windows
+
+Open **cmd** or **PowerShell** on Windows and run:
+
+```cmd
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=4222 --user-data-dir="%TEMP%\chrome-debug"
+```
+
+> The port must match the one you used in the `--browserUrl` flag above.
+
+---
+
+## Verify the connection
+
+### 1. Check the debug endpoint
+
+Open your browser and navigate to:
+
+```
+http://localhost:4222/json/version
+```
+
+You should see a JSON response like this:
+
+```json
+{
+  "Browser": "Chrome/147.0.7727.55",
+  "Protocol-Version": "1.3",
+  "User-Agent": "Mozilla/5.0 ...",
+  "V8-Version": "14.7.173.16",
+  "WebKit-Version": "537.36 (...)",
+  "webSocketDebuggerUrl": "ws://localhost:4222/devtools/browser/..."
+}
+```
+
+If you see this, the debug protocol is active.
+
+### 2. Check the MCP connection in Claude Code
+
+Inside Claude Code, run:
+
+```
+/mcp
+```
+
+You should see `chrome-devtools` listed as a connected MCP server. If it appears with a green status, Claude can communicate with your browser.
+
+---
+
+## Devcontainer
+
+The devcontainer is already configured to set up the Chrome DevTools MCP automatically. The `postCreateCommand` in `.devcontainer/devcontainer.json` installs dependencies and registers the MCP server, resolving the host IP via `host.docker.internal`:
+
+```json
+"postCreateCommand": "bun install && HOST_IP=$(getent ahostsv4 host.docker.internal | awk '{print $1}' | head -1) && claude mcp add chrome-devtools --scope user -- npx chrome-devtools-mcp@latest --browserUrl=http://${HOST_IP}:4222"
+```
+
+All you need to do is:
+
+1. Start Chrome on your host machine with `--remote-debugging-port=4222` (see the Linux or Windows sections above).
+2. Inside the devcontainer, verify the MCP is registered by running `/mcp` in Claude Code.

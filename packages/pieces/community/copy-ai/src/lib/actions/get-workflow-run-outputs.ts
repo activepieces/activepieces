@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
-import { copyAiAuth } from '../../index';
+import { copyAiAuth } from '../auth';
 
 export const getWorkflowRunOutputsAction = createAction({
     auth:copyAiAuth,
 	name: 'get_workflow_run_outputs',
 	displayName: 'Get Workflow Run Outputs',
 	description: 'Retrieves the outputs of a completed workflow run.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches the generated outputs of a Copy.ai workflow run, identified by its workflow ID and run ID. Use this once a run has completed (confirm via Get Workflow Run Status) to retrieve the produced content. Read-only and idempotent.', idempotent: true },
 	props: {
 		workflowId: Property.ShortText({
 			displayName: 'Workflow ID',
@@ -21,7 +23,7 @@ export const getWorkflowRunOutputsAction = createAction({
 	},
 	async run({ propsValue, auth }) {
 		const response = await makeRequest(
-			auth as string,
+			auth.secret_text,
 			HttpMethod.GET,
 			`/workflow/${propsValue.workflowId}/run/${propsValue.runId}`,
 		);

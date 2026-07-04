@@ -13,7 +13,7 @@ export class RemoveUniqueConstraintOnStepFile1725570317713 implements MigrationI
         await queryRunner.query(`
             CREATE INDEX "step_file_project_id_flow_id_step_name_name" ON "step_file" ("projectId", "flowId", "stepName", "name")
         `)
-        log.info({ name: 'RemoveUniqueConstraintOnStepFile1725570317713' }, 'up')
+        log.info('[removeUniqueConstraintOnStepFile1725570317713#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -23,7 +23,7 @@ export class RemoveUniqueConstraintOnStepFile1725570317713 implements MigrationI
         await queryRunner.query(`
             CREATE UNIQUE INDEX "step_file_project_id_flow_id_step_name_name" ON "step_file" ("projectId", "flowId", "stepName", "name")
         `)
-        log.info({ name: 'RemoveUniqueConstraintOnStepFile1725570317713' }, 'down')
+        log.info('[removeUniqueConstraintOnStepFile1725570317713#down]')
     }
 
 }

@@ -1,11 +1,14 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { intercomClient, TriggerPayload } from '../common';
 
 export const conversationClosedTrigger = createTrigger({
 	name: 'conversationClosed',
 	displayName: 'Conversation Closed',
 	description: 'Triggers when a conversation is closed.',
+	aiMetadata: {
+		description: 'Fires when a conversation is closed in Intercom, typically when an admin marks it as resolved or finished. Outputs the closed conversation object, including its participants, assignee, tags, state, and statistics.',
+	},
 	props: {},
 	auth: intercomAuth,
 	type: TriggerStrategy.APP_WEBHOOK,

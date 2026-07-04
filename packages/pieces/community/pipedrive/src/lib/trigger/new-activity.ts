@@ -1,10 +1,10 @@
 import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { pipedriveApiCall, pipedriveCommon } from '../common';
-import { pipedriveAuth } from '../..';
+import { pipedriveAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { LeadListResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 interface PipedriveActivityV2 {
 	id: number;
@@ -68,6 +68,10 @@ export const newActivity = createTrigger({
 	name: 'new_activity',
 	displayName: 'New Activity',
 	description: 'Triggers when a new activity is added',
+	aiMetadata: {
+		description:
+			'Fires when a new activity is added in Pipedrive. An activity is a scheduled task or event (call, meeting, deadline, email, etc.) with a subject, type, due date/time, and optional links to a deal, person, organization, or lead. Use to react when work or appointments are scheduled in the CRM.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

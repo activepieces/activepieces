@@ -10,6 +10,10 @@ export const videoGeneratedSuccessfully = createTrigger({
   name: 'videoGeneratedSuccessfully',
   displayName: 'Video Generated Successfully',
   description: 'Fires when a video is generated successfully',
+  aiMetadata: {
+    description:
+      'Fires when a JoggAI video generation job completes successfully, delivering the finished video’s project_id, video URL, and duration. Use to react to a completed avatar or template video without polling Get Generated Video.',
+  },
   auth: joggAiAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},
@@ -31,7 +35,7 @@ export const videoGeneratedSuccessfully = createTrigger({
         method: HttpMethod.POST,
         url: 'https://api.jogg.ai/v1/webhook/endpoint',
         headers: {
-          'x-api-key': context.auth,
+          'x-api-key': context.auth.secret_text,
           'Content-Type': 'application/json',
         },
         body: {
@@ -88,7 +92,7 @@ export const videoGeneratedSuccessfully = createTrigger({
           method: HttpMethod.DELETE,
           url: `https://api.jogg.ai/v1/webhook/endpoint/${webhookInfo.endpoint_id}`,
           headers: {
-            'x-api-key': context.auth,
+            'x-api-key': context.auth.secret_text,
           },
         });
       }

@@ -1,13 +1,15 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient } from '../../common';
 import { CustomerListFilter } from '../../common/models/customer';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
   name: 'list_customers',
   displayName: 'Get Customers',
   description: 'Fetches customers from clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'List clockodo customers, optionally filtered by active status. Read-only and repeatable. Use to discover customers or resolve a customer ID by name before another call; supply a page number to read one page at a time, or omit it to retrieve all matching customers.', idempotent: true },
   props: {
     active_filter: Property.Checkbox({
       displayName: 'Active Filter',
@@ -22,7 +24,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const filter: CustomerListFilter = {
       active: propsValue.active_filter,
     };

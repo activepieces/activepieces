@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { ZOHO_WEBHOOK_TOKEN } from '../common/constants';
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { biginApiService } from '../common/request';
 
 const CACHE_KEY = 'bigin_updated_contact_trigger';
@@ -10,13 +10,16 @@ export const contactUpdated = createTrigger({
   name: 'contactUpdated',
   displayName: 'Contact Updated',
   description: 'Triggers when a contact is updated',
+  aiMetadata: {
+    description: 'Fires when an existing contact (person) record is edited in Bigin CRM, via a Contacts.edit webhook. Represents a change to a person already in the CRM.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     try {
       const channel_id = Date.now().toString();
-      const { api_domain } = context.auth as any;
+      const { api_domain } = context.auth.data;
 
       const webhookData = {
         watch: [
@@ -40,7 +43,7 @@ export const contactUpdated = createTrigger({
     const channel_id = await context.store.get(CACHE_KEY) as string;
     if (!channel_id) return;
 
-    const { api_domain } = context.auth as any;
+    const { api_domain } = context.auth.data;
 
     await biginApiService.deleteWebhook(
       context.auth.access_token,

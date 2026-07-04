@@ -3,7 +3,7 @@ import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 type StripeWebhookPayload = {
   data: {
@@ -16,6 +16,10 @@ export const stripeNewCharge = createTrigger({
   name: 'new_charge',
   displayName: 'New Charge',
   description: 'Fires when a charge is successfully completed.',
+  aiMetadata: {
+    description:
+      'Fires when a charge is successfully completed in Stripe (the charge.succeeded event), emitting the charge record. Use to react to a successful card charge; note this is the charge-level event, distinct from the New Payment trigger which fires on a succeeded payment intent.',
+  },
   props: {},
   sampleData: {
     id: 'ch_3MmlLrLkdIwHu7ix0snN0B15',
@@ -59,7 +63,7 @@ export const stripeNewCharge = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'charge.succeeded',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>('_new_charge_trigger', {
       webhookId: webhook.id,
@@ -73,19 +77,21 @@ export const stripeNewCharge = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/charges',
+      url: 'https://api.stripe.com/v1/charges/search',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
+         'Stripe-Version': "2026-02-25.clover",
       },
       queryParams: {
+        query: 'status:"succeeded"',
         limit: '5',
       },
     });

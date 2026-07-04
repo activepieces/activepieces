@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
@@ -39,7 +40,7 @@ interface IncomingPhoneNumbersResponse {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof twilioAuth>,
+  AppConnectionValueForAuthProperty<typeof twilioAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -101,6 +102,9 @@ export const twilioNewPhoneNumber = createTrigger({
   name: 'new_phone_number',
   displayName: 'New Phone Number',
   description: 'Triggers when you add a new phone number to your account.',
+  aiMetadata: {
+    description: 'Fires when a new phone number is provisioned on the Twilio account. Each event represents one newly added incoming phone number with its capabilities and configuration.',
+  },
   props: {},
   sampleData: {
     sid: 'PNXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',

@@ -1,7 +1,7 @@
 import { test as base } from '@playwright/test';
 import {
   AuthenticationPage,
-  FlowsPage,
+  AutomationsPage,
   BuilderPage,
 } from '../pages';
 import { signUp, AuthenticationResponse } from './users';
@@ -9,7 +9,7 @@ import { DEFAULT_EMAIL, DEFAULT_PASSWORD } from '../global-setup';
 
 type CustomFixtures = {
   authenticationPage: AuthenticationPage;
-  flowsPage: FlowsPage;
+  automationsPage: AutomationsPage;
   builderPage: BuilderPage;
   authenticatedPage: AuthenticationPage;
   users: {
@@ -18,10 +18,10 @@ type CustomFixtures = {
 };
 
 export const test = base.extend<CustomFixtures>({
-  // Override page fixture to automatically authenticate before each test
+  // Authenticate before each test, then land on the automations dashboard.
   page: async ({ page }, use) => {
     const authPage = new AuthenticationPage(page);
-    
+
     if (process.env.E2E_EMAIL && process.env.E2E_PASSWORD) {
       await authPage.signIn({
         email: process.env.E2E_EMAIL,
@@ -33,7 +33,9 @@ export const test = base.extend<CustomFixtures>({
         password: DEFAULT_PASSWORD,
       });
     }
-    
+
+    await new AutomationsPage(page).open();
+
     await use(page);
   },
 
@@ -41,8 +43,8 @@ export const test = base.extend<CustomFixtures>({
     await use(new AuthenticationPage(page));
   },
 
-  flowsPage: async ({ page }, use) => {
-    await use(new FlowsPage(page));
+  automationsPage: async ({ page }, use) => {
+    await use(new AutomationsPage(page));
   },
 
   builderPage: async ({ page }, use) => {

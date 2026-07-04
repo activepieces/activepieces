@@ -7,6 +7,9 @@ export const graphqlSubscriptionTrigger = createTrigger({
   name: 'graphql_subscription_trigger',
   displayName: 'New GraphQL Subscription Event',
   description: 'Triggers on a new GraphQL subscription event',
+  aiMetadata: {
+    description: 'Fires whenever the subscribed GraphQL subscription pushes a new event over its websocket connection. Each fire delivers one event payload matching the configured subscription query, representing a real-time update streamed from the GraphQL server (for example a new blockchain block or transaction). Use this to react to live data the moment the GraphQL endpoint emits it.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     websocketUrl: Property.ShortText({
@@ -33,7 +36,7 @@ export const graphqlSubscriptionTrigger = createTrigger({
       context.propsValue.headers,
       context.propsValue.query,
       context.webhookUrl,
-      context.auth.proxyBaseUrl
+      context.auth.props.proxyBaseUrl
     );
 
     // Store subscription info
@@ -42,7 +45,7 @@ export const graphqlSubscriptionTrigger = createTrigger({
   async onDisable(context) {
     const subscriptionId: string = (await context.store.get('graphql_subscription_trigger')) as string;
     if (subscriptionId) {
-      await deleteGraphQLSubscription(subscriptionId, context.auth.proxyBaseUrl);
+      await deleteGraphQLSubscription(subscriptionId, context.auth.props.proxyBaseUrl);
       await context.store.delete('graphql_subscription_trigger');
     }
   },

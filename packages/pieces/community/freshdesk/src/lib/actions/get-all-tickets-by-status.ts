@@ -7,6 +7,8 @@ export const getAllTicketsByStatus = createAction({
   name: 'get_all_tickets_by_status',
   displayName: 'Get All Tickets By Status',
   description: 'Get All Tickets by selected status from Freshdesk.',
+  audience: 'both',
+  aiMetadata: { description: 'Search Freshdesk tickets filtered to one or more selected workflow states (Open, Pending, Resolved, Closed), combining the chosen statuses with OR. Use when you want tickets matching specific statuses rather than the full unfiltered list from Get Tickets. At least one status must be selected. Read-only and idempotent.', idempotent: true },
 
   props: {
     status_filter: Property.StaticMultiSelectDropdown({
@@ -37,7 +39,7 @@ export const getAllTicketsByStatus = createAction({
   },
 
   async run(context) {
-    const FDapiToken = context.auth.access_token;
+    const FDapiToken = context.auth.props.access_token;
 
     const headers = {
       Authorization: FDapiToken,
@@ -45,7 +47,7 @@ export const getAllTicketsByStatus = createAction({
     };
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const queryParams = new URLSearchParams();
 
     // Adjusted to accept number or string

@@ -7,10 +7,10 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { kimaiCreateTimesheetAction } from './lib/actions/create-timesheet';
 import { makeClient } from './lib/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const kimaiAuth = PieceAuth.CustomAuth({
@@ -41,7 +41,7 @@ export const kimaiAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     if (auth) {
       await propsValidation.validateZod(auth, {
-        base_url: z.string().url(),
+        base_url: z.string().check(z.url()),
       });
     }
 
@@ -52,7 +52,10 @@ export const kimaiAuth = PieceAuth.CustomAuth({
       };
     }
 
-    const client = await makeClient(auth);
+    const client = await makeClient({
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: auth,
+    });
 
     try {
       const pingResponse = await client.ping();
@@ -97,11 +100,11 @@ export const kimai = createPiece({
   actions: [
     kimaiCreateTimesheetAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: kimaiAuth,
       authMapping: async (auth) => ({
-        'X-AUTH-USER': (auth as { user: string }).user,
-        'X-AUTH-TOKEN': (auth as { api_password: string }).api_password,
+        'X-AUTH-USER': auth.props.user,
+        'X-AUTH-TOKEN': auth.props.api_password,
       }),
     }),
   ],

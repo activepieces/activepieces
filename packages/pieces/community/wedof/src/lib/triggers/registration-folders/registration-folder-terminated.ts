@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,10 @@ export const registrationFolderTerminated = createTrigger({
   displayName: 'Dossier de formation sort de formation',
   description:
     "Se déclenche lorsqu'un dossier de formation passe à l'état sorti de formation",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof training registration folder (dossier de formation) transitions to the 'terminated' (sorti de formation) state, meaning the learner has exited the training. Emits the full folder record.",
+  },
   props: {},
   sampleData: {
     withPoleEmploi: false,
@@ -220,7 +224,7 @@ export const registrationFolderTerminated = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

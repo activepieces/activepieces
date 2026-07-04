@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, dynamicTaskProperty, hookProperty, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const updateTaskAction = createAction({
@@ -8,6 +8,8 @@ export const updateTaskAction = createAction({
   name: 'update_task',
   displayName: 'Update Task',
   description: 'Modify an existing task\'s details or status. Only specified fields will be updated.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Podio task identified by task id; only the fields you supply change, and this includes toggling its completed flag, reassigning it, or editing text, due date, labels, and reminders. Use to edit or complete a known task; requires the task id and at least one field to change. Idempotent — repeating with the same values yields the same task state.', idempotent: true },
   props: {
     taskId: dynamicTaskProperty,
     text: Property.LongText({

@@ -9,7 +9,7 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { triggers } from './lib/triggers';
 
 const markdownPropertyDescription = `
@@ -82,10 +82,10 @@ export const formbricks = createPiece({
       auth: formBricksAuth,
       authMapping: async (auth) => {
         return {
-          'x-api-key': (auth as FormBricksAuthType).apiKey,
+          'x-api-key': (auth.props).apiKey,
         };
       },
-      baseUrl: (auth) => `${(auth as FormBricksAuthType).appUrl}/api/v1`,
+      baseUrl: (auth) => `${(auth?.props?.appUrl ?? '')}/api/v1`,
     }),
   ],
   triggers,

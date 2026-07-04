@@ -7,11 +7,17 @@ export const collectionList = createAction({
   name: 'collection_list',
   displayName: 'Get Collection List',
   description: 'Get the list of all the collections of your database',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List all collections in the connected Qdrant instance. Use to discover available collection names before targeting one with another action. Takes no input. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   run: async ({ auth }) => {
     const client = new QdrantClient({
-      apiKey: auth.key,
-      url: auth.serverAddress,
+      apiKey: auth.props.key,
+      url: auth.props.serverAddress,
     });
     const collections = await client.getCollections();
     return collections;

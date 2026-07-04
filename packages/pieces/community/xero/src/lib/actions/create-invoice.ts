@@ -15,6 +15,12 @@ export const xeroCreateInvoice = createAction({
   name: 'xero_create_invoice',
   description: 'Create Xero Invoice',
   displayName: 'Create or Update Invoice',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new ACCREC sales invoice for a customer (resolving or creating the contact from name/email) or update an existing invoice when an invoice ID is supplied. Use this for a single sales invoice; for recurring billing use Create Repeating Sales Invoice. Supplying an invoice ID updates that record (idempotent on a fixed ID); omitting it creates a new invoice each call.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     invoice_id: props.invoice_id(false),

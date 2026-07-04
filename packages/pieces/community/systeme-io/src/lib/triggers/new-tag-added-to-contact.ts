@@ -8,6 +8,9 @@ export const newTagAddedToContact = createTrigger({
     name: 'newTagAddedToContact',
     displayName: 'New Tag Added to Contact',
     description: 'Fires when a specific tag is assigned to a contact',
+    aiMetadata: {
+      description: 'Fires when a tag is added to a contact in Systeme.io, delivering the affected contact, the tag that was added, and when it was added. Use to react to a contact being labeled or entering a tag-based segment.',
+    },
     props: {},
     sampleData: {
         contact: {
@@ -59,7 +62,7 @@ export const newTagAddedToContact = createTrigger({
         const response = await systemeIoCommon.createWebhook({
             eventType: 'CONTACT_TAG_ADDED',
             webhookUrl: context.webhookUrl,
-            auth: context.auth,
+            auth: context.auth.secret_text  ,
             secret: secret,
         });
         
@@ -71,7 +74,7 @@ export const newTagAddedToContact = createTrigger({
         if (webhookId) {
             await systemeIoCommon.deleteWebhook({
                 webhookId,
-                auth: context.auth,
+                auth: context.auth.secret_text,
             });
             await context.store.put('new_tag_added_webhook_id', null);
             await context.store.put('new_tag_added_webhook_secret', null);

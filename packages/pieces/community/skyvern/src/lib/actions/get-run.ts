@@ -8,6 +8,8 @@ export const getRunAction = createAction({
 	name: 'get-run',
 	displayName: 'Get Workflow/Task Run',
 	description: 'Retrieves a workflow or task run by ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Retrieves the current status and details of a Skyvern workflow or task run by its run ID. Use to poll a run started via Run Agent Task or Run Workflow until it completes and to read its results. Read-only and idempotent.', idempotent: true },
 	props: {
 		runId: Property.ShortText({
 			displayName: 'Workflow/Task Run ID',
@@ -18,7 +20,7 @@ export const getRunAction = createAction({
 		const { runId } = context.propsValue;
 
 		const response = await skyvernApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/runs/${runId}`,
 		});

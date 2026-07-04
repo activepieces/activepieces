@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { wedofCommon } from '../../common/wedof';
 import dayjs from 'dayjs';
 
@@ -10,6 +10,12 @@ export const declareCertificationFolderToTake = createAction({
   displayName: "Passer un dossier de certification à l'état : Prêt à passer",
   description:
     "Change l'état d'un dossier de certification vers : Prêt à passer",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transition a Wedof certification folder into the 'toTake' (ready-to-take) state, optionally recording enrollment/exam dates, exam type and place, and a third-time accommodation flag. Pick this when the candidate is cleared to sit the exam; it follows the certification-folder state machine (typically after 'registered') and is not idempotent — re-running re-posts the transition. Requires the folder's externalId.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
@@ -87,7 +93,7 @@ export const declareCertificationFolderToTake = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

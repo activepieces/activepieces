@@ -1,18 +1,23 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { apVersionUtil } from '@activepieces/server-utils'
+import { ApEdition, ApFlagId, ExecutionMode, Flag } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
+import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { knowledgeBaseSchema } from '../knowledge-base/knowledge-base-schema'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
+import { webhookSecretsUtils } from './webhook-secrets-util'
 
 const flagRepo = repoFactory(FlagEntity)
 
-
-export const flagService = {
+export const flagService = (log: FastifyBaseLogger) => ({
     save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
@@ -33,7 +38,6 @@ export const flagService = {
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
-                ApFlagId.LATEST_VERSION,
                 ApFlagId.PRIVACY_POLICY_URL,
                 ApFlagId.PIECES_SYNC_MODE,
                 ApFlagId.PRIVATE_PIECES_ENABLED,
@@ -53,14 +57,13 @@ export const flagService = {
                 ApFlagId.MAX_FIELDS_PER_TABLE,
                 ApFlagId.MAX_RECORDS_PER_TABLE,
                 ApFlagId.MAX_FILE_SIZE_MB,
-                ApFlagId.SHOW_CHANGELOG,
+                ApFlagId.TEMPLATES_CATEGORIES,
             ]),
         })
-        const now = new Date().toISOString()
+        const now = dayjs().toISOString()
         const created = now
         const updated = now
-        const currentVersion = await apVersionUtil.getCurrentRelease()
-        const latestVersion = await apVersionUtil.getLatestRelease()
+        const currentVersion = apVersionUtil.getCurrentRelease()
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -69,14 +72,57 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.AGENTS_CONFIGURED,
-                value: await aiProviderService.isAgentConfigured(),
+                id: ApFlagId.FRONTEND_SENTRY_DSN,
+                value: system.get(AppSystemProp.FRONTEND_SENTRY_DSN) ?? null,
                 created,
                 updated,
             },
             {
-                id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
+                id: ApFlagId.AGENTS_CONFIGURED,
+                // TODO (@abuaboud): add new check
                 value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_ALERTS,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_PROJECT_MEMBERS,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_BADGES,
+                value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.CAN_BUY_ACTIVE_FLOWS,
+                value: system.getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.CAN_BUY_AI_CREDITS,
+                value: !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY)),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR,
+                value: system.getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_BILLING_PAGE,
+                value: system.getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
@@ -116,13 +162,6 @@ export const flagService = {
                 created,
                 updated,
             },
-     
-            {
-                id: ApFlagId.SHOW_BILLING,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
                 value: {},
@@ -131,7 +170,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: await federatedAuthnService(system.globalLogger()).getThirdPartyRedirectUrl(undefined),
+                value: await federatedAuthnService(log).getThirdPartyRedirectUrl(),
                 created,
                 updated,
             },
@@ -150,12 +189,6 @@ export const flagService = {
             {
                 id: ApFlagId.SHOW_COMMUNITY,
                 value: system.getEdition() !== ApEdition.ENTERPRISE,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_CHANGELOG,
-                value: true,
                 created,
                 updated,
             },
@@ -198,8 +231,20 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.TRIGGER_TIMEOUT_SECONDS,
+                value: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
                 value: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.FLOW_RUN_LOG_SIZE_LIMIT_MB,
+                value: system.getNumber(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
                 created,
                 updated,
             },
@@ -218,12 +263,6 @@ export const flagService = {
             {
                 id: ApFlagId.CURRENT_VERSION,
                 value: currentVersion,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.LATEST_VERSION,
-                value: latestVersion,
                 created,
                 updated,
             },
@@ -252,8 +291,26 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_TUTORIALS,
-                value: true,
+                id: ApFlagId.PROJECT_RATE_LIMITER_ENABLED,
+                value: system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED) ?? false,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.DEFAULT_CONCURRENT_JOBS_LIMIT,
+                value: system.getNumber(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SMTP_CONFIGURED,
+                value: smtpEmailSender(log).isSmtpConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PGVECTOR_AVAILABLE,
+                value: await knowledgeBaseSchema.isVectorExtensionInstalled(),
                 created,
                 updated,
             },
@@ -280,7 +337,10 @@ export const flagService = {
         return flags
     },
 
-}
+    aiCreditsEnabled(): boolean {
+        return !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY))
+    },
+})
 
 
 
@@ -298,6 +358,7 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
+    | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, string[]>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K

@@ -2,8 +2,14 @@
   "Convert JSON to text and vice versa": "JSONをテキストに、そしてその逆に変換する",
   "Convert Json to Text": "Jsonをテキストに変換する",
   "Convert Text to Json": "テキストをJsonに変換する",
+  "Run JSONata Query": "JSONata クエリの実行",
   "Stringifies JSON.": "JSON を文字列化します。",
   "Parses text into JSON.": "テキストを JSON に解析します。",
+  "Use the JSONata language to filter, map, and transform complex JSON payloads natively in JavaScript.": "JSONata 言語を使用して、JavaScript で複雑な JSON ペイロードをネイティブにフィルタ、マップ、および変換します。",
   "JSON": "JSON",
-  "Text": "テキスト"
+  "Text": "テキスト",
+  "JSON Data": "JSON データ",
+  "JSONata Query": "JSONata クエリ",
+  "Map the array or object you want to manipulate.": "操作したい配列またはオブジェクトをマッピングします。",
+  "Write a JSONata expression to manipulate your data. You can filter arrays, extract specific fields, group items, or reshape the JSON. (e.g., $[status=\"active\"])": "データを操作するためにJSONata式を記述します。配列をフィルタリングしたり、特定のフィールドを抽出したり、JSONを再形式に変換することができます。(例: $[status=\"active\"])"
 }

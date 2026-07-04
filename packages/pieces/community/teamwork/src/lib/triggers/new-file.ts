@@ -7,9 +7,13 @@ export const newFile = createTrigger({
 	name: 'new_file',
 	displayName: 'New File',
 	description: 'Fires when a new file is added.',
+	aiMetadata: {
+		description: 'Fires when a file is added in Teamwork (FILE.CREATED webhook), optionally filtered to a single project. Each event represents one newly uploaded file.',
+	},
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'The project to watch for new files. If not specified, all projects will be watched.',
 			required: false,
@@ -22,7 +26,7 @@ export const newFile = createTrigger({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});
@@ -39,7 +43,7 @@ export const newFile = createTrigger({
 	},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const res = await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
+		const res = await teamworkRequest(context.auth, {
 			method: HttpMethod.POST,
 			path: '/webhooks.json',
 			body: {
@@ -55,7 +59,7 @@ export const newFile = createTrigger({
 	async onDisable(context) {
 		const webhookId = await context.store.get('webhookId');
 		if (webhookId) {
-			await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
+			await teamworkRequest(context.auth, {
 				method: HttpMethod.DELETE,
 				path: `/webhooks/${webhookId}.json`,
 			});

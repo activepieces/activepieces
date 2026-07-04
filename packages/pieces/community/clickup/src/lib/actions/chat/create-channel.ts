@@ -1,13 +1,16 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
+import { channelOutputSchema } from '../../output-schemas';
 
 export const createClickupChannel = createAction({
   auth: clickupAuth,
   name: 'create_channel',
   description: 'Creates a channel in a ClickUp workspace',
+  audience: 'both',
+  aiMetadata: { description: 'Create a standalone Chat channel in a ClickUp workspace with a name and visibility. Each call creates a new channel, so it is not idempotent. Use this for a workspace-level channel; to tie the channel to a space, folder, or list, use Create Channel in Space/Folder/List instead.', idempotent: false },
   displayName: 'Create Channel',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -44,6 +47,7 @@ export const createClickupChannel = createAction({
     }),
   },
 
+  outputSchema: channelOutputSchema,
   async run(configValue) {
     const { workspace_id, name, description, visibility,topic } =
       configValue.propsValue;

@@ -1,5 +1,5 @@
 import {
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
   Property,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -11,12 +11,13 @@ import {
 } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../auth';
 import { common } from '../common';
 import { downloadFileFromDrive } from '../common/get-file-content';
+import { newFileTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleDriveAuth>,
+  AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
   { parentFolder?: any; include_team_drives?: boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -40,6 +41,9 @@ export const newFile = createTrigger({
   name: 'new_file',
   displayName: 'New File',
   description: 'Trigger when a new file is uploaded.',
+  aiMetadata: {
+    description: 'Fires when a new file appears in Google Drive, optionally scoped to a specific parent folder. Each event represents one newly created file and its metadata, with optional inclusion of the file content.',
+  },
   props: {
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
@@ -50,6 +54,7 @@ export const newFile = createTrigger({
       defaultValue: false
     }),
   },
+  outputSchema: newFileTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {

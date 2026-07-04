@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
-import { hunterAuth } from '../../index';
+import { hunterAuth } from '../auth';
 import { domainProp, companyProp, emailTypeProp } from '../common/props';
 
 export const countEmailsAction = createAction({
@@ -9,6 +9,8 @@ export const countEmailsAction = createAction({
     name: 'count-emails',
     displayName: 'Count Emails',
     description: 'Returns the number of email addresses found for a domain or company.',
+    audience: 'both',
+    aiMetadata: { description: 'Returns how many email addresses Hunter knows for a given domain or company, broken down by department and seniority, and optionally filtered to personal or generic addresses. Use to gauge coverage before running an email search or to estimate prospecting volume. Provide either a domain or a company name; this is a read-only lookup that consumes no credits and is idempotent.', idempotent: true },
     props: {
         domain: domainProp,
         company: companyProp,

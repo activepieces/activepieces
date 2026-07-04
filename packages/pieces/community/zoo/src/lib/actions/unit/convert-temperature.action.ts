@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertTemperatureAction = createAction({
   name: 'convert_temperature',
   displayName: 'Convert Temperature',
   description: 'Convert temperature measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single temperature value between Celsius, Fahrenheit, and Kelvin. Pick this only for temperature; other quantities (mass, length, energy, etc.) have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {
@@ -42,7 +44,7 @@ export const convertTemperatureAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/temperature/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

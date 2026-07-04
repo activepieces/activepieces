@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { clarifaiAuth } from '../..';
+import { clarifaiAuth } from '../auth';
 import {
   HttpMethod,
   HttpRequest,
@@ -11,6 +11,12 @@ export const clarifaiGenerateIGM = createAction({
   displayName: 'Ask IGM',
   description:
     'Generate an image using the Image generating models supported by clarifai.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates an image from a text prompt using a Clarifai text-to-image model (e.g. DALL-E mini) and returns it as a written file. Use when an agent needs to create a picture from a description; supply the Clarifai model id (looked up by name) and the prompt. Generative, so each call produces a new image.',
+    idempotent: false,
+  },
   auth: clarifaiAuth,
   props: {
     models: Property.Dropdown({
@@ -18,6 +24,7 @@ export const clarifaiGenerateIGM = createAction({
       description: `The model which will generate the response. If the model is not listed, get the model id from the clarifai website. Example : 'GPT-4' you can get the model id from here [https://clarifai.com/openai/chat-completion/models/GPT-4](https://clarifai.com/openai/chat-completion/models/GPT-4)`,
       refreshers: ['auth'],
       required: true,
+      auth: clarifaiAuth,
       options: async ({ auth }) => {
         if (!auth) {
           return {
@@ -30,7 +37,7 @@ export const clarifaiGenerateIGM = createAction({
           method: HttpMethod.GET,
           url: 'https://api.clarifai.com/v2/models?sort_by_star_count=true&model_type_id=text-to-image&filter_by_user_id=true&additional_fields=stars&per_page=24&page=1',
           headers: {
-            Authorization: ('Key ' + auth) as string,
+            Authorization: ('Key ' + auth.secret_text) as string,
           },
         };
         try {
@@ -73,7 +80,7 @@ export const clarifaiGenerateIGM = createAction({
       method: HttpMethod.GET,
       url: `https://api.clarifai.com/v2/models?name=${mId}&model_type_id=text-to-image`,
       headers: {
-        Authorization: ('Key ' + context.auth) as string,
+        Authorization: ('Key ' + context.auth.secret_text) as string,
       },
     };
     let model;
@@ -98,7 +105,7 @@ export const clarifaiGenerateIGM = createAction({
       method: HttpMethod.POST,
       url: `https://api.clarifai.com/v2/users/${model.model_version.user_id}/apps/${model.model_version.app_id}/models/${model.id}/versions/${model.model_version.id}/outputs`,
       headers: {
-        Authorization: ('Key ' + context.auth) as string,
+        Authorization: ('Key ' + context.auth.secret_text ) as string,
       },
       body: {
         inputs: [

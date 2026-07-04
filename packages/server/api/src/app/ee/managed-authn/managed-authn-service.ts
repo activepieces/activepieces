@@ -1,17 +1,7 @@
 import { createHash } from 'crypto'
-import { cryptoUtils } from '@activepieces/server-shared'
-import {
-    AuthenticationResponse,
-    isNil,
-    NotificationStatus,
-    PiecesFilterType,
-    PlatformRole,
-    PrincipalType,
-    Project,
-    User,
-    UserIdentity,
-    UserIdentityProvider,
-} from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { cryptoUtils } from '@activepieces/server-utils'
+import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
@@ -19,6 +9,7 @@ import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
@@ -31,15 +22,26 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalAccessToken,
         )
 
-        const { project, isNewProject } = await getOrCreateProject({
+        const { project } = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
-        })
+        }, log)
 
         if (!isNil(externalPrincipal.projectDisplayName)) {
-            await projectService.update(project.id, {
+            await projectService(log).update(project.id, {
+                type: project.type,
                 displayName: externalPrincipal.projectDisplayName,
             })
+        }
+
+        if (!isNil(externalPrincipal.concurrencyPoolKey) && !isNil(externalPrincipal.concurrencyPoolLimit)) {
+            const { poolId } = await concurrencyPoolService(log).upsertPool({
+                platformId: externalPrincipal.platformId,
+                key: externalPrincipal.concurrencyPoolKey,
+                maxConcurrentJobs: externalPrincipal.concurrencyPoolLimit,
+            })
+            await projectService(log).update(project.id, { type: project.type, poolId })
+            await concurrencyPoolService(log).assignProject({ projectId: project.id, poolId })
         }
 
         await updateProjectLimits({
@@ -47,10 +49,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             projectId: project.id,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
-            tasks: externalPrincipal.tasks,
-            aiCredits: externalPrincipal.aiCredits,
             log,
-            isNewProject,
         })
 
         const user = await getOrCreateUser(externalPrincipal, log)
@@ -65,10 +64,9 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             id: user.identityId,
         })
 
-        const token = await accessTokenManager.generateToken({
+        const token = await accessTokenManager(log).generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: project.id,
             platform: {
                 id: externalPrincipal.platformId,
             },
@@ -98,29 +96,18 @@ type UpdateProjectLimitsParams =
         projectId: string
         piecesTags: string[]
         piecesFilterType: PiecesFilterType
-        tasks: number | undefined
-        aiCredits: number | undefined
         log: FastifyBaseLogger
-        isNewProject: boolean
     }
 
-const updateProjectLimits = async (
-    { platformId, projectId, piecesTags, piecesFilterType, tasks, aiCredits, log, isNewProject }:
-    UpdateProjectLimitsParams,
-): Promise<void> => {
+const updateProjectLimits = async ({ platformId, projectId, piecesTags, piecesFilterType, log }: UpdateProjectLimitsParams): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
         projectId,
         piecesTags,
         piecesFilterType,
     })
-    const includedTasks = isNewProject ? (tasks ?? 1000) : tasks
-    const aiCreditsLimit = isNewProject ? (aiCredits ?? 200) : aiCredits
     await projectLimitsService(log).upsert({
         nickname: 'default-embeddings-limit',
-        tasks: includedTasks,
-        aiCredits: aiCreditsLimit,
-
         pieces,
         piecesFilterType,
     }, projectId)
@@ -130,7 +117,7 @@ const getOrCreateUser = async (
     params: GetOrCreateUserParams,
     log: FastifyBaseLogger,
 ): Promise<User> => {
-    const existingUser = await userService.getByPlatformAndExternalId({
+    const existingUser = await userService(log).getByPlatformAndExternalId({
         platformId: params.platformId,
         externalId: params.externalUserId,
     })
@@ -139,7 +126,7 @@ const getOrCreateUser = async (
         return existingUser
     }
     const identity = await getOrCreateUserIdentity(params, log)
-    const user = await userService.create({
+    const user = await userService(log).create({
         externalId: params.externalUserId,
         platformId: params.platformId,
         identityId: identity.id,
@@ -172,8 +159,8 @@ const getOrCreateUserIdentity = async (
 const getOrCreateProject = async ({
     platformId,
     externalProjectId,
-}: GetOrCreateProjectParams): Promise<{ project: Project, isNewProject: boolean }> => {
-    const existingProject = await projectService.getByPlatformIdAndExternalId({
+}: GetOrCreateProjectParams, log: FastifyBaseLogger): Promise<{ project: Project, isNewProject: boolean }> => {
+    const existingProject = await projectService(log).getByPlatformIdAndExternalId({
         platformId,
         externalId: externalProjectId,
     })
@@ -182,14 +169,14 @@ const getOrCreateProject = async ({
         return { project: existingProject, isNewProject: false }
     }
 
-    const platform = await platformService.getOneOrThrow(platformId)
+    const platform = await platformService(log).getOneOrThrow(platformId)
 
-    const project = await projectService.create({
+    const project = await projectService(log).create({
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,
-        notifyStatus: NotificationStatus.NEVER,
         externalId: externalProjectId,
+        type: ProjectType.TEAM,
     })
 
     return { project, isNewProject: true }

@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 import { Member } from '../common/models';
 
@@ -12,6 +12,8 @@ export const discordFindGuildMemberByUsername = createAction({
   auth: discordAuth,
   name: 'list_guild_members',
   description: 'List Guild Members',
+  audience: 'both',
+  aiMetadata: { description: 'Lists members of a guild, returning their user IDs and usernames for the given guild ID. Use to look up a member ID before role, kick, or ban actions, or to enumerate who is in a server. Read-only and idempotent; requires the Server Members privileged intent to be enabled for the bot.', idempotent: true },
   displayName: 'List guild members',
   props: {
     guild_id: discordCommon.guilds,
@@ -27,7 +29,7 @@ export const discordFindGuildMemberByUsername = createAction({
       method: HttpMethod.GET,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members`,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     };

@@ -11,6 +11,10 @@ export const scheduledAppointmentEventCreated = createTrigger({
   name: 'scheduledAppointmentEventCreated',
   displayName: `${MODULE_NAME} Created`,
   description: 'Triggers when a scheduled appointment event is created.',
+  aiMetadata: {
+    description:
+      'Fires when a scheduled appointment event is created in the selected ClickFunnels workspace, representing a newly booked appointment. Delivers the appointment event payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),
@@ -24,7 +28,7 @@ export const scheduledAppointmentEventCreated = createTrigger({
 
     try {
       const response: any = await clickfunnelsApiService.createWebhook(
-        auth,
+        auth.props,
         workspaceId as string,
         {
           webhooks_outgoing_endpoint: {
@@ -52,7 +56,7 @@ export const scheduledAppointmentEventCreated = createTrigger({
 
     if (cachedData) {
       await clickfunnelsApiService
-        .deleteWebhook(auth, cachedData.webhookId)
+        .deleteWebhook(auth.props, cachedData.webhookId)
         .then(async () => {
           await store.delete(CACHE_KEY);
         });

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 import { dataSourceDropdown } from '../common/data-source-dropdown';
 
@@ -9,6 +9,8 @@ export const updateDataSourceAction = createAction({
   name: 'update_data_source',
   displayName: 'Update Data Source',
   description: 'Update an existing data source',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing IBM Cognos data source identified by its id, changing its name and/or its disabled/hidden flags. At least one field must be supplied. Idempotent: re-applying the same values leaves the data source in the same state.', idempotent: true },
   props: {
     datasourceId: dataSourceDropdown,
     defaultName: Property.ShortText({
@@ -33,7 +35,7 @@ export const updateDataSourceAction = createAction({
     const { datasourceId, defaultName, disabled, hidden } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const updateDefinition: any = {};
       

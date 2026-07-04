@@ -4,7 +4,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { translateText } from './lib/actions/translate-text';
 
 const markdownDescription = `
@@ -60,7 +60,7 @@ export const deepl = createPiece({
           : 'https://api.deepl.com/v2', // Replace with the actual base URL
       auth: deeplAuth,
       authMapping: async (auth) => ({
-        Authorization: `DeepL-Auth-Key ${(auth as { key: string }).key}`,
+        Authorization: `DeepL-Auth-Key ${auth.props.key}`,
       }),
     }),
   ],

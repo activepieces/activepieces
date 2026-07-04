@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getServiceAccountAction = createAction({
   name: 'get_service_account',
   displayName: 'Get Service Account',
   description: 'Retrieve details of a specific service account',
+  audience: 'both',
+  aiMetadata: { description: 'Look up one organization service account by its token and return its details. Use when you already have the token; to discover tokens first use the list service accounts action. Read-only and idempotent.', idempotent: true },
   auth: zooAuth,
   // category: 'Service Accounts',
   props: {
@@ -20,7 +22,7 @@ export const getServiceAccountAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/org/service-accounts/${propsValue.token}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

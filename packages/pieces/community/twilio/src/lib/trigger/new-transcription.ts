@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
@@ -30,7 +31,7 @@ interface TranscriptionsResponse {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof twilioAuth>,
+  AppConnectionValueForAuthProperty<typeof twilioAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -94,6 +95,9 @@ export const twilioNewTranscription = createTrigger({
   name: 'new_transcription',
   displayName: 'New Transcription',
   description: 'Triggers when a new call recording transcription is completed.',
+  aiMetadata: {
+    description: 'Fires when a call recording transcription reaches completed status on the Twilio account. Each event represents one finished transcription tied to a recording, including its transcribed text.',
+  },
   props: {},
   sampleData: {
       "account_sid": "ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

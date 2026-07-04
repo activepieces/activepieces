@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import { smartsheetCommon } from '../common';
 
 export const attachFileToRow = createAction({
@@ -8,6 +8,8 @@ export const attachFileToRow = createAction({
   name: 'attach_file_to_row',
   displayName: 'Attach File to Row',
   description: 'Adds a file attachment to a row.',
+  audience: 'both',
+  aiMetadata: { description: 'Attaches a file or link to a row in a Smartsheet sheet, identified by sheet ID and row ID. The attachment type switches between two modes: uploading a binary file (FILE), or linking an external URL such as a Box, Dropbox, Google Drive, OneDrive, or plain web link. Use to add supporting documents to a row. Not idempotent: each call adds another attachment.', idempotent: false },
   props: {
     sheet_id: smartsheetCommon.sheet_id(),
     row_id: smartsheetCommon.row_id,
@@ -126,7 +128,7 @@ export const attachFileToRow = createAction({
         const fileName = attachment_name || file?.filename || 'attachment';
 
         // Create blob with proper MIME type
-        const blob = new Blob([file!.data], { type: fileMimeType });
+        const blob = new Blob([file!.data as unknown as ArrayBuffer], { type: fileMimeType });
         formData.append('file', blob, fileName);
 
         request = {

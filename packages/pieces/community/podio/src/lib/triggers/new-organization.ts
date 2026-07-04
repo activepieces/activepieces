@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const newOrganizationTrigger = createTrigger({
@@ -8,6 +8,9 @@ export const newOrganizationTrigger = createTrigger({
   name: 'new_app',
   displayName: 'New App',
   description: 'Fires when a new app is created in a workspace',
+  aiMetadata: {
+    description: 'Fires when a new app is created in the selected Podio workspace (space), via an app.create webhook on that space. Represents a newly added app.',
+  },
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,

@@ -1,0 +1,14 @@
+{
+  "Upload, process, and manage documents programmatically with FlowParser's REST API.": "Upload, process, and manage documents programmatically with FlowParser's REST API.",
+  "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n": "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n",
+  "Upload Document": "Upload Document",
+  "Upload a new document to FlowParser for processing": "Upload a new document to FlowParser for processing",
+  "File": "File",
+  "The document file to upload": "The document file to upload",
+  "New Parsed Document by Template": "New Parsed Document by Template",
+  "New Parsed Document Found": "New Parsed Document Found",
+  "Triggers when a new document is parsed using a specific template": "Triggers when a new document is parsed using a specific template",
+  "Triggers when a document has been successfully parsed": "Triggers when a document has been successfully parsed",
+  "Template": "Template",
+  "Select a template to monitor for new parsed documents": "Select a template to monitor for new parsed documents"
+}

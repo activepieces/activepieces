@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { getApiEndpoint } from '../common';
-import { returningAiAuth } from '../../index';
+import { returningAiAuth } from '../auth';
 
 /**
  * This action allows you to send messages to any accessible channel as a specific user.
@@ -30,6 +30,8 @@ export const sendMessage = createAction({
   name: 'sendMessage',
   displayName: 'Send Channel Message',
   description: 'Posts a message to a specified channel as a chosen user',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a new message to a Returning.ai channel on behalf of a given user (identified by username or email), so the message appears as if that user sent it. Use to broadcast or announce content in a channel; supply message text, image URLs, or both (at least one is required), and for forum-type channels a topic ID is also required. Not idempotent: each call posts a new message.', idempotent: false },
   props: {
     description: Property.MarkDown({
       value:
@@ -41,12 +43,13 @@ export const sendMessage = createAction({
       required: true,
     }),
     channel: Property.Dropdown({
+      auth: returningAiAuth,
       displayName: 'Channel',
       description: 'The channel where the message will be posted',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const authToken = auth as string;
+        const authToken = auth?.secret_text;
 
         if (!authToken) {
           return {
@@ -94,6 +97,7 @@ export const sendMessage = createAction({
       },
     }),
     dynamicFields: Property.DynamicProperties({
+      auth: returningAiAuth,
       displayName: 'Channel Fields',
       description: 'Additional fields based on channel type',
       required: true,
@@ -118,14 +122,39 @@ export const sendMessage = createAction({
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The message to be posted',
-      required: true,
+      description: 'The message to be posted (optional if images are provided)',
+      required: false,
+    }),
+    images: Property.Array({
+      displayName: 'Images',
+      description: 'Add one image URL per entry (e.g., https://example.com/image1.png)',
+      required: false,
     }),
   },
   async run({ propsValue, auth }) {
-    const authToken = auth as string;
+    const authToken = auth.secret_text;
     const channelData = JSON.parse(propsValue.channel as string);
+    const imagesInput = propsValue.images as unknown as string[];
     const dynamicFields = propsValue.dynamicFields as DynamicPropsValue;
+
+    // Parse comma-separated image URLs
+    const imageUrls = imagesInput
+      ? imagesInput
+          .map((url:string) => url.trim())
+          .filter((url:string) => url.length > 0)
+      : [];
+
+    // Validate that at least message or images is provided
+    const hasMessage = propsValue.message && propsValue.message.trim().length > 0;
+    const hasImages = imageUrls.length > 0;
+
+    if (!hasMessage && !hasImages) {
+      return {
+        status: 'error',
+        message: 'Either "message" (text content) or "images" (comma-separated URLs) must be provided.',
+        detail: 'Both fields are empty or missing.',
+      };
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -139,6 +168,9 @@ export const sendMessage = createAction({
         sender: propsValue.user,
         ...(channelData.type === 'forum' && {
           forumTopicId: dynamicFields['topicId'],
+        }),
+        ...(hasImages && {
+          images: imageUrls,
         }),
       },
     });

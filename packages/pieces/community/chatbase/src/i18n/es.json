@@ -26,10 +26,12 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
+  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Optional text data for training the chatbot.": "Datos opcionales de texto para entrenar el chatbot.",
   "Higher values = more random output. Between 0 and 1.": "Valores más altos = más salida aleatoria. Entre 0 y 1.",
   "Unique ID for saving this conversation in Chatbase dashboard.": "ID único para guardar esta conversación en el tablero de Chatbase.",
@@ -37,7 +39,7 @@
   "Pagination page number (default = 1)": "Número de página de paginación (por defecto = 1)",
   "Number of results per page (default = 10, max = 100)": "Número de resultados por página (por defecto = 10, max = 100)",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
   "o4-mini": "o4-mini",
   "o3": "o3",
   "gpt-4": "gpt-4",
@@ -80,5 +82,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "None": "Ninguna",
+  "JSON": "JSON",
+  "Form Data": "Datos de Formulario",
+  "Raw": "Rápido"
 }

@@ -7,10 +7,10 @@ import {
 	pollingHelper,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
-	PiecePropValueSchema,
+
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -28,8 +28,9 @@ type ListBlogPostsResponse = {
 		};
 	};
 };
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const articleState = propsValue.articleState;
@@ -85,6 +86,10 @@ export const newBlogArticleTrigger = createTrigger({
 	name: 'new-blog-article',
 	displayName: 'New COS Blog Article',
 	description: 'Triggers when a new article is added to your COS blog.',
+	aiMetadata: {
+		description:
+			'Fires when a blog post is added to your HubSpot COS (CMS) blog. The configured article state (Published only, Draft only, or Both) determines which posts qualify; published posts are tracked by publish date and drafts by creation date. Each event represents one blog post with its full CMS metadata.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		articleState: Property.StaticDropdown({

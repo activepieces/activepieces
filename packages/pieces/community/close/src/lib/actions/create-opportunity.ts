@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../../';
+import { closeAuth } from '../auth';
 import { customFields, leadId, statusId, userId } from '../common/props';
 import { closeApiCall } from '../common/client';
 
@@ -9,6 +9,11 @@ export const createOpportunity = createAction({
 	name: 'create_opportunity',
 	displayName: 'Create Opportunity',
 	description: 'Create a new opportunity.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Creates a new opportunity (deal) on an existing lead in Close CRM, with optional value, value period, confidence, status, contact, and custom fields. Use to log a sales deal against a lead. Requires the lead ID and an opportunity status. Not idempotent; each call creates a separate opportunity.',
+		idempotent: false,
+	},
 	props: {
 		lead_id: leadId(),
 		status_id: statusId('opportunity', true),
@@ -79,7 +84,7 @@ export const createOpportunity = createAction({
 
 		try {
 			const response = await closeApiCall({
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				method: HttpMethod.POST,
 				resourceUri: '/opportunity/',
 				body: opportunityData,

@@ -1,10 +1,5 @@
-import {
-    FileType,
-    Flow,
-    FlowStatus,
-    FlowVersion,
-    isNil,
-} from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { FileType, Flow, FlowStatus, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
@@ -14,6 +9,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         newStatus,
         flowToUpdate,
         publishedFlowVersion,
+        templateId,
     }: PreUpdateStatusParams): Promise<void> {
         switch (newStatus) {
             case FlowStatus.ENABLED: {
@@ -21,6 +17,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     flowVersion: publishedFlowVersion,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
+                    templateId,
                 })
                 break
             }
@@ -30,6 +27,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     projectId: flowToUpdate.projectId,
                     simulate: false,
                     ignoreError: false,
+                    templateId,
                 })
                 break
             }
@@ -68,6 +66,7 @@ type PreUpdateStatusParams = {
     flowToUpdate: Flow
     publishedFlowVersion: FlowVersion
     newStatus: FlowStatus
+    templateId?: string 
 }
 
 

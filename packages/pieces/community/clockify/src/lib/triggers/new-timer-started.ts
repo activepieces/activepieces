@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
-import { clockifyAuth } from '../../index';
+import { isNil } from '@activepieces/pieces-framework';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { workspaceId } from '../common/props';
 
@@ -12,6 +12,10 @@ export const newTimerStartedTrigger = createTrigger({
 	name: 'new-timer-started',
 	displayName: 'New Timer Started',
 	description: 'Triggers when a new entry is started and running.',
+	aiMetadata: {
+		description:
+			'Fires when a timer is started and begins running on the specified workspace, emitting the newly started time entry. Use to react to live timers as they begin.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		workspaceId: workspaceId({
@@ -23,10 +27,10 @@ export const newTimerStartedTrigger = createTrigger({
 		const { workspaceId } = context.propsValue;
 
 		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/webhooks`,
-			body: {
+			body: {	
 				url: context.webhookUrl,
 				webhookEvent: 'NEW_TIMER_STARTED',
 				triggerSourceType: 'WORKSPACE_ID',
@@ -43,7 +47,7 @@ export const newTimerStartedTrigger = createTrigger({
 
 		if (!isNil(webhookId)) {
 			await clockifyApiCall<{ id: string }>({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text	,
 				method: HttpMethod.DELETE,
 				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});

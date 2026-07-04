@@ -11,6 +11,8 @@ export const actionRecurringInvoice = createAction({
   displayName: 'Perform Action on Recurring Invoice',
   description:
     'Actions include: start, stop, send_now, restore, archive, delete.',
+  audience: 'both',
+  aiMetadata: { description: 'Performs a lifecycle action on an existing recurring invoice in Invoice Ninja, identified by its id. The action prop selects which operation to apply: start, stop, send_now, restore, archive, or delete. Requires a valid recurring invoice id. Treat as not idempotent — actions such as send_now and delete have per-call side effects.', idempotent: false },
   props: {
     recurring_id: Property.LongText({
       displayName: 'Recurring Invoice ID (alphanumeric)',
@@ -54,13 +56,13 @@ export const actionRecurringInvoice = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
     const headers = {
       'X-Api-Token': INapiToken,
       'Content-Type': 'application/json',
     };
 
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const i: string[] = [context.propsValue.recurring_id];
 
     const createRequestBody = {

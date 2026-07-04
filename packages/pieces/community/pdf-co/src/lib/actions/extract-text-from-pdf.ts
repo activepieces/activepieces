@@ -1,6 +1,6 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
-import { pdfCoAuth } from "../../index";
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from "../common/props";
 
 interface PdfCoExtractTextSuccessResponse {
@@ -38,6 +38,12 @@ export const extractTextFromPdf = createAction({
     name: 'extract_text_from_pdf',
     displayName: 'Extract Plain Text from PDF',
     description: 'Extracts plain text content from a PDF document.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Extracts plain text content from a source PDF (referenced by URL), optionally limited to specific pages. Use when an agent needs the raw text of a document for reading or downstream processing. The call only reads the input and returns the text directly, so it is idempotent.',
+        idempotent: true,
+    },
     auth: pdfCoAuth,
     props: {
         url: Property.ShortText({
@@ -83,7 +89,7 @@ export const extractTextFromPdf = createAction({
                 method: HttpMethod.POST,
                 url: `${BASE_URL}/pdf/convert/to/text-simple`,
                 headers: {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,

@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
 import { API_ENDPOINTS } from '../common/constants';
@@ -10,19 +10,22 @@ export const updateTask = createAction({
   name: 'updateTask',
   displayName: 'Update Task',
   description: 'updates a Task',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing task in Bigin CRM, identified by selecting the task; its current fields are prepopulated and any you set are overwritten (subject, owner, due date, priority, status, description, tags), with optional recurrence and reminder settings and a related Contact/Pipeline/Company link. Use to modify a task that already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     taskId: Property.Dropdown({
       displayName: 'Select Task',
       description: 'Choose a task to update',
+      auth: biginAuth,
       required: true,
       refreshers: ['auth'],
-      options: async (context: any) => {
+      options: async (context) => {
         if (!context.auth)
           return handleDropdownError('Please connect your account first');
 
         const response = await biginApiService.fetchTasks(
           context.auth.access_token,
-          (context.auth as any).api_domain
+          context.auth.data['api_domain']
         );
 
         return {
@@ -35,15 +38,16 @@ export const updateTask = createAction({
     }),
     owner: usersDropdown,
     taskDetails: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Task Details',
       description: 'These fields will be prepopulated with task data',
       refreshers: ['taskId', 'auth'],
       required: true,
-      props: async ({ taskId, auth }: any): Promise<InputPropertyMap> => {
-        if (!taskId) return {};
-        const task = JSON.parse(taskId);
-        const { access_token, api_domain } = auth as any;
-
+      props: async ({ taskId, auth }): Promise<InputPropertyMap> => {
+        if (!taskId || !auth) return {};
+        const task = JSON.parse(taskId as string);
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
         const fieldsResp = await biginApiService.fetchModuleFields(
           access_token,
           api_domain,
@@ -156,6 +160,7 @@ export const updateTask = createAction({
       required: false,
     }),
     recurringInfo: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Recurring Info',
       description:
         'Please note: Due Date must be set above for recurring tasks',
@@ -237,6 +242,7 @@ export const updateTask = createAction({
       required: false,
     }),
     reminderInfo: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Reminder Information',
       refreshers: ['enableReminder'],
       required: false,
@@ -302,6 +308,7 @@ export const updateTask = createAction({
       required: false,
       refreshers: ['auth'],
       defaultValue: 'Contacts',
+      auth: biginAuth,
       options: async () => ({
         options: [
           { label: 'Contacts', value: 'Contacts' },
@@ -311,6 +318,7 @@ export const updateTask = createAction({
       }),
     }),
     relatedTo: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Related To',
       description: 'Select the specific record the task is related to.',
       required: false,
@@ -319,7 +327,8 @@ export const updateTask = createAction({
         if (!auth) return handleDropdownError('Please connect first');
         if (!relatedModule) return { options: [] };
 
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const fetchMap: Record<string, () => Promise<any>> = {
           Contacts: () =>
@@ -347,7 +356,8 @@ export const updateTask = createAction({
     tag: tagsDropdown('Tasks'),
   },
   async run({ auth, propsValue }) {
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
 
     const taskId = JSON.parse(propsValue.taskId).id;
     const taskDetails = propsValue.taskDetails as any;

@@ -9,9 +9,12 @@ export const removeTagFromContact = createAction({
   name: 'removeTagFromContact',
   displayName: 'Remove Tag from Contact',
   description: 'Remove a tag that is currently assigned to an existing contact',
+  audience: 'both',
+  aiMetadata: { description: 'Removes a tag from an existing Systeme.io contact, given the contact id and the tag id to unassign. Use to unlabel or de-segment a contact. Idempotent: once the tag is removed, repeating the call leaves the contact in the same state.', idempotent: true },
   props: {
     contactId: systemeIoProps.contactIdDropdown,
     tagId: Property.Dropdown({
+      auth: systemeIoAuth,
       displayName: 'Tag to Remove',
       description: 'Select a tag currently assigned to this contact',
       required: true,
@@ -36,7 +39,7 @@ export const removeTagFromContact = createAction({
         try {
           const contact = await systemeIoCommon.getContact({
             contactId: contactId as string,
-            auth: auth as string,
+            auth: auth.secret_text,
           });
 
           let contactTags: any[] = [];
@@ -77,7 +80,7 @@ export const removeTagFromContact = createAction({
     try {
       const contact = await systemeIoCommon.getContact({
         contactId: contactId as string,
-        auth: context.auth,
+        auth: context.auth.secret_text,
       });
 
       if (contact && typeof contact === 'object' && (contact as any).tags) {
@@ -94,7 +97,7 @@ export const removeTagFromContact = createAction({
     const response = await systemeIoCommon.apiCall({
       method: HttpMethod.DELETE,
       url: `/contacts/${contactId}/tags/${tagId}`,
-      auth: context.auth,
+      auth: context.auth.secret_text,
     });
 
     return {

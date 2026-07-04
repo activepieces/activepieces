@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
+import { krispcallAuth } from '../auth';
 import { Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
 
 interface Item {
@@ -14,6 +14,12 @@ export const sendSms = createAction({
   displayName: 'Send SMS',
   auth: krispcallAuth,
   description: 'Send sms in Krispcall.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send a text-only SMS message from one of the connected KrispCall account numbers to a destination phone number. Use when an agent needs to send a plain SMS; the from number must be one provisioned on the account and the message content is required. Not idempotent — each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     from_number: Property.Dropdown({
       displayName: 'From Number',
@@ -21,9 +27,17 @@ export const sendSms = createAction({
       required: true,
       refreshers: ['auth'],
       refreshOnSearch: false,
+      auth: krispcallAuth,
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         try {
-          const authVaue = auth as PiecePropValueSchema<typeof krispcallAuth>;
+          const authVaue = auth.props;
           const res = await httpClient.sendRequest<Item[]>({
             method: HttpMethod.GET,
             url: 'https://app.krispcall.com/api/v3/platform/activepiece/get-numbers',
@@ -61,12 +75,11 @@ export const sendSms = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    console.log(auth.apiKey);
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: 'https://app.krispcall.com/api/v3/platform/activepiece/send-sms',
       headers: {
-        'X-API-KEY': auth.apiKey,
+        'X-API-KEY': auth.props.apiKey,
       },
 
       body: {

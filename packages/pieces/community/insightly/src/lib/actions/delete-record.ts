@@ -9,6 +9,8 @@ export const deleteRecord = createAction({
     name: 'delete_record',
     displayName: 'Delete Record',
     description: 'Delete a record by ID from a specified Insightly object',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently deletes a single record by its ID from a chosen Insightly CRM object (Contact, Lead, Opportunity, etc.). Use to remove an entity. Destructive: repeating the call on the same ID after deletion errors with a not-found, so treat as not idempotent. Requires the matching Insightly pod (e.g. "na1") and the record ID.', idempotent: false },
     props: {
         pod: Property.ShortText({
             displayName: 'Pod',
@@ -35,12 +37,13 @@ export const deleteRecord = createAction({
             }
         }),
         recordId: Property.Dropdown({
+            auth: insightlyAuth,
             displayName: 'Record ID',
             description: 'Select the record to delete',
             required: true,
             refreshers: ['objectName', 'pod'],
             options: async ({ auth, objectName, pod }) => {
-                if (!objectName || !pod) {
+                if (!objectName || !pod || !auth) {
                     return {
                         disabled: true,
                         placeholder: 'Please select an object type and pod first',
@@ -49,7 +52,7 @@ export const deleteRecord = createAction({
                 }
 
                 const response = await makeInsightlyRequest(
-                    auth as string,
+                    auth,
                     `/${objectName}?top=100&brief=true`,
                     pod as string
                 );

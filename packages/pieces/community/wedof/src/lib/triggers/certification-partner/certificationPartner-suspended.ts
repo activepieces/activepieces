@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -7,6 +7,10 @@ export const certificationPartnerSuspended = createTrigger({
   name: 'certificationPartnerSuspended',
   displayName: 'Partenariat suspendu',
   description: "Se déclenche Lorsqu'un partenariat est suspendu",
+  aiMetadata: {
+    description:
+      "Fires when a certification partnership (partenariat) is suspended in Wedof, temporarily halting the partner organisation's ability to manage certification folders for the certifier. The payload describes the partnership webhook event and links to the organisation involved.",
+  },
   props: {},
   sampleData: {
     id: 0,
@@ -56,7 +60,7 @@ export const certificationPartnerSuspended = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

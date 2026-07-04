@@ -17,6 +17,9 @@ export const eventOnDataUpdated = createTrigger({
   name: 'event_on_data_updated',
   displayName: 'Event On Data Updated',
   description: 'Handle EventOnData update event via webhooks',
+  aiMetadata: {
+    description: 'Fires when an existing data record is updated on the chosen Kizeo Forms form. Represents a modification to a previously submitted record.',
+  },
   props: {
     format: Property.StaticDropdown({
       displayName: 'Output Format',
@@ -81,7 +84,7 @@ export const eventOnDataUpdated = createTrigger({
         third_party_id: workflowId,
       },
       headers: {
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
       queryParams: {},
     };
@@ -102,7 +105,7 @@ export const eventOnDataUpdated = createTrigger({
           endpoint +
           `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
         headers: {
-          Authorization: context.auth,
+          Authorization: context.auth.secret_text,
         },
       };
       await httpClient.sendRequest(request);

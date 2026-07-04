@@ -1,9 +1,9 @@
 
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const CACHE_KEY = 'zagomail_unsubscribed_subscriber_trigger_store';
 
@@ -12,6 +12,9 @@ export const unsubscribedSubscriber = createTrigger({
   name: 'unsubscribedSubscriber',
   displayName: 'Unsubscribed Subscriber',
   description: 'Triggers when subscriber is unsubscribed.',
+  aiMetadata: {
+    description: 'Fires when a subscriber unsubscribes from a Zagomail list, representing a contact opting out of further mailings. The event payload includes the subscriber UID, list UID, email, status, and custom fields.',
+  },
   props: {},
   sampleData: {
     action: 'subscriber-unsubscribe',
@@ -28,7 +31,7 @@ export const unsubscribedSubscriber = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const response = (await zagoMailApiService.createWebhook(
-      context.auth,
+      context.auth.secret_text,
       context.webhookUrl,
       'subscriber-unsubscribe'
     )) as WebhookResponse;
@@ -40,7 +43,7 @@ export const unsubscribedSubscriber = createTrigger({
   async onDisable(context) {
     const webhook = await context.store.get<StoredWebhookId>(CACHE_KEY);
     if (!isNil(webhook) && !isNil(webhook.webhookId)) {
-      await zagoMailApiService.deleteWebhook(context.auth, webhook.webhookId);
+      await zagoMailApiService.deleteWebhook(context.auth.secret_text, webhook.webhookId);
     }
   },
   async run(context) {

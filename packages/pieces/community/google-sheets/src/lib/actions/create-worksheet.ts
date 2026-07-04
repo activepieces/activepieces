@@ -1,13 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createGoogleSheetClient } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { createGoogleClient } from '../common/common';
+import { googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
+import { sheets as googleSheets } from '@googleapis/sheets';
+import { createWorksheetActionOutputSchema } from '../output-schemas';
 
 export const createWorksheetAction = createAction({
   auth: googleSheetsAuth,
   name: 'create-worksheet',
   displayName: 'Create Worksheet',
-  description:'Create a blank worksheet with a title.',
+  description:'Create a new blank worksheet with a title.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a new worksheet (tab) to an existing spreadsheet, optionally seeding a header row. Use when an agent needs another tab within a spreadsheet. Not idempotent — each call adds a separate worksheet even if a tab with the same title already exists.',
+    idempotent: false,
+  },
   props: {
     includeTeamDrives: includeTeamDrivesProp(),
     spreadsheetId: spreadsheetIdProp('Spreadsheet',''),
@@ -22,12 +30,13 @@ export const createWorksheetAction = createAction({
     })
    
   },
+  outputSchema: createWorksheetActionOutputSchema,
   async run(context){
     const {spreadsheetId,title} = context.propsValue;
     const headers = context.propsValue.headers as string[] ?? [];
-	const googleSheetClient = await createGoogleSheetClient(context.auth);
-
-    const sheet = await googleSheetClient.spreadsheets.batchUpdate({
+	const client = await createGoogleClient(context.auth);
+    const sheetsApi = googleSheets({ version: 'v4', auth: client });
+    const sheet = await sheetsApi.spreadsheets.batchUpdate({
         spreadsheetId:spreadsheetId,
         requestBody:{
             requests:[
@@ -42,7 +51,7 @@ export const createWorksheetAction = createAction({
             ]
         }
     });
-    const addHeadersResponse = await googleSheetClient.spreadsheets.values.append({
+    const addHeadersResponse = await sheetsApi.spreadsheets.values.append({
         spreadsheetId,
         range:`${context.propsValue.title}!A1`,
         valueInputOption:'RAW',

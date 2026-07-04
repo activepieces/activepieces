@@ -10,6 +10,11 @@ export const repostPost = createAction({
   name: 'repostPost',
   displayName: 'Repost Post',
   description: 'Share someone else\'s post to your timeline',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Reposts an existing Bluesky post to the authenticated account\'s timeline, identified by an AT-URI / bsky.app post URL or selected from the recent timeline. Use to amplify another user\'s post. Not idempotent — each call creates a separate repost record.',
+    idempotent: false,
+  },
   props: {
     selectionMethod: Property.StaticDropdown({
       displayName: 'Select Method',
@@ -25,13 +30,15 @@ export const repostPost = createAction({
     }),
     
     postSelection: Property.Dropdown({
+      auth: blueskyAuth,
       displayName: 'Select Post',
       description: 'Choose from your recent timeline posts (only when "From my timeline" is selected above)',
       required: false,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         try {
-          const agent = await createBlueskyAgent(auth as BlueSkyAuthType);
+          if (!auth) return { options: [] };
+          const agent = await createBlueskyAgent(auth.props);
           const timeline = await agent.getTimeline({ limit: 50 });
           
           return {
@@ -70,7 +77,7 @@ export const repostPost = createAction({
       }
       
       try {
-        const agent = await createBlueskyAgent(auth);
+        const agent = await createBlueskyAgent(auth.props);
         postUri = await parseBlueskyUrl(postUrl.trim(), agent);
       } catch (error) {
         throw new Error(`Invalid post URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -80,7 +87,7 @@ export const repostPost = createAction({
     }
 
     try {
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
       const postsResponse = await agent.getPosts({ uris: [postUri] });
       

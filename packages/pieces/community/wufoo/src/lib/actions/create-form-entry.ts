@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wufooApiCall } from '../common/client';
-import { wufooAuth } from '../../index';
+import { wufooAuth } from '../auth';
 import { formIdentifier, dynamicFormFields } from '../common/props';
 
 
@@ -10,6 +10,8 @@ export const createFormEntryAction = createAction({
   name: 'create-form-entry',
   displayName: 'Create Form Entry',
   description: 'Submit a new entry to a Wufoo form with dynamic field selection.',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a new entry to a specified Wufoo form, with values mapped to the form\'s dynamic fields. Use to programmatically fill and submit a form (e.g. record a lead or feedback response). Target the form by name or hash; not idempotent — each call creates a separate entry, and Wufoo rate-limits to 50 submissions per user per 5-minute window.', idempotent: false },
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({

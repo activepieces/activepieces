@@ -18,7 +18,7 @@ import { removeTagFromContact } from './lib/actions/remove-tag-from-contact';
 import { enrollAContactIntoACourse } from './lib/actions/enroll-a-contact-into-a-course';
 import { updateOrCreateContact } from './lib/actions/update-or-create-contact';
 import { searchContacts } from './lib/actions/search-contacts';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const clickfunnels = createPiece({
@@ -39,11 +39,11 @@ export const clickfunnels = createPiece({
     createCustomApiCallAction({
       auth: clickfunnelsAuth,
       baseUrl: (auth) => {
-        const authValue = auth as CLICKFUNNELS_APIKEY_AUTH;
-        return CLICKFUNNELS_BASE_URL(authValue.subdomain);
+        const authValue = auth?.props;
+        return CLICKFUNNELS_BASE_URL(authValue?.subdomain ?? '');
       },
       authMapping: async (auth) => {
-        const authValue = auth as CLICKFUNNELS_APIKEY_AUTH;
+        const authValue = auth.props;
         return {
           Authorization: `Bearer ${authValue.apiKey}`,
         };

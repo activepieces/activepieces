@@ -15,12 +15,15 @@ export const gristSearchRecordAction = createAction({
   name: 'grist-search-record',
   displayName: 'Search Record',
   description: 'Search record by matching criteria.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up records in a Grist table by filtering one chosen column against a value. Use it to find rows before reading or updating them; the match is case-sensitive, exact, and only works on Text-type columns. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: commonProps.workspace_id,
     document_id: commonProps.document_id,
     table_id: commonProps.table_id,
     column: Property.Dropdown({
       displayName: 'Column',
+      auth: gristAuth,
       refreshers: ['document_id', 'table_id'],
       required: true,
       options: async ({ auth, document_id, table_id }) => {
@@ -32,7 +35,7 @@ export const gristSearchRecordAction = createAction({
           };
         }
 
-        const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
+        const authValue = auth.props;
 
         const client = new GristAPIClient({
           domainUrl: authValue.domain,
@@ -68,8 +71,8 @@ export const gristSearchRecordAction = createAction({
     const columnValue = context.propsValue.value;
 
     const client = new GristAPIClient({
-      domainUrl: context.auth.domain,
-      apiKey: context.auth.apiKey,
+      domainUrl: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
     });
 
     const encodedQuery = encodeURIComponent(

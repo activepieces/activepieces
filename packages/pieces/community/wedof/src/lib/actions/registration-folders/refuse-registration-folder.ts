@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,12 @@ export const refuseRegistrationFolder = createAction({
   name: 'refuseRegistrationFolder',
   displayName: 'Refuser le dossier de formation',
   description: 'Refuser le dossier de formation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Refuses a training registration folder, recording a required refusal reason code and an optional explanatory note. Not idempotent: it advances the folder's lifecycle to a refused state and should be called once. Distinct from canceling a folder, which uses a separate action and reason set.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -16,6 +22,7 @@ export const refuseRegistrationFolder = createAction({
       required: true,
     }),
     code: Property.Dropdown({
+      auth: wedofAuth,
       displayName: 'Raison du refus du dossier de formation',
       description: 'Sélectionner la raison du refus',
       required: true,
@@ -35,7 +42,7 @@ export const refuseRegistrationFolder = createAction({
               wedofCommon.baseUrl + '/registrationFoldersReasons?type=refused',
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': auth as string,
+              'X-Api-Key': auth.secret_text,
             },
           })
         ).body;
@@ -73,7 +80,7 @@ export const refuseRegistrationFolder = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

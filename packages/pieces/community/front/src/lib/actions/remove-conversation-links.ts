@@ -9,6 +9,12 @@ export const removeConversationLinks = createAction({
   name: 'removeConversationLinks',
   displayName: 'Remove Conversation Links',
   description: 'Remove external links from a conversation in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Detach external links (by URL) from a Front conversation, the inverse of "Add Conversation Links". Use to clean up associations no longer relevant to the thread. Effectively idempotent: removing a link not present leaves the conversation unchanged.',
+    idempotent: true,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     links: Property.Array({

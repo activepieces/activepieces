@@ -1,11 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getAddressTransactionsChain = createAction({
+ auth:PieceAuth.None(),
     name: 'get_address_transactions_chain',
     displayName: 'Get Address Transactions (Chain)',
     description: 'Returns confirmed transaction history (25 transactions per page)',
+    audience: 'both',
+    aiMetadata: { description: 'Returns only the confirmed (on-chain) transaction history for a Bitcoin address, 25 per page, newest first, with an optional last transaction ID to page through older entries. Read-only and idempotent. Choose this for settled history; use the Mempool variant for unconfirmed transactions, or Get Address Transactions for a combined view.', idempotent: true },
     // category: 'Addresses',
     props: {
         address: Property.ShortText({

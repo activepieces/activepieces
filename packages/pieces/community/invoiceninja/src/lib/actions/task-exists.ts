@@ -7,6 +7,8 @@ export const existsTask = createAction({
   name: 'exists_task',
   displayName: 'Check Task Existence',
   description: 'Verify if a Task Already Exists',
+  audience: 'both',
+  aiMetadata: { description: 'Checks whether a task with the given task/ticket number already exists in Invoice Ninja, returning a truthy/falsy result. Use to guard against duplicate task creation before calling Create Task. Read-only and idempotent.', idempotent: true },
   props: {
     number: Property.LongText({
       displayName: 'Task or Ticket Number (alphanumeric)',
@@ -16,7 +18,7 @@ export const existsTask = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
 
     const headers = {
       'X-Api-Token': INapiToken,
@@ -28,7 +30,7 @@ export const existsTask = createAction({
     queryParams.append('number', context.propsValue.number || '');
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v1/tasks?${queryParams.toString()}`;
     const httprequestdata = {
       method: HttpMethod.GET,

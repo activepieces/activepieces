@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { saveImage } from '../api';
 import { cmsAuth } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveImageAction = createAction({
@@ -12,6 +12,8 @@ export const saveImageAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Image',
   description: 'Save image to Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a single image-type CMS field in Total CMS, identified by its CMS ID (slug), with alt text, output extension (jpg/png), and thumbnail sizing/crop options. Use to set or replace the image stored at a given CMS ID. Idempotent: the field holds one image keyed on the slug, so repeating with the same input replaces it.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',
@@ -108,9 +110,9 @@ export const saveImageAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      quality: z.number().min(1).max(100),
-      scaleTh: z.number().min(1),
-      scaleSq: z.number().min(1),
+      quality: z.number().check(z.minimum(1), z.maximum(100)),
+      scaleTh: z.number().check(z.minimum(1)),
+      scaleSq: z.number().check(z.minimum(1)),
     });
     const slug = context.propsValue.slug;
     const image = {

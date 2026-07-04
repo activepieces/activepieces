@@ -1,4 +1,12 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  HttpResponse,
+  QueryParams,
+} from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { googleGeminiAuth } from '../auth';
+
 export const defaultLLM = 'gemini-1.5-flash';
 
 export const allowedLLMs = [
@@ -8,10 +16,57 @@ export const allowedLLMs = [
   'gemini-2.0-flash',
   'gemini-2.0-flash-lite',
   'gemini-2.5-flash',
-  'gemini-2.5-pro'
+  'gemini-2.5-pro',
+  'gemini-3-pro'
 ];
 
-export const getGeminiModelOptions = async ({ auth}: { auth: string | undefined | unknown }) => {
+const isAllowedLLM = (model: GeminiModel): boolean =>
+  allowedLLMs.some((allowed) => model.name.startsWith(`models/${allowed}`));
+
+const isTtsModel = (model: GeminiModel): boolean =>
+  model.name.toLowerCase().includes('tts') ||
+  (model.displayName?.toLowerCase().includes('tts') ?? false);
+
+const isVeoModel = (model: GeminiModel): boolean =>
+  model.name.toLowerCase().includes('veo');
+
+const listAllModels = async ({
+  auth,
+}: {
+  auth: GeminiAuth;
+}): Promise<GeminiModel[]> => {
+  const models: GeminiModel[] = [];
+  let pageToken: string | undefined = undefined;
+
+  do {
+    const queryParams: QueryParams = {
+      key: auth.secret_text,
+      pageSize: '1000',
+    };
+    if (pageToken) {
+      queryParams['pageToken'] = pageToken;
+    }
+
+    const { body }: HttpResponse<GeminiListModelsResponse> =
+      await httpClient.sendRequest<GeminiListModelsResponse>({
+        method: HttpMethod.GET,
+        url: 'https://generativelanguage.googleapis.com/v1beta/models',
+        queryParams,
+      });
+    models.push(...(body.models ?? []));
+    pageToken = body.nextPageToken;
+  } while (pageToken);
+
+  return models;
+};
+
+const fetchModelOptions = async ({
+  auth,
+  filter,
+}: {
+  auth?: GeminiAuth;
+  filter: (model: GeminiModel) => boolean;
+}) => {
   if (!auth) {
     return {
       disabled: true,
@@ -21,22 +76,11 @@ export const getGeminiModelOptions = async ({ auth}: { auth: string | undefined 
   }
 
   try {
-    const { body } = await httpClient.sendRequest<{
-      models: { name: string; displayName: string }[];
-    }>({
-      method: HttpMethod.GET,
-      url: `https://generativelanguage.googleapis.com/v1beta/models?key=${auth}`,
-    });
-    const options = body.models
-      .filter((model) =>
-        allowedLLMs.some((allowed) =>
-          model.name.startsWith(`models/${allowed}`)
-        )
-      )
-      .map((model) => ({
-        label: model.displayName,
-        value: model.name.replace('models/', ''),
-      }));
+    const models = await listAllModels({ auth });
+    const options = models.filter(filter).map((model) => ({
+      label: model.displayName ?? model.name.replace('models/', ''),
+      value: model.name.replace('models/', ''),
+    }));
 
     return {
       disabled: false,
@@ -46,7 +90,32 @@ export const getGeminiModelOptions = async ({ auth}: { auth: string | undefined 
     return {
       disabled: true,
       options: [],
-      placeholder: "Couldn't load models, API key is invalid",
+      placeholder: "Couldn't load models, check your API key or try again.",
     };
   }
+};
+
+export const getGeminiModelOptions = async ({ auth }: { auth?: GeminiAuth }) =>
+  fetchModelOptions({ auth, filter: isAllowedLLM });
+
+export const getGeminiTtsModelOptions = async ({ auth }: { auth?: GeminiAuth }) =>
+  fetchModelOptions({ auth, filter: isTtsModel });
+
+export const getGeminiVideoModelOptions = async ({
+  auth,
+}: {
+  auth?: GeminiAuth;
+}) => fetchModelOptions({ auth, filter: isVeoModel });
+
+type GeminiAuth = AppConnectionValueForAuthProperty<typeof googleGeminiAuth>;
+
+type GeminiModel = {
+  name: string;
+  displayName?: string;
+  supportedGenerationMethods?: string[];
+};
+
+type GeminiListModelsResponse = {
+  models?: GeminiModel[];
+  nextPageToken?: string;
 };

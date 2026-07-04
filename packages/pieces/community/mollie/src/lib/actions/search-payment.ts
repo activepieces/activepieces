@@ -1,13 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 
 export const mollieSearchPayment = createAction({
   auth: mollieAuth,
   name: 'search_payment',
   displayName: 'Search Payment',
   description: 'Retrieve all payments created with the current website profile',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists payments for the connected Mollie profile, paginated with an optional cursor (from payment ID), limit, sort direction, and profile filter. Use to look up existing payments or page through payment history. Idempotent: read-only listing with no side effects.',
+    idempotent: true,
+  },
   props: {
     from: Property.ShortText({
       displayName: 'From Payment ID',
@@ -49,7 +55,7 @@ export const mollieSearchPayment = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth;
 
     const queryParams: Record<string, string> = {};
 

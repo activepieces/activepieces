@@ -1,7 +1,5 @@
 # pieces-insightly
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-insightly` to build the library.
+Run `turbo run build --filter=@activepieces/piece-insightly` to build the library.

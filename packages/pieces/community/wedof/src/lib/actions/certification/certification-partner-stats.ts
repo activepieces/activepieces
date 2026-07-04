@@ -3,7 +3,7 @@ import {
   HttpMethod,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import {
   createAction,
   Property,
@@ -15,7 +15,12 @@ export const listPartnerStats = createAction({
   name: 'listPartnerStats',
   displayName: 'Lister les statistiques des partenaires',
   description: 'Récupère les statistiques des partenaires de certification',
-
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves statistics for the partners of a given certification (identified by certifInfo), filterable by partnership state, sync state, compliance, and connection issues, with paging and sort order. Read-only and safe to repeat. Use to report on or analyze certification partners rather than to modify them.',
+    idempotent: true,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'Identifiant de certification',
@@ -158,7 +163,7 @@ export const listPartnerStats = createAction({
       queryParams,
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': context.auth as string,
+        'X-Api-Key': context.auth.secret_text,
       },
     });
 

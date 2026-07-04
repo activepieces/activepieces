@@ -8,6 +8,8 @@ export const insertRowAction = createAction({
   name: 'insert_row',
   displayName: 'Insert Row',
   description: 'Insert a row into an Oracle table',
+  audience: 'both',
+  aiMetadata: { description: 'Inserts a single row into an Oracle Database table, mapping column names to values. Use to add one record; for many records in one call prefer Insert Rows. Not idempotent — each call appends a new row.', idempotent: false },
   props: {
     tableName: oracleDbProps.tableName(),
     row: Property.Object({
@@ -27,7 +29,7 @@ export const insertRowAction = createAction({
     }
 
     try {
-      const client = new OracleDbClient(context.auth);
+      const client = new OracleDbClient(context.auth.props);
       return await client.insertRow(tableName, row as Record<string, unknown>);
     } catch (error) {
       throw new Error(

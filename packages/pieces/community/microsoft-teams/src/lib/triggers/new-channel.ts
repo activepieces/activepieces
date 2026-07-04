@@ -1,16 +1,17 @@
-import { microsoftTeamsAuth } from '../../index';
+import { microsoftTeamsAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { microsoftTeamsCommon } from '../common';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { createGraphClient, withGraphRetry } from '../common/graph';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Channel } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 type Props = {
 	teamId: string;
@@ -21,6 +22,9 @@ export const newChannelTrigger = createTrigger({
 	name: 'new-channel',
 	displayName: 'New Channel',
 	description: 'Triggers when a new channel is created in a team.',
+	aiMetadata: {
+		description: 'Fires when a new channel is created within the selected Microsoft Teams team. Each event represents the newly created channel and its metadata. Polls periodically by creation time, so events appear with a short delay rather than instantly.',
+	},
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 	},
@@ -55,21 +59,20 @@ export const newChannelTrigger = createTrigger({
 	},
 });
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const { teamId } = propsValue;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const cloud = auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(auth.access_token, cloud);
 		const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
 
 		const channels: Channel[] = [];
 		const filter = lastFetchEpochMS === 0 ? '' : `?$filter=createdDateTime gt ${lastFetchDate}`;
 
-		let response: PageCollection = await client.api(`/teams/${teamId}/channels${filter}`).get();
+		let response: PageCollection = await withGraphRetry(() =>
+			client.api(`/teams/${teamId}/channels${filter}`).get(),
+		);
 
 		while (response.value && response.value.length > 0) {
 			for (const channel of response.value as Channel[]) {
@@ -78,8 +81,9 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> =
 				}
 				channels.push(channel);
 			}
-			if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
+			const nextLink = response['@odata.nextLink'];
+			if (lastFetchEpochMS !== 0 && nextLink) {
+				response = await withGraphRetry(() => client.api(nextLink).get());
 			} else {
 				break;
 			}

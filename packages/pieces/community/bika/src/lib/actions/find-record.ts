@@ -4,13 +4,15 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { BikaCommon, makeClient } from '../common';
-import { BikaAuth } from '../../index';
+import { BikaAuth } from '../auth';
 
 export const findRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_find_record',
   displayName: 'Get Record',
   description: 'Retrieves a record in database by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single record from a Bika.ai database by its record ID. Use when you already know the exact record ID; to search by field values or fetch multiple rows use Find Records instead. Read-only and idempotent.', idempotent: true },
   props: {
     space_id: BikaCommon.space_id,
     database_id: BikaCommon.database_id,
@@ -25,7 +27,7 @@ export const findRecordAction = createAction({
     const recordId = context.propsValue.recordId;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof BikaAuth>
+      context.auth.props,
     );
 
     const response: any = await client.findRecord(

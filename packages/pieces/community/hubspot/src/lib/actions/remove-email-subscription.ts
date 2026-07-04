@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
@@ -7,6 +7,8 @@ export const removeEmailSubscriptionAction = createAction({
 	name: 'remove-email-subscription',
 	displayName: 'Remove Email Subscription',
 	description: 'Removes email subscription.',
+	audience: 'both',
+	aiMetadata: { description: 'Unsubscribe an email address from all HubSpot marketing email subscriptions (opt the contact out of every subscription type). Re-running leaves the address in the same unsubscribed state, so it is idempotent.', idempotent: true },
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',

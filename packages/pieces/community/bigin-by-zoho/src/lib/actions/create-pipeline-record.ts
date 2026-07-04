@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
 import { companyDropdown, contactsDropdown, layoutsDropdown, multiContactsDropdown, pipelineRecordsDropdown, productsDropdown, SubPipelineorStageDropdown, tagsDropdown, usersDropdown } from '../common/props';
 import { formatDateOnly, formatDateTime, handleDropdownError } from '../common/helpers';
@@ -9,6 +9,8 @@ export const createPipelineRecord = createAction({
   name: 'createPipeline',
   displayName: 'Create Pipeline',
   description: 'Creates a new pipeline record in Bigin',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new pipeline record (deal) in Bigin CRM with a deal name, pipeline, sub-pipeline, stage, and closing date, plus optional amount, owner, company, contact, secondary contacts, associated products, tags, and module-defined fields. Use to open a new sales opportunity. Not idempotent: each call creates a new deal.', idempotent: false },
   props: {
     dealName: Property.ShortText({
       displayName: 'Deal Name',
@@ -48,11 +50,12 @@ export const createPipelineRecord = createAction({
     associatedProducts: productsDropdown,
     tag: tagsDropdown('Pipelines'),
     additionalFields: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Additional Fields',
       description: 'Optional fields from the Pipelines module',
       refreshers: ['auth'],
       required: false,
-      props: async ({ auth }: any): Promise<InputPropertyMap> => {
+      props: async ({ auth }): Promise<InputPropertyMap> => {
         if (!auth) return {} as InputPropertyMap;
         const { access_token, api_domain } = auth as any;
 
@@ -203,7 +206,8 @@ export const createPipelineRecord = createAction({
     }
 
     try {
-      const { access_token, api_domain } = auth as any;
+      const { access_token, data } = auth;
+      const api_domain = data['api_domain'];
 
       const response = await biginApiService.createPipelineRecord(
         access_token,

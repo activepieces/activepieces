@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
+import { edenAiAuth } from '../..';
 
 const OCR_PROVIDERS = [
   { label: 'Amazon', value: 'amazon' },
@@ -250,10 +251,18 @@ function normalizeOcrResponse(provider: string, response: any) {
 
 export const ocrImageAction = createAction({
   name: 'ocr_image',
+  auth: edenAiAuth,
   displayName: 'Extract Text in Image (OCR)',
   description: 'Extract text from images (OCR) using Eden AI. Supports multiple providers, languages, and bounding box coordinates.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Run OCR on an image or document referenced by URL via Eden AI, routed to a chosen provider, returning the extracted text plus bounding-box coordinates. Use it to pull raw text out of an image or scanned file. Requires a provider and a valid file URL; language defaults to auto-detection. Read-only extraction with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for text extraction.',
       required: true,
@@ -266,6 +275,7 @@ export const ocrImageAction = createAction({
       required: true,
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Document Language',
       description: 'The language of the text in the image. Choose "Auto Detection" if unsure.',
       required: false,
@@ -285,6 +295,7 @@ export const ocrImageAction = createAction({
       defaultValue: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -300,13 +311,13 @@ export const ocrImageAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      file_url: z.string().url('Valid file URL is required'),
-      language: z.string().nullish(),
-      file_password: z.string().nullish(),
-      attributes_as_list: z.boolean().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      file_url: z.string().check(z.url('Valid file URL is required')),
+      language: z.nullish(z.string()),
+      file_password: z.nullish(z.string()),
+      attributes_as_list: z.nullish(z.boolean()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 
@@ -335,7 +346,7 @@ export const ocrImageAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/ocr/ocr',
         body,

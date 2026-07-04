@@ -21,17 +21,16 @@
         "*.tsx"
       ],
       "rules": {
-        "@nx/enforce-module-boundaries": [
+        "no-restricted-imports": [
           "error",
           {
-            "enforceBuildableLibDependency": true,
-            "allow": [],
-            "depConstraints": [
-              {
-                "sourceTag": "*",
-                "onlyDependOnLibsWithTags": ["*"],
-                "allowedExternalImports": ["ethers"]
-              }
+            "patterns": [
+              "lodash",
+              "lodash/*",
+              "@activepieces/core-*",
+              "@activepieces/server*",
+              "@activepieces/engine",
+              "@activepieces/shared"
             ]
           }
         ]

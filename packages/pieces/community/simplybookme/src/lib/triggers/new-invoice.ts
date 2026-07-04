@@ -1,6 +1,6 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy
 } from '@activepieces/pieces-framework';
 import {
@@ -11,11 +11,11 @@ import {
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { simplybookAuth, getAccessToken } from '../common';
 
-const polling: Polling<PiecePropValueSchema<typeof simplybookAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof simplybookAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const authData = auth;
-    const token = await getAccessToken(authData);
+    const token = await getAccessToken(authData.props);
 
     // Calculate datetime range based on last fetch time
     const now = new Date();
@@ -36,7 +36,7 @@ const polling: Polling<PiecePropValueSchema<typeof simplybookAuth>, Record<strin
       url: `https://user-api-v2.simplybook.me/admin/invoices?filter[datetime_from]=${encodeURIComponent(datetimeFrom)}&filter[datetime_to]=${encodeURIComponent(datetimeTo)}`,
       headers: {
         'Content-Type': 'application/json',
-        'X-Company-Login': authData.companyLogin,
+        'X-Company-Login': authData.props.companyLogin,
         'X-Token': token
       },
       timeout: 20000
@@ -87,6 +87,9 @@ export const newInvoice = createTrigger({
   name: 'new_invoice',
   displayName: 'New Invoice',
   description: 'Triggers when a new invoice is generated/paid in SimplyBook.me (requires Accept Payments feature)',
+  aiMetadata: {
+    description: 'Fires when a new invoice/order is generated in SimplyBook.me, representing a billing record for a booking. Polls invoices by creation date; requires the Accept Payments feature to be enabled.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   async test(context) {

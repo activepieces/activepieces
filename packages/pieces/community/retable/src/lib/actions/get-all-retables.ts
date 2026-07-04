@@ -9,6 +9,8 @@ export const retableGetAllRetablesAction = createAction({
   name: 'retable_get_retables',
   displayName: 'Get Retables',
   description: 'Gets all retables in given project',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all retables (tables) within a given Retable project. Use to discover retable IDs needed before reading or writing records. Requires the project ID; read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: retableCommon.workspace_id(),
     project_id: retableCommon.project_id(),
@@ -20,7 +22,7 @@ export const retableGetAllRetablesAction = createAction({
         method: HttpMethod.GET,
         url: `${retableCommon.baseUrl}/project/${project_id}/retable`,
         headers: {
-          ApiKey: context.auth as string,
+          ApiKey: context.auth.secret_text,
         },
       })
     ).body;

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { motionAuth } from '../../index';
+import { motionAuth } from '../auth';
 import {
   BASE_URL,
   priority,
@@ -16,6 +16,8 @@ export const updateTask = createAction({
   name: 'update-task',
   displayName: 'Update Task',
   description: 'Update an existing task in Motion',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields on an existing Motion task identified by task ID — name, description, due date, duration, status, priority, assignee, and labels. Use when an agent needs to modify a known task rather than create one. Requires the task ID; only the provided fields are changed. Idempotent: re-applying the same values leaves the task in the same state.', idempotent: true },
   props: {
     workspaceId: workspaceId('Workspace ID'),
     taskId: taskId,
@@ -63,7 +65,7 @@ export const updateTask = createAction({
       url: `${BASE_URL}/tasks/${propsValue.taskId}`,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
       body: {
         name,

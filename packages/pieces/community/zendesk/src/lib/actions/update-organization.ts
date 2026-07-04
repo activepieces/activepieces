@@ -21,6 +21,8 @@ export const updateOrganizationAction = createAction({
   name: 'update-organization',
   displayName: 'Update Organization',
   description: 'Update existing organization fields.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing organization identified by organization ID, changing fields such as name, details, notes, domain names, tags, group, visibility settings, or custom fields. Use to edit an account record already in Zendesk. Note that the domain names and tags arrays REPLACE all existing values rather than appending. At least one field must be provided. Idempotent: re-applying the same field values leaves the organization in the same state.', idempotent: true },
   props: {
     organization_id: organizationIdDropdown,
     name: Property.ShortText({
@@ -55,6 +57,7 @@ export const updateOrganizationAction = createAction({
       required: false,
     }),
     organization_fields: Property.DynamicProperties({
+      auth: zendeskAuth,
       displayName: 'Organization Fields',
       description: 'Custom organization field values',
       required: false,
@@ -65,14 +68,14 @@ export const updateOrganizationAction = createAction({
         }
 
         try {
-          const authentication = auth as AuthProps;
+          const authentication = auth;
           const response = await httpClient.sendRequest({
-            url: `https://${authentication.subdomain}.zendesk.com/api/v2/organization_fields.json`,
+            url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organization_fields.json`,
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BASIC,
-              username: authentication.email + '/token',
-              password: authentication.token,
+              username: authentication.props.email + '/token',
+              password: authentication.props.token,
             },
           });
 
@@ -200,7 +203,7 @@ export const updateOrganizationAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       organization_id,
       name,
@@ -241,12 +244,12 @@ export const updateOrganizationAction = createAction({
     if (organization_fields && typeof organization_fields === 'object') {
       try {
         const fieldsResponse = await httpClient.sendRequest({
-          url: `https://${authentication.subdomain}.zendesk.com/api/v2/organization_fields.json`,
+          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organization_fields.json`,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: authentication.email + '/token',
-            password: authentication.token,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
           },
         });
 
@@ -288,15 +291,15 @@ export const updateOrganizationAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/organizations/${organization_id}.json`,
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organizations/${organization_id}.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
         body: {
           organization,

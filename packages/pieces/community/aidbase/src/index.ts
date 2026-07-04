@@ -16,7 +16,7 @@ import { createChatbotReply } from './lib/actions/create-chatbot-reply';
 import { startTraining } from './lib/actions/start-training';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { API_BASE_URL } from './lib/common/client';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const aidbase = createPiece({
   displayName: 'Aidbase',
@@ -37,7 +37,7 @@ export const aidbase = createPiece({
       baseUrl: () => API_BASE_URL,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth as string}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

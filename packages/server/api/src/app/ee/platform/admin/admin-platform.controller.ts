@@ -1,101 +1,131 @@
-import { StripePlanName } from '@activepieces/ee-shared'
-import { apDayjs } from '@activepieces/server-shared'
-import { AdminRetryRunsRequestBody, apId, ApplyLicenseKeyByEmailRequestBody, ExecutionType, FlowRunStatus, GiftTrialByEmailRequestBody, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, PrincipalType, ProgressUpdateType, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
+import { isNil } from '@activepieces/core-utils'
+import { AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ChatConversation, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
-import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
-import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
-import { projectService } from '../../../project/project-service'
-import { jobQueue } from '../../../workers/queue/job-queue'
-import { JobType } from '../../../workers/queue/queue-manager'
-import { stripeHelper } from '../platform-plan/stripe-helper'
+import { z } from 'zod'
+import { repoFactory } from '../../../core/db/repo-factory'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
+import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
+import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
+import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
-export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
-    await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
+const API_KEY_HEADER = 'api-key'
+const API_KEY = system.get(AppSystemProp.API_KEY)
+
+async function checkCertainKeyPreHandler(
+    req: FastifyRequest,
+    res: FastifyReply,
+): Promise<void> {
+
+    const key = req.headers[API_KEY_HEADER] as string | undefined
+    if (key !== API_KEY || isNil(API_KEY)) {
+        await res.status(StatusCodes.FORBIDDEN).send({ message: 'Forbidden' })
+        throw new Error('Forbidden')
+    }
 }
 
-const adminPlatformController: FastifyPluginAsyncTypebox = async (
+export const adminPlatformModule: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('preHandler', checkCertainKeyPreHandler)
+    await app.register(adminPlatformController, { prefix: '/v1/admin/' })
+}
+
+const adminPlatformController: FastifyPluginAsyncZod = async (
     app,
 ) => {
 
-    app.post('/runs/retry', AdminRetryRunsRequest, async (req, res) => {
+    app.post('/pieces', CreatePieceRequest, async (req): Promise<PieceMetadataModel> => {
+        return pieceMetadataService(req.log).create({
+            pieceMetadata: req.body as PieceMetadata,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+    },
+    )
+
+    app.post('/platforms/runs/retry', AdminRetryRunsRequest, async (req, res) => {
         await adminPlatformService(req.log).retryRuns(req.body)
         return res.status(StatusCodes.OK).send()
     })
 
-    app.post('/apply-license-key', ApplyLicenseKeyByEmailRequest, async (req, res) => {
+    app.post('/platforms/apply-license-key', ApplyLicenseKeyByEmailRequest, async (req, res) => {
         await adminPlatformService(req.log).applyLicenseKeyByEmail(req.body)
         return res.status(StatusCodes.OK).send()
     })
 
-    app.post('/retry-paused-runs', RetryPausedRuns, async (req, res) => {
-
-        for (const id of req.body.ids) {
-            const pausedRun = await flowRunRepo().findOneBy({ id, status: FlowRunStatus.PAUSED })
-            if (isNil(pausedRun)) {
-                throw new Error('Paused run not found')
-            }
-            if (pausedRun.pauseMetadata?.type !== PauseType.DELAY) {
-                throw new Error('Paused run is not a delay pause')
-            }
-            const logsFileId = pausedRun.logsFileId ?? apId()
-            const logsUploadUrl = await flowRunLogsService(req.log).constructUploadUrl({
-                flowRunId: pausedRun.id,
-                logsFileId,
-                behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-                projectId: pausedRun.projectId,
-            })
-            await jobQueue(req.log).add({
-                id: pausedRun.id,
-                type: JobType.ONE_TIME,
-                data: {
-                    projectId: pausedRun.projectId,
-                    platformId: await projectService.getPlatformId(pausedRun.projectId),
-                    environment: pausedRun.environment,
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    flowId: pausedRun.flowId,
-                    flowVersionId: pausedRun.flowVersionId,
-                    runId: pausedRun.id,
-                    httpRequestId: pausedRun.pauseMetadata?.requestIdToReply ?? undefined,
-                    synchronousHandlerId: pausedRun.pauseMetadata?.handlerId ?? null,
-                    progressUpdateType: pausedRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
-                    jobType: WorkerJobType.EXECUTE_FLOW,
-                    executionType: ExecutionType.RESUME,
-                    payload: {},
-                    logsUploadUrl,
-                    logsFileId,
-                },
-                delay: calculateDelayForPausedRun(pausedRun.pauseMetadata?.resumeDateTime),
-            })
-        }
+    app.post('/platforms/increase-ai-credits', IncreaseAICreditsForPlatformRequest, async (req, res) => {
+        await adminPlatformService(req.log).increaseAiCredits(req.body)
         return res.status(StatusCodes.OK).send()
     })
 
-    app.post('/gift-trials', GiftTrialByEmailRequest, async (req, res) => {
-        const { gifts } = req.body
-        const results = await Promise.all(
-            gifts.map(gift => stripeHelper(req.log).giftTrialForCustomer({ email: gift.email, trialPeriod: gift.trialPeriod, plan: gift.trialPlan as StripePlanName })),
-        )
+    app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
+        const { platformId, workerGroupId } = req.body
+        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
+        await workerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
+        return res.status(StatusCodes.OK).send()
+    })
 
-        const errors = results.filter(result => !isNil(result))
-        if (errors.length === 0) {
-            return res.status(StatusCodes.OK).send({ message: 'All gifts processed successfully' })
+    app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
+        const { platformId, canary } = req.body
+        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
+        await workerGroupService(req.log).updateCanary({ platformId, canary })
+        return res.status(StatusCodes.OK).send()
+    })
+
+    app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
+        const PAGE_SIZE = 100
+        const conversationRepo = repoFactory(ChatConversationEntity)
+        const totalCount = await conversationRepo().count()
+        const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+        req.log.info({ totalCount, totalPages }, 'Starting bulk chat analytics sync')
+
+        let synced = 0
+        let failed = 0
+
+        for (let page = 0; page < totalPages; page++) {
+            const conversations: ChatConversation[] = await conversationRepo().find({
+                skip: page * PAGE_SIZE,
+                take: PAGE_SIZE,
+                order: { created: 'ASC' },
+            })
+            const result = await chatAnalyticsBulkSync(req.log).syncAll({ conversations })
+            synced += result.synced
+            failed += result.failed
+            req.log.info({ page: page + 1, totalPages, synced, failed }, 'Synced chat analytics page')
         }
 
-        return res.status(StatusCodes.PARTIAL_CONTENT).send({ errors })
+        return res.status(StatusCodes.OK).send({ synced, failed, total: totalCount })
     })
 }
 
-const RetryPausedRuns = {
+
+const UpdateWorkerGroupRequest = {
     schema: {
-        body: Type.Object({
-            ids: Type.Array(Type.String()),
+        body: z.object({
+            platformId: z.string(),
+            workerGroupId: z.string().nullable(),
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
+        security: securityAccess.public(),
+    },
+}
+
+const UpdateCanaryRequest = {
+    schema: {
+        body: z.object({
+            platformId: z.string(),
+            canary: z.boolean(),
+        }),
+    },
+    config: {
+        security: securityAccess.public(),
     },
 }
 
@@ -104,7 +134,7 @@ const AdminRetryRunsRequest = {
         body: AdminRetryRunsRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
+        security: securityAccess.public(),
     },
 }
 
@@ -113,20 +143,65 @@ const ApplyLicenseKeyByEmailRequest = {
         body: ApplyLicenseKeyByEmailRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
+        security: securityAccess.public(),
     },
 }
 
-const GiftTrialByEmailRequest = {
+const IncreaseAICreditsForPlatformRequest = {
     schema: {
-        body: GiftTrialByEmailRequestBody,
+        body: IncreaseAICreditsForPlatformRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
+        security: securityAccess.public(),
     },
 }
 
-function calculateDelayForPausedRun(resumeDateTimeIsoString: string): number {
-    const delayInMilliSeconds = apDayjs(resumeDateTimeIsoString).diff(apDayjs())
-    return delayInMilliSeconds < 0 ? 0 : delayInMilliSeconds
+
+const Action = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    description: z.string(),
+    requireAuth: z.boolean(),
+    props: z.unknown(),
+    errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
+    outputSchema: z.optional(z.custom<OutputSchema>()),
+    aiMetadata: z.optional(AiMetadata),
+    audience: z.optional(Audience),
+})
+
+const Trigger = Action.omit({ audience: true }).extend({
+    renewConfiguration: z.optional(WebhookRenewConfiguration),
+    handshakeConfiguration: WebhookHandshakeConfiguration,
+    sampleData: z.unknown().optional(),
+    type: z.nativeEnum(TriggerStrategy),
+    testStrategy: z.nativeEnum(TriggerTestStrategy),
+})
+
+const CreatePieceRequest = {
+    schema: {
+        body: z.object({
+            name: z.string(),
+            displayName: z.string(),
+            logoUrl: z.string(),
+            description: z.string().optional(),
+            version: ExactVersionType,
+            auth: z.unknown().optional(),
+            authors: z.array(z.string()),
+            categories: z.array(z.nativeEnum(PieceCategory)).optional(),
+            minimumSupportedRelease: ExactVersionType,
+            maximumSupportedRelease: ExactVersionType,
+            actions: z.record(z.string(), Action),
+            triggers: z.record(z.string(), Trigger),
+            i18n: z.record(z.string(), z.record(z.string(), z.string())).optional(),
+        }),
+    },
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const SyncAllConversationsRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
 }

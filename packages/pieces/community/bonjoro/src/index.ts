@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addGreetAction } from './lib/actions/add-greet';
 import { bonjoroAuth } from './lib/auth';
 
@@ -18,7 +18,7 @@ export const bonjoro = createPiece({
       baseUrl: () => 'https://www.bonjoro.com/api/v2', // replace with the actual base URL
       auth: bonjoroAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { apiKey: string }).apiKey}`,
+        Authorization: `Bearer ${auth.props.apiKey}`,
       }),
     }),
   ],

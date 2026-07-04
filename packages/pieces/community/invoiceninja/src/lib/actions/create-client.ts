@@ -10,6 +10,8 @@ export const createClient = createAction({
   name: 'create_client',
   displayName: 'Create Client',
   description: 'Creates a new client in InvoiceNinja.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new client record in Invoice Ninja with a primary contact, requiring business name, contact email, address line 1, and city; other contact and address fields are optional. Not idempotent — each call creates a new client even if one with the same details already exists.', idempotent: false },
 
   props: {
     client_first_name: Property.LongText({
@@ -81,7 +83,7 @@ export const createClient = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
     const headers = {
       'X-Api-Token': INapiToken,
       'Content-Type': 'application/json',
@@ -103,7 +105,7 @@ export const createClient = createAction({
       }
     };
 
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v1/clients/?${queryParams.toString()}`;
 
     const httprequestdata = {

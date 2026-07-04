@@ -1,4 +1,5 @@
-import { ApEdition, apId } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
@@ -26,7 +27,7 @@ export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 impl
             ALTER TABLE "signing_key" DROP COLUMN "generatedBy"
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[moveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -56,7 +57,7 @@ export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 impl
             ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[moveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258#down]')
     }
 
 }

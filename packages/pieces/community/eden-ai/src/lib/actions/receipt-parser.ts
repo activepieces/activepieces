@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
+import { edenAiAuth } from '../..';
 
 const DATA_EXTRACTION_PROVIDERS = [
   { label: 'Amazon', value: 'amazon' },
@@ -26,11 +27,19 @@ function normalizeDataExtractionResponse(provider: string, response: any) {
 }
 
 export const receiptParserAction = createAction({
+  auth: edenAiAuth,
   name: 'receipt_parser',
   displayName: 'Receipt Parser',
   description: 'Extract structured data from receipts and documents using Eden AI. Supports general data extraction with bounding boxes.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Extract structured fields from a document referenced by URL via Eden AI data-extraction (OCR) endpoint, routed to a chosen provider. Use it for general field extraction from receipts and similar documents; unlike the invoice parser this takes a public file URL rather than a file upload. Requires a provider and a valid file URL; optionally a password for protected PDFs. Read-only extraction with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for data extraction.',
       required: true,
@@ -60,6 +69,7 @@ export const receiptParserAction = createAction({
       defaultValue: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -75,13 +85,13 @@ export const receiptParserAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      file_url: z.string().url('Valid file URL is required'),
-      file_password: z.string().nullish(),
-      convert_to_pdf: z.boolean().nullish(),
-      attributes_as_list: z.boolean().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      file_url: z.string().check(z.url('Valid file URL is required')),
+      file_password: z.nullish(z.string()),
+      convert_to_pdf: z.nullish(z.boolean()),
+      attributes_as_list: z.nullish(z.boolean()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 
@@ -110,7 +120,7 @@ export const receiptParserAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/ocr/data_extraction',
         body,

@@ -1,8 +1,8 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
-import { MarkdownVariant } from '@activepieces/shared';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { FilterOperatorEnum } from '../common/types';
 import { Client } from '@hubspot/api-client';
 
@@ -11,6 +11,8 @@ export const findDealAction = createAction({
 	name: 'find-deal',
 	displayName: 'Find Deal',
 	description: 'Finds a deal by searching.',
+	audience: 'both',
+	aiMetadata: { description: 'Search HubSpot deals by one or two property/value pairs (matched with equality) and return the matching deals. Read-only and repeatable. Use this to look up an existing deal before updating or associating it; pick a create action instead when no matching deal should exist.', idempotent: true },
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{
@@ -83,7 +85,7 @@ export const findDealAction = createAction({
 		const defaultDealProperties = getDefaultPropertiesForObject(OBJECT_TYPE.DEAL);
 
 		const response = client.crm.deals.searchApi.doSearch({
-			limit: 100,
+			limit: MAX_SEARCH_PAGE_SIZE,
 			properties: [...defaultDealProperties, ...additionalPropertiesToRetrieve],
 			filterGroups: [{ filters }],
 		});

@@ -9,26 +9,29 @@ import { shopifyAuth } from '../..';
 export const createShopifyWebhookTrigger = ({
   name,
   description,
+  aiMetadata,
   displayName,
   sampleData,
   topic,
 }: {
   name: string;
   description: string;
+  aiMetadata?: { description: string };
   displayName: string;
   topic: string;
   sampleData: Record<string, unknown>;
-}): Trigger =>
+}) =>
   createTrigger({
     auth: shopifyAuth,
     name,
     description,
+    aiMetadata,
     displayName,
     props: {},
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-      const shopName = context.auth.shopName;
+      const shopName = context.auth.props.shopName;
       const response = await httpClient.sendRequest<{
         webhook: {
           id: string;
@@ -37,7 +40,7 @@ export const createShopifyWebhookTrigger = ({
         method: HttpMethod.POST,
         url: `https://${shopName}.myshopify.com/admin/api/2023-01/webhooks.json`,
         headers: {
-          'X-Shopify-Access-Token': context.auth.adminToken,
+          'X-Shopify-Access-Token': context.auth.props.adminToken,
         },
         body: {
           webhook: {
@@ -52,7 +55,7 @@ export const createShopifyWebhookTrigger = ({
     },
     async onDisable(context) {
       const webhookId = await context.store.get<string>(`shopify_webhook_id`);
-      const shopName = context.auth.shopName;
+      const shopName = context.auth.props.shopName;
       await httpClient.sendRequest<{
         webhook: {
           id: string;
@@ -61,7 +64,7 @@ export const createShopifyWebhookTrigger = ({
         method: HttpMethod.DELETE,
         url: `https://${shopName}.myshopify.com/admin/api/2023-01/webhooks/${webhookId}.json`,
         headers: {
-          'X-Shopify-Access-Token': context.auth.adminToken,
+          'X-Shopify-Access-Token': context.auth.props.adminToken,
         },
       });
       await context.store?.put(`shopify_webhook_id`, null);

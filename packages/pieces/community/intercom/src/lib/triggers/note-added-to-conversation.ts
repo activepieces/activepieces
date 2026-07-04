@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { stripHtml } from 'string-strip-html';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
 
 export const noteAddedToConversation = createTrigger({
@@ -8,6 +8,9 @@ export const noteAddedToConversation = createTrigger({
 	name: 'noteAddedToConversation',
 	displayName: 'Note added to conversation',
 	description: 'Triggers when a note is added to a conversation',
+	aiMetadata: {
+		description: 'Fires when an internal note is added to a conversation in Intercom. Notes are private remarks visible only to admins and teammates, not to the contact. An optional keyword input filters to notes containing that text. Outputs the conversation object reflecting the added note.',
+	},
 	props: {
 		keyword: Property.ShortText({
 			displayName: 'Keyword (optional)',

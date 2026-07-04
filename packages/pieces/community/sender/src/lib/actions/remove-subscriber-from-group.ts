@@ -12,6 +12,8 @@ export const removeSubscriberFromGroupAction = createAction({
   name: 'remove_subscriber_from_group',
   displayName: 'Remove Subscriber from Group',
   description: 'Remove a subscriber from a specific group',
+  audience: 'both',
+  aiMetadata: { description: 'Removes one or more subscribers from a specific group/list in a Sender account, identified by group ID and subscriber IDs. Use to unsegment contacts without unsubscribing them globally. Idempotent: removing contacts no longer in the group leaves the group unchanged.', idempotent: true },
   props: {
     subscribers: subscribersDropdown,
     groupId: groupIdDropdown,
@@ -25,7 +27,7 @@ export const removeSubscriberFromGroupAction = createAction({
     };
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       `/subscribers/groups/${groupId}`,
       HttpMethod.DELETE,
       requestBody

@@ -1,11 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const returnPongAction = createAction({
   name: 'return_pong',
   displayName: 'Return Pong',
   description: 'Health check endpoint that returns "pong"',
+  audience: 'both',
+  aiMetadata: { description: 'Ping the Zoo API to verify connectivity and that credentials are valid. Read-only and repeatable; takes no input. Use as a lightweight health or auth check before running other actions.', idempotent: true },
   auth: zooAuth,
   // category: 'Meta',
   props: {},
@@ -14,7 +16,7 @@ export const returnPongAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/ping',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getApiEndpoint } from '../common';
-import { returningAiAuth } from '../../index';
+import { returningAiAuth } from '../auth';
 
 /**
  * This action allows you to react to a specific message as a chosen user in a channel.
@@ -30,6 +30,8 @@ export const reactMessage = createAction({
   name: 'reactMessage', 
   displayName: 'React to Message',
   description: 'Add an emoji reaction to a specific message as a chosen user.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an emoji reaction to an existing Returning.ai message on behalf of a given user (identified by username or email), so the reaction appears as if that user added it. Use to acknowledge or react to a known message; requires the target message ID and an emoji shortcode (e.g. :sparkling_heart:). Not idempotent: the API is called on each invocation.', idempotent: false },
   props: {
     description: Property.MarkDown({
       value:
@@ -52,7 +54,7 @@ export const reactMessage = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authToken = auth as string;
+    const authToken = auth.secret_text;
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages/react`,

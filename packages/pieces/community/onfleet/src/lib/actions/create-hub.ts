@@ -9,6 +9,8 @@ export const createHub = createAction({
   name: 'create_hub',
   displayName: 'Create Hub',
   description: 'Create a new hub',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Onfleet hub (a physical depot/location) with a name and address, optionally assigned to teams. The address can be given as structured fields or as a single unparsed address string. Not idempotent: calling it repeatedly creates duplicate hubs.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -20,7 +22,7 @@ export const createHub = createAction({
     teams: common.teams,
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     let address;
     if (context.propsValue.unparsedDestination) {

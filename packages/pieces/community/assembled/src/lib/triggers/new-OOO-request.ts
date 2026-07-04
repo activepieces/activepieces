@@ -1,11 +1,16 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { assembledAuth } from '../common/auth';
 
 export const newTimeOffRequest = createTrigger({
+  auth: assembledAuth,
   name: 'new_OOO_request',
   displayName: 'New OOO Request',
   description: 'Triggers when a new OOO request is created.',
+  aiMetadata: {
+    description: 'Fires when a new time-off (out-of-office) request is created in Assembled, polling for time-off requests updated since the last check. Use to react to newly submitted OOO requests, for example to route them for approval.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {
@@ -18,17 +23,17 @@ export const newTimeOffRequest = createTrigger({
     status: 'approved',
     activity_type_id: '<uuid>',
   },
-  async onEnable(context: any) {
+  async onEnable(context) {
     await context.store.put('lastCheck', Math.floor(Date.now() / 1000));
   },
   async onDisable() {
     // Cleanup if needed
   },
-  async run(context: any) {
+  async run(context) {
     const lastCheck = await context.store.get('lastCheck') || Math.floor(Date.now() / 1000) - 86400; 
     
     const response = await assembledCommon.makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       `/time_off/requests?updated_since=${lastCheck}&limit=100`
     );

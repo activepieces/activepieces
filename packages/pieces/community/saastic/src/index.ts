@@ -5,7 +5,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCharge } from './lib/actions/create-charge';
 import { createCustomer } from './lib/actions/create-customer';
 
@@ -23,7 +23,7 @@ export const saasticAuth = PieceAuth.SecretText({
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
+          token: auth.auth,
         },
       });
       return {
@@ -54,7 +54,7 @@ export const saastic = createPiece({
       baseUrl: () => 'https://api.saastic.com',
       auth: saasticAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

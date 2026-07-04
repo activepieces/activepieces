@@ -4,7 +4,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createNewUser } from './lib/actions/create-new-user';
 
 export const brilliantDirectoriesAuth = PieceAuth.CustomAuth({
@@ -43,10 +43,10 @@ export const brilliantDirectories = createPiece({
   actions: [
     createNewUser,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { site_url: string }).site_url,
+      baseUrl: (auth) => auth?.props?.site_url || '',
       auth: brilliantDirectoriesAuth,
       authMapping: async (auth) => ({
-        'X-Api-Key': `${(auth as { api_key: string }).api_key}`,
+        'X-Api-Key': `${auth.props.api_key}`,
       }),
     }),
   ],

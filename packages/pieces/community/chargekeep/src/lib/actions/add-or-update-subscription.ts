@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
+import { chargekeepAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateSubscription = createAction({
   name: 'addOrUpdateSubscription',
   displayName: 'Add or Update Subscription',
   description: 'Creates a new subscription.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates or updates a product subscription for a contact in the ChargeKeep/Sperse CRM. Identifies the contact by Contact ID or External Contact ID (Contact XREF) and requires a Product Code and Payment Period Type (Monthly, Annual, or LifeTime) that already exist on the product. Use to enroll or change a contact in a subscription plan; repeating the same input updates the same subscription rather than creating a duplicate.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     contactId: Property.Number({
@@ -90,11 +92,11 @@ export const addOrUpdateSubscription = createAction({
       hasRecurringBilling: context.propsValue.hasRecurringBilling,
     };
 
-    const res = await httpClient.sendRequest({
+    const res = await httpClient.sendRequest({  
       method: HttpMethod.PUT,
-      url: `${context.auth.base_url}/api/services/CRM/OrderSubscription/Update`,
+      url: `${context.auth.props.base_url}/api/services/CRM/OrderSubscription/Update`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const get_tags = createAction({
@@ -8,6 +8,8 @@ export const get_tags = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Tags',
     description: 'Retrieve the list of tags available in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'List all route tags defined in the account, returning their ids and names. Use to resolve a valid tag reference before applying tags to routes or visits. Read-only and idempotent; takes no inputs.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/routes/tags/`;
@@ -16,7 +18,7 @@ export const get_tags = createAction({
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

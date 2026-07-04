@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty, dynamicFileProperty } from '../common';
 
 export const attachFileAction = createAction({
@@ -8,6 +8,8 @@ export const attachFileAction = createAction({
   name: 'attach_file',
   displayName: 'Attach File',
   description: 'Upload and attach a file to an item/task/comment.',
+  audience: 'both',
+  aiMetadata: { description: 'Attaches an already-uploaded Podio file to a target object — an item, task, status update, comment, or space — selected via the reference type and id. Use when linking an existing file to a Podio object; requires the file id, a space, and the target type/id. Not idempotent — each call adds another attachment.', idempotent: false },
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
@@ -16,6 +18,7 @@ export const attachFileAction = createAction({
     fileId: dynamicFileProperty,
     
     refType: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Attach To',
       description: 'What type of object to attach the file to',
       required: true,

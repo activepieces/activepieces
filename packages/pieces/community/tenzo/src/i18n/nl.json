@@ -1,0 +1,15 @@
+{
+  "Extract data and insights from the Tenzo platform for sales, forecasting, and analytics.": "Haal gegevens en inzichten uit het Tenzo-platform voor verkoop, prognoses en analytics uit.",
+  "New Daily Forecast": "Nieuwe Dagelijkse Voorspelling",
+  "New Summary Payments": "Nieuwe samenvatting betalingen",
+  "New Summary Sales": "Nieuwe samenvatting verkoop",
+  "Triggers when there is a new daily forecast for a selected location.": "Triggert wanneer er een nieuwe dagelijkse voorspelling is voor een geselecteerde locatie.",
+  "Triggers when there is new daily sales and payments data.": "Triggert wanneer er nieuwe dagelijkse verkoop- en betalingsgegevens zijn.",
+  "Triggers when there is new daily sales data.": "Triggert wanneer er nieuwe dagelijkse verkoopgegevens zijn.",
+  "Location": "Locatie",
+  "Area": "Oppervlak",
+  "Include Deleted": "Inclusief verwijderde",
+  "Select the location to filter data": "Selecteer de locatie om gegevens te filteren",
+  "Select the area to filter data": "Selecteer het gebied om gegevens te filteren",
+  "Include data that has been deleted": "Gegevens bijvoegen die verwijderd zijn"
+}

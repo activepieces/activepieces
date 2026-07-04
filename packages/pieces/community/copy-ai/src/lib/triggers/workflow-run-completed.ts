@@ -1,8 +1,8 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
-import { copyAiAuth } from '../../index';
+import { isNil } from '@activepieces/pieces-framework';
+import { copyAiAuth } from '../auth';
 
 
 export const workflowRunCompletedTrigger = createTrigger({
@@ -10,6 +10,9 @@ export const workflowRunCompletedTrigger = createTrigger({
     name: 'workflow_run_completed',
     displayName: 'Workflow Run Completed',
     description: 'Triggered when a workflow run is completed.',
+    aiMetadata: {
+      description: 'Fires via webhook when an execution of the specified Copy.ai workflow finishes, delivering the completed run including its status, inputs, and generated outputs. Scoped to the single workflow ID configured on the trigger.',
+    },
     props: {
         workflowId: Property.ShortText({
 			displayName: 'Workflow ID',
@@ -40,7 +43,7 @@ export const workflowRunCompletedTrigger = createTrigger({
       },
     async onEnable(context) {
         const response = await makeRequest(
-            context.auth as string,
+            context.auth.secret_text,
             HttpMethod.POST,
             '/webhook',
             {
@@ -59,7 +62,7 @@ export const workflowRunCompletedTrigger = createTrigger({
         if(!isNil(response) && !isNil(response.webhookId))
         {
              await makeRequest(
-                context.auth as string,
+                context.auth.secret_text,
                 HttpMethod.DELETE,
                 `/webhook/${response.webhookId}`,
                 {}

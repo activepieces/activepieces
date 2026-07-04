@@ -1,6 +1,6 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 
 export const createDataSourceAction = createAction({
@@ -8,6 +8,8 @@ export const createDataSourceAction = createAction({
   name: 'create_data_source',
   displayName: 'Create Data Source',
   description: 'Create a new data source',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new data source in IBM Cognos Analytics from a JDBC connection string, optionally attaching a database driver and a signon (username/password) credential. Use when provisioning a database connection for reporting. Not idempotent: each call creates a new data source and fails if one with the same name already exists.', idempotent: false },
   props: {
     defaultName: Property.ShortText({
       displayName: 'Data Source Name',
@@ -46,7 +48,7 @@ export const createDataSourceAction = createAction({
     const { defaultName, connectionString, driverName, username, password, signonDefaultName } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const dataSourceDefinition: any = {
         defaultName,

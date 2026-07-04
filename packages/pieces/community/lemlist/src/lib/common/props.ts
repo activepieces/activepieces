@@ -1,5 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { lemlistApiService } from './requests';
+import { lemlistAuth } from './constants';
 
 export const campaignsDropdown = ({
   refreshers,
@@ -9,13 +10,14 @@ export const campaignsDropdown = ({
   required?: boolean;
 }) =>
   Property.Dropdown({
+    auth: lemlistAuth,
     displayName: 'Campaign',
     description: required
       ? 'Select a campaign'
       : 'Select a campaign (optional)',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth }) {
       if (!auth) {
         return {
           disabled: true,
@@ -25,7 +27,7 @@ export const campaignsDropdown = ({
       }
 
       try {
-        const campaigns = await lemlistApiService.fetchCampaigns(auth);
+        const campaigns = await lemlistApiService.fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((c: any) => ({

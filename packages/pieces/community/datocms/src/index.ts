@@ -42,7 +42,7 @@ export const datocms = createPiece({
       auth: datoAuth,
       baseUrl: () => DATO_BASE_URL,
       authMapping: async (auth) => {
-        const { apiKey, environment } = auth as DatoAuthType;
+        const { apiKey, environment } = auth.props;
         const headers: HttpHeaders = {
           Accept: 'application/json',
           'Content-Type': 'application/vnd.api+json',

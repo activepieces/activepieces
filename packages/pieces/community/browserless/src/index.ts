@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { browserlessAuth } from './lib/common/auth';
 import { captureScreenshot } from './lib/actions/capture-screenshot';
 import { generatePdf } from './lib/actions/generate-pdf';

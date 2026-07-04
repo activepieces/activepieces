@@ -2,6 +2,7 @@ import {
 	createTrigger,
 	TriggerStrategy,
 	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
 	DedupeStrategy,
@@ -14,7 +15,7 @@ import dayjs from 'dayjs';
 import { pdfmonkeyAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 
-const polling: Polling<PiecePropValueSchema<typeof pdfmonkeyAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof pdfmonkeyAuth>, Record<string, never>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS }) => {
 		let page = 1;
@@ -34,7 +35,7 @@ const polling: Polling<PiecePropValueSchema<typeof pdfmonkeyAuth>, Record<string
 			const response = await makeRequest<{
 				document_cards: Array<{ id: string; created_at: string }>;
 				meta: { total_pages: number; current_page: number };
-			}>(auth as string, HttpMethod.GET, '/document_cards', qs);
+			}>(auth, HttpMethod.GET, '/document_cards', qs);
 
 			const items = response.document_cards ?? [];
 
@@ -60,6 +61,9 @@ export const documentGeneratedTrigger = createTrigger({
 	name: 'documentGenerated',
 	displayName: 'Document Generated',
 	description: 'Triggers when a document generation completes successfully.',
+	aiMetadata: {
+		description: 'Fires when a PDFMonkey document finishes generating with a success status. Each event represents one completed document, carrying its download URL, filename, template, and metadata. Polls for documents updated since the last check.',
+	},
 	props: {},
 	sampleData: {
 		id: '11475e57-0334-4ad5-8896-9462a2243957',

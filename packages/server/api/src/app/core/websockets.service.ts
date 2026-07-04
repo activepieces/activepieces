@@ -1,20 +1,21 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
+import { projectMemberService } from '../ee/projects/project-members/project-member.service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { app } from '../server'
 
-export type WebsocketListener<T> = (socket: Socket) => (data: T, principal: Principal, callback?: (data: unknown) => void) => Promise<void>
+export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER> = (socket: Socket) => (data: T, principal: PrincipalForType<PR>, projectId: PR extends PrincipalType.USER ? string : null, callback?: (data: unknown) => void) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ListenerMap = Partial<Record<WebsocketServerEvent, WebsocketListener<any>>>
+type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<Record<WebsocketServerEvent, WebsocketListener<any, PR>>>
 
-const listener: Record<PrincipalType.USER | PrincipalType.WORKER, ListenerMap> = {
-    [PrincipalType.USER]: {},
-    [PrincipalType.WORKER]: {},
+const listener = {
+    [PrincipalType.USER]: {} as ListenerMap<PrincipalType.USER>,
+    [PrincipalType.WORKER]: {} as ListenerMap<PrincipalType.WORKER>,
 }
-
 
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
@@ -24,22 +25,26 @@ export const websocketService = {
         if (![PrincipalType.USER, PrincipalType.WORKER].includes(type)) {
             return
         }
+
         const castedType = type as keyof typeof listener
+        const projectId = socket.handshake.auth.projectId
         switch (type) {
             case PrincipalType.USER: {
+                await validateProjectId({ userId: principal.id, projectId, log })
                 log.info({
                     message: 'User connected',
-                    userId: principal.id,
-                    projectId: principal.projectId,
+                    user: { id: principal.id },
+                    project: { id: projectId },
                 })
-                await socket.join(principal.projectId)
+                await socket.join(projectId)
+                await socket.join(principal.id)
                 break
             }
             case PrincipalType.WORKER: {
                 const workerId = socket.handshake.auth.workerId
                 log.info({
                     message: 'Worker connected',
-                    workerId,
+                    worker: { id: workerId },
                 })
                 await socket.join(workerId)
                 break
@@ -54,23 +59,60 @@ export const websocketService = {
             }
         }
         for (const [event, handler] of Object.entries(listener[castedType])) {
-            socket.on(event, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, callback), log))
-        }
-        for (const handler of Object.values(listener[castedType][WebsocketServerEvent.CONNECT] ?? {})) {
-            handler(socket)
-        }
-    },
-    async onDisconnect(socket: Socket): Promise<void> {
-        const principal = await websocketService.verifyPrincipal(socket)
-        const castedType = principal.type as keyof typeof listener
-        for (const handler of Object.values(listener[castedType][WebsocketServerEvent.DISCONNECT] ?? {})) {
-            handler(socket)
+            // Socket.IO emits the reserved lowercase 'disconnect' per-socket; map our DISCONNECT enum
+            // onto it or the handler never fires (it never did — worker cleanup relied on the 60s sweep).
+            const socketEvent = event === WebsocketServerEvent.DISCONNECT ? 'disconnect' : event
+            socket.on(socketEvent, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log))
         }
     },
     async verifyPrincipal(socket: Socket): Promise<Principal> {
-        return accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
+        return accessTokenManager(app!.log).verifyPrincipal(socket.handshake.auth.token)
     },
-    addListener<T>(principalType: keyof typeof listener, event: WebsocketServerEvent, handler: WebsocketListener<T>): void {
-        listener[principalType][event] = handler
+    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
+        switch (principalType) {
+            case PrincipalType.USER: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                listener[PrincipalType.USER][event] = handler as unknown as WebsocketListener<any, PrincipalType.USER>
+                break
+            }
+            case PrincipalType.WORKER: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                listener[PrincipalType.WORKER][event] = handler as unknown as WebsocketListener<any, PrincipalType.WORKER>
+                break
+            }
+        }
     },
+    emitWithAck<T = unknown>(event: WebsocketServerEvent, workerId: string, data?: unknown): Promise<T> {
+        return app!.io.to([workerId]).timeout(4000).emitWithAck(event, data)
+    },
+}
+
+const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<void> => {
+    if (isNil(projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHENTICATION,
+            params: {
+                message: 'Project ID is required',
+            },
+        })
+    }
+    const role = await projectMemberService(log).getRole({
+        projectId,
+        userId,
+    })
+
+    if (isNil(role)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User not allowed to access this project',
+            },
+        })
+    }
+}
+
+type ValidateProjectIdArgs = {
+    userId: string
+    projectId?: string
+    log: FastifyBaseLogger
 }

@@ -1,18 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { vadooAiAuth } from '../../index';
+import { vadooAiAuth } from '../auth';
 import {
   httpClient,
   HttpMethod,
   propsValidation,
 } from '@activepieces/pieces-common';
 import { generatePodcastSchema } from '../schemas';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const generatePodcast = createAction({
   auth: vadooAiAuth,
   name: 'generate_podcast',
   displayName: 'Generate Podcast',
   description: 'Generates a podcast-style video.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates a two-speaker podcast-style video on Vadoo from source content and waits (polls up to ~5 minutes) for it to finish, returning the completed video URL. The content source is selectable: either a website/PDF URL or custom text, and the matching field is required for the chosen source. Requires host and guest names; optional voices, theme, language, duration, and tone shape the output. Each call starts a new generation job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     content_source: Property.StaticDropdown({
       displayName: 'Content Source',
@@ -41,6 +47,7 @@ export const generatePodcast = createAction({
       required: true,
     }),
     voice1: Property.Dropdown({
+  auth: vadooAiAuth,
       displayName: 'Host Voice',
       description: 'The host voice for AI Podcast',
       required: false,
@@ -59,7 +66,7 @@ export const generatePodcast = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_voices',
             headers: {
-              'X-API-KEY': auth as string,
+              'X-API-KEY': auth.secret_text,
             },
             timeout: 10000, // 10 second timeout
           });
@@ -109,6 +116,7 @@ export const generatePodcast = createAction({
       required: true,
     }),
     voice2: Property.Dropdown({
+  auth: vadooAiAuth,
       displayName: 'Guest Voice',
       description: 'The guest voice for AI Podcast',
       required: false,
@@ -127,7 +135,7 @@ export const generatePodcast = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_voices',
             headers: {
-              'X-API-KEY': auth as string,
+              'X-API-KEY': auth.secret_text,
             },
             timeout: 10000, // 10 second timeout
           });
@@ -172,6 +180,7 @@ export const generatePodcast = createAction({
       },
     }),
     theme: Property.Dropdown({
+  auth: vadooAiAuth,
       displayName: 'Theme',
       description: 'To display captions with style',
       required: false,
@@ -190,7 +199,7 @@ export const generatePodcast = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_themes',
             headers: {
-              'X-API-KEY': auth as string,
+              'X-API-KEY': auth.secret_text,
             },
           });
 
@@ -212,6 +221,7 @@ export const generatePodcast = createAction({
       },
     }),
     language: Property.Dropdown({
+  auth: vadooAiAuth,
       displayName: 'Language',
       description: 'To generate video in language you want',
       required: false,
@@ -230,7 +240,7 @@ export const generatePodcast = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_languages',
             headers: {
-              'X-API-KEY': auth as string,
+              'X-API-KEY': auth.secret_text,
             },
           });
 
@@ -322,7 +332,7 @@ export const generatePodcast = createAction({
       method: HttpMethod.POST,
       url: 'https://viralapi.vadoo.tv/api/generate_podcast',
       headers: {
-        'X-API-KEY': context.auth,
+        'X-API-KEY': context.auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,
@@ -345,7 +355,7 @@ export const generatePodcast = createAction({
         method: HttpMethod.GET,
         url: 'https://viralapi.vadoo.tv/api/get_video_url',
         headers: {
-          'X-API-KEY': context.auth,
+          'X-API-KEY': context.auth.secret_text,
           'Content-Type': 'application/json',
         },
         queryParams: {

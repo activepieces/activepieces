@@ -9,6 +9,8 @@ export const createWorker = createAction({
   name: 'create_worker',
   displayName: 'Create Worker',
   description: 'Create a new worker',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Onfleet worker (driver) from a name and phone, assigned to one or more required teams, with optional capacity and display name. Not idempotent: calling it repeatedly creates duplicate workers. Use update-worker to modify an existing driver.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -31,7 +33,7 @@ export const createWorker = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.workers.create({
       name: context.propsValue.name,

@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createOrgAction = createAction({
   name: 'create_org',
   displayName: 'Create Organization',
   description: 'Create a new organization',
+  audience: 'both',
+  aiMetadata: { description: 'Create a brand-new organization with the given name. Use only to provision a new org; to rename an existing one use update-org. Not idempotent: each call creates another organization, so do not retry blindly.', idempotent: false },
   auth: zooAuth,
   // category: 'Organizations',
   props: {
@@ -20,7 +22,7 @@ export const createOrgAction = createAction({
       method: HttpMethod.POST,
       url: 'https://api.zoo.dev/org',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         name: propsValue.name,

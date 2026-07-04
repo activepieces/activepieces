@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookCommon } from '../common/client';
 import { messageIdDropdown } from '../common/props';
 
 export const forwardEmailAction = createAction({
@@ -9,6 +9,8 @@ export const forwardEmailAction = createAction({
 	name: 'forwardEmail',
 	displayName: 'Forward Email',
 	description: 'Forwards an email message.',
+	audience: 'both',
+	aiMetadata: { description: 'Forwards an existing Outlook message (by message ID) to new recipients, preserving the original body and attachments and prepending an optional comment. Use this to pass an existing email along rather than composing a new one. Not idempotent: each call sends a new forwarded email.', idempotent: false },
 	props: {
 		messageId: messageIdDropdown({
 			displayName: 'Email',
@@ -29,13 +31,9 @@ export const forwardEmailAction = createAction({
 		const { messageId, comment } = context.propsValue;
 		const recipients = context.propsValue.recipients as string[];
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-		});
+		const client = outlookCommon.createClient(context.auth);
 
-		const message = await client.api(`/me/messages/${messageId}`).get();
+		const message = await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/messages/${messageId}`).get();
 
 		const messagePayload: Message = {
 			toRecipients: recipients.map((mail) => ({
@@ -51,7 +49,7 @@ export const forwardEmailAction = createAction({
 		};
 
 		const response = await client
-			.api(`/me/messages/${messageId}/forward`)
+			.api(`${outlookCommon.mailboxPrefix(context.auth)}/messages/${messageId}/forward`)
 			.post({
 				message:messagePayload,
 			});

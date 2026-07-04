@@ -1,16 +1,17 @@
 import {
-  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import { BikaCommon, makeClient } from '../common';
-import { BikaAuth } from '../../index';
+import { BikaAuth } from '../auth';
 
 export const deleteRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_delete_record',
   displayName: 'Delete Record',
   description: 'Deletes a record in database by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a single record from a Bika.ai database by its record ID, within a given space and database. Use to permanently remove a known record. Idempotent in effect: once removed, repeating the call leaves the record absent.', idempotent: true },
   props: {
     space_id: BikaCommon.space_id,
     database_id: BikaCommon.database_id,
@@ -26,7 +27,7 @@ export const deleteRecordAction = createAction({
     const recordId = context.propsValue.recordId;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof BikaAuth>
+      context.auth.props,
     );
 
     const response: any = await client.deleteRecord(

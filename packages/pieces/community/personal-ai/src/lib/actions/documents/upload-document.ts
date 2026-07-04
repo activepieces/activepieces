@@ -1,12 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { personalAiAuth } from '../../auth';
+import { BASE_URL } from '../../../index';
 
 export const uploadDocument = createAction({
   auth:personalAiAuth,
   name: 'upload_document',
   displayName: 'Upload Document',
   description: 'Upload a text document to AI assistant.',
+  audience: 'both',
+  aiMetadata: { description: 'Upload a text document (raw text plus a title) to the Personal AI assistant so it can reference the content, with optional tags, source, and add-to-memory flag. Use when the source is plain text already in hand; use Upload File for binary files or Upload URL Content to fetch from a link. Each call creates a new document, so it is not idempotent.', idempotent: false },
   // category: 'Documents',
   props: {
     text: Property.LongText({
@@ -54,7 +57,7 @@ export const uploadDocument = createAction({
       url: `${BASE_URL}/v1/upload-text`,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       },
       body: {
         Text: text,

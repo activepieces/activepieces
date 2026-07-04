@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertFrequencyAction = createAction({
   name: 'convert_frequency',
   displayName: 'Convert Frequency',
   description: 'Convert frequency measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single frequency value between hertz, kilohertz, megahertz, and gigahertz. Use only for frequency; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {
@@ -44,7 +46,7 @@ export const convertFrequencyAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/frequency/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

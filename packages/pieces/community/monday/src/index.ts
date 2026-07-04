@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createColumnAction } from './lib/actions/create-column';
 import { createGroupAction } from './lib/actions/create-group';
 import { createItemAction } from './lib/actions/create-item';
@@ -11,6 +11,7 @@ import { updateItemNameAction } from './lib/actions/update-item-name';
 import { newItemInBoardTrigger } from './lib/triggers/new-item-in-board';
 import { specificColumnValueUpdatedTrigger } from './lib/triggers/specific-column-updated';
 import { uploadFileToColumnAction } from './lib/actions/upload-file-to-column';
+import { mondayAuth } from './lib/auth';
 
 const markdown = `
 1.Log into your monday.com account.\n
@@ -18,12 +19,6 @@ const markdown = `
 3.Select **Administration** (this requires you to have admin permissions).\n
 4.Go to the **API** section.\n
 5.Copy your personal token`;
-
-export const mondayAuth = PieceAuth.SecretText({
-  displayName: 'API v2 Token',
-  description: markdown,
-  required: true,
-});
 
 export const monday = createPiece({
   displayName: 'monday.com',

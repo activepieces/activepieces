@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { acuitySchedulingAuth } from '../../index';
+import { acuitySchedulingAuth } from '../auth';
 import { API_URL } from '../common';
 import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
 
@@ -9,6 +9,12 @@ export const findAppointmentAction = createAction({
 	name: 'find_appointment',
 	displayName: 'Find Appointment(s)',
 	description: 'Find appointments based on various criteria, including client information.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			"Searches Acuity appointments and returns matches with a found flag. Filter by client name/email/phone, date range, calendar, appointment type, and status (scheduled, canceled, or all); providing no filters fetches all appointments up to the result limit rather than a targeted match. Use to look up existing appointments or resolve an appointment ID. Read-only and idempotent.",
+		idempotent: true,
+	},
 	props: {
 		// Client Info Filters
 		firstName: Property.ShortText({

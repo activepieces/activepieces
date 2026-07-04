@@ -1,6 +1,6 @@
 import { createAction, Property, ApFile, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, HttpMessageBody, HttpHeaders } from '@activepieces/pieces-common';
-import { cambaiAuth } from '../../index';
+import { cambaiAuth } from '../auth';
 import { API_BASE_URL, listSourceLanguagesDropdown, POLLING_INTERVAL_MS, LONG_MAX_POLLING_ATTEMPTS } from '../common';
 import FormData from 'form-data';
 import { listFoldersDropdown } from '../common';
@@ -10,6 +10,8 @@ export const createTranscription = createAction({
     name: 'create_transcription',
     displayName: 'Create Transcription',
     description: 'Creates a task to process speech into readable text.',
+    audience: 'both',
+    aiMetadata: { description: 'Transcribes speech from an audio/video source into text via Camb.AI, polling until the transcription task completes. The media can be supplied either as an uploaded file (max 20MB) or as a public file URL, selected via the media source mode; you must specify the spoken language. Use to convert recorded speech to text. Not idempotent: each call starts a new transcription task.', idempotent: false },
     props: {
         language: listSourceLanguagesDropdown,
         source_type: Property.StaticDropdown({
@@ -25,6 +27,7 @@ export const createTranscription = createAction({
             },
         }),
         media: Property.DynamicProperties({
+            auth: cambaiAuth,
             displayName: 'Media',
             required: true,
             refreshers: ['source_type'],
@@ -82,7 +85,7 @@ export const createTranscription = createAction({
 
         const requestBody = await formData.getBuffer();
         const headers: HttpHeaders = {
-            'x-api-key': auth,
+            'x-api-key': auth.secret_text,
             ...formData.getHeaders(),
         };
 
@@ -100,7 +103,7 @@ export const createTranscription = createAction({
             const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/transcribe/${taskId}`,
-                headers: { 'x-api-key': auth },
+                headers: { 'x-api-key': auth.secret_text },
             });
 
             if (statusResponse.body.status === 'SUCCESS') {
@@ -120,7 +123,7 @@ export const createTranscription = createAction({
         const resultResponse = await httpClient.sendRequest<{ transcriptions: string[] }>({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/transcription-result/${run_id}`,
-            headers: { 'x-api-key': auth },
+            headers: { 'x-api-key': auth.secret_text },
         });
 
         return resultResponse.body;

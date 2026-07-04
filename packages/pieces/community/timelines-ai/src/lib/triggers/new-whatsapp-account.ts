@@ -7,6 +7,9 @@ export const newWhatsappAccount = createTrigger({
   name: 'newWhatsappAccount',
   displayName: 'New WhatsApp Account',
   description: 'Fires when a new WhatsApp account is added/registered.',
+  aiMetadata: {
+    description: 'Fires when a WhatsApp account is connected to TimelinesAI. Represents a newly registered/connected account, carrying its id, phone number, status, and owner details.',
+  },
   props: {},
   sampleData: {
     event_type: 'whatsapp:account:connected',

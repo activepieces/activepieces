@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertEnergyAction = createAction({
   name: 'convert_energy',
   displayName: 'Convert Energy',
   description: 'Convert energy measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single energy value between units such as joules, kilojoules, calories, kilocalories, watt-hours, kilowatt-hours, and BTU. Use only for energy; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {
@@ -50,7 +52,7 @@ export const convertEnergyAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/energy/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

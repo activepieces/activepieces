@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertAreaAction = createAction({
   name: 'convert_area',
   displayName: 'Convert Area',
   description: 'Convert area measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single area value between units such as square meters/feet/inches/yards/kilometers/miles, hectares, and acres. Use only for area; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {
@@ -52,7 +54,7 @@ export const convertAreaAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/area/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

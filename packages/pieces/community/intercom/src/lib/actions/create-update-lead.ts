@@ -1,4 +1,4 @@
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
 import dayjs from 'dayjs';
@@ -8,6 +8,8 @@ export const createOrUpdateLeadAction = createAction({
 	name: 'create-or-update-lead',
 	displayName: 'Create or Update Lead',
 	description: 'Create or update an Intercom lead.If an ID is provided, the lead will be updated.',
+	audience: 'both',
+	aiMetadata: { description: 'Upsert a lead (prospect contact): if a Lead ID is supplied the matching lead is updated (erroring if none is found), otherwise a new lead is created. Providing an ID makes it effectively idempotent; without an ID each call creates a new lead. For signed-up users use Create/Update User instead.', idempotent: true },
 	props: {
 		leadId: Property.ShortText({
 			displayName: 'Lead ID',

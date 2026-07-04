@@ -1,11 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getBlockTimestamp = createAction({
+ auth:PieceAuth.None(),
     name: 'get_block_timestamp',
     displayName: 'Get Block Timestamp',
     description: 'Returns the height and hash of the block closest to the given timestamp',
+    audience: 'both',
+    aiMetadata: { description: 'Find the block mined closest to a given Unix timestamp, returning its height and hash. Pick this to locate a block by time; use Get Block Height when you already know the numeric height. Read-only.', idempotent: true },
     // category: 'Blocks',
     props: {
         timestamp: Property.Number({

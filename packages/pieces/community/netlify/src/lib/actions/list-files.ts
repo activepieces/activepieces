@@ -1,13 +1,16 @@
 import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { netlifyAuth } from "../common/auth";
 
 export const listFiles = createAction({
   name: "list_files",
   displayName: "List Files",
   description: "Returns a list of all the files in the current deploy.",
+  audience: 'both',
+  aiMetadata: { description: 'Lists all files in the current (published) deploy of a Netlify site, identified by its site ID. Use it to inspect which files are served for the live site. Read-only and idempotent.', idempotent: true },
   props: {
     siteId: Property.Dropdown({
-      displayName: "Site",
+      auth: netlifyAuth,      displayName: "Site",
       description: "Select the site to list files for",
       required: true,
       refreshers: ['auth'],

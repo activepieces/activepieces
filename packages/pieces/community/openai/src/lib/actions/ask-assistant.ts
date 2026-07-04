@@ -4,18 +4,20 @@ import {
   StoreScope,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { openaiAuth } from '../auth';
 import { sleep } from '../common/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askAssistant = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'ask_assistant',
   displayName: 'Ask Assistant',
   description: 'Ask a GPT assistant anything you want!',
   props: {
     assistant: Property.Dropdown({
+  auth: openaiAuth,
       displayName: 'Assistant',
       required: true,
       description: 'The assistant which will generate the completion.',
@@ -30,7 +32,7 @@ export const askAssistant = createAction({
         }
         try {
           const openai = new OpenAI({
-            apiKey: auth as string,
+            apiKey: auth.secret_text,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -65,11 +67,11 @@ export const askAssistant = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      memoryKey: z.string().max(128).optional(),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
 
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;

@@ -2,12 +2,15 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { clickupCommon, callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../auth';
+import { taskOutputSchema } from '../../output-schemas';
 
 export const updateClickupTask = createAction({
   auth: clickupAuth,
   name: 'update_task',
   description: 'Update task in a ClickUp workspace and list',
+  audience: 'both',
+  aiMetadata: { description: 'Modify fields of an existing ClickUp task identified by its task ID, including name, description, status, priority, and adding or removing assignees. Pick this to change a task you already have the ID for; use Create Task to make a new one. Only the fields you supply are changed, so repeating the same update produces the same end state.', idempotent: false },
   displayName: 'Update Task',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -37,6 +40,7 @@ export const updateClickupTask = createAction({
       'assignee(s) you want to remove from the task'
     ),
   },
+  outputSchema: taskOutputSchema,
   async run(configValue) {
     const {
       task_id,

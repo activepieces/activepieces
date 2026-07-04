@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -9,6 +9,7 @@ import {
 import { baseUrlv0, baseUrlv1 } from '../common/common';
 
 export const imageGeneration = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'image_generation',
   displayName: 'Image Generation',
@@ -31,6 +32,8 @@ export const imageGeneration = createAction({
       },
     }),
     model: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Model',
       required: true,
       description: 'Select the image generation model.',
@@ -53,7 +56,7 @@ export const imageGeneration = createAction({
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as string,
+              token: auth.secret_text,
             },
           });
 
@@ -123,7 +126,7 @@ export const imageGeneration = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: {
         model: propsValue.model,

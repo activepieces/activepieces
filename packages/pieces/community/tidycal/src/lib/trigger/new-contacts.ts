@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   HttpMethod,
@@ -6,7 +6,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { calltidycalapi } from '../common';
-import { tidyCalAuth } from '../../';
+import { tidyCalAuth } from '../auth';
 import dayjs from 'dayjs';
 
 export const tidycalnewcontact = createTrigger({
@@ -14,6 +14,9 @@ export const tidycalnewcontact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact is added to the TidyCal account. A contact represents a person who has booked or interacted with the scheduling account, including their id, name, email, and creation timestamp. Use this to react to newly captured contacts, such as syncing them to a CRM or mailing list.',
+  },
   props: {},
   sampleData: {
     data: [
@@ -59,7 +62,7 @@ export const tidycalnewcontact = createTrigger({
   },
 });
 
-const polling: Polling<string, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof tidyCalAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const currentValues = await calltidycalapi<{

@@ -1,24 +1,19 @@
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-
-import { googleSheetsAuth } from '../..';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
-
+import { sheets as googleSheets } from '@googleapis/sheets';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { nanoid } from 'nanoid';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
-import { columnToLabel } from '../common/common';
-import { isNil } from '@activepieces/shared';
+import { columnToLabel, createGoogleClient, GoogleSheetsAuthValue } from '../common/common';
+import { isNil } from '@activepieces/pieces-framework';
 
 export async function getWorkSheetName(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	spreadSheetId: string,
 	sheetId: number,
 ) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+	const authClient = await createGoogleClient(auth);
 
-	const sheets = google.sheets({ version: 'v4', auth: authClient });
+	const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 	const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId });
 	const sheetName = res.data.sheets?.find((f) => f.properties?.sheetId == sheetId)?.properties
@@ -32,14 +27,13 @@ export async function getWorkSheetName(
 }
 
 export async function getWorkSheetGridSize(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	spreadSheetId: string,
 	sheetId: number,
 ) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+	const authClient = await createGoogleClient(auth);
 
-	const sheets = google.sheets({ version: 'v4', auth: authClient });
+	const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 	const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId, includeGridData: true, fields: 'sheets.properties(sheetId,title,sheetType,gridProperties)' });
 	const sheetRange = res.data.sheets?.find((f) => f.properties?.sheetId == sheetId)?.properties?.gridProperties;
@@ -52,14 +46,13 @@ export async function getWorkSheetGridSize(
 }
 
 export async function getWorkSheetValues(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	spreadsheetId: string,
 	range?: string,
 ) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+	const authClient = await createGoogleClient(auth);
 
-	const sheets = google.sheets({ version: 'v4', auth: authClient });
+	const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 	const res = await sheets.spreadsheets.values.get({
 		spreadsheetId: spreadsheetId,
@@ -70,15 +63,14 @@ export async function getWorkSheetValues(
 }
 
 export async function createFileNotification(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	fileId: string,
 	url: string,
 	includeTeamDrives?: boolean,
-) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+): Promise<{ data: drive_v3.Schema$Channel }> {
+	const authClient = await createGoogleClient(auth);
 
-	const drive = google.drive({ version: 'v3', auth: authClient });
+	const drive = googleDrive({ version: 'v3', auth: authClient });
 
 	// create unique UUID for channel
 	const channelId = nanoid();
@@ -95,14 +87,13 @@ export async function createFileNotification(
 }
 
 export async function deleteFileNotification(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	channelId: string,
 	resourceId: string,
-) {
-	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+): Promise<{ data: void }> {
+	const authClient = await createGoogleClient(auth);
 
-	const drive = google.drive({ version: 'v3', auth: authClient });
+	const drive = googleDrive({ version: 'v3', auth: authClient });
 
 	return await drive.channels.stop({
 		requestBody: {

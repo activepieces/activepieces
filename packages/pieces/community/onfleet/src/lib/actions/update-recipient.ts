@@ -8,6 +8,12 @@ export const updateRecipient = createAction({
   name: 'update_recipient',
   displayName: 'Update Recipient',
   description: 'Updates a recipient',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing Onfleet recipient identified by recipient ID, changing name, notes, or the skip-SMS-notifications setting. Idempotent: it modifies the same record in place by ID, so repeated calls with the same values leave it unchanged. Use Create Recipient when no recipient exists yet.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Recipient ID',
@@ -29,7 +35,7 @@ export const updateRecipient = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
     const recipient: any = {
       name: context.propsValue['name'] ?? undefined,
       notes: context.propsValue['notes'] ?? undefined,

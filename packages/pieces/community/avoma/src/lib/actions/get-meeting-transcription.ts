@@ -1,11 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { avomaCommon } from '../common';
 
 export const getMeetingTranscription = createAction({
+  auth: avomaCommon.avomaAuth,
   name: 'get_meeting_transcription',
   displayName: 'Get Meeting Transcription',
   description: 'Returns transcription with speakers, timestamps, and VTT file URL',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the transcription for a single Avoma meeting by its transcription UUID, including speaker-labeled segments and a downloadable VTT subtitle URL. Use to retrieve the text of a recorded meeting or call. Read-only and idempotent.', idempotent: true },
   props: {
     transcription_uuid: avomaCommon.transcriptionDropdown
   },

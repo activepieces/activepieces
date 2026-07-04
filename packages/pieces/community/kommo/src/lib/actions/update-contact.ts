@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { makeRequest } from '../common';
 import { contactDropdown, userDropdown } from '../common/props';
 
@@ -15,6 +15,8 @@ export const updateContactAction = createAction({
   name: 'update_contact',
   displayName: 'Update Contact',
   description: 'Updates an existing contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Kommo CRM contact identified by contact ID, changing only the supplied fields (name, email/phone, responsible user) and adding or removing tags. Use to amend a known contact; resolve the contact ID first via Find Contact if unknown. Idempotent — repeating the same update yields the same contact state, though tag add/delete depends on the current tag set.', idempotent: true },
   props: {
     contactId: contactDropdown,
     name: Property.ShortText({
@@ -63,7 +65,7 @@ export const updateContactAction = createAction({
     const tagsToAdd = context.propsValue.tags_to_add ?? [];
     const tagsToDelete = context.propsValue.tags_to_delete ?? [];
 
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
 
     const customFields: KommoCustomFieldValue[] = [];
 

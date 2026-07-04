@@ -5,13 +5,15 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { googleCalendarCommon } from '../common';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
+import { quickEventActionOutputSchema } from '../output-schemas';
 
 export const createQuickCalendarEvent = createAction({
   auth: googleCalendarAuth,
   name: 'create_quick_event',
   description: 'Add Quick Calendar Event',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a calendar event from a single natural-language phrase (e.g. "Lunch with Sam tomorrow at 1pm") via Google\'s quickAdd parsing, letting Google infer the time, title, and date. Use when you have free-form text rather than structured fields; prefer Create Event when you have explicit start/end times or attendees. Not idempotent: each call creates a new event.', idempotent: false },
   displayName: 'Create Quick Event',
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
@@ -44,6 +46,7 @@ export const createQuickCalendarEvent = createAction({
       },
     }),
   },
+  outputSchema: quickEventActionOutputSchema,
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/quickAdd
     const calendarId = configValue.propsValue['calendar_id'];
@@ -58,7 +61,7 @@ export const createQuickCalendarEvent = createAction({
       body: {},
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: configValue.auth.access_token,
+        token: await getAccessToken(configValue.auth),
       },
       queryParams: qParams,
     };

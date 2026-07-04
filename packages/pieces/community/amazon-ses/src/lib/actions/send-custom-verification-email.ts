@@ -3,7 +3,7 @@ import {
   SESClient,
   SendCustomVerificationEmailCommand,
 } from '@aws-sdk/client-ses';
-import { amazonSesAuth } from '../../index';
+import { amazonSesAuth } from '../auth';
 import {
   getConfigurationSets,
   getCustomVerificationTemplates,
@@ -21,6 +21,12 @@ export const sendCustomVerificationEmail = createAction({
   displayName: 'Send Custom Verification Email',
   description:
     'Send verification email to add an email address to SES identities',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a custom verification email via Amazon SES to a target address using an existing custom verification template, starting the flow that adds that address as a verified SES identity once the recipient clicks the link. Use to begin verifying a new sender/recipient identity. Requires a pre-created verification template and (outside SES sandbox) production access to verify arbitrary addresses. Not idempotent: each call sends another verification email.',
+    idempotent: false,
+  },
   props: {
     emailAddress: Property.ShortText({
       displayName: 'Email Address',
@@ -28,6 +34,7 @@ export const sendCustomVerificationEmail = createAction({
       required: true,
     }),
     templateName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Verification Template',
       description: 'Select custom verification email template',
       required: true,
@@ -54,6 +61,7 @@ export const sendCustomVerificationEmail = createAction({
       },
     }),
     configurationSetName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Configuration Set',
       description: 'SES configuration set for tracking (optional)',
       required: false,
@@ -85,7 +93,7 @@ export const sendCustomVerificationEmail = createAction({
       checkExistingIdentity,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     if (validateEmailFormat) {
       const validatedEmails = validateEmailAddresses(

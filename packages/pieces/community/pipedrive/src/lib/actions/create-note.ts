@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { dealIdProp, leadIdProp, organizationIdProp, personIdProp } from '../common/props';
 import { pipedriveApiCall } from '../common';
@@ -9,6 +9,8 @@ export const createNoteAction = createAction({
 	name: 'create-note',
 	displayName: 'Create Note',
 	description: 'Creates a new note.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a note with the given content and attach it to at least one deal, person, organization, or lead (at least one association is required, with optional pinning). Pick this to record a comment or log against a CRM record; each call creates a new note, so repeating it produces duplicates. Not idempotent.', idempotent: false },
 	props: {
 		content: Property.LongText({
 			displayName: 'Content',

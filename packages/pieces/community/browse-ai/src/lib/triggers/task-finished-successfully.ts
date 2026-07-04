@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { browseAiAuth } from '../common/auth';
 import { browseAiApiCall } from '../common/client';
 import { robotIdDropdown } from '../common/props';
@@ -13,6 +13,10 @@ export const taskFinishedSuccessfullyTrigger = createTrigger({
   displayName: 'Task Finished Successfully',
   description:
     'Triggers when a robot finishes a task successfully.',
+  aiMetadata: {
+    description:
+      'Fires when a task run for the selected Browse AI robot completes successfully, delivering the finished task record with its captured/extracted data. Use to process scrape results as soon as they are ready.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     robotId: robotIdDropdown,
@@ -20,7 +24,7 @@ export const taskFinishedSuccessfullyTrigger = createTrigger({
 
   async onEnable(context) {
     const { robotId } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     try {
       // Verify robot exists and we have access
@@ -82,7 +86,7 @@ export const taskFinishedSuccessfullyTrigger = createTrigger({
     const { robotId } = context.propsValue;
 
     const webhookId = await context.store.get<string>(TRIGGER_KEY);
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     if (!isNil(webhookId)) {
       try {
@@ -117,7 +121,7 @@ export const taskFinishedSuccessfullyTrigger = createTrigger({
   async test(context) {
     const { robotId } = context.propsValue;
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const response = await browseAiApiCall<{
       result: { robotTasks: { items: { id: string }[] } };

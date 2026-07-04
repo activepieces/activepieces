@@ -12,20 +12,22 @@ export const deleteRecord = createAction({
   auth: vtigerAuth,
   displayName: 'Delete Record',
   description: 'Delete a Record',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a Vtiger record by its id within a given module (element type). Choose this to remove a known record. Idempotent in effect: once deleted, repeating the call leaves the record absent.', idempotent: true },
   props: {
     elementType: elementTypeProperty,
     record: recordIdProperty(),
   },
   async run({
     propsValue: { elementType, record },
-    auth: { instance_url, username, password },
+    auth
   }) {
-    const instance = await instanceLogin(instance_url, username, password);
+    const instance = await instanceLogin(auth.props.instance_url, auth.props.username, auth.props.password);
 
     if (instance !== null) {
       const response = await httpClient.sendRequest<Record<string, unknown>[]>({
         method: HttpMethod.POST,
-        url: `${instance_url}/webservice.php`,
+        url: `${auth.props.instance_url}/webservice.php`,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },

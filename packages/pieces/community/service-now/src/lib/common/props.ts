@@ -1,4 +1,4 @@
-import { Property, DynamicPropsValue, PieceAuth } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue, PieceAuth, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { ServiceNowClient } from './client';
 
 export const servicenowAuth = PieceAuth.CustomAuth({
@@ -23,6 +23,7 @@ export const servicenowAuth = PieceAuth.CustomAuth({
 });
 
 export const tableDropdown = Property.Dropdown({
+  auth: servicenowAuth,
   displayName: 'Table',
   description: 'ServiceNow table to work with',
   required: true,
@@ -62,6 +63,7 @@ export const tableDropdown = Property.Dropdown({
 });
 
 export const recordDropdown = Property.Dropdown({
+  auth: servicenowAuth,
   displayName: 'Record',
   description: 'Select a record from the table',
   required: true,
@@ -100,13 +102,77 @@ export const recordDropdown = Property.Dropdown({
   },
 });
 
-export function createServiceNowClient(auth: any): ServiceNowClient {
+export const catalogItemDropdown = Property.Dropdown({
+  auth: servicenowAuth,
+  displayName: 'Catalog Item',
+  description: 'Select a catalog item to order',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your ServiceNow account first',
+        options: [],
+      };
+    }
+
+    try {
+      const client = new ServiceNowClient({
+        instanceUrl: (auth as any).instanceUrl,
+        auth: {
+          type: 'basic',
+          username: (auth as any).username,
+          password: (auth as any).password,
+        },
+      });
+
+      const items = await client.listCatalogItems({ limit: 100 });
+      return {
+        disabled: false,
+        options: items.map((item) => ({
+          label: item.name
+            ? `${item.name} (${item.sys_id})`
+            : item.sys_id,
+          value: item.sys_id,
+        })),
+      };
+    } catch {
+      return {
+        disabled: true,
+        placeholder:
+          'Failed to load catalog items. Check your credentials and ensure the Service Catalog API is enabled.',
+        options: [],
+      };
+    }
+  },
+});
+
+export function createServiceNowClient(auth: AppConnectionValueForAuthProperty<typeof servicenowAuth>): ServiceNowClient {
   return new ServiceNowClient({
-    instanceUrl: auth.instanceUrl,
+    instanceUrl: auth.props.instanceUrl,
     auth: {
       type: 'basic',
-      username: auth.username,
-      password: auth.password,
+      username: auth.props.username,
+      password: auth.props.password,
     },
   });
+}
+
+export function resolveSysId({
+  selected,
+  manual,
+  label = 'record',
+}: {
+  selected: string | undefined;
+  manual: string | undefined;
+  label?: string;
+}): string {
+  const value = selected || manual;
+  if (!value) {
+    throw new Error(
+      `Either ${label} selection or manual sys_id must be provided`
+    );
+  }
+  return value;
 }

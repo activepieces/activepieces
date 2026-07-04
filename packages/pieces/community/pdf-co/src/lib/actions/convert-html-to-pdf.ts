@@ -1,7 +1,7 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
 import { PdfCoSuccessResponse, PdfCoErrorResponse } from "../common/types";
-import { pdfCoAuth } from "../../index";
+import { pdfCoAuth } from '../auth';
 import { BASE_URL } from "../common/props";
 interface PdfConvertFromHtmlRequestBody {
     html: string;
@@ -23,6 +23,12 @@ export const convertHtmlToPdf = createAction({
     name: 'convert_html_to_pdf',
     displayName: 'Convert HTML to PDF',
     description: 'Convert HTML code into a downloadable PDF document.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Renders a block of HTML into a new PDF document, with optional paper size, orientation, margins, header/footer, and media-type controls. Use when an agent needs to turn HTML markup into a downloadable PDF. Each call generates a new output file and consumes credits, so it is not idempotent.',
+        idempotent: false,
+    },
     auth: pdfCoAuth,
     props: {
         html: Property.LongText({
@@ -147,7 +153,7 @@ export const convertHtmlToPdf = createAction({
                 method: HttpMethod.POST,
                 url: `${BASE_URL}/pdf/convert/from/html`,
                 headers: {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,

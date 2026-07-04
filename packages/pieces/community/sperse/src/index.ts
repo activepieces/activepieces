@@ -3,7 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended';
 import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
 import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription';
@@ -16,7 +16,6 @@ import { newSubscription } from './lib/triggers/new-subscription';
 
 const markdownDescription = `
   Follow these instructions to get your Sperse API Key:
-
   1. Visit the following website: https://app.sperse.com/, or the beta website: https://beta.sperse.com, or the test website: https://testadmin.sperse.com 
   2. Once on the website, locate and click on the admin to obtain your sperse API Key.
 `;

@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
+import { vboutAuth } from '../auth';
 import { makeClient } from '../common';
 
 export const createEmailListAction = createAction({
@@ -7,6 +7,11 @@ export const createEmailListAction = createAction({
   name: 'vbout_create_email_list',
   displayName: 'Create Email List',
   description: 'Creates a new email list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new VBOUT email list with optional subscription settings (sender, reply-to, confirmation and notification emails/messages). Use to set up a new audience before adding contacts or sending campaigns. Only the list name is required; not idempotent, as each call creates a new list.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       required: true,
@@ -65,7 +70,7 @@ export const createEmailListAction = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const client = makeClient(auth as string);
+    const client = makeClient(auth.secret_text);
     return await client.createEmailList(propsValue);
   },
 });

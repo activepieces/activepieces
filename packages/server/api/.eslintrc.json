@@ -1,6 +1,6 @@
 {
   "extends": [
-    "../../../.eslintrc.json",
+    "../.eslintrc.json",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/strict",
@@ -18,7 +18,7 @@
       ],
       "parserOptions": {
         "project": [
-          "packages/server/api/tsconfig.*?.json"
+          "tsconfig.*?.json"
         ]
       },
       "rules": {

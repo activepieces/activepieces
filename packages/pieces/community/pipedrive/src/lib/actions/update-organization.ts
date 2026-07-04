@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { organizationCommonProps, organizationIdProp } from '../common/props';
 import {
@@ -9,13 +9,15 @@ import {
 } from '../common';
 import { GetField, GetOrganizationResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const updateOrganizationAction = createAction({
 	auth: pipedriveAuth,
 	name: 'update-organization',
 	displayName: 'Update Organization',
 	description: 'Updates an existing organization.',
+	audience: 'both',
+	aiMetadata: { description: 'Update fields on an existing organization identified by ID (name, owner, address, visibility, labels, and custom fields). Pick this to modify a known organization; only supplied fields are changed. Re-running with the same inputs yields the same final state.', idempotent: true },
 	props: {
 		organizationId: organizationIdProp(true),
 		name: Property.ShortText({

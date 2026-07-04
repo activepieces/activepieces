@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { openPhoneAuth } from '../../index';
+import { openPhoneAuth } from '../auth';
 import {
   openPhoneCommon,
   OpenPhoneMessageWebhookResponse,
@@ -13,6 +13,9 @@ export const incomingMessageReceived = createTrigger({
   name: 'incoming_message_received',
   displayName: 'Incoming Message Received',
   description: 'Fires when a new SMS/MMS message is received.',
+  aiMetadata: {
+    description: 'Fires when the OpenPhone number receives a new inbound SMS/MMS message, delivering the message text and sender details. Use to react to incoming texts (auto-reply, routing, logging). Can be scoped to a specific OpenPhone number or all numbers.',
+  },
   props: {
     phoneNumbers: phoneNumberDropdown,
   },

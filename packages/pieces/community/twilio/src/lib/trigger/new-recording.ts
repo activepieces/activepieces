@@ -1,4 +1,4 @@
-import { createTrigger, PiecePropValueSchema, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, PiecePropValueSchema, TriggerStrategy } from '@activepieces/pieces-framework';
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { twilioAuth } from '../..';
 
@@ -21,7 +21,7 @@ interface RecordingsResponse {
 
 
 const polling: Polling<
-  PiecePropValueSchema<typeof twilioAuth>,
+  AppConnectionValueForAuthProperty<typeof twilioAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -83,6 +83,9 @@ export const twilioNewRecording = createTrigger({
     name: 'new_recording',
     displayName: 'New Recording',
     description: 'Triggers when a new call recording is completed and available.',
+    aiMetadata: {
+      description: 'Fires when a new call recording becomes available on the Twilio account. Each event represents one completed recording, including its call SID, duration, and status.',
+    },
     props: {},
     sampleData: {
       "account_sid": "ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

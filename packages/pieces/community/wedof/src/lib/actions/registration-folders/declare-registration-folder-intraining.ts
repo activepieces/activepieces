@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 import dayjs from 'dayjs';
@@ -9,7 +9,12 @@ export const declareRegistrationFolderIntraining = createAction({
   name: 'declareRegistrationFolderIntraining',
   displayName: "Passer un dossier de formation à l'état : En formation",
   description: "Change l'état d'un dossier de formation vers : En formation",
-
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transitions a training registration folder into the 'in training' state, optionally recording the training start date. Not idempotent: it advances the folder's lifecycle and should be called once when training begins. Use the terminated and service-done actions for later lifecycle steps.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -41,7 +46,7 @@ export const declareRegistrationFolderIntraining = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

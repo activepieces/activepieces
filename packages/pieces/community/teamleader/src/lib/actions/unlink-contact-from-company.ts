@@ -7,9 +7,12 @@ export const unlinkContactFromCompany = createAction({
     name: 'unlink_contact_from_company',
     displayName: 'Unlink Contact from Company',
     description: 'Remove the association between contact and company',
+    audience: 'both',
+    aiMetadata: { description: 'Remove the link between a contact and a company in Teamleader without deleting either record. Use to undo a Link Contact to Company association. Requires contact ID and company ID. Idempotent: if the link is already absent, re-running leaves them unlinked.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Contact',
             description: 'Select the contact to unlink',
             required: true,
@@ -23,7 +26,7 @@ export const unlinkContactFromCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/contacts.list',
                         body: {}
@@ -46,6 +49,7 @@ export const unlinkContactFromCompany = createAction({
             }
         }),
         company_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Company',
             description: 'Select the company to unlink from',
             required: true,
@@ -59,7 +63,7 @@ export const unlinkContactFromCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/companies.list',
                         body: {}

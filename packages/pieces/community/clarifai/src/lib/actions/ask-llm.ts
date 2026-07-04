@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { clarifaiAuth } from '../..';
+import { clarifaiAuth } from '../auth';
 import {
   HttpMethod,
   HttpRequest,
@@ -11,9 +11,16 @@ export const clarifaiAskLLM = createAction({
   displayName: 'Ask LLM',
   description:
     'Send a prompt to any large language models (LLM) supported by clarifai.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a text prompt to a Clarifai-hosted LLM (e.g. GPT-4) and returns the generated text completion. Use to generate or transform text via Clarifai rather than calling the provider directly; supply the Clarifai model id (looked up by name) and the prompt. Generative and non-deterministic, so repeated calls may return different text.',
+    idempotent: false,
+  },
   auth: clarifaiAuth,
   props: {
     models: Property.Dropdown({
+      auth: clarifaiAuth,
       displayName: 'Model Id',
       description: `The model which will generate the response. If the model is not listed, get the model id from the clarifai website. Example : 'GPT-4' you can get the model id from here [https://clarifai.com/openai/chat-completion/models/GPT-4](https://clarifai.com/openai/chat-completion/models/GPT-4)`,
       refreshers: ['auth'],
@@ -30,7 +37,7 @@ export const clarifaiAskLLM = createAction({
           method: HttpMethod.GET,
           url: 'https://api.clarifai.com/v2/models?sort_by_star_count=true&use_cases=llm&filter_by_user_id=true&additional_fields=stars&per_page=24&page=1',
           headers: {
-            Authorization: ('Key ' + auth) as string,
+            Authorization: ('Key ' + auth.secret_text) as string,
           },
         };
         try {
@@ -73,7 +80,7 @@ export const clarifaiAskLLM = createAction({
       method: HttpMethod.GET,
       url: `https://api.clarifai.com/v2/models?name=${mId}&use_cases=llm`,
       headers: {
-        Authorization: ('Key ' + context.auth) as string,
+        Authorization: ('Key ' + context.auth.secret_text) as string,
       },
     };
     let model;
@@ -98,7 +105,7 @@ export const clarifaiAskLLM = createAction({
       method: HttpMethod.POST,
       url: `https://api.clarifai.com/v2/users/${model.model_version.user_id}/apps/${model.model_version.app_id}/models/${model.id}/versions/${model.model_version.id}/outputs`,
       headers: {
-        Authorization: ('Key ' + context.auth) as string,
+        Authorization: ('Key ' + context.auth.secret_text) as string,
       },
       body: {
         inputs: [

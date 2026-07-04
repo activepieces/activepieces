@@ -1,12 +1,17 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
-import { moxieCRMAuth } from '../..';
+import { moxieCRMAuth } from '../auth';
 
 export const moxieCreateClientAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_client',
   displayName: 'Create a Client',
   description: 'Create a new client record in moxie CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new client or prospect record in Moxie CRM with contact, address, billing, and rate details. Use when onboarding a new account into the CRM; set Client Type to distinguish a converted Client from a Prospect lead. Not idempotent: each call creates a separate client even if the name matches an existing one.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

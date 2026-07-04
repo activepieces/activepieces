@@ -1,13 +1,18 @@
 import { createTrigger, Property, TriggerStrategy, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { netlifyAuth } from "../common/auth";
 
 export const newFormSubmission = createTrigger({
   name: "new_form_submission",
   displayName: "New Form Submission",
   description: "Fires when a Netlify form submission is received.",
+  aiMetadata: {
+    description: 'Fires when a new form submission is received on the selected Netlify site (the submission_created event); the payload includes the submitted field data and submitter metadata. Use it to process or route contact/lead form entries.',
+  },
+  auth: netlifyAuth,
   props: {
     siteId: Property.Dropdown({
-      displayName: "Site",
+      auth: netlifyAuth,      displayName: "Site",
       description: "Select the site to monitor for form submissions",
       required: true,
       refreshers: ['auth'],

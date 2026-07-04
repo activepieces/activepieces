@@ -1,26 +1,27 @@
 import {
-  PiecePropValueSchema,
   Property,
   Store,
   StoreScope,
   createAction,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import {
   areSheetIdsValid,
+  GoogleSheetsAuthValue,
   googleSheetsCommon,
   mapRowsToHeaderNames,
 } from '../common/common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { getWorkSheetGridSize } from '../triggers/helpers';
 import { commonProps } from '../common/props';
+import { getNextRowsActionOutputSchema } from '../output-schemas';
 
 async function getRows(
   store: Store,
-  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+  auth: GoogleSheetsAuthValue,
   spreadsheetId: string,
   sheetId: number,
   memKey: string,
@@ -30,16 +31,8 @@ async function getRows(
   useHeaderNames: boolean,
   testing: boolean
 ) {
-  const sheetName = await googleSheetsCommon.findSheetName(
-    auth.access_token,
-    spreadsheetId,
-    sheetId
-  );
-
   const sheetGridRange = await getWorkSheetGridSize(auth,spreadsheetId,sheetId);
   const existingGridRowCount = sheetGridRange.rowCount ??0;
-	// const existingGridColumnCount = sheetGridRange.columnCount??26;
-
   const memVal = await store.get(memKey, StoreScope.FLOW);
 
   let startingRow;
@@ -70,7 +63,7 @@ async function getRows(
   if (testing == false) await store.put(memKey, endRow, StoreScope.FLOW);
 
   const row = await googleSheetsCommon.getGoogleSheetRows({
-    accessToken: auth.access_token,
+    auth,
     sheetId: sheetId,
     spreadsheetId: spreadsheetId,
     rowIndex_s: startingRow,
@@ -81,7 +74,7 @@ async function getRows(
   if (row.length == 0) {
     const allRows = await googleSheetsCommon.getGoogleSheetRows({
       spreadsheetId: spreadsheetId,
-      accessToken: auth.access_token,
+      auth,
       sheetId: sheetId,
       rowIndex_s: undefined,
       rowIndex_e: undefined,
@@ -97,7 +90,7 @@ async function getRows(
     spreadsheetId,
     sheetId,
     headerRow,
-    auth.access_token
+    auth,
   );
   
   return finalRows;
@@ -112,7 +105,13 @@ const notes = `
 export const getRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'get_next_rows',
-  description: 'Get next group of rows from a Google Sheet',
+  description: 'Get next group of rows from a specifiec workheet',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reads the next batch of rows from a worksheet, advancing a cursor stored under a memory key so successive calls walk through the sheet without reprocessing rows. Use to iterate a sheet in chunks across runs. Not idempotent — each non-test call moves the stored cursor forward and returns a different batch.',
+    idempotent: false,
+  },
   displayName: 'Get next row(s)',
   props: {
     ...commonProps,
@@ -150,6 +149,7 @@ export const getRowsAction = createAction({
       defaultValue: 1,
     }),
   },
+  outputSchema: getNextRowsActionOutputSchema,
   async run({ store, auth, propsValue }) {
     const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId, useHeaderNames} = propsValue;
 
@@ -158,8 +158,8 @@ export const getRowsAction = createAction({
 		}
 
     await propsValidation.validateZod(propsValue, {
-      startRow: z.number().min(1),
-      groupSize: z.number().min(1),
+      startRow: z.number().check(z.minimum(1)),
+      groupSize: z.number().check(z.minimum(1)),
     });
 
     try {

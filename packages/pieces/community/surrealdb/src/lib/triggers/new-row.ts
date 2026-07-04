@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -16,7 +17,7 @@ import crypto from 'crypto';
 
 // replace auth with piece auth variable
 const polling: Polling<
-  PiecePropValueSchema<typeof surrealdbAuth>,
+  AppConnectionValueForAuthProperty<typeof surrealdbAuth>,
   {
     table: string;
     order_by: string;
@@ -32,7 +33,7 @@ const polling: Polling<
       order_direction: propsValue.order_direction,
     });
 
-    const authProps = auth as PiecePropValueSchema<typeof surrealdbAuth>;
+    const authProps = auth.props;
     const result = await client.query(authProps, query, {
       table: propsValue.table,
     });
@@ -103,6 +104,9 @@ export const newRow = createTrigger({
   name: 'new-row',
   displayName: 'New Row',
   description: 'Triggers when a new row is added to the defined table.',
+  aiMetadata: {
+    description: 'Fires when a new row appears in the selected SurrealDB table. New rows are detected by polling and ordering on a chosen column (typically a created-at timestamp), so the table must have a reliable monotonic order-by field for detection to work correctly.',
+  },
   props: {
     description: Property.MarkDown({
       value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached. It's suggested to add a created_at timestamp. \`DEFINE FIELD OVERWRITE createdAt ON schedule VALUE time::now() READONLY;\``,
@@ -112,6 +116,7 @@ export const newRow = createTrigger({
       required: true,
       refreshers: ['auth'],
       refreshOnSearch: false,
+      auth: surrealdbAuth,
       options: async ({ auth }) => {
         if (!auth) {
           return {
@@ -120,7 +125,7 @@ export const newRow = createTrigger({
             placeholder: 'Please authenticate first',
           };
         }
-        const authProps = auth as PiecePropValueSchema<typeof surrealdbAuth>;
+        const authProps = auth.props;
         try {
           const result = await client.query(authProps, 'INFO FOR DB');
           const options = Object.keys(result.body[0].result.tables).map(

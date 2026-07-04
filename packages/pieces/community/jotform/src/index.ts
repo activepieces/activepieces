@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { jotformCommon } from './lib/common';
 import { newSubmission } from './lib/triggers/new-submission';
 
@@ -59,10 +59,11 @@ export const jotform = createPiece({
   actions: [
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        jotformCommon.baseUrl((auth as { region: string }).region),
+        auth?
+        jotformCommon.baseUrl(auth.props.region) : '',
       auth: jotformAuth,
       authMapping: async (auth) => ({
-        APIKEY: (auth as { apiKey: string }).apiKey,
+        APIKEY: auth.props.apiKey,
       }),
     }),
   ],

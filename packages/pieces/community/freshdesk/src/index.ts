@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getContactFromID } from './lib/actions/get-contact-from-id';
 import { getTicketStatus } from './lib/actions/get-ticket-status';
 import { getTickets } from './lib/actions/get-tickets';
@@ -43,10 +43,10 @@ export const freshdesk = createPiece({
     getContacts,
     getAllTicketsByStatus,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: freshdeskAuth,
       authMapping: async (auth) => ({
-        Authorization: (auth as { access_token: string }).access_token,
+        Authorization: (auth.props.access_token),
       }),
     }),
   ],

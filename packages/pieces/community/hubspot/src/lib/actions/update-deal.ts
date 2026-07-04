@@ -1,11 +1,11 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 
 import {
 	Property,
 	createAction,
 } from '@activepieces/pieces-framework';
 
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE } from '../common/constants';
 import {
 	getDefaultPropertiesForObject,
@@ -22,6 +22,8 @@ export const updateDealAction = createAction({
 	name: 'update-deal',
 	displayName: 'Update Deal',
 	description: 'Updates a deal in HubSpot.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates properties on an existing deal identified by its deal ID, such as name, pipeline, stage, or custom fields, then returns the refreshed deal. Use to modify a known deal; use Create Deal to make a new one. Idempotent: applying the same property values converges to the same deal state.', idempotent: true },
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',
@@ -80,6 +82,9 @@ export const updateDealAction = createAction({
 
 		// Add additional properties to the dealProperties object
 		Object.entries(objectProperties).forEach(([key, value]) => {
+			if ((Array.isArray(value) && value.length === 0)) {
+        return;  
+			}
 			// Format values if they are arrays
 			dealProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});

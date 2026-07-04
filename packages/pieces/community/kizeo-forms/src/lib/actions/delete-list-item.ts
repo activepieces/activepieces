@@ -9,6 +9,8 @@ export const deleteListItem = createAction({
   name: 'delete_list_item',
   displayName: 'Delete List Item',
   description: 'Delete a specific item from a list',
+  audience: 'both',
+  aiMetadata: { description: 'Delete a specific item from a Kizeo Forms external list by its list ID and item ID. Use to permanently remove a single list row. Idempotent on the end state: once the item is deleted, repeating the call leaves it absent.', idempotent: true },
   props: {
     listId: kizeoFormsCommon.listId,
     itemId: Property.ShortText({
@@ -26,7 +28,7 @@ export const deleteListItem = createAction({
         `public/v4/lists/${listId}/items/${itemId}?used-with-active-pieces=`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
     });
 

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const create_client_property = createAction({
@@ -8,6 +8,8 @@ export const create_client_property = createAction({
     auth: simplirouteAuth,
     displayName: 'Create Client Custom Property',
     description: 'Create a new custom attribute for clients.',
+    audience: 'both',
+    aiMetadata: { description: 'Define a new custom property (str, int, float or bool) on the client schema so subsequent client records can store that attribute. Use when an attribute you need does not yet exist on clients; not idempotent (each call adds another property definition).', idempotent: false },
     props: {
         label: Property.ShortText({ 
             displayName: 'label', 
@@ -28,7 +30,7 @@ export const create_client_property = createAction({
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

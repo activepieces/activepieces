@@ -5,6 +5,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+    AppConnectionValueForAuthProperty,
     OAuth2PropertyValue,
     TriggerStrategy,
     createTrigger,
@@ -19,6 +20,9 @@ export const newCaseAttachment = createTrigger({
     name: 'new_case_attachment',
     displayName: 'New Case Attachment',
     description: 'Fires when a new Attachment or File is added to any Case record.',
+    aiMetadata: {
+        description: 'Fires when an attachment is added to any Case in Salesforce, covering both classic Attachments and modern Files (ContentDocumentLink) linked to recently modified Cases. Each event represents one attachment and includes an attachment_type field of either "Classic" or "File". Detected by polling for records modified since the last poll.',
+    },
     props: {},
     sampleData: {
         "Id": "00P7Q000002XyA4UAK",
@@ -43,7 +47,7 @@ export const newCaseAttachment = createTrigger({
     },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
         const isoDate = dayjs(lastFetchEpochMS).toISOString();

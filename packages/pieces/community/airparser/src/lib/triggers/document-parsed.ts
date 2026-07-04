@@ -4,8 +4,8 @@ import {
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
-import { airparserAuth } from '../../index';
+import { isNil } from '@activepieces/pieces-framework';
+import { airparserAuth } from '../auth';
 import { airparserApiCall, GetDocumentResponse } from '../common';
 import { inboxIdDropdown } from '../common/props';
 
@@ -14,6 +14,9 @@ export const documentParsedTrigger = createTrigger({
   name: 'document_parsed',
   displayName: 'Document Parsed',
   description: 'Triggers when a new document is parsed in a specific inbox.',
+  aiMetadata: {
+    description: 'Fires when Airparser finishes parsing a document in the selected inbox (the doc.parsed event), signaling that extracted data is ready to retrieve. Requires a webhook to be configured manually in the Airparser account.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     inboxId: inboxIdDropdown,
@@ -60,7 +63,7 @@ export const documentParsedTrigger = createTrigger({
       hasNextPage: boolean;
       docs: { _id: string; name: string }[];
     }>({
-      apiKey: context.auth as string,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
       resourceUri: `/inboxes/${inboxId}/docs`,
       query: {
@@ -73,7 +76,7 @@ export const documentParsedTrigger = createTrigger({
     const items = [];
     for (const doc of listDocResponse.docs) {
       const response = await airparserApiCall<GetDocumentResponse>({
-        apiKey: context.auth,
+        apiKey: context.auth.secret_text,
         method: HttpMethod.GET,
         resourceUri: `/docs/${doc._id}/extended`,
       });

@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { TranslationArgs, InferenceClient } from '@huggingface/inference';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const languageTranslation = createAction({
+  audience: 'human',
   name: 'language_translation',
   auth: huggingFaceAuth,
   displayName: 'Language Translation',
@@ -11,6 +12,7 @@ export const languageTranslation = createAction({
     'Translate text between languages using specialized Hugging Face translation models',
   props: {
     model: Property.Dropdown({
+      auth: huggingFaceAuth,
       displayName: 'Translation Model',
       description:
         'Select a translation model or search from 7000+ available models',
@@ -205,7 +207,7 @@ export const languageTranslation = createAction({
       );
     }
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
 
     const args: TranslationArgs = {
       model: modelToUse,

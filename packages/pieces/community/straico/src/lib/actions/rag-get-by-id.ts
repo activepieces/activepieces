@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -8,6 +8,7 @@ import {
 import { baseUrlv0 } from '../common/common';
 
 export const getRagById = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'get_rag_by_id',
   displayName: 'Get RAG by ID',
@@ -46,7 +47,7 @@ export const getRagById = createAction({
       method: HttpMethod.GET,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
     });
 

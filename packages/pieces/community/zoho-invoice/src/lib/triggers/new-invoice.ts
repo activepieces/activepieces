@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
@@ -15,7 +16,7 @@ import dayjs from 'dayjs';
 import { zohoAuth } from '../..';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof zohoAuth>,
+  AppConnectionValueForAuthProperty<typeof zohoAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -39,6 +40,10 @@ export const newInvoice = createTrigger({
   name: 'new_invoice',
   displayName: 'New Invoice',
   description: 'Trigger when a new invoice is received.',
+  aiMetadata: {
+    description:
+      'Fires when a new invoice is created in Zoho Invoice. Polls periodically for invoices created since the last check and emits each newly created invoice, with the invoice record as the event payload.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {

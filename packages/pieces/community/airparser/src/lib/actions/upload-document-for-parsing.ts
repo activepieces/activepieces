@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
-import { airparserAuth } from '../../index';
+import { airparserAuth } from '../auth';
 import { BASE_URL } from '../common';
 import { inboxIdDropdown } from '../common/props';
 
@@ -10,6 +10,8 @@ export const uploadDocumentAction = createAction({
 	name: 'upload_document',
 	displayName: 'Upload Document',
 	description: 'Upload a document to an Airparser inbox for parsing.',
+	audience: 'both',
+	aiMetadata: { description: 'Uploads a file to a specified Airparser inbox so it can be parsed into structured data; requires the inbox ID and the file. Use to submit a new document (PDF, email, image, etc.) for extraction. Not idempotent: each call creates a new document, and parsing completes asynchronously, so retrieve the results separately once parsing finishes.', idempotent: false },
 	props: {
 		inboxId: inboxIdDropdown,
 		file: Property.File({
@@ -42,7 +44,7 @@ export const uploadDocumentAction = createAction({
 			url: BASE_URL + `/inboxes/${inboxId}/upload`,
 			headers: {
 				...formData.getHeaders(),
-				'X-API-Key': context.auth,
+				'X-API-Key': context.auth.secret_text,
 			},
 			body: formData,
 		});

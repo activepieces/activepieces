@@ -10,7 +10,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createWordPressPage } from './lib/actions/create-page.action';
 import { createWordPressPost } from './lib/actions/create-post.action';
 import { getWordPressPost } from './lib/actions/get-post.action';
@@ -118,13 +118,13 @@ export const wordpress = createPiece({
     updateWordPressPost,
     getWordPressPost,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',
+      baseUrl: (auth) =>auth ?
+        (auth.props.website_url).trim() + '/wp-json/wp/v2' : '',
       auth: wordpressAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { username: string }).username}:${
-            (auth as { password: string }).password
+          `${auth.props.username}:${
+            auth.props.password
           }`
         ).toString('base64')}`,
       }),

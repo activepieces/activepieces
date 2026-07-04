@@ -4,7 +4,7 @@ import {
 	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import { QuickbooksEntityResponse, quickbooksCommon } from '../lib/common';
 import { QuickbooksCustomer, QuickbooksInvoice, QuickbooksRef } from '../lib/types';
 
@@ -13,8 +13,15 @@ export const createInvoiceAction = createAction({
 	name: 'create_invoice',
 	displayName: 'Create Invoice',
 	description: 'Creates an invoice in QuickBooks.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Create a new QuickBooks invoice for a customer with one or more line items (each line needs an amount and an Item/product Id). Optionally set due date, transaction date, invoice number, memos, and email status; setting email status to "Needs To Be Sent" requires a billing email. Not idempotent: each call creates a new invoice, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		customerRef: Property.Dropdown({
+			auth: quickbooksAuth,
+
 			displayName: 'Customer',
 			required: true,
 			refreshers: [],
@@ -155,7 +162,7 @@ export const createInvoiceAction = createAction({
 		const { access_token } = context.auth;
 		const companyId = context.auth.props?.['companyId'];
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId);
+		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const props = context.propsValue;
 
 		if (props['emailStatus'] === 'NeedToSend' && !props['billEmail']) {

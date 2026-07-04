@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listOrgShortlinksAction = createAction({
   name: 'list_org_shortlinks',
   displayName: 'List Organization Shortlinks',
   description: 'List all shortlinks for your organization',
+  audience: 'both',
+  aiMetadata: { description: 'List the shortlinks belonging to the authenticated user\'s Zoo organization, with optional limit and offset for paging. Read-only and repeatable. Use the user shortlinks action to scope the list to just the current user.', idempotent: true },
   auth: zooAuth,
   // category: 'Shortlinks',
   props: {
@@ -25,7 +27,7 @@ export const listOrgShortlinksAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/org/shortlinks',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

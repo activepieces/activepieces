@@ -4,7 +4,7 @@ import { createSummaryAction } from './actions/create-summary';
 import { createTranscriptionCallbackAction } from './actions/create-transcription';
 import { listProjectsAction } from './actions/list-projects';
 import { textToSpeechAction } from './actions/text-to-speech';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './common/constants';
 
@@ -27,7 +27,7 @@ export const deepgramPiece = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          Authorization: `Token ${auth}`,
+          Authorization: `Token ${auth.secret_text}`,
         };
       },
     }),

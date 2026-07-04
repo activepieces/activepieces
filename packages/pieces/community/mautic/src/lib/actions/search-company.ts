@@ -1,17 +1,23 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { mauticCommon, searchEntity } from '../common';
-import { mauticAuth } from '../..';
+import { mauticAuth } from '../auth';
 
 export const searchCompany = createAction({
   auth: mauticAuth,
   description: 'Search for a company in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up a company in Mautic by matching the supplied field values (combined into a search query), returning the first matching company. Use to find a company or resolve its id before updating, or to verify whether an organization already exists before creating one. Read-only and idempotent.',
+    idempotent: true,
+  },
   displayName: 'Search Company',
   name: 'search_mautic_company',
   props: {
     fields: mauticCommon.companyFields,
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth;
+    const { base_url, username, password } = context.auth.props;
     const url =
       (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/companies';
     const fields = context.propsValue.fields;

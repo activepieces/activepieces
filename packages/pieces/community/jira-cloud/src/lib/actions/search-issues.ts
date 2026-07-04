@@ -1,23 +1,47 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
-import { z } from 'zod';
+import { searchIssuesByJql, mapFieldNames } from '../common';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const searchIssues = createAction({
   name: 'search_issues',
   displayName: 'Search Issues',
   description: 'Search for issues with JQL',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search Jira issues with an arbitrary JQL query, paginating automatically up to a max-results cap (1-5000) and optionally restricting which fields are returned or mapping field IDs to readable names. The go-to tool for finding issues by project, status, assignee, dates, or any JQL-expressible criteria; limit returned fields on large result sets to avoid memory issues. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: jiraCloudAuth,
   props: {
+    memoryWarning: Property.MarkDown({
+      value: `Fetching a large number of issues without specifying **Fields to Return** may exceed your flow's memory limits. Use field selection to reduce payload size.`,
+      variant: MarkdownVariant.WARNING,
+    }),
     jql: Property.LongText({
       displayName: 'JQL',
-      description: 'The JQL query to use in the search',
+      description: "The JQL query to use in search (Tip: Use single quotes for strings/dates)",
       defaultValue: `type = story and created > '2023-12-13 14:00'`,
       required: true,
+    }),
+    fields: Property.Array({
+      displayName: 'Fields to Return',
+      description: `List of exact Jira Field IDs to return (e.g., 'summary', 'customfield_10016').
+Special commands:
+- Use *all for every field.
+- Use *navigable for standard fields (default).
+- Prefix with a minus to exclude (e.g., -description).
+Example: *all and -comment returns everything except comments.`,
+      required: false,
+    }),
+    mapNames: Property.Checkbox({
+      displayName: 'Map Field Names',
+      description: `Map human readable names to Fields in the output.\nNotes:\n- If there are fields with the same name, they may be overridden.`,
+      required: true,
+      defaultValue: false,
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
@@ -32,14 +56,49 @@ export const searchIssues = createAction({
   },
   run: async ({ auth, propsValue }) => {
     await propsValidation.validateZod(propsValue, {
-      maxResults: z.number().min(1).max(100),
+      maxResults: z.number().check(z.minimum(1), z.maximum(5000)),
     });
-    const { jql, maxResults, sanitizeJql } = propsValue;
-    return await searchIssuesByJql({
-      auth,
-      jql,
-      maxResults: maxResults,
-      sanitizeJql,
-    });
+
+    const { jql, maxResults, sanitizeJql, fields, mapNames } = propsValue;
+    
+    const fieldList = fields as string[];
+
+    const expandParams = mapNames ? ['names'] : [];
+
+    const allIssues: any[] = [];
+    let nextPageToken: string | undefined;
+    const PAGE_SIZE = 100; 
+
+    while (allIssues.length < maxResults) {
+      const limit = Math.min(PAGE_SIZE, maxResults - allIssues.length);
+
+      const response = await searchIssuesByJql({
+        auth,
+        jql,
+        maxResults: limit,
+        sanitizeJql,
+        nextPageToken,
+        fields: fieldList,
+        expand: expandParams,
+      });
+
+      const fetchedIssues = response.issues;
+      const fieldNames = response.names || {};
+      
+      if (mapNames && Object.keys(fieldNames).length > 0) {
+        for (const issue of fetchedIssues) {
+          if (issue.fields) {
+            issue.fields = mapFieldNames(issue.fields, fieldNames);
+          }
+        }
+      }
+
+      allIssues.push(...fetchedIssues);
+      nextPageToken = response.nextPageToken;
+
+      if (!nextPageToken || fetchedIssues.length === 0) break;
+    }
+
+    return allIssues;
   },
 });

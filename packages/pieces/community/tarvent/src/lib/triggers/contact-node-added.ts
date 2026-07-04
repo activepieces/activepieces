@@ -1,5 +1,5 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 
@@ -8,6 +8,9 @@ export const contactNoteAddedTrigger = createTrigger({
   name: 'tarvent_contact_note_added',
   displayName: 'Contact Note Added',
   description: 'Triggers when a note is added to a contact.',
+  aiMetadata: {
+    description: 'Fires when a note is added to a contact in Tarvent. Represents new annotation activity logged against a contact.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

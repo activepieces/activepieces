@@ -1,6 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { callSevenApi } from '../common';
-import { sevenAuth } from '../index';
+import { sevenAuth } from '../lib/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 interface SubscribeHookResponse {
@@ -21,6 +21,9 @@ const triggerNameInStore = 'seven_new_sms_trigger';
 export const smsInbound = createTrigger({
   auth: sevenAuth,
   description: 'Triggers when a new SMS message is received',
+  aiMetadata: {
+    description: 'Fires when an inbound SMS is received at the seven gateway (a mobile-originated sms_mo event), delivering the incoming message. Can optionally be limited to messages from a single sender phone number.',
+  },
   displayName: 'New Incoming SMS',
   name: 'new_incoming_sms',
   props: {
@@ -51,7 +54,7 @@ export const smsInbound = createTrigger({
         target_url: context.webhookUrl
       },
       method: HttpMethod.POST
-    }, 'hooks', context.auth as string);
+    }, 'hooks', context.auth.secret_text);
 
     if (!body.success) return;
 
@@ -69,7 +72,7 @@ export const smsInbound = createTrigger({
         id: info.webhookId
       },
       method: HttpMethod.POST
-    }, 'hooks', context.auth as string);
+    }, 'hooks', context.auth.secret_text);
 
     if (!body.success) return;
 

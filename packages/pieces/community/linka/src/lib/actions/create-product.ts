@@ -1,11 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { linkaAuth } from '../..';
+import { linkaAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createProduct = createAction({
   name: 'createProduct',
   displayName: 'Create Product',
   description: 'Creates a new product in the CRM',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Imports a product into the Linka/Sperse CRM catalog, keyed by its unique SKU (product code), with type (General, Event, Subscription, or Digital), pricing, unit, and subscription/billing options. Use to add a sellable product. Idempotent on the SKU: re-importing the same code updates the existing product rather than creating a duplicate. Price/unit/cycle fields are required depending on the product type.',
+    idempotent: true,
+  },
   auth: linkaAuth,
   props: {
     productType: Property.StaticDropdown({
@@ -300,9 +306,9 @@ export const createProduct = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportProduct`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportProduct`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

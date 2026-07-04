@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { skyvernAuth } from '../common/auth';
 import { skyvernApiCall } from '../common/client';
 import { ListWorkflowResponse } from '../common/props';
@@ -10,6 +10,8 @@ export const findWorkflowAction = createAction({
 	name: 'find-workflow',
 	displayName: 'Find Workflow',
 	description: 'Finds workflow based on title.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Skyvern workflows by title, paging through all results and returning every match. Use to resolve a workflow title into its workflow ID before calling Run Workflow. Read-only and idempotent.', idempotent: true },
 	props: {
 		title: Property.ShortText({
 			displayName: 'Workflow Title',
@@ -25,7 +27,7 @@ export const findWorkflowAction = createAction({
 
 		do {
 			const response = await skyvernApiCall<ListWorkflowResponse[]>({
-				apiKey: context.auth as string,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.GET,
 				resourceUri: '/workflows',
 				query: {

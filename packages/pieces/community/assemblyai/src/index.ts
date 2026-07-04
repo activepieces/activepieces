@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import * as actions from './lib/actions';
 import { assemblyaiAuth } from './lib/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const assemblyai = createPiece({
   displayName: 'AssemblyAI',
@@ -9,7 +9,7 @@ export const assemblyai = createPiece({
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   description:
     "Transcribe and extract data from audio using AssemblyAI's Speech AI.",
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/assemblyai.png',
   authors: ['AssemblyAI'],
   actions: [

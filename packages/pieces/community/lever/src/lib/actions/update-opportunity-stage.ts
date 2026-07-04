@@ -4,12 +4,19 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..';
+import { LeverAuth, leverAuth } from '../..';
+import { LEVER_BASE_URL } from '../..';
 
 export const updateOpportunityStage = createAction({
   name: 'updateOpportunityStage',
   displayName: 'Update opportunity stage',
   description: "Change an Opportunity's current stage",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Move a Lever opportunity to a specific pipeline stage. Use to advance or reassign a candidate's stage in the hiring pipeline; requires the opportunity ID and the target stage ID. Idempotent: setting the same stage again leaves the opportunity in that stage with no additional effect.",
+    idempotent: true,
+  },
   auth: leverAuth,
   props: {
     opportunityId: Property.ShortText({
@@ -17,6 +24,7 @@ export const updateOpportunityStage = createAction({
       required: true,
     }),
     stage: Property.Dropdown({
+      auth: leverAuth,
       displayName: 'Stage',
       required: true,
       refreshers: ['auth'],
@@ -33,7 +41,7 @@ export const updateOpportunityStage = createAction({
           url: `${LEVER_BASE_URL}/stages`,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: (auth as LeverAuth).apiKey,
+            username: auth.props.apiKey,
             password: '',
           },
         });
@@ -53,7 +61,7 @@ export const updateOpportunityStage = createAction({
       url: `${LEVER_BASE_URL}/opportunities/${propsValue.opportunityId}/stage`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.apiKey,
+        username: auth.props.apiKey,
         password: '',
       },
       body: { stage: propsValue.stage },

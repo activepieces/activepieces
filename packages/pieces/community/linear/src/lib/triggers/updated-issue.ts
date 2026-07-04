@@ -8,6 +8,9 @@ export const linearUpdatedIssue = createTrigger({
   name: 'updated_issue',
   displayName: 'Updated Issue',
   description: 'Triggers when an existing Linear issue is updated',
+  aiMetadata: {
+    description: 'Fires when an existing Linear issue is modified, optionally scoped to a specific team. Represents the updated issue along with the fields that changed.',
+  },
   props: {
     team_id: props.team_id(false)
   },
@@ -76,7 +79,7 @@ export const linearUpdatedIssue = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     
     // Create webhook configuration
     const webhookConfig: any = {
@@ -102,7 +105,7 @@ export const linearUpdatedIssue = createTrigger({
     }
   },
   async onDisable(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const response = await context.store?.get<WebhookInformation>(
       '_updated_issue_trigger'
     );

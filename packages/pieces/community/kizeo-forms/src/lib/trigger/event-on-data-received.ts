@@ -17,6 +17,9 @@ export const eventOnDataPulled = createTrigger({
   name: 'event_on_data_received',
   displayName: 'Event On Data Received',
   description: 'Handle EventOnData receive event via webhooks',
+  aiMetadata: {
+    description: 'Fires when a pushed data record is received (pulled) on the chosen Kizeo Forms form, i.e. a device picks up a prefilled submission. Represents the receipt of pushed data for that form.',
+  },
   props: {
     format: Property.StaticDropdown({
       displayName: 'Output Format',
@@ -81,7 +84,7 @@ export const eventOnDataPulled = createTrigger({
         third_party_id: workflowId,
       },
       headers: {
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
       queryParams: {},
     };
@@ -102,7 +105,7 @@ export const eventOnDataPulled = createTrigger({
           endpoint +
           `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
         headers: {
-          Authorization: context.auth,
+          Authorization: context.auth.secret_text,
         },
       };
       await httpClient.sendRequest(request);

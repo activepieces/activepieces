@@ -19,10 +19,12 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
+  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The text to transform in image.": "El texto a transformar en la imagen.",
   "How strictly the diffusion process adheres to the prompt text (higher values keep your image closer to your prompt) (MIN:0; MAX:35)": "Cuán estrictamente el proceso de difusión se adhiere al texto del prompt (valores más altos mantienen la imagen más cercana a la indicación) (MIN:0; MAX:35)",
   "Height of the image in pixels. Must be in increments of 64 and >= 128": "Altura de la imagen en píxeles. Debe estar en incrementos de 64 y >= 128",
@@ -31,7 +33,7 @@
   "Number of diffusion steps to run (MIN:10; MAX:150)": "Número de pasos de difusión a ejecutar (MIN:10; MAX:150)",
   "Pass in a style preset to guide the image model towards a particular style.": "Pase un ajuste de estilo para guiar el modelo de imagen hacia un estilo particular.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
   "NONE": "NINGUNA",
   "FAST_BLUE": "PLAYLUE",
   "FAST_GREEN": "FALL_GROUND",
@@ -68,5 +70,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "None": "Ninguna",
+  "JSON": "JSON",
+  "Form Data": "Datos de Formulario",
+  "Raw": "Rápido"
 }

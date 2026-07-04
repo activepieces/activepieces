@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 import { dataSourceDropdown } from '../common/data-source-dropdown';
 
@@ -9,6 +9,8 @@ export const getDataSourceAction = createAction({
   name: 'get_data_source',
   displayName: 'Get Data Source',
   description: 'Retrieve data source details',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of a single IBM Cognos data source by its id. Use to read or verify a data source\'s configuration before acting on it; optionally request extra fields such as connections or signons. Idempotent read-only lookup.', idempotent: true },
   props: {
     datasourceId: dataSourceDropdown,
     fields: Property.ShortText({
@@ -21,7 +23,7 @@ export const getDataSourceAction = createAction({
     const { datasourceId, fields } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const queryParams = [];
       if (fields && fields.trim()) {

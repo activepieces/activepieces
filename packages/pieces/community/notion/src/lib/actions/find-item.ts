@@ -1,23 +1,31 @@
-import { notionAuth } from '../../';
+import { notionAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
-import { notionCommon } from '../common';
+import { getNotionToken, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
+import { notionFindDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const findDatabaseItem = createAction({
   auth: notionAuth,
   name: 'notion-find-database-item',
   displayName: 'Find Database Item',
   description: 'Searches for an item in database by field.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Queries a Notion database for items whose property values match the given filter fields (combined with AND). Use when an agent needs to look up existing records by field value before reading or updating them; requires the database_id and at least one filter field matching the database schema. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   props: {
     database_id: notionCommon.database_id,
     filterDatabaseFields: notionCommon.filterDatabaseFields,
   },
+  outputSchema: notionFindDatabaseItemActionOutputSchema,
   async run(context) {
     const databaseId = context.propsValue.database_id;
     const filterFields = context.propsValue.filterDatabaseFields;
 
     const notion = new Client({
-      auth: context.auth.access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 
@@ -30,7 +38,12 @@ export const findDatabaseItem = createAction({
     for (const fieldKey in filterFields) {
       const fieldValue = filterFields[fieldKey];
       const fieldType = properties[fieldKey].type;
-      if (fieldValue === '' || fieldValue === undefined) {
+      if (
+        fieldValue === '' ||
+        fieldValue === undefined ||
+        fieldValue === null ||
+        (Array.isArray(fieldValue) && fieldValue.length === 0)
+      ) {
         continue;
       }
       switch (fieldType) {
@@ -71,6 +84,40 @@ export const findDatabaseItem = createAction({
           filterArray.push({
             property: fieldKey,
             title: { equals: fieldValue },
+          });
+          break;
+        case 'date':
+          filterArray.push({
+            property: fieldKey,
+            date: { equals: fieldValue },
+          });
+          break;
+        case 'checkbox':
+          filterArray.push({
+            property: fieldKey,
+            checkbox: { equals: Boolean(fieldValue) },
+          });
+          break;
+        case 'status':
+          filterArray.push({
+            property: fieldKey,
+            status: { equals: fieldValue },
+          });
+          break;
+        case 'multi_select':
+          for (const value of Array.isArray(fieldValue)
+            ? fieldValue
+            : [fieldValue]) {
+            filterArray.push({
+              property: fieldKey,
+              multi_select: { contains: value },
+            });
+          }
+          break;
+        case 'people':
+          filterArray.push({
+            property: fieldKey,
+            people: { contains: fieldValue },
           });
           break;
       }

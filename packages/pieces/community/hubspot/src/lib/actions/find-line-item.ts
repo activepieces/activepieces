@@ -1,9 +1,9 @@
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { FilterOperatorEnum } from '../common/types';
 
 export const findLineItemAction = createAction({
@@ -11,6 +11,8 @@ export const findLineItemAction = createAction({
     name: 'find-line-item',
     displayName: 'Find Line Item',
     description: 'Finds a line item by searching.',
+    audience: 'both',
+    aiMetadata: { description: 'Search HubSpot line items by one or two property/value pairs (matched with equality) and return the matches. Read-only and repeatable. Use this to locate an existing line item before updating it.', idempotent: true },
     props: {
         firstSearchPropertyName: standardObjectPropertiesDropdown(
             {
@@ -83,7 +85,7 @@ export const findLineItemAction = createAction({
         const defaultLineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
 
         const response = client.crm.lineItems.searchApi.doSearch({
-            limit: 100,
+            limit: MAX_SEARCH_PAGE_SIZE,
             properties: [...defaultLineItemProperties, ...additionalPropertiesToRetrieve],
             filterGroups: [{ filters }],
         });

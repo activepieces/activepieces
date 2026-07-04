@@ -1,10 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient } from '../../common/client';
+import { createClient } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { PaginatedResponse, Todo } from '../../common/types';
-import { assertLimit } from '../../common/validation';
+import { assertIdPrefix, assertLimit } from '../../common/validation';
 
 function toTodoArray(result: unknown): Todo[] {
   if (Array.isArray(result)) {
@@ -26,14 +26,19 @@ export const listSessionTodos = createAction({
   name: 'list-session-todos',
   displayName: 'List Session Todos',
   description: 'Retrieve todos generated for a specific session.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List the todos generated for one specific Hedy session, identified by a session ID (must be prefixed with "sess_"). Use when you have a session and want only its todos, rather than the account-wide list. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     sessionId: commonProps.sessionId,
     returnAll: commonProps.returnAll,
     limit: commonProps.limit,
   },
   async run(context) {
-    const sessionId = context.propsValue.sessionId as string;
-    const client = new HedyApiClient(context.auth as string);
+    const sessionId = assertIdPrefix(context.propsValue.sessionId as string, 'sess_', 'Session ID');
+    const client = createClient(context.auth);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;

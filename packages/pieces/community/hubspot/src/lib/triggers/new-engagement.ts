@@ -7,7 +7,7 @@ import {
 	pollingHelper,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	PiecePropValueSchema,
@@ -25,7 +25,8 @@ type EngagementResponse = {
 	offset: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const eventType = propsValue.eventType;
@@ -66,6 +67,10 @@ export const newEngagementTrigger = createTrigger({
 	name: 'new-engagement',
 	displayName: 'New Engagement',
 	description: 'Triggers when a new engagement is created.',
+	aiMetadata: {
+		description:
+			'Fires when a new engagement (interaction) is created in HubSpot, optionally filtered to a single type: Note, Task, Meeting, Email, or Call. Polls the Engagements API and emits each engagement with its metadata and associations to contacts, companies, and deals. Represents a logged activity or touchpoint on a CRM record.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		eventType: Property.StaticDropdown({

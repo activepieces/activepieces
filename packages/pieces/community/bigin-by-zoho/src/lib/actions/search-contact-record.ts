@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { biginApiService } from '../common/request';
 
@@ -7,6 +7,8 @@ export const searchContactRecord = createAction({
   name: 'searchContactRecord',
   displayName: 'Search Contact Record',
   description: 'Searches contacts by criteria, email, phone, or word',
+  audience: 'both',
+  aiMetadata: { description: 'Searches contact (person) records in Bigin CRM and returns matches. The search mode selects what the term is matched against: Criteria (name/email/mobile with equals or starts-with), a dedicated Email lookup, a dedicated Phone lookup, or a free-text Word search. Use to find a person by name, email, or phone before referencing or updating them. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Search Mode',
@@ -29,9 +31,10 @@ export const searchContactRecord = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { searchTerm, mode } = propsValue as any;
+    const { searchTerm, mode } = propsValue;
 
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
 
     let queryKey = 'criteria';
     let queryValue = '';

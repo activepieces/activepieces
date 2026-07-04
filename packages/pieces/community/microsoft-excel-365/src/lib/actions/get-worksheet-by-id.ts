@@ -1,33 +1,40 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const getWorksheetAction = createAction({
     auth: excelAuth,
     name: 'get_worksheet',
     displayName: 'Get Worksheet by ID',
     description: 'Retrieve metadata of a worksheet by its ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetch a single worksheet by its id (or name), returning that sheet metadata such as id, name, position, and visibility. Use when you already know which sheet you want; to list all sheets use Get Worksheets, or to search by name use Find Worksheet. Read-only and idempotent.', idempotent: true },
     props: {
-        workbook_id: excelCommon.workbook_id,
-        worksheet_id: excelCommon.worksheet_id, // This dropdown provides the worksheet name as its value
+        storageSource: commonProps.storageSource,
+        siteId: commonProps.siteId,
+        documentId: commonProps.documentId,
+        workbookId: commonProps.workbookId,
+        worksheetId: commonProps.worksheetId, // This dropdown provides the worksheet name as its value
     },
     async run(context) {
-        const { workbook_id, worksheet_id } = context.propsValue;
+        const { storageSource, siteId, documentId, workbookId, worksheetId } = context.propsValue;
         const { access_token } = context.auth;
+        const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+
+        if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+            throw new Error('please select SharePoint site and document library.');
+        }
+        const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
         // The worksheet_id prop from excelCommon returns the worksheet's name,
         // which can be used to identify it in the API URL as per the documentation ({id|name}).
-        const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: access_token,
-            },
-        });
+        const client = createMSGraphClient(access_token, cloud);
+        const response = await client
+            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`)
+            .get();
 
         // The response body contains the workbookWorksheet object with its metadata.
-        return response.body;
+        return response;
     },
 });

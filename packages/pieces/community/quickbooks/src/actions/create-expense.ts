@@ -1,6 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
 import {
 	QuickbooksAccount,
@@ -14,8 +14,15 @@ export const createExpenseAction = createAction({
 	name: 'create_expense',
 	displayName: 'Create Expense',
 	description: 'Creates an expense transaction (purchase) in QuickBooks.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Record a new expense (purchase) paid from a chosen bank or credit-card account, with one or more account-based line items (each needs an amount and an expense account Id) and a payment type of cash, check, or credit card. Optionally attach a payee/vendor, payment date, and memo. Not idempotent: each call creates a new purchase, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		accountRef: Property.Dropdown({
+			auth: quickbooksAuth,
+
 			displayName: 'Bank/Credit Card Account',
 			description: 'The account from which the expense was paid.',
 			required: true,
@@ -71,6 +78,8 @@ export const createExpenseAction = createAction({
 			defaultValue: 'Cash',
 		}),
 		entityRef: Property.Dropdown({
+			auth: quickbooksAuth,
+
 			displayName: 'Payee (Vendor)',
 			description: 'Optional - The vendor the expense was paid to.',
 			required: false,
@@ -164,7 +173,7 @@ export const createExpenseAction = createAction({
 		const { access_token } = context.auth;
 		const companyId = context.auth.props?.['companyId'];
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId);
+		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const props = context.propsValue;
 
 		const lines = (props['lineItems'] as any[]).map((line) => {

@@ -21,6 +21,8 @@ export const createTicketAction = createAction({
   name: 'create-ticket',
   displayName: 'Create Ticket',
   description: 'Create a new ticket in Zendesk.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new support ticket in Zendesk, requiring either a plain-text or HTML comment body as the opening message. Use to open a new case, log a customer request, or file an issue; the subject defaults to the first comment if omitted. Requester, assignee, collaborator, and follower are passed as emails (resolved to user IDs, creating a new requester user if no match) rather than IDs, and tags, priority, status, and custom fields can be set on creation. Not idempotent: each call creates a distinct ticket.', idempotent: false },
   props: {
     subject: Property.ShortText({
       displayName: 'Subject',
@@ -127,6 +129,7 @@ export const createTicketAction = createAction({
       required: false,
     }),
     custom_fields: Property.DynamicProperties({
+      auth: zendeskAuth,
       displayName: 'Custom Fields',
       description: 'Custom ticket field values',
       required: false,
@@ -137,14 +140,14 @@ export const createTicketAction = createAction({
         }
 
         try {
-          const authentication = auth as AuthProps;
+          const authentication = auth;
           const response = await httpClient.sendRequest({
-            url: `https://${authentication.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
+            url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BASIC,
-              username: authentication.email + '/token',
-              password: authentication.token,
+              username: authentication.props.email + '/token',
+              password: authentication.props.token,
             },
           });
 
@@ -286,7 +289,7 @@ export const createTicketAction = createAction({
     problem_id: problemTicketIdDropdown,
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       subject,
       comment_body,
@@ -337,12 +340,12 @@ export const createTicketAction = createAction({
     const resolveUserByEmail = async (email: string) => {
       try {
         const response = await httpClient.sendRequest({
-          url: `https://${authentication.subdomain}.zendesk.com/api/v2/users/search.json?query=email:${encodeURIComponent(email)}`,
+          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users/search.json?query=email:${encodeURIComponent(email)}`,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: authentication.email + '/token',
-            password: authentication.token,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
           },
         });
         
@@ -424,12 +427,12 @@ export const createTicketAction = createAction({
     if (custom_fields && typeof custom_fields === 'object') {
       try {
         const fieldsResponse = await httpClient.sendRequest({
-          url: `https://${authentication.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
+          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: authentication.email + '/token',
-            password: authentication.token,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
           },
         });
 
@@ -465,15 +468,15 @@ export const createTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/tickets.json`,
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets.json`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
         body: {
           ticket,

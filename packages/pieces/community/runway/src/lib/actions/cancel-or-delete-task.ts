@@ -2,13 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';
 import { runwayAuth } from '../common';
 import RunwayML from '@runwayml/sdk';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const cancelOrDeleteTask = createAction({
 	auth: runwayAuth,
 	name: 'cancel_or_delete_task',
 	displayName: 'Cancel or Delete Task',
 	description: 'Cancel or delete a task. Running/pending tasks are cancelled, completed tasks are deleted.',
+	audience: 'both',
+	aiMetadata: { description: 'Aborts or removes a Runway task by ID: a running, pending, or throttled task is cancelled, while an already-completed task is deleted. Use when an agent needs to stop a generation in progress or clean up a finished task. Mutating and not idempotent (a repeat call on an already-removed task reports it as already deleted); requires a valid task UUID.', idempotent: false },
 	props: {
 		taskId: Property.ShortText({
 			displayName: 'Task ID',
@@ -18,10 +20,10 @@ export const cancelOrDeleteTask = createAction({
 	},
 	async run({ auth, propsValue }) {
 		await propsValidation.validateZod(propsValue, {
-			taskId: z.string().uuid('Task ID must be a valid UUID format'),
+			taskId: z.string().check(z.uuid('Task ID must be a valid UUID format')),
 		});
 
-		const apiKey = auth as string;
+		const apiKey = auth.secret_text;
 		const client = new RunwayML({ apiKey });
 
 		// First get task details to determine what action will be taken

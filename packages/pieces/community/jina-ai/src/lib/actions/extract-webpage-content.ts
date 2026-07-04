@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
-import { jinaAiAuth } from '../../index';
+import { jinaAiAuth } from '../auth';
 
 export const extractWebpageContentAction = createAction({
   auth:jinaAiAuth,
@@ -9,6 +9,12 @@ export const extractWebpageContentAction = createAction({
   displayName: 'Extract Webpage Content',
   description:
     'Convert a URL into clean, LLM-friendly Markdown using the Reader API.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a single webpage by URL via the Jina Reader API and return its content cleaned for LLM consumption, with optional markdown/HTML/text/screenshot output, CSS-selector targeting or exclusion, and link/image summaries. Pick this when you already have the target URL; to find pages by keyword first, use Web Search Summarization. Read-only fetch, so repeat calls are idempotent (results may be served from cache unless do-not-track is set).',
+    idempotent: true,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -213,7 +219,7 @@ export const extractWebpageContentAction = createAction({
     const response = await JinaAICommon.makeRequest({
       url: finalUrl,
       method: HttpMethod.GET,
-      auth: apiKey as string,
+      auth: apiKey.secret_text,
       body: undefined,
       headers,
     });

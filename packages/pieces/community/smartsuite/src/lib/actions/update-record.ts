@@ -8,6 +8,11 @@ export const updateRecord = createAction({
 	name: 'update_record',
 	displayName: 'Update a Record',
 	description: 'Updates an existing record in the specified table',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Patches an existing SmartSuite record identified by its record ID, overwriting only the supplied field values against the live table schema. Use when an agent needs to change fields on a known record; requires the solution, table, record ID, and the fields to set. Idempotent — re-applying the same field values leaves the record in the same state.',
+		idempotent: true,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,
@@ -21,8 +26,8 @@ export const updateRecord = createAction({
 		const tableResponse = await smartSuiteApiCall<{
 			structure: TableStucture[];
 		}>({
-			apiKey: auth.apiKey,
-			accountId: auth.accountId,
+			apiKey: auth.props.apiKey,
+			accountId: auth.props.accountId,
 			method: HttpMethod.GET,
 			resourceUri: `/applications/${tableId}`,
 		});
@@ -32,8 +37,8 @@ export const updateRecord = createAction({
 
 		try {
 			const response = await smartSuiteApiCall<Record<string, any>>({
-				apiKey: auth.apiKey,
-				accountId: auth.accountId,
+				apiKey: auth.props.apiKey,
+				accountId: auth.props.accountId,
 				method: HttpMethod.PATCH,
 				resourceUri: `/applications/${tableId}/records/${recordId}/`,
 				body: formattedFields,

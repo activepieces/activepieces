@@ -4,6 +4,7 @@ import {
   Property,
   PiecePropValueSchema,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -35,12 +36,12 @@ const props = {
     },
   }),
 };
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof frontAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { conversation_id, desired_state } = propsValue;
     const conv = await makeRequest(
-      auth as unknown as string,
+      auth,
       HttpMethod.GET,
       `/conversations/${conversation_id}`
     );
@@ -70,6 +71,10 @@ export const newConversationStateChange = createTrigger({
   name: 'newConversationStateChange',
   displayName: 'New Conversation State Change',
   description: 'Triggers when a conversation changes to a specified state.',
+  aiMetadata: {
+    description:
+      'Fires when the selected Front conversation transitions into a chosen status (open, archived, deleted, assigned, or unassigned). Represents a single conversation reaching that state and emits the full conversation object, letting an agent react to lifecycle changes such as a ticket being resolved, reopened, or routed to a teammate.',
+  },
   props,
   sampleData: {
     _links: {

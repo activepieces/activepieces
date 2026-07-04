@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -9,6 +9,10 @@ export const certificationFolderSurveySixMonthExperienceAnswered =
     displayName: 'Enquête "Situation professionnelle de 6 mois" répondue',
     description:
       "Se déclenche lorsqu'un une enquête de 6 mois de cursus est répondue",
+    aiMetadata: {
+      description:
+        "Fires when the candidate answers the Wedof six-month professional-situation survey (enquête de situation professionnelle à 6 mois) on a certification folder. Emits the certification-folder survey record with the submitted six-month-experience answers.",
+    },
     type: TriggerStrategy.WEBHOOK,
     props: {},
     sampleData: {
@@ -90,7 +94,7 @@ export const certificationFolderSurveySixMonthExperienceAnswered =
       if (id !== null && id !== undefined) {
         await wedofCommon.unsubscribeWebhook(
           id as string,
-          context.auth as string
+          context.auth.secret_text
         );
         await context.store.delete('_webhookId');
       }

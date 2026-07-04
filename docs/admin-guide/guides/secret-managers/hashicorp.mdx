@@ -1,0 +1,79 @@
+---
+title: "HashiCorp Vault"
+description: "Connect HashiCorp Vault to Activepieces for enterprise-grade secret management"
+---
+
+HashiCorp Vault is an enterprise-grade secrets management system that provides secure storage and access to secrets, API keys, passwords, and other sensitive data.
+
+## Prerequisites
+
+Before connecting HashiCorp Vault to Activepieces, ensure you have:
+
+- **HashiCorp Vault Key-value (KV) secrets engine** version 2
+- **AppRole auth method** [enabled](https://developer.hashicorp.com/vault/docs/auth/approle)
+- **One or more AppRoles** [configured](https://developer.hashicorp.com/vault/docs/auth/approle) with appropriate policies
+
+## Policies
+
+Enable The created AppRole to access your secrets engine(s) by adding the following to your policy
+
+```
+path "sys/mounts" {
+  capabilities = [ "read" ]
+}
+
+path "<secret_engine_name>/data/<secret_name>" {
+  capabilities = [ "read" ]
+}
+```
+or 
+```
+path "sys/mounts" {
+  capabilities = [ "read" ]
+}
+
+path "<secret_engine_name>/data/*" {
+  capabilities = [ "read" ]
+}
+```
+
+## Connecting to Activepieces
+
+1. Go to **Platform Admin → Security → Secret Managers**
+2. Click **New Connection** and select **HashiCorp Vault**
+3. Enter a **Name** for the connection
+4. Choose a **Scope** — **Platform** to make it available to all projects, or **Project** to restrict it to specific projects
+5. Fill in the connection details:
+   - **URL**: Your Vault server URL (e.g., `http://localhost:8200`)
+   - **Role ID**: The Role ID from your AppRole configuration
+   - **Secret ID**: The Secret ID from your AppRole configuration
+   - **Namespace** (optional): Vault namespace if using Vault Enterprise namespaces
+6. Click **Save** to test and save the connection
+
+## Using HashiCorp Vault Secrets
+
+Once the connection is saved, you can reference Vault secrets inside any piece connection dialog — in global connections (Platform Admin) or directly in the flow builder.
+
+1. Open a connection dialog and click the **key icon** (🔑) next to a credential field
+2. Select your HashiCorp Vault connection from the dropdown
+3. Enter the secret path in the format: `mount/data/path/to/secret/key`
+
+For example, if you stored a secret with:
+
+```bash
+vault kv put -mount=secret mysec api_key='supersecret'
+```
+
+The path to enter would be:
+
+```
+secret/data/mysec/api_key
+```
+
+![Manage Oauth2 apps](/resources/screenshots/secret-manager.png)
+
+The connection will automatically retrieve the secret from Vault when the flow runs.
+
+<Warning>
+  If you update a secret in Vault and the change isn't reflected in your flows, the cached value may still be active. Use the **refresh icon** next to the connection in the Secret Managers page to clear its cache immediately, or wait up to 1 hour for it to expire automatically. See [Caching](/admin-guide/guides/secret-managers/overview#caching) for details.
+</Warning>

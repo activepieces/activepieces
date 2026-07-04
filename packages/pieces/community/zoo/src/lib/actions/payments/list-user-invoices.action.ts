@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listUserInvoicesAction = createAction({
   name: 'list_user_invoices',
   displayName: 'List User Invoices',
   description: 'List all invoices for your user account',
+  audience: 'both',
+  aiMetadata: { description: 'List billing invoices for the authenticated user\'s own account, with optional limit and offset paging. Use for individual-user invoices; the org-level equivalent is the list organization invoices action. Read-only and idempotent.', idempotent: true },
   auth: zooAuth,
   // category: 'Payments',
   props: {
@@ -25,7 +27,7 @@ export const listUserInvoicesAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/user/payment/invoices',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

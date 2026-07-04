@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { clockifyAuth } from '../../index';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { workspaceId } from '../common/props';
 
@@ -9,6 +9,12 @@ export const findRunningTimerAction = createAction({
 	name: 'find-running-timer',
 	displayName: 'Find Running Timer',
 	description: 'Finds currently running timer on specified workspace.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Returns the in-progress (currently running) time entries for the authenticated user on the given workspace. Use to check whether a timer is active before starting or stopping one. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		workspaceId: workspaceId({
 			displayName: 'Workspace',
@@ -19,7 +25,7 @@ export const findRunningTimerAction = createAction({
 		const { workspaceId } = context.propsValue;
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/workspaces/${workspaceId}/time-entries/status/in-progress`,
 		});

@@ -12,6 +12,12 @@ export const updateLead = createAction({
   name: 'updateLead',
   displayName: 'Update Lead',
   description: 'Updates an existing lead.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing lead in Copper CRM, identified by lead ID, overwriting name, email, phone numbers, and address with the supplied values. Use to modify a known lead; requires the target lead ID. Idempotent: re-applying the same values leaves the record in the same state.',
+    idempotent: true,
+  },
   props: {
     leadId: leadDropdown(['auth']),
     fields: Property.DynamicProperties({
@@ -19,12 +25,11 @@ export const updateLead = createAction({
       description: '',
       refreshers: ['auth', 'leadId'],
       required: false,
-      props: async ({ auth, leadId }: any): Promise<InputPropertyMap> => {
+      auth: CopperAuth,
+      props: async ({ auth, leadId }) => {
         if (!auth || !leadId) return {};
-
-        const lead = JSON.parse(leadId);
-
-        return {
+        const lead = JSON.parse(leadId as string);
+        const map:InputPropertyMap= {
           name: Property.ShortText({
             displayName: 'Full Name',
             required: true,
@@ -81,6 +86,7 @@ export const updateLead = createAction({
             defaultValue: lead.address?.country,
           }),
         };
+        return map;
       },
     }),
   },

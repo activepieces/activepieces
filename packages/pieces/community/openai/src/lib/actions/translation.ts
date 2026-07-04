@@ -4,12 +4,13 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { openaiAuth } from '../..';
+import { openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
 import { baseUrl } from '../common/common';
 
 export const translateAction = createAction({
+  audience: 'human',
   name: 'translate',
   displayName: 'Translate Audio',
   description: 'Translate audio to text using whisper-1 model',
@@ -32,7 +33,7 @@ export const translateAction = createAction({
     form.append('model', 'whisper-1');
 
     const headers = {
-      Authorization: `Bearer ${context.auth}`,
+      Authorization: `Bearer ${context.auth.secret_text}`,
     };
 
     const request: HttpRequest = {
@@ -44,11 +45,7 @@ export const translateAction = createAction({
         ...headers,
       },
     };
-    try {
-      const response = await httpClient.sendRequest(request);
-      return response.body;
-    } catch (e) {
-      throw new Error(`Error while execution:\n${e}`);
-    }
+    const response = await httpClient.sendRequest(request);
+    return response.body;
   },
 });

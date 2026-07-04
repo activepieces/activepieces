@@ -10,6 +10,9 @@ export const newPartialFormSubmission = createTrigger({
   name: 'new_partial_form_submission',
   displayName: 'New Partial Form Submission',
   description: 'Triggers when a partial/in-progress submission is received.',
+  aiMetadata: {
+    description: 'Fires when a respondent saves or abandons an in-progress (not yet completed) submission on the selected Paperform form. The event represents a partial submission and may carry empty or incomplete field data.',
+  },
   props: {
     formId: paperformCommonProps.formId,
   },
@@ -20,7 +23,7 @@ export const newPartialFormSubmission = createTrigger({
     const response = await paperformCommon.createWebhook({
       formId,
       webhookUrl: context.webhookUrl,
-      auth: context.auth,
+      auth: context.auth.secret_text,
       eventType: 'partial_submission',
     });
 
@@ -31,7 +34,7 @@ export const newPartialFormSubmission = createTrigger({
     if (webhookId) {
       await paperformCommon.deleteWebhook({
         webhookId,
-        auth: context.auth,
+        auth: context.auth.secret_text,
       });
     }
   },
@@ -41,14 +44,14 @@ export const newPartialFormSubmission = createTrigger({
 
     const response = await paperformCommon.getPartialSubmission({
       submissionId: payload.submission_id,
-      auth: context.auth,
+      auth: context.auth.secret_text,
     });
 
     const submission = response.results['partial-submission'];
 
     const fields = await paperformCommon.getFormFields({
       formSlugOrId: formId as string,
-      auth: context.auth as string,
+      auth: context.auth.secret_text,
     });
 
     const transformedFields =
@@ -71,7 +74,7 @@ export const newPartialFormSubmission = createTrigger({
 
     const response = await paperformCommon.getPartialSubmissions({
       formSlugOrId: formId,
-      auth: context.auth,
+      auth: context.auth.secret_text,
       limit: 10,
     });
 
@@ -79,7 +82,7 @@ export const newPartialFormSubmission = createTrigger({
 
     const fields = await paperformCommon.getFormFields({
       formSlugOrId: formId as string,
-      auth: context.auth as string,
+      auth: context.auth.secret_text,
     });
 
     return response.results['partial-submissions'].map((submission) => {

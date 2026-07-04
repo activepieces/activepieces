@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertPressureAction = createAction({
   name: 'convert_pressure',
   displayName: 'Convert Pressure',
   description: 'Convert pressure measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single pressure value between pascal, kilopascal, bar, atmosphere, and psi. Use only for pressure; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {
@@ -46,7 +48,7 @@ export const convertPressureAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/pressure/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

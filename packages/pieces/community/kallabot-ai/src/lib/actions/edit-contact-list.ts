@@ -6,10 +6,16 @@ export const editContactListAction = createAction({
     name: 'edit-contact-list',
     displayName: 'Edit Contact List',
     description: 'Update/replace all contacts in an existing contact list.',
+    audience: 'both',
+    aiMetadata: {
+        description: 'Replace the entire contents of an existing contact list (by list ID) with a supplied array of contacts, each requiring a phone_number and optionally a name and template_variables. This is a full overwrite, not an append — contacts not in the array are removed; use Add Contacts to List to append instead. Idempotent: re-sending the same array yields the same resulting list.',
+        idempotent: true,
+    },
     auth: kallabotAuth,
 
     props: {
         list_id: Property.Dropdown({
+            auth: kallabotAuth,
             displayName: 'Contact List',
             description: 'Select the contact list to edit.',
             required: true,
@@ -28,7 +34,7 @@ export const editContactListAction = createAction({
                         method: HttpMethod.GET,
                         url: 'https://api.kallabot.com/contacts/lists',
                         headers: {
-                            'Authorization': `Bearer ${auth}`,
+                            'Authorization': `Bearer ${auth.secret_text}`,
                             'Content-Type': 'application/json'
                         }
                     });
@@ -71,6 +77,7 @@ export const editContactListAction = createAction({
             }
         }),
         contacts: Property.DynamicProperties({
+            auth: kallabotAuth,
             displayName: 'Contacts',
             description: 'JSON array of contacts to replace the entire list',
             required: true,

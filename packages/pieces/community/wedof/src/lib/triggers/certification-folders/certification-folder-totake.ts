@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,10 @@ export const certificationFolderTotake = createTrigger({
   displayName: 'Dossier de certification prêt à passer',
   description:
     "Se déclenche lorsqu'un dossier de certification est prét à passer",
+  aiMetadata: {
+    description:
+      "Fires when a certification folder (dossier de certification) transitions to the 'to take' state, meaning the candidate is registered and ready to sit the certification exam. The payload contains the full certification folder, including candidate details, exam information, state history, files, and links to the related certification and organisations.",
+  },
   props: {},
   sampleData: {
     attendeeLink: 'https://test.wedof.fr/candidat-1234-123456789',
@@ -213,7 +217,7 @@ export const certificationFolderTotake = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

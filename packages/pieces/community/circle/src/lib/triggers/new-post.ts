@@ -1,5 +1,5 @@
 import {
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
@@ -15,7 +15,7 @@ import { circleAuth } from '../common/auth';
 import { ListBasicPostsResponse } from '../common/types';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<typeof circleAuth>, { space_id?: number }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof circleAuth>, { space_id?: number }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const spaceId = propsValue.space_id!;
@@ -76,6 +76,9 @@ export const newPostCreated = createTrigger({
 	name: 'new_post_created',
 	displayName: 'New Post Created',
 	description: 'Triggers when a new post is created in a specific space.',
+	aiMetadata: {
+		description: 'Fires when a new published post appears in the selected Circle space. Each event represents one newly published post in that space.',
+	},
 	props: {
 		space_id: spaceIdDropdown,
 	},

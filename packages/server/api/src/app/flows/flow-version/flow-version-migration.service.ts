@@ -1,35 +1,40 @@
-import { 
-    flowMigrations,
-    FlowVersion, 
-    isNil,
-    LATEST_SCHEMA_VERSION,
-    spreadIfDefined,
-} from '@activepieces/shared'
+import { ErrorCode, isNil, ProjectId, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { onCallService } from '@activepieces/server-utils'
+import { FlowVersion, LATEST_FLOW_SCHEMA_VERSION } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
+import { flowMigrations } from './migrations'
 
-const log = system.globalLogger()
-
-export const flowVersionMigrationService = {
-    async migrate(flowVersion: FlowVersion): Promise<FlowVersion> {
+export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
+    async migrate(flowVersion: FlowVersion, projectId?: ProjectId): Promise<FlowVersion> {
         // Early exit if already at latest version
-        if (flowVersion.schemaVersion === LATEST_SCHEMA_VERSION) {
+        if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
             return flowVersion
         }
 
         log.info('Starting flow version migration')
 
-        const migratedFlowVersion: FlowVersion = flowMigrations.apply(flowVersion)
-        if (flowVersion.schemaVersion === migratedFlowVersion.schemaVersion) {
-            return flowVersion
-        }
-
         const backupFiles = flowVersion.backupFiles ?? {}
         if (!isNil(flowVersion.schemaVersion)) {
-            backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService.store(flowVersion)
+            backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService(log).store(flowVersion)
         }
-        
+
+        const { data: migratedFlowVersion, error: migrationError } = await tryCatch(() => flowMigrations.apply(flowVersion, { log, projectId }))
+        if (migrationError) {
+            log.error({ migrationError }, '[flowVersionMigration] Failed to migrate flow version')
+            onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
+                code: ErrorCode.FLOW_MIGRATION_FAILED,
+                message: migrationError.message,
+                params: { flowVersionId: flowVersion.id },
+            }).catch((pageError) => {
+                log.error({ pageError }, '[flowVersionMigration] Failed to send on-call page')
+            })
+            throw migrationError
+        }
+
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,
             ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
@@ -40,4 +45,4 @@ export const flowVersionMigrationService = {
         log.info('Flow version migration completed')
         return migratedFlowVersion
     },
-}
+})

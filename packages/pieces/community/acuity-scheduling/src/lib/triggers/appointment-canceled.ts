@@ -6,7 +6,7 @@ import {
 	HttpRequest,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { acuitySchedulingAuth } from '../../index';
+import { acuitySchedulingAuth } from '../auth';
 import { API_URL, getAppointmentDetails } from '../common';
 import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
 
@@ -17,6 +17,10 @@ export const appointmentCanceledTrigger = createTrigger({
 	name: 'appointment_canceled',
 	displayName: 'Appointment Canceled',
 	description: 'Triggers when an appointment is canceled.',
+	aiMetadata: {
+		description:
+			'Fires when an appointment is canceled in Acuity, emitting the canceled appointment details. Can be scoped to a specific calendar and/or appointment type; events outside the configured scope are ignored.',
+	},
 	props: {
 		calendarId: calendarIdDropdown({
 			displayName: 'Calendar',

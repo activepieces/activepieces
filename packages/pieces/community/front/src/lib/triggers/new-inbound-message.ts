@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   Property,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -21,7 +22,7 @@ const props = {
   }),
 };
 
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof frontAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     let query = `q[types]=inbound`;
@@ -30,7 +31,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
     }
     const limit = 15;
     const response = await makeRequest(
-      auth as string,
+      auth,
       HttpMethod.GET,
       `/events?${query}&limit=${limit}`
     );
@@ -56,6 +57,10 @@ export const newInboundMessage = createTrigger({
   name: 'newInboundMessage',
   displayName: 'New Inbound Message',
   description: 'Fires when a new message is received in a shared inbox.',
+  aiMetadata: {
+    description:
+      'Fires when a new inbound message is received in Front, such as an incoming email or chat from a contact, optionally scoped to a specific inbox. Represents a message arriving from an external sender and emits the inbound event with its message body, sender, and parent conversation, letting an agent act on newly received customer communications.',
+  },
   props,
   sampleData: {
     _links: {

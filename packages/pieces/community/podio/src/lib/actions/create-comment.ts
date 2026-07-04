@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const createCommentAction = createAction({
@@ -8,12 +8,15 @@ export const createCommentAction = createAction({
   name: 'create_comment',
   displayName: 'Create Comment',
   description: 'Post a comment on an item or task.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a text comment on a Podio item or task, chosen via the comment-on type and object id, with optional file or embed attachments. Use to add a note or reply to a record; requires the target type/id and comment text. Not idempotent — each call posts a separate comment.', idempotent: false },
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
     appId: dynamicAppProperty,
 
     type: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Comment On',
       description: 'What type of object to comment on',
       required: true,
@@ -28,6 +31,7 @@ export const createCommentAction = createAction({
       },
     }),
     id: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Object',
       description: 'Select the specific object to comment on',
       required: true,

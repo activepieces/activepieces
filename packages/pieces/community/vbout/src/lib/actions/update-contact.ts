@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
+import { vboutAuth } from '../auth';
 import { makeClient, vboutCommon } from '../common';
 
 export const updateContactAction = createAction({
@@ -7,6 +7,11 @@ export const updateContactAction = createAction({
   name: 'vbout_update_contact',
   displayName: 'Update Contact',
   description: 'Updates a contact in a given email list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates an existing VBOUT contact (found by email) with a new status, IP address, and custom field values for a given list. Use to modify an already-subscribed contact rather than add a new one. Requires the contact email and list ID; idempotent, since re-applying the same values yields the same record state.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Contact Email',
@@ -22,7 +27,7 @@ export const updateContactAction = createAction({
     fields: vboutCommon.listFields,
   },
   async run(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth.secret_text);
     const { email } = context.propsValue;
     const res = await client.getContactByEmail(email as string);
     const contact = res.response.data.contact;

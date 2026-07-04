@@ -1,14 +1,16 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { googleDriveAuth } from '../../index';
+import { drive as googleDrive } from '@googleapis/drive';
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
+import { duplicateFileActionOutputSchema } from '../output-schemas';
 
 export const duplicateFileAction = createAction({
   displayName: 'Duplicate File',
   auth: googleDriveAuth,
   name: 'duplicate_file',
   description: 'Duplicate a file from Google Drive. Returns the new file ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Copies an existing Drive file into a target folder under a new name, optionally converting it to a Google Sheet or Google Doc. Use to clone a file or create an editable Google-format copy. Requires the source file ID and destination folder ID. Not idempotent: each call creates a new copy.', idempotent: false },
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',
@@ -44,16 +46,16 @@ export const duplicateFileAction = createAction({
     }),
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: duplicateFileActionOutputSchema,
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const fileId = context.propsValue.fileId;
     const nameForNewFile = context.propsValue.name;
     const parentFolderId = context.propsValue.folderId;
     const mimeType = context.propsValue.mimeType;
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const requestBody: any = {
       name: nameForNewFile,

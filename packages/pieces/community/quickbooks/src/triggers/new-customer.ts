@@ -2,8 +2,9 @@ import {
   TriggerStrategy,
   createTrigger,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import {
   DedupeStrategy,
   httpClient,
@@ -16,15 +17,15 @@ import dayjs from 'dayjs';
 import { QuickbooksCustomer } from '../lib/types';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof quickbooksAuth>,
+  AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
     const { access_token } = auth;
-    const companyId = auth.props?.['companyId'];
+    const companyId = auth.props?.['companyId'] as string;
 
-    const apiUrl = quickbooksCommon.getApiUrl(companyId);
+    const apiUrl = quickbooksCommon.getApiUrl(companyId!);
 
     const query =
       lastFetchEpochMS === 0
@@ -59,6 +60,9 @@ export const newCustomer = createTrigger({
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created.',
+  aiMetadata: {
+    description: 'Fires when a new customer is created in the connected QuickBooks company, emitting the newly created customer record. Use to react to a new customer being added to the books.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {

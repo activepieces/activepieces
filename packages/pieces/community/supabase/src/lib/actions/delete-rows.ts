@@ -1,12 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { supabaseAuth } from "../../index";
+import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { deleteRowsActionOutputSchema } from '../output-schemas';
 
 export const deleteRows = createAction({
     name: 'delete_rows',
     displayName: 'Delete Rows',
     description: 'Remove rows matching filter criteria from a table',
+    audience: 'both',
+    aiMetadata: { description: 'Deletes rows from a Supabase table that match a single filter condition (equals, not-equals, in-list, range comparisons, null checks, or LIKE pattern on a chosen column). Use to remove records you can identify by one filter; a filter is required so it will not blindly clear a table. Idempotent: re-running deletes nothing further once the matching rows are gone.', idempotent: true },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,
@@ -32,6 +35,7 @@ export const deleteRows = createAction({
             }
         }),
         filter_column: Property.Dropdown({
+            auth: supabaseAuth,
             displayName: 'Filter Column',
             description: 'Select the column to filter on',
             required: true,
@@ -46,7 +50,7 @@ export const deleteRows = createAction({
                 }
                 
                 try {
-                    const { url, apiKey } = auth as { url: string; apiKey: string };
+                    const { url, apiKey } = auth.props;
                     const supabase = createClient(url, apiKey);
                     
                     try {
@@ -134,6 +138,7 @@ export const deleteRows = createAction({
             defaultValue: false,
         })
     },
+    outputSchema: deleteRowsActionOutputSchema,
     async run(context) {
         const { 
             table_name, 
@@ -144,7 +149,7 @@ export const deleteRows = createAction({
             count_deleted, 
             return_deleted 
         } = context.propsValue;
-        const { url, apiKey } = context.auth;
+        const { url, apiKey } = context.auth.props;
 
         const supabase = createClient(url, apiKey);
         

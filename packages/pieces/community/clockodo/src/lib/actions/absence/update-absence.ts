@@ -5,13 +5,19 @@ import {
   makeClient,
   reformatDate,
 } from '../../common';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
   name: 'update_absence',
   displayName: 'Update Absence',
   description: 'Updates an absence in clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Modifies an existing clockodo absence identified by absence_id, changing its date range, type, status (e.g. approve or decline a request), half-day flag, note, or sick-note flag. Use to amend or approve an absence rather than creating a new one (use Create Absence for new records). Idempotent: applying the same field values to the same absence_id converges to the same state.',
+    idempotent: true,
+  },
   props: {
     absence_id: Property.Number({
       displayName: 'Absence ID',
@@ -53,7 +59,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.updateAbsence(propsValue.absence_id, {
       date_since: reformatDate(propsValue.date_since),
       date_until: reformatDate(propsValue.date_until),

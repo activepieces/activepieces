@@ -4,7 +4,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { firstSeenAtFromField, firstSeenAtUntilField, lastSeenAtFromField, lastSeenAtUntilField, limitField, makeClient, pageField } from '../common';
-import { PredictLeadsAuth } from '../../index';
+import { PredictLeadsAuth } from '../auth';
 import { prepareQuery } from '../common/client';
 
 const categories = [
@@ -42,6 +42,8 @@ export const getCompanyJobOpeningsActions = createAction({
   name: 'predict-leads_find_company_job_openings',
   displayName: "List Company's Job Openings",
   description: 'Retrieves job openings by company domain.',
+  audience: 'both',
+  aiMetadata: { description: "Lists a specific company's job openings in PredictLeads, keyed by its domain. Optional filters narrow results to active or not-yet-closed postings, date windows, openings that have a description or location, and job categories. Use to gauge a known company's hiring activity as a buying or growth signal; requires the company domain. Read-only and idempotent; supports pagination.", idempotent: true },
   props: {
     domain: Property.ShortText({
       displayName: "Domain",
@@ -85,7 +87,7 @@ export const getCompanyJobOpeningsActions = createAction({
   },
   async run(context) {
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     const domain = context.propsValue.domain;
@@ -130,6 +132,8 @@ export const getAJobOpeningByIdAction = createAction({
   name: 'predict-leads_get_a_job_opening_by_id',
   displayName: 'Get Job Opening',
   description: 'Retrieves a single job opening by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full details of one job opening in PredictLeads by its job opening ID. Use when you already have an opening ID (e.g. from a list/discover call) and want its complete record. Read-only and idempotent.', idempotent: true },
   props: {
     jobOpeningId: Property.ShortText({
       displayName: "Job Opening ID",
@@ -139,7 +143,7 @@ export const getAJobOpeningByIdAction = createAction({
   },
   async run(context) {
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     const jobOpeningId = context.propsValue.jobOpeningId;
@@ -158,6 +162,8 @@ export const findJobOpeningsAction = createAction({
   name: 'predict-leads_find_job_openings',
   displayName: 'List Job Openings',
   description: 'Retrieves a list of job openings',
+  audience: 'both',
+  aiMetadata: { description: 'Discovers job openings across all companies in PredictLeads, optionally filtered by O*NET occupation codes (e.g. "15-1254.00" for Web Developers). Use to find hiring activity for specific roles without targeting a particular company; for one known company\'s postings use the company job-openings action instead. Read-only and idempotent; supports pagination.', idempotent: true },
   props: {
     onet_codes: Property.Array({
       displayName: 'onet_codes',
@@ -169,7 +175,7 @@ export const findJobOpeningsAction = createAction({
   },
   async run(context) {
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
     const page = context.propsValue.page ?? 1;
     const limit = context.propsValue.limit ?? 1000;

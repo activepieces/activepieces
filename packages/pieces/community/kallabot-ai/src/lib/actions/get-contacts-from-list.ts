@@ -6,6 +6,11 @@ export const getContactsFromListAction = createAction({
     name: 'get-contacts-from-list',
     displayName: 'Get Contacts from List',
     description: 'Retrieve all contacts from a specific contact list.',
+    audience: 'both',
+    aiMetadata: {
+        description: 'List every contact stored in one Kallabot contact list, identified by its list ID. Use it to read or enumerate the members of a list before calling, editing, or campaigning. Read-only and idempotent.',
+        idempotent: true,
+    },
     auth: kallabotAuth,
 
     props: {
@@ -13,6 +18,7 @@ export const getContactsFromListAction = createAction({
             displayName: 'Contact List',
             description: 'Select the contact list to retrieve contacts from.',
             required: true,
+            auth: kallabotAuth,
             refreshers: [],
             options: async ({ auth }) => {
                 if (!auth) {
@@ -28,7 +34,7 @@ export const getContactsFromListAction = createAction({
                         method: HttpMethod.GET,
                         url: 'https://api.kallabot.com/contacts/lists',
                         headers: {
-                            'Authorization': `Bearer ${auth}`,
+                            'Authorization': `Bearer ${auth.secret_text}`,
                             'Content-Type': 'application/json'
                         }
                     });

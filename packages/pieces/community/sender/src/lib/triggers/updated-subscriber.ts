@@ -7,6 +7,9 @@ export const updatedSubscriberTrigger = createTrigger({
   name: 'updated_subscriber',
   displayName: 'Updated Subscriber',
   description: "Fires when a subscriber's data (fields) is updated",
+  aiMetadata: {
+    description: "Fires when an existing subscriber's data or custom fields are updated in the connected Sender account, representing the changed contact.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
@@ -18,7 +21,7 @@ export const updatedSubscriberTrigger = createTrigger({
     };
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/account/webhooks',
       HttpMethod.POST,
       webhookData
@@ -31,7 +34,7 @@ export const updatedSubscriberTrigger = createTrigger({
 
     if (webhookId) {
       await makeSenderRequest(
-        context.auth,
+        context.auth.secret_text,
         `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
@@ -44,7 +47,7 @@ export const updatedSubscriberTrigger = createTrigger({
   },
   async test(context) {
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/subscribers?limit=1',
       HttpMethod.GET
     );

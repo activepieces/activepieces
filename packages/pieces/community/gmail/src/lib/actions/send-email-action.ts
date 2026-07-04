@@ -2,14 +2,20 @@ import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
-import { gmailAuth } from '../../';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
+import { gmail as googleGmail } from '@googleapis/gmail';
+import { sendEmailActionOutputSchema } from '../output-schemas';
 
 export const gmailSendEmailAction = createAction({
   auth: gmailAuth,
   name: 'send_email',
   description: 'Send an email through a Gmail account',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Composes and sends a new email from the connected Gmail account to one or more recipients, with optional CC/BCC, attachments, and plain-text or HTML body. Use this to originate a fresh message; to answer an existing thread prefer Reply to Email instead, or pass an original Message-ID to send this message into that existing thread. Set the draft flag to save it as a draft instead of sending. Not idempotent: each call sends (or drafts) a separate message.',
+    idempotent: false,
+  },
   displayName: 'Send Email',
   props: {
     receiver: Property.Array({
@@ -98,11 +104,11 @@ export const gmailSendEmailAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: sendEmailActionOutputSchema,
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const subjectBase64 = Buffer.from(context.propsValue['subject']).toString(
       'base64'
@@ -155,9 +161,7 @@ export const gmailSendEmailAction = createAction({
     }
 
     const senderEmail =
-      context.propsValue.from ||
-      (await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get())
-        .data.email;
+      context.propsValue.from || (await getUserEmail(context.auth, authClient));
     if (senderEmail) {
       mailOptions.from = context.propsValue.sender_name
         ? `${context.propsValue['sender_name']} <${senderEmail}>`

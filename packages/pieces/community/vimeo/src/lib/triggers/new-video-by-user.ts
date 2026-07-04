@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { vimeoAuth } from '../auth';
 import { apiRequest } from '../common';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
@@ -8,7 +8,7 @@ type Props = {
   userId: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof vimeoAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof vimeoAuth>, Props> = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue, lastFetchEpochMS }) {
     const { userId } = propsValue;
@@ -53,6 +53,9 @@ export const newVideoByUser = createTrigger({
   name: 'new_video_by_user',
   displayName: 'New Video by User',
   description: 'Triggers when another specified user adds a video',
+  aiMetadata: {
+    description: 'Fires when a specified Vimeo user (identified by their user ID) publishes a new video. Polls that user\'s videos sorted by date and emits each newly added one, letting an agent watch another account\'s uploads.',
+  },
   auth: vimeoAuth,
   props: {
     userId: Property.ShortText({

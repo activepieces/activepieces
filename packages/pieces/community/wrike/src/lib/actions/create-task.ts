@@ -7,6 +7,8 @@ export const createTask = createAction({
     name: 'create_task',
     displayName: 'Create Task',
     description: 'Create a new task in Wrike',
+    audience: 'both',
+    aiMetadata: { description: 'Create a task inside a specific Wrike folder, with optional status, importance, assignees (user IDs), start/due dates, duration, and custom fields. Use when an agent needs to add work items to a Wrike project or folder. Requires the target folder ID; each call creates a distinct task, so it is not idempotent.', idempotent: false },
     auth: wrikeAuth,
     props: {
         folderId: Property.ShortText({

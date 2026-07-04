@@ -15,8 +15,15 @@ export const pauseWarmup = createAction({
   name: 'pauseWarmup',
   displayName: 'Pause Warmup',
   description: 'Pause warmup for selected email accounts.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Turns off inbox warmup for a connected ReachInbox email account, identified by its account id. Use to stop reputation-building activity for a mailbox. Idempotent: re-running for an account already paused leaves it disabled.',
+    idempotent: true,
+  },
   props: {
     accountId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Email Accounts to Pause Warmup',
       description: 'Choose email accounts that are currently warming up.',
       required: true,
@@ -70,7 +77,7 @@ export const pauseWarmup = createAction({
         method: HttpMethod.POST,
         url: `${reachinboxCommon.baseUrl}account/warmup/pause`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

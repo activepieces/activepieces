@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { missiveAuth } from './lib/common/auth';
 import { createContact } from './lib/actions/create-contact';
@@ -30,7 +30,7 @@ export const missive = createPiece({
             baseUrl: () => 'https://public.missiveapp.com/v1',
             auth: missiveAuth,
             authMapping: async (auth) => ({
-                Authorization: `Bearer ${auth}`,
+                Authorization: `Bearer ${auth.secret_text}`,
             }),
         }),
     ],

@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
-import { hunterAuth } from '../../index';
+import { hunterAuth } from '../auth';
 import { emailProp } from '../common/props';
 
 export const verifyEmailAction = createAction({
@@ -9,6 +9,8 @@ export const verifyEmailAction = createAction({
     name: 'verify-email',
     displayName: 'Verify Email',
     description: 'Check email deliverability and validation status.',
+    audience: 'both',
+    aiMetadata: { description: 'Verifies a single email address against Hunter, returning deliverability status, a confidence score, and signals such as MX records, SMTP check, disposable/webmail flags, and accept-all. Use to validate an address before sending. Requires the email; read-only and idempotent, though verification may occasionally be reported as still in progress.', idempotent: true },
     props: {
         email: emailProp,
     },

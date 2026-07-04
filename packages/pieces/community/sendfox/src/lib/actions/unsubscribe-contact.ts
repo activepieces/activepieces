@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../../index';
+import { sendfoxAuth } from '../auth';
 import { callsendfoxApi } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -8,6 +8,8 @@ export const unsubscribe = createAction({
   auth: sendfoxAuth,
   displayName: 'Unsubscribe Contact',
   description: 'Unsubscribe a contact',
+  audience: 'both',
+  aiMetadata: { description: 'Unsubscribes a contact from SendFox by email so they stop receiving emails. Use to honor an opt-out or remove someone from sends. Effectively idempotent in outcome (the contact ends up unsubscribed), but flagged not idempotent because each call issues a state-changing request.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -16,7 +18,7 @@ export const unsubscribe = createAction({
   },
   async run(context) {
     const authentication = context.auth;
-    const accessToken = authentication;
+    const accessToken = authentication.secret_text;
     const email = context.propsValue.email;
     const response = (
       await callsendfoxApi(HttpMethod.PATCH, 'unsubscribe', accessToken, {

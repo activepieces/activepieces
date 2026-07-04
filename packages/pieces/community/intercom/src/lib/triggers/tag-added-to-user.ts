@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
 import { tagIdProp } from '../common/props';
 
@@ -7,6 +7,9 @@ export const tagAddedToUserTrigger = createTrigger({
 	name: 'tag-added-to-user',
 	displayName: 'Tag Added to User',
 	description: 'Triggers when a tag is added to a user.',
+	aiMetadata: {
+		description: 'Fires when a tag is applied to a user contact in Intercom. An optional Tag input limits the trigger to a specific tag; if left empty it fires for any tag added to a user. Outputs the affected user contact and the tag that was added.',
+	},
 	props: {
 		tagId: tagIdProp('Tag', false),
 	},

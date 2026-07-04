@@ -3,13 +3,18 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const typeAction = createAction({
 	name: 'type',
 	auth: airtopAuth,
 	displayName: 'Type',
 	description: 'Type into a browser window at the specified field.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Types text into an input in a session window, with options to clear the field first, press Enter and/or Tab afterward, and wait for navigation; the target field can be located by a natural-language element description or left to the active focus. Use this to fill forms or search boxes. Requires session id, window id, and the text; not idempotent since it mutates the page and may submit forms or trigger navigation.',
+		idempotent: false,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,
@@ -167,12 +172,12 @@ export const typeAction = createAction({
 		} = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			costThresholdCredits: z.number().min(0).optional(),
-			timeThresholdSeconds: z.number().min(0).optional(),
-			navigationTimeoutSeconds: z.number().min(0).optional(),
-			visualAnalysisMaxScrolls: z.number().min(1).optional(),
-			visualAnalysisOverlap: z.number().min(0).max(100).optional(),
-			visualAnalysisScrollDelay: z.number().min(0).optional(),
+			costThresholdCredits: z.optional(z.number().check(z.minimum(0))),
+			timeThresholdSeconds: z.optional(z.number().check(z.minimum(0))),
+			navigationTimeoutSeconds: z.optional(z.number().check(z.minimum(0))),
+			visualAnalysisMaxScrolls: z.optional(z.number().check(z.minimum(1))),
+			visualAnalysisOverlap: z.optional(z.number().check(z.minimum(0), z.maximum(100))),
+			visualAnalysisScrollDelay: z.optional(z.number().check(z.minimum(0))),
 		});
 
 		const body: Record<string, any> = {
@@ -255,7 +260,7 @@ export const typeAction = createAction({
 		}
 
 		const response = await airtopApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/type`,
 			body,

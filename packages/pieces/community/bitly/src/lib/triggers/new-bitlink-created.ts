@@ -11,6 +11,9 @@ export const newBitlinkCreatedTrigger = createTrigger({
   name: 'new_bitlink_created',
   displayName: 'New Bitlink Created',
   description: 'Fires when a new Bitlink is created.',
+  aiMetadata: {
+    description: 'Fires when a new Bitlink appears in the selected group, detected by polling. Represents a newly created short link, optionally narrowed to those whose title or tags match a filter and optionally including archived links.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     pollingInterval: Property.StaticDropdown({
@@ -54,7 +57,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
 
   async onEnable(context) {
     const { group_guid } = context.propsValue;
-    const { accessToken } = context.auth;
+    const { accessToken } = context.auth.props;
 
     try {
       const response = await bitlyApiCall<{ links: BitlyLink[] }>({
@@ -96,7 +99,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
 
   async run(context) {
     const { group_guid, titleFilter, tagFilter, includeArchived } = context.propsValue;
-    const { accessToken } = context.auth;
+    const { accessToken } = context.auth.props;
     
     try {
       const previousLinkIds = await context.store.get<string[]>(LAST_BITLINK_IDS_KEY) || [];
@@ -188,7 +191,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
 
   async test(context) {
     const { group_guid, includeArchived } = context.propsValue;
-    const { accessToken } = context.auth;
+    const { accessToken } = context.auth.props;
 
     try {
       const response = await bitlyApiCall<{ links: BitlyLink[] }>({

@@ -6,7 +6,7 @@ import {
 import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 type StripeWebhookPayload = {
   data: {
@@ -22,6 +22,10 @@ export const stripeCheckoutSessionCompleted = createTrigger({
   displayName: 'Checkout Session Completed',
   description:
     'Fires when a Stripe Checkout Session is successfully completed.',
+  aiMetadata: {
+    description:
+      'Fires when a Stripe Checkout Session is successfully completed (the checkout.session.completed event), emitting the completed session including customer and payment details. An optional customer ID filter narrows firing to one customer. Use to react to a completed hosted checkout, such as fulfilling an order or granting access.',
+  },
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',
@@ -57,7 +61,7 @@ export const stripeCheckoutSessionCompleted = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'checkout.session.completed',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>(
       '_checkout_session_completed_trigger',
@@ -74,7 +78,7 @@ export const stripeCheckoutSessionCompleted = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
@@ -83,7 +87,7 @@ export const stripeCheckoutSessionCompleted = createTrigger({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/checkout/sessions',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {

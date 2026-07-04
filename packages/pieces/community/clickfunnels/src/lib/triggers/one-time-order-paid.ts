@@ -11,6 +11,10 @@ export const oneTimeOrderPaid = createTrigger({
   name: 'OneTimeOrderPaid',
   displayName: MODULE_NAME,
   description: 'Triggers when a customer pays a one-time order.',
+  aiMetadata: {
+    description:
+      'Fires when a one-time (non-subscription) order is completed/paid in the selected ClickFunnels workspace, representing a successful single-purchase payment. Delivers the order payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),
@@ -24,7 +28,7 @@ export const oneTimeOrderPaid = createTrigger({
 
     try {
       const response: any = await clickfunnelsApiService.createWebhook(
-        auth,
+        auth.props,
         workspaceId as string,
         {
           webhooks_outgoing_endpoint: {
@@ -52,7 +56,7 @@ export const oneTimeOrderPaid = createTrigger({
 
     if (cachedData) {
       await clickfunnelsApiService
-        .deleteWebhook(auth, cachedData.webhookId)
+        .deleteWebhook(auth.props, cachedData.webhookId)
         .then(async () => {
           await store.delete(CACHE_KEY);
         });

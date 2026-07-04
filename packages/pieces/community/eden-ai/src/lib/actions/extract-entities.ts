@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
+import { edenAiAuth } from '../..';
 
 const NER_PROVIDERS = [
   { label: 'Amazon', value: 'amazon' },
@@ -70,8 +71,15 @@ export const extractEntitiesAction = createAction({
   name: 'extract_entities',
   displayName: 'Extract Named Entities in Text',
   description: 'Identify entities (names, places) in text using Eden AI. Supports multiple providers, languages, and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Run named-entity recognition over a text via Eden AI, routed to a chosen provider, returning detected entities with their category and importance. Use it to pull out people, places, organizations, and similar named items from a passage. Requires a provider and the text; language defaults to auto-detection. Read-only analysis with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for named entity recognition.',
       required: true,
@@ -84,6 +92,7 @@ export const extractEntitiesAction = createAction({
       required: true,
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Text Language',
       description: 'The language of the input text. Choose "Auto Detection" if unsure.',
       required: false,
@@ -97,6 +106,7 @@ export const extractEntitiesAction = createAction({
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -110,14 +120,15 @@ export const extractEntitiesAction = createAction({
       defaultValue: false,
     }),
   },
+  auth: edenAiAuth,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      text: z.string().min(1, 'Text is required'),
-      language: z.string().nullish(),
-      model: z.string().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      text: z.string().check(z.minLength(1, 'Text is required')),
+      language: z.nullish(z.string()),
+      model: z.nullish(z.string()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 
@@ -147,7 +158,7 @@ export const extractEntitiesAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/text/named_entity_recognition',
         body,

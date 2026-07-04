@@ -1,21 +1,23 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../..';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelCommon } from '../common/common';
 
 export const lookupTableColumnAction = createAction({
   auth: excelAuth,
   name: 'lookup_table_column',
   description: 'Lookup a value in a table column in a worksheet',
+  audience: 'both',
+  aiMetadata: { description: 'Find rows in a defined Excel table where a named column exactly equals a given value, returning the first match by default or all matches when Return All Matches is enabled. Use to look up table records by a key; throws if the named column does not exist. Read-only and idempotent.', idempotent: true },
   displayName: 'Lookup Table Column',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
-    table_id: excelCommon.table_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
+    tableId: commonProps.tableId,
     lookup_column: Property.ShortText({
       displayName: 'Lookup Column',
       description: 'The column name to lookup the value in',
@@ -34,34 +36,28 @@ export const lookupTableColumnAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const tableName = propsValue['table_id'];
+    const { storageSource, siteId, documentId, workbookId, worksheetId, tableId } = propsValue;
     const lookupColumn = propsValue['lookup_column'];
     const lookupValue = propsValue['lookup_value'];
     const returnAllMatches = propsValue['return_all_matches'];
+    const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
-    const rowsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/rows`;
-    const rowsResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: rowsUrl,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    const columnsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/columns`;
-    const columnsResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: columnsUrl,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    const client = createMSGraphClient(auth['access_token'], cloud);
 
-    const columns = columnsResponse.body['value'];
+    const rowsResponse = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`)
+      .get();
+
+    const columnsResponse = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`)
+      .get();
+
+    const columns = columnsResponse.value;
     const columnIndex = columns.findIndex(
       (column: any) => column.name === lookupColumn
     );
@@ -70,7 +66,7 @@ export const lookupTableColumnAction = createAction({
       throw new Error(`Column "${lookupColumn}" not found in the table.`);
     }
 
-    const rows = rowsResponse.body['value'];
+    const rows = rowsResponse.value;
     const matchedRows = rows.filter(
       (row: any) => row.values[0][columnIndex] === lookupValue
     );

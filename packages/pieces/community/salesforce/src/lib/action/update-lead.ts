@@ -8,6 +8,8 @@ export const updateLead = createAction({
     name: 'update_lead',
     displayName: 'Update Lead',
     description: 'Update an existing lead.',
+    audience: 'both',
+    aiMetadata: { description: 'Update fields on an existing Lead selected by its ID; only the fields you provide are changed and the Lead must already exist. Use Create Lead to add a new one; this does not convert the Lead.', idempotent: false },
     props: {
         lead_id: salesforcesCommon.lead,
         FirstName: Property.ShortText({

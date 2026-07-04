@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../index';
+import { wedofAuth } from '../auth';
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
@@ -8,6 +8,12 @@ export const sendFile = createAction({
   name: 'sendFile',
   displayName: "Envoyer un fichier",
   description: "Permet d'envoyer un fichier pour un dossier (Dossier de formation / Dossier de certification)",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads a document to a single folder (a training or certification folder selected via the folder-type input), provided as a direct file, a file URL, or a link to download. Not idempotent: each call adds a new document to the folder. Use to attach a file to one specific folder by its number.',
+    idempotent: false,
+  },
   props: {
     entityClass: Property.StaticDropdown({
       displayName: "Choisir le type de dossier",
@@ -38,6 +44,7 @@ export const sendFile = createAction({
         required: false,
     }),
     typeId: Property.DynamicProperties({
+      auth: wedofAuth,
       displayName: 'Type du fichier',
       refreshers: ['entityClass', 'externalId'],
       required: true,
@@ -107,6 +114,7 @@ export const sendFile = createAction({
       
     }),
   files: Property.DynamicProperties({
+    auth: wedofAuth,
     description: '',
     displayName: 'ez',
     required: true,
@@ -154,7 +162,7 @@ export const sendFile = createAction({
           body: message,
           headers: {
             'Content-Type': 'multipart/form-data',
-            'X-Api-Key': context.auth as string,
+            'X-Api-Key': context.auth.secret_text,
           },
         })
       ).body;

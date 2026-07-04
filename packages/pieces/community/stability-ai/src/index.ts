@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { textToImage } from './lib/actions/text-to-image';
 
 export const stabilityAiAuth = PieceAuth.CustomAuth({
@@ -34,7 +34,7 @@ export const stabilityAi = createPiece({
       baseUrl: () => 'https://api.stability.ai/v1',
       auth: stabilityAiAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { api_key: string }).api_key}`,
+        Authorization: `Bearer ${auth.props.api_key}`,
       }),
     }),
   ],

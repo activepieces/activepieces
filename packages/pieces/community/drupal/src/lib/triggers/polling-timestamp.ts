@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,17 +10,17 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { drupalAuth } from '../../';
-type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
+import { drupalAuth } from '../auth';
+import { DrupalAuthType } from '../common/jsonapi';
 
-const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }> = {
+const polling: Polling<DrupalAuthType, { name: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     if (lastFetchEpochMS === undefined || lastFetchEpochMS === null) {
       lastFetchEpochMS = 0;
     }
     console.debug('Polling by timestamp', propsValue['name'], lastFetchEpochMS);
-    const { website_url, username, password } = (auth as DrupalAuthType);
+    const { website_url, username, password } = auth.props;
     const body: any = {
       name: propsValue['name'],
       timestamp: lastFetchEpochMS / 1000,
@@ -49,6 +48,9 @@ export const drupalPollingTimestamp = createTrigger({
   name: 'drupalPollingTimestamp',
   displayName: 'Polling by timestamp',
   description: 'A trigger that polls the Drupal site by timestamp.',
+  aiMetadata: {
+    description: 'Fires for each new item pushed to a named Drupal orchestration poll, tracked by timestamp so only items created after the last poll are emitted. Use the time-based variant when items are dated rather than sequentially numbered; the poll name must match the name configured on the Drupal side (e.g. an ECA poll event).',
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

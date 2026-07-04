@@ -1,14 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth, baseApiUrl } from '../..';
+import { autocallsAuth } from '../..';
+import { baseApiUrl } from '../..';
 
 export const makePhoneCall = createAction({
   auth:autocallsAuth,
   name: 'makePhoneCall',
   displayName: 'Make Phone Call',
   description: "Call a customer by it's phone number using an assistant from our platform.",
+  audience: 'both',
+  aiMetadata: { description: 'Places an outbound AI phone call to a single customer phone number using a selected Autocalls outbound assistant, passing template variables (e.g. customer_name) into the conversation. Use to dial one contact on demand rather than enrolling them in a campaign. Requires a valid outbound assistant id and a phone number; each call dials again, so it is not idempotent.', idempotent: false },
   props: {
     assistant: Property.Dropdown({
+      auth: autocallsAuth,
       displayName: 'Assistant',
       description: 'Select an assistant',
       required: true,
@@ -19,7 +23,7 @@ export const makePhoneCall = createAction({
           method: HttpMethod.GET,
           url: baseApiUrl + 'api/user/assistants/outbound',
           headers: {
-            Authorization: "Bearer " + auth,
+            Authorization: "Bearer " + auth?.secret_text,
           },
         });
 
@@ -70,7 +74,7 @@ export const makePhoneCall = createAction({
         variables: context.propsValue['variables'],
       },
       headers: {
-        Authorization: "Bearer " + context.auth,
+        Authorization: "Bearer " + context.auth.secret_text,
       },
     });
     return res.body;

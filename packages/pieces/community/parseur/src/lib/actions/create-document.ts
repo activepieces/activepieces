@@ -6,6 +6,12 @@ export const createDocument = createAction({
   name: 'createDocument',
   displayName: 'Create Document',
   description: 'Creates a new document.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits a new email-style document to Parseur for parsing by sending its subject, sender/recipient addresses, and HTML or plain-text body. Use to push raw email content into a Parseur mailbox so it can be parsed against templates. Each call creates a separate document, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     subject: Property.ShortText({
       displayName: 'Subject',
@@ -57,7 +63,7 @@ export const createDocument = createAction({
   async run({ auth: apiKey, propsValue }) {
     const { message_headers, ...rest } = propsValue;
     return await parseurCommon.createDocument({
-      apiKey,
+      apiKey:apiKey.secret_text,
       ...rest,
       message_headers: message_headers
         ? Object.fromEntries(

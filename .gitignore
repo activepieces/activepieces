@@ -1,15 +1,29 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+# Claude Code worktrees
+.claude/worktrees/
+
+pieces-cache-db-*.sqlite
+
+# local debug logs (evlog filesystem drain)
+.evlog/
+
+# local dev/session artifacts (research dumps, IDE config, captured eval output)
+.firecrawl/
+.claude/launch.json
+CONTEXT.md
+!.agents/contexts/**/CONTEXT.md
+packages/server/worker/test/lib/chat-eval/live/results/
+
 # compiled output
 dist
 tmp
-.nx/
+.turbo/
 /out-tsc
 firebase-admin-sdk.json
 dev
 /cache
 /logs/
-.env
 
 # SDK Build
 builds
@@ -42,7 +56,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
-.nx/
+.turbo/
 # System Files
 .DS_Store
 Thumbs.db
@@ -62,13 +76,28 @@ activepieces-engine.js
 scratch.md
 
 # environment variables
-.env
+.env*
+
+# chat-eval CLI cache + decision log
+.chat-eval/
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Turborepo
+.turbo
 
 # Playwright
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/redis-binaries/
+
+# Terraform
+deploy/terraform/**/.terraform/
+deploy/terraform/**/*.tfstate
+deploy/terraform/**/*.tfstate.backup
+deploy/terraform/**/.terraform.lock.hcl
+deploy/terraform/**/terraform.tfvars
+deploy/terraform/**/terraform-*.tfvars

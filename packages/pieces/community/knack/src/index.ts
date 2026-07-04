@@ -5,7 +5,7 @@ import { createRecordAction } from './lib/actions/create-record';
 import { deleteRecordAction } from './lib/actions/delete-record';
 import { findRecordAction } from './lib/actions/find-record';
 import { updateRecordAction } from './lib/actions/update-record';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const knack = createPiece({
   displayName: 'Knack',
@@ -23,7 +23,7 @@ export const knack = createPiece({
       auth: knackAuth,
       baseUrl: () => 'https://api.knack.com/v1',
       authMapping: async (auth) => {
-        const { apiKey, applicationId } = auth as { apiKey: string, applicationId: string };
+        const { apiKey, applicationId } = auth.props;
         return {
           'X-Knack-Application-ID': applicationId,
           'X-Knack-REST-API-Key': apiKey,

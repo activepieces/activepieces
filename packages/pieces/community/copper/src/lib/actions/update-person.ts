@@ -12,6 +12,12 @@ export const updatePerson = createAction({
   name: 'updatePerson',
   displayName: 'Update Person',
   description: 'Updates a person based on matching criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing person (contact) in Copper CRM, identified by person ID, overwriting name, emails, phone numbers, and address with the supplied values. Use to modify a known contact; requires the target person ID and at least one valid email. Idempotent: re-applying the same values leaves the record in the same state.',
+    idempotent: true,
+  },
   props: {
     personId: peopleDropdown(['auth']),
     fields: Property.DynamicProperties({
@@ -19,12 +25,13 @@ export const updatePerson = createAction({
       description: '',
       refreshers: ['auth', 'personId'],
       required: false,
-      props: async ({ auth, personId }: any): Promise<InputPropertyMap> => {
+      auth: CopperAuth,
+      props: async ({ auth, personId }) => {
         if (!auth || !personId) return {};
 
-        const person = JSON.parse(personId);
+        const person = JSON.parse(personId as string);
 
-        return {
+        const map:InputPropertyMap= {
           name: Property.ShortText({
             displayName: 'Full Name',
             required: true,
@@ -85,7 +92,8 @@ export const updatePerson = createAction({
             required: false,
             defaultValue: person.address?.country,
           }),
-        };
+        } ;
+        return map;
       },
     }),
   },

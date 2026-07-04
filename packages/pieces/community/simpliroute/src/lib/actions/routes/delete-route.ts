@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const delete_route = createAction({
@@ -8,6 +8,8 @@ export const delete_route = createAction({
     auth: simplirouteAuth,
     displayName: 'Delete Route',
     description: 'Delete a route by its ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently delete a single route identified by its UUID. Use to remove an unwanted or mistaken route; destructive and irreversible. Deleting an already-removed route id simply has no further effect.', idempotent: false },
     props: {
         route_id: Property.ShortText({ 
             displayName: 'route_id', 
@@ -22,7 +24,7 @@ export const delete_route = createAction({
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

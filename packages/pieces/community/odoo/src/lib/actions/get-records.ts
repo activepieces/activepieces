@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
-import { odooAuth } from "../..";
-import { z } from 'zod';
+import { odooAuth } from '../auth';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export default createAction({
@@ -9,6 +9,8 @@ export default createAction({
     auth: odooAuth,
     displayName: 'Custom Search and read records',
     description: 'Records can be listed and filtered',
+    audience: 'both',
+    aiMetadata: { description: 'Searches and reads records from any Odoo model via the XML-RPC search_read call, returning the chosen fields with optional offset/limit paging. Supply a model name and an optional Odoo domain (a list of [field, operator, value] criteria); an empty domain returns all records of the model. Read-only and idempotent. Use this generic reader when no model-specific get action fits.', idempotent: true },
     props: {
         // Properties to ask from the user, in this ask we will take number of
         model: Property.ShortText({
@@ -41,15 +43,15 @@ export default createAction({
     },
     async run(context) {
         await propsValidation.validateZod(context.propsValue, {
-            limit: z.number().min(1).optional(),
+            limit: z.optional(z.number().check(z.minimum(1))),
         });
 
         const odoo = new Odoo({
-            url: context.auth.base_url,
+            url: context.auth.props.base_url,
             port: 443,
-            db: context.auth.database,
-            username: context.auth.username,
-            password: context.auth.api_key,
+            db: context.auth.props.database,
+            username: context.auth.props.username,
+            password: context.auth.props.api_key,
         })
 
         try {

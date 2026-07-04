@@ -1,21 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createDiscussion } from '../api';
 import { buildMemberSpacesDropdown } from '../props';
-import { bettermodeAuth, BettermodeAuthType } from '../auth';
+import { bettermodeAuth } from '../auth';
 
 export const createDiscussionAction = createAction({
   name: 'create_discussion',
   auth: bettermodeAuth,
   displayName: 'Create Discussion Post',
   description: 'Create a new discussion post in a space',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a new discussion post (title, HTML content, optional comma-separated tags, optional locked flag) into a Bettermode community space identified by its space ID. Use to start a conversation thread programmatically. Not idempotent: each call publishes a separate post.', idempotent: false },
   props: {
     spaceId: Property.Dropdown({
+      auth: bettermodeAuth,
       displayName: 'Space',
       description: 'The space to create the discussion in',
       required: true,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildMemberSpacesDropdown(auth as BettermodeAuthType),
+        await buildMemberSpacesDropdown(auth?.props),
     }),
     title: Property.ShortText({
       displayName: 'Title',
@@ -41,7 +44,7 @@ export const createDiscussionAction = createAction({
   },
   async run(context) {
     return await createDiscussion(
-      context.auth as BettermodeAuthType,
+      context.auth.props,
       context.propsValue.spaceId,
       context.propsValue.tagNames ?? '',
       context.propsValue.title,

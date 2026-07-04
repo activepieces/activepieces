@@ -3,6 +3,7 @@ import {
   createTrigger,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { xeroAuth } from '../..';
 import {
@@ -28,7 +29,7 @@ function parseXeroDateToEpoch(dateVal: unknown): number {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof xeroAuth>,
+AppConnectionValueForAuthProperty<typeof xeroAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -109,6 +110,9 @@ export const xeroNewPayment = createTrigger({
   name: 'xero_new_payment',
   displayName: 'New Payment',
   description: 'Fires when a payment is received.',
+  aiMetadata: {
+    description: 'Fires when a new payment is recorded in the connected Xero organisation. Polls the Xero Payments endpoint and emits each payment the first time its PaymentID is seen, optionally filtered by payment type (ACCRECPAYMENT received on a sales invoice / ACCPAYPAYMENT paid on a bill), status, invoice, reference, or date range. Each item is a full payment record (amount, date, linked invoice, account). Represents a newly recorded payment, not an update to one.',
+  },
   props: {
     tenant_id: props.tenant_id,
     payment_types: Property.StaticMultiSelectDropdown({

@@ -9,6 +9,8 @@ export const convertFile = createAction({
     name: 'convert_file',
     displayName: 'Convert File',
     description: 'Create a basic file conversion task for a single file with desired output format',
+    audience: 'both',
+    aiMetadata: { description: 'Converts a single file from one format to another via CloudConvert (200+ formats; input format auto-detected unless specified). Choose this to transform a document, image, audio, or video file into a different format. Supply the input via one of three import methods — a public URL, an uploaded file, or a previously stored Activepieces file ID — and set the target output_format. Each call creates a new conversion job, so it is not idempotent.', idempotent: false },
     auth: cloudconvertAuth,
     requireAuth: true,
     props: getConvertFileProps(),
@@ -22,13 +24,13 @@ export const convertFile = createAction({
         try {
             const supportedFormats = await client.getSupportedFormats({
                 inputFormat: input_format === 'auto' ? undefined : input_format,
-                outputFormat: output_format,
+                outputFormat: output_format as string,
                 include: ['options', 'engine_versions']
             });
             
             if (supportedFormats.length === 0) {
                 const allOutputFormats = await client.getSupportedFormats({
-                    outputFormat: output_format,
+                    outputFormat: output_format as string,
                     include: ['options', 'engine_versions']
                 });
                 

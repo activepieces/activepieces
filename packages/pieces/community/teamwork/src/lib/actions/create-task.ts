@@ -12,9 +12,12 @@ export const createTask = createAction({
 	name: 'create_task',
 	displayName: 'Create Task',
 	description: 'Add a new task under a project with description, due date, assignee, tags, etc.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a task within a project and task list in Teamwork. Use to add an actionable item with content, optional due/start dates, assignees, priority, tags, custom fields, and an optional file attachment (uploaded via presigned URL before the task is created). Requires the target project and task list. Not idempotent — each call creates a new task.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'The project to create the task in.',
 			required: true,
@@ -27,7 +30,7 @@ export const createTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});
@@ -42,6 +45,7 @@ export const createTask = createAction({
 			},
 		}),
 		tasklistId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Task List',
 			description: 'The task list to add the task to.',
 			required: true,
@@ -54,7 +58,7 @@ export const createTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: `/projects/${projectId}/tasklists.json`,
 				});
@@ -74,6 +78,7 @@ export const createTask = createAction({
 			required: true,
 		}),
 		'responsible-party-id': Property.MultiSelectDropdown({
+auth: teamworkAuth,
 			displayName: 'Responsible Parties',
 			description: 'The users responsible for the task.',
 			required: false,
@@ -86,7 +91,7 @@ export const createTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: `/projects/${projectId}/people.json`,
 				});
@@ -129,6 +134,7 @@ export const createTask = createAction({
 			},
 		}),
 		tagIds: Property.MultiSelectDropdown({
+auth: teamworkAuth,
 			displayName: 'Tags',
 			description: 'Tags to associate with the task.',
 			required: false,
@@ -141,7 +147,7 @@ export const createTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/tags.json',
 				});
@@ -161,6 +167,7 @@ export const createTask = createAction({
 			required: false,
 		}),
 		customFields: Property.DynamicProperties({
+			auth: teamworkAuth,
 			displayName: 'Custom Fields',
 			description: 'Custom fields for this task.',
 			required: false,
@@ -168,7 +175,7 @@ export const createTask = createAction({
 			props: async ({ auth }) => {
 				if (!auth) return {};
 				const fields: DynamicPropsValue = {};
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/customfields.json',
 					query: {

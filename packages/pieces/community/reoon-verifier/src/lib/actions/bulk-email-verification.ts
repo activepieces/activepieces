@@ -7,6 +7,8 @@ export const bulkEmailVerification = createAction({
   name: 'bulkEmailVerificationTask',
   displayName: 'Create Bulk Email Verification',
   description: 'Creates bulk email verification task.',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a named batch of email addresses to the Reoon API for asynchronous bulk verification and returns the task identifier used to poll for results later (pair with the Get Bulk Verification Result action). Use when validating many addresses at once rather than one-by-one; emails may be passed as separate entries or comma-separated. Not idempotent: each call creates a new verification task.', idempotent: false },
   props: {
     taskName: Property.ShortText({
       displayName: 'Task Name',
@@ -32,7 +34,7 @@ export const bulkEmailVerification = createAction({
     const res = await verifyEmails(
       emailsToVerify,
       context.propsValue.taskName,
-      context.auth
+      context.auth.secret_text
     );
 
     return res.body;

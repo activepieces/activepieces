@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -9,6 +9,12 @@ export const getCertificationFolderDocuments = createAction({
   displayName: "Liste des documents d'un dossier de certification",
   description:
     "Récupérer la liste de documents d'un dossier de certification à partir de son n° de dossier",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "List the documents (files) attached to a single Wedof certification folder, identified by its externalId. Read-only and idempotent; returns the folder's file listing rather than the folder record itself.",
+    idempotent: true,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
@@ -28,7 +34,7 @@ export const getCertificationFolderDocuments = createAction({
           '/files',
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

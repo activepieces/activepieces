@@ -8,6 +8,8 @@ export const findMember = createAction({
   name: 'find_member',
   displayName: 'Find Member',
   description: 'Find a member by email',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up Ghost members filtered by an exact email address and returns the matches. Use to check whether a member exists or to resolve a member id before updating. Read-only and idempotent.', idempotent: true },
   auth: ghostAuth,
   props: {
     email: Property.ShortText({
@@ -18,10 +20,10 @@ export const findMember = createAction({
 
   async run(context) {
     const response = await httpClient.sendRequest({
-      url: `${context.auth.baseUrl}/ghost/api/admin/members`,
+      url: `${context.auth.props.baseUrl}/ghost/api/admin/members`,
       method: HttpMethod.GET,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(context.auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(context.auth.props.apiKey)}`,
       },
       queryParams: {
         filter: `email:${context.propsValue.email}`,

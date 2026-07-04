@@ -21,9 +21,12 @@ export const searchRecords = createAction({
   auth: vtigerAuth,
   displayName: 'Search Records',
   description: 'Search for a record.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches a Vtiger module (element type) by filtering its records against field-value criteria; string fields match case-insensitive substrings and other fields match exactly. Leaving the criteria empty returns all records (optionally capped by limit). Choose this for simple field-based lookups; use Query Records for custom SQL-style conditions. Read-only and idempotent.', idempotent: true },
   props: {
     elementType: elementTypeProperty,
     fields: Property.DynamicProperties({
+      auth: vtigerAuth,
       displayName: 'Search Fields',
       description: 'Enter your filter criteria',
       required: true,
@@ -34,9 +37,9 @@ export const searchRecords = createAction({
         }
 
         const instance = await instanceLogin(
-          (auth as PiecePropValueSchema<typeof vtigerAuth>).instance_url,
-          (auth as PiecePropValueSchema<typeof vtigerAuth>).username,
-          (auth as PiecePropValueSchema<typeof vtigerAuth>).password
+          auth.props.instance_url,
+          auth.props.username,
+          auth.props.password
         );
 
         if (instance === null) {
@@ -44,7 +47,7 @@ export const searchRecords = createAction({
         }
 
         return generateElementFields(
-          auth as VTigerAuthValue,
+          auth,
           elementType as unknown as string,
           {},
           true
@@ -59,9 +62,9 @@ export const searchRecords = createAction({
   },
   async run({ propsValue, auth }) {
     const vtigerInstance = await instanceLogin(
-      auth.instance_url,
-      auth.username,
-      auth.password
+      auth.props.instance_url,
+      auth.props.username,
+      auth.props.password
     );
     if (vtigerInstance === null) return;
 

@@ -8,6 +8,8 @@ export const createDiscountAction = createAction({
   auth: cartloomAuth,
   displayName: 'Create Discount',
   description: 'Create a discount in Cartloom',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new discount in the connected Cartloom store, as either a fixed-amount or percentage discount applied to all products, selected products, or the order total. Use to set up a promotion or coupon; supply a code for a redeemable coupon or leave it blank for an automatic discount, and provide start/stop dates. Not idempotent — each call creates a separate discount.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Title',
@@ -94,12 +96,21 @@ export const createDiscountAction = createAction({
       required: false,
     }),
     targetPids: Property.MultiSelectDropdown({
+      auth: cartloomAuth,
       displayName: 'Target Products',
       description: 'Select the products to apply the discount to',
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildProductsDropdown(auth as CartloomAuthType),
+       { if(!auth)
+        {
+           return {
+             options: [],
+             disabled:true,
+             placeholder:"please authenticate"
+           }
+        }
+       return await buildProductsDropdown(auth.props)},
     }),
     targetAmount: Property.Number({
       displayName: 'Target Amount',
@@ -121,7 +132,7 @@ export const createDiscountAction = createAction({
     }),
   },
   async run(context) {
-    return await createDiscount(context.auth, {
+    return await createDiscount(context.auth.props, {
       enabled: context.propsValue.enabled ? 1 : 0,
       auto: context.propsValue.auto ? 1 : 0,
       unlimited: context.propsValue.unlimited ? 1 : 0,

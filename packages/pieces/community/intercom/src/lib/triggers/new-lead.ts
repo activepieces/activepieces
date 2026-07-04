@@ -1,4 +1,4 @@
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
 
@@ -7,6 +7,9 @@ export const newLeadTrigger = createTrigger({
 	name: 'new-lead',
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',
+	aiMetadata: {
+		description: 'Fires when a new lead is created in Intercom. A lead is an unidentified or not-yet-signed-up contact (role "lead"), as opposed to a user. Outputs the newly created lead contact object with its attributes.',
+	},
 	props: {},
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {

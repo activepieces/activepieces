@@ -3,7 +3,7 @@ import {
   SESClient,
   UpdateCustomVerificationEmailTemplateCommand,
 } from '@aws-sdk/client-ses';
-import { amazonSesAuth } from '../../index';
+import { amazonSesAuth } from '../auth';
 import {
   getVerifiedIdentities,
   getCustomVerificationTemplates,
@@ -24,14 +24,28 @@ export const updateCustomVerificationEmailTemplate = createAction({
   name: 'update_custom_verification_email_template',
   displayName: 'Update Custom Verification Email Template',
   description: 'Modify an existing custom verification email template',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites an existing Amazon SES custom verification email template, replacing its from-address, subject, content, and success/failure redirect URLs; an optional preserve-unspecified mode keeps the current values when fields are left blank. Use to edit a verification template that already exists, not to create one. Idempotent: repeating the call with the same input leaves the template in the same final state.',
+    idempotent: true,
+  },
   props: {
     templateName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Template to Update',
       description: 'Select custom verification template to modify',
       required: true,
       refreshers: ['loadCurrentContent'],
       options: async ({ auth }) => {
-        const templates = await getCustomVerificationTemplates(auth as any);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const templates = await getCustomVerificationTemplates(auth.props);
 
         if (templates.length === 0) {
           return {
@@ -58,12 +72,20 @@ export const updateCustomVerificationEmailTemplate = createAction({
       defaultValue: true,
     }),
     fromEmailAddress: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'From Email',
       description: 'Verified sender email address',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const verifiedIdentities = await getVerifiedIdentities(auth as any);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const verifiedIdentities = await getVerifiedIdentities(auth.props);
         return createIdentityDropdownOptions(verifiedIdentities);
       },
     }),
@@ -113,7 +135,7 @@ export const updateCustomVerificationEmailTemplate = createAction({
       validateUrls,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     validateCustomVerificationTemplateName(templateName);
 

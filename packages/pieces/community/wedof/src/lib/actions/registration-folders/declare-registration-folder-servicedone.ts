@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 import dayjs from 'dayjs';
@@ -10,6 +10,12 @@ export const declareRegistrationFolderServicedone = createAction({
   displayName: "Passer un dossier de formation à l'état : Service fait déclaré",
   description:
     "Passe le dossier dans l'état 'service fait déclaré' s'il est dans l'état 'sortie de formation' ou dans l'état 'en formation'. Si depuis l'état 'en formation', le passage à l'état intermédiaire 'sortie de formation' se fera automatiquement.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transitions a training registration folder into the 'service done declared' state, recording exit reason, exit date, and absence details. Works from either the 'in training' or 'terminated' state; from 'in training' it auto-passes through 'terminated' first. Not idempotent: it advances the folder's lifecycle and should be called once after training is complete.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -33,6 +39,7 @@ export const declareRegistrationFolderServicedone = createAction({
       defaultValue: 0,
     }),
     code: Property.Dropdown({
+      auth: wedofAuth,
       displayName: 'Raison de la sortie de formation',
       description: 'Sélectionner la raison de sortie de formation',
       required: true,
@@ -49,11 +56,11 @@ export const declareRegistrationFolderServicedone = createAction({
           await httpClient.sendRequest({
             method: HttpMethod.GET,
             url:
-              wedofCommon.baseUrl +
+              wedofCommon.baseUrl + 
               '/registrationFoldersReasons?type=terminated',
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': auth as string,
+              'X-Api-Key': auth.secret_text,
             },
           })
         ).body;
@@ -96,7 +103,7 @@ export const declareRegistrationFolderServicedone = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { linkaAuth } from '../..';
+import { linkaAuth } from '../auth';
 import { linkaCommon } from '../common/common';
 
 export const newLead = createTrigger({
@@ -7,6 +7,10 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
+  aiMetadata: {
+    description:
+      'Fires when a new lead is created in the Linka/Sperse CRM (via the LeadCreated webhook), delivering the lead\'s full contact, business, tracking, and application details. Use to start a flow whenever a new lead enters the CRM.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -200,8 +204,8 @@ export const newLead = createTrigger({
   async onEnable(context) {
     const webhookId = await linkaCommon.subscribeWebhook(
       'LeadCreated',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -216,8 +220,8 @@ export const newLead = createTrigger({
 
     if (response !== null && response !== undefined) {
       await linkaCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const create_users = createAction({
@@ -8,6 +8,8 @@ export const create_users = createAction({
     auth: simplirouteAuth,
     displayName: 'Create User',
     description: 'Create new user/driver in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new user/driver, requiring username, password, and the is_driver flag. Not idempotent: each call creates another account, so do not retry blindly. To change an existing user use the update-user action.', idempotent: false },
     props: {
         username: Property.ShortText({ displayName: 'username', description: 'Nombre de usuario (login).', required: true }),
         name: Property.ShortText({ displayName: 'name', description: 'Nombre completo del usuario.', required: false }),
@@ -29,7 +31,7 @@ export const create_users = createAction({
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

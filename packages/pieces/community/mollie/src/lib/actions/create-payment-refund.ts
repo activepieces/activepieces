@@ -1,15 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 
 export const mollieCreatePaymentRefund = createAction({
   auth: mollieAuth,
   name: 'create_payment_refund',
   displayName: 'Create Payment Refund',
   description: 'Creates refund for payment',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Refunds an existing Mollie payment, fully or partially, by specifying the refund amount and currency against a target payment ID. Use to return funds for a charged payment. Not idempotent: each call issues another refund against the payment, so repeating it can over-refund.',
+    idempotent: false,
+  },
   props: {
     paymentId: Property.Dropdown({
+  auth: mollieAuth,
       displayName: 'Payment',
       description: 'Select the payment to refund',
       required: true,
@@ -24,7 +31,7 @@ export const mollieCreatePaymentRefund = createAction({
         }
 
         try {
-          const apiKey = auth as string;
+          const apiKey = auth;
           const payments = await mollieCommon.makeRequest(
             apiKey,
             HttpMethod.GET,
@@ -159,7 +166,7 @@ export const mollieCreatePaymentRefund = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth;
 
     const refundData: Record<string, unknown> = {
       amount: {

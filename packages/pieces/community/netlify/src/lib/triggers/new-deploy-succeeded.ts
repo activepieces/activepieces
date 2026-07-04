@@ -1,13 +1,18 @@
 import { createTrigger, Property, TriggerStrategy, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { netlifyAuth } from "../common/auth";
 
 export const newDeploySucceeded = createTrigger({
   name: "new_deploy_succeeded",
   displayName: "New Deploy Succeeded",
   description: "Fires when a new site version has successfully deployed.",
+  aiMetadata: {
+    description: 'Fires when a deploy on the selected Netlify site finishes successfully and the new version goes live (the deploy_succeeded event). Use it to run follow-up steps after a site is published, e.g. cache purges, notifications, or downstream syncs.',
+  },
+  auth: netlifyAuth,
   props: {
     siteId: Property.Dropdown({
-      displayName: "Site",
+      auth: netlifyAuth,      displayName: "Site",
       description: "Select the site to monitor for successful deploy events",
       required: true,
       refreshers: ['auth'],

@@ -5,7 +5,7 @@ import {
 import { createCampaign } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const createCampaignAction = createAction({
@@ -13,6 +13,8 @@ export const createCampaignAction = createAction({
   auth: sendyAuth,
   displayName: 'Create Campaign',
   description: 'Create a new campaign',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new email campaign in Sendy from the supplied from/reply-to addresses, subject, and HTML (plus optional plain text), targeting selected lists/segments. By default it is saved as a draft, but it can instead be sent immediately or scheduled for a future date/time via the auto-send and schedule options. Use to author or dispatch a campaign; HTML body and sender fields are required. Not idempotent — each call creates (and may send) a separate campaign.', idempotent: false },
   props: {
     fromEmail: Property.ShortText({
       displayName: 'From Email',
@@ -50,6 +52,7 @@ export const createCampaignAction = createAction({
       required: true,
     }),
     lists: Property.MultiSelectDropdown({
+      auth: sendyAuth,
       displayName: 'Lists',
       description: 'Select lists to send the campaign to',
       required: false,
@@ -58,6 +61,7 @@ export const createCampaignAction = createAction({
         await buildListDropdown(auth as SendyAuthType),
     }),
     excludeLists: Property.MultiSelectDropdown({
+      auth: sendyAuth,
       displayName: 'Exclude Lists',
       description: 'Select lists to exclude from the campaign send',
       required: false,

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicItemProperty, formatFieldValues } from '../common';
 
 export const updateItemAction = createAction({
@@ -8,10 +8,13 @@ export const updateItemAction = createAction({
   name: 'update_item',
   displayName: 'Update Item',
   description: 'Update an existing record in a Podio app with specified field values. Only provided fields will be updated.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields on an existing Podio item identified by item id; only the fields you supply are changed (via structured app-field inputs or a raw legacy-fields JSON map). Use when modifying an existing record rather than creating one; requires the app id and item id. Idempotent — repeating with the same values leaves the item in the same state.', idempotent: true },
   props: {
     appId: dynamicAppProperty,
     itemId: dynamicItemProperty,
     appFields: Property.DynamicProperties({
+      auth: podioAuth,
       displayName: 'App Fields',
       description: 'Configure values for the fields you want to update in the selected app',
       required: false,

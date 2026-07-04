@@ -1,14 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth, baseApiUrl } from '../..';
+import { autocallsAuth } from '../..';
+import { baseApiUrl } from '../..';
 
 export const addLead = createAction({
   auth:autocallsAuth,
   name: 'addLead',
   displayName: 'Add lead to a campaign',
   description: "Add lead to an outbound campaign, to be called by an assistant from our platform.",
+  audience: 'both',
+  aiMetadata: { description: 'Enrolls a lead (phone number plus template variables, optionally with secondary contacts) into an Autocalls outbound campaign so its assistant will dial them. Use to queue contacts for a campaign rather than placing a one-off call. Requires a campaign id and phone number; creates a new lead each call (unless duplicates are disallowed), so it is not idempotent.', idempotent: false },
   props: {
     campaign: Property.Dropdown({
+      auth: autocallsAuth,
       displayName: 'Campaign',
       description: 'Select a campaign',
       required: true,
@@ -89,6 +93,7 @@ export const addLead = createAction({
       defaultValue: 0,
     }),
     secondary_contacts: Property.DynamicProperties({
+      auth: autocallsAuth,
       displayName: 'Secondary Contacts',
       description: 'Add secondary contacts for this lead. Each contact can have its own phone number and variables.',
       required: false,
@@ -164,7 +169,7 @@ export const addLead = createAction({
         url: baseApiUrl + 'api/user/lead',
         body: body,
         headers: {
-          Authorization: "Bearer " + context.auth,
+          Authorization: "Bearer " + context.auth.secret_text,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },

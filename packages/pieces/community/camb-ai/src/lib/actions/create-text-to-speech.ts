@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, HttpResponse } from '@activepieces/pieces-common';
-import { cambaiAuth } from '../../index';
+import { cambaiAuth } from '../auth';
 import { API_BASE_URL, listSourceLanguagesDropdown, listVoicesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS } from '../common';
 import { listFoldersDropdown } from '../common';
 
@@ -9,6 +9,8 @@ export const createTextToSpeech = createAction({
     name: 'create_text_to_speech',
     displayName: 'Create Text-to-Speech',
     description: 'Convert text into speech using a specified voice, language, gender, and age group.',
+    audience: 'both',
+    aiMetadata: { description: 'Synthesizes spoken-voice audio from text via Camb.AI text-to-speech, polling until the task completes and writing the resulting WAV to a file. Requires a language and a voice_id (both selected from Camb.AI dropdowns); optionally tune gender and age. Use for spoken narration/dialogue; for non-speech sound effects use Create Text-to-Sound instead. Not idempotent: each call starts a new synthesis task and produces a new audio file.', idempotent: false },
     props: {
         text: Property.LongText({
             displayName: 'Text',
@@ -62,7 +64,7 @@ export const createTextToSpeech = createAction({
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/tts`,
-            headers: { 'x-api-key': auth, 'Content-Type': 'application/json' },
+            headers: { 'x-api-key': auth.secret_text, 'Content-Type': 'application/json' },
             body: payload,
         });
         const taskId = initialResponse.body.task_id;
@@ -73,7 +75,7 @@ export const createTextToSpeech = createAction({
             const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/tts/${taskId}`,
-                headers: { 'x-api-key': auth },
+                headers: { 'x-api-key': auth.secret_text },
             });
 
             if (statusResponse.body.status === 'SUCCESS') {
@@ -99,7 +101,7 @@ export const createTextToSpeech = createAction({
         const audioResponse: HttpResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/tts-result/${run_id}`,
-            headers: { 'x-api-key': auth },
+            headers: { 'x-api-key': auth.secret_text },
             responseType: 'arraybuffer',
         });
         

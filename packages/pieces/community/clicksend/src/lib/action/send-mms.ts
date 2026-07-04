@@ -7,6 +7,12 @@ export const clicksendSendMms = createAction({
   auth: clicksendAuth,
   name: 'send_mms',
   description: 'Send one or more MMS messages.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends an MMS multimedia message via ClickSend to a recipient phone number, attaching a media file referenced by URL along with a subject and body. Choose this over Send SMS when the message must include an image, video, or other media. Requires a publicly reachable media URL; not idempotent, as each call dispatches the message again.',
+    idempotent: false,
+  },
   displayName: 'Send MMS',
   props: {
     to: Property.ShortText({

@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -9,6 +9,7 @@ import { baseUrlv0 } from '../common/common';
 import FormData from 'form-data';
 
 export const createRag = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'create_rag',
   displayName: 'Create RAG',
@@ -31,6 +32,8 @@ export const createRag = createAction({
 				'Represents the file to be attached. Accepted file extensions are: pdf, docx, csv, txt, xlsx, py',
 		}),
     chunkingMethod: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Chunking Method',
       required: false,
       description: 'Represents the chunking method to be used for generating the RAG base. The default value is fixed_size',
@@ -149,7 +152,7 @@ export const createRag = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: formData,
       headers: {

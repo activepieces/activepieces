@@ -1,8 +1,8 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { listFields, listUId } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 
 export const updateSubscriber = createAction({
@@ -10,6 +10,8 @@ export const updateSubscriber = createAction({
   name: 'updateSubscriber',
   displayName: 'Update Subscriber',
   description: 'Updates an existing subscriber.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates the custom fields of an existing subscriber in a Zagomail list, targeting it by list UID and subscriber UID. Use to change a contact details after creation. Idempotent: repeating the call with the same field values leaves the subscriber in the same state.', idempotent: true },
   props: {
     listUId: listUId,
     subsriberUid: Property.ShortText({
@@ -43,7 +45,7 @@ export const updateSubscriber = createAction({
     }
 
     return await zagoMailApiService.updateSubscriber(
-      auth,
+      auth.secret_text,
       listUId,
       subsriberUid,
       payload

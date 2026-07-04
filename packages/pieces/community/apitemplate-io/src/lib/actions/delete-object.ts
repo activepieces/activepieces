@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
-import { ApitemplateAuthConfig, makeRequest } from '../common/client';
+import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { transactionRefDropdown } from '../common/props';
 
@@ -9,11 +9,13 @@ export const deleteObject = createAction({
   name: 'deleteObject',
   displayName: 'Delete Object',
   description: 'Deletes a generated PDF or image by its transaction reference or object ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a previously generated PDF or image, identified by its transaction reference (pick from the dropdown of recent objects). Use to clean up stored output. Idempotent in effect: once the object is gone, repeating the call leaves the same deleted state.', idempotent: true },
   props: {
     transactionRef: transactionRefDropdown,
   },
   async run({ auth, propsValue }) {
-    const authConfig = auth as ApitemplateAuthConfig;
+    const authConfig = auth.props;
     const { transactionRef } = propsValue;
 
     // Build query parameters according to API docs
@@ -29,7 +31,7 @@ export const deleteObject = createAction({
         endpoint,
         undefined,
         undefined,
-        authConfig.region
+        authConfig.region as ApitemplateRegion
       );
 
       return response;

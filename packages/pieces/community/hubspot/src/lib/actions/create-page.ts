@@ -1,5 +1,5 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../../index';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pageType } from '../common/props';
 
@@ -8,6 +8,8 @@ export const createPageAction = createAction({
 	name: 'create-page',
 	displayName: 'Create Page',
 	description: 'Creates a new landing/site page.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new HubSpot CMS landing page or site page (choose via Page Type) from a template, then optionally publish it when State is set to publish rather than leaving it as a draft. Each call creates a distinct page, so it is not idempotent.', idempotent: false },
 	props: {
 		pageType: pageType,
 		pageTitle: Property.ShortText({

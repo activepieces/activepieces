@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { memAuth } from '../../index';
+import { memAuth } from '../auth';
 import { makeRequest } from '../common';
 
 export const createNoteAction = createAction({
@@ -8,6 +8,11 @@ export const createNoteAction = createAction({
   name: 'create_note',
   displayName: 'Create Note',
   description: 'Log a plain-text Markdown note into Mem, optionally with formatting, templates, collections, and timestamps.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a Markdown note in Mem, using the first line as the title, and can assign it to one or more collections (creating them if they do not exist). Use when you want to store a specific, ready-formatted note rather than hand raw content to Mem\'s processor. Not idempotent: a new note is created on each call, even when a Note ID is supplied.',
+    idempotent: false,
+  },
   props: {
     content: Property.LongText({
       displayName: 'Content',
@@ -32,7 +37,7 @@ export const createNoteAction = createAction({
       add_to_collections,
     } = context.propsValue;
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const body: Record<string, unknown> = {
       content,

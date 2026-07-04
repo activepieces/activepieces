@@ -7,9 +7,16 @@ export const removeTag = createAction({
   name: 'removeTag',
   displayName: 'Remove Tag',
   description: 'Remove a tag from a contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes a tag from a contact. Use to unlabel or de-segment a subscriber. Idempotent: once the tag is gone, repeating the call leaves the contact in the same untagged state.',
+    idempotent: true,
+  },
   props: zohoCampaignsCommon.removeTagProperties,
   async run({ auth, propsValue }) {
-    const { access_token: accessToken, location } = auth as any;
+    const location = auth.props?.['location'] as string || 'zoho.com';
+    const accessToken = auth.access_token;
     await propsValidation.validateZod(
       propsValue,
       zohoCampaignsCommon.removeTagSchema

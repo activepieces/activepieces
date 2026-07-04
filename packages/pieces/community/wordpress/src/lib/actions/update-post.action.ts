@@ -12,6 +12,8 @@ export const updateWordPressPost = createAction({
   auth: wordpressAuth,
   name: 'update_post',
   description: 'Update an existing post on WordPress.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing WordPress post identified by its post ID, changing only the fields you supply (title, content, status, categories, tags, excerpt, featured image, or ACF fields). Choose this to edit or republish a known post rather than create a new one. Requires the target post ID; idempotent — repeating with the same input leaves the post in the same final state.', idempotent: true },
   displayName: 'Update Post',
   props: {
     post: wordpressCommon.post,
@@ -60,8 +62,8 @@ export const updateWordPressPost = createAction({
     }),
   },
   async run(context) {
-    if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
-      throw new Error('Website url is invalid: ' + context.auth.website_url);
+    if (!(await wordpressCommon.urlExists(context.auth.props.website_url.trim()))) {
+      throw new Error('Website url is invalid: ' + context.auth.props.website_url);
     }
     const requestBody: Record<string, unknown> = {};
 
@@ -118,15 +120,15 @@ export const updateWordPressPost = createAction({
       formData.append('file', Buffer.from(base64, 'base64'), filename);
       const uploadMediaResponse = await httpClient.sendRequest<{ id: string }>({
         method: HttpMethod.POST,
-        url: `${context.auth.website_url.trim()}/wp-json/wp/v2/media`,
+        url: `${context.auth.props.website_url.trim()}/wp-json/wp/v2/media`,
         body: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
         },
         authentication: {
           type: AuthenticationType.BASIC,
-          username: context.auth.username,
-          password: context.auth.password,
+          username: context.auth.props.username,
+          password: context.auth.props.password,
         },
       });
       requestBody['featured_media'] = uploadMediaResponse.body.id;
@@ -134,13 +136,13 @@ export const updateWordPressPost = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.website_url.trim()}/wp-json/wp/v2/posts/${
+      url: `${context.auth.props.website_url.trim()}/wp-json/wp/v2/posts/${
         context.propsValue.post
       }`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: context.auth.username,
-        password: context.auth.password,
+        username: context.auth.props.username,
+        password: context.auth.props.password,
       },
       body: requestBody,
     });

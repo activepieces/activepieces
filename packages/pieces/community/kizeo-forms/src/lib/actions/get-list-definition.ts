@@ -9,6 +9,8 @@ export const getListDefinition = createAction({
   name: 'get_list_definition',
   displayName: 'Get List Definition',
   description: 'Get the definition of a list',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the definition (schema/structure) of a Kizeo Forms external list by its list ID, including its configured properties. Use to discover a list\'s columns before reading or writing items. Read-only and idempotent.', idempotent: true },
   props: {
     listId: kizeoFormsCommon.listId,
   },
@@ -21,7 +23,7 @@ export const getListDefinition = createAction({
         `public/v4/lists/${listId}/definition?used-with-activepieces=`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
     });
     if (response.status === 200) {

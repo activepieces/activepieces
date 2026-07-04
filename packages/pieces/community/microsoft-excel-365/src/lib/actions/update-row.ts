@@ -1,36 +1,42 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelCommon, objectToArray } from '../common/common';
 
 export const updateRowAction = createAction({
 	auth: excelAuth,
 	name: 'update_row',
 	description: 'Update a row in a worksheet',
+	audience: 'both',
+	aiMetadata: { description: 'Overwrite the cells of a specific worksheet row, identified by its row number, with the provided values starting at column A. Use to edit an existing row in place; to add a new row use the append actions, or Delete Row to remove one. Idempotent for a given row number and values — re-running writes the same cells. Values can be keyed by header when the first row holds headers.', idempotent: true },
 	displayName: 'Update Worksheet Rows',
 	props: {
-		workbook_id: excelCommon.workbook_id,
-		worksheet_id: excelCommon.worksheet_id,
+		storageSource: commonProps.storageSource,
+		siteId: commonProps.siteId,
+		documentId: commonProps.documentId,
+		workbookId: commonProps.workbookId,
+		worksheetId: commonProps.worksheetId,
 		row_number: Property.Number({
 			displayName: 'Row number',
 			description: 'The row number to update',
 			required: true,
 		}),
-		first_row_headers: Property.Checkbox({
-			displayName: 'Does the first row contain headers?',
-			description: 'If the first row is headers',
-			required: true,
-			defaultValue: false,
-		}),
-		values: excelCommon.values,
+		isFirstRowHeaders: commonProps.isFirstRowHeaders,
+		values: commonProps.worksheetValues,
 	},
 	async run({ propsValue, auth }) {
-		const workbookId = propsValue['workbook_id'];
-		const worksheetId = propsValue['worksheet_id'];
+		const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
 		const rowNumber = propsValue['row_number'];
-		const values = propsValue.first_row_headers
+		const values = propsValue.isFirstRowHeaders
 			? objectToArray(propsValue['values'])
 			: Object.values(propsValue['values']);
+		const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+
+		if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+			throw new Error('please select SharePoint site and document library.');
+		}
+		const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
 		const requestBody = {
 			values: [values],
@@ -41,18 +47,11 @@ export const updateRowAction = createAction({
 		const rangeFrom = `A${rowNumber}`;
 		const rangeTo = `${lastUsedColumn}${rowNumber}`;
 
-		const request = {
-			method: HttpMethod.PATCH,
-			url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`,
-			body: requestBody,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN as const,
-				token: auth['access_token'],
-			},
-		};
+		const client = createMSGraphClient(auth['access_token'], cloud);
+		const response = await client
+			.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`)
+			.patch(requestBody);
 
-		const response = await httpClient.sendRequest(request);
-
-		return response.body;
+		return response;
 	},
 });

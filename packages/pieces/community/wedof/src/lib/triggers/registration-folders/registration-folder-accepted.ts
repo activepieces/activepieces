@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,10 @@ export const registrationFolderAccepted = createTrigger({
   displayName: 'Dossier de formation accepté',
   description:
     "Se déclenche lorsqu'un dossier de formation passe à l'état accepté",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof training registration folder (dossier de formation) transitions to the 'accepted' (accepté) state, meaning the enrollment has been approved. Emits the full folder record.",
+  },
   props: {},
   sampleData: {
     withPoleEmploi: false,
@@ -220,7 +224,7 @@ export const registrationFolderAccepted = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

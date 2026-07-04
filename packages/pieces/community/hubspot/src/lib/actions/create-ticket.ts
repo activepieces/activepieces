@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 
-import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../../';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, pipelineDropdown, pipelineStageDropdown, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 
@@ -11,6 +11,8 @@ export const createTicketAction = createAction({
 	name: 'create-ticket',
 	displayName: 'Create Ticket',
 	description: 'Creates a ticket in HubSpot.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new HubSpot support ticket with a name, pipeline, and pipeline stage plus optional properties. Each call creates a separate ticket even for identical input, so it is not idempotent.', idempotent: false },
 	props: {
 		ticketName: Property.ShortText({
 			displayName: 'Ticket Name',

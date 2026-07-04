@@ -1,19 +1,10 @@
-import {
-    ActivepiecesError,
-    apId,
-    CreateFolderRequest,
-    Cursor,
-    ErrorCode,
-    Folder,
-    FolderDto,
-    FolderId,
-    isNil, ProjectId,
-    UpdateFolderRequest,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { CreateFolderRequest, Folder, FolderDto, FolderId, UpdateFolderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { tableService } from '../../tables/table/table.service'
 import { flowService } from '../flow/flow.service'
 import { FolderEntity } from './folder.entity'
 
@@ -64,14 +55,48 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             id: folderId,
             projectId,
             displayName: request.displayName,
+            externalId: folderId,
         }, ['projectId', 'displayName'])
         const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
         return {
             ...folder,
             numberOfFlows: 0,
+            numberOfTables: 0,
         }
     },
-    async list(params: ListParams) {
+    async listAllByProject(params: ListAllParams): Promise<Folder[]> {
+        const { projectId } = params
+        return folderRepo().find({ where: { projectId } })
+    },
+    async upsertByExternalId(params: UpsertByExternalIdParams): Promise<Folder> {
+        const { projectId, externalId, displayName, displayOrder } = params
+        const existing = await folderRepo().findOneBy({ projectId, externalId })
+        if (!isNil(existing)) {
+            await folderRepo().update(existing.id, {
+                displayName,
+                displayOrder,
+            })
+            return folderRepo().findOneByOrFail({ id: existing.id, projectId })
+        }
+        const folderId = apId()
+        await folderRepo().insert({
+            id: folderId,
+            projectId,
+            displayName,
+            displayOrder,
+            externalId,
+        })
+        return folderRepo().findOneByOrFail({ id: folderId, projectId })
+    },
+    async deleteByExternalId(params: DeleteByExternalIdParams): Promise<void> {
+        const { projectId, externalId } = params
+        const existing = await folderRepo().findOneBy({ projectId, externalId })
+        if (isNil(existing)) {
+            return
+        }
+        await folderRepo().delete({ id: existing.id, projectId })
+    },
+    async list(params: ListParams): Promise<SeekPage<FolderDto>> {
         const { projectId, cursorRequest, limit } = params
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -83,23 +108,21 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const paginationResponse = await paginator.paginate(
-            folderRepo().createQueryBuilder('folder').where({ projectId }),
-        )
-        const numberOfFlowForEachFolder: Promise<number>[] = []
-        const dtosList: FolderDto[] = []
-        paginationResponse.data.forEach((f) => {
-            numberOfFlowForEachFolder.push(
-                flowService(log).count({ projectId, folderId: f.id }),
-            )
-        });
-        (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx) => {
-            dtosList.push({ ...paginationResponse.data[idx], numberOfFlows: num })
-        })
-        return paginationHelper.createPage<FolderDto>(
-            dtosList,
-            paginationResponse.cursor,
-        )
+        
+        const queryBuilder = folderRepo()
+            .createQueryBuilder('folder')
+            .where('folder.projectId = :projectId', { projectId })
+            .addSelect((subQuery) => subQuery
+                .select('COUNT(*)::int')
+                .from('flow', 'flow')
+                .where('flow."folderId" = folder.id'), 'numberOfFlows')
+            .addSelect((subQuery) => subQuery
+                .select('COUNT(*)::int')
+                .from('table', 'tbl')
+                .where('tbl."folderId" = folder.id'), 'numberOfTables')
+
+        const paginationResponse = await paginator.paginate<FolderDto>(queryBuilder)
+        return paginationHelper.createPage(paginationResponse.data, paginationResponse.cursor)
     },
     async getOneByDisplayNameCaseInsensitive(params: GetOneByDisplayNameParams): Promise<Folder | null> {
         const { projectId, displayName } = params
@@ -119,10 +142,14 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const numberOfFlows = await flowService(log).count({ projectId, folderId })
+        const [numberOfFlows, numberOfTables] = await Promise.all([
+            flowService(log).count({ projectId, folderId }),
+            tableService.count({ projectId, folderId }),
+        ])
         return {
             ...folder,
             numberOfFlows,
+            numberOfTables,
         }
     },
 })
@@ -157,4 +184,20 @@ type GetOneByDisplayNameParams = {
 type GetOneOrThrowParams = {
     projectId: ProjectId
     folderId: FolderId
+}
+
+type ListAllParams = {
+    projectId: ProjectId
+}
+
+type UpsertByExternalIdParams = {
+    projectId: ProjectId
+    externalId: string
+    displayName: string
+    displayOrder: number
+}
+
+type DeleteByExternalIdParams = {
+    projectId: ProjectId
+    externalId: string
 }
