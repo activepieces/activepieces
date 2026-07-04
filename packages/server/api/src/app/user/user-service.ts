@@ -157,6 +157,17 @@ export const userService = (log: FastifyBaseLogger) => ({
             userId: id,
             platformId,
         })
+        // The personal project is soft deleted above and hard deleted later by an
+        // async system job. Until that job runs, the project row still references
+        // the user through fk_project_owner_id (ON DELETE NO ACTION), which makes
+        // the user hard delete below fail with a foreign key violation. Reassign
+        // the soft-deleted row to the platform owner so the user row can go now.
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        await platformProjectService(log).reassignSoftDeletedPersonalProjects({
+            fromUserId: id,
+            toUserId: platform.ownerId,
+            platformId,
+        })
         await userRepo().delete({
             id,
             platformId,
