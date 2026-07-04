@@ -48,6 +48,15 @@ export const gmailCreateLabelAction = createAction({
       },
     }),
   },
+  outputSchema: {
+    fields: [
+      { key: 'id', label: 'Label ID' },
+      { key: 'name', label: 'Name' },
+      { key: 'type', label: 'Type' },
+      { key: 'labelListVisibility', label: 'Label List Visibility' },
+      { key: 'messageListVisibility', label: 'Message List Visibility' },
+    ],
+  },
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });

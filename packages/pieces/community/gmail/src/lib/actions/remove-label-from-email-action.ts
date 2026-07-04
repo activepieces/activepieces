@@ -22,6 +22,13 @@ export const gmailRemoveLabelFromEmailAction = createAction({
       required: true,
     }),
   },
+  outputSchema: {
+    fields: [
+      { key: 'id', label: 'Message ID' },
+      { key: 'threadId', label: 'Thread ID' },
+      { key: 'labelIds', label: 'Labels' },
+    ],
+  },
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
