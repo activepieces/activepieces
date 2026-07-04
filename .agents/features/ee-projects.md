@@ -5,6 +5,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 
 ## Key Files
 - `packages/server/api/src/app/ee/projects/` — platform project service, RBAC enforcement
+- `packages/server/api/src/app/ee/projects/platform-project-jobs.ts` — `hardDeleteProject()`, queued and synchronous hard-delete of a project's flows/connections/row
 - `packages/server/api/src/app/ee/project-members/` — member CRUD, role lookup
 - `packages/server/api/src/app/ee/project-role/` — default and custom role management
 - `packages/server/api/src/app/ee/project-release/` — release creation, diff, apply
@@ -101,6 +102,12 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - `NONE`: All pieces available
 - `ALLOWED`: Only pieces in `pieces[]` array visible
 - Platform-level filtering (`FilteredPieceBehavior.ALLOWED/BLOCKED`) applied first, then project-level
+
+## Project Hard Deletion
+
+`hardDeleteProject()` (`platform-project-jobs.ts`) deletes a project's flows (with side-effect cleanup), app connections, and the project row itself in a transaction. Two callers:
+- `platformProjectBackgroundJobs.hardDeleteProjectHandler` — the queued `HARD_DELETE_PROJECT` system job, used after `markForDeletion()` soft-deletes a project (normal project deletion, platform deletion, SCIM group deletion). Resumable via `preDeletedFlowIds` if a retry is needed.
+- `userService.delete` (self-hosted user deletion) — calls it synchronously, not via the queue, because the user row can't be deleted while their personal project still exists (`fk_project_owner_id`, `ON DELETE NO ACTION`). See the Users feature doc for details.
 
 ## Platform Project Service
 

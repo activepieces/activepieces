@@ -92,3 +92,7 @@ Manages user identity, platform membership, roles, session security, and a gamif
 - `GET /v1/users/me` — get current user with identity info
 - `POST /v1/users/me` — update profile (firstName, lastName, profilePicture)
 - User CRUD managed via platform admin endpoints (EE): list users, update role/status, delete user
+
+## User Deletion (self-hosted)
+
+`userService.delete` hard-deletes the user's personal project synchronously (flows, connections, project row) before deleting the user row — not via the async `HARD_DELETE_PROJECT` queue. This is required because `project.ownerId` has an `ON DELETE NO ACTION` foreign key to `user.id`; deleting the user first would fail while the project still exists. `assertNotPlatformOwner` guards the other blocking FK (`fk_platform_user`, RESTRICT) before either delete runs. Cloud uses `removeFromPlatform` instead (detaches via update, never hard-deletes the user row), so it isn't affected by this ordering.

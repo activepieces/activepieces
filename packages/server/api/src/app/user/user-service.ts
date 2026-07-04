@@ -165,10 +165,18 @@ export const userService = (log: FastifyBaseLogger) => ({
         if (!isNil(personalProject)) {
             await hardDeleteProject(personalProject.id, platformId, [], log)
         }
-        await userRepo().delete({
-            id,
-            platformId,
-        })
+        try {
+            await userRepo().delete({
+                id,
+                platformId,
+            })
+        }
+        catch (error) {
+            if (!isNil(personalProject)) {
+                log.error({ userId: id, platformId, projectId: personalProject.id, error }, '[userService#delete] User delete failed after personal project was already removed, user is now orphaned without a project')
+            }
+            throw error
+        }
     },
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
