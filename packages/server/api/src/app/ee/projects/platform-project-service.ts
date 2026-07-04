@@ -2,7 +2,7 @@ import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId
 import { apDayjs } from '@activepieces/server-utils'
 import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, TeamProjectsLimit, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
+import { ArrayContains, Equal, ILike, In, IsNull, Not } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -217,6 +217,17 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         }
     },
 
+    async reassignSoftDeletedPersonalProjects({ fromUserId, toUserId, platformId }: ReassignSoftDeletedPersonalProjectsParams): Promise<void> {
+        await projectRepo().update({
+            ownerId: fromUserId,
+            platformId,
+            type: ProjectType.PERSONAL,
+            deleted: Not(IsNull()),
+        }, {
+            ownerId: toUserId,
+        })
+    },
+
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
         const result = await projectRepo().softDelete({ id, platformId })
         if (result.affected === 0) {
@@ -347,6 +358,12 @@ type GetAllForParamsAndUser = {
     types?: ProjectType[]
     isPrivileged: boolean
     principalType?: PrincipalType
+}
+
+type ReassignSoftDeletedPersonalProjectsParams = {
+    fromUserId: UserId
+    toUserId: UserId
+    platformId: PlatformId
 }
 
 type DeletePersonalProjectForUserParams = {
