@@ -51,6 +51,10 @@ export enum WorkerSystemProp {
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
     CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
+    // Kill-switch for chat Code Mode (ap_run_tools), which runs model-written JS in an in-worker
+    // node:vm context — not a hard security boundary (see chat-code-mode.ts header). Defaults ON;
+    // set to false to disable the feature immediately without a redeploy of new code.
+    CHAT_CODE_MODE_ENABLED = 'AP_CHAT_CODE_MODE_ENABLED',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {

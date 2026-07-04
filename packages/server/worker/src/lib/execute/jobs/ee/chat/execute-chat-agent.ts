@@ -2,6 +2,7 @@ import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, 
 import { chatAiUtils } from '@activepieces/server-utils'
 import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
+import { system, WorkerSystemProp } from '../../../../config/configs'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatCodeMode } from './chat-code-mode'
 import { chatMcpClient } from './chat-mcp-client'
@@ -480,7 +481,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     // context, and approval gates are inherited). Skipped in dry-run (no tool execution in the
     // playground); in discovery-only its bridged side-effecting tools are already neutralized at
     // their own layer, so no extra guard is needed here.
-    const codeModeTools = dryRun
+    // Default ON; an operator can set AP_CHAT_CODE_MODE_ENABLED=false to disable the vm-backed
+    // Code Mode immediately (kill-switch) if a sandbox-escape risk is discovered before #13909's
+    // isolated engine sandbox lands. `!== false` keeps zero-setup: unset means enabled.
+    const codeModeEnabled = system.getBoolean(WorkerSystemProp.CHAT_CODE_MODE_ENABLED) !== false
+    const codeModeTools = dryRun || !codeModeEnabled
         ? {}
         : chatCodeMode.createCodeModeTools({ getTools: () => baseTools, log })
 

@@ -18,6 +18,10 @@ import { z } from 'zod'
 // in the sandbox, and `tools.x(args)` round-trips back to the worker where `allTools` lives. The
 // bridge is deliberately a narrow async interface (one method: callTool) so that swap is feasible
 // without touching the model-facing contract or the namespace generation.
+//
+// KILL-SWITCH: the whole feature is gated behind AP_CHAT_CODE_MODE_ENABLED (default ON) in
+// execute-chat-agent.ts, so an operator can disable Code Mode instantly — without shipping new code
+// — if a sandbox-escape risk surfaces before the isolated engine sandbox lands.
 
 // Hard ceiling on one Code Mode run. Kept well below the old 10-minute value so a hung bridged call
 // (e.g. a raw custom_api_call HTTP that never responds — which can otherwise burn the 300s per-call
@@ -258,7 +262,7 @@ function readJsonSchemaProps(schema: unknown): { properties: Record<string, unkn
     return { properties: json.properties as Record<string, unknown>, required }
 }
 
-function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
+function buildBridge({ tools, log, signal }: { tools: ToolSet, log: ApLogger, signal: AbortSignal }): {
     bridge: BridgedTools
     getStats: () => { bridgedCallCount: number, serverSideBytes: number, resultShapes: { tool: string, shape: string }[] }
 } {
@@ -288,6 +292,12 @@ function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
         if (isNil(entry)) {
             throw new Error(`Unknown tool: tools.${jsName} is not available. See the list in the tool description.`)
         }
+        // Once the run has timed out (signal aborted) refuse to dispatch further calls, so a
+        // post-timeout `tools.x()` — e.g. the write the model would retry after seeing the failure —
+        // never reaches a real, side-effecting action.
+        if (signal.aborted) {
+            throw new Error('Code Mode run aborted (timed out); tool call not dispatched.')
+        }
         if (bridgedCallCount >= MAX_BRIDGED_CALLS) {
             throw new Error(`Code Mode exceeded ${MAX_BRIDGED_CALLS} bridged tool calls in one run.`)
         }
@@ -295,8 +305,11 @@ function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
         // Each bridged call gets its own toolCallId so per-call approval gates (keyed on
         // toolCallId) work independently. messages is empty: the bridged call is not itself a
         // model turn. execute() is the real implementation, so its result — however large —
-        // stays here in the runner and never enters the model context.
-        const options: ToolExecutionOptions = { toolCallId: apId(), messages: [] }
+        // stays here in the runner and never enters the model context. abortSignal carries the
+        // run timeout down to the tool so a gated wait (waitForApproval) or in-flight HTTP is
+        // cancelled when the run times out, instead of an approved write executing after the fact
+        // (best-effort — a tool that ignores abortSignal can still finish, but no new call runs).
+        const options: ToolExecutionOptions = { toolCallId: apId(), messages: [], abortSignal: signal }
         // Mark the args so every offload/truncate layer (the worker tool wrappers, the MCP
         // wrapper, and the API's runChatAdhocAction across the RPC) returns the FULL, un-offloaded,
         // un-truncated result. Those protections exist to keep the MODEL's context lean; the in-VM
@@ -332,11 +345,12 @@ function buildBridge({ tools, log }: { tools: ToolSet, log: ApLogger }): {
     }
 }
 
-async function runCodeWithBridge({ code, data, bridge, log }: {
+async function runCodeWithBridge({ code, data, bridge, log, onTimeout }: {
     code: string
     data: Record<string, unknown>
     bridge: BridgedTools
     log: ApLogger
+    onTimeout: () => void
 }): Promise<{ ok: boolean, returnValue?: unknown, error?: string, consoleLines: string[] }> {
     const consoleLines: string[] = []
     const capture = (...parts: unknown[]): void => {
@@ -422,7 +436,12 @@ async function runCodeWithBridge({ code, data, bridge, log }: {
         return Promise.race([
             promise,
             new Promise<never>((_resolve, reject) => {
-                const timer = setTimeout(() => reject(new Error(`Code Mode timed out after ${CODE_MODE_TIMEOUT_MS / 1_000}s.`)), CODE_MODE_TIMEOUT_MS)
+                const timer = setTimeout(() => {
+                    // Abort bridged calls (cancel gated waits / in-flight HTTP, block new dispatches)
+                    // BEFORE rejecting, so a side-effecting action can't run after the run is done.
+                    onTimeout()
+                    reject(new Error(`Code Mode timed out after ${CODE_MODE_TIMEOUT_MS / 1_000}s.`))
+                }, CODE_MODE_TIMEOUT_MS)
                 if (typeof timer.unref === 'function') timer.unref()
             }),
         ])
@@ -441,8 +460,9 @@ async function runCodeMode({ code, tools, data, log }: {
     data: Record<string, unknown>
     log: ApLogger
 }): Promise<CodeModeRunResult> {
-    const { bridge, getStats } = buildBridge({ tools, log })
-    const { ok, returnValue, error, consoleLines } = await runCodeWithBridge({ code, data, bridge, log })
+    const abortController = new AbortController()
+    const { bridge, getStats } = buildBridge({ tools, log, signal: abortController.signal })
+    const { ok, returnValue, error, consoleLines } = await runCodeWithBridge({ code, data, bridge, log, onTimeout: () => abortController.abort() })
     const { bridgedCallCount, serverSideBytes, resultShapes } = getStats()
     const returnedBytes = ok ? byteLengthOf(returnValue) : 0
 
