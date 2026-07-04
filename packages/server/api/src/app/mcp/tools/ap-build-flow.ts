@@ -52,7 +52,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration')),
-            steps: z.preprocess(mcpUtils.parseJsonStringArg, z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions. ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.')),
+            steps: z.preprocess(mcpUtils.parseJsonStringArg, z.array(stepSpec)).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions. ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
