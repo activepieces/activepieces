@@ -6,14 +6,18 @@ import { nanoid } from 'nanoid'
 import { In, IsNull } from 'typeorm'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { hardDeleteProject } from '../ee/projects/platform-project-jobs'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
+import { ProjectEntity } from '../project/project-entity'
 import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
+
+const projectRepo = repoFactory(ProjectEntity)
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -153,10 +157,14 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
-        await platformProjectService(log).deletePersonalProjectForUser({
-            userId: id,
+        const personalProject = await projectRepo().findOneBy({
             platformId,
+            ownerId: id,
+            type: ProjectType.PERSONAL,
         })
+        if (!isNil(personalProject)) {
+            await hardDeleteProject(personalProject.id, platformId, [], log)
+        }
         await userRepo().delete({
             id,
             platformId,

@@ -11,9 +11,11 @@ import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { platformUserApi } from '@/api/platform-user-api';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { api } from '@/lib/api';
 
 export const platformUserKeys = {
   users: ['users'] as const,
@@ -67,6 +69,28 @@ export const platformUserMutations = {
       onSuccess: () => {
         onSuccess();
         toast.success(t('User deleted successfully'), { duration: 3000 });
+      },
+      onError: (error) => {
+        const data = api.isError(error) ? error.response?.data : undefined;
+        const message =
+          typeof data === 'object' &&
+          data !== null &&
+          'params' in data &&
+          typeof data.params === 'object' &&
+          data.params !== null &&
+          'message' in data.params
+            ? String(data.params.message)
+            : typeof data === 'object' && data !== null && 'message' in data
+            ? String(data.message)
+            : undefined;
+        if (message) {
+          toast.error(t('Failed to delete user'), {
+            description: message,
+            duration: 5000,
+          });
+        } else {
+          internalErrorToast();
+        }
       },
     });
   },
