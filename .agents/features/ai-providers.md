@@ -31,6 +31,8 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 - **AI Credits**: Platform-level usage budget (1000 credits = $1 USD) metered through OpenRouter; drives the ACTIVEPIECES auto-provision flow.
 - **aiCreditsEnabled**: Platform plan flag that triggers auto-provisioning of the ACTIVEPIECES provider.
 - **Model cache**: In-memory cache of models per provider, cleared daily at midnight via cron.
+- **Chat model allowlists**: Per-vendor constants in `ai-providers/index.ts` (e.g. `ANTHROPIC_CHAT_MODELS`, `ANTHROPIC_OPENROUTER_CHAT_MODELS`) fixing which model IDs may be selected for chat.
+- **Activepieces chat tiers** (`ACTIVEPIECES_CHAT_TIERS`): the three built-in chat tiers mapping Fast/Expert/Heavy to OpenRouter model IDs — Fast `anthropic/claude-haiku-4.5`, Expert `anthropic/claude-sonnet-5`, Heavy `anthropic/claude-opus-4.8`.
 
 ## Entity
 
