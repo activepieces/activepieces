@@ -1,40 +1,55 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { gmailAuth, getAccessToken, GmailAuthValue } from '../auth';
-import { google } from 'googleapis';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { gmailAuth, createGoogleClient } from '../auth';
+import { gmail as googleGmail } from '@googleapis/gmail';
 
-export const gmailLabelEmailAction = createAction({
+export const gmailModifyLabelAction = createAction({
   auth: gmailAuth,
-  name: 'label_email',
-  displayName: 'Label Email',
-  description: 'Apply labels to an email message',
+  name: 'gmail_modify_label',
+  displayName: 'Add/Remove Label',
+  description: 'Add or remove a label from an email.',
   props: {
-    message_id: {
+    message_id: Property.ShortText({
       displayName: 'Message ID',
-      description: 'The ID of the message to label',
-      singleLine: true,
+      description: 'The ID of the email message to modify.',
       required: true,
-    },
-    label_ids: {
-      displayName: 'Label IDs',
-      description: 'Comma-separated list of label IDs to apply',
-      singleLine: true,
+    }),
+    action: Property.StaticDropdown({
+      displayName: 'Action',
+      description: 'Whether to add or remove the label.',
       required: true,
-    },
+      options: {
+        options: [
+          { label: 'Add Label', value: 'add' },
+          { label: 'Remove Label', value: 'remove' },
+        ],
+      },
+    }),
+    label_id: Property.ShortText({
+      displayName: 'Label ID',
+      description: 'The Gmail label ID to add or remove (e.g., IMPORTANT, STARRED, or a custom label ID).',
+      required: true,
+    }),
   },
   async run(context) {
-    const auth = await getAccessToken(context.auth as GmailAuthValue);
-    const gmail = google.gmail({ version: 'v1', auth });
+    const authClient = await createGoogleClient(context.auth);
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
-    const labelIds = context.propsValue.label_ids.split(',').map((id: string) => id.trim());
+    const isAdd = context.propsValue.action === 'add';
 
     await gmail.users.messages.modify({
       userId: 'me',
       id: context.propsValue.message_id,
       requestBody: {
-        addLabelIds: labelIds,
+        addLabelIds: isAdd ? [context.propsValue.label_id] : [],
+        removeLabelIds: isAdd ? [] : [context.propsValue.label_id],
       },
     });
 
-    return { success: true };
+    return {
+      success: true,
+      messageId: context.propsValue.message_id,
+      action: isAdd ? 'label_added' : 'label_removed',
+      labelId: context.propsValue.label_id,
+    };
   },
 });
