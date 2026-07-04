@@ -6,9 +6,11 @@ import { nanoid } from 'nanoid'
 import { In, IsNull } from 'typeorm'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { hardDeleteProject } from '../ee/projects/platform-project-jobs'
+import { transaction } from '../core/db/transaction'
+import { deleteProjectFlowsAndConnections, deleteProjectRow } from '../ee/projects/platform-project-jobs'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
+import { flowExecutionCache } from '../flows/flow/flow-execution-cache'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
@@ -162,21 +164,23 @@ export const userService = (log: FastifyBaseLogger) => ({
             ownerId: id,
             type: ProjectType.PERSONAL,
         })
-        if (!isNil(personalProject)) {
-            await hardDeleteProject(personalProject.id, platformId, [], log)
-        }
-        try {
+        if (isNil(personalProject)) {
             await userRepo().delete({
                 id,
                 platformId,
             })
+            return
         }
-        catch (error) {
-            if (!isNil(personalProject)) {
-                log.error({ userId: id, platformId, projectId: personalProject.id, error }, '[userService#delete] User delete failed after personal project was already removed, user is now orphaned without a project')
-            }
-            throw error
-        }
+
+        const flowIds = await deleteProjectFlowsAndConnections(personalProject.id, [], log)
+        await transaction(async (entityManager) => {
+            await deleteProjectRow(personalProject.id, platformId, entityManager)
+            await userRepo(entityManager).delete({
+                id,
+                platformId,
+            })
+        })
+        await flowExecutionCache(log).invalidate(...flowIds)
     },
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
