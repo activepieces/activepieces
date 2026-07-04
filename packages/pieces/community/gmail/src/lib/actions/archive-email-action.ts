@@ -1,23 +1,22 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { gmailAuth, getAccessToken, GmailAuthValue } from '../auth';
-import { google } from 'googleapis';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { gmailAuth, createGoogleClient } from '../auth';
+import { gmail as googleGmail } from '@googleapis/gmail';
 
 export const gmailArchiveEmailAction = createAction({
   auth: gmailAuth,
-  name: 'archive_email',
+  name: 'gmail_archive_email',
   displayName: 'Archive Email',
-  description: 'Archive an email message',
+  description: 'Archive an email by removing it from the inbox.',
   props: {
-    message_id: {
+    message_id: Property.ShortText({
       displayName: 'Message ID',
-      description: 'The ID of the message to archive',
-      singleLine: true,
+      description: 'The ID of the email message to archive.',
       required: true,
-    },
+    }),
   },
   async run(context) {
-    const auth = await getAccessToken(context.auth as GmailAuthValue);
-    const gmail = google.gmail({ version: 'v1', auth });
+    const authClient = await createGoogleClient(context.auth);
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     await gmail.users.messages.modify({
       userId: 'me',
@@ -27,6 +26,6 @@ export const gmailArchiveEmailAction = createAction({
       },
     });
 
-    return { success: true };
+    return { success: true, messageId: context.propsValue.message_id };
   },
 });
