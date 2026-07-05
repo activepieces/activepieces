@@ -20,6 +20,8 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
+import { WaitpointEntity } from './waitpoint/waitpoint-entity'
+import { Waitpoint } from './waitpoint/waitpoint-types'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 
@@ -438,12 +440,18 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
 
 async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
-    await jobQueue(log).removeOneTimeJob({
-        jobId: flowRun.id,
+    const removeJob = (jobId: string) => jobQueue(log).removeOneTimeJob({
+        jobId,
         platformId,
         projectId: flowRun.projectId,
         jobType: WorkerJobType.EXECUTE_FLOW,
     })
+    await removeJob(flowRun.id)
+    await removeJob(`${flowRun.id}-resume`)
+    const waitpoints = await repoFactory<Waitpoint>(WaitpointEntity)().findBy({ flowRunId: flowRun.id })
+    for (const wp of waitpoints) {
+        await removeJob(`${flowRun.id}-resume-${wp.id}`)
+    }
     await runsMetadataQueue(log).add({
         id: flowRun.id,
         projectId: flowRun.projectId,

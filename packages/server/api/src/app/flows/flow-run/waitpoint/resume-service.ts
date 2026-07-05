@@ -133,7 +133,7 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
     const platformId = await projectService(log).getPlatformId(flowRun.projectId)
     // Namespace the BullMQ job with waitpoint id so it cannot be deduplicated
     // against the still-active BEGIN job or a consecutive resume for a different waitpoint
-    const waitpointId = waitpoint?.id ?? apId()
+    const waitpointId = waitpoint?.id ?? 'legacy'
     await addToQueue({
         payload: resumePayload,
         flowRun,
