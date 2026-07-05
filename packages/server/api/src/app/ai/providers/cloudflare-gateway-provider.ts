@@ -126,7 +126,11 @@ async function fetchUpstreamModels({
                     type: AIProviderModelType.TEXT,
                 })))
                 hasMore = res.body.has_more
-                afterId = res.body.last_id
+                const nextAfterId = res.body.last_id
+                if (hasMore && (!nextAfterId || nextAfterId === afterId)) {
+                    throw new Error('Anthropic model discovery pagination stalled: gateway returned has_more without an advancing cursor')
+                }
+                afterId = nextAfterId
             }
             if (pageCount >= MAX_PAGES) {
                 log.warn({ modelCount: models.length }, '[cloudflareGatewayProvider#discoverModels] Anthropic pagination hit max pages, some models may be omitted')
