@@ -215,7 +215,7 @@ export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensiti
 
 export const PlatformPieceFilter = z.object({
     filteredPieceNames: z.array(z.string()),
-    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
+    filteredPieceBehavior: z.enum(FilteredPieceBehavior),
     filteredActionNames: z.record(z.string(), z.array(z.string())),
     filteredTriggerNames: z.record(z.string(), z.array(z.string())),
 })
