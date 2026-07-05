@@ -1,12 +1,15 @@
-import { apId, Cursor, isNil, PlatformId, ProjectId, SeekPage, tryCatchSync } from '@activepieces/core-utils'
-import { ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+import { apId, Cursor, isNil, PlatformId, ProjectId, SeekPage, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { applicationEvents } from '../helper/application-events'
 import { domainHelper } from '../helper/domain-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
+import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
 import {
     EventDestinationEntity,
@@ -110,81 +113,162 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             })
         }
         const destinations = await eventDestinationRepo().findBy(conditions)
-        const destinationsToDispatch = await skipInternalDestinationsOnFlowCycle({
-            destinations,
+        if (destinations.length === 0) {
+            return
+        }
+        const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+            path: 'v1/webhooks',
+        })
+        const classifiedDestinations = destinations.map((destination) => ({
+            destination,
+            internalFlowId: extractFlowIdFromWebhookUrl({
+                destinationUrl: destination.url,
+                webhookUrlPrefix,
+            }),
+        }))
+        const destinationsToDispatch = skipInternalDestinationsOnFlowCycle({
+            classifiedDestinations,
             event,
             log,
         })
-        await Promise.all(destinationsToDispatch.map(destination =>
-            jobQueue(log).add({
-                type: JobType.ONE_TIME,
-                id: apId(),
-                data: {
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    platformId,
-                    projectId,
-                    webhookId: destination.id,
-                    webhookUrl: destination.url,
-                    payload: event,
-                    jobType: WorkerJobType.EVENT_DESTINATION,
-                },
+        await Promise.all(destinationsToDispatch.map(({ destination, internalFlowId }) =>
+            dispatchEventToDestination({
+                log,
+                platformId,
+                projectId,
+                destinationId: destination.id,
+                destinationUrl: destination.url,
+                internalFlowId,
+                event,
             }),
         ))
     },
     test: async ({ platformId, projectId, url, event }: TestParams): Promise<void> => {
         const eventToTest = event ?? ApplicationEventName.FLOW_CREATED
         const mockEvent = buildMockEvent({ event: eventToTest, platformId, projectId })
-        await jobQueue(log).add({
-            type: JobType.ONE_TIME,
-            id: apId(),
-            data: {
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                platformId,
-                projectId,
-                webhookId: apId(),
-                webhookUrl: url,
-                payload: mockEvent,
-                jobType: WorkerJobType.EVENT_DESTINATION,
-            },
+        const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+            path: 'v1/webhooks',
+        })
+        await dispatchEventToDestination({
+            log,
+            platformId,
+            projectId,
+            destinationId: apId(),
+            destinationUrl: url,
+            internalFlowId: extractFlowIdFromWebhookUrl({
+                destinationUrl: url,
+                webhookUrlPrefix,
+            }),
+            event: mockEvent,
         })
     },
 })
 
 
-const skipInternalDestinationsOnFlowCycle = async ({
-    destinations,
+// Same-origin handler-flow destinations are dispatched straight to the webhook handler instead of
+// making an outbound HTTP POST back to this instance: on self-hosted deployments the instance's own
+// hostname resolves to a private/loopback IP and the POST is rejected by the SSRF filter (safeHttp).
+// The bypass is tightly scoped — only URLs whose parsed origin exactly equals the instance's
+// configured public API origin AND whose path sits under /v1/webhooks/ qualify (see
+// extractFlowIdFromWebhookUrl); everything else keeps going through the SSRF-protected worker job.
+const dispatchEventToDestination = async ({
+    log,
+    platformId,
+    projectId,
+    destinationId,
+    destinationUrl,
+    internalFlowId,
+    event,
+}: DispatchEventParams): Promise<void> => {
+    if (!isNil(internalFlowId)) {
+        await dispatchToInternalFlow({
+            log,
+            destinationId,
+            flowId: internalFlowId,
+            event,
+        })
+        return
+    }
+    await jobQueue(log).add({
+        type: JobType.ONE_TIME,
+        id: apId(),
+        data: {
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+            platformId,
+            projectId,
+            webhookId: destinationId,
+            webhookUrl: destinationUrl,
+            payload: event,
+            jobType: WorkerJobType.EVENT_DESTINATION,
+        },
+    })
+}
+
+const dispatchToInternalFlow = async ({
+    log,
+    destinationId,
+    flowId,
+    event,
+}: DispatchToInternalFlowParams): Promise<void> => {
+    const { data: response, error } = await tryCatch(async () => webhookService.handleWebhook({
+        logger: log,
+        flowId,
+        async: true,
+        saveSampleData: await triggerSourceService(log).existsByFlowId({
+            flowId,
+            simulate: true,
+        }),
+        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+        data: () => Promise.resolve(buildInternalWebhookPayload(event)),
+        execute: true,
+        failParentOnFailure: false,
+    }))
+    if (error !== null) {
+        log.error({
+            destination: { id: destinationId },
+            flow: { id: flowId },
+            error: error.message,
+        }, '[eventDestinationService#dispatchToInternalFlow] Failed to dispatch the event to the internal handler flow')
+        return
+    }
+    if (response.status >= StatusCodes.BAD_REQUEST) {
+        log.error({
+            destination: { id: destinationId },
+            flow: { id: flowId },
+            response: { status: response.status },
+        }, '[eventDestinationService#dispatchToInternalFlow] Internal handler flow did not accept the event — the flow may be deleted or disabled')
+    }
+}
+
+const buildInternalWebhookPayload = (event: ApplicationEvent): EventPayload => ({
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: event,
+    queryParams: {},
+})
+
+const skipInternalDestinationsOnFlowCycle = ({
+    classifiedDestinations,
     event,
     log,
-}: SkipDestinationsParams): Promise<EventDestinationSchema[]> => {
-    if (destinations.length === 0 || !isFlowRunEvent(event)) {
-        return destinations
+}: SkipDestinationsParams): ClassifiedDestination[] => {
+    if (classifiedDestinations.length === 0 || !isFlowRunEvent(event)) {
+        return classifiedDestinations
     }
-    const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
-        path: 'v1/webhooks',
-    })
-    const destinationsWithFlowIds = destinations.map((destination) => ({
-        destination,
-        flowId: extractFlowIdFromWebhookUrl({
-            destinationUrl: destination.url,
-            webhookUrlPrefix,
-        }),
-    }))
     const internalFlowIds = new Set(
-        destinationsWithFlowIds
-            .map(({ flowId }) => flowId)
+        classifiedDestinations
+            .map(({ internalFlowId }) => internalFlowId)
             .filter((flowId): flowId is string => !isNil(flowId)),
     )
     const eventFlowId = event.data.flowRun.flowId
     if (!internalFlowIds.has(eventFlowId)) {
-        return destinations
+        return classifiedDestinations
     }
     log.warn({
         flow: { id: eventFlowId },
         action: event.action,
     }, '[eventDestinationService#trigger] Source flow is wired as an internal webhook target; dropping internal destinations to break the cycle, external destinations will still fire')
-    return destinationsWithFlowIds
-        .filter(({ flowId }) => isNil(flowId))
-        .map(({ destination }) => destination)
+    return classifiedDestinations.filter(({ internalFlowId }) => isNil(internalFlowId))
 }
 
 const isFlowRunEvent = (
@@ -240,10 +324,32 @@ type TestParams = {
     event?: ApplicationEventName
 }
 
+type ClassifiedDestination = {
+    destination: EventDestinationSchema
+    internalFlowId: string | null
+}
+
 type SkipDestinationsParams = {
-    destinations: EventDestinationSchema[]
+    classifiedDestinations: ClassifiedDestination[]
     event: ApplicationEvent
     log: FastifyBaseLogger
+}
+
+type DispatchEventParams = {
+    log: FastifyBaseLogger
+    platformId: PlatformId
+    projectId?: ProjectId
+    destinationId: string
+    destinationUrl: string
+    internalFlowId: string | null
+    event: ApplicationEvent
+}
+
+type DispatchToInternalFlowParams = {
+    log: FastifyBaseLogger
+    destinationId: string
+    flowId: string
+    event: ApplicationEvent
 }
 
 type ExtractFlowIdParams = {

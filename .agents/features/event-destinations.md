@@ -58,9 +58,9 @@ Event Destinations streams platform and project activity events to webhook URLs 
 
 Events delivered via BullMQ job queue (`WorkerJobType.EVENT_DESTINATION`):
 1. Application event fires (user or worker event)
-2. `eventDestinationService.trigger()` finds matching destinations
-3. For each match: queues ONE_TIME job with webhook URL + event payload
-4. Worker delivers HTTP POST to destination URL
+2. `eventDestinationService.trigger()` finds matching destinations and classifies each URL as internal (same-origin handler flow) or external
+3. **Internal destinations** (URL origin exactly equals the instance's public API origin AND path is under `/v1/webhooks/`): dispatched directly through `webhookService.handleWebhook` (async EXECUTE_WEBHOOK path) — no outbound HTTP, so the SSRF filter never sees a self-referential private-IP call (GIT-1539)
+4. **External destinations**: queued as ONE_TIME `EVENT_DESTINATION` jobs; the worker delivers an HTTP POST via `safeHttp` (SSRF-protected) and logs delivery failures (transport errors and 4xx/5xx responses) at error level
 
 ## Endpoints
 
@@ -70,7 +70,7 @@ Events delivered via BullMQ job queue (`WorkerJobType.EVENT_DESTINATION`):
 - `DELETE /v1/event-destinations/:id` — delete destination
 - `POST /v1/event-destinations/test` — sends a mock event to the URL. Body accepts an optional `event: ApplicationEventName` field; defaults to `FLOW_CREATED`. The payload is built via `buildMockEvent()`.
 
-Internal flow webhook URLs are accepted as destination URLs — outbound webhook delivery is still routed through `safeHttp` (SSRF-protected). The previous `assertUrlIsExternal` check has been removed to support the internal handler-flow pattern; recursion is prevented by a server-side cycle guard that drops events whose payload originated from the same destination chain.
+Internal flow webhook URLs are accepted as destination URLs and are dispatched internally (no outbound HTTP, see Event Delivery) so self-hosted instances work without `AP_SSRF_ALLOW_LIST` configuration; external URLs are still delivered through `safeHttp` (SSRF-protected). The previous `assertUrlIsExternal` check has been removed to support the internal handler-flow pattern; recursion is prevented by a server-side cycle guard that drops events whose payload originated from the same destination chain.
 
 ## Gating & Sidebar
 
