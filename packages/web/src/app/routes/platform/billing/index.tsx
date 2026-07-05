@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   CurrentSubscriptionCard,
   CreditsCard,
+  CreditsInfoDialog,
   AutoRechargeCard,
   DROP_TO_FREE_MESSAGE,
   DROP_TO_FREE_WARNING,
@@ -60,7 +61,6 @@ function BillingPageDetails() {
   } = billingQueries.usePlatformSubscription(platform.id);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
-  const isCloud = edition === ApEdition.CLOUD;
   const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
     billingMutations.usePortalLink();
   const { mutate: reactivateSubscription, isPending: isReactivating } =
@@ -137,19 +137,12 @@ function BillingPageDetails() {
             title={t('Credits')}
             description={
               <div className="flex flex-col gap-2">
-                <span>{creditsExplanation({ info, isPaid })}</span>
                 <span>
                   {t(
-                    'You spend 1 credit per flow run, AI step, chat message, and tool call (from an agent step or chat).',
+                    'Credits are what you spend to run flows, AI steps, and chat. See how they add up and how to get more.',
                   )}
                 </span>
-                {isCloud && (
-                  <span>
-                    {t(
-                      'On Activepieces models, each AI step, message, and tool call is multiplied by the model: Fast ×2, Smart ×10, Premium ×20.',
-                    )}
-                  </span>
-                )}
+                <CreditsInfoDialog />
               </div>
             }
           >
@@ -223,26 +216,6 @@ function BillingPageDetails() {
       </div>
     </div>
   );
-}
-
-function creditsExplanation({
-  info,
-  isPaid,
-}: {
-  info: PlatformBillingInformation;
-  isPaid: boolean;
-}): string {
-  const plan = info.currentPlanName ?? t('Free');
-  const credits = info.plan.includedCredits.toLocaleString();
-  return isPaid
-    ? t(
-        'In the {plan} plan, you get {credits} credits per month, resets monthly. Unused credits do not carry over.',
-        { plan, credits },
-      )
-    : t(
-        'In the {plan} plan, you get {credits} credits per day, resets daily. Unused credits do not carry over.',
-        { plan, credits },
-      );
 }
 
 const BillingSection = ({
