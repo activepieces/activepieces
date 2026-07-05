@@ -46,7 +46,7 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
             nullable: true,
         },
         conversationId: {
-            type: String,
+            ...ApIdSchema,
             nullable: true,
         },
         source: {
@@ -64,11 +64,11 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
             nullable: true,
         },
         logs: {
-            type: String,
+            type: 'text',
             nullable: true,
         },
         errorMessage: {
-            type: String,
+            type: 'text',
             nullable: true,
         },
         startTime: {
