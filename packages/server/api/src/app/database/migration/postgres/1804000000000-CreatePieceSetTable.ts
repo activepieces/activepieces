@@ -25,6 +25,10 @@ const PROJECT_BATCH = 500
 const log = system.globalLogger()
 const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
+// transaction=false is required by CREATE INDEX CONCURRENTLY, so the migration runs in
+// autocommit mode. Every step is guarded (IF NOT EXISTS DDL, NOT EXISTS backfill inserts,
+// pieceSetId IS NULL project updates), so a mid-run failure leaves a partial state that is
+// safe to resolve by simply re-running the migration.
 export class CreatePieceSetTable1804000000000 implements Migration {
     name = 'CreatePieceSetTable1804000000000'
     breaking = false
