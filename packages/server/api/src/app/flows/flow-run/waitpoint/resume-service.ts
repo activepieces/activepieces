@@ -1,4 +1,4 @@
-import { apId, FlowRunId } from '@activepieces/core-utils'
+import { apId, FlowRunId, isNil } from '@activepieces/core-utils'
 import { EngineHttpResponse, ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, ResumeReason, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -7,7 +7,7 @@ import { engineResponseWatcher } from '../../../workers/engine-response-watcher'
 import { addToQueue, findFlowRunOrThrow, flowRunService, WEBHOOK_TIMEOUT_MS } from '../flow-run-service'
 import { flowRunSideEffects } from '../flow-run-side-effects'
 import { waitpointService } from './waitpoint-service'
-import { Waitpoint, WaitpointResumePayload } from './waitpoint-types'
+import { Waitpoint, WaitpointResumePayload, WaitpointStatus } from './waitpoint-types'
 
 export const resumeService = (log: FastifyBaseLogger) => ({
     async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
@@ -29,6 +29,26 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                 }, log)
             },
         })
+
+        if (processed) {
+            const currentFlowRun = await findFlowRunOrThrow(flowRunId)
+            if (currentFlowRun.status === FlowRunStatus.PAUSED) {
+                const latestWaitpoint = await waitpointService(log).getByFlowRunId(flowRunId)
+                if (!isNil(latestWaitpoint) && latestWaitpoint.status === WaitpointStatus.COMPLETED) {
+                    log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeFromWaitpoint] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; triggering resume now')
+                    // addToQueue uses flowRun.id as the BullMQ job id, so concurrent
+                    // enqueueResume calls for the same run are deduplicated by BullMQ
+                    await enqueueResume({
+                        flowRun: currentFlowRun,
+                        waitpoint: latestWaitpoint,
+                        resumePayload: resumePayload ?? null,
+                        workerHandlerId,
+                        httpRequestId,
+                    }, log)
+                }
+            }
+        }
+
         return { flowRun, stale: !processed }
     },
 
