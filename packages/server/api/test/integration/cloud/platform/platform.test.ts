@@ -110,6 +110,30 @@ describe('Platform API', () => {
             expect(responseBody.cloudAuthEnabled).toBe(false)
         }),
 
+        it('rejects piece filter fields that moved to the dedicated piece-filter endpoint', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    filteredPieceNames: ['@activepieces/piece-slack'],
+                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.body).toContain('pieceFilterMovedToDedicatedEndpoint')
+        }),
+
         it('updates the platform logo icons', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {

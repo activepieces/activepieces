@@ -65,13 +65,16 @@ export const UpdatePlatformRequestBody = z.object({
     pieceSelectorConfig: NullablePieceSelectorConfigFromMultipart.optional(),
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
         .optional(),
+    // Moved to POST /v1/platform-piece-filter — rejected here so stale clients fail loudly instead of silently no-oping
+    filteredPieceNames: z.undefined({ error: 'pieceFilterMovedToDedicatedEndpoint' }).optional(),
+    filteredPieceBehavior: z.undefined({ error: 'pieceFilterMovedToDedicatedEndpoint' }).optional(),
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>
 
 export const UpdatePlatformPieceFilterRequestBody = z.object({
     filteredPieceNames: z.array(z.string()).optional(),
-    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
+    filteredPieceBehavior: z.enum(FilteredPieceBehavior).optional(),
     filteredActionNames: z.record(z.string(), z.array(z.string())).optional(),
     filteredTriggerNames: z.record(z.string(), z.array(z.string())).optional(),
 })

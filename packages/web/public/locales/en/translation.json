@@ -2005,6 +2005,7 @@
   "All": "All",
   "Highlights": "Highlights",
   "External ID can only contain letters, numbers and underscores": "External ID can only contain letters, numbers and underscores",
+  "pieceFilterMovedToDedicatedEndpoint": "Piece filters have moved to POST /v1/platform-piece-filter",
   "required": "Required",
   "Please connect your account first": "Please connect your account first",
   "Recommended": "Recommended",
