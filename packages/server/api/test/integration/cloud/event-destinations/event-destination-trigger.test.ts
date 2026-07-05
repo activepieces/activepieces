@@ -218,7 +218,6 @@ describe('Event Destination Trigger', () => {
         const flowId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
-            platformId: ctx.platform.id,
         })
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
@@ -266,7 +265,6 @@ describe('Event Destination Trigger', () => {
         const flowId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
-            platformId: ctx.platform.id,
         })
         const selfTargetingDestination = createMockEventDestination({
             platformId: ctx.platform.id,
@@ -300,7 +298,6 @@ describe('Event Destination Trigger', () => {
         const flowBId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
-            platformId: ctx.platform.id,
         })
         const internalDestinationA = createMockEventDestination({
             platformId: ctx.platform.id,
@@ -340,7 +337,6 @@ describe('Event Destination Trigger', () => {
         const flowBId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
-            platformId: ctx.platform.id,
         })
         const internalDestinationA = createMockEventDestination({
             platformId: ctx.platform.id,
@@ -598,6 +594,86 @@ describe('Event Destination Trigger', () => {
             expect(handleWebhookSpy).toHaveBeenCalledWith(
                 expect.objectContaining({ flowId }),
             )
+        })
+
+        it('should keep /draft and /test route URLs on the outbound path (their execution semantics differ from async production dispatch)', async () => {
+            const ctx = await createTestContext(app)
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+                path: 'v1/webhooks',
+            })
+            const draftDestination = createMockEventDestination({
+                platformId: ctx.platform.id,
+                events: [ApplicationEventName.FLOW_CREATED],
+                scope: EventDestinationScope.PLATFORM,
+                url: `${webhookUrlPrefix}/${apId()}/draft`,
+            })
+            const testRouteDestination = createMockEventDestination({
+                platformId: ctx.platform.id,
+                events: [ApplicationEventName.FLOW_CREATED],
+                scope: EventDestinationScope.PLATFORM,
+                url: `${webhookUrlPrefix}/${apId()}/test`,
+            })
+            await db.save('event_destination', [draftDestination, testRouteDestination])
+
+            await eventDestinationService(app.log).trigger({
+                event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+            })
+
+            expect(handleWebhookSpy).not.toHaveBeenCalled()
+            expect(addSpy).toHaveBeenCalledTimes(2)
+            const queuedUrls = addSpy.mock.calls.map((call: unknown[]) => (call[0] as { data: { webhookUrl: string } }).data.webhookUrl)
+            expect(queuedUrls).toEqual(expect.arrayContaining([draftDestination.url, testRouteDestination.url]))
+        })
+
+        it('should still drop a self-targeting /draft destination on its own flow-run event (cycle guard keys off the target flow, not the dispatch mode)', async () => {
+            const ctx = await createTestContext(app)
+            const flowId = apId()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+                path: 'v1/webhooks',
+            })
+            const destination = createMockEventDestination({
+                platformId: ctx.platform.id,
+                events: [ApplicationEventName.FLOW_RUN_FINISHED],
+                scope: EventDestinationScope.PLATFORM,
+                url: `${webhookUrlPrefix}/${flowId}/draft`,
+            })
+            await db.save('event_destination', destination)
+
+            await eventDestinationService(app.log).trigger({
+                event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId }),
+            })
+
+            expect(addSpy).not.toHaveBeenCalled()
+            expect(handleWebhookSpy).not.toHaveBeenCalled()
+        })
+
+        it('should forward the destination URL query params to the internal handler flow', async () => {
+            const ctx = await createTestContext(app)
+            const flowId = apId()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+                path: 'v1/webhooks',
+            })
+            const destination = createMockEventDestination({
+                platformId: ctx.platform.id,
+                events: [ApplicationEventName.FLOW_CREATED],
+                scope: EventDestinationScope.PLATFORM,
+                url: `${webhookUrlPrefix}/${flowId}?token=abc&channel=alerts`,
+            })
+            await db.save('event_destination', destination)
+
+            const event = buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id })
+            await eventDestinationService(app.log).trigger({ event })
+
+            expect(addSpy).not.toHaveBeenCalled()
+            expect(handleWebhookSpy).toHaveBeenCalledTimes(1)
+            const handleWebhookParams = handleWebhookSpy.mock.calls[0][0]
+            const payload = await handleWebhookParams.data(ctx.project.id)
+            expect(payload).toEqual({
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: event,
+                queryParams: { token: 'abc', channel: 'alerts' },
+            })
         })
 
         it('should NOT bypass outbound delivery for a webhook-shaped path on a different origin', async () => {
