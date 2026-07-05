@@ -106,6 +106,25 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         return queue
     },
+    async removeAllFlowRunJobs({ flowRunId, platformId, projectId }: RemoveAllFlowRunJobsParams): Promise<void> {
+        const queueName = await getQueueName({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW }, log)
+        const queue = await ensureQueueExists({ log, queueName })
+        const removedIds: string[] = []
+        let cursor = 0
+        while (true) {
+            const jobs = await queue.getJobs(['waiting', 'delayed'], cursor, cursor + 199)
+            if (jobs.length === 0) break
+            for (const job of jobs) {
+                if (job.id?.startsWith(flowRunId)) {
+                    await job.remove()
+                    removedIds.push(job.id)
+                }
+            }
+            cursor += jobs.length
+        }
+        log.info({ flowRun: { id: flowRunId }, queueName, removedIds }, '[jobQueue#removeAllFlowRunJobs] done')
+    },
+
     async close(): Promise<void> {
         log.info('[jobQueue#close] Closing job queue')
         const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
@@ -221,6 +240,12 @@ type RemoveOneTimeJobParams = {
     platformId: string | null
     projectId?: string | null
     jobType?: WorkerJobType
+}
+
+type RemoveAllFlowRunJobsParams = {
+    flowRunId: string
+    platformId: string | null
+    projectId?: string | null
 }
 
 type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> = {
