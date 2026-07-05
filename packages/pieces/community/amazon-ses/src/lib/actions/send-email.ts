@@ -21,6 +21,12 @@ export const sendEmail = createAction({
   displayName: 'Send Email',
   description:
     'Send a customizable email via Amazon SES with verified sender addresses',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a one-off email through Amazon SES from a verified sender, with HTML or plain-text body (HTML mode auto-generates a text fallback), plus optional CC/BCC, reply-to, return path, configuration set, and tags. Use to deliver ad-hoc messages where the content is supplied inline rather than from a stored template. The sender address must already be verified in SES, and the chosen body format requires its matching content field. Not idempotent: each call dispatches a new email.',
+    idempotent: false,
+  },
   props: {
     fromEmailAddress: Property.Dropdown({
       auth: amazonSesAuth,

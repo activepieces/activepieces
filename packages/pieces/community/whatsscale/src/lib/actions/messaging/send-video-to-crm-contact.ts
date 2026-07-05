@@ -11,6 +11,8 @@ export const sendVideoToCrmContactAction = createAction({
   name: 'whatsscale_send_video_to_crm_contact',
   displayName: 'Send a Video to a CRM Contact',
   description: 'Send a video to a WhatsScale CRM contact selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a video to a contact stored in the WhatsScale CRM, identified by CRM contact ID chosen from the dropdown, with an optional caption. Pick this when the recipient is a managed CRM record; use the plain contact, group, manual-entry, or channel video variants for non-CRM recipients. Requires a directly downloadable video URL. Not idempotent: each call delivers another video.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     crmContact: whatsscaleProps.crmContact,

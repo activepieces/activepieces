@@ -7,6 +7,8 @@ export const convertLeadToEstimateOrJob = createAction({
   name: "convert_lead_to_estimate_or_job",
   displayName: "Convert Lead to Estimate or Job",
   description: "Converts a lead into an estimate or job.",
+  audience: 'both',
+  aiMetadata: { description: "Convert an existing Housecall Pro lead (by lead ID) into either an estimate or a job, selected via the type field ('estimate' or 'job'). Not idempotent: each call performs a fresh conversion that creates a new estimate or job record.", idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: "Lead ID",

@@ -6,8 +6,9 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { folderIdProp } from '../common/props';
+import { newDocumentTriggerOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
-import { google, drive_v3 } from 'googleapis';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 
 type Props = {
 	folderId?: string;
@@ -28,7 +29,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>,
 
 		const authClient = await createGoogleClient(auth);
 
-		const drive = google.drive({ version: 'v3', auth: authClient });
+		const drive = googleDrive({ version: 'v3', auth: authClient });
 
 		let nextPageToken;
 		const items = [];
@@ -67,10 +68,15 @@ export const newDocumentTrigger = createTrigger({
 	name: 'new-document',
 	displayName: 'New Document',
 	description: 'Triggers when a new document is added to a specific folder(optional).',
+	aiMetadata: {
+		description:
+			'Fires when a new Google Docs document is created, optionally limited to a specific Drive folder. Use to react when a document first appears; it does not fire on edits to existing documents.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		folderId: folderIdProp,
 	},
+	outputSchema: newDocumentTriggerOutputSchema,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {
 			auth: context.auth,

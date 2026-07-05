@@ -10,6 +10,9 @@ export const newFeature = createTrigger({
     name: 'new_feature',
     displayName: 'New Feature',
     description: 'Triggers when a new feature is created in Productboard',
+    aiMetadata: {
+        description: 'Fires when a new feature is created in Productboard (feature.created webhook event), representing a newly added roadmap item.',
+    },
     auth: productboardAuth,
     type: TriggerStrategy.WEBHOOK,
     props: {},

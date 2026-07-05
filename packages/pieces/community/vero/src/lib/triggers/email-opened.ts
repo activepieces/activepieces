@@ -9,6 +9,10 @@ export const emailOpened = createTrigger({
   name: 'emailOpened',
   displayName: 'Email Opened',
   description: 'Triggered when an email is opened',
+  aiMetadata: {
+    description:
+      'Fires when a recipient opens an email sent through Vero, representing an open/read engagement event for a specific user and campaign.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

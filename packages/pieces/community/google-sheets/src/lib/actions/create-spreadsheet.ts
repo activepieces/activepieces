@@ -1,7 +1,6 @@
 import {
 	AppConnectionValueForAuthProperty,
 	createAction,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -10,16 +9,24 @@ import {
 	HttpMethod,
 	HttpRequest,
 } from '@activepieces/pieces-common';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { includeTeamDrivesProp } from '../common/props';
 import { createGoogleClient, getAccessToken, googleSheetsAuth } from '../common/common';
-import { AppConnectionType, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { AppConnectionType } from '@activepieces/pieces-framework';
+import { createSpreadsheetActionOutputSchema } from '../output-schemas';
 
 export const createSpreadsheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'create-spreadsheet',
 	displayName: 'Create Spreadsheet',
 	description: 'Creates a blank spreadsheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new, empty Google Sheets spreadsheet with the given title, optionally inside a specified Drive folder. Use when an agent needs a fresh spreadsheet to populate. Not idempotent — each call creates a separate spreadsheet even if the title is identical.',
+		idempotent: false,
+	},
 	props: {
 		title: Property.ShortText({
 			displayName: 'Title',
@@ -90,6 +97,7 @@ export const createSpreadsheetAction = createAction({
 			},
 		}),
 	},
+	outputSchema: createSpreadsheetActionOutputSchema,
 	async run(context) {
 		const { title, folder } = context.propsValue;
 		const response = await createSpreadsheet(context.auth, title, folder);
@@ -109,7 +117,7 @@ async function createSpreadsheet(
 	folderId?: string,
 ) {
 	const googleClient = await createGoogleClient(auth);
-  const driveApi = google.drive({ version: 'v3', auth: googleClient });
+  const driveApi = googleDrive({ version: 'v3', auth: googleClient });
   const response = await driveApi.files.create({
     requestBody: {
       name: title,

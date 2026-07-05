@@ -1,9 +1,9 @@
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { ServerContext } from '../../context';
 
 export const BasePieceAuthSchema = z.object({
   displayName: z.string(),
-  description: z.string().optional()
+  description: z.optional(z.string())
 });
 
 export type BasePieceAuthSchema<AuthValueSchema> = {

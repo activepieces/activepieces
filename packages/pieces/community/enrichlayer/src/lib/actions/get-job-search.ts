@@ -9,6 +9,12 @@ export const getJobSearch = createAction({
   displayName: 'Search Company Jobs',
   description:
     'List jobs posted by a company with optional filters (2 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List job postings from a company, filterable by keyword, job type, experience level, recency, and work flexibility. Read-only and safe to retry. Use when you need the actual job listings; to get only the matching count without the listings use Get Job Count. Requires the company search_id obtained from a company profile lookup.',
+    idempotent: true,
+  },
   props: {
     search_id: Property.ShortText({
       displayName: 'Company Search ID',

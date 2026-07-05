@@ -8,6 +8,8 @@ export const closeIncidents = createAction({
   name: 'closeIncidents',
   displayName: 'Close Incidents',
   description: 'Close one or more Coralogix incidents (e.g. false positives or noise). Use Resolve for incidents that were actually fixed.',
+  audience: 'both',
+  aiMetadata: { description: 'Closes one or more Coralogix incidents by incident ID; choose this for false positives or noise rather than Resolve Incidents (which is for incidents that were genuinely fixed). Idempotent: re-closing already-closed incidents yields the same state.', idempotent: true },
   requireAuth: true,
   props: {
     incidentIds: Property.Array({

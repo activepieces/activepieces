@@ -7,6 +7,12 @@ export const askQuestion = createAction({
   displayName: 'Ask Question',
   description:
     'Sends a question to a Wonderchat bot; returns the bot’s answer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a question to a specific Wonderchat chatbot (identified by chatbotId) and returns the bot’s generated answer. Use to query a deployed knowledge-base chatbot programmatically. Optionally pass a chatlogId to continue an existing chat session plus custom context/contextUrl to ground the answer. Not idempotent: each call posts a new message and produces a fresh AI-generated reply.',
+    idempotent: false,
+  },
   auth: wonderchatAuth,
   props: {
     chatbotId: Property.ShortText({

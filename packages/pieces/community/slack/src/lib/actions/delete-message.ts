@@ -9,6 +9,12 @@ export const deleteMessageAction = createAction({
   name: 'delete-message',
   displayName: 'Delete Message',
   description: `Deletes a specific message from a channel using the message's timestamp.`,
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete one Slack message from a channel, identified by its timestamp (ts) and channel. Pick this to remove a previously posted message; to instead edit its content use Update Message. Not idempotent in effect though re-deleting an already-gone message errors, and deletion requires a user token with rights to remove that message.',
+    idempotent: false,
+  },
   auth: slackAuth,
   props: {
     info: singleSelectChannelInfo,

@@ -8,6 +8,12 @@ export const searchForAnActivity = createAction({
   name: 'searchForAnActivity',
   displayName: 'Search for an Activity',
   description: 'Find an existing activity by type/criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches logged activities in Copper CRM, optionally narrowing by parent record (person, company, lead, opportunity, project, or task), activity types, and an activity-date range, with paging. Use to retrieve activity history; with no filters it returns recent activities across the account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     entity: Property.StaticDropdown({
       displayName: 'Parent Entity',

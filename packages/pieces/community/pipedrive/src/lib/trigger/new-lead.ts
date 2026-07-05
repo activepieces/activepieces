@@ -8,7 +8,7 @@ import {
     pipedriveTransformV1CustomFields,
 } from '../common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 interface PipedriveLeadV2 {
 	id: string;
@@ -55,6 +55,10 @@ export const newLeadTrigger = createTrigger({
 	name: 'new-lead',
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',
+	aiMetadata: {
+		description:
+			'Fires when a new lead is created in Pipedrive. A lead is an early, unqualified sales opportunity (with a title, optional value, source, and links to a person or organization) that has not yet been converted into a deal. Use to act on inbound prospects as they enter the leads inbox.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

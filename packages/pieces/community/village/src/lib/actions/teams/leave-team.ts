@@ -8,6 +8,12 @@ export const leaveTeam = createAction({
   displayName: 'Leave Team',
   description:
     'Leave a team you are a member of. If you are the last member of a non-paid team, the team is deleted. Admins of paid teams cannot leave — use Cancel Plan instead.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Remove the authenticated user from a team by team ID. Not idempotent: leaving the same team again fails since membership is already gone, and leaving as the last member of a non-paid team deletes the team. Admins of paid teams cannot leave this way.',
+    idempotent: false,
+  },
   props: {
     team_id: Property.ShortText({
       displayName: 'Team ID',

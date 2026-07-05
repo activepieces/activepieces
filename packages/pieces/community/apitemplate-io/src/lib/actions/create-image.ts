@@ -9,6 +9,8 @@ export const createImage = createAction({
   name: 'createImage',
   displayName: 'Create Image',
   description: 'Creates an image from a template with provided data.',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a new image from a saved APITemplate.io template, merging in the supplied JSON `overrides` array to fill template objects. Requires a template ID (pick from the dropdown). Not idempotent: each call generates and stores a new image with its own transaction reference.', idempotent: false },
   props: {
     templateId: templateIdDropdown,
         data: Property.Json({

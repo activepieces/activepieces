@@ -2,11 +2,14 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { upsertRowActionOutputSchema } from '../output-schemas';
 
 export const upsertRow = createAction({
     name: 'upsert_row',
     displayName: 'Upsert Row',
     description: 'Insert or update a row in a table',
+    audience: 'both',
+    aiMetadata: { description: 'Inserts a row into a Supabase table, or updates the existing row when it collides on the specified unique conflict column. Use when you want to write a record without first checking whether it exists. Idempotent: requires a unique conflict column, and re-running with the same data converges to the same single row.', idempotent: true },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,
@@ -127,6 +130,7 @@ export const upsertRow = createAction({
             defaultValue: false,
         })
     },
+    outputSchema: upsertRowActionOutputSchema,
     async run(context) {
         const { 
             table_name, 

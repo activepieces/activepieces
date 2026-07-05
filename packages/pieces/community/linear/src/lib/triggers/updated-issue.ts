@@ -8,6 +8,9 @@ export const linearUpdatedIssue = createTrigger({
   name: 'updated_issue',
   displayName: 'Updated Issue',
   description: 'Triggers when an existing Linear issue is updated',
+  aiMetadata: {
+    description: 'Fires when an existing Linear issue is modified, optionally scoped to a specific team. Represents the updated issue along with the fields that changed.',
+  },
   props: {
     team_id: props.team_id(false)
   },

@@ -1,16 +1,17 @@
 import { PiecePropertyMap } from ".";
 import { PieceAuthProperty } from "./authentication";
 import { PropertyType } from "./input/property-type";
-import { z } from "zod";
-import { AUTHENTICATION_PROPERTY_NAME, isEmpty, isNil } from "@activepieces/shared";
+import * as z from "zod/mini";
+import { isEmpty, isNil } from "@activepieces/core-utils";
+import { AUTHENTICATION_PROPERTY_NAME } from "@activepieces/core-piece-types";
 
 function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAuthProperty[] | undefined, requireAuth: boolean | undefined = true) {
     const entries = Object.entries(props);
-    const propsSchema: Record<string, z.ZodType> = {};
+    const propsSchema: Record<string, z.ZodMiniType> = {};
     for (const [name, property] of entries) {
       switch (property.type) {
         case PropertyType.MARKDOWN:
-          propsSchema[name] = z.union([z.null(), z.undefined(), z.never(), z.unknown()]).optional();
+          propsSchema[name] = z.optional(z.union([z.null(), z.undefined(), z.never(), z.unknown()]));
           break;
         case PropertyType.DATE_TIME:
         case PropertyType.SHORT_TEXT:
@@ -18,7 +19,7 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
         case PropertyType.COLOR:
         case PropertyType.FILE:
           propsSchema[name] = property.required
-            ? z.string().min(1)
+            ? z.string().check(z.minLength(1))
             : z.string();
           break;
         case PropertyType.CHECKBOX:
@@ -29,20 +30,20 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
           break;
         case PropertyType.NUMBER:
           propsSchema[name] = z.union([
-            property.required ? z.string().min(1) : z.string(),
+            property.required ? z.string().check(z.minLength(1)) : z.string(),
             z.number(),
           ]);
           break;
         case PropertyType.STATIC_DROPDOWN:
         case PropertyType.DROPDOWN:
-          propsSchema[name] = z.unknown().refine(
+          propsSchema[name] = z.unknown().check(z.refine(
             (val) => val !== null && val !== undefined,
-            { message: 'Value must not be null or undefined' },
-          );
+            { error: 'Value must not be null or undefined' },
+          ));
           break;
         case PropertyType.SECRET_TEXT:
           propsSchema[name] = property.required
-            ? z.string().min(1)
+            ? z.string().check(z.minLength(1))
             : z.string();
           break;
         case PropertyType.BASIC_AUTH:
@@ -51,39 +52,39 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
           break;
         case PropertyType.ARRAY: {
           const arrayItemSchema = isNil(property.properties)
-            ? (property.required ? z.string().min(1) : z.string())
+            ? (property.required ? z.string().check(z.minLength(1)) : z.string())
             : buildSchema(property.properties, undefined);
           propsSchema[name] = z.union([
             property.required
-              ? z.array(arrayItemSchema).min(1)
+              ? z.array(arrayItemSchema).check(z.minLength(1))
               : z.array(arrayItemSchema),
             //for inline items mode
             z.record(z.string(), z.unknown()),
             //for normal dynamic input mode
-            property.required ? z.string().min(1) : z.string(),
+            property.required ? z.string().check(z.minLength(1)) : z.string(),
           ]);
           break;
         }
         case PropertyType.OBJECT:
           propsSchema[name] = z.union([
             z.record(z.string(), z.any()),
-            property.required ? z.string().min(1) : z.string(),
+            property.required ? z.string().check(z.minLength(1)) : z.string(),
           ]);
           break;
         case PropertyType.JSON:
           propsSchema[name] = z.union([
             z.record(z.string(), z.any()),
             z.array(z.any()),
-            property.required ? z.string().min(1) : z.string(),
+            property.required ? z.string().check(z.minLength(1)) : z.string(),
           ]);
           break;
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
           propsSchema[name] = z.union([
             property.required
-              ? z.array(z.any()).min(1)
+              ? z.array(z.any()).check(z.minLength(1))
               : z.array(z.any()),
-            property.required ? z.string().min(1) : z.string(),
+            property.required ? z.string().check(z.minLength(1)) : z.string(),
           ]);
           break;
         case PropertyType.DYNAMIC:
@@ -96,16 +97,16 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
 
       //optional array is checked against its children
       if (!property.required && property.type !== PropertyType.ARRAY) {
-        propsSchema[name] = z.union(
+        propsSchema[name] = z.optional(z.union(
           isEmpty(propsSchema[name])
-            ? [z.any(), z.null(), z.undefined()] as [z.ZodType, z.ZodType, z.ZodType]
-            : [propsSchema[name], z.null(), z.undefined()] as [z.ZodType, z.ZodType, z.ZodType],
-        ).optional();
+            ? [z.any(), z.null(), z.undefined()] as [z.ZodMiniType, z.ZodMiniType, z.ZodMiniType]
+            : [propsSchema[name], z.null(), z.undefined()] as [z.ZodMiniType, z.ZodMiniType, z.ZodMiniType],
+        ));
       }
     }
     if(auth && requireAuth)
       {
-       propsSchema[AUTHENTICATION_PROPERTY_NAME] = z.string().min(1)
+       propsSchema[AUTHENTICATION_PROPERTY_NAME] = z.string().check(z.minLength(1))
       }
     return z.object(propsSchema);
   }

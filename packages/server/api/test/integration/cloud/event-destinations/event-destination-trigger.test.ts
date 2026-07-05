@@ -1,16 +1,9 @@
-import {
-    apId,
-    ApplicationEventName,
-    EventDestinationScope,
-    FlowCreatedEvent,
-    FlowDeletedEvent,
-    FlowRunEvent,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { ApplicationEventName, EventDestinationScope, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { domainHelper } from '../../../../src/app/helper/domain-helper'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { applicationEvents } from '../../../../src/app/helper/application-events'
+import { domainHelper } from '../../../../src/app/helper/domain-helper'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockEventDestination } from '../../../helpers/mocks'
@@ -473,7 +466,9 @@ describe('Event Destination Trigger', () => {
         })
         await db.save('event_destination', [workerDestination, userDestination])
 
-        applicationEvents(app.log).sendWorkerEvent(ctx.project.id, {
+        applicationEvents(app.log).sendWorkerEvent({
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {
                 flowRun: {

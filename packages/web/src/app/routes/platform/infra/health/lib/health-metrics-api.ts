@@ -13,8 +13,11 @@ export const healthMetricsApi = {
   }): Promise<PlatformMetricsReport> {
     return api.get<PlatformMetricsReport>('/v1/health/run-metrics', range);
   },
-  getQueueMetrics(): Promise<PlatformMetricsLive> {
-    return api.get<PlatformMetricsLive>('/v1/health/queue-metrics');
+  getQueueMetrics(range: {
+    createdAfter: string;
+    createdBefore: string;
+  }): Promise<PlatformMetricsLive> {
+    return api.get<PlatformMetricsLive>('/v1/health/queue-metrics', range);
   },
   getHealthHistory(): Promise<PlatformMetricsHealthHistory> {
     return api.get<PlatformMetricsHealthHistory>('/v1/health/history');

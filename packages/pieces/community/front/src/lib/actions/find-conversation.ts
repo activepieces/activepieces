@@ -8,6 +8,12 @@ export const findConversation = createAction({
   name: 'findConversation',
   displayName: 'Find Conversation',
   description: 'Find a conversation by search filters such as subject, participants, tags, inbox, etc.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search Front conversations using a Front query string (e.g. subject, tag_ids, inbox_id, participant) with optional limit and pagination token. Use to locate conversation IDs to feed into reply, comment, tag, or update actions. Read-only and idempotent: the same query returns the same matches without changing data.',
+    idempotent: true,
+  },
   props: {
     q: Property.ShortText({
       displayName: 'Query',

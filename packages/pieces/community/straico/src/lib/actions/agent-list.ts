@@ -27,6 +27,7 @@ interface AgentListResponse {
 }
 
 export const agentList = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent-list',
   displayName: 'List Agents',

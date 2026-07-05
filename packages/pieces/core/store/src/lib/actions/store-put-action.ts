@@ -7,7 +7,7 @@ import {
   StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { common, getScopeAndKey, PieceStoreScope } from './common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 async function executeStoragePut(context: ActionContext<PieceAuthProperty | undefined, {
@@ -16,7 +16,7 @@ async function executeStoragePut(context: ActionContext<PieceAuthProperty | unde
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
 }>, isTestMode = false) {
   await propsValidation.validateZod(context.propsValue, {
-    key: z.string().max(128),
+    key: z.string().check(z.maxLength(128)),
   });
 
   const { key, scope } = getScopeAndKey({
@@ -33,6 +33,7 @@ async function executeStoragePut(context: ActionContext<PieceAuthProperty | unde
 }
 
 export const storagePutAction = createAction({
+  audience: 'human',
   name: 'put',
   displayName: 'Put',
   description: 'Put a value in storage',

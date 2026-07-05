@@ -1,4 +1,5 @@
-import { ApId, CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, GitPushOperationType, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, UpdateTableRequest } from '@activepieces/shared'
+import { ApId, Permission, SeekPage } from '@activepieces/core-utils'
+import { CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, GitPushOperationType, ListTablesRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -39,6 +40,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
             name: request.query.name,
             externalIds: request.query.externalIds,
             folderId: request.query.folderId,
+            folderIds: request.query.folderIds,
         })
     })
 

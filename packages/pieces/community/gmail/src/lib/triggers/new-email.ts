@@ -11,20 +11,26 @@ import {
   convertAttachment,
   getFirstFiveOrAll,
 } from '../common/data';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
+import { gmailNewEmailReceivedTriggerOutputSchema } from '../output-schemas';
 
 export const gmailNewEmailTrigger = createTrigger({
   auth: gmailAuth,
   name: 'gmail_new_email_received',
   displayName: 'New Email',
   description: 'Triggers when new mail is found in your Gmail inbox',
+  aiMetadata: {
+    description:
+      'Fires when a new email arrives in the connected Gmail account, optionally narrowed by sender, recipient, subject, label, or category filters. Each event represents one newly received message with its parsed contents and thread.',
+  },
   props: {
     subject: GmailProps.subject,
     from: GmailProps.from,
     to: GmailProps.to,
-    label: GmailProps.label,
+    label: GmailProps.label({ required: false }),
     category: GmailProps.category,
   },
+  outputSchema: gmailNewEmailReceivedTriggerOutputSchema,
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
@@ -92,7 +98,7 @@ async function pollRecentMessages({
 > {
   const authClient = await createGoogleClient(auth);
 
-  const gmail = google.gmail({ version: 'v1', auth: authClient });
+  const gmail = googleGmail({ version: 'v1', auth: authClient });
 
   // construct query
   const query = [];

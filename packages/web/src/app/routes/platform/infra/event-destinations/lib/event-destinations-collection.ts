@@ -1,3 +1,4 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   ApplicationEvent,
   ApplicationEventName,
@@ -8,7 +9,6 @@ import {
   PopulatedFlow,
   ProjectType,
   SampleDataFileType,
-  SeekPage,
   Template,
   TestPlatformEventDestinationRequestBody,
   UpdatePlatformEventDestinationRequestBody,

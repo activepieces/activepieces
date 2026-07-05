@@ -94,6 +94,9 @@ export const newOpportunity = createTrigger({
   name: 'new_opportunity',
   displayName: 'New Opportunity',
   description: 'Fires when a new opportunity is created',
+  aiMetadata: {
+    description: 'Fires when a new sales opportunity is created in Wealthbox, optionally narrowed by linked resource, stage, manager, probability range, target-close range, or whether closed opportunities are included. Each fired item represents one newly created opportunity record.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     resource_type: Property.StaticDropdown({

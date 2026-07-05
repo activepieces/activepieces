@@ -3,7 +3,6 @@ import {
 	createAction,
 	DropdownOption,
 	DynamicPropsValue,
-	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -17,10 +16,11 @@ import {
 	createGoogleClient,
 } from '../common/common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
-import { google, sheets_v4 } from 'googleapis';
-import { MarkdownVariant } from '@activepieces/shared';
+import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { parse } from 'csv-parse/sync';
 import { commonProps } from '../common/props';
+import { googleSheetsInsertMultipleRowsActionOutputSchema } from '../output-schemas';
 
 type RowValueType = Record<string, any>;
 
@@ -29,6 +29,12 @@ export const insertMultipleRowsAction = createAction({
 	name: 'google-sheets-insert-multiple-rows',
 	displayName: 'Add Multiple Rows',
 	description: 'Add multiple rows of data at once to a specific spreadsheet.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Bulk-appends many rows to a worksheet in one call, accepting input as CSV, JSON, or per-column values. Use for batch inserts instead of calling Add Row repeatedly. Optional flags can overwrite existing data or skip duplicates keyed on a chosen column; in default append mode it is not idempotent — repeating it adds the rows again.',
+		idempotent: false,
+	},
 	props: {
 		...commonProps,
 		input_type: Property.StaticDropdown({
@@ -237,6 +243,7 @@ export const insertMultipleRowsAction = createAction({
 			defaultValue: 1,
 		}),
 	},
+	outputSchema: googleSheetsInsertMultipleRowsActionOutputSchema,
 
 	async run(context) {
 		const {
@@ -272,7 +279,7 @@ export const insertMultipleRowsAction = createAction({
 		const sheetHeaders = rowHeaders[0]?.values ?? {};
 
 		const authClient = await createGoogleClient(context.auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const formattedValues = await formatInputRows(
 			sheets,

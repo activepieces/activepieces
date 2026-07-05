@@ -38,6 +38,7 @@ interface AgentUpdateResponse {
 }
 
 export const agentUpdate = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent_update',
   displayName: 'Update Agent',

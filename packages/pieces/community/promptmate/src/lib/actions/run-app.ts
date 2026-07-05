@@ -8,6 +8,8 @@ export const runApp = createAction({
   name: 'run_app',
   displayName: 'Run PromptMate App',
   description: 'Runs a PromptMate app with the specified data',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a job to run a PromptMate app over an array of data objects, where each object must supply the data fields the chosen app expects (look these up via list-apps or get-app-details). Use it to actually execute an app and produce results; the call returns a job that you then poll with get-job-status. Optionally accepts a callback URL for async delivery. Not idempotent — each call starts a new job and consumes credits.', idempotent: false },
   props: {
     appId: Property.Dropdown({
       auth: promptmateAuth,

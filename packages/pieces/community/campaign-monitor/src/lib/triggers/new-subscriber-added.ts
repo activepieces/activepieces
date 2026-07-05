@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest, transformCustomFields } from '../common/client';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 
@@ -10,6 +10,10 @@ export const newSubscriberAddedTrigger = createTrigger({
   name: 'new_subscriber_added',
   displayName: 'New Subscriber Added',
   description: 'Triggered when a new subscriber is added to a list.',
+  aiMetadata: {
+    description:
+      'Fires when a contact subscribes to the specified Campaign Monitor list under a client, via a Subscribe webhook event, and reports the new subscriber together with their details and custom fields.',
+  },
   props: {
     clientId: clientId,
     listId: listId,

@@ -8,6 +8,8 @@ export const getCustomerAction = createAction({
   name: 'get_gorgias_customer',
   displayName: 'Get Customer',
   description: 'Retrieve a Gorgias customer by ID or find one by email.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single Gorgias customer, operating in one of two modes: pass a Customer ID to fetch it directly, or omit the ID and pass an Email to search customers server-side and return the match. Use to resolve a customer record before working with their tickets; supply exactly one of the two inputs and the call errors if neither is given or no email match is found. Idempotent read-only lookup.', idempotent: true },
   props: {
     customerId: Property.Number({
       displayName: 'Customer ID',

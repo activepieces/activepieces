@@ -9,6 +9,9 @@ export const newMention = createTrigger({
   name: 'newMention',
   displayName: 'New Mention',
   description: 'Triggers when a new mention is received in Google Chat.',
+  aiMetadata: {
+    description: 'Fires when a new message containing an @-mention of a user is posted in Google Chat, delivered via a Pub/Sub webhook subscription. Optionally narrow it to mentions of one specific space member; otherwise it fires on any user mention in the watched space.',
+  },
   props: {
     projectId: projectsDropdown(['auth']),
     spaceId: spacesDropdown({refreshers: ['auth']}),

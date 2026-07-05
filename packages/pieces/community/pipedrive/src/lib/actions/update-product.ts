@@ -9,13 +9,19 @@ import {
 } from '../common';
 import { GetField, GetProductResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const updateProductAction = createAction({
     auth: pipedriveAuth,
     name: 'update-product',
     displayName: 'Update Product',
     description: 'Updates an existing product.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Updates fields on an existing product identified by its product ID, such as name, code, pricing, tax, owner, active state, and custom fields; only supplied fields change. Use to edit a product you have the ID for (use Find Products to locate it first). Idempotent: repeating the same update converges to the same product state.',
+        idempotent: true,
+    },
     props: {
         id: Property.ShortText({
             displayName: 'Product ID',

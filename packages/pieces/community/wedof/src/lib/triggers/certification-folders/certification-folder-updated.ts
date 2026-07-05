@@ -7,6 +7,10 @@ export const certificationFolderUpdated = createTrigger({
   name: 'certificationFolderUpdated',
   displayName: 'Dossier de certification mis à jour',
   description: "Se déclenche lorsqu'un dossier de certification est mis à jour",
+  aiMetadata: {
+    description:
+      'Fires whenever any field of a certification folder (dossier de certification) changes in Wedof. The payload contains the full updated certification folder, including its current state, candidate (attendee) details, exam information, history of state-change dates, attached files, and links to the related certification, registration folder, and organisations.',
+  },
   props: {},
   sampleData: {
     attendeeLink: 'https://test.wedof.fr/candidat-1234-123456789',

@@ -8,7 +8,7 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedriveOrganizationV2 {
@@ -80,6 +80,10 @@ export const updatedOrganizationTrigger = createTrigger({
 	name: 'updated-organization',
 	displayName: 'Updated Organization',
 	description: 'Triggers when an existing organization is updated.',
+	aiMetadata: {
+		description:
+			'Fires when any field of an existing organization (company) record changes in Pipedrive, such as its name, owner, address, labels, or custom fields. Use to react to edits on company records in the CRM.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

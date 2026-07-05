@@ -7,6 +7,8 @@ export const listCustomers = createAction({
   name: 'list_customers',
   displayName: 'List Customers',
   description: 'Retrieve a list of customers',
+  audience: 'both',
+  aiMetadata: { description: 'Lists customers in a Lightfunnels store, with optional pagination (limit/cursor) and a Lightfunnels query string to filter, sort, and scope results (e.g. "order_by:created_at order_dir:desc"); an empty query returns all customers in default order. Use to browse contacts or find them by criteria. Read-only and idempotent.', idempotent: true },
   props: {
     first: Property.Number({
       displayName: 'Limit',

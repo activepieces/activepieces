@@ -13,6 +13,8 @@ export const sendBatchEmails = createAction({
   auth: resendAuth,
   displayName: 'Send Batch Emails',
   description: 'Send up to 100 emails in a single API call',
+  audience: 'both',
+  aiMetadata: { description: 'Sends up to 100 distinct emails in one Resend API call, each with its own recipient, subject, and body. Use this instead of Send Email when delivering many independent messages at once. Senders must be on verified domains; pass an idempotency key to guard against duplicate batch sends, otherwise each call sends new emails.', idempotent: false },
   props: {
     emails: Property.Array({
       displayName: 'Emails',

@@ -9,6 +9,12 @@ export const markEmailAsReadAction = createAction({
 	name: 'mark_email_as_read',
 	displayName: 'Mark Email as Read',
 	description: 'Marks an email as read.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Sets the read flag on one Zoho Mail message identified by account ID and message ID. Use to clear an unread indicator after processing a message. Idempotent: re-running on an already-read message leaves it read.',
+		idempotent: true,
+	},
 	props: {
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({ displayName: 'Folder', required: true }),

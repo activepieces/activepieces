@@ -17,6 +17,10 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/core-utils": ["packages/core/utils/src/index.ts"],
+      "@activepieces/core-formula": ["packages/core/formula/src/index.ts"],
+      "@activepieces/core-piece-types": ["packages/core/piece-types/src/index.ts"],
+      "@activepieces/core-execution": ["packages/core/execution/src/index.ts"],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/engine": ["packages/server/engine/src/main.ts"],
@@ -164,6 +168,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bocha-search": [
+        "packages/pieces/community/bocha-search/src/index.ts"
+      ],
       "@activepieces/piece-bigcommerce": [
         "packages/pieces/community/bigcommerce/src/index.ts"
       ],
@@ -221,6 +228,9 @@
       ],
       "@activepieces/piece-campaign-monitor": [
         "packages/pieces/community/campaign-monitor/src/index.ts"
+      ],
+      "@activepieces/piece-canva": [
+        "packages/pieces/community/canva/src/index.ts"
       ],
       "@activepieces/piece-capsule-crm": [
         "packages/pieces/community/capsule-crm/src/index.ts"
@@ -342,6 +352,9 @@
       "@activepieces/piece-copy-ai": [
         "packages/pieces/community/copy-ai/src/index.ts"
       ],
+      "@activepieces/piece-coupa": [
+        "packages/pieces/community/coupa/src/index.ts"
+      ],
       "@activepieces/piece-crisp": [
         "packages/pieces/community/crisp/src/index.ts"
       ],
@@ -360,6 +373,9 @@
       ],
       "@activepieces/piece-datadog": [
         "packages/pieces/community/datadog/src/index.ts"
+      ],
+      "@activepieces/piece-dataforb2b": [
+        "packages/pieces/community/dataforb2b/src/index.ts"
       ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/core/date-helper/src/index.ts"
@@ -453,6 +469,9 @@
       ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/core/file-helper/src/index.ts"
+      ],
+      "@activepieces/piece-filetopdf": [
+        "packages/pieces/community/filetopdf/src/index.ts"
       ],
       "@activepieces/piece-fillout-forms": [
         "packages/pieces/community/fillout-forms/src/index.ts"
@@ -854,6 +873,9 @@
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
+      "@activepieces/piece-muna-ai": [
+        "packages/pieces/community/muna-ai/src/index.ts"
+      ],
       "@activepieces/piece-murf-api": [
         "packages/pieces/community/murf-api/src/index.ts"
       ],
@@ -901,6 +923,9 @@
       ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
+      ],
+      "@activepieces/piece-outseta": [
+        "packages/pieces/community/outseta/src/index.ts"
       ],
       "@activepieces/piece-open-phone": [
         "packages/pieces/community/open-phone/src/index.ts"
@@ -977,6 +1002,9 @@
       ],
       "@activepieces/piece-podio": [
         "packages/pieces/community/podio/src/index.ts"
+      ],
+      "@activepieces/piece-polydoc": [
+        "packages/pieces/community/polydoc/src/index.ts"
       ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
@@ -1058,6 +1086,9 @@
       ],
       "@activepieces/piece-reddit": [
         "packages/pieces/community/reddit/src/index.ts"
+      ],
+      "@activepieces/piece-rendex": [
+        "packages/pieces/community/rendex/src/index.ts"
       ],
       "@activepieces/piece-reoon-verifier": [
         "packages/pieces/community/reoon-verifier/src/index.ts"
@@ -1224,6 +1255,9 @@
       "@activepieces/piece-softr": [
         "packages/pieces/community/softr/src/index.ts"
       ],
+      "@activepieces/piece-sofya": [
+        "packages/pieces/community/sofya/src/index.ts"
+      ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"
       ],
@@ -1342,6 +1376,9 @@
       ],
       "@activepieces/piece-truelayer": [
         "packages/pieces/community/truelayer/src/index.ts"
+      ],
+      "@activepieces/piece-trust": [
+        "packages/pieces/community/trust/src/index.ts"
       ],
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
@@ -1521,7 +1558,8 @@
         "packages/pieces/community/meistertask/src/index.ts"
       ],
       "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
-      "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/sandbox": ["packages/server/sandbox/src/index.ts"],
+      "@activepieces/shared": ["packages/core/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
@@ -1556,8 +1594,8 @@
       "@activepieces/piece-videoask": [
         "packages/pieces/community/videoask/src/index.ts"
       ],
-      "@activepieces/piece-presenton": [
-        "packages/pieces/community/presenton/src/index.ts"
+      "@activepieces/piece-presentation": [
+        "packages/pieces/community/presentation/src/index.ts"
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
@@ -1663,6 +1701,9 @@
       ],
       "@activepieces/piece-linkup": [
         "packages/pieces/community/linkup/src/index.ts"
+      ],
+      "@activepieces/piece-linkupapi": [
+        "packages/pieces/community/linkupapi/src/index.ts"
       ],
       "@activepieces/piece-youform": [
         "packages/pieces/community/youform/src/index.ts"
@@ -1842,7 +1883,7 @@
       "@activepieces/piece-omnihr": [
         "packages/pieces/community/omnihr/src/index.ts"
       ],
-      "@activepieces/piece-clicdata": [
+      "@activepieces/piece-clicdog": [
         "packages/pieces/community/clicdata/src/index.ts"
       ],
       "@activepieces/piece-katana": [

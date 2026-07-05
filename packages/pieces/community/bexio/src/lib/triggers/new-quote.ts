@@ -79,6 +79,9 @@ export const newQuoteTrigger = createTrigger({
   name: 'new_quote',
   displayName: 'New Quotes',
   description: 'Triggers when a quote is created or updated with the chosen status',
+  aiMetadata: {
+    description: 'Fires when a quote (offer) is created or its updated timestamp changes in Bexio, optionally filtered to a chosen quote status. Emits each matching quote with its document number, contact, totals (gross, net, taxes), validity dates, and status. Use to react to new or modified quotes.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({

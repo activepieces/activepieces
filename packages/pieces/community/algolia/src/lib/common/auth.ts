@@ -1,5 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 
 import { validateAlgoliaAuth } from './client';
 

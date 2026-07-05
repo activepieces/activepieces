@@ -11,6 +11,8 @@ export const getEmailStatus = createAction({
   auth: resendAuth,
   displayName: 'Get Email Status',
   description: 'Retrieve the delivery status of a sent email',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up the current delivery status and details of a single previously sent email by its Resend email ID. Use this to check whether a specific email was delivered, bounced, or is still scheduled. Read-only and idempotent; requires the email ID returned when the email was sent.', idempotent: true },
   props: {
     email_id: Property.ShortText({
       displayName: 'Email ID',

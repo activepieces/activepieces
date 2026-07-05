@@ -13,6 +13,8 @@ export const createEntryAction = createAction({
 	name: 'create_entry',
 	displayName: 'Create List Entry',
 	description: 'Add a record to a specified list.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds an existing record to a specified Attio list as a new entry, optionally setting the list-specific entry attribute values. Requires the list, the parent record\'s object type, and the parent record ID. Not idempotent — each call creates another entry, so the same record can be added to the list multiple times.', idempotent: false },
 	auth: attioAuth,
 	props: {
 		listId: listIdDropdown({

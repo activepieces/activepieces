@@ -2,10 +2,11 @@ import { deepseekAuth } from '../auth';
 import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
 import OpenAI from 'openai';
 import { baseUrl } from '../common/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askDeepseek = createAction({
+  audience: 'human',
   auth: deepseekAuth,
   name: 'ask_deepseek',
   displayName: 'Ask Deepseek',
@@ -127,8 +128,8 @@ export const askDeepseek = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      memoryKey: z.string().max(128).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
     const openai = new OpenAI({
       baseURL: baseUrl,

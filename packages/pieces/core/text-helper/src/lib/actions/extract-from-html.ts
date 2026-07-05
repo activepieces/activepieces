@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { JSDOM, VirtualConsole } from 'jsdom';
 
 export const extractFromHtml = createAction({
+  audience: 'human',
   name: 'extract_from_html',
   displayName: 'Extract from HTML',
   description: 'Extract specific elements or data from an HTML document.',

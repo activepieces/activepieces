@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -23,6 +23,7 @@ export function ChatInput({
   isStreaming,
   onSend,
   onStop,
+  onInputChange,
   placeholder,
   leftActions,
   rightActions,
@@ -30,6 +31,7 @@ export function ChatInput({
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
+  onInputChange?: (hasInput: boolean) => void;
   placeholder?: string;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
@@ -37,6 +39,19 @@ export function ChatInput({
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [interimText, setInterimText] = useState('');
+  const lastHasInputRef = useRef(false);
+
+  const handleValueChange = useCallback(
+    (v: string) => {
+      setValue(v);
+      const hasInput = v.trim().length > 0;
+      if (hasInput !== lastHasInputRef.current) {
+        lastHasInputRef.current = hasInput;
+        onInputChange?.(hasInput);
+      }
+    },
+    [onInputChange],
+  );
 
   const handleTranscript = useCallback((text: string) => {
     setValue((prev) => {
@@ -100,7 +115,7 @@ export function ChatInput({
       <PromptInput
         isLoading={isStreaming}
         value={value}
-        onValueChange={setValue}
+        onValueChange={handleValueChange}
         onSubmit={handleSubmit}
         className="border-0 rounded-none shadow-none"
       >
@@ -145,7 +160,7 @@ export function ChatInput({
           )}
         </AnimatePresence>
         {isRecording ? (
-          <div className="min-h-[44px] px-3 py-2 text-sm text-foreground whitespace-pre-wrap break-words">
+          <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-foreground whitespace-pre-wrap break-words">
             {interimText || (
               <span className="text-muted-foreground">{t('Listening...')}</span>
             )}
@@ -154,14 +169,14 @@ export function ChatInput({
           <PromptInputTextarea
             autoFocus
             placeholder={placeholder ?? t('Tell me what you need...')}
-            className="min-h-[44px] text-sm"
+            className="min-h-[44px] text-base sm:text-sm"
           />
         )}
         <PromptInputActions className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <PromptInputAction tooltip={t('Attach files')}>
               <FileUploadTrigger asChild>
-                <div className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                   <Paperclip className="size-4" />
                 </div>
               </FileUploadTrigger>
@@ -175,7 +190,7 @@ export function ChatInput({
                 <Button
                   variant="default"
                   size="icon"
-                  className="h-7 w-7 rounded-full"
+                  className="h-9 w-9 sm:h-7 sm:w-7 rounded-full"
                   onClick={onStop}
                 >
                   <Square className="size-3 fill-current" />
@@ -197,7 +212,7 @@ export function ChatInput({
                 <Button
                   variant="default"
                   size="icon"
-                  className="h-7 w-7 rounded-full"
+                  className="h-9 w-9 sm:h-7 sm:w-7 rounded-full"
                   onClick={handleSubmit}
                   disabled={isStreaming}
                 >
@@ -209,7 +224,7 @@ export function ChatInput({
                 <button
                   type="button"
                   onClick={startRecording}
-                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <Mic className="size-4" />
                 </button>
@@ -219,7 +234,7 @@ export function ChatInput({
                 <Button
                   variant="default"
                   size="icon"
-                  className="h-7 w-7 rounded-full"
+                  className="h-9 w-9 sm:h-7 sm:w-7 rounded-full"
                   onClick={handleSubmit}
                   disabled={true}
                 >

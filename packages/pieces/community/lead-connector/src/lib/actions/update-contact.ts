@@ -12,7 +12,7 @@ import {
   updateContact,
 } from '../common';
 import { leadConnectorAuth } from '../..';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const updateContactAction = createAction({
@@ -20,6 +20,8 @@ export const updateContactAction = createAction({
   name: 'update_contact',
   displayName: 'Update Contact',
   description: 'Update an existing contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing GoHighLevel/LeadConnector contact identified by contact ID, overwriting any provided fields (name, email, phone, company, address, tags, source). Use to amend a known contact rather than create one. Idempotent — repeating with the same input leaves the contact in the same state.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Contact ID',
@@ -139,9 +141,9 @@ export const updateContactAction = createAction({
 
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email().optional(),
-      phone: z.string().optional(),
-      website: z.string().url().optional(),
+      email: z.optional(z.string().check(z.email())),
+      phone: z.optional(z.string()),
+      website: z.optional(z.string().check(z.url())),
     });
 
     const {

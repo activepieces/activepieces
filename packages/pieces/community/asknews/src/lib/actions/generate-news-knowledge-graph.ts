@@ -8,6 +8,12 @@ export const generateNewsKnowledgeGraph = createAction({
   name: 'generateNewsKnowledgeGraph',
   displayName: 'Generate News Knowledge Graph',
   description: 'Build a custom mega-news-knowledge graph with fully disambiguated entities and relationships',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Builds a news knowledge graph of disambiguated entities and their relationships from articles matching a natural-language query, via the AskNews API. Choose this when an agent needs structured entity/relationship extraction (optionally a visualization like mermaid/svg) rather than raw article text. Computes a fresh graph on each call from current matching news; safe to repeat.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

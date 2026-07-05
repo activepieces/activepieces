@@ -4,7 +4,7 @@ import {
   Property,
   WebhookRenewStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import {
   googleCalendarCommon,
   googleCalendarAuth,
@@ -18,6 +18,7 @@ import {
   listEventsWithSyncToken,
 } from '../common/helper';
 import { GoogleWatchResponse, GoogleCalendarEvent } from '../common/types';
+import { eventOutputSchema } from '../output-schemas';
 
 const WATCH_STORE_KEY = 'google_calendar_watch';
 const SYNC_TOKEN_STORE_KEY = 'google_calendar_sync_token';
@@ -72,6 +73,9 @@ export const newEvent = createTrigger({
   name: 'new_event',
   displayName: 'New Event',
   description: 'Fires when a new event is created in a calendar.',
+  aiMetadata: {
+    description: 'Fires when a brand-new event is created in the selected calendar (not on edits or cancellations), via Google push notifications. Each fired item is the new event; can be narrowed by event type, a text search across title/description/location, and an option to skip all-day events.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     event_types: Property.StaticMultiSelectDropdown({
@@ -103,6 +107,7 @@ export const newEvent = createTrigger({
       defaultValue: false,
     }),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   renewConfiguration: {
     strategy: WebhookRenewStrategy.CRON,

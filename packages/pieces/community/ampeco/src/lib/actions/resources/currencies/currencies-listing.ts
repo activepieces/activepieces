@@ -15,6 +15,8 @@ export const currenciesListingAction = createAction({
   name: 'currenciesListing',
   displayName: 'Resources - Currencies - Listing',
   description: 'Currencies / Listing.',
+  audience: 'both',
+  aiMetadata: { description: 'List the currencies supported by the AMPECO instance. Read-only and safe to repeat; takes no input. Use to discover valid currency codes before configuring rates or other currency-dependent resources.', idempotent: true },
   props: {
   },
   async run(context): Promise<CurrenciesListingResponse> {

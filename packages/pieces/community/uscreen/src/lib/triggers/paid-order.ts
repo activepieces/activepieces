@@ -29,6 +29,9 @@ export const paidOrder = createTrigger({
   displayName: 'Paid Order',
   description:
     'Triggers when a payment is processed for subscriptions, bundles, or content.',
+  aiMetadata: {
+    description: 'Fires when an order is successfully paid on the Uscreen storefront (event order_paid), covering purchases of subscriptions, bundles, or individual content. Represents a completed paid transaction with its amount, customer, and offer details.',
+  },
   props: {},
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,

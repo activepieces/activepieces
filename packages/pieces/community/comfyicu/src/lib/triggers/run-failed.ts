@@ -63,6 +63,9 @@ export const runFailedTrigger = createTrigger({
   name: 'run-failed',
   displayName: 'Run Failed',
   description: 'Triggers when a workflow run is failed.',
+  aiMetadata: {
+    description: 'Fires when a run of the selected Comfy.ICU workflow reaches ERROR status, emitting the failed run including its error details. Scoped to a single workflow chosen by workflow ID; polls that workflow\'s runs for newly failed ones.',
+  },
   props: {
     workflow_id: commonProps.workflow_id,
   },

@@ -39,6 +39,10 @@ export const newInvoice = createTrigger({
   displayName: 'New Invoice',
   description:
     'Fires every time a new invoice is created in Wafeq. Useful for logging sales to a spreadsheet, posting to Slack, or syncing to another system.',
+  aiMetadata: {
+    description:
+      'Fires when a new sales invoice is created in Wafeq (polling by creation time), representing a newly issued customer invoice regardless of its status. Use to react to new sales — log them, notify a channel, or sync them onward.',
+  },
   props: {},
   sampleData: {
     id: 'inv_abc123',

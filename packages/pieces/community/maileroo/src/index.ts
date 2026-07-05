@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { sendEmail } from './lib/actions/send-email';
 import { sendFromTemplate } from './lib/actions/send-from-template';
 import { verifyEmail } from './lib/actions/verify-email';

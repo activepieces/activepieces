@@ -10,6 +10,9 @@ export const bookingStatusUpdate = createTrigger({
   displayName: 'Booking Status Update',
   description:
     'Triggers when a booking status is updated.  Only available if you have a MotionToolsadmin account',
+  aiMetadata: {
+    description: 'Fires when an existing booking is modified in MotionTools (the booking.modified webhook event), e.g. its status changes. Each event carries the affected booking and customer ids. Requires a MotionTools admin account to register the webhook.',
+  },
   props: {
     instructions: Property.MarkDown({
       value: `# Motiontools Webhook Setup

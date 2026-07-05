@@ -9,6 +9,12 @@ export const sendMessage = createAction({
   name: 'sendMessage',
   displayName: 'Send Message',
   description: 'Send a message to a conversation within an agent',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a user prompt to an existing conversation in a CustomGPT agent and returns the agent reply, optionally overriding the model, persona, response source, capability mode, language, or attaching a file. Use this to ask the chatbot a question or continue a chat thread; requires the agent project id, an existing conversation session id, and the prompt text. Not idempotent: each call posts a new message and generates a new response.',
+    idempotent: false,
+  },
   props: {
     project_id: projectId,
     session_id: Property.ShortText({

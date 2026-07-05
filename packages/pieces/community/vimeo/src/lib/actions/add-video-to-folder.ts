@@ -7,6 +7,8 @@ export const addVideoToFolder = createAction({
   name: 'add_video_to_folder',
   displayName: 'Add Video to Folder',
   description: 'Adds an existing video to a user\'s folder',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an existing video the user owns to one of their Vimeo folders (projects), identified by video ID and folder ID. Use to file already-uploaded videos into a folder for organization; it does not upload new content and a folder selection is required. Idempotent: the video is keyed into the folder by ID, so re-running with the same pair leaves the membership unchanged. Requires a token with the interact scope.', idempotent: true },
   auth: vimeoAuth,
   props: {
     videoId: userVideoDropdown,

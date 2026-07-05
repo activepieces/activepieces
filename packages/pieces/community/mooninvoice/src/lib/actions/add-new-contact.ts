@@ -9,6 +9,12 @@ export const addNewContact = createAction({
   name: 'addNewContact',
   displayName: 'Add New Contact',
   description: 'Add a new contact to a company in MoonInvoice',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new contact (customer and/or vendor) under a given MoonInvoice company. Use when adding a person or organization that will later be billed, invoiced, or paid. Requires the target company; all contact details (name, email, addresses, tax/registration numbers, opening balance) are optional. Not idempotent — each call creates a separate contact, even with identical details.',
+    idempotent: false,
+  },
   props: {
     companyId:companyIdProp,
     organization: Property.ShortText({

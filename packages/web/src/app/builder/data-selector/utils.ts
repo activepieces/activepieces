@@ -1,7 +1,6 @@
+import { isNil, isObject } from '@activepieces/core-utils';
 import {
   flowCanvasUtils,
-  isNil,
-  isObject,
   FlowAction,
   FlowActionType,
   FlowTrigger,
@@ -11,6 +10,7 @@ import { t } from 'i18next';
 
 import { pieceSelectorUtils } from '@/features/pieces';
 
+import { pathHelpers } from './path-helpers';
 import {
   DataSelectorTreeNode,
   DataSelectorTestNodeData,
@@ -20,7 +20,6 @@ import {
 
 type PathSegment = string | number;
 
-const MAX_CHUNK_LENGTH = 10;
 const JOINED_VALUES_MAX_LENGTH = 32;
 
 function buildTestStepNode(
@@ -47,20 +46,6 @@ function buildTestStepNode(
         key: `test_${stepName}`,
       },
     ],
-  };
-}
-
-function buildChunkNode(
-  displayName: string,
-  children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] | undefined,
-): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  return {
-    key: displayName,
-    data: {
-      type: 'chunk',
-      displayName,
-    },
-    children,
   };
 }
 
@@ -124,7 +109,8 @@ function convertArrayToZippedView(
     const stepName = propertyPath[0];
     const subPath = [...propertyPath.slice(1), key];
 
-    const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}['output'], ['${subPath
+    const arrayPath = pathHelpers.propertyPathStarter(String(stepName));
+    const propertyPathWithFlattenArray = `flattenNestedKeys(${arrayPath}, ['${subPath
       .map((s) => String(s))
       .join("', '")}'])`;
     const joinedValues = node.values.join(', ');
@@ -155,10 +141,10 @@ function buildJsonPath(propertyPath: PathSegment[]): string {
   return propertyPathWithoutStepName.reduce((acc, segment) => {
     return `${acc}[${
       typeof segment === 'string'
-        ? `'${escapeMentionKey(String(segment))}'`
+        ? `'${pathHelpers.escapeMentionKey(String(segment))}'`
         : segment
     }]`;
-  }, `${propertyPath[0]}['output']`) as string;
+  }, pathHelpers.propertyPathStarter(String(propertyPath[0]))) as string;
 }
 
 function buildDataSelectorNode(
@@ -168,38 +154,19 @@ function buildDataSelectorNode(
   children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] | undefined,
   insertable = true,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const isEmptyArrayOrObject =
-    (Array.isArray(value) && value.length === 0) ||
-    (isObject(value) && Object.keys(value).length === 0);
   const jsonPath = buildJsonPath(propertyPath);
 
   return {
     key: jsonPath,
     data: {
       type: 'value',
-      value: isEmptyArrayOrObject ? 'Empty List' : value,
+      value,
       displayName,
       propertyPath: jsonPath,
       insertable,
     },
     children,
   };
-}
-
-function breakArrayIntoChunks<T>(
-  array: T[],
-  chunkSize: number,
-): { items: T[]; range: { start: number; end: number } }[] {
-  return Array.from(
-    { length: Math.ceil(array.length / chunkSize) },
-    (_, i) => ({
-      items: array.slice(i * chunkSize, i * chunkSize + chunkSize),
-      range: {
-        start: i * chunkSize + 1,
-        end: Math.min((i + 1) * chunkSize, array.length),
-      },
-    }),
-  );
 }
 
 function traverseOutput(
@@ -221,27 +188,11 @@ function traverseOutput(
           insertable,
         ),
       );
-      const chunks = breakArrayIntoChunks(mentionNodes, MAX_CHUNK_LENGTH);
-      const isSingleChunk = chunks.length === 1;
-      if (isSingleChunk) {
-        return buildDataSelectorNode(
-          displayName,
-          propertyPath,
-          node,
-          mentionNodes,
-          insertable,
-        );
-      }
       return buildDataSelectorNode(
         displayName,
         propertyPath,
-        undefined,
-        chunks.map((chunk) =>
-          buildChunkNode(
-            `${displayName} [${chunk.range.start}-${chunk.range.end}]`,
-            chunk.items,
-          ),
-        ),
+        node,
+        mentionNodes,
         insertable,
       );
     } else {
@@ -293,10 +244,6 @@ function traverseOutput(
   }
 }
 
-function escapeMentionKey(key: string) {
-  return key.replaceAll(/[\\"'\n\r\t’]/g, (char) => `\\${char}`);
-}
-
 function getSearchableValue(
   item: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>,
 ) {
@@ -305,6 +252,18 @@ function getSearchableValue(
   }
   if (item.data.type === 'chunk') {
     return item.data.displayName;
+  }
+  // A container whose value holds the real object/array (for the type icon +
+  // count) is matched by displayName and by its children's leaf values, which
+  // are searched separately — so don't stringify the whole subtree here every
+  // keystroke (redundant and costly). Containers carrying a primitive value
+  // (e.g. the zipped-view aggregated preview string) keep their value searchable.
+  const isContainerObjectValue =
+    !isNil(item.children) &&
+    item.children.length > 0 &&
+    (isObject(item.data.value) || Array.isArray(item.data.value));
+  if (isContainerObjectValue) {
+    return '';
   }
   if (!isNil(item.data.value)) {
     return JSON.stringify(item.data.value).toLowerCase();
@@ -375,7 +334,7 @@ function traverseStep(
         data: {
           type: 'value',
           displayName: t('Output'),
-          propertyPath: `${step.name}['output']`,
+          propertyPath: pathHelpers.propertyPathStarter(step.name),
           value: stepNode.data.value,
           insertable: true,
           hideStepIcon: true,

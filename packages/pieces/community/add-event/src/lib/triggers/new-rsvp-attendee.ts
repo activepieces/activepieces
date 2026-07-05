@@ -47,6 +47,10 @@ export const addEventNewRsvpAttendeeTrigger = createTrigger({
   name: 'new_rsvp_attendee',
   displayName: 'New RSVP Attendee',
   description: 'Triggers when a new attendee RSVPs to your AddEvent event.',
+  aiMetadata: {
+    description:
+      'Fires when a new attendee RSVPs to a specific AddEvent event, representing one RSVP response (going, maybe, or not-going) from a person. Scoped to the single event identified by the configured event ID.',
+  },
   type: TriggerStrategy.POLLING,
   props,
   sampleData: {

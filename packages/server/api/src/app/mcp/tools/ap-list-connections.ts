@@ -1,9 +1,5 @@
-import {
-    AppConnectionStatus,
-    McpToolDefinition,
-    Permission,
-    ProjectScopedMcpServer,
-} from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { AppConnectionStatus, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'

@@ -15,6 +15,8 @@ export const roamingOperatorReadAction = createAction({
   name: 'roamingOperatorRead',
   displayName: 'Resources - Roaming Operators - Roaming Operator Read',
   description: 'Get a Roaming Operator.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single roaming operator by its numeric ID. Read-only and idempotent. Pick this when you already know the roaming operator ID; otherwise use the roaming operators listing action to find it first.', idempotent: true },
   props: {
         
   roamingOperator: Property.Number({

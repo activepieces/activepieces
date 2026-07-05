@@ -12,6 +12,12 @@ export const sendTransactionalEmail = createAction({
   displayName: 'Send Transactional Email',
   description:
     'Send a transactional email through Plunk. Recipient can be a single address or a comma-separated list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a one-off transactional email through Plunk to one recipient or a comma-separated list of recipients, with an HTML body and optional sender name, from address (must be a verified Plunk address), and reply-to. Choose this for direct/triggered emails rather than marketing campaigns. Not idempotent: each call dispatches a new email, and enabling the subscribed flag will create the recipient as a subscribed contact if they do not already exist.',
+    idempotent: false,
+  },
   props: {
     to: Property.ShortText({
       displayName: 'To',

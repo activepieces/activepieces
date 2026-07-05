@@ -15,6 +15,8 @@ export const listPcIdsAction = createAction({
   name: 'listPcIds',
   displayName: 'Resources - Provisioning Certificates - List Pc Ids',
   description: 'Get all Provisioning Certificates.',
+  audience: 'both',
+  aiMetadata: { description: 'List all AMPECO provisioning certificates (Plug & Charge), with Paginate Results to auto-fetch every page. Read-only and idempotent; use this to discover certificate IDs before getting, updating, or deleting a specific one.', idempotent: true },
   props: {
         
     per_page: Property.Number({

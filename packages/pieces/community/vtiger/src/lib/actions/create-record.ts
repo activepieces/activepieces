@@ -12,6 +12,8 @@ export const createRecord = createAction({
   auth: vtigerAuth,
   displayName: 'Create Record',
   description: 'Create a Record',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new record of a given Vtiger module (element type, e.g. Contacts, Leads, Accounts) with the supplied field values. Choose this to add a new CRM entity. Each call inserts a new record, so repeated calls create duplicates.', idempotent: false },
   props: {
     elementType: elementTypeProperty,
     record: recordProperty(),

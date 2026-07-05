@@ -9,6 +9,8 @@ export const updateAssistant = createAction({
   displayName: 'Update Assistant',
   description:
     'Update an existing Vapi assistant configuration (name, model, first message, etc.).',
+  audience: 'both',
+  aiMetadata: { description: 'Modify the configuration of an existing Vapi assistant identified by its ID, setting fields such as name, first message, end-call message, model/provider, and a system prompt. Use to reconfigure a voice agent before placing calls. Key constraint: the system-prompt/instructions field requires both model and provider to be supplied (and model and provider must always be given together), otherwise the call errors. Idempotent: applying the same values leaves the assistant in the same state.', idempotent: true },
   props: {
     assistantId: Property.ShortText({
       displayName: 'Assistant ID',

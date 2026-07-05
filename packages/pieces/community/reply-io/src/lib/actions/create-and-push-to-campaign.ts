@@ -10,6 +10,8 @@ export const createAndPushToCampaignAction = createAction({
   displayName: 'Add Contact to Campaign',
   description:
     'Create a new contact (or update an existing one) and immediately enrol them in a campaign so they start receiving outreach emails.',
+  audience: 'both',
+  aiMetadata: { description: 'Upsert a contact (by email) and in the same call enrol them into the given campaign so outbound outreach begins. Use when adding a brand-new lead to a sequence in one step; if the contact already exists in Reply.io, prefer Push Contact to Campaign instead. Requires a target campaign id plus email and first name. Not idempotent: it enrolls the contact and starts sending outreach on each call.', idempotent: false },
   auth: replyIoAuth,
   props: {
     campaignId: campaignIdProp,

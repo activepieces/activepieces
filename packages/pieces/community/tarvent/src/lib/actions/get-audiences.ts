@@ -7,6 +7,8 @@ export const getAudiences = createAction({
   name: 'tarvent_get_audiences',
   displayName: 'Find Audience',
   description: 'Finds an audience by name or tags.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Tarvent audiences, optionally filtered by name and/or comma-separated tags; leaving the filters empty returns all audiences. Use to look up an audience or its ID before acting on contacts. Idempotent read-only lookup.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Audience name',

@@ -1,5 +1,5 @@
+import { isNil } from '@activepieces/core-utils';
 import {
-  isNil,
   PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
@@ -37,6 +37,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
   projectCollectionUtils,
@@ -155,6 +156,9 @@ export function ProjectDashboardSidebar({
     hasPermission: true,
     isSubItem: false,
     badge: t('Beta'),
+    onClick: () => {
+      window.dispatchEvent(new Event(chatUtils.newChatEvent));
+    },
   };
 
   const exploreLink: SidebarItemType = {

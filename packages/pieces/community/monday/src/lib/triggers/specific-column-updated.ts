@@ -10,12 +10,15 @@ import {
   MondayWebhookEventType,
 } from '../common/constants';
 import { WebhookInformation } from '../common/models';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const specificColumnValueUpdatedTrigger = createTrigger({
   auth: mondayAuth,
   name: 'monday_specific_column_updated',
   displayName: 'Specific Column Value Updated in Board',
   description: 'Triggers when a specific column value is updated in board.',
+  aiMetadata: {
+    description: 'Fires when the value of one chosen column changes on the selected monday.com board. Represents a single-column update event, carrying both the new and previous values for that column.',
+  },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

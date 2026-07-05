@@ -8,6 +8,8 @@ export const googleTrendsSearch = createAction({
   name: 'google_trends_search',
   displayName: 'Google Trends Search',
   description: 'Discover trending keywords over time to inform content strategy and market research with geographic insights.',
+  audience: 'both',
+  aiMetadata: { description: 'Queries Google Trends via SerpApi for interest in a keyword over time and across regions. Use to gauge a topic\'s popularity trajectory, compare geographic interest, or find related/rising queries for content and market research. Read-only and idempotent; requires the query, a SerpApi API key, and a chosen data type (interest over time, by region, related topics, or related queries).', idempotent: true },
 
   props: {
     query: Property.ShortText({

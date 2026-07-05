@@ -63,6 +63,12 @@ export const sendMessage = createAction({
   name: 'send_message',
   displayName: 'Send Message',
   description: 'Send a message reply to a Chatwoot conversation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts a new message to an existing Chatwoot conversation, identified by its numeric conversation display ID. Use to reply to a customer or, by enabling the private-note option, to leave an internal note visible only to agents rather than to the contact. Not idempotent — each call appends another message.',
+    idempotent: false,
+  },
   props: {
     conversationId: Property.Number({
       displayName: 'Conversation ID',

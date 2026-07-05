@@ -6,6 +6,11 @@ export const createAndQueryDB = createAction({
   name: 'createAndQueryDB',
   displayName: 'Create and Query DB',
   description: 'Create DB from data and run query',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Spins up a throwaway in-memory DuckDB, loads one or more tables from supplied JSON arrays (column names taken from object keys; schema can be given explicitly or autodetected), then runs a SQL query against them and returns the rows. Use to run SQL joins, aggregations, or transforms over JSON data you already have in the flow, without any external database. Use parameterized placeholders ($1, $2, ...) with the args list rather than interpolating values into the query string. Read-only with respect to external systems: the database exists only for this call, so repeating with the same input yields the same result.',
+    idempotent: true,
+  },
   props: {
     markdown: Property.MarkDown({
       value: `

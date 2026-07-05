@@ -7,6 +7,8 @@ export const answerAction = createAction({
   name: 'answer',
   displayName: 'Answer Query',
   description: 'Get AI-generated answers using search results. Combines web/proprietary search with AI processing.',
+  audience: 'both',
+  aiMetadata: { description: 'Answers a question by running a Valyu search and synthesizing the results into an AI-generated response. Use when you want a direct answer rather than raw search hits; output_format can return unstructured text or structured JSON conforming to a supplied schema. Read-only retrieval with no stored side effect, so repeating the same query is safe.', idempotent: true },
   auth: valyuAuth,
   props: {
     query: Property.ShortText({

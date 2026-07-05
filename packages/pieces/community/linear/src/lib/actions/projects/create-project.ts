@@ -8,6 +8,11 @@ export const linearCreateProject = createAction({
   name: 'linear_create_project',
   displayName: 'Create Project',
   description: 'Create a new project in Linear workspace',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new project under a Linear team, with optional description, icon, color, start/target dates, and status. Use to set up a new project to group issues. Requires a team ID and project name; not idempotent, each call creates a distinct project.',
+    idempotent: false,
+  },
   props: {
     team_id: props.team_id(),
     name: Property.ShortText({

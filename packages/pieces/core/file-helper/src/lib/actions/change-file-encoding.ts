@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { encodings } from '../common/encodings';
 
 export const changeFileEncoding = createAction({
+  audience: 'human',
   name: 'change_file_encoding',
   displayName: 'Change File Encoding',
   description: 'Changes the encoding of a file',

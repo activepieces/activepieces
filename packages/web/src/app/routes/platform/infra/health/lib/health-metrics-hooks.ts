@@ -20,10 +20,17 @@ export const healthMetricsQueries = {
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
-  useQueueMetrics: (enabled = true) => {
+  useQueueMetrics: (
+    range: { createdAfter: string; createdBefore: string },
+    enabled = true,
+  ) => {
     return useQuery({
-      queryKey: ['platform-metrics-live'],
-      queryFn: () => healthMetricsApi.getQueueMetrics(),
+      queryKey: [
+        'platform-metrics-live',
+        range.createdAfter,
+        range.createdBefore,
+      ],
+      queryFn: () => healthMetricsApi.getQueueMetrics(range),
       enabled,
       refetchInterval: LIVE_REFETCH_INTERVAL_MS,
     });

@@ -30,6 +30,8 @@ export const sendMessage = createAction({
   name: 'sendMessage',
   displayName: 'Send Channel Message',
   description: 'Posts a message to a specified channel as a chosen user',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a new message to a Returning.ai channel on behalf of a given user (identified by username or email), so the message appears as if that user sent it. Use to broadcast or announce content in a channel; supply message text, image URLs, or both (at least one is required), and for forum-type channels a topic ID is also required. Not idempotent: each call posts a new message.', idempotent: false },
   props: {
     description: Property.MarkDown({
       value:

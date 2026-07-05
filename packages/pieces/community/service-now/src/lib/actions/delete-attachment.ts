@@ -6,6 +6,12 @@ export const deleteAttachmentAction = createAction({
   name: 'delete_attachment',
   displayName: 'Delete Attachment',
   description: 'Delete an attachment by its sys_id',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a file attachment identified by its attachment sys_id (look it up with Find File in list mode). Use to remove a specific attachment; this is destructive and cannot be undone. Requires the attachment sys_id.',
+    idempotent: false,
+  },
   props: {
     attachment_sys_id: Property.ShortText({
       displayName: 'Attachment Sys ID',

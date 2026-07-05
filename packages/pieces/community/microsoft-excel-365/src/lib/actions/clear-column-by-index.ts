@@ -9,6 +9,8 @@ export const clearColumnAction = createAction({
   name: 'clear_column',
   displayName: 'Clear Column by Index',
   description: 'Clear contents/formatting of a column by its index.',
+  audience: 'both',
+  aiMetadata: { description: 'Clear an entire column in a worksheet identified by its 1-based index (1 = A, 2 = B). Choose what to remove via Clear Type: contents, formats, or both. Clears in place without shifting other cells; idempotent — re-running on an already-cleared column has no further effect. To clear a row instead use Clear Row by ID, or a specific range with Clear Worksheet.', idempotent: true },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

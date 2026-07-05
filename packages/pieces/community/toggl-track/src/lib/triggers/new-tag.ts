@@ -16,6 +16,9 @@ export const newTag = createTrigger({
   name: 'new_tag',
   displayName: 'New Tag',
   description: 'Triggers when a new tag is created',
+  aiMetadata: {
+    description: 'Fires when a new tag is created in the configured Toggl Track workspace, delivering the created tag (id, name, workspace). Delivered via a Toggl webhook the user must set up manually.',
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     setupInstructions: Property.MarkDown({

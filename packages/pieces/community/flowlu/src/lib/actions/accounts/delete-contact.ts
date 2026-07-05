@@ -11,6 +11,8 @@ export const deleteContactAction = createAction({
   name: 'flowlu_delete_contact',
   displayName: 'Delete CRM Account(Contact)',
   description: 'Deletes an existing contact in CRM.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a CRM account (contact) in Flowlu by its account id. Use to remove a contact record permanently. Effectively idempotent in end state once the record is gone, but it mutates data and a repeat call targets an already-deleted record.', idempotent: false },
   props: {
     id: flowluCommon.contact_id(true),
   },

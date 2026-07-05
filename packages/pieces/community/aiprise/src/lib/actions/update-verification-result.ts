@@ -9,6 +9,12 @@ export const updateVerificationResultAction = createAction({
   displayName: 'Override Identity Verification Decision',
   description:
     'Manually changes the outcome of an identity check — useful when a human reviewer needs to approve or decline a case that AiPrise flagged for manual review.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Manually overrides the decision on an existing identity verification, setting it to Approved, Declined, Review (back to manual review), or Deactivated. Use this to implement a human-review/escalation step on a case AiPrise flagged. Requires the verification session ID and the target decision. Idempotent — it sets the decision to an explicit value, so repeating the same call leaves the case in the same state.',
+    idempotent: true,
+  },
   props: {
     verification_session_id: Property.ShortText({
       displayName: 'Verification Session ID',

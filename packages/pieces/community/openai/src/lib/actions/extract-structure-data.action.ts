@@ -1,9 +1,10 @@
 import { openaiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { notLLMs } from '../common/common';
+import { isLLM } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
+  audience: 'human',
 	auth: openaiAuth,
 	name: 'extract-structured-data',
 	displayName: 'Extract Structured Data from Text',
@@ -28,8 +29,7 @@ export const extractStructuredDataAction = createAction({
 						apiKey: auth.secret_text,
 					});
 					const response = await openai.models.list();
-					// We need to get only LLM models
-					const models = response.data.filter((model) => !notLLMs.includes(model.id));
+					const models = response.data.filter((model) => isLLM(model.id));
 					return {
 						disabled: false,
 						options: models.map((model) => {
@@ -129,11 +129,20 @@ export const extractStructuredDataAction = createAction({
 		});
 
 		const toolCallsResponse = response.choices[0].message.tool_calls;
-		if (toolCallsResponse) {
-			return JSON.parse(toolCallsResponse[0].function.arguments);
-		} else {
+		if (!toolCallsResponse || toolCallsResponse.length === 0) {
 			throw new Error(JSON.stringify({
 				message: "OpenAI couldn't extract the fields from the above text."
+			}));
+		}
+		const rawArgs = toolCallsResponse[0].function.arguments;
+		try {
+			return JSON.parse(rawArgs);
+		} catch (parseError) {
+			// The model returned a non-JSON string in the function arguments — surface the raw payload
+			// so users can inspect it rather than getting a vague "Unexpected token" error.
+			throw new Error(JSON.stringify({
+				message: 'OpenAI returned invalid JSON for the extracted fields.',
+				raw: rawArgs,
 			}));
 		}
 	},

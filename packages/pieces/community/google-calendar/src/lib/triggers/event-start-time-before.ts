@@ -18,6 +18,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { eventOutputSchema } from '../output-schemas';
 
 interface GoogleCalendarEventList {
   items: GoogleCalendarEvent[];
@@ -133,6 +134,9 @@ export const eventStartTimeBefore = createTrigger({
   displayName: 'Event Start (Time Before)',
   description:
     'Fires at a specified amount of time before an event starts (e.g., a reminder).',
+  aiMetadata: {
+    description: 'Fires a configurable lead time (in minutes, hours, or days) before an event in the selected calendar begins, acting as a pre-event reminder. Each fired item is the upcoming event. Can watch all events or a single specific event.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
@@ -162,6 +166,7 @@ export const eventStartTimeBefore = createTrigger({
       defaultValue: 'minutes',
     }),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {},
 

@@ -8,6 +8,8 @@ export const ipLookup = createAction({
   name: 'ip_lookup',
   displayName: 'IP Lookup',
   description: 'Look up comprehensive information about an IP address including location, ISP, security, and risk factors',
+  audience: 'both',
+  aiMetadata: { description: 'Look up geolocation, ISP, timezone, currency, and security/risk signals for an IPv4 or IPv6 address. Optionally narrow the response to specific modules (security, currency, timezone, location) via a comma-separated list. Use to geolocate or fraud-screen an IP. Read-only lookup; safe to repeat.', idempotent: true },
   props: {
     ip: Property.ShortText({
       displayName: 'IP Address',

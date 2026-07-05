@@ -7,6 +7,12 @@ export const stripeCreateInvoice = createAction({
   auth: stripeAuth,
   displayName: 'Create Invoice',
   description: 'Create an Invoice in stripe',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a draft invoice in Stripe for an existing customer in the given currency. Use to bill a customer for pending invoice items. Requires a valid Stripe customer ID; not idempotent, as each call creates a separate invoice.',
+    idempotent: false,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

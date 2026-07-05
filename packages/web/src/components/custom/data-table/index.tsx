@@ -1,6 +1,6 @@
 'use client';
 
-import { apId, isNil, SeekPage } from '@activepieces/shared';
+import { apId, isNil, SeekPage } from '@activepieces/core-utils';
 import {
   ColumnDef as TanstackColumnDef,
   flexRender,

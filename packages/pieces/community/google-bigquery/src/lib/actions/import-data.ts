@@ -44,6 +44,12 @@ export const importDataAction = createAction({
   displayName: 'Import Data',
   description:
     'Imports a batch of rows into a BigQuery table. Accepts a JSON array or newline-delimited JSON (NDJSON). Large datasets are automatically split into chunks.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Bulk-imports rows into a BigQuery table via streaming inserts, accepting either a JSON array of objects or a newline-delimited JSON (NDJSON) string and automatically splitting large datasets into chunks. Choose this for ingesting a large or variably-formatted dataset in one step; optional flags control whether the batch fails on bad rows or skips invalid rows / unknown fields. Not idempotent: each call appends the rows again, duplicating data if re-run.',
+    idempotent: false,
+  },
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,

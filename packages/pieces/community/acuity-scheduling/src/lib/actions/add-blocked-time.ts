@@ -9,6 +9,12 @@ export const addBlockedTimeAction = createAction({
 	name: 'add_blocked_time',
 	displayName: 'Add Blocked Off Time',
 	description: 'Block off a specific time range on a calendar.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Marks a time range on a specific Acuity calendar as unavailable for booking, optionally with notes. Use to reserve or hold off slots (e.g. breaks, holidays). Requires start time, end time, and a numeric calendar ID; end must be after start. Not idempotent — each call creates a new block.',
+		idempotent: false,
+	},
 	props: {
 		start: Property.DateTime({
 			displayName: 'Start Time',

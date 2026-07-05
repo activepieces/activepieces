@@ -12,6 +12,8 @@ export const createAffiliateAction = createAction({
   name: 'create_affiliate',
   displayName: 'Create Affiliate',
   description: 'Creates a new affiliate in Tapfiliate.',
+  audience: 'both',
+  aiMetadata: { description: 'Registers a new affiliate account in Tapfiliate from a name, email, and password, with optional company and address details. Use it to onboard a partner into the program. Not idempotent: each call creates a new affiliate, and a duplicate email will be rejected by Tapfiliate.', idempotent: false },
   props: {
     firstname: Property.ShortText({
       displayName: 'First Name',

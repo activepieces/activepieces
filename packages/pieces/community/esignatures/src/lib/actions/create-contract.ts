@@ -7,6 +7,8 @@ export const createContract = createAction({
   name: 'createContract',
   displayName: 'Create Contract',
   description: 'Create a new contract from a template in eSignatures',
+  audience: 'both',
+  aiMetadata: { description: 'Creates an eSignatures contract from an existing template and, by default, sends it to the listed signers for signature; set save-as-draft to create it without sending. Use when an agent needs to issue a document for signing. Requires a valid template ID and at least one signer (name plus email and/or mobile). Not idempotent: each call creates and dispatches a new contract.', idempotent: false },
   props: {
     templateId: Property.ShortText({
       displayName: 'Template ID',

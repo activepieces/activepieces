@@ -3,12 +3,19 @@ import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
+import { sendEmailActionOutputSchema } from '../output-schemas';
 
 export const gmailSendEmailAction = createAction({
   auth: gmailAuth,
   name: 'send_email',
   description: 'Send an email through a Gmail account',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Composes and sends a new email from the connected Gmail account to one or more recipients, with optional CC/BCC, attachments, and plain-text or HTML body. Use this to originate a fresh message; to answer an existing thread prefer Reply to Email instead, or pass an original Message-ID to send this message into that existing thread. Set the draft flag to save it as a draft instead of sending. Not idempotent: each call sends (or drafts) a separate message.',
+    idempotent: false,
+  },
   displayName: 'Send Email',
   props: {
     receiver: Property.Array({
@@ -97,10 +104,11 @@ export const gmailSendEmailAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: sendEmailActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const subjectBase64 = Buffer.from(context.propsValue['subject']).toString(
       'base64'

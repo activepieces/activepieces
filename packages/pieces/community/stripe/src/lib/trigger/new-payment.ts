@@ -3,13 +3,17 @@ import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const stripeNewPayment = createTrigger({
   auth: stripeAuth,
   name: 'new_payment',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is made',
+  aiMetadata: {
+    description:
+      'Fires when a payment succeeds in Stripe (the payment_intent.succeeded event), emitting the completed payment. Use to react to a successful payment, such as fulfilling an order or recording revenue.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

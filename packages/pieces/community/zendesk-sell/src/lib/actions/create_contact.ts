@@ -9,6 +9,8 @@ export const createContact = createAction({
     name: 'create_contact',
     displayName: 'Create Contact',
     description: 'Create a new contact.',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new contact (person or organization) in Zendesk Sell. The "Is Organization" flag switches the required field: organizations need a Name, individuals need a Last Name. Use to add a customer or company record to the CRM. Not idempotent — each call creates a separate contact even with identical input.', idempotent: false },
     props: {
         is_organization: Property.Checkbox({
             displayName: 'Is Organization',

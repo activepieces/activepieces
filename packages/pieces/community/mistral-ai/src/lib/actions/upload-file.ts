@@ -26,6 +26,7 @@ function getFileExtension(filename: string): string {
 }
 
 export const uploadFile = createAction({
+  audience: 'human',
 	auth: mistralAuth,
 	name: 'upload_file',
 	displayName: 'Upload File',

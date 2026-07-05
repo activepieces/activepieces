@@ -8,6 +8,12 @@ export const listLists = createAction({
   displayName: 'List all lists',
   description:
     'Get all your saved lists of people or companies. Supports pagination, filtering by type, and searching by title.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List the caller\'s saved lists, with optional cursor pagination, type filter (people or company), and title search. Read-only and idempotent. Use to discover list IDs and titles; use Get a list to read the items inside a specific list.',
+    idempotent: true,
+  },
   props: {
     cursor: Property.ShortText({
       displayName: 'Cursor',

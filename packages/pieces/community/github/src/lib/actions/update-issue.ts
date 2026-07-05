@@ -8,6 +8,12 @@ export const githubUpdateIssueAction = createAction({
   name: 'update_issue',
   displayName: 'Update Issue',
   description: 'Updates an existing issue.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Edits an existing issue (by number) in a repository, setting only the fields you provide — title, body, state (open/closed) and state reason, milestone, labels, or assignees. Use to modify, close, or reopen an issue. Idempotent: applying the same field values again leaves the issue in the same state. Note that labels and assignees here replace the existing set rather than append.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: githubCommon.issueDropdown(),

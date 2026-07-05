@@ -8,6 +8,8 @@ export const findProspectByEmail = createAction({
   name: 'find_prospect_by_email',
   displayName: 'Find Prospect by Email',
   description: 'Search for a prospect by their email address',
+  audience: 'both',
+  aiMetadata: { description: 'Look up prospects in Woodpecker by email address, optionally including the campaigns each prospect is enrolled in. Use to check whether a contact already exists or to fetch their stored details and IDs before another action. The email is matched as a search filter (may return more than one match); read-only and safe to call repeatedly.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

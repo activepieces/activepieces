@@ -52,6 +52,11 @@ export const findPaymentAction = createAction({
 	name: 'find_payment',
 	displayName: 'Find Payment',
 	description: 'Finds an existing payment in QuickBooks.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'List all QuickBooks payments belonging to a given customer, identified by the customer Id (not name). Use to retrieve a customer\'s payment history or to check whether they have any payments on record. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		customerId: Property.ShortText({
 			displayName: 'Customer ID',

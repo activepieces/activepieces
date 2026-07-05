@@ -2,11 +2,14 @@ import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { telegramBotAuth } from '../..';
 import { telegramCommons } from '../common';
+import { getChatMemberActionOutputSchema } from '../output-schemas';
 
 export const telegramGetChatMemberAction = createAction({
   auth: telegramBotAuth,
   name: 'get_chat_member',
   description: 'Get member info (or null) for the provided chat id and user id',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a specific user\'s membership in a chat by chat_id and user_id, returning their role and status (member, administrator, left, kicked, etc.). Use to check whether a user belongs to a chat or what permissions they hold before acting. Idempotent: read-only lookup with no side effects.', idempotent: true },
   displayName: 'Get Chat Member',
   props: {
     instructions: telegramCommons.chatIdInstructions(),
@@ -17,6 +20,7 @@ export const telegramGetChatMemberAction = createAction({
       required: true,
     }),
   },
+  outputSchema: getChatMemberActionOutputSchema,
   async run(ctx) {
     try {
       const response = await httpClient.sendRequest<never>({

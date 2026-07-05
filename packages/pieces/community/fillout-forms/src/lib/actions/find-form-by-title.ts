@@ -8,6 +8,8 @@ export const findFormByTitle = createAction({
   name: 'findFormByTitle',
   displayName: 'Find Form by Title',
   description: 'Finds an existing forms by title.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches the account\'s Fillout forms for those whose title contains the given text (case-insensitive partial match) and returns the matches. Use to resolve a form name to its form ID before calling response-fetching actions. Read-only and idempotent.', idempotent: true },
   props: {
     title: Property.ShortText({
       displayName: 'Form Title',

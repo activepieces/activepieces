@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { esignaturesAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createContract } from './lib/actions/create-contract';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 

@@ -6,13 +6,14 @@ import {
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import {
   parseStream,
   convertAttachment,
   getFirstFiveOrAll,
 } from '../common/data';
 import { GmailLabel } from '../common/models';
+import { newAttachmentTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
   from?: string;
@@ -28,6 +29,10 @@ export const gmailNewAttachmentTrigger = createTrigger({
   name: 'new_attachment',
   displayName: 'New Attachment',
   description: 'Triggers when an email with an attachment arrives.',
+  aiMetadata: {
+    description:
+      'Fires when a new email carrying one or more attachments arrives, optionally narrowed by sender, recipient, subject, label, category, or file extension. Each event represents a single attachment (a multi-attachment email emits one event per attachment) along with its source message.',
+  },
   props: {
     from: {
       ...GmailProps.from,
@@ -47,12 +52,11 @@ export const gmailNewAttachmentTrigger = createTrigger({
         'Only trigger for emails containing this text in the subject.',
       required: false,
     }),
-    label: {
-      ...GmailProps.label,
+    label: GmailProps.label({
       description: 'Filter by Gmail label.',
       displayName: 'Label',
       required: false,
-    },
+    }),
     category: {
       ...GmailProps.category,
       description: 'Filter by Gmail category.',
@@ -66,6 +70,7 @@ export const gmailNewAttachmentTrigger = createTrigger({
       required: false,
     }),
   },
+  outputSchema: newAttachmentTriggerOutputSchema,
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
@@ -125,7 +130,7 @@ async function pollRecentMessages({
 > {
   const authClient = await createGoogleClient(auth);
 
-  const gmail = google.gmail({ version: 'v1', auth: authClient });
+  const gmail = googleGmail({ version: 'v1', auth: authClient });
 
   // construct query
   const query = ['has:attachment'];

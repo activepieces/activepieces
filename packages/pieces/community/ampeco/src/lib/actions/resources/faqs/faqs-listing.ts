@@ -15,6 +15,8 @@ export const faqsListingAction = createAction({
   name: 'faqsListing',
   displayName: 'Resources - Faqs - Listing',
   description: 'Get all FAQs.',
+  audience: 'both',
+  aiMetadata: { description: 'List all FAQ entries. Read-only and idempotent. Use this to browse or count FAQs; to fetch one known entry prefer Faq Read. Enable Paginate Results to walk every page.', idempotent: true },
   props: {
         
     per_page: Property.Number({

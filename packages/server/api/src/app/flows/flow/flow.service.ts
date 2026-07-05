@@ -1,38 +1,6 @@
+import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    apId,
-    assertNotNullOrUndefined,
-    CreateFlowRequest,
-    Cursor,
-    ErrorCode,
-    Flow,
-    FlowCreator,
-    FlowId,
-    FlowOperationRequest,
-    FlowOperationStatus,
-    FlowOperationType,
-    flowPieceUtil,
-    FlowStatus,
-    FlowTriggerType,
-    FlowVersion,
-    FlowVersionId,
-    FlowVersionState,
-    isNil,
-    Metadata,
-    PlatformId,
-    PopulatedFlow,
-    ProjectId,
-    SeekPage,
-    SharedTemplate,
-    TelemetryEventName,
-    TemplateStatus,
-    TemplateType,
-    TriggerSource,
-    UncategorizedFolderId,
-    UserId,
-    UserWithMetaInformation,
-} from '@activepieces/shared'
+import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
@@ -41,6 +9,7 @@ import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import Paginator, { Order } from '../../helper/pagination/paginator'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { SystemJobName } from '../../helper/system-jobs/common'
@@ -81,20 +50,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
             {
                 displayName: request.displayName,
                 notes: [],
+                schemaVersion: null,
             },
         )
 
-        telemetry(log).trackProject(savedFlow.projectId, {
-            name: TelemetryEventName.CREATED_FLOW,
-            payload: {
-                flowId: savedFlow.id,
-            },
-        })
-            .catch((e) =>
-                log.error({ err: e }, 'Failed to track project telemetry'),
-            )
+        rejectedPromiseHandler(
+            telemetry(log).trackProject(savedFlow.projectId, {
+                name: TelemetryEventName.CREATED_FLOW,
+                payload: {
+                    flowId: savedFlow.id,
+                },
+            }),
+            log,
+        )
 
-        log.info({ flowId: savedFlow.id, projectId, displayName: request.displayName }, 'Flow created')
+        log.info({ flow: { id: savedFlow.id }, project: { id: projectId }, displayName: request.displayName }, 'Flow created')
         return {
             ...savedFlow,
             version: savedFlowVersion,
@@ -107,6 +77,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         cursorRequest,
         limit = Paginator.NO_LIMIT,
         folderId,
+        folderIds,
         status,
         name,
         connectionExternalIds,
@@ -143,6 +114,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         if (folderId !== undefined) {
             queryBuilder.andWhere({ folderId: folderId === UncategorizedFolderId ? IsNull() : folderId })
+        }
+
+        if (folderIds !== undefined) {
+            queryBuilder.andWhere({ folderId: In(folderIds) })
         }
 
         if (status !== undefined) {
@@ -378,7 +353,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 await flowRepo().update(id, {
                     folderId: operation.request.folderId,
                 })
-                log.info({ flowId: id, folderId: operation.request.folderId }, 'Flow moved to folder')
+                log.info({ flow: { id }, folderId: operation.request.folderId }, 'Flow moved to folder')
                 break
             }
 
@@ -505,7 +480,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
         })
-        log.info({ flowId: id, projectId }, 'Flow deletion requested')
+        log.info({ flow: { id }, project: { id: projectId } }, 'Flow deletion requested')
     },
 
     async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
@@ -762,6 +737,7 @@ type ListParamsBase = {
     cursorRequest?: Cursor
     limit?: number
     folderId?: string
+    folderIds?: string[]
     status?: FlowStatus[]
     name?: string
     versionState?: FlowVersionState
@@ -868,6 +844,7 @@ async function createNewDraftIfVersionIsPublished({
         lastVersion = await flowVersionService(log).createEmptyVersion(flowId, {
             displayName: lockedVersion.displayName,
             notes: lockedVersion.notes,
+            schemaVersion: lockedVersion.schemaVersion,
         })
         const operations: FlowOperationRequest[] = [{
             type: FlowOperationType.IMPORT_FLOW,

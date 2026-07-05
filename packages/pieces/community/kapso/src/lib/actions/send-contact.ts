@@ -8,6 +8,11 @@ export const sendContact = createAction({
   name: 'send_contact',
   displayName: 'Send Contact',
   description: 'Send a contact card via WhatsApp.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a vCard-style contact card to a WhatsApp recipient. Only the contact full name is required; phone, email, and company are optional. Each call delivers a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,

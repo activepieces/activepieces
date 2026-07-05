@@ -15,6 +15,8 @@ export const firmwareVersionsListingAction = createAction({
   name: 'firmwareVersionsListing',
   displayName: 'Resources - Firmware Versions - Listing',
   description: 'Get all Firmware Versions.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO charge-point firmware versions, optionally filtered by vendor ID, model ID, or version string (prefix match), with auto-pagination available. Use to discover firmware version IDs or survey available firmware; for a known version use the firmware version read action. Read-only and idempotent.', idempotent: true },
   props: {
         
   filter__vendorId: Property.Array({

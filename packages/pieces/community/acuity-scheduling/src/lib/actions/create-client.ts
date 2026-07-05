@@ -8,6 +8,12 @@ export const createClientAction = createAction({
 	name: 'create_client',
 	displayName: 'Create Client',
 	description: 'Creates a new client.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new client record in Acuity from a first and last name, with optional phone, email, and notes. Use to add a contact to the client list before or independent of booking. Not idempotent — repeating creates duplicate client records since there is no dedupe on identity.',
+		idempotent: false,
+	},
 	props: {
 		firstName: Property.ShortText({
 			displayName: 'First Name',

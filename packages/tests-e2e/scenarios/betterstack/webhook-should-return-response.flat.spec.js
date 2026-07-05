@@ -69,7 +69,7 @@ test('should handle webhook with return response', async ({ page }) => {
   await page
     .locator('div.cm-activeLine.cm-line')
     .fill(
-      '{"targetRunVersion": "{{trigger[\'queryParams\'][\'targetRunVersion\']}}"}'
+      '{"targetRunVersion": "{{trigger[\'output\'][\'queryParams\'][\'targetRunVersion\']}}"}'
     );
   await page.waitForTimeout(1000);
 

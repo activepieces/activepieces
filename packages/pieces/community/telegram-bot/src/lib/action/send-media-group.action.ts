@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendMediaGroupActionOutputSchema } from '../output-schemas';
 
 const MEDIA_GROUP_LIMIT = 10;
 
@@ -18,6 +19,8 @@ export const telegramSendMediaGroupAction = createAction({
   displayName: 'Send Media Group',
   description:
     'Send a group of 2–10 photos, videos, documents or audios as an album to a chat',
+  audience: 'both',
+  aiMetadata: { description: 'Sends 2–10 media items (each a public URL or a Telegram file_id) as a single grouped album to a chat. Use to post several photos/videos together; photo and video may be mixed, but audio-only and document-only groups cannot be combined with other types. Not idempotent: each call posts a new album.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
@@ -58,6 +61,7 @@ export const telegramSendMediaGroupAction = createAction({
     protect_content: telegramCommons.protectContentProp(),
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
   },
+  outputSchema: sendMediaGroupActionOutputSchema,
   async run(ctx) {
     const items = (ctx.propsValue.media ?? []) as Array<Record<string, unknown>>;
     if (items.length < 2 || items.length > MEDIA_GROUP_LIMIT) {

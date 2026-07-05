@@ -9,6 +9,8 @@ export const translateText = createAction({
   name: "translateText",
   displayName: "Translate Text",
   description: "Translate one or more texts to the target language.",
+  audience: 'both',
+  aiMetadata: { description: 'Translates one or more text strings into a target language using Murf. Choose it when you need translated text (often as a precursor to generating multilingual speech). Requires the target language code and at least one input string. Each call issues a fresh translation request and is not idempotent.', idempotent: false },
   props: {
     targetLanguage: murfCommon.language,
     texts: Property.Array({

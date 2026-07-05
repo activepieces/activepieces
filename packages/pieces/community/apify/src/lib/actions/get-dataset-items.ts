@@ -7,6 +7,8 @@ export const getDatasetItems = createAction({
   auth: apifyAuth,
   displayName: 'Get Dataset Items',
   description: 'Retrieves items from a dataset.',
+  audience: 'both',
+  aiMetadata: { description: 'Reads the stored result rows from an Apify dataset by dataset ID, with optional offset/limit paging. Use this to fetch the scraped/extracted output of an actor or task run once you know its dataset ID. Read-only and idempotent; it returns existing items without modifying them.', idempotent: true },
   props: {
     datasetId: Property.Dropdown({
       auth: apifyAuth,

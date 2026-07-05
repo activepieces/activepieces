@@ -6,6 +6,12 @@ export const getRowAction = createAction({
   name: 'baserow_get_row',
   displayName: 'Get Row',
   description: 'Gets a single row by its ID from a table.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches one row from a Baserow table by its numeric row ID. Use when you already know the exact row ID and want its full current field values; to locate a row by a field value instead, use Find Row. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),

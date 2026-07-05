@@ -8,6 +8,12 @@ export const createAVideoFromATemplate = createAction({
   name: 'createAVideoFromATemplate',
   displayName: 'Create a video from a template',
   description: 'Create a video based on a template created in Synthesia',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits a video-generation job to Synthesia from an existing template, passing template-variable values as case-sensitive key-value pairs. Choose this when the user wants a video built from a pre-designed template rather than authored scene-by-scene; requires a valid template ID. Each call queues a new video, so it is not idempotent. Enable test mode to produce a watermarked preview.',
+    idempotent: false,
+  },
   props: {
     templateId: templateIdDropdown,
     templateData: Property.Object({

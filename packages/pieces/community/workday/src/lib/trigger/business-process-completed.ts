@@ -24,6 +24,10 @@ export const businessProcessCompleted = createTrigger({
 	name: 'business_process_completed',
 	displayName: 'Business Process Event Completed',
 	description: 'Triggers when a business process event is completed in Workday.',
+	aiMetadata: {
+		description:
+			'Fires when a Workday business process completes (e.g. a hire, change-job, or approval workflow reaches its end state). Polls active workers as the change signal. Use to run downstream automation once a Workday workflow finishes.',
+	},
 	props: {},
 	sampleData: { id: 'bp-001', descriptor: 'Hire: John Smith', completedDate: '2026-04-01T14:30:00Z' },
 	type: TriggerStrategy.POLLING,

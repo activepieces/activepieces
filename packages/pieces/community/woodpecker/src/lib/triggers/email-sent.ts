@@ -7,6 +7,9 @@ export const emailSent = createTrigger({
   name: 'email_sent',
   displayName: 'Campaign Email Sent',
   description: 'Triggers when a campaign email is sent to a prospect',
+  aiMetadata: {
+    description: 'Fires when Woodpecker sends a campaign email to a prospect. Represents an outbound send event and includes the prospect plus the campaign it was sent from.',
+  },
   props: {},
   sampleData: {
     method: 'email_sent',

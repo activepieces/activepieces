@@ -21,6 +21,8 @@ export const createRecord = createAction({
     displayName: 'Create Record',
     description:
         'Create a new record in a specified Insightly object (Contact, Lead, Opportunity, etc.)',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new record in a chosen Insightly CRM object (Contact, Lead, Opportunity, Organization, Project, Task, Event, Product, or Quote), with field values supplied per the selected object type. Use to add a new entity to Insightly. Not idempotent: each call creates another record. Requires the Insightly pod (e.g. "na1") that matches your account region.', idempotent: false },
     props: {
         pod: Property.ShortText({
             displayName: 'Pod',

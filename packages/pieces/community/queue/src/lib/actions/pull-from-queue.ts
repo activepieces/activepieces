@@ -11,6 +11,7 @@ const notes = `**Note:**
 - The testing step work in isolation and doesn't affect the actual queue after publishing.
 `
 export const pullFromQueue = createAction({
+  audience: 'human',
     name: 'pull-from-queue',
     description: 'Pull items from queue',
     displayName: 'Pull items from queue',

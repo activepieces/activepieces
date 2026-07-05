@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { docs as googleDocs } from '@googleapis/docs';
+import { editTemplateActionOutputSchema } from '../output-schemas';
 
 const PLACEHOLDER_FORMATS: Record<string, string> = {
   'curly_braces': '{{KEY}}',
@@ -19,6 +20,12 @@ export const createDocumentBasedOnTemplate = createAction({
   name: 'create_document_based_on_template',
   description:
     'Edit a template file and replace the values with the ones provided',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fills a Google Docs template in place by find-and-replacing placeholder tokens (e.g. [[KEY]] or {{KEY}}) with supplied key/value pairs and swapping placeholder images by object ID. Use when an agent has an existing template document and wants to merge data into it rather than build a doc from scratch. Requires the target document ID and the matching placeholder format; idempotent since re-running with the same values replaces no remaining placeholders and leaves the document unchanged.',
+    idempotent: true,
+  },
   displayName: 'Edit template file',
   props: {
     template: Property.ShortText({
@@ -53,6 +60,7 @@ export const createDocumentBasedOnTemplate = createAction({
         },
   }),
   },
+  outputSchema: editTemplateActionOutputSchema,
   async run(context) {
     const documentId: string = context.propsValue.template;
     const values = context.propsValue.values;
@@ -60,7 +68,7 @@ export const createDocumentBasedOnTemplate = createAction({
     const placeholder_format = PLACEHOLDER_FORMATS[placeholderType] || '[[KEY]]';
 
     const authClient = await createGoogleClient(context.auth);
-    const docs = google.docs('v1');
+    const docs = googleDocs('v1');
 
     const requests = [];
 

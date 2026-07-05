@@ -10,8 +10,8 @@ The Templates feature provides a library of reusable flow (and table) blueprints
 - `packages/server/api/src/app/template/template-validator.ts` — validates flows and extracts piece names
 - `packages/server/api/src/app/template/community-templates.service.ts` — proxies official templates from cloud for non-cloud editions
 - `packages/server/api/src/app/ee/template/platform-template.service.ts` — EE: creates/updates CUSTOM templates for a platform
-- `packages/shared/src/lib/management/template/template.ts` — `Template`, `TemplateType`, `TemplateStatus`, `FlowVersionTemplate`, `TableTemplate`, `TemplateTag`
-- `packages/shared/src/lib/management/template/template.requests.ts` — `CreateTemplateRequestBody`, `UpdateTemplateRequestBody`, `ListTemplatesRequestQuery`
+- `packages/core/shared/src/lib/management/template/template.ts` — `Template`, `TemplateType`, `TemplateStatus`, `FlowVersionTemplate`, `TableTemplate`, `TemplateTag`
+- `packages/core/shared/src/lib/management/template/template.requests.ts` — `CreateTemplateRequestBody`, `UpdateTemplateRequestBody`, `ListTemplatesRequestQuery`
 - `packages/web/src/features/templates/api/templates-api.ts` — frontend API client
 - `packages/web/src/features/templates/components/templates-browse-dialog.tsx` — browsing/searching dialog
 - `packages/web/src/features/templates/components/use-template-dialog.tsx` — importing a template into a project
@@ -24,6 +24,9 @@ The Templates feature provides a library of reusable flow (and table) blueprints
 - **Cloud**: OFFICIAL templates stored directly in DB. CUSTOM templates available when `manageTemplatesEnabled` is enabled.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **TemplateType**: `OFFICIAL` (Activepieces-curated, platformId = null), `CUSTOM` (platform-owned, requires `manageTemplatesEnabled`), `SHARED` (ad-hoc share, not listable).
 - **TemplateStatus**: `PUBLISHED` (visible in listing) or `ARCHIVED` (hidden).
 - **FlowVersionTemplate**: A flow version stripped of runtime-only fields (id, flowId, state, etc.) for embedding in a template.

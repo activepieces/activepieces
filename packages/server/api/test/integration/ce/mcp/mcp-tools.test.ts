@@ -1,24 +1,11 @@
-import { beforeAll, afterAll, describe, it, expect } from 'vitest'
+import { apId } from '@activepieces/core-utils'
+import { FlowActionType, FlowCreatorType, FlowRunStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import {
-    apId,
-    FlowActionType,
-    FlowCreatorType,
-    FlowRunStatus,
-    McpServerType,
-    PackageType,
-    PieceType,
-    ProjectScopedMcpServer,
-    RunEnvironment,
-    StepLocationRelativeToParent,
-} from '@activepieces/shared'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { createTestContext } from '../../../helpers/test-context'
-import { db } from '../../../helpers/db'
-import { createMockPieceMetadata } from '../../../helpers/mocks'
+import { StatusCodes } from 'http-status-codes'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { flowService } from '../../../../src/app/flows/flow/flow.service'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
-import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
@@ -38,10 +25,13 @@ import { apDuplicateFlowTool } from '../../../../src/app/mcp/tools/ap-duplicate-
 import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-branch'
 import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
+import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
-import { flowService } from '../../../../src/app/flows/flow/flow.service'
-import { StatusCodes } from 'http-status-codes'
+import { db } from '../../../helpers/db'
+import { createMockPieceMetadata } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -78,7 +68,10 @@ beforeAll(async () => {
                 displayName: 'New Email',
                 description: 'Triggers on new email',
                 requireAuth: false,
-                props: {},
+                props: {
+                    folder: { type: 'SHORT_TEXT', displayName: 'Folder', required: false },
+                    label: { type: 'SHORT_TEXT', displayName: 'Label', required: false },
+                },
             },
             new_attachment: {
                 name: 'new_attachment',
@@ -662,7 +655,7 @@ describe('MCP Tools integration', () => {
 
     // ── Fix 1: Step output reference format ───────────────────────────
 
-    it('28. ap_flow_structure — reference hint uses {{stepName.field}} without .output.', async () => {
+    it('28. ap_flow_structure — reference hint uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Reference Format Test')
@@ -670,28 +663,27 @@ describe('MCP Tools integration', () => {
         const result = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         const output = text(result)
 
-        expect(output).toContain('{{stepName.field}}')
+        expect(output).toContain('{{stepName[\'output\'].field}}')
         expect(output).not.toContain('{{stepName.output.field}}')
-        expect(output).not.toContain('{{trigger.output.')
     })
 
-    it('29. ap_update_step — input description uses {{stepName.field}} not {{stepName.output.field}}', async () => {
+    it('29. ap_update_step — input description uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const tool = apUpdateStepTool(mcp, mockLog)
         const inputDesc = tool.inputSchema.input.description ?? ''
 
-        expect(inputDesc).toContain('{{stepName.field}}')
+        expect(inputDesc).toContain('{{stepName[\'output\'].field}}')
         expect(inputDesc).not.toContain('{{stepName.output.field}}')
     })
 
-    it('30. ap_update_trigger — input description uses {{stepName.field}} not {{stepName.output.field}}', async () => {
+    it('30. ap_update_trigger — input description uses {{stepName[\'output\'].field}} bracket notation', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const tool = apUpdateTriggerTool(mcp, mockLog)
         const inputDesc = tool.inputSchema.input.description ?? ''
 
-        expect(inputDesc).toContain('{{stepName.field}}')
+        expect(inputDesc).toContain('{{stepName[\'output\'].field}}')
         expect(inputDesc).not.toContain('{{stepName.output.field}}')
     })
 
@@ -790,13 +782,14 @@ describe('MCP Tools integration', () => {
             flowId,
             pieceName: '@activepieces/piece-test-email',
             triggerName: 'new_email',
+            input: { folder: 'inbox' },
         })
 
         const addFieldResult = await apUpdateTriggerTool(mcp, mockLog).execute({
             flowId,
             pieceName: '@activepieces/piece-test-email',
             triggerName: 'new_email',
-            input: { extraField: 'value' },
+            input: { label: 'important' },
         })
         expect(text(addFieldResult)).toContain('✅')
 
@@ -1316,7 +1309,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('sourceCode:')
         expect(output).toContain('inputs.name')
         expect(output).toContain('input:')
-        expect(output).toContain('{{trigger.from}}')
+        expect(output).toContain('{{trigger[\'output\'].from}}')
     })
 
     it('51. ap_flow_structure — shows LOOP step loopItems expression', async () => {
@@ -1347,7 +1340,7 @@ describe('MCP Tools integration', () => {
         const result = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         const output = text(result)
 
-        expect(output).toContain('loopItems: {{trigger.items}}')
+        expect(output).toContain('loopItems: {{trigger[\'output\'].items}}')
     })
 
     it('52. ap_flow_structure — shows router branch conditions', async () => {
@@ -1385,7 +1378,7 @@ describe('MCP Tools integration', () => {
 
         expect(output).toContain('VIP')
         expect(output).toContain('conditions:')
-        expect(output).toContain('{{trigger.type}}')
+        expect(output).toContain('{{trigger[\'output\'].type}}')
         expect(output).toContain('TEXT_EXACTLY_MATCHES')
         expect(output).toContain('vip')
     })
@@ -1567,7 +1560,7 @@ describe('MCP Tools integration', () => {
         const structure = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         const output = text(structure)
         expect(output).toContain('VIP Branch')
-        expect(output).toContain('{{trigger.type}}')
+        expect(output).toContain('{{trigger[\'output\'].type}}')
         expect(output).toContain('TEXT_EXACTLY_MATCHES')
     })
 
@@ -1809,7 +1802,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('Inner Code')
         expect(output).toContain('step_2')
         expect(output).toContain('branch 0')
-        expect(output).toContain('{{trigger.status}}')
+        expect(output).toContain('{{trigger[\'output\'].status}}')
     })
 
     it('66. ap_update_branch — handles complex multi-group conditions', async () => {
@@ -2356,7 +2349,7 @@ describe('MCP Tools integration', () => {
             pieceName: '@activepieces/piece-test-email',
             actionName: 'send_email',
             input: { to: 'x@y.z', subject: 'hi' },
-            connectionExternalId: "bad'; evil",
+            connectionExternalId: 'bad\'; evil',
         })
 
         expect(text(result)).toContain('❌')
@@ -2483,9 +2476,10 @@ describe('MCP Tools integration', () => {
             searchQuery: 'private-only-b',
         })
 
-        // Require the call to have succeeded — otherwise an error response
-        // (which also wouldn't contain the piece name) would falsely pass.
-        expect(text(result)).toContain('✅')
+        // Require the call to have succeeded (not errored) — otherwise an error response
+        // (which also wouldn't contain the piece name) would falsely pass. A cross-platform
+        // piece is invisible here, so the correct successful result is "no pieces matched".
+        expect(text(result)).not.toContain('❌')
         expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
     })
 

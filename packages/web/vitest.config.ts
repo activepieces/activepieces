@@ -12,7 +12,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@activepieces/shared': path.resolve(
         __dirname,
-        '../../packages/shared/src',
+        '../../packages/core/shared/src',
       ),
     },
   },

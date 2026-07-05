@@ -9,6 +9,12 @@ export const getPersonalEmail = createAction({
   displayName: 'Look Up Personal Email',
   description:
     'Find personal email addresses from a social media profile (1 credit per email returned)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Find a person's personal (non-work) email addresses given one social profile URL (professional-network, Twitter/X, or Facebook — supply exactly one). Read-only and safe to retry. Use when you have a profile link and need personal contact emails; for work emails use Look Up Work Email, and to go from email back to profiles use Reverse Email Lookup.",
+    idempotent: true,
+  },
   props: {
     profile_url: Property.ShortText({
       displayName: 'Profile URL',

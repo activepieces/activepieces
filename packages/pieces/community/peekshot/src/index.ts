@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { captureScreenshot } from './lib/actions/capture-screenshot';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import {
   createCustomApiCallAction,
   httpClient,

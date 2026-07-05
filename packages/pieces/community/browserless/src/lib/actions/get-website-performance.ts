@@ -7,6 +7,8 @@ export const getWebsitePerformance = createAction({
     name: 'get_website_performance',
     displayName: 'Get Website Performance',
     description: 'Analyze website performance metrics using Lighthouse',
+    audience: 'both',
+    aiMetadata: { description: 'Runs a Lighthouse audit on a public URL in a headless browser and returns performance, accessibility, best-practices, SEO, and PWA scores plus key metrics. Use to measure a page\'s quality; the URL is required, and you can scope the audit to specific categories and simulate a desktop or mobile device with network throttling. Read-only analysis: re-running with the same input re-audits the page without side effects (scores may vary slightly run to run).', idempotent: true },
     auth: browserlessAuth,
     props: {
         url: Property.ShortText({

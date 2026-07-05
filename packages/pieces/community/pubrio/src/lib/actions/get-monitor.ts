@@ -8,6 +8,12 @@ export const getMonitor = createAction({
   name: 'get_monitor',
   displayName: 'Get Monitor',
   description: 'Look up a monitor by ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a single monitor by its ID, optionally including signature-reveal data. Read-only and repeatable; requires a known monitor ID rather than search criteria.',
+    idempotent: true,
+  },
   props: {
     monitor_id: Property.ShortText({
       displayName: 'Monitor ID',

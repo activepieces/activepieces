@@ -1,7 +1,7 @@
 
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { formitableTriggers } from './lib/triggers';
 
 const markdown = `

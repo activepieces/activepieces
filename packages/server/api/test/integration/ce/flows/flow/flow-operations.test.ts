@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import {
     FlowActionType,
     FlowOperationType,
@@ -13,6 +12,7 @@ import {
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../../helpers/db'
+import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 import {
     createMockFlow,
     createMockFlowVersion,
@@ -20,7 +20,7 @@ import {
     createMockPieceMetadata,
 } from '../../../../helpers/mocks'
 import { createTestContext } from '../../../../helpers/test-context'
-import { describeWithAuth } from '../../../../helpers/describe-with-auth'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

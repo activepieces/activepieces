@@ -2,12 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendLocationActionOutputSchema } from '../output-schemas';
 
 export const telegramSendLocationAction = createAction({
   auth: telegramBotAuth,
   name: 'send_location',
   displayName: 'Send Location',
   description: 'Send a geographic location (latitude/longitude) to a Telegram chat',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a point location given as latitude and longitude to a Telegram chat, optionally as a live location that updates for a set period. Use to share a place or track a moving position; both coordinates are required. Not idempotent: each call posts a new location message.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
@@ -49,6 +52,7 @@ export const telegramSendLocationAction = createAction({
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: sendLocationActionOutputSchema,
   async run(ctx) {
     return await httpClient.sendRequest<never>({
       method: HttpMethod.POST,

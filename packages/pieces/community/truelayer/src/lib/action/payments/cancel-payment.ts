@@ -7,6 +7,8 @@ export const cancelPayment = createAction({
   name: 'cancel-payment',
   displayName: 'Cancel Payment',
   description: 'Cancel a payment. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Cancel an in-progress payment so it can no longer be authorized or executed. Use to abandon a payment before it completes. This is a state change on the payment and should be treated as one-time; callable with the payment resource token or a backend bearer token.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Payment ID',

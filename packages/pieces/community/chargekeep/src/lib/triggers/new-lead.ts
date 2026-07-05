@@ -7,6 +7,9 @@ export const newLead = createTrigger({
   name: 'new_lead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
+  aiMetadata: {
+    description: 'Fires when a new lead is created in the ChargeKeep/Sperse CRM, emitting the lead\'s full contact record (personal, business, tracking, application, and classification info).',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

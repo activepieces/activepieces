@@ -15,6 +15,12 @@ export const createRowAction = createAction({
   displayName: 'Create Board Row',
   description:
     'Create a new horizontal swimlane row on a Teamhood board.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new horizontal swimlane row on a Teamhood board, requiring a workspace, board, and row title; optional start/end dates position it on the timeline view. Use to add a grouping lane that items can be placed into. Not idempotent — each call creates a separate row.',
+    idempotent: false,
+  },
   props: {
     workspaceId: workspaceIdDropdown(true),
     boardId: boardIdDropdown(true),

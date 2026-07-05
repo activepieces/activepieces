@@ -10,6 +10,12 @@ export const deleteFilesAction = createAction({
   displayName: 'Delete Files',
   description:
     'Permanently delete one or more user files by UID. Returns a partial-success report — files the caller can\'t modify are reported in `errors` while accessible files are deleted.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete one or more SimplyPrint files by their UID, identifying them via the file UID strings (look these up with List Files first). Use when the caller wants to remove files from the account; deletion is destructive and not idempotent — re-running with an already-deleted UID surfaces that UID under the partial-success error report rather than succeeding.',
+    idempotent: false,
+  },
   props: {
     fileUids: Property.Array({
       displayName: 'File UIDs',

@@ -18,6 +18,8 @@ export const createUserAction = createAction({
   name: 'create-user',
   displayName: 'Create User',
   description: 'Add a new user to the Zendesk instance.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new user (end-user, agent, or admin; defaults to end-user) in the Zendesk instance; only the name is required. Use to add a customer, agent, or admin account, optionally setting email, phone, role, organization (by ID or by new organization name), tags, custom user fields, and additional identities. A verification email is sent unless skipped. Not idempotent: each call creates a distinct user, and a duplicate email fails validation.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

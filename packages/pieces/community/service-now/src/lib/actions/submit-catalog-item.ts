@@ -17,6 +17,12 @@ export const submitCatalogItemAction = createAction({
   displayName: 'Submit Catalog Request',
   description:
     'Order a catalog item. Submits a service catalog request and returns the resulting request number.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Places an order for a service catalog item, creating a new catalog request with the given quantity, requested-for user, and item variables. Use to provision or request something from the catalog; call Get Catalog Item first to learn the expected variables. Not idempotent — each call submits another request. Requires the catalog item sys_id (from the dropdown or a raw sys_id).',
+    idempotent: false,
+  },
   props: {
     item_sys_id: catalogItemDropdown,
     manual_item_sys_id: Property.ShortText({

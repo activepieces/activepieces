@@ -9,6 +9,8 @@ export const listTagsAction = createAction({
   name: 'list_tags',
   displayName: 'List Tags',
   description: 'Lists all tags visible to the current user.',
+  audience: 'both',
+  aiMetadata: { description: 'List tags visible to the current user, optionally filtered by a name substring; leave the filter empty to return all tags. Use to discover tag IDs before adding or removing tags on an issue. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({ displayName: 'Filter by Name', description: 'Filter tags by name. Leave empty for all.', required: false }),
     limit: Property.Number({ displayName: 'Limit', description: 'Max tags. Default 100.', required: false, defaultValue: 100 }),

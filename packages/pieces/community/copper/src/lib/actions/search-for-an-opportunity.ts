@@ -16,6 +16,12 @@ export const searchForAnOpportunity = createAction({
   name: 'searchForAnOpportunity',
   displayName: 'Search for an Opportunity',
   description: 'Lookup an opportunity.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches opportunities (deals) in Copper CRM, filtering by any combination of name, assignee, status, priority, pipeline and stage, company, primary contact, customer source, loss reason, tags, monetary value, interaction counts/dates, close/stage-change dates, and creation/modification dates, with sorting and paging. Use to find one or more deals; with no filters it lists opportunities across the account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

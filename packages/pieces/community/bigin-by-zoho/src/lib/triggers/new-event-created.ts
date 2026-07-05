@@ -10,6 +10,9 @@ export const newEventCreated = createTrigger({
   name: 'newEventCreated',
   displayName: 'New Event Created',
   description: 'Triggers when a new event is created',
+  aiMetadata: {
+    description: 'Fires when a new calendar event is created in Bigin CRM, via an Events.create webhook. Represents a newly scheduled meeting or appointment.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

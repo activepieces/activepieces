@@ -7,6 +7,8 @@ export const searchCompanies = createAction({
     name: 'search_companies',
     displayName: 'Search Companies',
     description: 'List or filter companies',
+    audience: 'both',
+    aiMetadata: { description: 'Look up companies in Teamleader, optionally narrowing by a free-text term, email, VAT number, status, tags, or updated-since date, with paging and sorting. With no filters it lists all companies; supply filters to find specific matches (e.g. resolve a company ID before creating a deal). Read-only and idempotent.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         term: Property.ShortText({

@@ -35,6 +35,7 @@ export function createMailgunWebhookTrigger({
   name,
   displayName,
   description,
+  aiMetadata,
   eventType,
   testEventFilter,
   sampleData,
@@ -42,6 +43,7 @@ export function createMailgunWebhookTrigger({
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   eventType: string;
   testEventFilter: Record<string, string>;
   sampleData: Record<string, unknown>;
@@ -51,6 +53,7 @@ export function createMailgunWebhookTrigger({
     name,
     displayName,
     description,
+    aiMetadata,
     props: {
       domain: mailgunCommon.domainDropdown,
     },

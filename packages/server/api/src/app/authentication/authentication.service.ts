@@ -1,9 +1,11 @@
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
@@ -23,10 +25,12 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 email: params.email,
                 platformId,
             })
-            await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
-                email: params.email,
-                platformId,
-            })
+            if (system.get(AppSystemProp.ALLOW_OPEN_SIGN_UP) !== 'true') {
+                await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
+                    email: params.email,
+                    platformId,
+                })
+            }
             const userIdentity = await userIdentityService(log).create({
                 ...params,
                 verified: true,
@@ -37,7 +41,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             })
             await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
-            log.info({ email: params.email, platformId }, 'User signed up to existing platform')
+            log.info({ email: params.email, platform: { id: platformId } }, 'User signed up to existing platform')
             return authenticationUtils(log).getProjectAndToken({
                 userId: user.id,
                 platformId,
@@ -97,7 +101,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             platformId,
         })
         assertNotNullOrUndefined(user, 'User not found')
-        log.info({ email: params.email, platformId }, 'User signed in with password')
+        log.info({ email: params.email, platform: { id: platformId } }, 'User signed in with password')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
@@ -163,7 +167,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         assertNotNullOrUndefined(platform, 'Platform not found')
         const user = await getUserForPlatform(params.identityId, platform, log)
-        log.info({ userId: user.id, platformId: platform.id }, 'User switched platform')
+        log.info({ user: { id: user.id }, platform: { id: platform.id } }, 'User switched platform')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId: platform.id,
@@ -201,8 +205,13 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
 
 async function sendVerificationOrAutoVerify(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
     const edition = system.getEdition()
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
     switch (edition) {
         case ApEdition.CLOUD:
+            if (environment === ApEnvironment.DEVELOPMENT) {
+                await userIdentityService(log).verify(userIdentity.id)
+                break
+            }
             if (!userIdentity.verified) {
                 await otpService(log).createAndSend({
                     platformId: null,

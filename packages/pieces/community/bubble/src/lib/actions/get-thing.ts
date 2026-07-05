@@ -13,6 +13,8 @@ export const bubbleGetThingAction = createAction({
   name: 'bubble_get_thing',
   displayName: 'Get Thing',
   description: 'Get a thing by id',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single record ("thing") of a given data type from a Bubble app by its unique id, via the Bubble Data API. Use to read the current values of one known record. Read-only and idempotent.', idempotent: true },
   props: {
     typename: bubbleCommon.typename,
     thing_id: bubbleCommon.thing_id,

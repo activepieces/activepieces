@@ -9,6 +9,11 @@ export const updateChangeTask = createAction({
   name: 'update_change_task',
   displayName: 'Update Change Task',
   description: 'Updates an existing task on a change request in Freshservice.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Modifies fields on an existing task within a Freshservice change request, identified by change id and task id (e.g. title, status, assignee, due date). Use to progress or revise a change task; at least one field must be supplied or the call errors. Idempotent — re-sending the same field values leaves the task in the same state.',
+    idempotent: true,
+  },
   props: {
     change_id: freshserviceCommon.change(true),
     task_id: Property.Number({

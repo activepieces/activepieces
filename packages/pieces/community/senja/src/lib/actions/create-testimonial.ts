@@ -8,6 +8,8 @@ export const createTestimonialAction = createAction({
   name: 'create_testimonial',
   displayName: 'Create Testimonial',
   description: 'Add a new testimonial to your Senja project.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new testimonial in a Senja project, either a text or a video testimonial (set by type). Use to import or record a customer testimonial along with its customer details, rating, tags, and source. Requires type and customer name; text needs body text and video needs a video URL. Not idempotent — each call creates a separate testimonial.', idempotent: false },
   props: {
     type: Property.StaticDropdown({
       displayName: 'Testimonial Type',

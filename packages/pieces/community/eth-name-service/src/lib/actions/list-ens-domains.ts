@@ -6,6 +6,8 @@ export const listEnsDomains = createAction({
   auth: ensCommon.auth,
   displayName: 'List ENS Domains',
   description: 'List the ENS domains for a given address.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up all Ethereum Name Service (ENS) domains owned by a given Ethereum address by querying the ENS subgraph on The Graph. Use to discover which ENS names an address controls, along with their subdomains, resolver, and metadata. Requires the wallet address; case is normalized automatically. Read-only and idempotent.', idempotent: true },
   props: {
     address: Property.ShortText({
       displayName: 'Address',

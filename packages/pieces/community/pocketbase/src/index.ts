@@ -6,7 +6,7 @@ import { getRecord } from './lib/actions/get-record';
 import { createRecord } from './lib/actions/create-record';
 import { updateRecord } from './lib/actions/update-record';
 import { deleteRecord } from './lib/actions/delete-record';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 const markdown = `
 Provide your PocketBase **host URL** and **superuser credentials**.

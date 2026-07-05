@@ -1,7 +1,7 @@
 import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { engineFileApi } from '../src/lib/engine-file-api'
+import { engineFileApi } from '../src/lib/api/engine-file-api'
 
 const zstdCompress = promisify(zstdCompressCallback)
 

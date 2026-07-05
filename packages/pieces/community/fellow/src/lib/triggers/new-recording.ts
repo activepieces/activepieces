@@ -3,7 +3,7 @@ import { fellowAuth, getBaseUrl } from "../common/auth";
 import { DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from "@activepieces/pieces-common";
 import dayjs from 'dayjs';
 import { ListRecordingsResponse } from "../common/types";
-import { isNil } from "@activepieces/shared";
+import { isNil } from '@activepieces/pieces-framework';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof fellowAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
@@ -66,6 +66,9 @@ export const newRecordingTrigger = createTrigger({
     auth: fellowAuth,
     displayName: 'New Recording',
     description: 'Triggers when a new recording is created.',
+    aiMetadata: {
+        description: 'Fires when a new meeting recording appears in the connected Fellow workspace, polling for recordings created since the last check and emitting each one (including its transcript and AI notes).',
+    },
     type: TriggerStrategy.POLLING,
     props: {},
     async onEnable(context) {

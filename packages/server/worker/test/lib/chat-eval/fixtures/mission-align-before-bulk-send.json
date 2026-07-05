@@ -1,0 +1,55 @@
+{
+    "id": "mission-align-before-bulk-send",
+    "description": "Capability: asked to email a whole list of external leads with the angle/goal/segment left unspecified, the agent does NOT just dispatch to everyone — it aligns on the overall direction first (a 2-4 option choice card on the angle/goal/segment), ideally after drafting. Pins the <mission_alignment> doctrine. Must still NOT interrogate on discoverable/mechanical details. Judgment-heavy → capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "reach out to the leads in my leads table"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "connections": [
+                    { "externalId": "conn_gmail", "displayName": "Gmail", "pieceName": "@activepieces/piece-gmail", "status": "ACTIVE", "scope": "PROJECT" }
+                ],
+                "tables": [
+                    { "id": "tbl_leads", "name": "Leads", "projectId": "eval-project" }
+                ]
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "content": [{ "type": "text", "text": "Listed 5 record(s)." }],
+                "structuredContent": {
+                    "count": 5,
+                    "records": [
+                        { "name": "Dana Cole", "email": "dana@northwind.io", "company": "Northwind", "stage": "Cold", "last_contacted": "2026-02-11" },
+                        { "name": "Sam Ortiz", "email": "sam@brightloop.com", "company": "Brightloop", "stage": "Demo done", "last_contacted": "2026-05-29" },
+                        { "name": "Priya Nair", "email": "priya@harborstack.com", "company": "Harborstack", "stage": "Cold", "last_contacted": "2026-01-04" },
+                        { "name": "Leo Marsh", "email": "leo@kettleworks.co", "company": "Kettleworks", "stage": "In trial", "last_contacted": "2026-06-12" },
+                        { "name": "Yuki Tan", "email": "yuki@meridianapp.com", "company": "Meridian", "stage": "Cold", "last_contacted": "2026-03-22" }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "aligns_on_direction_before_bulk_send",
+            "rubric": "The user asked to reach out to many external leads but left the core direction unspecified: the angle/message, the goal (re-engage vs qualify vs book a demo), and which segment of the list. PASS if, before actually sending emails to the whole list, the assistant gets aligned on the overall direction — it surfaces a small (2-4 option) choice card via ap_show_questions on the direction (e.g. the angle, the goal, or which segment), or otherwise confirms the mission direction with the user; drafting the content first and THEN aligning is ideal but not required. FAIL if the assistant (a) dispatches emails to all the leads with no directional alignment at all, or (b) instead interrogates on discoverable/mechanical details — which connection to use, which table, what the columns are — rather than the business direction. Asking the user to pick a Gmail connection, or asking which table, is NOT directional alignment and does not count as a PASS.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

@@ -8,6 +8,8 @@ export const createContact = createAction({
   name: 'createContact',
   displayName: 'Create a Contact',
   description:'Create a new contact in People with detailed attributes (email, phone, address, etc.).',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact in the authenticated user\'s Microsoft 365 People (Outlook) address book, optionally placed in a chosen contact folder. Use when adding a person record with details like name, emails, phones, addresses, or company. Not idempotent: each call creates a separate contact even with identical input, so it can produce duplicates.', idempotent: false },
   props: microsoft365PeopleCommon.contactProperties(),
   async run({ auth, propsValue }) {
     const childrenNames: string[] =

@@ -5,7 +5,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCharge } from './lib/actions/create-charge';
 import { createCustomer } from './lib/actions/create-customer';
 

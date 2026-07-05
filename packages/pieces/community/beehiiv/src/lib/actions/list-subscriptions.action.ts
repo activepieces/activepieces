@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { publicationId } from '../common/props';
 import { beehiivApiCall } from '../common/client';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 type SubscriptionListResponse = {
 	data: Record<string, unknown>[];
@@ -16,6 +16,8 @@ export const listSubscriptionsAction = createAction({
 	name: 'list_subscriptions',
 	displayName: 'List Subscriptions',
 	description: 'Retrieves all subscriptions for a Beehiiv publication.',
+	audience: 'both',
+	aiMetadata: { description: 'Lists subscriptions for a beehiiv publication, optionally filtered by status (active, inactive, pending, etc.). Operates in two modes: when neither limit nor cursor is set it auto-paginates and returns every matching subscription; when a limit or cursor is provided it returns a single page with a next-cursor for manual pagination. Use to look up or enumerate subscribers. Read-only and idempotent.', idempotent: true },
 	props: {
 		publicationId: publicationId,
 		status: Property.StaticDropdown({

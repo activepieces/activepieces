@@ -9,6 +9,8 @@ export const searchConversationsAction = createAction({
 	name: 'search_conversations',
 	displayName: 'Search Conversations by Query',
 	description: 'Searches for conversations from a specific chatbot.',
+	audience: 'both',
+	aiMetadata: { description: 'Retrieves logged conversations for a specific Chatbase chatbot (selected by its ID), with optional filters for source channels (API, WhatsApp, Slack, etc.), a start/end date range, and pagination. Use when an agent needs to review or audit past chatbot conversations; leaving the optional filters empty returns all conversations for the chatbot. Idempotent read-only lookup.', idempotent: true },
 	props: {
 		chatbotId: chatbotIdDropdown,
 		filteredSources: Property.StaticMultiSelectDropdown({

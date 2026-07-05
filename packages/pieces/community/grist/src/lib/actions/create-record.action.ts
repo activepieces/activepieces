@@ -8,6 +8,8 @@ export const gristCreateRecordAction = createAction({
   name: 'grist-create-record',
   displayName: 'Create Record',
   description: 'Creates a new record in specific table.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds one new row to a Grist table, mapping the values you supply onto that table\'s columns. Use it to append data to a known document/table; requires the document and table identifiers. Not idempotent — each call inserts another record even with identical input.', idempotent: false },
   props: {
     workspace_id: commonProps.workspace_id,
     document_id: commonProps.document_id,

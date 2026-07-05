@@ -7,6 +7,8 @@ export const deleteWorkbookAction = createAction({
   auth: excelAuth,
   name: 'delete_workbook',
   description: 'Delete a workbook',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an entire Excel workbook file from OneDrive or a SharePoint document library. Pick this to remove a whole file, not a single sheet (use Delete Worksheet for that). Destructive and irreversible; idempotent by stable workbook id, so re-running after deletion has no further effect.', idempotent: true },
   displayName: 'Delete Workbook',
   props: {
     storageSource: commonProps.storageSource,

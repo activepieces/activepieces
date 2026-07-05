@@ -12,6 +12,8 @@ export const listInboxes = createAction({
   name: 'list_inboxes',
   displayName: 'List Inboxes',
   description: 'List all email inboxes on the account.',
+  audience: 'both',
+  aiMetadata: { description: 'Returns every email inbox on the authenticated LobsterMail account, each with its id and address. Use to discover which inboxes exist or to find an inbox id needed by other actions. Takes no input. Read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest<{

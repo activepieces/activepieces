@@ -16,6 +16,8 @@ export const listWorkflowsAction = createAction({
   name: 'list_workflows',
   displayName: 'List Workflows',
   description: 'Returns all workflows configured in your SavvyCal account.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all SavvyCal automation workflows in the account with their ids and names. Use to discover available workflows, typically to obtain a workflow id for Get Workflow Rules. Read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
     const workflows = await savvyCalPaginatedCall<SavvyCalWorkflow>({

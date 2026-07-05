@@ -6,6 +6,12 @@ export const askAQuestionAboutTheWebPage = createAction({
   name: 'askAQuestionAboutTheWebPage',
   displayName: 'Ask a Question About the Web Page',
   description: 'Gets an answer to a question about a given webpage.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a web page (rendering JavaScript), then uses an LLM to answer a natural-language question about its content. Choose this to extract a specific fact or summary from a single URL without parsing HTML yourself, when you have a concrete question rather than needing the full page text or a structured record. Requires the target URL and the question; optional proxy/country/device/header controls tune how the page is fetched. Read-only and idempotent (a GET-style request that does not alter the target site).',
+    idempotent: true,
+  },
   props: webscrapingAiCommon.askQuestionProperties,
   async run({ auth: apiKey, propsValue }) {
     const { device, format, question, ...rest } = propsValue;

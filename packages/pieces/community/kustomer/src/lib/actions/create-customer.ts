@@ -10,6 +10,12 @@ export const createCustomerAction = createAction({
   name: 'create-customer',
   displayName: 'Create Customer',
   description: 'Creates a new customer record in Kustomer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer record in Kustomer from identity and profile fields (name, email, phone, company, externalId, locale, etc.). Use to add a contact to Kustomer; pass externalId to link the record back to your own system. Not idempotent — each call creates a separate customer even with identical input, so guard against duplicates.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Full Name',

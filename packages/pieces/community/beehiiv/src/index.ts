@@ -10,7 +10,7 @@ import { newPostSentTrigger } from './lib/triggers/new-post-sent.trigger';
 import { userUnsubscribesTrigger } from './lib/triggers/user-unsubscribes.trigger';
 import { newSubscriptionConfirmedTrigger } from './lib/triggers/new-subscription-confirmed.trigger';
 import { newSubscriberCreatedTrigger } from './lib/triggers/new-subscriber-created.trigger';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { beehiivAuth } from './lib/common/auth';
 import { BEEHIIV_API_URL } from './lib/common/client';

@@ -9,6 +9,12 @@ export const lookupLookalike = createAction({
   displayName: 'Lookup Lookalike Company',
   description:
     'Look up a similar company result by domain, LinkedIn URL, or domain search ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Find companies similar to a given seed company, identified by its domain, LinkedIn URL, or domain search ID. Read-only and repeatable. Pick this for lookalike/competitor discovery from one reference company; use Search Companies for criteria-based discovery and Enrich Company for full details on one firm.',
+    idempotent: true,
+  },
   props: {
     lookup_type: Property.StaticDropdown({
       displayName: 'Lookup Type',

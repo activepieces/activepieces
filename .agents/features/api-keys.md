@@ -7,7 +7,7 @@ Platform API Keys allow platform admins to generate long-lived service credentia
 - `packages/server/api/src/app/ee/api-keys/api-key-module.ts` — module registration with `platformMustHaveFeatureEnabled` guard
 - `packages/server/api/src/app/ee/api-keys/api-key-entity.ts` — TypeORM entity
 - `packages/server/api/src/app/ee/api-keys/api-key-service.ts` — service (add, list, delete, lookup by value)
-- `packages/shared/src/lib/ee/api-key/index.ts` — `ApiKey`, `ApiKeyResponseWithValue`, `ApiKeyResponseWithoutValue`, `CreateApiKeyRequest` types
+- `packages/core/shared/src/lib/ee/api-key/index.ts` — `ApiKey`, `ApiKeyResponseWithValue`, `ApiKeyResponseWithoutValue`, `CreateApiKeyRequest` types
 - `packages/web/src/features/platform-admin/api/api-key-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/api-key-hooks.ts` — React query hooks
 - `packages/web/src/app/routes/platform/security/api-keys/` — platform admin UI page
@@ -16,6 +16,9 @@ Platform API Keys allow platform admins to generate long-lived service credentia
 Enterprise and Cloud. Gated by `platform.plan.apiKeysEnabled`. The module registers the hook: `platformMustHaveFeatureEnabled((platform) => platform.plan.apiKeysEnabled)`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **API Key**: A platform-scoped service credential used for programmatic access.
 - **hashedValue**: SHA-256 hash of the raw key, used for lookup on every request.
 - **truncatedValue**: Last 4 characters of the raw key, shown in the UI for identification.

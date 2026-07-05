@@ -10,6 +10,8 @@ export const deletePartialFormSubmission = createAction({
   name: 'deletePartialFormSubmission',
   displayName: 'Delete Partial Form Submission',
   description: 'Deletes a partial/in-progress submission by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a partial (in-progress, not yet completed) Paperform submission by its ID from the given form. Use to discard an abandoned draft response; this is destructive and not idempotent.', idempotent: false },
   props: {
     formId: paperformCommonProps.formId,
     partialSubmissionId: Property.Dropdown({

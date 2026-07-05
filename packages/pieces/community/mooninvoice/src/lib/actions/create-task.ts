@@ -9,6 +9,12 @@ export const createTask = createAction({
   name: 'createTask',
   displayName: 'Create Task',
   description: 'Create a new task in MoonInvoice',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new billable task (time/service line item) under a project within a MoonInvoice company that can later be added to invoices or estimates. Use when defining work to bill by hours and rate. Requires the company, a project, and a task name; tax IDs are supplied as a JSON array. Not idempotent — each call creates a new task even with the same name.',
+    idempotent: false,
+  },
   props: {
     companyId: companyIdProp,
     taskName: Property.ShortText({

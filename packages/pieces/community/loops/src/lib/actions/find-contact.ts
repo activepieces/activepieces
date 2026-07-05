@@ -6,6 +6,12 @@ export const findContact = createAction({
   name: 'find_contact',
   displayName: 'Find Contact',
   description: 'Finds a contact in Loops by their email address or user ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a contact in Loops by a single search field, chosen via a Search By selector that switches between matching on email or on internal user ID (the API allows only one search parameter). Use to check whether a contact exists or to retrieve their details before acting. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: loopsAuth,
   props: {
     searchBy: Property.StaticDropdown({

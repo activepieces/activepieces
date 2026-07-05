@@ -1,6 +1,6 @@
 import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createComment } from './lib/actions/create-comment';
 import { createNewFeatureRequest } from './lib/actions/create-feature-request';
 import { createBeamerPost } from './lib/actions/create-posts';

@@ -13,6 +13,8 @@ export const tariffGroupDeleteAction = createAction({
   name: 'tariffGroupDelete',
   displayName: 'Resources - Tariff Groups - Delete',
   description: 'Delete a tariff group.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an AMPECO tariff group by its numeric ID. Destructive and not reversible; re-running on an already-deleted group will fail. Confirm the correct group ID first via the read or listing action.', idempotent: false },
   props: {
         
   tariffGroup: Property.Number({

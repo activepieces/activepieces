@@ -9,6 +9,12 @@ export const runAppGenerator = createAction({
   displayName: 'Run App Generator',
   description:
     "Triggers the execution of Flipando's Special App Generator, initiating a background job for application completion.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Runs Flipando's Special App Generator to build a new application, starting an asynchronous completion job (retrieve the result later via Get Task). Use it to create a new app from JSON input variables rather than running an existing one; the is_new_app_private flag controls whether the generated app is private or public. Not idempotent: each call generates a new app.",
+    idempotent: false,
+  },
   props: {
     inputs_data: Property.LongText({
       displayName: 'Inputs Data',

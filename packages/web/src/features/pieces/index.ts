@@ -8,6 +8,7 @@ export { PiecesSearchInput } from './components/piece-selector-search';
 export { PieceSelectorTabs } from './components/piece-selector-tabs';
 export { piecesHooks, piecesMutations } from './hooks/pieces-hooks';
 export { stepsHooks } from './hooks/steps-hooks';
+export { usePieceOutputSchema } from './hooks/use-piece-output-schema';
 export {
   usePieceSearchContext,
   PieceSearchProvider,
@@ -40,3 +41,8 @@ export {
   extractPieceNamesAndCoreMetadata,
   stepUtils,
 } from './utils/step-utils';
+export {
+  pieceSelectorCustomization,
+  PIECE_SELECTOR_TAB_ICON_OPTIONS,
+} from './utils/piece-selector-customization';
+export type { ResolvedPieceSelectorTab } from './utils/piece-selector-customization';

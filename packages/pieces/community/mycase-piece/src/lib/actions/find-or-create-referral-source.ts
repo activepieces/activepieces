@@ -7,6 +7,8 @@ export const findOrCreateReferralSource = createAction({
   name: 'find_or_create_referral_source',
   displayName: 'Find or Create Referral Source',
   description: 'Finds a referral source by name or creates a new one if it does not exist',
+  audience: 'both',
+  aiMetadata: { description: 'Resolve a MyCase referral source by exact (case-insensitive) name, creating it if no match exists, and return the source. Use to ensure a named referral source is present without risking duplicates. Idempotent: repeated calls with the same name return the existing source rather than creating another.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Referral Source Name',

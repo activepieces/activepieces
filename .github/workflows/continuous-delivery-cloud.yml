@@ -1,8 +1,8 @@
 name: Continuous Delivery — Cloud
 
 on:
-  schedule:
-    - cron: '0 9 * * 0' # Sunday 9 AM UTC — promote release candidate to prod
+  # schedule:
+    # - cron: '0 9 * * 0' # Sunday 9 AM UTC — promote release candidate to prod
   workflow_call:
   workflow_dispatch:
     inputs:

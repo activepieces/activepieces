@@ -14,6 +14,11 @@ export const createRecordAction = createAction({
   name: 'create_record',
   displayName: 'Create Record',
   description: 'Creates a new record into a specified object/table.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new record in a chosen Knack object (table), with field values supplied as key-value data keyed by Knack field IDs. Use when adding a new row to a Knack database. Not idempotent: each call inserts another record, and a duplicate unique value returns a conflict error.',
+    idempotent: false,
+  },
   props: {
     object: objectDropdown,
     recordFields: recordFields,

@@ -2,11 +2,14 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { deleteRowsActionOutputSchema } from '../output-schemas';
 
 export const deleteRows = createAction({
     name: 'delete_rows',
     displayName: 'Delete Rows',
     description: 'Remove rows matching filter criteria from a table',
+    audience: 'both',
+    aiMetadata: { description: 'Deletes rows from a Supabase table that match a single filter condition (equals, not-equals, in-list, range comparisons, null checks, or LIKE pattern on a chosen column). Use to remove records you can identify by one filter; a filter is required so it will not blindly clear a table. Idempotent: re-running deletes nothing further once the matching rows are gone.', idempotent: true },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,
@@ -135,6 +138,7 @@ export const deleteRows = createAction({
             defaultValue: false,
         })
     },
+    outputSchema: deleteRowsActionOutputSchema,
     async run(context) {
         const { 
             table_name, 

@@ -7,6 +7,8 @@ export const deleteInvoice = createAction({
     name: 'delete_invoice',
     displayName: 'Delete Invoice',
     description: 'Deletes a payables invoice from Oracle Fusion Cloud ERP.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently delete a payables (supplier) invoice by its InvoiceId. Destructive; idempotent in effect since a removed invoice cannot be deleted again. Oracle typically allows deletion only for unvalidated/unpaid invoices; to back out a validated invoice without removing it use Cancel Invoice instead.', idempotent: true },
     props: {
         invoiceId: Property.ShortText({
             displayName: 'Invoice ID',

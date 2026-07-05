@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../auth';
-import { createS3 } from '../common';
+import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
+import { resolveS3Client } from '../common';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
 
 interface S3File {
@@ -18,10 +18,15 @@ interface ListFilesResult {
 }
 
 export const listFiles = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'list-files',
   displayName: 'List Files',
   description: 'List all files from an S3 bucket folder/prefix.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists objects in the configured S3 bucket, optionally filtered to a folder prefix (empty prefix lists the whole bucket), capped at a maximum count (1-1000, default 1000) and sorted newest-first. Use to discover files or look up an object key before reading, moving, or deleting it. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     prefix: Property.ShortText({
       displayName: 'Folder Path (Optional)',
@@ -37,10 +42,11 @@ export const listFiles = createAction({
 
   },
   async run(context) {
-    const s3 = createS3(context.auth.props);
+    const authProps: S3AuthProps = context.auth.props;
+    const s3 = await resolveS3Client({ authProps, server: context.server });
 
     const params: ListObjectsV2CommandInput = {
-      Bucket: context.auth.props.bucket,
+      Bucket: authProps.bucket,
       MaxKeys: Math.min(Math.max(context.propsValue.maxKeys || 1000, 1), 1000),
     };
 

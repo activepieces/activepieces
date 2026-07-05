@@ -4,10 +4,11 @@ import {
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const visionPrompt = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'vision_prompt',
   displayName: 'Vision Prompt',
@@ -96,7 +97,7 @@ export const visionPrompt = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(1),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
     });
 
     const openai = new OpenAI({

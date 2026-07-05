@@ -12,6 +12,12 @@ export const createTaskAction = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Create a new Task in Capsule CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new task in Capsule CRM with a description and due date, optionally linked to exactly one entity chosen via the Link To selector (a party/contact, an opportunity, or a project). Use to schedule a to-do or follow-up. Not idempotent: each call creates a separate task, so repeating it produces duplicates.',
+    idempotent: false,
+  },
   props: {
     description: Property.ShortText({
       displayName: 'Description',

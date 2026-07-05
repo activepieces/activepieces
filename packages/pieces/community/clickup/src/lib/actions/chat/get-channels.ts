@@ -6,12 +6,15 @@ import {
 } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
+import { getChannelsOutputSchema } from '../../output-schemas';
 
 export const getClickupChannels = createAction({
   auth: clickupAuth,
   name: 'get_channels',
   description: 'Gets all channels in a ClickUp workspace',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only: list the Chat channels in a ClickUp workspace, optionally including hidden ones and capping the count (1-100). Use to discover channel IDs before reading or posting messages. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Channels',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -29,12 +32,10 @@ export const getClickupChannels = createAction({
     }),
   },
 
+  outputSchema: getChannelsOutputSchema,
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
-      limit: z
-        .number()
-        .min(0)
-        .max(100, 'You can fetch between 1 and 100 messages'),
+      limit: z.number().check(z.minimum(0), z.maximum(100, 'You can fetch between 1 and 100 messages')),
     });
 
     const { workspace_id, include_hidden, limit } = configValue.propsValue;

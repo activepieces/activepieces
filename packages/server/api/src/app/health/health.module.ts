@@ -38,7 +38,8 @@ const healthController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/queue-metrics', GetQueueMetricsRequest, async (request) => {
         const { platform } = request.principal
-        return healthMetricsService(request.log).getQueueMetrics(platform.id)
+        const { createdAfter, createdBefore } = request.query
+        return healthMetricsService(request.log).getQueueMetrics(platform.id, { createdAfter, createdBefore })
     })
 
     app.get('/history', GetHealthHistoryRequest, async (request) => {
@@ -78,6 +79,7 @@ const GetQueueMetricsRequest = {
     },
     schema: {
         tags: ['health'],
+        querystring: PlatformMetricsReportRequest,
         response: {
             200: PlatformMetricsLive,
         },

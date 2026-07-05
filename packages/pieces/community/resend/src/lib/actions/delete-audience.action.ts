@@ -8,6 +8,8 @@ export const deleteAudience = createAction({
   auth: resendAuth,
   displayName: 'Delete Audience',
   description: 'Permanently delete an audience and all its contacts',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes an entire audience and all of its contacts from Resend, identified by audience ID. Use this to remove a whole mailing list; this is destructive and cannot be undone. Effectively idempotent — once deleted, repeating the call has no further effect.', idempotent: true },
   props: {
     audience_id: resendProps.audienceId,
   },

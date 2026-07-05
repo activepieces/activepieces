@@ -20,6 +20,8 @@ export const findOrganizationAction = createAction({
   name: 'find-organization',
   displayName: 'Find Organization(s)',
   description: 'Search organizations by name, domain, external ID, or other criteria.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Zendesk organizations and returns matching records. A required search-type selector chooses the mode: match by name, domain, external ID, tag, or details, or pass a raw Zendesk search-syntax string via the Custom Query mode for arbitrary filters. Use to look up an organization or its ID before creating/updating tickets or users; results can be sorted by relevance, created, or updated date. Read-only and idempotent.', idempotent: true },
   props: {
     search_type: Property.StaticDropdown({
       displayName: 'Search Type',

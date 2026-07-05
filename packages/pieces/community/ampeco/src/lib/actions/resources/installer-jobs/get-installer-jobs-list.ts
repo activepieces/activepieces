@@ -14,6 +14,8 @@ export const getInstallerJobsListAction = createAction({
   name: 'getInstallerJobsList',
   displayName: 'Resources - Installer Jobs - Get Installer Jobs List',
   description: 'Get all Installer Jobs.',
+  audience: 'both',
+  aiMetadata: { description: 'List installer jobs, with optional filters by company, location, charge point, status, installer admin, and created/updated date ranges, plus auto-pagination. Use to find or browse jobs; read-only and safe to retry. To fetch one known job by ID use the get action instead.', idempotent: true },
   props: {
         
   filter__installationAndMaintenanceCompanyId: Property.Number({

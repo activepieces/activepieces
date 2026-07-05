@@ -12,6 +12,8 @@ export const updateInstallerJobAction = createAction({
   name: 'updateInstallerJob',
   displayName: 'Resources - Installer Jobs - Update',
   description: 'Update Installer Job.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing installer job by its numeric ID, changing its description, installer admin, or access PIN. Use to modify a known job rather than creating one; targets a specific record so re-running with the same values is safe.', idempotent: true },
   props: {
         
   installerJob: Property.Number({

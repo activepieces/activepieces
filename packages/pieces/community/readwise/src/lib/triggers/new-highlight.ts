@@ -45,6 +45,10 @@ export const newHighlight = createTrigger({
   name: 'new_highlight',
   displayName: 'New Highlight',
   description: 'Fires when a new highlight is saved to Readwise.',
+  aiMetadata: {
+    description:
+      'Fires when a new highlight is created in the connected Readwise account, emitting that highlight. Polls Readwise on an interval and surfaces each newly added highlight as a separate event.',
+  },
   auth: readwiseAuth,
   props: {},
   type: TriggerStrategy.POLLING,

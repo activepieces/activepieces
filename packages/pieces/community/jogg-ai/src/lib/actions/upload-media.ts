@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const uploadMedia = createAction({
@@ -12,6 +12,12 @@ export const uploadMedia = createAction({
   displayName: 'Upload Media',
   description:
     'Generate a signed URL for file upload. Use the returned sign_url to upload your file with a PUT request.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Requests a signed upload URL from JoggAI for a given filename (must include a file extension and no special characters); the caller then PUTs the actual file bytes to the returned sign_url. Use as the first step to get media into JoggAI before referencing it in product or video actions. Not idempotent: each call mints a new signed upload target.',
+    idempotent: false,
+  },
   auth: joggAiAuth,
   props: {
     filename: Property.ShortText({
@@ -26,13 +32,7 @@ export const uploadMedia = createAction({
     const { filename } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      filename: z
-        .string()
-        .min(1, 'Filename cannot be empty')
-        .regex(
-          /^[^/\\:*?"<>|]+\.[a-zA-Z0-9]+$/,
-          'Filename must include a file extension and contain no special characters'
-        ),
+      filename: z.string().check(z.minLength(1, 'Filename cannot be empty'), z.regex(/^[^/\\:*?"<>|]+\.[a-zA-Z0-9]+$/, 'Filename must include a file extension and contain no special characters')),
     });
 
     const response = await httpClient.sendRequest({

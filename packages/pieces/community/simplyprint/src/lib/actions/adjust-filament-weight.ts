@@ -11,6 +11,8 @@ export const adjustFilamentWeightAction = createAction({
   displayName: 'Adjust Filament Weight',
   description:
     'Update the remaining filament on a spool. Provide ONE of "grams remaining" / "percent remaining" / "weighed gross" — the other two derive from it.',
+  audience: 'both',
+  aiMetadata: { description: 'Set the remaining filament on a spool, identified by numeric ID or the 4-character QR/NFC short ID, by supplying exactly one of grams remaining, percent remaining, or weighed gross (with optional empty-spool-weight handling). Pick it to correct or record spool inventory. Idempotent: the call sets the spool to an absolute value rather than incrementing.', idempotent: true },
   props: {
     filamentId: Property.ShortText({
       displayName: 'Filament',

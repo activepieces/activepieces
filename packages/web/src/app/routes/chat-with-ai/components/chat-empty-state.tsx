@@ -1,69 +1,86 @@
 import { t } from 'i18next';
 import {
-  Database,
-  Lightbulb,
+  ArrowUpRight,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Settings,
-  ShieldCheck,
-  Sparkles,
-  Zap,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
+import {
+  CSSProperties,
+  ReactNode,
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { PromptSuggestion } from '@/components/prompt-kit/prompt-suggestion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
-export function EmptyState({ incognito }: { incognito: boolean }) {
-  const greeting = incognito
-    ? t('Private Chat')
-    : t('What would you like to work on?');
+export function EmptyState({
+  onSuggestionClick,
+  incognito,
+  hasInput,
+}: {
+  onSuggestionClick: (text: string) => void;
+  incognito: boolean;
+  showFlowCards: boolean;
+  hasInput: boolean;
+}) {
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const firstName = currentUser?.firstName ?? '';
+
+  if (incognito) {
+    return (
+      <div className="flex min-h-full flex-col justify-center pt-8 pb-6">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+          <Greeting firstName={firstName} incognito />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <motion.div
-      className="flex items-center gap-3"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <Sparkles className="h-7 w-7 text-primary shrink-0" />
-      <h2
-        className="text-[28px] font-bold leading-tight bg-[length:200%_100%] animate-[shimmer_3s_ease-in-out_infinite] bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
-        style={{ textWrap: 'balance' }}
-      >
-        {greeting}
-      </h2>
-    </motion.div>
+    <div className="flex min-h-full flex-col pt-12 sm:pt-16 pb-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
+          <div className="min-w-0 sm:flex-1 sm:max-w-md">
+            <Greeting firstName={firstName} incognito={false} />
+          </div>
+          <div className="hidden sm:contents">
+            <AppMarquee />
+          </div>
+        </div>
+        <CollapseOnInput collapsed={hasInput}>
+          <ExampleCards onSuggestionClick={onSuggestionClick} />
+        </CollapseOnInput>
+      </div>
+    </div>
   );
 }
 
-export function SuggestionCards({
-  onSend,
+function CollapseOnInput({
+  collapsed,
+  children,
 }: {
-  onSend: (text: string, files?: File[]) => void;
+  collapsed: boolean;
+  children: ReactNode;
 }) {
-  const suggestions = [
-    { icon: Zap, text: t('Automate a task') },
-    { icon: ShieldCheck, text: t('Handle approvals') },
-    { icon: Database, text: t('Check my data') },
-    { icon: Lightbulb, text: t('Brainstorm ideas') },
-  ];
-
   return (
-    <div className="flex flex-wrap justify-center gap-2 mt-3">
-      {suggestions.map((s, i) => (
-        <motion.div
-          key={s.text}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
-        >
-          <PromptSuggestion onClick={() => onSend(s.text)}>
-            <s.icon className="h-3.5 w-3.5" />
-            {s.text}
-          </PromptSuggestion>
-        </motion.div>
-      ))}
+    <div
+      className={cn(
+        'grid transition-all duration-300 ease-out',
+        collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
+      )}
+    >
+      <div className="overflow-hidden">{children}</div>
     </div>
   );
 }
@@ -108,3 +125,537 @@ export function MessageSkeletons() {
     </div>
   );
 }
+
+function Greeting({
+  firstName,
+  incognito,
+}: {
+  firstName: string;
+  incognito: boolean;
+}) {
+  const headline = useMemo(
+    () =>
+      GREETING_HEADLINES[Math.floor(Math.random() * GREETING_HEADLINES.length)],
+    [],
+  );
+
+  return (
+    <motion.div
+      className="flex flex-col items-start gap-3.5"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <h1 className="text-4xl sm:text-5xl font-bold leading-[1.1] text-balance font-sentient">
+        {incognito
+          ? t('Private Chat')
+          : firstName
+          ? t(headline.withName, { name: firstName })
+          : t(headline.plain)}
+      </h1>
+      {!incognito && (
+        <p className="text-base text-muted-foreground max-w-xl">
+          {t(
+            "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.",
+          )}
+        </p>
+      )}
+    </motion.div>
+  );
+}
+
+const AppMarquee = memo(function AppMarquee() {
+  const { pieces, isLoading } = piecesHooks.usePieces({});
+  const reducedMotion = useReducedMotion();
+
+  const columns = useMemo(() => {
+    const byName = new Map((pieces ?? []).map((piece) => [piece.name, piece]));
+    const apps = FEATURED_APP_NAMES.map((name) => {
+      const piece = byName.get(name);
+      if (!piece?.logoUrl) {
+        return undefined;
+      }
+      return {
+        name: piece.name,
+        displayName: piece.displayName,
+        logoUrl: piece.logoUrl,
+      };
+    }).filter((app): app is ResolvedApp => app !== undefined);
+
+    return [0, 1, 2].map((col) => apps.filter((_, i) => i % 3 === col));
+  }, [pieces]);
+
+  if (isLoading) {
+    return (
+      <div className="flex shrink-0 gap-3 self-center">
+        {[0, 1, 2].map((col) => (
+          <div key={col} className="flex flex-col gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="size-14 rounded-2xl" />
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (columns.every((col) => col.length === 0)) {
+    return null;
+  }
+
+  const moreCount = Math.max(
+    100,
+    Math.floor((pieces?.length ?? 0) / 100) * 100,
+  );
+
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-3 self-center">
+      <div className="relative flex h-56 gap-3 overflow-hidden">
+        {columns.map((col, i) => (
+          <MarqueeColumn
+            key={i}
+            apps={col}
+            reverse={i % 2 === 1}
+            paused={!!reducedMotion}
+          />
+        ))}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-linear-to-b from-background to-background/0" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-linear-to-t from-background to-background/0" />
+      </div>
+      <span className="text-xs font-medium text-muted-foreground">
+        {t('{count}+ apps', { count: moreCount })}
+      </span>
+    </div>
+  );
+});
+
+// Each tile is `size-14` (56px) tall with a `mb-3` (12px) gap, so one logo advances the
+// strip by 68px. The strip is duplicated, so one full copy is `apps.length * 68px`. The loop
+// must translate by exactly that distance: `translateY(-50%)` cannot be used because the
+// column is a stretched flex item (its height is the 224px row, not its 800px+ content).
+const TILE_ADVANCE_PX = 68;
+
+const MarqueeColumn = memo(function MarqueeColumn({
+  apps,
+  reverse,
+  paused,
+}: {
+  apps: ResolvedApp[];
+  reverse: boolean;
+  paused: boolean;
+}) {
+  const strip = [...apps, ...apps];
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col',
+        !paused &&
+          (reverse
+            ? 'animate-[slot-spin_linear_infinite_reverse]'
+            : 'animate-[slot-spin_linear_infinite]'),
+      )}
+      style={
+        paused
+          ? undefined
+          : ({
+              '--marquee-loop': `${apps.length * TILE_ADVANCE_PX}px`,
+              animationDuration: `${apps.length * 2200}ms`,
+            } as CSSProperties)
+      }
+    >
+      {strip.map((app, i) => (
+        <div
+          key={`${app.name}-${i}`}
+          className="size-14 shrink-0 overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/50 mb-3"
+        >
+          <img
+            src={app.logoUrl}
+            alt={app.displayName}
+            className="w-full h-full rounded-2xl object-contain p-2.5"
+          />
+        </div>
+      ))}
+    </div>
+  );
+});
+
+function ExampleCards({
+  onSuggestionClick,
+}: {
+  onSuggestionClick: (text: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const reducedMotion = useReducedMotion();
+
+  const handleToggle = () => setExpanded((value) => !value);
+
+  return (
+    <div className="mt-16">
+      {expanded ? (
+        <motion.div
+          className="grid grid-cols-1 gap-4 sm:grid-cols-6"
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
+          {ALL_EXAMPLE_CARDS.map((card, i) => (
+            <ExampleCard
+              key={card.title}
+              card={card}
+              delay={0}
+              animateIn={false}
+              onSuggestionClick={onSuggestionClick}
+              largeText={i < 2}
+              className={i < 2 ? 'sm:col-span-3' : 'sm:col-span-2'}
+            />
+          ))}
+        </motion.div>
+      ) : (
+        <CardCarousel>
+          {EXAMPLE_CARDS.map((card, i) => (
+            <ExampleCard
+              key={card.title}
+              card={card}
+              delay={0.15 + i * 0.08}
+              onSuggestionClick={onSuggestionClick}
+              large
+            />
+          ))}
+        </CardCarousel>
+      )}
+
+      <div className="mt-6 flex justify-center">
+        <button
+          type="button"
+          onClick={handleToggle}
+          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+        >
+          {expanded ? t('Show less') : t('More and bigger')}
+          <ChevronDown
+            className={cn(
+              'size-4 transition-transform duration-300',
+              expanded && 'rotate-180',
+            )}
+          />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CardCarousel({ children }: { children: ReactNode }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ atStart: true, atEnd: false });
+
+  const updateEdges = () => {
+    const el = scrollerRef.current;
+    if (!el) {
+      return;
+    }
+    const atStart = el.scrollLeft <= 1;
+    const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
+    setEdges({ atStart, atEnd });
+  };
+
+  useEffect(() => {
+    updateEdges();
+    const el = scrollerRef.current;
+    if (!el) {
+      return;
+    }
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) {
+      return;
+    }
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) {
+        return;
+      }
+      const lineHeight = 16;
+      const amount = e.deltaMode === 1 ? e.deltaY * lineHeight : e.deltaY;
+      const scrollParent = findScrollableAncestor(el);
+      if (scrollParent) {
+        scrollParent.scrollTop += amount;
+      } else {
+        window.scrollBy(0, amount);
+      }
+      e.preventDefault();
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  const scrollByPage = (direction: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) {
+      return;
+    }
+    el.scrollBy({
+      left: direction * Math.round(el.clientWidth * 0.8),
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <div className="relative">
+      <div
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-background to-transparent transition-opacity duration-300',
+          edges.atStart ? 'opacity-0' : 'opacity-100',
+        )}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-background to-transparent transition-opacity duration-300',
+          edges.atEnd ? 'opacity-0' : 'opacity-100',
+        )}
+      />
+      {!edges.atStart && (
+        <CarouselArrow direction="left" onClick={() => scrollByPage(-1)} />
+      )}
+      {!edges.atEnd && (
+        <CarouselArrow direction="right" onClick={() => scrollByPage(1)} />
+      )}
+      <div
+        ref={scrollerRef}
+        onScroll={updateEdges}
+        className="flex snap-x gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function findScrollableAncestor(el: HTMLElement): HTMLElement | null {
+  let node = el.parentElement;
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY;
+    const scrollable =
+      (overflowY === 'auto' ||
+        overflowY === 'scroll' ||
+        overflowY === 'overlay') &&
+      node.scrollHeight > node.clientHeight;
+    if (scrollable) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return null;
+}
+
+function CarouselArrow({
+  direction,
+  onClick,
+}: {
+  direction: 'left' | 'right';
+  onClick: () => void;
+}) {
+  const Icon = direction === 'left' ? ChevronLeft : ChevronRight;
+  return (
+    <button
+      type="button"
+      aria-label={direction === 'left' ? t('Scroll left') : t('Scroll right')}
+      onClick={onClick}
+      className={cn(
+        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-md backdrop-blur transition-colors hover:bg-background',
+        direction === 'left' ? 'left-2' : 'right-2',
+      )}
+    >
+      <Icon className="size-5" />
+    </button>
+  );
+}
+
+function ExampleCard({
+  card,
+  delay,
+  onSuggestionClick,
+  large = false,
+  largeText = false,
+  animateIn = true,
+  className,
+}: {
+  card: ExampleCardData;
+  delay: number;
+  onSuggestionClick: (text: string) => void;
+  large?: boolean;
+  largeText?: boolean;
+  animateIn?: boolean;
+  className?: string;
+}) {
+  const emphasized = large || largeText;
+  const [imgError, setImgError] = useState(false);
+  const src = `/chat-suggestions/cards/${card.id}.webp`;
+
+  return (
+    <motion.button
+      type="button"
+      className={cn(
+        'group relative flex aspect-video cursor-pointer overflow-hidden rounded-xl text-left ring-1 ring-border/60',
+        large
+          ? 'w-[78vw] max-w-[360px] shrink-0 snap-start sm:w-[360px]'
+          : 'w-full',
+        imgError && 'bg-neutral-900',
+        className,
+      )}
+      onClick={() => onSuggestionClick(card.prompt)}
+      initial={animateIn ? { opacity: 0, y: 8 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay }}
+    >
+      {!imgError && (
+        <img
+          src={src}
+          alt=""
+          aria-hidden
+          loading="lazy"
+          onError={() => setImgError(true)}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+        />
+      )}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"
+      />
+      <div
+        className={cn(
+          'relative z-10 flex h-full w-full items-end justify-start',
+          emphasized ? 'p-5' : 'p-4',
+        )}
+      >
+        <h3
+          className={cn(
+            'font-bold leading-tight text-white [text-shadow:_0_1px_12px_rgb(0_0_0_/_60%)]',
+            emphasized ? 'text-2xl sm:text-3xl' : 'text-lg',
+          )}
+        >
+          {t(card.title)}
+        </h3>
+      </div>
+      <ArrowUpRight className="absolute right-3 top-3 z-10 size-4 text-white/0 transition-colors duration-300 group-hover:text-white/90" />
+    </motion.button>
+  );
+}
+
+const GREETING_HEADLINES: GreetingHeadline[] = [
+  { withName: 'Dream big, {name}.', plain: 'Dream big.' },
+  { withName: 'Think bigger, {name}.', plain: 'Think bigger.' },
+  { withName: 'Aim higher, {name}.', plain: 'Aim higher.' },
+  { withName: 'Reach further, {name}.', plain: 'Reach further.' },
+  { withName: 'Go all in, {name}.', plain: 'Go all in.' },
+  { withName: 'Push harder, {name}.', plain: 'Push harder.' },
+  { withName: 'Expect more, {name}.', plain: 'Expect more.' },
+  { withName: 'Raise the bar, {name}.', plain: 'Raise the bar.' },
+  { withName: 'Go bolder, {name}.', plain: 'Go bolder.' },
+  { withName: 'Be ambitious, {name}.', plain: 'Be ambitious.' },
+];
+
+const FEATURED_APP_NAMES = [
+  '@activepieces/piece-gmail',
+  '@activepieces/piece-slack',
+  '@activepieces/piece-microsoft-outlook',
+  '@activepieces/piece-notion',
+  '@activepieces/piece-hubspot',
+  '@activepieces/piece-salesforce',
+  '@activepieces/piece-google-sheets',
+  '@activepieces/piece-stripe',
+  '@activepieces/piece-microsoft-teams',
+  '@activepieces/piece-google-drive',
+  '@activepieces/piece-shopify',
+  '@activepieces/piece-zendesk',
+  '@activepieces/piece-github',
+  '@activepieces/piece-jira-cloud',
+  '@activepieces/piece-airtable',
+  '@activepieces/piece-openai',
+];
+
+const EXAMPLE_CARDS: ExampleCardData[] = [
+  {
+    id: 'fill-pipeline',
+    title: 'Fill my pipeline',
+    prompt: 'Fill my pipeline',
+  },
+  { id: 'close-deals', title: 'Close my deals', prompt: 'Close my deals' },
+  {
+    id: 'take-from-rivals',
+    title: 'Take customers from my rivals',
+    prompt: 'Take customers from my rivals',
+  },
+  { id: 'clone-me', title: 'Clone me', prompt: 'Clone me' },
+];
+
+const MORE_EXAMPLE_CARDS: ExampleCardData[] = [
+  { id: 'chase-leads', title: 'Chase my leads', prompt: 'Chase my leads' },
+  {
+    id: 'get-invoices-paid',
+    title: 'Get my invoices paid',
+    prompt: 'Get my invoices paid',
+  },
+  {
+    id: 'chase-late-payers',
+    title: 'Chase down my late payers',
+    prompt: 'Chase down my late payers',
+  },
+  {
+    id: 'grow-following',
+    title: 'Grow my following',
+    prompt: 'Grow my following',
+  },
+  { id: 'run-socials', title: 'Run my socials', prompt: 'Run my socials' },
+  { id: 'write-posts', title: 'Write my posts', prompt: 'Write my posts' },
+  {
+    id: 'win-back-customers',
+    title: 'Win back my customers',
+    prompt: 'Win back my customers',
+  },
+  {
+    id: 'answer-customers',
+    title: 'Answer my customers',
+    prompt: 'Answer my customers',
+  },
+  {
+    id: 'onboard-signups',
+    title: 'Onboard my new signups',
+    prompt: 'Onboard my new signups',
+  },
+  {
+    id: 'prep-meetings',
+    title: 'Prep me for meetings',
+    prompt: 'Prep me for meetings',
+  },
+  { id: 'run-my-day', title: 'Run my day', prompt: 'Run my day' },
+  { id: 'do-my-hiring', title: 'Do my hiring', prompt: 'Do my hiring' },
+  { id: 'squash-bugs', title: 'Squash my bugs', prompt: 'Squash my bugs' },
+];
+
+const ALL_EXAMPLE_CARDS: ExampleCardData[] = [
+  ...EXAMPLE_CARDS,
+  ...MORE_EXAMPLE_CARDS,
+];
+
+type ResolvedApp = {
+  name: string;
+  displayName: string;
+  logoUrl: string;
+};
+
+type ExampleCardData = {
+  id: string;
+  title: string;
+  prompt: string;
+};
+
+type GreetingHeadline = {
+  withName: string;
+  plain: string;
+};

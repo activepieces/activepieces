@@ -8,6 +8,8 @@ export const searchAgents = createAction({
   name: "search_agents",
   displayName: "Search Agents",
   description: "Find agents by name or ID using search filters.",
+  audience: 'both',
+  aiMetadata: { description: 'Lists AgentX agents on the account, optionally narrowing the results by partial name match and/or exact agent ID; leave both filters blank to return all agents. Use this to discover available agents or resolve an agent ID before starting a conversation. Read-only and idempotent.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: "Agent Name",

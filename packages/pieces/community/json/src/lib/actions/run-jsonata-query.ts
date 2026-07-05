@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import jsonata from 'jsonata';
 
 export const runJsonataQuery = createAction({
+  audience: 'human',
   name: 'run_jsonata_query',
   displayName: 'Run JSONata Query',
   description: 'Use the JSONata language to filter, map, and transform complex JSON payloads natively in JavaScript.',

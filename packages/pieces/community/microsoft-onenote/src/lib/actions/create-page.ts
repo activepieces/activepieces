@@ -9,6 +9,8 @@ export const createPage = createAction({
 	name: 'create_page',
 	displayName: 'Create Page',
 	description: 'Creates a page in section.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new OneNote page in a chosen notebook section with a title and optional HTML body content. Functionally similar to Create Note in Section; pick either to add a text page. Content accepts basic HTML tags. Not idempotent: each call creates a new page.', idempotent: false },
 	props: {
 		notebook_id: Property.Dropdown({
 			auth: oneNoteAuth,

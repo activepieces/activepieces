@@ -7,6 +7,12 @@ export const clicksendFindContactListAction = createAction({
   auth: clicksendAuth,
   name: 'find_contact_lists',
   description: 'Finds for contact list based on name.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches all ClickSend contact lists for one whose name exactly matches the given search term, paging through every list until a match is found. Choose this to resolve a list name to its list id for use by the contact actions. Matching is exact (not partial); read-only and idempotent.',
+    idempotent: true,
+  },
   displayName: 'Find Contact List',
   props: {
     search: Property.ShortText({

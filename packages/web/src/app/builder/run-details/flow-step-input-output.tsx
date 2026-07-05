@@ -1,3 +1,4 @@
+import { isNil, tryParseFriendlyPieceError } from '@activepieces/core-utils';
 import {
   StepOutputStatus,
   flowStructureUtil,
@@ -7,18 +8,17 @@ import {
   isFlowRunStateTerminal,
   FlowRun,
   FlowRunStatus,
-  isNil,
   ApFlagId,
   LogSliceRef,
   StepOutputType,
   RunInternalError,
-  tryParseFriendlyPieceError,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,6 +34,7 @@ import { stepPropertiesSnapshotUtils } from '../data-display/build-step-properti
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { ClosePanelButton } from '../step-data/close-panel-button';
 import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
@@ -145,8 +146,9 @@ export const FlowStepInputOutput = () => {
   if (!selectedStepOutput || !selectedStep) {
     return (
       <div className="flex flex-col h-full w-full">
-        <div className="flex justify-end px-3 py-2 shrink-0">
+        <div className="flex items-center justify-end gap-1 px-3 py-2 shrink-0">
           <StepDataPanelViewToggle />
+          <ClosePanelButton />
         </div>
         <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
           <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
@@ -186,6 +188,10 @@ export const FlowStepInputOutput = () => {
     selectedStep.type === FlowTriggerType.PIECE
       ? (selectedStep.settings.input as Record<string, unknown> | undefined)
       : undefined;
+  const pieceSchema =
+    pieceModel?.actions[stepName ?? '']?.outputSchema ??
+    pieceModel?.triggers[stepName ?? '']?.outputSchema ??
+    null;
   const explanationContext: ErrorExplanationContext = {
     pieceName: stepPieceName,
     pieceVersion: stepPieceVersion,
@@ -230,16 +236,17 @@ export const FlowStepInputOutput = () => {
               )}
               <TabsTrigger value="output">{t('Output')}</TabsTrigger>
             </TabsList>
-            <StepDataPanelViewToggle />
+            <div className="flex items-center gap-1 shrink-0">
+              <StepDataPanelViewToggle />
+              <ClosePanelButton />
+            </div>
           </div>
 
           {!isTrigger && (
             <TabsContent value="input">
-              <DataDisplayTabs
-                data={selectedStepOutput.input}
+              <SmartOutputViewer
+                json={selectedStepOutput.input}
                 title={t('Input')}
-                copyableData={selectedStepOutput.input}
-                downloadFileName={`${selectedStep.name}-input`}
               />
             </TabsContent>
           )}
@@ -261,6 +268,12 @@ export const FlowStepInputOutput = () => {
                 error={friendlyError}
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}
+              />
+            ) : status === 'success' ? (
+              <SmartOutputViewer
+                json={parsedOutput}
+                title={t('Output')}
+                pieceSchema={pieceSchema}
               />
             ) : (
               <DataDisplayTabs

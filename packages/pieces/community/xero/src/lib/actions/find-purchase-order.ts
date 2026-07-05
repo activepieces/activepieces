@@ -13,6 +13,12 @@ export const xeroFindPurchaseOrder = createAction({
   name: 'xero_find_purchase_order',
   displayName: 'Find Purchase Order',
   description: 'Finds a purchase order by given parameters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up Xero purchase orders by exact number, exact reference, or GUID ID, with optional filters for contact, status, date range, and paging. Read-only and idempotent; use it to resolve a purchase-order ID or inspect orders before updating one. Searching by ID fetches that single record directly; the other modes run a filtered list query.',
+    idempotent: true,
+  },
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(false),

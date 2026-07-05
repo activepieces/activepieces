@@ -1,15 +1,5 @@
-import {
-    FlowActionType,
-    FlowOperationRequest,
-    FlowOperationType,
-    flowStructureUtil,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    PieceActionSettings,
-    ProjectScopedMcpServer,
-    UpdateActionRequest,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolDefinition, PieceActionSettings, ProjectScopedMcpServer, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -48,7 +38,7 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
             sourceCode: z.string().optional().describe('For CODE steps only: the JavaScript/TypeScript source code. Must export a `code` function: `export const code = async (inputs) => { ... }`.'),
             packageJson: z.string().optional().describe('For CODE steps only: package.json content as a JSON string for npm dependencies. Defaults to "{}".'),
-            continueOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to continue the flow if this step fails.'),
+            continueOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: set true on the step that can fail (the one whose failure you want to react to), NOT on the recovery step. The flow keeps running on failure and the step gains On success / On failure branches — add handler steps into them with ap_add_step using stepLocationRelativeToParent INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH and parentStepName = this step.'),
             retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure.'),
         },
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -82,13 +72,15 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 return authError
             }
 
+            const rewritten = mcpUtils.rewriteAllReferences({ input, loopItems, trigger: flow.version.trigger })
+
             const currentSettings = step.settings as Record<string, unknown>
             const updatedSettings: Record<string, unknown> = { ...currentSettings }
 
-            if (input !== undefined || auth !== undefined) {
+            if (rewritten.input !== undefined || auth !== undefined) {
                 updatedSettings.input = {
                     ...(currentSettings.input as Record<string, unknown> ?? {}),
-                    ...(input ?? {}),
+                    ...(rewritten.input ?? {}),
                     ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
                 }
             }
@@ -100,9 +92,9 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     return { content: [{ type: 'text', text: `❌ actionName can only be set on PIECE steps, but "${stepName}" is type ${step.type}.` }] }
                 }
             }
-            if (loopItems !== undefined) {
+            if (rewritten.loopItems !== undefined) {
                 if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-                    updatedSettings.items = loopItems
+                    updatedSettings.items = rewritten.loopItems
                 }
                 else {
                     return { content: [{ type: 'text', text: `❌ loopItems can only be set on LOOP_ON_ITEMS steps, but "${stepName}" is type ${step.type}.` }] }
@@ -140,6 +132,14 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                     platformId: project.platformId,
                     log,
                 })
+
+                const { pieceName, pieceVersion, actionName: resolvedActionName } = updatedSettings
+                if (typeof pieceName === 'string' && typeof pieceVersion === 'string' && typeof resolvedActionName === 'string') {
+                    const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', input: updatedSettings.input, platformId: project.platformId, log })
+                    if (unknownPropsError) {
+                        return unknownPropsError
+                    }
+                }
             }
 
             const payload = {
@@ -220,7 +220,7 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
         return parts.join(' ')
     }
     catch (err) {
-        log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
         return null
     }
 }

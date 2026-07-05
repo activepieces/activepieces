@@ -9,6 +9,12 @@ export const getBusinessResultAction = createAction({
   displayName: 'Get Business Verification Result',
   description:
     "Fetches the current status and outcome of a company's background check — whether it is still running, approved, or declined.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up the current status and decision (running, approved, or declined) of a single business (KYB) verification by its session ID. Use this to poll or read the outcome of a previously started business verification. Requires the verification session ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     session_id: Property.ShortText({
       displayName: 'Verification Session ID',

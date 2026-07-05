@@ -44,6 +44,9 @@ export const newChange = createTrigger({
   name: 'new_change',
   displayName: 'New Change',
   description: 'Triggers when a new change request is created in Freshservice.',
+  aiMetadata: {
+    description: 'Fires when a new change request is created in Freshservice, representing a freshly proposed IT change entering change management. Polls newest-first by creation time across all changes in the account.',
+  },
   props: {},
   sampleData: {
     id: 1,

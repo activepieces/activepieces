@@ -1,8 +1,8 @@
+import { LocalesEnum, isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
   FlowTriggerType,
-  LocalesEnum,
   SuggestionType,
   FlowTrigger,
 } from '@activepieces/shared';
@@ -30,7 +30,8 @@ export const stepsHooks = {
       Error
     >({
       queryKey: getQueryKeyForStepMetadata(step, i18n.language as LocalesEnum),
-      queryFn: () => stepUtils.getMetadata(step, i18n.language as LocalesEnum),
+      queryFn: () => stepUtils.getMetadata(step!, i18n.language as LocalesEnum),
+      enabled: !isNil(step),
     });
     return {
       stepMetadata: query.data,
@@ -118,7 +119,7 @@ function passSearch(
 }
 
 type UseStepMetadata = {
-  step: FlowAction | FlowTrigger;
+  step: FlowAction | FlowTrigger | undefined;
 };
 
 type UseMetadataProps = {
@@ -128,15 +129,20 @@ type UseMetadataProps = {
 };
 
 const getQueryKeyForStepMetadata = (
-  step: FlowAction | FlowTrigger,
+  step: FlowAction | FlowTrigger | undefined,
   locale: LocalesEnum,
 ): (string | undefined)[] => {
+  if (isNil(step)) {
+    return ['step-metadata-disabled', locale];
+  }
   const isPieceStep =
     step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE;
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   const customLogoUrl =
-    'customLogoUrl' in step ? (step.customLogoUrl as string) : undefined;
+    'customLogoUrl' in step && typeof step.customLogoUrl === 'string'
+      ? step.customLogoUrl
+      : undefined;
   const actionName =
     step.type === FlowActionType.PIECE ? step.settings.actionName : undefined;
   const triggerName =

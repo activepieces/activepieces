@@ -12,6 +12,9 @@ export const newLeadAdded = createTrigger({
 	name: 'new_lead_created',
 	displayName: 'New Lead Created',
 	description: 'Triggers when a new lead is created.',
+	aiMetadata: {
+		description: 'Fires when a new lead (company/account) is created in Close CRM, via a registered webhook on the lead-created event. Emits the full lead record. Use to start a flow whenever a prospect or account enters the CRM.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

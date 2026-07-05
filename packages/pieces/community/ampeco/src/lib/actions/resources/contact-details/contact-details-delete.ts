@@ -14,6 +14,8 @@ export const contactDetailsDeleteAction = createAction({
   name: 'contactDetailsDelete',
   displayName: 'Resources - Contact Details - Contact Details Delete',
   description: 'Delete contact details.',
+  audience: 'both',
+  aiMetadata: { description: 'Delete the account-level contact details (no parameters; operates on the authenticated account\'s single contact record). Destructive: clears the stored email/phone. Safe to repeat in effect since the end state is "no contact details", but use contact-details-update to set values instead of removing them.', idempotent: false },
   props: {
   },
   async run(context): Promise<unknown> {

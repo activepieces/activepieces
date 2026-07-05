@@ -26,6 +26,12 @@ export const importRelationships = createAction({
   displayName: 'Import Relationships',
   description:
     "Import manual relationships to expand your network graph — useful for adding people you know but aren't connected to digitally. Provide email addresses or LinkedIn URLs with optional scores (0-10); higher scores indicate stronger relationships. Max 1000 per request.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Import up to 1000 manual relationships into the network graph, each identified by email or LinkedIn URL with an optional 0-10 strength score and relationship type. Effectively idempotent per person: re-importing the same identifier updates that relationship rather than duplicating it. Use to add people known offline who would not surface from a synced integration.',
+    idempotent: true,
+  },
   props: {
     people: Property.Array({
       displayName: 'People',

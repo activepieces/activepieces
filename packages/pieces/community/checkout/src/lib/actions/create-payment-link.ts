@@ -7,6 +7,8 @@ export const createPaymentLinkAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Create Payment Link',
   description: 'Create a Payment Link to accept and process payment details.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a hosted Checkout.com Payment Link for a given amount, currency, billing country, and processing channel that a customer can open to enter their details and pay, optionally restricting payment methods, attaching products, customer, and shipping info. Choose it when you need a shareable pay-by-link page rather than charging a card directly. Not idempotent: each call generates a new payment link.', idempotent: false },
   props: {
     amount: Property.Number({
       displayName: 'Amount',

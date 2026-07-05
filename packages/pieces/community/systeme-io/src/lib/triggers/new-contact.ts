@@ -8,6 +8,9 @@ export const newContact = createTrigger({
     name: 'newContact',
     displayName: 'New Contact',
     description: 'Fires when a new contact is created',
+    aiMetadata: {
+      description: 'Fires when a new contact is created in the Systeme.io account, delivering the new contact record (email, fields, tags). Use to react to newly captured leads or subscribers.',
+    },
     props: {},
     sampleData: {
         contact: {

@@ -9,6 +9,8 @@ export const approveQueueItemAction = createAction({
   name: 'approve_queue_item',
   displayName: 'Approve Queue Item',
   description: 'Approve one or more pending queue items.',
+  audience: 'both',
+  aiMetadata: { description: 'Approve one or more pending print-queue items by their numeric IDs, with an optional comment, so they can proceed to printing. Pick it to clear an approval gate on queued jobs. Idempotent: approving an already-approved item leaves it approved.', idempotent: true },
   props: {
     queueItemIds: Property.Array({
       displayName: 'Queue item IDs',

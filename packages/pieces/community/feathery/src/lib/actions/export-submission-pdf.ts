@@ -8,6 +8,8 @@ export const exportSubmissionPdfAction = createAction({
   name: 'export_submission_pdf',
   displayName: 'Export Form Submission PDF',
   description: 'Create a PDF export for a specific form submission.',
+  audience: 'both',
+  aiMetadata: { description: 'Generates a PDF export of one user\'s submission for a specific Feathery form, identified by form ID and user ID. Use to produce a downloadable PDF of a completed submission. Not idempotent — each call triggers a new export generation.', idempotent: false },
   props: {
     form_id: Property.Dropdown({
       displayName: 'Form',

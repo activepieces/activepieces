@@ -3,11 +3,14 @@ import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
+import { messageRepliesOutputSchema } from '../../output-schemas';
 
 export const getClickupMessageReplies = createAction({
   auth: clickupAuth,
   name: 'get_message_replies',
   description: 'Gets the replies of a message in a ClickUp channel',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only: retrieve the threaded replies to a specific Chat message in a ClickUp workspace, given the workspace and message IDs. Use to read a reply thread; does not post anything. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Message Replies',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -18,6 +21,7 @@ export const getClickupMessageReplies = createAction({
     }),
   },
 
+  outputSchema: messageRepliesOutputSchema,
   async run(configValue) {
     const { workspace_id, message_id } = configValue.propsValue;
     const response = await callClickUpApi3(

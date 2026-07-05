@@ -11,6 +11,10 @@ export const customerCreated = createTrigger({
   name: 'customerCreated',
   displayName: 'Customer Created',
   description: 'Triggers when a new customer is created',
+  aiMetadata: {
+    description:
+      'Fires when a new customer is created in the BigCommerce store. The event identifies the new customer.',
+  },
   props: {},
   sampleData: {
     producer: 'stores/xqcaklwsso',

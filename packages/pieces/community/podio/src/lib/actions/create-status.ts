@@ -8,6 +8,8 @@ export const createStatusAction = createAction({
   name: 'create_status',
   displayName: 'Create Status Update',
   description: 'Add a status to an item or workspace stream.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a status update to a Podio workspace (space) stream, optionally with file/embed attachments or an attached poll. Use to share an announcement or post to a space feed; requires the space id and a status message. Not idempotent — each call posts a new status update.', idempotent: false },
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,

@@ -10,6 +10,12 @@ export const githubCreateGistAction = createAction({
   displayName: 'Create Gist',
   description:
     'Create a GitHub Gist. Requires an OAuth connection — Gists cannot be created with GitHub App authentication.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a GitHub Gist (a standalone code/text snippet) containing a single named file with the given content, public or secret. Use to share a snippet outside any repository. Requires an OAuth connection — it throws an error under GitHub App authentication. Not idempotent: each call creates a new gist.',
+    idempotent: false,
+  },
 
   props: {
     description: Property.ShortText({

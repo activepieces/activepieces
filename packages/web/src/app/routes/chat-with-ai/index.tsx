@@ -1,10 +1,13 @@
+import { SeekPage } from '@activepieces/core-utils';
+import { ChatConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,11 +16,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { AIChatBox } from './ai-chat-box';
+import { ConversationSidebarToggle } from './components/conversation-sidebar-toggle';
 import { TypewriterText } from './components/typewriter-text';
 import { ConversationList } from './conversation-list';
+
+const SIDEBAR_PINNED_STORAGE_KEY = 'chat-sidebar-pinned';
 
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();
@@ -32,9 +47,28 @@ export function ChatWithAIPage() {
   const [conversationTitle, setConversationTitle] = useState<string | null>(
     null,
   );
+  const [titleResolved, setTitleResolved] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const renameCancelledRef = useRef(false);
+  const [sidebarPinned, setSidebarPinned] = useState(
+    () => localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY) === 'true',
+  );
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    // Record the chat-page landing for the cloud rollout funnel (server is cloud-gated; no-op otherwise).
+    chatApi.recordLanding().catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarPinned((prev) => {
+      const next = !prev;
+      localStorage.setItem(SIDEBAR_PINNED_STORAGE_KEY, String(next));
+      return next;
+    });
+  }, []);
 
   const selectedConversationId = urlConversationId ?? null;
 
@@ -42,6 +76,7 @@ export function ChatWithAIPage() {
     setResetKey((k) => k + 1);
     setPendingConversationId(null);
     setConversationTitle(null);
+    setTitleResolved(false);
     navigate('/chat', { replace: true });
   }, [navigate]);
 
@@ -49,6 +84,7 @@ export function ChatWithAIPage() {
     (conversationId: string) => {
       setPendingConversationId(null);
       setConversationTitle(null);
+      setTitleResolved(false);
       navigate(`/chat/${conversationId}`, {
         replace: true,
       });
@@ -107,18 +143,20 @@ export function ChatWithAIPage() {
     }
   }, [selectedConversationId, pendingConversationId, renameValue, queryClient]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
     const convId = selectedConversationId ?? pendingConversationId;
     if (!convId) return;
-    try {
-      await chatApi.deleteConversation(convId);
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
-      handleNewChat();
-    } catch {
-      toast.error(t('Failed to delete conversation'));
-    }
+    handleNewChat();
+    chatApi.deleteConversation(convId).then(
+      () => {
+        void queryClient.invalidateQueries({
+          queryKey: ['chat-conversations'],
+        });
+      },
+      () => {
+        toast.error(t('Failed to delete conversation'));
+      },
+    );
   }, [
     selectedConversationId,
     pendingConversationId,
@@ -132,9 +170,13 @@ export function ChatWithAIPage() {
     chatApi
       .getConversation(selectedConversationId)
       .then((conv) => {
-        if (!cancelled && conv.title) setConversationTitle(conv.title);
+        if (cancelled) return;
+        if (conv.title) setConversationTitle(conv.title);
+        setTitleResolved(true);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!cancelled) setTitleResolved(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -155,20 +197,71 @@ export function ChatWithAIPage() {
     return () => window.removeEventListener('keydown', handler);
   }, [handleNewChat]);
 
+  useEffect(() => {
+    const handler = () => handleNewChat();
+    window.addEventListener(chatUtils.newChatEvent, handler);
+    return () => window.removeEventListener(chatUtils.newChatEvent, handler);
+  }, [handleNewChat]);
+
   const activeConversationId = selectedConversationId ?? pendingConversationId;
-  const displayTitle = conversationTitle ?? t('New conversation');
+  const cachedTitle = useMemo(() => {
+    if (conversationTitle) return conversationTitle;
+    if (!selectedConversationId) return null;
+    const cached = queryClient.getQueryData<SeekPage<ChatConversation>>([
+      'chat-conversations',
+    ]);
+    return (
+      cached?.data?.find((c) => c.id === selectedConversationId)?.title ?? null
+    );
+  }, [conversationTitle, selectedConversationId, queryClient]);
+  const isTitleLoading =
+    !!selectedConversationId && !cachedTitle && !titleResolved;
+  const displayTitle = cachedTitle
+    ? chatUtils.sanitizeTitle(cachedTitle)
+    : t('New Chat');
+  const effectivePinned = !isMobile && sidebarPinned;
 
   return (
     <div className="flex h-full overflow-hidden">
-      <div className="shrink-0 overflow-hidden opacity-70 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
-        <ConversationList
-          onNewChat={handleNewChat}
-          onSelect={handleSelectConversation}
-          selectedId={pendingConversationId ?? selectedConversationId}
-        />
-      </div>
+      {effectivePinned && (
+        <div className="shrink-0 overflow-hidden border-r animate-in slide-in-from-left-2 duration-200">
+          <ConversationList
+            onNewChat={handleNewChat}
+            onSelect={handleSelectConversation}
+            selectedId={pendingConversationId ?? selectedConversationId}
+          />
+        </div>
+      )}
       <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-        <div className="shrink-0 flex items-center gap-1.5 px-6 py-3 border-b">
+        <div className="shrink-0 flex items-center gap-1.5 px-3 sm:px-6 py-3 border-b">
+          <ConversationSidebarToggle
+            pinned={effectivePinned}
+            isMobile={isMobile}
+            onTogglePin={toggleSidebar}
+            onNewChat={handleNewChat}
+            onSelect={handleSelectConversation}
+            selectedId={pendingConversationId ?? selectedConversationId}
+          />
+          {!effectivePinned && (
+            <TooltipProvider delayDuration={400}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
+                    onClick={handleNewChat}
+                  >
+                    <PlusIcon size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="flex items-center gap-2">
+                  {t('New chat')}
+                  <span className="text-[11px] opacity-50">⇧⌘O</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {isRenaming ? (
             <Input
               autoFocus
@@ -186,10 +279,14 @@ export function ChatWithAIPage() {
             />
           ) : (
             <>
-              <TypewriterText
-                text={displayTitle}
-                className="text-sm font-semibold truncate max-w-[400px]"
-              />
+              {isTitleLoading ? (
+                <Skeleton className="h-4 w-32" />
+              ) : (
+                <TypewriterText
+                  text={displayTitle}
+                  className="text-sm font-semibold truncate max-w-[400px]"
+                />
+              )}
               {activeConversationId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -204,7 +301,11 @@ export function ChatWithAIPage() {
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem
                       onClick={() => {
-                        setRenameValue(conversationTitle ?? '');
+                        setRenameValue(
+                          conversationTitle
+                            ? chatUtils.sanitizeTitle(conversationTitle)
+                            : '',
+                        );
                         setIsRenaming(true);
                       }}
                     >
