@@ -390,13 +390,10 @@ import { AddWorkerGroupsEnabledToPlatformPlan1797000000000 } from './migration/p
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/1798000000000-AddWorkerGroupIdToProject'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
-import { AddAdhocRunTable1800000000000 } from './migration/postgres/1800000000000-AddAdhocRunTable'
-import { AddUserIdToAdhocRun1800000000001 } from './migration/postgres/1800000000001-AddUserIdToAdhocRun'
-import { AddArchivedAtToAdhocRun1800000000002 } from './migration/postgres/1800000000002-AddArchivedAtToAdhocRun'
-import { AddConversationIdToAdhocRun1800000000003 } from './migration/postgres/1800000000003-AddConversationIdToAdhocRun'
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
+import { AddAdhocRunTable1804000000000 } from './migration/postgres/1804000000000-AddAdhocRunTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -801,14 +798,11 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiToolConfigTable1797000000000,
         AddChatConversationActiveRunId1798000000000,
         AddChatRolloutUserTable1799000000000,
-        AddAdhocRunTable1800000000000,
-        AddUserIdToAdhocRun1800000000001,
-        AddArchivedAtToAdhocRun1800000000002,
-        AddConversationIdToAdhocRun1800000000003,
         AddTimelineToFlowRun1800000000000,
         AddToolSearchIndexTable1801000000000,
         AddChatRolloutFreeCreditGrant1802000000000,
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
+        AddAdhocRunTable1804000000000,
     ]
     return migrations
 }

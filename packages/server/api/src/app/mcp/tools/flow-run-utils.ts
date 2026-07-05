@@ -241,9 +241,9 @@ export async function executeAdhocAction({
         return {
             content: [{
                 type: 'text',
-                text: `⏳ Action still running after the time limit. Run ID: ${adhocRun.id}. Use ap_get_adhoc_run to check results later.`,
+                text: `⏳ ${action.displayName} timed out before it finished. Run ID: ${adhocRun.id}.`,
             }],
-            structuredContent: { errorSummary: 'Still running — this is taking longer than usual.' },
+            structuredContent: { errorSummary: 'The action timed out before it finished.' },
         }
     }
 

@@ -43,7 +43,7 @@ A one-shot action has no flow context, so `adhocMode`:
 - Rejects waitpoints/pauses via `assertAdhocCannotSuspend`, thrown as a **plain `Error` (USER-level)** so the step ends FAILED rather than INTERNAL_ERROR — "this action only works inside a flow" is a usage error, not an engine bug, and must not page oncall.
 
 ## Edition Availability
-- Community / Enterprise / Cloud: all editions. Entity registered in `database-connection.ts`; migrations `1800000000000-AddAdhocRunTable` and `1800000000001-AddUserIdToAdhocRun`.
+- Community / Enterprise / Cloud: all editions. Entity registered in `database-connection.ts`; the single migration `1804000000000-AddAdhocRunTable` creates the `adhoc_run` table with all columns (including `userId`, `conversationId`, and the `archivedAt` soft-delete column) and its indexes.
 
 ## Domain Terms
 - **Ad-hoc run** — a single action/code execution outside any flow; persisted as an `adhoc_run` row.

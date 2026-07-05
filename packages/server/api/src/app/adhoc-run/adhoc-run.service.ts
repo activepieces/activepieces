@@ -253,7 +253,25 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
     async deleteStale(): Promise<void> {
         const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         const cutoff = dayjs().subtract(retentionDays, 'day').toISOString()
-        await adhocRunRepo().delete({ created: LessThan(cutoff) })
+        const maximumRunsToDeletePerIteration = 4000
+        const maximumRunsToDeletePerRun = 1_000_000
+        let totalAffected = 0
+        let affected: number | undefined = undefined
+        while ((isNil(affected) || affected === maximumRunsToDeletePerIteration) && totalAffected < maximumRunsToDeletePerRun) {
+            const staleRuns = await adhocRunRepo().find({
+                select: ['id'],
+                where: { created: LessThan(cutoff) },
+                take: maximumRunsToDeletePerIteration,
+            })
+            if (staleRuns.length === 0) {
+                break
+            }
+            const result = await adhocRunRepo().delete({ id: In(staleRuns.map((run) => run.id)) })
+            affected = result.affected ?? 0
+            totalAffected += affected
+            log.info({ count: affected }, '[adhocRunService#deleteStale] iteration completed')
+        }
+        log.info({ totalAffected }, '[adhocRunService#deleteStale] completed')
     },
 })
 
