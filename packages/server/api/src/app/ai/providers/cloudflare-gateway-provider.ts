@@ -113,6 +113,7 @@ async function fetchUpstreamModels({
             let hasMore = true
             let pageCount = 0
             const MAX_PAGES = 10
+            const seenCursors = new Set<string>()
             while (hasMore && pageCount < MAX_PAGES) {
                 pageCount++
                 const res = await httpClient.sendRequest<{ data: { id: string, display_name: string }[], has_more: boolean, last_id: string }>({
@@ -127,8 +128,11 @@ async function fetchUpstreamModels({
                 })))
                 hasMore = res.body.has_more
                 const nextAfterId = res.body.last_id
-                if (hasMore && (!nextAfterId || nextAfterId === afterId)) {
+                if (hasMore && (!nextAfterId || seenCursors.has(nextAfterId))) {
                     throw new Error('Anthropic model discovery pagination stalled: gateway returned has_more without an advancing cursor')
+                }
+                if (nextAfterId) {
+                    seenCursors.add(nextAfterId)
                 }
                 afterId = nextAfterId
             }
