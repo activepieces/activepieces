@@ -240,26 +240,31 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
         return populated
     },
     async bulkArchive(params: BulkArchiveParams): Promise<void> {
-        let query = adhocRunRepo().createQueryBuilder('adhoc_run')
-            .select('adhoc_run.id')
-            .where({ projectId: params.projectId, archivedAt: IsNull() })
-        if (!isNil(params.adhocRunIds) && params.adhocRunIds.length > 0) {
-            query = query.andWhere({ id: In(params.adhocRunIds) })
+        const maximumRunsToArchivePerIteration = 4000
+        let affected: number | undefined = undefined
+        while (isNil(affected) || affected === maximumRunsToArchivePerIteration) {
+            let query = adhocRunRepo().createQueryBuilder('adhoc_run')
+                .select('adhoc_run.id')
+                .where({ projectId: params.projectId, archivedAt: IsNull() })
+            if (!isNil(params.adhocRunIds) && params.adhocRunIds.length > 0) {
+                query = query.andWhere({ id: In(params.adhocRunIds) })
+            }
+            if (!isNil(params.excludeAdhocRunIds) && params.excludeAdhocRunIds.length > 0) {
+                query = query.andWhere({ id: Not(In(params.excludeAdhocRunIds)) })
+            }
+            query = applyAdhocRunFilters(query, params)
+            const runs = await query.take(maximumRunsToArchivePerIteration).getMany()
+            if (runs.length === 0) {
+                break
+            }
+            const result = await adhocRunRepo().update({
+                id: In(runs.map((run) => run.id)),
+                projectId: params.projectId,
+            }, {
+                archivedAt: dayjs().toISOString(),
+            })
+            affected = result.affected ?? runs.length
         }
-        if (!isNil(params.excludeAdhocRunIds) && params.excludeAdhocRunIds.length > 0) {
-            query = query.andWhere({ id: Not(In(params.excludeAdhocRunIds)) })
-        }
-        query = applyAdhocRunFilters(query, params)
-        const runs = await query.getMany()
-        if (runs.length === 0) {
-            return
-        }
-        await adhocRunRepo().update({
-            id: In(runs.map((run) => run.id)),
-            projectId: params.projectId,
-        }, {
-            archivedAt: dayjs().toISOString(),
-        })
     },
     async deleteStale(): Promise<void> {
         const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)

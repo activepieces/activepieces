@@ -338,7 +338,7 @@ export async function executeAdhocCode({
     return mapCodeResult(adhocRun)
 }
 
-function mapCodeResult(run: { id: string, status: FlowRunStatus, output: unknown, errorMessage: string | null }): AdhocCodeResult {
+function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknown, errorMessage?: string | null }): AdhocCodeResult {
     switch (run.status) {
         case FlowRunStatus.SUCCEEDED:
             return { status: 'succeeded', runId: run.id, output: run.output }
