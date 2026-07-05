@@ -1,9 +1,15 @@
 import { isNil } from '@activepieces/core-utils';
 import { Field, Table, PopulatedRecord } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
-import { createContext, useContext, useRef } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
@@ -21,6 +27,7 @@ import { recordsApi } from '../api/records-api';
 import { tablesApi } from '../api/tables-api';
 
 const TableContext = createContext<ApTableStore | null>(null);
+const TableRefreshContext = createContext<(() => Promise<void>) | null>(null);
 
 export const TableStateProviderWithTable = ({
   children,
@@ -49,6 +56,8 @@ export function ApTableStateProvider({
   children: React.ReactNode;
 }) {
   const tableId = useParams().tableId;
+  const queryClient = useQueryClient();
+  const [refreshKey, setRefreshKey] = useState(0);
   const {
     data: table,
     isLoading: isTableLoading,
@@ -98,6 +107,18 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
+  // rebuilds the table store from freshly fetched server state without
+  // reloading the document (a full reload breaks the embed SDK handshake
+  // inside an iframe)
+  const refreshTableState = useCallback(async () => {
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ['table', tableId] }),
+      queryClient.refetchQueries({ queryKey: ['fields', tableId] }),
+      queryClient.refetchQueries({ queryKey: ['records', tableId] }),
+    ]);
+    setRefreshKey((key) => key + 1);
+  }, [queryClient, tableId]);
+
   if (isTableLoading || isFieldsLoading || isRecordsLoading) {
     return <RouteLoadingBar />;
   }
@@ -136,13 +157,16 @@ export function ApTableStateProvider({
   }
 
   return (
-    <TableStateProviderWithTable
-      table={table}
-      fields={fields}
-      records={records.data}
-    >
-      {children}
-    </TableStateProviderWithTable>
+    <TableRefreshContext.Provider value={refreshTableState}>
+      <TableStateProviderWithTable
+        key={refreshKey}
+        table={table}
+        fields={fields}
+        records={records.data}
+      >
+        {children}
+      </TableStateProviderWithTable>
+    </TableRefreshContext.Provider>
   );
 }
 
@@ -152,6 +176,14 @@ export function useTableState<T>(selector: (state: TableState) => T) {
     throw new Error('Table context not found');
   }
   return useStore(tableStore, selector);
+}
+
+export function useRefreshTableState() {
+  const refreshTableState = useContext(TableRefreshContext);
+  if (!refreshTableState) {
+    throw new Error('Table refresh context not found');
+  }
+  return refreshTableState;
 }
 
 export function useOptionalTableStore() {

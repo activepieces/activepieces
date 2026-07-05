@@ -4,6 +4,7 @@ export { ApTableFooter } from './components/ap-table-footer';
 export { ApTableHeader } from './components/ap-table-header';
 export {
   useTableState,
+  useRefreshTableState,
   ApTableStateProvider,
 } from './components/ap-table-state-provider';
 export { ImportTableDialog } from './components/import-table-dialog';

@@ -11,6 +11,7 @@ import {
   ApTableFooter,
   ApTableHeader,
   useTableState,
+  useRefreshTableState,
   useTableColumns,
   mapRecordsToRows,
   Row,
@@ -50,8 +51,12 @@ const ApTableEditorPage = () => {
     state.setLockedByOtherUser,
   ]);
 
+  // refresh the table in place after a successful take-over; a full-page
+  // reload would break the embed SDK handshake inside an iframe
+  const refreshTableState = useRefreshTableState();
   const { lockedBy, takeOver } = useResourceLock({
     resourceId: table.id,
+    onTakeOver: refreshTableState,
   });
 
   useEffect(() => {

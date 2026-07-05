@@ -10,10 +10,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
-function useResourceLock({ resourceId }: UseResourceLockParams) {
+function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
   const socket = useSocket();
   const currentUserId = authenticationSession.getCurrentUserId();
   const isOwner = useRef(false);
+  // bumped after a successful take-over so the acquire effect re-runs and
+  // registers ownership on this socket, replacing the previous full-page
+  // reload (which broke the embed SDK handshake inside an iframe)
+  const [lockSession, setLockSession] = useState(0);
   const [lockedBy, setLockedBy] = useState<{
     userId: string;
     userDisplayName: string;
@@ -79,7 +83,7 @@ function useResourceLock({ resourceId }: UseResourceLockParams) {
         isOwner.current = false;
       }
     };
-  }, [resourceId, socket]);
+  }, [resourceId, socket, lockSession]);
 
   const takeOver = useCallback(() => {
     socket.emit(
@@ -88,11 +92,13 @@ function useResourceLock({ resourceId }: UseResourceLockParams) {
       (response: LockResourceResponse) => {
         if (response.acquired) {
           isOwner.current = false;
-          window.location.reload();
+          setLockedBy(null);
+          setLockSession((session) => session + 1);
+          onTakeOver?.();
         }
       },
     );
-  }, [resourceId, socket]);
+  }, [resourceId, socket, onTakeOver]);
 
   return { lockedBy, takeOver };
 }
@@ -101,4 +107,5 @@ export { useResourceLock };
 
 type UseResourceLockParams = {
   resourceId: string;
+  onTakeOver?: () => void;
 };
