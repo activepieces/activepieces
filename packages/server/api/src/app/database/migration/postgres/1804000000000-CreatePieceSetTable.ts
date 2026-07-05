@@ -2,7 +2,9 @@ import { apId } from '@activepieces/core-utils'
 import { ApEdition } from '@activepieces/shared'
 import { QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { isNotOneOfTheseEditions } from '../../database-common'
+import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
 type PieceSetConfig = {
@@ -21,11 +23,13 @@ const PLATFORM_BATCH = 100
 const PROJECT_BATCH = 500
 
 const log = system.globalLogger()
+const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
 export class CreatePieceSetTable1804000000000 implements Migration {
     name = 'CreatePieceSetTable1804000000000'
     breaking = false
     release = '0.103.0'
+    transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -76,16 +80,32 @@ export class CreatePieceSetTable1804000000000 implements Migration {
             ADD COLUMN IF NOT EXISTS "pieceSetId" character varying(21)
         `)
 
-        await queryRunner.query(`
-            ALTER TABLE "project"
-            ADD CONSTRAINT "fk_project_piece_set_id"
-            FOREIGN KEY ("pieceSetId") REFERENCES "piece_set"("id") ON DELETE SET NULL
-        `)
+        const [existingFk] = await queryRunner.query(
+            'SELECT 1 FROM pg_constraint WHERE conname = $1',
+            ['fk_project_piece_set_id'],
+        )
+        if (!existingFk) {
+            await queryRunner.query(`
+                ALTER TABLE "project"
+                ADD CONSTRAINT "fk_project_piece_set_id"
+                FOREIGN KEY ("pieceSetId") REFERENCES "piece_set"("id") ON DELETE SET NULL
+            `)
+        }
 
-        await queryRunner.query(`
-            CREATE INDEX IF NOT EXISTS "idx_project_piece_set_id"
-            ON "project" ("pieceSetId")
-        `)
+        if (isPGlite) {
+            await queryRunner.query(`
+                CREATE INDEX IF NOT EXISTS "idx_project_piece_set_id"
+                ON "project" ("pieceSetId")
+            `)
+        }
+        else {
+            // CONCURRENTLY avoids a ShareLock that would block all writes on the
+            // existing "project" table for the duration of the index build.
+            await queryRunner.query(`
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_project_piece_set_id"
+                ON "project" ("pieceSetId")
+            `)
+        }
 
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
