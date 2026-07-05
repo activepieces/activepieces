@@ -35,7 +35,7 @@ type ProjectSchema = Project & {
     cells: Cell[]
     tableWebhooks: TableWebhook[]
     pool?: ConcurrencyPool | null
-    pieceSet?: PieceSet | null,
+    pieceSet?: PieceSet | null
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
