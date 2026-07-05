@@ -81,6 +81,9 @@ scratch.md
 # chat-eval CLI cache + decision log
 .chat-eval/
 
+# security advisory triage artifacts (PRIVATE/embargoed advisory content — never commit)
+.security-triage/
+
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
