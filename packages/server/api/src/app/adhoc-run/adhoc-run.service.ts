@@ -1,4 +1,4 @@
-import { apId, isNil, sanitizeObjectForPostgresql, unique } from '@activepieces/core-utils'
+import { apId, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import {
     AdhocRun,
     AdhocRunKind,
@@ -178,13 +178,24 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
             archivedAt: null,
         })
 
-        const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineActionResponse>({
+        const { data: engineResponse, error: engineError } = await tryCatch(() => userInteractionWatcher.submitAndWaitForResponse<EngineActionResponse>({
             jobType: WorkerJobType.EXECUTE_ACTION,
             projectId,
             platformId,
             step,
             piece,
-        }, log)
+        }, log))
+
+        if (engineError) {
+            await adhocRunRepo().save({
+                ...created,
+                status: FlowRunStatus.INTERNAL_ERROR,
+                errorMessage: engineError instanceof Error ? engineError.message : String(engineError),
+                finishTime: dayjs().toISOString(),
+                updated: dayjs().toISOString(),
+            })
+            throw engineError
+        }
 
         const status = deriveStatus(engineResponse)
         const output = status === FlowRunStatus.SUCCEEDED ? sanitizeValue(engineResponse.response.output) : null
