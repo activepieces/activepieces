@@ -1,11 +1,11 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { FileType, FlowRun, FlowVersion, LogSliceRef, PlanName } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, FileType, FlowRun, FlowVersion, LogSliceRef, PlanName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
-import { CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
+import { buildCreditEvents, CreditUsageEvent, CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { flowRunAiUsageExtractor } from './flow-run-ai-usage-extractor'
 import { flowRunService } from './flow-run-service'
@@ -35,26 +35,28 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
         const appSumoAiValue = usage.breakdown
             .filter((entry) => entry.provider === AIProviderName.ACTIVEPIECES)
             .reduce((sum, entry) => sum + entry.messages + entry.toolCalls, 0)
+        const weightedMessages = usage.breakdown.reduce((sum, entry) => sum + entry.messages * resolveAiCreditWeight({ provider: entry.provider, model: entry.model }), 0)
+        const weightedToolCalls = usage.breakdown.reduce((sum, entry) => sum + entry.toolCalls * resolveAiCreditWeight({ provider: entry.provider, model: entry.model }), 0)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const isAppSumoPlan = platformPlan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false
         await trackCreditsWithAppSumo({
             log,
-            credits: {
+            creditEvents: buildCreditEvents({
                 platformId: project.platformId,
-                value: usage.messages + usage.toolCalls,
                 source: CreditUsageSource.AI,
-                idempotencyKey: `${flowRun.id}:ai`,
+                baseIdempotencyKey: `${flowRun.id}:ai`,
                 properties: {
                     platformId: project.platformId,
                     projectId: flowRun.projectId,
                     flowId: flowRun.flowId,
                     flowRunId: flowRun.id,
                     environment: flowRun.environment,
-                    messages: usage.messages,
-                    toolCalls: usage.toolCalls,
-                    breakdown: usage.breakdown,
                 },
-            },
+                events: [
+                    { event: CreditUsageEvent.AI_STEP_MESSAGE, value: weightedMessages, key: 'message' },
+                    { event: CreditUsageEvent.AI_STEP_TOOL_CALL, value: weightedToolCalls, key: 'tool_call' },
+                ],
+            }),
             appSumo: appSumoAiValue > 0 && isAppSumoPlan ? {
                 platformId: project.platformId,
                 value: appSumoAiValue,
@@ -90,6 +92,14 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+
+export function resolveAiCreditWeight({ provider, model }: { provider: string, model: string }): number {
+    if (provider !== AIProviderName.ACTIVEPIECES) {
+        return 1
+    }
+    return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === model)?.creditWeight ?? 2
+}
 
 
 async function fetchSlice({ log, projectId, ref }: FetchSliceParams): Promise<unknown> {

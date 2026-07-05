@@ -90,16 +90,36 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
     }
 }
 
-export async function trackCreditsWithAppSumo({ log, credits, appSumo }: {
+export async function trackCreditsWithAppSumo({ log, creditEvents, appSumo }: {
     log: FastifyBaseLogger
-    credits: TrackCreditsParams
+    creditEvents: TrackCreditsParams[]
     appSumo?: TrackAppSumoAiUsageParams
 }): Promise<void> {
     const provider = billingProvider.get(log)
-    await provider.trackCredits(credits)
+    for (const creditEvent of creditEvents) {
+        await provider.trackCredits(creditEvent)
+    }
     if (!isNil(appSumo)) {
         await provider.trackAppSumoAiUsage(appSumo)
     }
+}
+
+export function buildCreditEvents({ platformId, source, baseIdempotencyKey, properties, events }: {
+    platformId: string
+    source: CreditUsageSource
+    baseIdempotencyKey: string
+    properties: CreditEventProperties
+    events: { event: CreditUsageEvent, value: number, key: string }[]
+}): TrackCreditsParams[] {
+    return events
+        .filter(({ value }) => value > 0)
+        .map(({ event, value, key }) => ({
+            platformId,
+            value,
+            source,
+            idempotencyKey: `${baseIdempotencyKey}:${key}`,
+            properties: { ...properties, event },
+        }))
 }
 
 export enum CreditUsageSource {
@@ -108,12 +128,34 @@ export enum CreditUsageSource {
     CHAT = 'chat',
 }
 
+export enum CreditUsageEvent {
+    FLOW_RUN = 'flow_run',
+    AI_STEP_MESSAGE = 'ai_step_message',
+    AI_STEP_TOOL_CALL = 'ai_step_tool_call',
+    CHAT_MESSAGE = 'chat_message',
+    CHAT_TOOL_CALL = 'chat_tool_call',
+}
+
+export type CreditEventProperties = {
+    platformId: string
+    projectId: string
+    flowId?: string
+    flowRunId?: string
+    environment?: string
+    userId?: string
+    conversationId?: string
+    turnIndex?: number
+    provider?: string | null
+    model?: string | null
+    tier?: string
+}
+
 export type TrackCreditsParams = {
     platformId: string
     value: number
     source: CreditUsageSource
     idempotencyKey: string
-    properties?: Record<string, unknown>
+    properties?: CreditEventProperties & { event?: CreditUsageEvent }
 }
 
 export type TrackAppSumoAiUsageParams = {

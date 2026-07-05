@@ -1,11 +1,11 @@
 import { isManualPieceTrigger, isNil, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, FlowRun, FlowRunStatus, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ApEdition, FlowRun, FlowRunStatus, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { system } from '../../helper/system/system'
-import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
+import { billingProvider, CreditUsageEvent, CreditUsageSource } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowRunAiUsageTracker } from './flow-run-ai-usage-tracker'
@@ -76,6 +76,7 @@ async function trackProductionRunCredit(log: FastifyBaseLogger, flowRun: FlowRun
             flowId: flowRun.flowId,
             flowRunId: flowRun.id,
             environment: flowRun.environment,
+            event: CreditUsageEvent.FLOW_RUN,
         },
     })
 }
