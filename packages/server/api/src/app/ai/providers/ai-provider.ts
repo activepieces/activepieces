@@ -5,4 +5,5 @@ export type AIProviderStrategy<T extends AIProviderAuthConfig, C extends AIProvi
     name: string
     listModels(authConfig: T, config: C): Promise<AIProviderModel[]>
     validateConnection(authConfig: T, config: C, log: FastifyBaseLogger): Promise<void>
+    discoverModels?(authConfig: T, config: C, log: FastifyBaseLogger): Promise<AIProviderModel[]>
 }

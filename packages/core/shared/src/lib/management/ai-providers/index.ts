@@ -25,6 +25,16 @@ export type OpenAICompatibleProviderAuthConfig = z.infer<typeof OpenAICompatible
 export const CloudflareGatewayProviderAuthConfig = BaseAIProviderAuthConfig
 export type CloudflareGatewayProviderAuthConfig = z.infer<typeof CloudflareGatewayProviderAuthConfig>
 
+export const CloudflareGatewayDiscoveryProvider = z.enum(['openai', 'anthropic', 'google-vertex-ai'])
+export type CloudflareGatewayDiscoveryProvider = z.infer<typeof CloudflareGatewayDiscoveryProvider>
+
+export const CloudflareGatewayModelFilter = z.object({
+    vendors: z.array(z.string()).optional(),
+    zdrOnly: z.boolean().optional(),
+    search: z.string().optional(),
+})
+export type CloudflareGatewayModelFilter = z.infer<typeof CloudflareGatewayModelFilter>
+
 export const AzureProviderAuthConfig = BaseAIProviderAuthConfig
 export type AzureProviderAuthConfig = z.infer<typeof AzureProviderAuthConfig>
 
@@ -74,6 +84,11 @@ export const CloudflareGatewayProviderConfig = z.object({
     models: z.array(ProviderModelConfig),
     vertexProject: z.string().optional(),
     vertexRegion: z.string().optional(),
+    discovery: z.object({
+        provider: CloudflareGatewayDiscoveryProvider,
+        vertexPublisher: z.string().optional(),
+        filter: CloudflareGatewayModelFilter.optional(),
+    }).optional(),
 })
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
@@ -251,6 +266,21 @@ export const AIErrorResponse = z.object({
 })
 
 export type AIErrorResponse = z.infer<typeof AIErrorResponse>
+
+export const DiscoverAIProviderModelsRequest = z.object({
+    auth: AIProviderAuthConfig,
+    config: AIProviderConfig,
+})
+export type DiscoverAIProviderModelsRequest = z.infer<typeof DiscoverAIProviderModelsRequest>
+
+type CloudflareGatewayModelMetadata = { vendor: string, zdrEligible: boolean }
+export const CLOUDFLARE_GATEWAY_MODEL_METADATA: Record<string, CloudflareGatewayModelMetadata> = {
+    'openai/gpt-4.1': { vendor: 'openai', zdrEligible: true },
+    'openai/gpt-4o': { vendor: 'openai', zdrEligible: true },
+    'anthropic/claude-opus-4-8': { vendor: 'anthropic', zdrEligible: true },
+    'anthropic/claude-sonnet-5': { vendor: 'anthropic', zdrEligible: true },
+}
+
 /**
  * Resolves the effective provider and model for capability decisions. For direct providers
  * this is the same pair that came in. For Cloudflare Gateway (which tunnels to a submodel

@@ -44,6 +44,8 @@ import { AWS_BEDROCK_REGIONS } from '@/features/agents/aws-regions';
 
 import { ModelFormPopover } from './model-form-popover';
 
+import { DiscoverModelsDialog } from './discover-models-dialog';
+
 type UpsertProviderConfigFormProps = {
   form: UseFormReturn<CreateAIProviderRequest>;
   provider: AIProviderName;
@@ -421,17 +423,38 @@ export const UpsertProviderConfigForm = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-base">{t('Models Configuration')}</Label>
-            <ModelFormPopover onSubmit={(model) => append(model)}>
-              <Button
-                type="button"
-                size="sm"
-                variant="basic"
-                disabled={isLoading}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t('Add Model')}
-              </Button>
-            </ModelFormPopover>
+            <div className="flex gap-2">
+              {provider === AIProviderName.CLOUDFLARE_GATEWAY && (
+                <DiscoverModelsDialog
+                  form={form as any}
+                  existingModelIds={fields.map((f) => (f as ProviderModelConfig).modelId)}
+                  onModelsSelected={(models) => {
+                    models.forEach((m) => append(m));
+                  }}
+                >
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="basic"
+                    disabled={isLoading}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t('Discover Models')}
+                  </Button>
+                </DiscoverModelsDialog>
+              )}
+              <ModelFormPopover onSubmit={(model) => append(model)}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="basic"
+                  disabled={isLoading}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('Add Model')}
+                </Button>
+              </ModelFormPopover>
+            </div>
           </div>
 
           {fields.length === 0 ? (

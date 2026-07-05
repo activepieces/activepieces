@@ -13,6 +13,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 - `packages/web/src/app/routes/platform/setup/ai/universal-pieces/upsert-provider-dialog.tsx` — create/edit provider dialog
 - `packages/web/src/app/routes/platform/setup/ai/universal-pieces/upsert-provider-config-form.tsx` — provider config form
 - `packages/web/src/app/routes/platform/setup/ai/universal-pieces/model-form-popover.tsx` — model selection popover
+- `packages/web/src/app/routes/platform/setup/ai/universal-pieces/discover-models-dialog.tsx` — Cloudflare-only dialog for dynamic model discovery via upstream provider pass-through
 - `packages/web/src/features/agents/ai-model/index.tsx` — AI model selector used in agent step settings
 - `packages/web/src/features/agents/ai-model/hooks.ts` — hooks for listing available models per provider
 
@@ -31,6 +32,9 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 - **AI Credits**: Platform-level usage budget (1000 credits = $1 USD) metered through OpenRouter; drives the ACTIVEPIECES auto-provision flow.
 - **aiCreditsEnabled**: Platform plan flag that triggers auto-provisioning of the ACTIVEPIECES provider.
 - **Model cache**: In-memory cache of models per provider, cleared daily at midnight via cron.
+- **CloudflareGatewayDiscoveryProvider**: Enum of upstream providers (`openai`, `anthropic`, `google-vertex-ai`) that can be queried for model discovery through Cloudflare's pass-through routing.
+- **CloudflareGatewayModelFilter**: Optional filter object (search string, vendor list, zdrOnly boolean) applied to discovered models before returning them to the UI.
+- **CLOUDFLARE_GATEWAY_MODEL_METADATA**: Curated lookup table keyed by `"{gatewayProvider}/{modelId}"` mapping to `{ vendor, zdrEligible }`. Provider APIs do not expose ZDR/vendor metadata, so this table is maintained by hand (same pattern as `ALLOWED_CHAT_MODELS_BY_PROVIDER`).
 
 ## Entity
 
@@ -45,7 +49,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 | GOOGLE | apiKey | Gemini models |
 | AZURE | apiKey, deploymentName, instanceName | Azure OpenAI |
 | OPENROUTER | apiKey | 200+ models |
-| CLOUDFLARE | apiKey, accountId, gatewayId | Proxied via Cloudflare Workers AI |
+| CLOUDFLARE | apiKey, accountId, gatewayId | Proxied via Cloudflare AI Gateway; supports upstream model discovery for OpenAI, Anthropic, and Google Vertex AI |
 | CUSTOM | apiKey, baseUrl | OpenAI-compatible (LM Studio, Ollama) |
 | ACTIVEPIECES | apiKey, apiKeyHash (auto-provisioned) | Uses OpenRouter, managed by platform |
 
@@ -77,6 +81,7 @@ Models listed per provider are cached in memory. Cache cleared daily at midnight
 - `POST /` — create provider (validates credentials first)
 - `POST /:id` — update provider (re-validates if auth changed, cannot update ACTIVEPIECES)
 - `DELETE /:id` — delete provider (cannot delete ACTIVEPIECES)
+- `POST /:provider/models/discover` — discover upstream models through Cloudflare AI Gateway (platform admin only, Cloudflare-only); accepts `DiscoverAIProviderModelsRequest` body with auth + config + discovery sub-provider; returns `AIProviderModel[]`
 
 ## Engine Integration
 
@@ -85,6 +90,8 @@ During flow execution, AI pieces call `GET /v1/ai-providers/{provider}/config` t
 ## Frontend
 
 The platform admin AI setup page lives at `/platform/setup/ai`. It renders an `ai-provider-card` for each configured provider and an "Add Provider" button that opens `upsert-provider-dialog`. The `upsert-provider-config-form` adapts its fields to the selected `AIProviderName`. The `model-form-popover` lets admins configure which models are exposed per provider.
+
+For Cloudflare Gateway, a "Discover Models" button opens `discover-models-dialog`, which lets admins query the upstream provider (OpenAI, Anthropic, or Google Vertex AI) through Cloudflare's pass-through routing. Results appear as checkboxes; selected models are appended to the manual list with automatic deduplication against existing entries.
 
 Inside the builder, the agent step settings use `features/agents/ai-model/index.tsx` (with `hooks.ts`) to render a model selector that queries `GET /v1/ai-providers/:provider/models` via `aiProviderApi.listModelsForProvider()`.
 

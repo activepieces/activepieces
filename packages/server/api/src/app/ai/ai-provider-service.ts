@@ -166,6 +166,16 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             id: providerId,
         })
     },
+    async discoverModels(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig, log: FastifyBaseLogger): Promise<AIProviderModel[]> {
+        const strategy = aiProviders[provider]
+        if (isNil(strategy.discoverModels)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `${strategy.name} does not support model discovery. Add models manually instead.` },
+            })
+        }
+        return strategy.discoverModels(auth, config, log)
+    },
     async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
         const providerStrategy = aiProviders[provider]
         try {

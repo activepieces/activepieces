@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AIProviderModel, CreateAIProviderRequest, DiscoverAIProviderModelsRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -31,6 +31,9 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         await aiProviderService(app.log).delete(platformId, request.params.id)
         return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+    app.post('/:provider/models/discover', DiscoverModels, async (request) => {
+        return aiProviderService(app.log).discoverModels(request.params.provider, request.body.auth, request.body.config, app.log)
     })
 }
 
@@ -94,5 +97,20 @@ const DeleteAIProvider = {
         params: z.object({
             id: z.string(),
         }),
+    },
+}
+
+const DiscoverModels = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        params: z.object({
+            provider: z.nativeEnum(AIProviderName),
+        }),
+        body: DiscoverAIProviderModelsRequest,
+        response: {
+            [StatusCodes.OK]: z.array(AIProviderModel),
+        },
     },
 }
