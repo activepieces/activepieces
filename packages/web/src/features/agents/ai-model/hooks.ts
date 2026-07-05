@@ -1,5 +1,6 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
+  ACTIVEPIECES_CHAT_TIERS,
   AIProviderModel,
   ALLOWED_CHAT_MODELS_BY_PROVIDER,
 } from '@activepieces/shared';
@@ -14,7 +15,10 @@ function getAllowedModelsForProvider(
   allModels: AIProviderModel[],
   modelType: AIModelType,
 ): AIProviderModel[] {
-  const allowedIds = ALLOWED_CHAT_MODELS_BY_PROVIDER[provider];
+  const allowedIds =
+    provider === AIProviderName.ACTIVEPIECES
+      ? ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.modelId)
+      : ALLOWED_CHAT_MODELS_BY_PROVIDER[provider];
 
   return allModels
     .filter((model) => model.type === modelType)
