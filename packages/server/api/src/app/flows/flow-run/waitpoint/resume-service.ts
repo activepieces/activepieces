@@ -2,6 +2,7 @@ import { apId, FlowRunId, isNil } from '@activepieces/core-utils'
 import { EngineHttpResponse, ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, ResumeReason, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { distributedLock } from '../../../database/redis-connections'
 import { projectService } from '../../../project/project-service'
 import { engineResponseWatcher } from '../../../workers/engine-response-watcher'
 import { addToQueue, findFlowRunOrThrow, flowRunService, WEBHOOK_TIMEOUT_MS } from '../flow-run-service'
@@ -11,6 +12,14 @@ import { Waitpoint, WaitpointResumePayload, WaitpointStatus } from './waitpoint-
 
 export const resumeService = (log: FastifyBaseLogger) => ({
     async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
+        return distributedLock(log).runExclusive({
+            key: `runs_metadata_${flowRunId}`,
+            timeoutInSeconds: 30,
+            fn: () => this.resumeFromWaitpointWithoutLock({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }),
+        })
+    },
+
+    async resumeFromWaitpointWithoutLock({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
         const processed = await waitpointService(log).handleResumeSignal({
             flowRunId,
@@ -35,9 +44,10 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             if (currentFlowRun.status === FlowRunStatus.PAUSED) {
                 const latestWaitpoint = await waitpointService(log).getByFlowRunId(flowRunId)
                 if (!isNil(latestWaitpoint) && latestWaitpoint.status === WaitpointStatus.COMPLETED) {
-                    log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeFromWaitpoint] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; triggering resume now')
-                    // addToQueue uses flowRun.id as the BullMQ job id, so concurrent
-                    // enqueueResume calls for the same run are deduplicated by BullMQ
+                    log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeFromWaitpointWithoutLock] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; consuming waitpoint and enqueuing resume')
+                    // Consume the stale COMPLETED waitpoint under the lock so it cannot
+                    // poison the next createForPause call on a subsequent loop iteration
+                    await waitpointService(log).delete({ id: latestWaitpoint.id })
                     await enqueueResume({
                         flowRun: currentFlowRun,
                         waitpoint: latestWaitpoint,
@@ -121,6 +131,9 @@ export const resumeService = (log: FastifyBaseLogger) => ({
 async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger): Promise<void> {
     const { flowRun, waitpoint, resumePayload, workerHandlerId, httpRequestId } = params
     const platformId = await projectService(log).getPlatformId(flowRun.projectId)
+    // Namespace the BullMQ job with waitpoint id so it cannot be deduplicated
+    // against the still-active BEGIN job or a consecutive resume for a different waitpoint
+    const waitpointId = waitpoint?.id ?? apId()
     await addToQueue({
         payload: resumePayload,
         flowRun,
@@ -132,6 +145,7 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
             : StreamStepProgress.NONE,
         executionType: ExecutionType.RESUME,
         resumeReason: ResumeReason.WAITPOINT,
+        jobId: `${flowRun.id}-resume-${waitpointId}`,
     }, log)
     await flowRunSideEffects(log).onResume({ flowRun, platformId })
 }

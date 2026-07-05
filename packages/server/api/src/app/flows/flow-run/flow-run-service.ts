@@ -589,7 +589,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             executeTrigger: params.executeTrigger,
         }
     await jobQueue(log).add({
-        id: params.flowRun.id,
+        id: params.jobId ?? params.flowRun.id,
         type: JobType.ONE_TIME,
         data,
     })
@@ -733,6 +733,7 @@ type AddToQueueParamsCommon = {
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
+    jobId?: string
 }
 
 export type AddToQueueParams = AddToQueueParamsCommon & (
