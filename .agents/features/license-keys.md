@@ -76,8 +76,8 @@ The remote secrets service returns an object with these feature flags:
 | `secretManagersEnabled` | boolean | Secret managers |
 | `agentsEnabled` | boolean | Agents |
 | `aiProvidersEnabled` | boolean | AI providers |
-| `dataManipulationEnabled` | boolean | Formula / data-manipulation builder feature |
 | `isTrial` | boolean | Whether this is a trial key |
+| `workerGroupsEnabled` | boolean | Workers infrastructure control |
 
 ## Background Job
 

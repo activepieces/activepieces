@@ -35,7 +35,7 @@ type ProjectSchema = Project & {
     cells: Cell[]
     tableWebhooks: TableWebhook[]
     pool?: ConcurrencyPool | null
-    pieceSet?: PieceSet | null
+    pieceSet?: PieceSet | null,
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -87,6 +87,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             ...ApIdSchema,
             nullable: true,
         },
+        workerGroupId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -113,6 +117,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         {
             name: 'idx_project_piece_set_id',
             columns: ['pieceSetId'],
+            unique: false,
+        },
+        {
+            name: 'idx_project_worker_group',
+            columns: ['workerGroupId'],
             unique: false,
         },
     ],
