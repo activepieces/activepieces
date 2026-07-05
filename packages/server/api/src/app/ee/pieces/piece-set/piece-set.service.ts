@@ -155,6 +155,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 .update('project')
                 .set({ pieceSetId: defaultSet.id })
                 .where('"pieceSetId" = :pieceSetId', { pieceSetId: id })
+                .andWhere('"platformId" = :platformId', { platformId })
                 .execute()
 
             await em.delete(PieceSetEntity, { id, platformId })

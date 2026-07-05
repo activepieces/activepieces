@@ -5,12 +5,13 @@ A Platform is the top-level tenant namespace in Activepieces. Every installation
 
 ## Key Files
 - `packages/server/api/src/app/platform/platform.controller.ts` — POST `/:id` (update), GET `/:id` (read), DELETE `/:id` (Cloud only), GET `/assets/:id` (logo/favicon download)
-- `packages/server/api/src/app/platform/platform.service.ts` — CRUD service; `create`, `update`, `getOneWithPlanAndUsageOrThrow`, `listPlatformsForIdentityWithAtleastProject`
+- `packages/server/api/src/app/platform/platform-piece-filter.controller.ts` — GET `/` (read killswitch), POST `/` (update killswitch) under `/v1/platform-piece-filter`
+- `packages/server/api/src/app/platform/platform.service.ts` — CRUD service; `create`, `update`, `getPieceFilter`, `updatePieceFilter`, `getOneWithPlanAndUsageOrThrow`, `listPlatformsForIdentityWithAtleastProject`
 - `packages/server/api/src/app/platform/platform.entity.ts` — `platform` TypeORM entity
 - `packages/server/api/src/app/platform/platform.utils.ts` — `getPlatformIdForRequest`, `isCustomerOnDedicatedDomain`
 - `packages/server/api/src/app/platform/platform-jobs.ts` — `HARD_DELETE_PLATFORM` job handler
 - `packages/core/shared/src/lib/management/platform/platform.model.ts` — `Platform`, `PlatformWithoutSensitiveData`, `PlatformPlan`, `PlatformUsage`, `PlatformThemeColors`, `PieceSelectorConfig`, `PieceSelectorTabConfig`, `PieceSelectorTabSection` Zod schemas
-- `packages/core/shared/src/lib/management/platform/platform.request.ts` — `UpdatePlatformRequestBody`
+- `packages/core/shared/src/lib/management/platform/platform.request.ts` — `UpdatePlatformRequestBody`, `UpdatePlatformPieceFilterRequestBody`
 - `packages/web/src/hooks/platform-hooks.ts` — `useCurrentPlatform()` React Query hook
 - `packages/web/src/features/platform-admin/hooks/branding-hooks.ts` — branding mutation hooks
 
@@ -63,15 +64,19 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 | Method | Path | Security | Description |
 |---|---|---|---|
 | GET | `/v1/platforms/:id` | publicPlatform (USER, SERVICE) | Get platform with plan and usage (sensitive SSO data stripped). For USER principals, `plan.chatEnabled` is rewritten to the **effective per-user** chat visibility (`chatVisibilityHelper.resolveChatEnabledForUser` — edition + embed + cloud rollout/grandfather), and `licenseKey` is nulled for embedded users |
-| POST | `/v1/platforms/:id` | platformAdminOnly (USER) | Update branding, auth settings, piece filters |
+| POST | `/v1/platforms/:id` | platformAdminOnly (USER) | Update branding, auth settings, piece pinning. Piece filter fields moved to `/v1/platform-piece-filter`; sending `filteredPieceNames`/`filteredPieceBehavior` here returns 400 |
 | DELETE | `/v1/platforms/:id` | platformAdminOnly (USER) | Cloud only: mark projects for deletion and schedule hard delete |
 | GET | `/v1/platforms/assets/:id` | public | Download a platform asset (logo/favicon) by file ID |
+| GET | `/v1/platform-piece-filter` | platformAdminOnly (USER, SERVICE) | Get the platform-wide piece/component visibility killswitch |
+| POST | `/v1/platform-piece-filter` | platformAdminOnly (USER, SERVICE) | Update the platform-wide piece/component visibility killswitch |
 
 ## Service Methods
 
 ### `platformService`
 - `create({ ownerId, name, primaryColor?, logoIconUrl?, fullLogoUrl?, favIconUrl? })` — creates platform record with defaults from `defaultTheme`; calls `userService.addOwnerToPlatform`
-- `update(params)` — merges fields; if `plan` is set delegates to `platformPlanService.update`; if SAML config changes, clears SAML client cache
+- `update(params)` — merges fields; if `plan` is set delegates to `platformPlanService.update`; if SAML config changes, clears SAML client cache. Does not accept piece filter fields (moved to `updatePieceFilter`)
+- `getPieceFilter(id)` — returns `filteredPieceNames`, `filteredPieceBehavior`, `filteredActionNames`, `filteredTriggerNames`
+- `updatePieceFilter({ id, ...filter })` — partial update of the platform-wide piece/component killswitch; returns the updated filter
 - `getOneWithPlanAndUsageOrThrow(id)` — full read with plan feature flags and usage metrics
 - `getOneWithPlanOrThrow(id)` — plan flags only (no usage); used in auth guards for fast plan checks
 - `listPlatformsForIdentityWithAtleastProject({ identityId })` — returns all platforms where the identity has at least one accessible project; used for platform-switcher
