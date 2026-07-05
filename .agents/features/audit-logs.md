@@ -46,6 +46,7 @@ Indices:
 - `(platformId, projectId, userId, action)` — composite for filtered queries
 - `(platformId, userId, action)`
 - `(platformId, action)`
+- `(created)` — supports date-range filters and retention cleanup queries
 
 ## Endpoints
 
