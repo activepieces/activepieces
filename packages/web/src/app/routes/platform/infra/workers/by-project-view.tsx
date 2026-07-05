@@ -124,7 +124,7 @@ function usePlatformProjectsPage({
         limit: Number(limit) || 10,
         displayName,
       }),
-    meta: { showErrorDialog: true },
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 }
 
