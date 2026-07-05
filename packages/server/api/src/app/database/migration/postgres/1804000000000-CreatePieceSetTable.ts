@@ -220,8 +220,8 @@ async function migrateTagSets(queryRunner: QueryRunner, platformId: string): Pro
 }
 
 async function migrateAllowedProjects(queryRunner: QueryRunner, platformId: string): Promise<void> {
-    let offset = 0
-
+    // No OFFSET: each processed batch drops out of the WHERE clause ("pieceSetId"
+    // IS NULL + NOT EXISTS), so the next query naturally starts at the next batch.
     while (true) {
         const projects: Array<{ projectId: string, pieces: string | string[] }> = await queryRunner.query(
             `SELECT p.id AS "projectId", pp.pieces
@@ -235,15 +235,14 @@ async function migrateAllowedProjects(queryRunner: QueryRunner, platformId: stri
                    WHERE ps."generatedForProjectId" = p.id AND ps."platformId" = $1
                )
              ORDER BY p.created ASC
-             LIMIT $2 OFFSET $3`,
-            [platformId, PROJECT_BATCH, offset],
+             LIMIT $2`,
+            [platformId, PROJECT_BATCH],
         )
 
         if (projects.length === 0) break
 
         await insertProjectSets(queryRunner, platformId, projects)
 
-        offset += projects.length
         if (projects.length < PROJECT_BATCH) break
     }
 }
