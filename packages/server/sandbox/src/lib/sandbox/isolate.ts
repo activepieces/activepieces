@@ -127,13 +127,6 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 shell: false,
             })
 
-            child.stdout?.on('data', (data: Buffer) => {
-                process.stdout.write(data)
-            })
-            child.stderr?.on('data', (data: Buffer) => {
-                process.stderr.write(data)
-            })
-
             return child
         },
     }

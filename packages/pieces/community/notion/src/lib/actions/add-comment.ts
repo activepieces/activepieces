@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
+import { addCommentActionOutputSchema } from '../output-schemas';
 
 export const addComment = createAction({
   auth: notionAuth,
@@ -24,6 +25,7 @@ export const addComment = createAction({
       required: true,
     }),
   },
+  outputSchema: addCommentActionOutputSchema,
   async run(context) {
     const { page_id, comment_text } = context.propsValue;
 

@@ -2,6 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { createRowActionOutputSchema } from '../output-schemas';
 
 export const createRow = createAction({
     name: 'create_row',
@@ -20,6 +21,7 @@ export const createRow = createAction({
             defaultValue: true,
         }),
     },
+    outputSchema: createRowActionOutputSchema,
     async run(context) {
         const { table_name, row_data, return_row } = context.propsValue;
         const { url, apiKey } = context.auth.props;

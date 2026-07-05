@@ -78,9 +78,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             ? { update: async (): Promise<void> => { /* no-op: ad-hoc runs have no live progress channel */ } }
             : flowRunProgressReporter.createOutputContext({
                 engineConstants: constants,
-                flowExecutorContext: executionState,
-                stepName: action.name,
-                stepOutput,
             })
 
         const isPaused = executionState.isPaused({ stepName: action.name })

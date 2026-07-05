@@ -1,9 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown } from '../common/props';
 
 export const findEmailAction = createAction({
@@ -35,15 +35,9 @@ export const findEmailAction = createAction({
 	async run(context) {
 		const { searchQuery, folderId, top } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = outlookCommon.createClient(context.auth);
 
-		const baseUrl = folderId ? `/me/mailFolders/${folderId}/messages` : '/me/messages';
+		const baseUrl = folderId ? `${outlookCommon.mailboxPrefix(context.auth)}/mailFolders/${folderId}/messages` : `${outlookCommon.mailboxPrefix(context.auth)}/messages`;
 		const searchParam = `$search="${searchQuery}"`;
 		const topParam = top ? `$top=${Math.min(Math.max(top, 1), 1000)}` : '$top=25';
 		const selectParam = ['id', 'subject', 'from', 'toRecipients', 'receivedDateTime'].join(',');
