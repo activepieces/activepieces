@@ -14,7 +14,6 @@ import {
   Eye,
   GitBranch,
   Hash,
-  Lock,
   Package,
   Puzzle,
   SlidersHorizontal,
@@ -298,8 +297,8 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             if (isPlatformHidden(row.original.name)) {
               return (
                 <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Lock className="size-3.5" />
-                  {t('Managed by platform')}
+                  <EyeOff className="size-3.5" />
+                  {t('Hidden by platform')}
                 </span>
               );
             }

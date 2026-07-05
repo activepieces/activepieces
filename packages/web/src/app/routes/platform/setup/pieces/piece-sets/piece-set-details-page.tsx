@@ -1,3 +1,4 @@
+import { PieceSelection } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -7,27 +8,50 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { piecesHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { PieceSetPiecesTab } from './piece-set-pieces-tab';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
 
+function flipSelectionMode({
+  current,
+  include,
+  knownPieceNames,
+}: {
+  current: PieceSelection;
+  include: boolean;
+  knownPieceNames: string[];
+}): PieceSelection {
+  const excluded = new Set(current.exceptions);
+  return {
+    mode: include ? 'include_all' : 'exclude_all',
+    exceptions: knownPieceNames.filter((name) => !excluded.has(name)),
+  };
+}
+
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: pieceSet, isLoading } = pieceSetQueries.usePieceSet(id ?? '');
+  const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({
+    includeHidden: true,
+    isTableQuery: true,
+    skipProjectFilter: true,
+  });
   const { mutate: updateSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
 
   const handleToggle = (value: boolean) => {
-    if (!pieceSet) return;
+    if (!pieceSet || !pieces) return;
     updateSet({
       id: pieceSet.id,
       request: {
-        pieces: {
-          mode: value ? 'include_all' : 'exclude_all',
-          exceptions: pieceSet.config.pieces.exceptions,
-        },
+        pieces: flipSelectionMode({
+          current: pieceSet.config.pieces,
+          include: value,
+          knownPieceNames: pieces.map((p) => p.name),
+        }),
       },
     });
   };
@@ -84,7 +108,7 @@ const PieceSetDetailsPage = () => {
               <AutoIncludePill
                 label={t('New pieces')}
                 checked={pieceSet.config.pieces.mode === 'include_all'}
-                disabled={isPending}
+                disabled={isPending || piecesLoading}
                 onCheckedChange={handleToggle}
               />
             </div>

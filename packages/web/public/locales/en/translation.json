@@ -99,7 +99,7 @@
   "Only the checked items below are available. New actions and triggers added to this piece later stay hidden until you check them here.": "Only the checked items below are available. New actions and triggers added to this piece later stay hidden until you check them here.",
   "{count} of {total} selected": "{count} of {total} selected",
   "No actions or triggers found": "No actions or triggers found",
-  "Managed by platform": "Managed by platform",
+  "Hidden by platform": "Hidden by platform",
   "All actions": "All actions",
   "Unskip": "Unskip",
   "Skip": "Skip",
