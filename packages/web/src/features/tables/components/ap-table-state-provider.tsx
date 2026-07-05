@@ -7,6 +7,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -20,6 +21,7 @@ import {
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/stores/store/ap-tables-client-state';
+import { useResourceLock } from '@/hooks/use-resource-lock';
 import { cn } from '@/lib/utils';
 
 import { fieldsApi } from '../api/fields-api';
@@ -28,6 +30,7 @@ import { tablesApi } from '../api/tables-api';
 
 const TableContext = createContext<ApTableStore | null>(null);
 const TableRefreshContext = createContext<(() => Promise<void>) | null>(null);
+const TableLockContext = createContext<TableLockContextValue | null>(null);
 
 export const TableStateProviderWithTable = ({
   children,
@@ -158,14 +161,16 @@ export function ApTableStateProvider({
 
   return (
     <TableRefreshContext.Provider value={refreshTableState}>
-      <TableStateProviderWithTable
-        key={refreshKey}
-        table={table}
-        fields={fields}
-        records={records.data}
-      >
-        {children}
-      </TableStateProviderWithTable>
+      <TableLockProvider resourceId={table.id} onTakeOver={refreshTableState}>
+        <TableStateProviderWithTable
+          key={refreshKey}
+          table={table}
+          fields={fields}
+          records={records.data}
+        >
+          {children}
+        </TableStateProviderWithTable>
+      </TableLockProvider>
     </TableRefreshContext.Provider>
   );
 }
@@ -186,7 +191,39 @@ export function useRefreshTableState() {
   return refreshTableState;
 }
 
+export function useTableLock() {
+  const lock = useContext(TableLockContext);
+  if (!lock) {
+    throw new Error('Table lock context not found');
+  }
+  return lock;
+}
+
 export function useOptionalTableStore() {
   const tableStore = useContext(TableContext);
   return tableStore ?? null;
 }
+
+// mounted above the keyed remount of TableStateProviderWithTable so a
+// take-over refresh never unmounts the lock hook — unmounting it would emit
+// a spurious UNLOCK_RESOURCE/LOCK_RESOURCE pair and briefly release the
+// just-acquired lock for other clients
+function TableLockProvider({
+  resourceId,
+  onTakeOver,
+  children,
+}: {
+  resourceId: string;
+  onTakeOver: () => void;
+  children: React.ReactNode;
+}) {
+  const { lockedBy, takeOver } = useResourceLock({ resourceId, onTakeOver });
+  const lock = useMemo(() => ({ lockedBy, takeOver }), [lockedBy, takeOver]);
+  return (
+    <TableLockContext.Provider value={lock}>
+      {children}
+    </TableLockContext.Provider>
+  );
+}
+
+type TableLockContextValue = ReturnType<typeof useResourceLock>;

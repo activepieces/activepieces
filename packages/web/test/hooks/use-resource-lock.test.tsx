@@ -84,10 +84,20 @@ function lockEmits() {
 describe('useResourceLock takeOver', () => {
   let container: HTMLDivElement;
   let root: Root;
+  const reloadSpy = vi.fn();
+  // jsdom marks location.reload unforgeable, but vitest exposes `location`
+  // as a configurable property of the test global, so the whole object can
+  // be swapped for one with an observable reload
+  const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
 
   beforeEach(() => {
     socketState.emitCalls.length = 0;
     latestHookResult = null;
+    reloadSpy.mockClear();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: reloadSpy },
+    });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -98,6 +108,9 @@ describe('useResourceLock takeOver', () => {
       root.unmount();
     });
     container.remove();
+    if (originalLocation) {
+      Object.defineProperty(window, 'location', originalLocation);
+    }
   });
 
   it('re-acquires the lock and refreshes in place instead of reloading the document', async () => {
@@ -155,6 +168,7 @@ describe('useResourceLock takeOver', () => {
     );
     expect(unlock).toBeDefined();
     expect(unlock?.payload).toEqual({ resourceId: RESOURCE_ID });
+    expect(reloadSpy).not.toHaveBeenCalled();
   });
 
   it('keeps the locked state when the force acquire is rejected', async () => {
@@ -178,5 +192,6 @@ describe('useResourceLock takeOver', () => {
 
     expect(onTakeOver).not.toHaveBeenCalled();
     expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+    expect(reloadSpy).not.toHaveBeenCalled();
   });
 });
