@@ -82,7 +82,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 **Entity**: id, projectId, name, description, importedBy (FK user), fileId (FK), type (GIT_BRANCH/MANUAL/ROLLBACK).
 
 **Release workflow**:
-1. `releasePlan()` — compute diff (what flows/tables/connections would change)
+1. `releasePlan()` — compute diff (what flows/tables/connections would change), including exact piece version changes such as patch updates in flow steps
 2. `create()` — apply diffs, serialize project state to File, record release
 3. Uses memory lock to prevent concurrent releases
 
