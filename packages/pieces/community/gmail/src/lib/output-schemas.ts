@@ -740,3 +740,128 @@ export const newLabeledEmailTriggerOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const newStarredEmailTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'subject',
+      label: 'Subject',
+      value: 'data.message.subject',
+    },
+    {
+      key: 'from',
+      label: 'From',
+      value: 'data.message.from.text',
+      format: 'email',
+    },
+    {
+      key: 'to',
+      label: 'To',
+      value: 'data.message.to.text',
+      format: 'email',
+    },
+    {
+      key: 'text',
+      label: 'Body (Text)',
+      value: 'data.message.text',
+    },
+    {
+      key: 'date',
+      label: 'Date',
+      value: 'data.message.date',
+      format: 'datetime',
+    },
+    {
+      key: 'id',
+      label: 'Message ID',
+      value: 'id',
+    },
+    {
+      key: 'messageId',
+      label: 'Internet Message ID',
+      value: 'data.message.messageId',
+    },
+    {
+      key: 'starredAt',
+      label: 'Starred At',
+      value: 'data.starredAt',
+      format: 'datetime',
+    },
+    {
+      key: 'attachments',
+      label: 'Attachments',
+      value: 'data.message.attachments',
+      labelKey: 'filename',
+      listItems: [
+        {
+          key: 'filename',
+          label: 'Filename',
+          value: 'filename',
+        },
+        {
+          key: 'contentType',
+          label: 'Content Type',
+          value: 'contentType',
+        },
+        {
+          key: 'size',
+          label: 'Size',
+          value: 'size',
+          format: 'filesize',
+        },
+      ],
+    },
+    {
+      key: 'thread',
+      label: 'Thread',
+      value: 'data.thread',
+      children: [
+        {
+          key: 'id',
+          label: 'Thread ID',
+          value: 'id',
+        },
+        {
+          key: 'messages',
+          label: 'Messages',
+          value: 'messages',
+          labelKey: 'snippet',
+          listItems: [
+            {
+              key: 'snippet',
+              label: 'Snippet',
+              value: 'snippet',
+            },
+            {
+              key: 'id',
+              label: 'Message ID',
+              value: 'id',
+            },
+            {
+              key: 'threadId',
+              label: 'Thread ID',
+              value: 'threadId',
+            },
+            {
+              key: 'labelIds',
+              label: 'Label IDs',
+              value: 'labelIds',
+            },
+            {
+              key: 'internalDate',
+              label: 'Internal Date',
+              value: 'internalDate',
+            },
+            {
+              key: 'sizeEstimate',
+              label: 'Size Estimate',
+              value: 'sizeEstimate',
+              format: 'filesize',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
