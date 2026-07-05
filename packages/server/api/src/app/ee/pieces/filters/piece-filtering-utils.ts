@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ApEdition, FilteredPieceBehavior, isComponentVisible, isPieceVisible, PiecesFilterType, PlatformWithoutFederatedAuth } from '@activepieces/shared'
+import { ApEdition, FilteredPieceBehavior, isComponentVisible, isPieceVisible, PieceSet, PiecesFilterType, PlatformPlan, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
@@ -11,18 +11,34 @@ import { projectLimitsService } from '../../projects/project-plan/project-plan.s
 import { pieceSetRepo, pieceSetService } from '../piece-set/piece-set.service'
 
 export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
-    async filterComponents({ platformId, projectId, summaries }: FilterComponentsParams): Promise<PieceMetadataModelSummary[]> {
+    async loadFilterContext({ platformId, projectId }: LoadFilterContextParams): Promise<PieceFilterContext | null> {
         const edition = system.getEdition()
         if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
-            return summaries
+            return null
         }
         if (isNil(platformId)) {
-            return summaries
+            return null
         }
-        const platform = await platformService(log).getOne(platformId)
+        const [platform, platformPlan] = await Promise.all([
+            platformService(log).getOne(platformId),
+            platformPlanService(log).getOrCreateForPlatform(platformId),
+        ])
         if (isNil(platform)) {
+            return null
+        }
+        const pieceSet = platformPlan.managePiecesEnabled && !isNil(projectId)
+            ? await resolvePieceSetForProject({ log, projectId, platformId })
+            : null
+        return { platform, platformPlan, pieceSet }
+    },
+    async filterComponents({ platformId, projectId, summaries, filterContext }: FilterComponentsParams): Promise<PieceMetadataModelSummary[]> {
+        const context = filterContext !== undefined
+            ? filterContext
+            : await this.loadFilterContext({ platformId, projectId })
+        if (isNil(context)) {
             return summaries
         }
+        const { platform, platformPlan } = context
         const platformFilteredSummaries = summaries.map((summary) => ({
             ...summary,
             suggestedActions: summary.suggestedActions?.filter(
@@ -32,37 +48,38 @@ export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
                 (trigger) => !(platform.filteredTriggerNames[summary.name] ?? []).includes(trigger.name),
             ),
         }))
-        if (isNil(projectId)) {
+        if (isNil(projectId) || !platformPlan.managePiecesEnabled) {
             return platformFilteredSummaries
         }
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (!platformPlan.managePiecesEnabled) {
-            return platformFilteredSummaries
-        }
-        return filterComponentsBasedOnPieceSet({ log, projectId, platformId, summaries: platformFilteredSummaries })
+        const pieceSet = context.pieceSet ?? await resolvePieceSetForProject({ log, projectId, platformId: platform.id })
+        return platformFilteredSummaries.map((summary) => ({
+            ...summary,
+            suggestedActions: summary.suggestedActions?.filter(
+                (action) => isComponentVisible({ selected: pieceSet.config.selectedActions[summary.name], name: action.name }),
+            ),
+            suggestedTriggers: summary.suggestedTriggers?.filter(
+                (trigger) => isComponentVisible({ selected: pieceSet.config.selectedTriggers[summary.name], name: trigger.name }),
+            ),
+        }))
     },
     async filter(params: FilterParams): Promise<PieceMetadataSchema[]> {
-        const edition = system.getEdition()
-        if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
-            return params.pieces
-        }
-        const { platformId, includeHidden, pieces, projectId } = params
-        if (isNil(platformId) || includeHidden) {
+        const { platformId, includeHidden, pieces, projectId, filterContext } = params
+        if (includeHidden) {
             return pieces
         }
-
-        const platformWithPlan = await platformService(log).getOne(platformId)
-        if (isNil(platformWithPlan)) {
+        const context = filterContext !== undefined
+            ? filterContext
+            : await this.loadFilterContext({ platformId, projectId })
+        if (isNil(context)) {
             return pieces
         }
-        const platformFilteredPieces = await filterPiecesBasedPlatform(platformWithPlan, pieces)
+        const platformFilteredPieces = await filterPiecesBasedPlatform(context.platform, pieces)
         if (isNil(projectId)) {
             return platformFilteredPieces
         }
-
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (platformPlan.managePiecesEnabled) {
-            return filterBasedOnPieceSet({ log, projectId, platformId, pieces: platformFilteredPieces })
+        if (context.platformPlan.managePiecesEnabled) {
+            const pieceSet = context.pieceSet ?? await resolvePieceSetForProject({ log, projectId, platformId: context.platform.id })
+            return platformFilteredPieces.filter((p) => isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }))
         }
         return filterBasedOnProject(log, projectId, platformFilteredPieces)
     },
@@ -76,71 +93,21 @@ export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
     },
 })
 
-type FilterComponentsParams = {
-    platformId: string | undefined
-    projectId?: string
-    summaries: PieceMetadataModelSummary[]
-}
-
-type IsFilteredParams = {
-    piece: PieceMetadataSchema
-    projectId: string | undefined
-    platformId: string | undefined
-}
-
-type FilterParams = {
-    platformId?: string
-    includeHidden?: boolean
-    pieces: PieceMetadataSchema[]
-    projectId?: string
-}
-
-type FilterByPieceSetParams = {
-    log: FastifyBaseLogger
-    projectId: string
-    platformId: string
-    pieces: PieceMetadataSchema[]
-}
-
-type FilterComponentsByPieceSetParams = {
-    log: FastifyBaseLogger
-    projectId: string
-    platformId: string
-    summaries: PieceMetadataModelSummary[]
-}
-
-async function filterComponentsBasedOnPieceSet({ log, projectId, platformId, summaries }: FilterComponentsByPieceSetParams): Promise<PieceMetadataModelSummary[]> {
+async function resolvePieceSetForProject({ log, projectId, platformId }: ResolvePieceSetForProjectParams): Promise<PieceSet> {
     const project = await projectRepo().findOneBy({ id: projectId })
     const pieceSetId = project?.pieceSetId ?? null
 
-    const resolvedSet = isNil(pieceSetId)
-        ? await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
+    return isNil(pieceSetId)
+        ? pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
         : (await pieceSetRepo().findOneBy({ id: pieceSetId, platformId }))
-            ?? await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
-
-    return summaries.map((summary) => ({
-        ...summary,
-        suggestedActions: summary.suggestedActions?.filter(
-            (action) => isComponentVisible({ selected: resolvedSet.config.selectedActions[summary.name], name: action.name }),
-        ),
-        suggestedTriggers: summary.suggestedTriggers?.filter(
-            (trigger) => isComponentVisible({ selected: resolvedSet.config.selectedTriggers[summary.name], name: trigger.name }),
-        ),
-    }))
+            ?? pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
 }
 
-async function filterBasedOnPieceSet({ log, projectId, platformId, pieces }: FilterByPieceSetParams): Promise<PieceMetadataSchema[]> {
-    const project = await projectRepo().findOneBy({ id: projectId })
-    const pieceSetId = project?.pieceSetId ?? null
-
-    const resolvedSet = isNil(pieceSetId)
-        ? await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
-        : (await pieceSetRepo().findOneBy({ id: pieceSetId, platformId }))
-            ?? await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
-
-    return pieces.filter((p) => isPieceVisible({ pieces: resolvedSet.config.pieces, name: p.name }))
-}
-
+/**
+ * @deprecated Legacy project-plan (`pieces`/`piecesFilterType`) enforcement for platforms
+ * without `managePiecesEnabled`. Piece sets are the replacement; remove once all platforms
+ * are migrated to piece sets.
+ */
 async function filterBasedOnProject(
     log: FastifyBaseLogger,
     projectId: string,
@@ -182,4 +149,42 @@ async function filterPiecesBasedPlatform(
     const predicate = filterPredicate[platformWithPlan.filteredPieceBehavior]
     const filteredPieces = pieces.slice().filter(predicate)
     return filteredPieces
+}
+
+export type PieceFilterContext = {
+    platform: PlatformWithoutFederatedAuth
+    platformPlan: PlatformPlan
+    pieceSet: PieceSet | null
+}
+
+type LoadFilterContextParams = {
+    platformId: string | undefined
+    projectId?: string
+}
+
+type FilterComponentsParams = {
+    platformId: string | undefined
+    projectId?: string
+    summaries: PieceMetadataModelSummary[]
+    filterContext?: PieceFilterContext | null
+}
+
+type IsFilteredParams = {
+    piece: PieceMetadataSchema
+    projectId: string | undefined
+    platformId: string | undefined
+}
+
+type FilterParams = {
+    platformId?: string
+    includeHidden?: boolean
+    pieces: PieceMetadataSchema[]
+    projectId?: string
+    filterContext?: PieceFilterContext | null
+}
+
+type ResolvePieceSetForProjectParams = {
+    log: FastifyBaseLogger
+    projectId: string
+    platformId: string
 }

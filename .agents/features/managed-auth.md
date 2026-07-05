@@ -50,7 +50,12 @@ The extractor supports three token versions:
 
 The JWT header must include `kid` set to the Signing Key ID.
 
-The optional `pieceSet` claim (all payload versions) is a piece-set **externalId**: when present and matching a set on the platform, the provisioned project is assigned that set; if it does not match, the project falls back to the platform Default set. When `pieceSet` is absent, the legacy `piecesTags` / `piecesFilterType` claims auto-generate a per-project set (`generatedForProjectId`). Applies only when `managePiecesEnabled`. See [piece-sets.md](./piece-sets.md).
+The optional `pieceSet` claim (all payload versions) is a piece-set **externalId**. How piece access is provisioned depends on `platform.plan.managePiecesEnabled`:
+
+- **`managePiecesEnabled` on** — the project is assigned a **named** piece set: the explicit `pieceSet` externalId; else (legacy claims) the **first** `piecesTags` entry matched against set `externalId` (the backfill migration created one named set per tag, `externalId = tagName`); else the platform Default set (also the fallback, with a warn log, when the externalId matches no set). The project plan is **not** written.
+- **`managePiecesEnabled` off** — the **deprecated** legacy path is preserved: tags are resolved to piece names via `pieceTagService` and upserted into the project plan (`default-embeddings-limit`, `pieces`/`piecesFilterType`), which drives read-time filtering. No piece set is assigned. This path is scheduled for removal once flag-off platforms are migrated to piece sets.
+
+See [piece-sets.md](./piece-sets.md).
 
 ## Service Flow (`externalToken`)
 
@@ -58,7 +63,7 @@ The optional `pieceSet` claim (all payload versions) is a piece-set **externalId
 2. Call `getOrCreateProject` — looks up project by `(platformId, externalProjectId)`; if absent, creates a new `TEAM` type project owned by the platform owner.
 3. Optionally update the project's `displayName` from `projectDisplayName` claim.
 4. Optionally upsert a concurrency pool and assign it to the project.
-5. Call `updateProjectLimits` — resolves allowed pieces from tags/filter type and upserts the project plan. Under `managePiecesEnabled`, also assigns the project's piece set: by `pieceSet` externalId, else an auto-generated per-project set from the legacy tags/filter claims, else the Default set.
+5. Call `applyProjectPieceAccess` — under `managePiecesEnabled`, assigns the project's named piece set (`pieceSet` externalId → first legacy tag matched against set `externalId` → Default set); otherwise runs the deprecated legacy path that upserts tag-resolved pieces into the project plan. Runs on every token exchange, so claim/tag changes (and later enabling the flag) take effect at the next embed sign-in.
 6. Call `getOrCreateUser` — finds user by `(platformId, externalUserId)`; if absent, creates a user identity using a deterministic hashed email (`managed_<platformId>_<externalUserId>` SHA-256), then creates the platform user.
 7. Upsert project membership with the specified role (defaults to `EDITOR`).
 8. Generate a 7-day Activepieces access token and return the full `AuthenticationResponse`.
