@@ -1,0 +1,20 @@
+{
+  "API Key": "API Key",
+  "Your Tunova API key (sk_live_…).": "Your Tunova API key (sk_live_…).",
+  "\nYour Tunova API key (sk_live_…). Get one free — 50 tokens, no card — at https://tunova.ai\n": "\nYour Tunova API key (sk_live_…). Get one free — 50 tokens, no card — at https://tunova.ai\n",
+  "Generate Song": "Generate Song",
+  "Submit a song generation job from a text prompt. Async — returns a job_id; use \"Get Job\" to poll for the finished track. Billed only on a successful render.": "Submit a song generation job from a text prompt. Async — returns a job_id; use \"Get Job\" to poll for the finished track. Billed only on a successful render.",
+  "Prompt": "Prompt",
+  "A text description of the song, e.g. \"calm rainy-night lofi\".": "A text description of the song, e.g. \"calm rainy-night lofi\".",
+  "Model": "Model",
+  "Suno model to use.": "Suno model to use.",
+  "Instrumental": "Instrumental",
+  "Generate an instrumental (no vocals).": "Generate an instrumental (no vocals).",
+  "Get Job": "Get Job",
+  "Poll a generation job. Once status is \"complete\", clips[].audio_url is set; a failed render is auto-refunded.": "Poll a generation job. Once status is \"complete\", clips[].audio_url is set; a failed render is auto-refunded.",
+  "Job ID": "Job ID",
+  "The job_id returned by \"Generate Song\".": "The job_id returned by \"Generate Song\".",
+  "Generate Lyrics": "Generate Lyrics",
+  "Generate song lyrics from a theme or brief. Synchronous.": "Generate song lyrics from a theme or brief. Synchronous.",
+  "The theme or brief for the lyrics.": "The theme or brief for the lyrics."
+}
