@@ -1,12 +1,17 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   Sheet,
   SheetContent,
@@ -413,56 +418,65 @@ function ComponentSection({
   showCheckboxes,
   onToggle,
 }: ComponentSectionProps) {
+  const [expanded, setExpanded] = useState(true);
+
   return (
-    <div>
-      <div className="flex items-center gap-2 pt-4 pb-1.5">
+    <Collapsible open={expanded} onOpenChange={setExpanded}>
+      <CollapsibleTrigger className="flex items-center gap-2 pt-4 pb-1.5 w-full">
+        {expanded ? (
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+        )}
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
         <Badge variant="inverted" className="text-xs font-bold">
           {visibleCount}/{items.length}
         </Badge>
-      </div>
-      <div className="divide-y">
-        {items.map((item) => {
-          const isHidden = hiddenNames.includes(item.data.name);
-          return (
-            <label
-              key={`${item.type}:${item.data.name}`}
-              className={cn(
-                'flex items-center gap-3 py-2.5',
-                showCheckboxes && 'cursor-pointer',
-                showCheckboxes && isHidden && 'opacity-50',
-              )}
-            >
-              {showCheckboxes && (
-                <Checkbox
-                  checked={!isHidden}
-                  onCheckedChange={() => onToggle(item)}
-                />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium truncate">
-                    {item.data.displayName}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className="shrink-0 text-xs capitalize"
-                  >
-                    {item.type}
-                  </Badge>
-                </div>
-                {item.data.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                    {item.data.description}
-                  </p>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="divide-y">
+          {items.map((item) => {
+            const isHidden = hiddenNames.includes(item.data.name);
+            return (
+              <label
+                key={`${item.type}:${item.data.name}`}
+                className={cn(
+                  'flex items-center gap-3 py-2.5',
+                  showCheckboxes && 'cursor-pointer',
+                  showCheckboxes && isHidden && 'opacity-50',
                 )}
-              </div>
-            </label>
-          );
-        })}
-      </div>
-    </div>
+              >
+                {showCheckboxes && (
+                  <Checkbox
+                    checked={!isHidden}
+                    onCheckedChange={() => onToggle(item)}
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium truncate">
+                      {item.data.displayName}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="shrink-0 text-xs capitalize"
+                    >
+                      {item.type}
+                    </Badge>
+                  </div>
+                  {item.data.description && (
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {item.data.description}
+                    </p>
+                  )}
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
