@@ -74,51 +74,68 @@ export const gmailNewStarredEmailTrigger = createTrigger({
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
-    const lastHistoryId = await context.store.get('lastHistoryId');
+    let lastHistoryId = await context.store.get<string | number>('lastHistoryId');
     if (!lastHistoryId) {
       const profile = await gmail.users.getProfile({ userId: 'me' });
       await context.store.put('lastHistoryId', profile.data.historyId);
       return [];
     }
 
-    const historyResponse = await gmail.users.history.list({
-      userId: 'me',
-      startHistoryId: lastHistoryId as string,
-      labelId: 'STARRED',
-      historyTypes: ['labelAdded', 'messageAdded'],
-    });
-
     const starredMessages = new Map<string, string>();
     const results = [];
+    let nextPageToken: string | undefined = undefined;
+    let newHistoryId: string | undefined = undefined;
 
-    if (historyResponse.data.history) {
-      for (const history of historyResponse.data.history) {
-        if (history.labelsAdded) {
-          for (const labelAdded of history.labelsAdded) {
-            if (
-              labelAdded.labelIds?.includes('STARRED') &&
-              labelAdded.message?.id
-            ) {
-              starredMessages.set(
-                labelAdded.message.id,
-                history.id?.toString() || ''
-              );
-            }
-          }
-        } else if (history.messagesAdded) {
-          for (const messageAdded of history.messagesAdded) {
-            if (
-              messageAdded.message?.id &&
-              messageAdded.message.labelIds?.includes('STARRED')
-            ) {
-              starredMessages.set(
-                messageAdded.message.id,
-                history.id?.toString() || ''
-              );
+    try {
+      do {
+        const historyResponse: any = await gmail.users.history.list({
+          userId: 'me',
+          startHistoryId: lastHistoryId.toString(),
+          labelId: 'STARRED',
+          historyTypes: ['labelAdded', 'messageAdded'],
+          pageToken: nextPageToken,
+        });
+
+        if (historyResponse.data.history) {
+          for (const history of historyResponse.data.history) {
+            if (history.labelsAdded) {
+              for (const labelAdded of history.labelsAdded) {
+                if (
+                  labelAdded.labelIds?.includes('STARRED') &&
+                  labelAdded.message?.id
+                ) {
+                  starredMessages.set(
+                    labelAdded.message.id,
+                    history.id?.toString() || ''
+                  );
+                }
+              }
+            } else if (history.messagesAdded) {
+              for (const messageAdded of history.messagesAdded) {
+                if (
+                  messageAdded.message?.id &&
+                  messageAdded.message.labelIds?.includes('STARRED')
+                ) {
+                  starredMessages.set(
+                    messageAdded.message.id,
+                    history.id?.toString() || ''
+                  );
+                }
+              }
             }
           }
         }
-      }
+
+        nextPageToken = historyResponse.data.nextPageToken || undefined;
+        if (historyResponse.data.historyId) {
+          newHistoryId = historyResponse.data.historyId.toString();
+        }
+      } while (nextPageToken);
+    } catch (error: any) {
+      console.warn('History ID expired, resetting to latest profile history ID', error);
+      const profile = await gmail.users.getProfile({ userId: 'me' });
+      await context.store.put('lastHistoryId', profile.data.historyId);
+      return [];
     }
 
     for (const [messageId, historyId] of starredMessages) {
@@ -129,7 +146,7 @@ export const gmailNewStarredEmailTrigger = createTrigger({
           files: context.files,
         });
 
-        if (lastHistoryId !== historyId) {
+        if (lastHistoryId.toString() !== historyId) {
           results.push({
             id: historyId,
             data: enrichedMessage,
@@ -140,8 +157,8 @@ export const gmailNewStarredEmailTrigger = createTrigger({
       }
     }
 
-    if (historyResponse.data.historyId) {
-      await context.store.put('lastHistoryId', historyResponse.data.historyId);
+    if (newHistoryId) {
+      await context.store.put('lastHistoryId', newHistoryId);
     }
 
     return results;
