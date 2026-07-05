@@ -1,4 +1,4 @@
-import { isEmpty, isNil } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
 import { AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import {
@@ -16,10 +16,11 @@ import { distributedLock, distributedStore } from '../../../../database/redis-co
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
 import { AppSumoAction, CreditUsage } from '../../../../platform/billing-provider'
+import { platformService } from '../../../../platform/platform.service'
+import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://sir-highly-incentive-latitude.trycloudflare.com'
-const AUTUMN_FREE_PLAN_ID = 'free'
+const AUTUMN_CONSOLE_URL = 'https://polo-roof-apply-paris.trycloudflare.com'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
@@ -93,8 +94,8 @@ export const autumnUtils = {
                 }
                 const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
                 const credentials = isNil(platformPlan.licenseKey) || isEmpty(platformPlan.licenseKey)
-                    ? await autumnConsole.subscribeFree({ platformId })
-                    : await autumnConsole.activate({ licenseKey: platformPlan.licenseKey, platformId })
+                    ? await autumnConsole.enrollFree({ email: await getPlatformOwnerEmail(log, platformId) })
+                    : await autumnConsole.activate({ licenseKey: platformPlan.licenseKey })
                 await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
                 await autumnUtils.refreshEntitlements(log, platformId)
             },
@@ -180,18 +181,18 @@ export const autumnConsole = {
         )
         return response.data.data
     },
-    async subscribeFree({ platformId }: { platformId: string }): Promise<AutumnEnrollmentCredentials> {
+    async enrollFree({ email }: { email: string }): Promise<AutumnEnrollmentCredentials> {
         const response = await safeHttp.axios.post<ConsoleBillingEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/billing/subscribe`,
-            { planId: AUTUMN_FREE_PLAN_ID, platformId },
+            `${AUTUMN_CONSOLE_URL}/api/billing/enroll`,
+            { email },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
         )
         return response.data.data
     },
-    async activate({ licenseKey, platformId }: { licenseKey: string, platformId: string }): Promise<AutumnEnrollmentCredentials> {
+    async activate({ licenseKey }: { licenseKey: string }): Promise<AutumnEnrollmentCredentials> {
         const response = await safeHttp.axios.post<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/activate`,
-            { platformId },
+            {},
             {
                 timeout: CONSOLE_REQUEST_TIMEOUT_MS,
                 headers: { Authorization: `Bearer ${licenseKey}` },
@@ -267,11 +268,13 @@ export const autumnConsole = {
         )
         return response.data.data
     },
-    async compAppSumo({ platformId, planId, action }: { platformId: string, planId?: string, action: AppSumoAction }): Promise<void> {
+    async compAppSumo({ log, platformId, action }: { log: FastifyBaseLogger, platformId: string, action: AppSumoAction }): Promise<void> {
+        const creds = await autumnConsole.getCreds(log, platformId)
+        assertNotNullOrUndefined(creds, 'Autumn credentials must exist before applying an AppSumo plan')
         const token = system.get(AppSystemProp.APPSUMO_TOKEN)
         await safeHttp.axios.post<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/appsumo`,
-            { platformId, planId, action },
+            { autumnCustomerId: creds.autumnCustomerId, action },
             {
                 timeout: CONSOLE_REQUEST_TIMEOUT_MS,
                 headers: { Authorization: `Bearer ${token}` },
@@ -285,6 +288,12 @@ export const autumnConsole = {
         }
         return { autumnCustomerId, autumnApiKey }
     },
+}
+
+async function getPlatformOwnerEmail(log: FastifyBaseLogger, platformId: string): Promise<string> {
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    const owner = await userService(log).getMetaInformation({ id: platform.ownerId })
+    return owner.email
 }
 
 function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements {

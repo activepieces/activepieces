@@ -161,13 +161,13 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     refreshEntitlements: async (platformId: string) => {
         await autumnUtils.refreshEntitlements(log, platformId)
     },
-    applyAppSumoPlan: async ({ platformId, planId, action }: ApplyAppSumoPlanParams) => {
+    applyAppSumoPlan: async ({ platformId, action }: ApplyAppSumoPlanParams) => {
         await autumnUtils.ensureEnrolled(log, platformId)
-        await autumnConsole.compAppSumo({ platformId, planId, action })
+        await autumnConsole.compAppSumo({ log, platformId, action })
         await autumnUtils.refreshEntitlements(log, platformId)
     },
     activateLicense: async ({ platformId, licenseKey }: ActivateLicenseParams) => {
-        const credentials = await autumnConsole.activate({ licenseKey, platformId })
+        const credentials = await autumnConsole.activate({ licenseKey })
         await platformPlanService(log).update({ platformId, licenseKey })
         await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
         await autumnUtils.refreshEntitlements(log, platformId)

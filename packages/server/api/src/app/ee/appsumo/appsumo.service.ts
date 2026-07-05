@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { PlanName, PlatformRole } from '@activepieces/shared'
+import { PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -56,7 +56,6 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                 await platformPlanService(log).getOrCreateForPlatform(project.platformId)
                 await billingProvider.get(log).applyAppSumoPlan({
                     platformId: project.platformId,
-                    planId: isRefund ? undefined : PlanName.APPSUMO,
                     action: isRefund ? AppSumoAction.REFUND : AppSumoAction.ACTIVATE,
                 })
             }

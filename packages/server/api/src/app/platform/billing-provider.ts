@@ -230,7 +230,6 @@ export enum AppSumoAction {
 
 export type ApplyAppSumoPlanParams = {
     platformId: string
-    planId?: string
     action: AppSumoAction
 }
 
