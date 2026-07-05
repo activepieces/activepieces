@@ -98,6 +98,10 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
             columns: ['projectId', 'created', 'archivedAt'],
         },
         {
+            name: 'idx_adhoc_run_created',
+            columns: ['created'],
+        },
+        {
             name: 'idx_adhoc_run_project_id_status',
             columns: ['projectId', 'status'],
         },

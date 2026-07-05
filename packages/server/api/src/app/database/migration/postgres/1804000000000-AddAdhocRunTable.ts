@@ -53,6 +53,9 @@ export class AddAdhocRunTable1804000000000 implements Migration {
             CREATE INDEX "idx_adhoc_run_project_id_created_archived_at" ON "adhoc_run" ("projectId", "created", "archivedAt")
         `)
         await queryRunner.query(`
+            CREATE INDEX "idx_adhoc_run_created" ON "adhoc_run" ("created")
+        `)
+        await queryRunner.query(`
             ALTER TABLE "adhoc_run"
             ADD CONSTRAINT "fk_adhoc_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
@@ -75,6 +78,9 @@ export class AddAdhocRunTable1804000000000 implements Migration {
         `)
         await queryRunner.query(`
             ALTER TABLE "adhoc_run" DROP CONSTRAINT "fk_adhoc_run_project_id"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "idx_adhoc_run_created"
         `)
         await queryRunner.query(`
             DROP INDEX "idx_adhoc_run_project_id_created_archived_at"
