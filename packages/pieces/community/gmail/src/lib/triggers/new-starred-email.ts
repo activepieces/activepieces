@@ -110,7 +110,8 @@ export const gmailNewStarredEmailTrigger = createTrigger({
                   );
                 }
               }
-            } else if (history.messagesAdded) {
+            }
+            if (history.messagesAdded) {
               for (const messageAdded of history.messagesAdded) {
                 if (
                   messageAdded.message?.id &&
@@ -132,10 +133,20 @@ export const gmailNewStarredEmailTrigger = createTrigger({
         }
       } while (nextPageToken);
     } catch (error: any) {
-      console.warn('History ID expired, resetting to latest profile history ID', error);
-      const profile = await gmail.users.getProfile({ userId: 'me' });
-      await context.store.put('lastHistoryId', profile.data.historyId);
-      return [];
+      const status = error.status || error.code;
+      const isExpiredHistory =
+        status === 404 ||
+        status === 410 ||
+        status === 412 ||
+        status === 400;
+
+      if (isExpiredHistory) {
+        console.warn('History ID expired, resetting to latest profile history ID', error);
+        const profile = await gmail.users.getProfile({ userId: 'me' });
+        await context.store.put('lastHistoryId', profile.data.historyId);
+        return [];
+      }
+      throw error;
     }
 
     for (const [messageId, historyId] of starredMessages) {
