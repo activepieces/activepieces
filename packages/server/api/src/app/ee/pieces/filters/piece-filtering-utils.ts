@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { ApEdition, FilteredPieceBehavior, isComponentVisible, isPieceVisible, PieceSet, PiecesFilterType, PlatformPlan, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
@@ -82,6 +82,26 @@ export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
             return platformFilteredPieces.filter((p) => isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }))
         }
         return filterBasedOnProject(log, projectId, platformFilteredPieces)
+    },
+    async filterPieceComponents({ piece, platformId, projectId }: FilterPieceComponentsParams): Promise<PieceMetadataModel> {
+        const context = await this.loadFilterContext({ platformId, projectId })
+        if (isNil(context)) {
+            return piece
+        }
+        const { platform, pieceSet } = context
+        const hiddenActions = platform.filteredActionNames[piece.name] ?? []
+        const hiddenTriggers = platform.filteredTriggerNames[piece.name] ?? []
+        const actionVisible = (name: string): boolean =>
+            !hiddenActions.includes(name)
+            && (isNil(pieceSet) || isComponentVisible({ selected: pieceSet.config.selectedActions[piece.name], name }))
+        const triggerVisible = (name: string): boolean =>
+            !hiddenTriggers.includes(name)
+            && (isNil(pieceSet) || isComponentVisible({ selected: pieceSet.config.selectedTriggers[piece.name], name }))
+        return {
+            ...piece,
+            actions: Object.fromEntries(Object.entries(piece.actions).filter(([name]) => actionVisible(name))),
+            triggers: Object.fromEntries(Object.entries(piece.triggers).filter(([name]) => triggerVisible(name))),
+        }
     },
     async isFiltered({ piece, projectId, platformId }: IsFilteredParams): Promise<boolean> {
         const filteredPieces = await this.filter({
@@ -167,6 +187,12 @@ type FilterComponentsParams = {
     projectId?: string
     summaries: PieceMetadataModelSummary[]
     filterContext?: PieceFilterContext | null
+}
+
+type FilterPieceComponentsParams = {
+    piece: PieceMetadataModel
+    platformId: string | undefined
+    projectId?: string
 }
 
 type IsFilteredParams = {

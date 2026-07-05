@@ -123,7 +123,7 @@ const assignProjectPieceSet = async ({ platformId, projectId, pieceSetExternalId
         : await pieceSetRepo().findOneBy({ platformId, externalId: targetExternalId })
 
     if (!isNil(set)) {
-        await pieceSetService(log).assignProject({ pieceSetId: set.id, platformId, projectId })
+        await pieceSetService(log).assignProject({ pieceSet: set, projectId })
         return
     }
 
@@ -131,7 +131,7 @@ const assignProjectPieceSet = async ({ platformId, projectId, pieceSetExternalId
         log.warn({ platform: { id: platformId }, project: { id: projectId } }, `[managedAuthn] pieceSet externalId "${targetExternalId}" not found — falling back to default`)
     }
     const defaultSet = await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
-    await pieceSetService(log).assignProject({ pieceSetId: defaultSet.id, platformId, projectId })
+    await pieceSetService(log).assignProject({ pieceSet: defaultSet, projectId })
 }
 
 /**

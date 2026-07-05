@@ -551,6 +551,135 @@ describe('Piece Component Filtering (EE)', () => {
         })
     })
 
+    describe('GET /v1/pieces/:name (component filters on the detail endpoint)', () => {
+        it('hides platform-filtered actions and triggers in the detail response', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    filteredActionNames: { 'test-piece': ['send_email'] },
+                    filteredTriggerNames: { 'test-piece': ['new_record'] },
+                },
+            })
+
+            const piece = createMockPieceMetadata({
+                name: 'test-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: {
+                    send_email: makeAction('send_email'),
+                    create_contact: makeAction('create_contact'),
+                },
+                triggers: {
+                    new_record: makeTrigger('new_record'),
+                    updated_record: makeTrigger('updated_record'),
+                },
+            })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/pieces/test-piece',
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(200)
+            const found = response.json()
+            expect(Object.keys(found.actions)).toEqual(['create_contact'])
+            expect(Object.keys(found.triggers)).toEqual(['updated_record'])
+        })
+
+        it('applies the project piece-set component selection when projectId is passed', async () => {
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+                platform: { filteredPieceNames: [], filteredActionNames: {}, filteredTriggerNames: {} },
+            })
+
+            const pieceSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'Detail Test Set',
+                externalId: null,
+                isDefault: false,
+                generatedForProjectId: null,
+                config: {
+                    pieces: { mode: 'include_all', exceptions: [] },
+                    selectedActions: { 'test-piece': ['visible_action'] },
+                    selectedTriggers: {},
+                },
+            }
+            await databaseConnection().getRepository('piece_set').save(pieceSet)
+            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
+
+            const piece = createMockPieceMetadata({
+                name: 'test-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: {
+                    visible_action: makeAction('visible_action'),
+                    hidden_action: makeAction('hidden_action'),
+                },
+                triggers: {},
+            })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/test-piece?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(200)
+            expect(Object.keys(response.json().actions)).toEqual(['visible_action'])
+        })
+
+        it('returns all components when nothing is filtered', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                platform: { filteredActionNames: {}, filteredTriggerNames: {} },
+            })
+
+            const piece = createMockPieceMetadata({
+                name: 'test-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: {
+                    send_email: makeAction('send_email'),
+                    create_contact: makeAction('create_contact'),
+                },
+                triggers: {},
+            })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/pieces/test-piece',
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(200)
+            expect(Object.keys(response.json().actions).sort()).toEqual(['create_contact', 'send_email'])
+        })
+    })
+
     describe('GET /v1/pieces (with filteredTriggerNames)', () => {
         it('filters out suggestedTriggers listed in filteredTriggerNames for the matching piece', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup({

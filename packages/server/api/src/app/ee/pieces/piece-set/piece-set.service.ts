@@ -41,8 +41,7 @@ type DeleteParams = {
 }
 
 type AssignProjectParams = {
-    pieceSetId: string
-    platformId: string
+    pieceSet: PieceSet
     projectId: string
     entityManager?: EntityManager
 }
@@ -174,14 +173,13 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async assignProject({ pieceSetId, platformId, projectId, entityManager }: AssignProjectParams): Promise<void> {
-        await this.getOne({ id: pieceSetId, platformId })
-
+    // Takes the fetched set (not an id) so hot paths like managed-authn skip a redundant validation query
+    async assignProject({ pieceSet, projectId, entityManager }: AssignProjectParams): Promise<void> {
         const repo = entityManager
             ? entityManager.getRepository('project')
             : pieceSetRepo().manager.getRepository('project')
 
-        await repo.update({ id: projectId, platformId }, { pieceSetId })
+        await repo.update({ id: projectId, platformId: pieceSet.platformId }, { pieceSetId: pieceSet.id })
     },
 
     async assignProjects({ pieceSetId, platformId, projectIds, entityManager }: AssignProjectsParams): Promise<void> {
