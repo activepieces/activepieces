@@ -1,11 +1,9 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ApEdition, ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, FlowVersionState, PrewarmDataResponse, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { websocketService } from '../../core/websockets.service'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
-import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
@@ -13,14 +11,12 @@ import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import Paginator from '../../helper/pagination/paginator'
+import { preWarmWorkersService } from '../../flows/pre-warm-workers'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { projectWorkerGroupService } from '../../project/project-worker-group.service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
@@ -168,62 +164,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async getPrewarmData(input) {
-            const empty: PrewarmDataResponse = { flows: [], platformId: '', engineToken: '' }
-
-            // Targeted prewarm (flowPublished): the flow is already known, so skip listing active flows
-            // and just mint a token for its project.
-            if (!isNil(input.flow)) {
-                const platformId = await projectService(log).getPlatformId(input.flow.projectId)
-                const engineToken = await accessTokenManager(log).generateEngineToken({ projectId: input.flow.projectId, platformId })
-                return { flows: [input.flow], platformId, engineToken }
-            }
-
-            let projectIds: string[] | undefined = undefined
-            let platformId: string | undefined = undefined
-
-            // for cloud we only try to get flows for dedicated workers (with a worker group id). we can't do it for shared workers because they handle all users flows
-            if (system.getEdition() === ApEdition.CLOUD) {
-                if (isNil(input.workerGroupId)) { // shared cloud worker
-                    return empty
-                }
-                if (input.projectWorker) { // get projects with given worker group id
-                    projectIds = await projectWorkerGroupService(log).getWorkerGroupProjects({ workerGroupId: input.workerGroupId })
-                    if (isNil(projectIds) || projectIds.length === 0) {
-                        return empty
-                    }
-                    platformId = await projectService(log).getPlatformId(projectIds[0])
-                }
-                else {  // get platform with given worker group id
-                    platformId = await workerGroupService(log).getWorkerGroupPlatformId({ workerGroupId: input.workerGroupId }) ?? undefined
-                    if (isNil(platformId)) {
-                        return empty
-                    }
-                }
-            }
-            else {
-                const platform = await platformService(log).getOldestPlatform()
-                if (isNil(platform)) {
-                    return empty
-                }
-                platformId = platform.id
-            }
-
-            const baseListParams = {
-                status: [FlowStatus.ENABLED],
-                versionState: FlowVersionState.LOCKED,
-                limit: Paginator.NO_LIMIT,
-                includeTriggerSource: false,
-            }
-
-            const activeFlows = await flowService(log).list(
-                !isNil(projectIds) ? { ...baseListParams, projectIds } : { ...baseListParams, platformId },
-            )
-            const flows = activeFlows.data.map((flow) => ({ id: flow.id, versionId: flow.version.id, projectId: flow.projectId }))
-            const engineToken = await accessTokenManager(log).generateEngineToken({
-                projectId: projectIds?.[0] ?? (await projectService(log).getProjectIdsByPlatform(platformId))[0],
-                platformId,
-            })
-            return { flows, platformId, engineToken }
+            return preWarmWorkersService(log).getPrewarmData(input)
         },
 
         async extendLock(input) {
