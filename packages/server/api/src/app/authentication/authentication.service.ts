@@ -1,10 +1,11 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ApEdition, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
@@ -24,10 +25,12 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 email: params.email,
                 platformId,
             })
-            await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
-                email: params.email,
-                platformId,
-            })
+            if (system.get(AppSystemProp.ALLOW_OPEN_SIGN_UP) !== 'true') {
+                await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
+                    email: params.email,
+                    platformId,
+                })
+            }
             const userIdentity = await userIdentityService(log).create({
                 ...params,
                 verified: true,
@@ -202,8 +205,13 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
 
 async function sendVerificationOrAutoVerify(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
     const edition = system.getEdition()
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
     switch (edition) {
         case ApEdition.CLOUD:
+            if (environment === ApEnvironment.DEVELOPMENT) {
+                await userIdentityService(log).verify(userIdentity.id)
+                break
+            }
             if (!userIdentity.verified) {
                 await otpService(log).createAndSend({
                     platformId: null,

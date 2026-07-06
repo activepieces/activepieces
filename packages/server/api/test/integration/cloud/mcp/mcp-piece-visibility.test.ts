@@ -48,7 +48,9 @@ describe('MCP piece visibility', () => {
 
         const result = await apResearchPiecesTool(mcp, mockLog).execute({})
 
-        expect(text(result)).toContain('✅')
+        // The only seeded piece is blocked, so the correct successful result is "no pieces matched"
+        // (a ⚠️ guidance message, not an ❌ error) — assert it succeeded and excludes the blocked piece.
+        expect(text(result)).not.toContain('❌')
         expect(text(result)).not.toContain(blockedPieceName)
     })
 

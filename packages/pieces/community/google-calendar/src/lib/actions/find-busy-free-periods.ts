@@ -5,6 +5,7 @@ import { getCalendars } from '../common/helper';
 import dayjs from 'dayjs';
 
 
+import { freeBusyActionOutputSchema } from '../output-schemas';
 interface FreeBusyResponse {
   kind: 'calendar#freeBusy';
   timeMin: string;
@@ -98,5 +99,6 @@ export const findFreeBusy = createAction({
   audience: 'human',
   aiMetadata: { description: 'Queries one or more calendars for their busy time blocks within a given start/end window, without exposing event details. Use to check availability or find open slots before scheduling a meeting. Requires the calendars to check and a time range. Read-only and idempotent.', idempotent: true },
   props: findFreeBusyProps,
+  outputSchema: freeBusyActionOutputSchema,
   run: runFindFreeBusy,
 });

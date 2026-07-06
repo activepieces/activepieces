@@ -1,21 +1,21 @@
 import { Property } from '@activepieces/pieces-framework';
 import {
   ListSecretsCommand,
-  SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from './auth';
+import { awsSecretsManagerCombinedAuth } from './auth';
+import { resolveSecretsManagerClient } from './client';
 
 export const secretIdDropdown = Property.Dropdown<
   string,
   true,
-  typeof awsSecretsManagerAuth
+  typeof awsSecretsManagerCombinedAuth
 >({
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   displayName: 'Secret ID or ARN',
   description: 'The name or ARN of the secret',
   required: true,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  options: async ({ auth }, { server }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -25,13 +25,7 @@ export const secretIdDropdown = Property.Dropdown<
     }
 
     try {
-      const client = new SecretsManagerClient({
-        region: auth.props.region,
-        credentials: {
-          accessKeyId: auth.props.accessKeyId,
-          secretAccessKey: auth.props.secretAccessKey,
-        },
-      });
+      const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 
       const options: Array<{ label: string; value: string }> = [];
       let nextToken: string | undefined;

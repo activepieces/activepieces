@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { calendar as googleCalendar } from '@googleapis/calendar';
 import { randomUUID } from 'crypto';
 
+import { eventOutputSchema } from '../output-schemas';
 export const createEventProps = {
   calendar_id: googleCalendarCommon.calendarDropdown('writer'),
   title: Property.ShortText({
@@ -167,5 +168,6 @@ export const createEvent = createAction({
   aiMetadata: { description: 'Creates a Google Calendar event with structured fields (title, start/end times, location, description, attendees, color, guest permissions) and can optionally attach a Google Meet link. Use this when you have explicit event details; choose Create Quick Event instead when working from a single natural-language phrase. Requires a title and start time (end defaults to 30 minutes after start). Not idempotent: each call creates a new event.', idempotent: false },
   displayName: 'Create Event',
   props: createEventProps,
+  outputSchema: eventOutputSchema,
   run: runCreateEvent,
 });

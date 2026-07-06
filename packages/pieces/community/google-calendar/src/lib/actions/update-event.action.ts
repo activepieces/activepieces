@@ -3,6 +3,7 @@ import { calendar as googleCalendar, calendar_v3 } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
 
+import { eventOutputSchema } from '../output-schemas';
 export const updateEventProps = {
   calendar_id: googleCalendarCommon.calendarDropdown('writer'),
   eventId: Property.ShortText({
@@ -130,5 +131,6 @@ export const updateEventAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Updates the fields of an existing Google Calendar event identified by calendar and event ID (title, times, location, description, color, attendees, guest permissions); unset fields retain their current values. Use to modify or reschedule an event that already exists rather than creating a new one. Requires the event ID. Idempotent: applying the same field values repeatedly leaves the event in the same state.', idempotent: true },
   props: updateEventProps,
+  outputSchema: eventOutputSchema,
   run: runUpdateEvent,
 });

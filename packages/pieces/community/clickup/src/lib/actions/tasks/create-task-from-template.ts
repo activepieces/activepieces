@@ -3,6 +3,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { taskOutputSchema } from '../../output-schemas';
 
 export const createClickupTaskFromTemplate = createAction({
   auth: clickupAuth,
@@ -22,6 +23,7 @@ export const createClickupTaskFromTemplate = createAction({
       required: true,
     }),
   },
+  outputSchema: taskOutputSchema,
   async run(configValue) {
     const { list_id, name, template_id } = configValue.propsValue;
     const response = await callClickUpApi(

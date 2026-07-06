@@ -1,13 +1,12 @@
 import { ActionReceiptEvent } from '@activepieces/shared';
 import { t } from 'i18next';
-import { AlertCircle, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
-import { cn } from '@/lib/utils';
 
 import { normalizePieceName } from '../lib/message-parsers';
 
@@ -55,14 +54,9 @@ export function ActionReceiptCard({
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <div className="mx-3.5 mb-2 rounded-lg bg-destructive/5 px-3 py-2">
-          <div className="flex items-start gap-1.5">
-            <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
-            <p className="text-xs text-destructive break-words min-w-0">
-              {receipt.errorMessage}
-            </p>
-          </div>
-        </div>
+        <p className="px-3.5 pb-2.5 text-[11px] leading-relaxed text-muted-foreground/70 break-words">
+          {receipt.errorMessage}
+        </p>
       )}
 
       {hasOutput && (
@@ -103,24 +97,17 @@ export function ActionReceiptCard({
 }
 
 function StatusBadge({ isSuccess }: { isSuccess: boolean }) {
+  if (isSuccess) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+        <Check className="h-3 w-3" />
+        {t('Action completed')}
+      </span>
+    );
+  }
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 text-xs font-medium',
-        isSuccess ? 'text-green-600 dark:text-green-400' : 'text-destructive',
-      )}
-    >
-      {isSuccess ? (
-        <>
-          <Check className="h-3 w-3" />
-          {t('Action completed')}
-        </>
-      ) : (
-        <>
-          <AlertCircle className="h-3 w-3" />
-          {t('Action failed')}
-        </>
-      )}
+    <span className="text-xs text-muted-foreground/70">
+      {t("Didn't go through")}
     </span>
   );
 }

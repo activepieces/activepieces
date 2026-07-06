@@ -48,6 +48,18 @@ export const FailedStep = z.object({
 })
 export type FailedStep = z.infer<typeof FailedStep>
 
+export const TimelinePhase = z.object({
+    name: z.enum(['QUEUE', 'PROVISION', 'BOOT', 'RUN']),
+    durationMs: z.number(),
+})
+export type TimelinePhase = z.infer<typeof TimelinePhase>
+
+// One leg per execution attempt; legs.length > 1 means the run paused and resumed.
+export const RunTimeline = z.object({
+    legs: z.array(z.array(TimelinePhase)),
+})
+export type RunTimeline = z.infer<typeof RunTimeline>
+
 export const FlowRun = z.object({
     ...BaseModelSchema,
     projectId: z.string(),
@@ -64,6 +76,7 @@ export const FlowRun = z.object({
     status: z.nativeEnum(FlowRunStatus),
     startTime: z.string().nullish(),
     finishTime: z.string().nullish(),
+    timeline: RunTimeline.nullish(),
     environment: z.nativeEnum(RunEnvironment),
     // The steps data may be missing if the flow has not started yet,
     // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.

@@ -116,6 +116,7 @@ async function removeDeprecatedJobs(): Promise<void> {
         'update-flow-status',
         'expire-pending-sso-domains',
         'console-usage-report',
+        'chat-funnel-sync',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
     const knownJobNames = Object.values(SystemJobName) as string[]

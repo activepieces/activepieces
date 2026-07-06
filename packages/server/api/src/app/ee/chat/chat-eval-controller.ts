@@ -9,7 +9,6 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
-import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
 import { chatService } from './chat-service'
 import { chatPrompt } from './prompt/chat-prompt'
@@ -73,7 +72,6 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         let priorAssistantTurns = 0
         for (const turn of turns) {
             lastRunId = apId()
-            await chatApprovalGate.storeActiveRunId({ conversationId: conversation.id, runId: lastRunId })
             await jobQueue(log).add({
                 id: apId(),
                 type: JobType.ONE_TIME,
@@ -107,10 +105,11 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    // Enqueue one turn and return; the caller polls /state for progress. Dry-run, so tools aren't executed.
+    // Enqueue one turn and return; the caller polls /state for progress. Dry-run by default (tools
+    // not executed); pass executeTools:true to run tools live against the owner's real connections.
     app.post('/eval/turn/start', EvalTurnStartRoute, async (request, reply) => {
         const log = request.log
-        const { conversationId, platformId, userMessage, promptOverride } = request.body
+        const { conversationId, platformId, userMessage, promptOverride, executeTools, discoveryOnly } = request.body
 
         let convId: string
         let evalPlatformId: string
@@ -149,7 +148,6 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         }
 
         const runId = apId()
-        await chatApprovalGate.storeActiveRunId({ conversationId: convId, runId })
         await jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,
@@ -164,7 +162,10 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
                 userMessage,
                 modelName: null,
                 promptOverride,
-                dryRun: true,
+                // discovery-only still needs the real tool set (dry-run strips MCP piece tools
+                // entirely), so it runs non-dry but with execution neutralized in the worker.
+                dryRun: executeTools !== true && discoveryOnly !== true,
+                discoveryOnly: discoveryOnly === true,
             },
         })
 
@@ -258,6 +259,14 @@ const EvalTurnStartRequest = z.object({
     platformId: z.string().optional(),
     userMessage: z.string().min(1).max(51200),
     promptOverride: ChatPromptOverride.optional(),
+    // Opt-in (default off): run the turn with tools actually executing against the platform
+    // owner's real connections, instead of the dry-run playground stub. The failure-mode eval
+    // harness needs real discovery/execution results to measure how the agent uses pieces;
+    // dry-run returns "not executed" for every cross-project tool, which hides piece-use behavior.
+    executeTools: z.boolean().optional(),
+    // Opt-in (default off): real discovery, but ap_execute_action neutralized and approval gates
+    // auto-resolved — measures how the agent navigates to a runnable call with zero side effects.
+    discoveryOnly: z.boolean().optional(),
 })
 
 const EvalStateParams = z.object({

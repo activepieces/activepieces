@@ -13,7 +13,7 @@ export const requestApprovalDirectMessage = createAction({
     'Send approval message to a user and then wait until the message is approved or disapproved',
   audience: 'both',
   aiMetadata: {
-    description: 'Posts an Approve/Disapprove adaptive card into a Microsoft Teams chat (by chat ID) and pauses the flow until the recipient clicks one of the buttons, then resumes reporting whether it was approved. Use as a human-in-the-loop gate targeting a specific person via direct chat; for a channel-wide gate use Request Approval in Channel instead. Not idempotent — each call posts another approval message and creates a new wait.',
+    description: 'Posts an adaptive card with a single button linking to a confirmation page (where the recipient chooses Approve or Disapprove) into a Microsoft Teams chat (by chat ID) and pauses the flow until they respond, then resumes reporting whether it was approved. Use as a human-in-the-loop gate targeting a specific person via direct chat; for a channel-wide gate use Request Approval in Channel instead. Not idempotent — each call posts another approval message and creates a new wait.',
     idempotent: false,
   },
   props: {
@@ -38,12 +38,7 @@ export const requestApprovalDirectMessage = createAction({
       const waitpoint = await context.run.createWaitpoint({
         type: 'WEBHOOK',
       });
-      const approvalLink = waitpoint.buildResumeUrl({
-        queryParams: { action: 'approve' },
-      });
-      const disapprovalLink = waitpoint.buildResumeUrl({
-        queryParams: { action: 'disapprove' },
-      });
+      const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
 
       const chatMessage = {
         body: {
@@ -68,15 +63,8 @@ export const requestApprovalDirectMessage = createAction({
               actions: [
                 {
                   type: 'Action.OpenUrl',
-                  title: 'Approve',
-                  url: approvalLink,
-                  style: 'positive',
-                },
-                {
-                  type: 'Action.OpenUrl',
-                  title: 'Disapprove',
-                  url: disapprovalLink,
-                  style: 'destructive',
+                  title: 'Review & Respond',
+                  url: confirmationLink,
                 },
               ],
             }),

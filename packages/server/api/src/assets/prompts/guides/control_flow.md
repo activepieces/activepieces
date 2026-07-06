@@ -57,4 +57,4 @@ So to use **all** results after the loop, read `{{loopStep['output'].iterations}
 
 ## Deep nesting → flatten
 
-More than ~2 levels of nested routers is a smell. Compute the decision once in a `CODE` step (return a single tag string), then use one router keyed on that tag instead of a deep tree.
+More than ~2 levels of nested routers is a smell. Compute the decision once — prefer an inline formula expression that returns a single tag string (e.g. `ap-formula-v1::{switch({{step_1['output'].country}};"US";"NA";"DE";"EU")}::ap-formula-v1`), or a `CODE` step only if the logic is too complex for a formula — then use one router keyed on that tag instead of a deep tree.

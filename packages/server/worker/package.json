@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/sandbox-pool": "workspace:*",
+    "@activepieces/sandbox": "workspace:*",
     "@activepieces/server-utils": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@ai-sdk/amazon-bedrock": "3.0.97",
@@ -46,6 +46,6 @@
     "@types/decompress": "4.2.7",
     "@types/node": "24.11.0",
     "@types/write-file-atomic": "4.0.3",
-    "vitest": "3.0.8"
+    "vitest": "3.2.6"
   }
 }

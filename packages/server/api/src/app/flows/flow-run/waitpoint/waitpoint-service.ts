@@ -142,6 +142,10 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async findByIdAndFlowRunId({ waitpointId, flowRunId }: { waitpointId: string, flowRunId: string }): Promise<Waitpoint | null> {
+        return waitpointRepo().findOneBy({ id: waitpointId, flowRunId })
+    },
+
     async getByFlowRunId(flowRunId: string): Promise<Waitpoint | null> {
         const completed = await waitpointRepo().findOneBy({ flowRunId, status: WaitpointStatus.COMPLETED })
         return completed ?? waitpointRepo().findOneBy({ flowRunId })

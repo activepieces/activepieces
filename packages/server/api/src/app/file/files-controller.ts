@@ -119,9 +119,12 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             projectId: file.projectId ?? undefined,
             type: file.type,
         })
+        const mimeType = file.metadata?.mimetype ?? 'application/octet-stream'
+        const disposition = isInlineSafeMimeType(mimeType) ? 'inline' : 'attachment'
         return reply
-            .type('application/octet-stream')
-            .header('Content-Disposition', `attachment; filename="${encodeURI(file.fileName ?? `${file.id}.bin`)}"`)
+            .type(mimeType)
+            .header('X-Content-Type-Options', 'nosniff')
+            .header('Content-Disposition', `${disposition}; filename="${encodeURI(file.fileName ?? `${file.id}.bin`)}"`)
             .status(StatusCodes.OK)
             .send(data)
     })
@@ -144,6 +147,15 @@ export const signedStepFileController: FastifyPluginAsyncZod = async (app) => {
         })
         return reply.redirect(readUrl)
     })
+}
+
+const INLINE_SAFE_MIME_TYPES = new Set([
+    'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'image/bmp',
+    'application/pdf', 'text/plain',
+])
+
+function isInlineSafeMimeType(mimeType: string): boolean {
+    return INLINE_SAFE_MIME_TYPES.has(mimeType.split(';')[0].trim().toLowerCase())
 }
 
 async function authorizeRead({ token, fileId, log }: AuthorizeReadParams): Promise<string | undefined> {

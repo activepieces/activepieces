@@ -8,6 +8,7 @@ import {
 import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
 
+import { eventOutputSchema } from '../output-schemas';
 export const getEventByIdProps = {
   calendar_id: googleCalendarCommon.calendarDropdown(),
   event_id: Property.ShortText({
@@ -127,5 +128,6 @@ export const getEventById = createAction({
   audience: 'human',
   aiMetadata: { description: 'Fetches the full details of a single Google Calendar event by its unique event ID within a given calendar. Use when you already have an event ID (e.g. from a trigger or a list action) and need its details; use Get all Events to search when you do not. Requires a valid event ID. Read-only and idempotent.', idempotent: true },
   props: getEventByIdProps,
+  outputSchema: eventOutputSchema,
   run: runGetEventById,
 });
