@@ -51,15 +51,20 @@ The Enterprise Authentication module extends the Community Edition auth layer wi
 ## SAML SSO (`saml-authn/`)
 
 **Flow**:
-1. `POST /v1/authn/saml/login` → generates SAML login request → returns `{ redirectUrl }` to IdP
+1. `POST /v1/authn/saml/login` (optional `from` query param) → generates SAML login request, RelayState set per below → returns `{ redirectUrl }` to IdP
 2. User authenticates at Identity Provider (Okta, JumpCloud, etc.)
-3. IdP POSTs SAML assertion to `POST /v1/authn/saml/acs`
-4. `authnSsoSamlService.acs()` parses assertion, extracts email/firstName/lastName
+3. IdP POSTs SAML assertion + RelayState to `POST /v1/authn/saml/acs`
+4. `authnSsoSamlService.acs()` parses assertion, extracts email/firstName/lastName, and resolves RelayState back to `from` + `originBaseUrl`
 5. Calls `authenticationService.federatedAuthn()` → creates/links user → returns JWT
+6. Controller redirects to `/authenticate` on the resolved `originBaseUrl` (falling back to the current request's host if no RelayState resolved), carrying `from` so the frontend can route the user back to where SAML login started
 
 **Config**: `SAMLAuthnProviderConfig { entityId, ssoUrl, certificate }` — stored in `platform.federatedAuthProviders.saml`
 
 **Gating**: `platform.plan.ssoEnabled`
+
+**Redirecting back to the originating host (`from` + RelayState)**: SAML's ACS URL is statically IdP-registered (built from config in `getAcsUrl()`, never from the live `/acs` request), so `/acs` can never observe which host a login actually started from — but `/login`'s own request host reliably does. `login()` captures `originBaseUrl` via `networkUtils.getRequestBaseUrl(req)` and round-trips it through RelayState alongside `from` (the same "return here after login" convention used app-wide via `useRedirectAfterLogin()`), so `acs()` can use it directly as the redirect's base URL — no route-prefix or env-var-based host inference needed, and it generalizes automatically to any current or future surface that can reach `/login`:
+- SAML's `RelayState` is spec-limited to ~80 bytes, but `from` can be much larger (the MCP case embeds a signed JWT). `login()` validates `from` via `isSafeRelativePath()` (parses it against a fixed dummy origin and checks the origin didn't change — catches `//evil.com` and backslash-based open-redirect tricks that a `startsWith('/')` check would miss), then `storeRelayState()` stores `{ from, originBaseUrl }` in `distributedStore` (Redis — `/login` and `/acs` can land on different replicas) under a short-TTL `apId()` token, and only that token is sent as RelayState.
+- `acs()` calls `resolveRelayState()` to look up and delete the stored value (single-use) and re-validate `from`, returning `{ from, originBaseUrl }` (or `null` if no RelayState resolved). The controller redirects to `originBaseUrl` when present, falling back to the existing `networkUtils.getRequestBaseUrl(req)` behavior otherwise.
 
 ## Federated Auth — Google/GitHub (`federated-authn/`)
 

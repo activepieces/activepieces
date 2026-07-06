@@ -24,8 +24,8 @@ export const invalidateSamlClientCache = (platformId: string): void => {
 }
 
 const samlClient = ({ idp, sp, attributeMapping }: SamlClientArgs) => ({
-    getLoginUrl(): string {
-        return sp.createLoginRequest(idp, LOGIN_REQUEST_BINDING).context
+    getLoginUrl(relayState?: string): string {
+        return sp.createLoginRequest(idp, LOGIN_REQUEST_BINDING, relayState ? { relayState } : undefined).context
     },
     async parseAndValidateLoginResponse(idpLoginResponse: IdpLoginResponse): Promise<SamlAttributes> {
         const { data: loginResult, error: parseError } = await tryCatch(

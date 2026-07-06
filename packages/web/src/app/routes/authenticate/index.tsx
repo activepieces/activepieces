@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 const AuthenticatePage = () => {
-  const navigate = useNavigate();
+  const redirectAfterLogin = useRedirectAfterLogin();
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
@@ -14,7 +15,7 @@ const AuthenticatePage = () => {
     if (response) {
       const decodedResponse = JSON.parse(response);
       authenticationSession.saveResponse(decodedResponse, false);
-      navigate('/flows');
+      redirectAfterLogin();
     }
   }, [response]);
 

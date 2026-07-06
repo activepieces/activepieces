@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { authenticationApi } from '@/api/authentication-api';
 import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
@@ -40,6 +41,8 @@ const ThirdPartyLogin = React.memo(
     const isCloud = edition === ApEdition.CLOUD;
     const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
     const { capture } = useTelemetry();
+    const [searchParams] = useSearchParams();
+    const from = searchParams.get('from');
 
     const handleProviderClick = async (
       event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -110,7 +113,9 @@ const ThirdPartyLogin = React.memo(
                 name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
                 payload: { provider: 'saml' },
               });
-              window.location.href = '/api/v1/authn/saml/login';
+              window.location.href = from
+                ? `/api/v1/authn/saml/login?from=${encodeURIComponent(from)}`
+                : '/api/v1/authn/saml/login';
             }}
           >
             <ThirdPartyIcon icon={SamlIcon} />

@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import { ApplicationEventName, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
@@ -16,7 +16,12 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         const platformId = req.query.platformId ?? await platformUtils.getPlatformIdForRequest(req)
         assertNotNullOrUndefined(platformId, 'Platform Id should not be null')
         const { saml } = await authnSsoSamlService(req.log).getSamlConfigOrThrow(platformId)
-        const { redirectUrl } = await authnSsoSamlService(req.log).login(platformId, saml)
+        const { redirectUrl } = await authnSsoSamlService(req.log).login({
+            platformId,
+            samlProvider: saml,
+            from: req.query.from,
+            originBaseUrl: networkUtils.getRequestBaseUrl(req),
+        })
         return res.redirect(redirectUrl)
     })
 
@@ -26,16 +31,26 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
             ?? await platformUtils.getPlatformIdForRequest(req)
         assertNotNullOrUndefined(platformId, 'Platform Id should not be null')
         const { saml } = await authnSsoSamlService(req.log).getSamlConfigOrThrow(platformId)
-        const response = await authnSsoSamlService(req.log).acs(platformId, saml, {
-            body: req.body,
-            query: req.query,
+        const relayState = typeof req.body.RelayState === 'string' ? req.body.RelayState : undefined
+        const { authenticationResponse, from, originBaseUrl } = await authnSsoSamlService(req.log).acs({
+            platformId,
+            samlProvider: saml,
+            idpLoginResponse: {
+                body: req.body,
+                query: req.query,
+            },
+            relayState,
         })
-        const url = new URL('/authenticate', networkUtils.getRequestBaseUrl(req))
-        url.searchParams.append('response', JSON.stringify(response))
+        const baseUrl = originBaseUrl ?? networkUtils.getRequestBaseUrl(req)
+        const url = new URL('/authenticate', baseUrl)
+        url.searchParams.append('response', JSON.stringify(authenticationResponse))
+        if (!isNil(from)) {
+            url.searchParams.append('from', from)
+        }
         applicationEvents(req.log).sendUserEvent({
             platformId,
-            userId: response.id,
-            projectId: response.projectId ?? undefined,
+            userId: authenticationResponse.id,
+            projectId: authenticationResponse.projectId ?? undefined,
             ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_UP,
@@ -83,6 +98,7 @@ const LoginRequest = {
     schema: {
         querystring: z.object({
             platformId: z.string().optional(),
+            from: z.string().max(512).optional(),
         }),
     },
 }

@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,8 @@ type SamlLoginFormProps = {
 };
 
 export const SamlLoginForm = ({ onBack }: SamlLoginFormProps) => {
+  const [searchParams] = useSearchParams();
+  const from = searchParams.get('from');
   const form = useForm<FormValues>({
     resolver: zodResolver(FormValues),
     defaultValues: { email: '' },
@@ -41,9 +44,10 @@ export const SamlLoginForm = ({ onBack }: SamlLoginFormProps) => {
       if (!platformId) {
         throw new Error(t('No SAML provider found for this domain'));
       }
+      const fromParam = from ? `&from=${encodeURIComponent(from)}` : '';
       window.location.href = `/api/v1/authn/saml/login?platformId=${encodeURIComponent(
         platformId,
-      )}`;
+      )}${fromParam}`;
     },
     onError: (error) => {
       const message =
