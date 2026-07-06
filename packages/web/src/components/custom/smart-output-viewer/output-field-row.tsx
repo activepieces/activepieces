@@ -14,7 +14,7 @@ import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { FieldTypeIcon } from './field-type-icon';
 import { FormatValue, getValueByDotPath } from './format-value';
 import { schemaUtils } from './resolve-schema';
-import { formatKey, truncateValue, ValueRow } from './shared-value-rendering';
+import { truncateValue, ValueRow } from './shared-value-rendering';
 import { OutputSchemaField } from './types';
 
 const NESTED_BASE_PADDING = 40;
@@ -434,7 +434,7 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
           {genericObjectEntries.map(([entryKey, entryValue]) => (
             <ValueRow
               key={entryKey}
-              label={formatKey(entryKey)}
+              label={entryKey}
               value={entryValue}
               depth={depth + 1}
             />
