@@ -45,7 +45,8 @@ function getAllowedModelsForProvider(
 }
 
 function managedTierLabel(modelId: string): string | undefined {
-  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)?.label;
+  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)
+    ?.label;
 }
 
 export const aiModelHooks = {
