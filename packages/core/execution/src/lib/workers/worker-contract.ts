@@ -213,8 +213,6 @@ export type DisableFlowRequest = {
 export type PrewarmDataRequest = {
     workerGroupId: string | undefined
     projectWorker: boolean | undefined
-    // Targeted prewarm for a single known flow (e.g. on publish) — the server skips listing active
-    // flows and just returns this flow with a token for its project.
     flow?: { id: string, versionId: string, projectId: string }
 }
 

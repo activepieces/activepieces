@@ -27,6 +27,9 @@ export const preWarmWorkersService = (log: FastifyBaseLogger) => ({
     async getPrewarmData(input: PrewarmDataRequest): Promise<PrewarmDataResponse> {
         // Targeted prewarm (flowPublished): the flow is already known, so skip listing (and the cache) and just mint a token for its project.
         if (!isNil(input.flow)) {
+            if (system.getEdition() === ApEdition.CLOUD && isNil(input.workerGroupId)) {
+                return EMPTY_RESPONSE
+            }
             const platformId = await projectService(log).getPlatformId(input.flow.projectId)
             const engineToken = await accessTokenManager(log).generateEngineToken({ projectId: input.flow.projectId, platformId })
             return { flows: [input.flow], platformId, engineToken }
