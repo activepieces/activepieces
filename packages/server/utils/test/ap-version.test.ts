@@ -61,6 +61,25 @@ describe('apVersionUtil.getCurrentRelease', () => {
     })
 })
 
+describe('apVersionUtil.getReleaseInfo', () => {
+    it('reports readOk true with the real version when package.json is readable', async () => {
+        await writeFile(join(tempDir, 'package.json'), JSON.stringify({ version: '1.2.3' }))
+        const apVersionUtil = await loadApVersionUtil()
+        expect(apVersionUtil.getReleaseInfo()).toEqual({ version: '1.2.3', readOk: true })
+    })
+
+    it('reports readOk false with the 0.0.0 sentinel when package.json is missing', async () => {
+        const apVersionUtil = await loadApVersionUtil()
+        expect(apVersionUtil.getReleaseInfo()).toEqual({ version: '0.0.0', readOk: false })
+    })
+
+    it('reports readOk false when the version field is invalid', async () => {
+        await writeFile(join(tempDir, 'package.json'), JSON.stringify({ version: 123 }))
+        const apVersionUtil = await loadApVersionUtil()
+        expect(apVersionUtil.getReleaseInfo()).toEqual({ version: '0.0.0', readOk: false })
+    })
+})
+
 describe('apVersionUtil.versionsAreCompatible', () => {
     it('returns true when both are the same real version', async () => {
         const apVersionUtil = await loadApVersionUtil()

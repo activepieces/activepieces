@@ -35,6 +35,20 @@ function pageOnceForUnreadableWorkerVersion(workerLog: typeof logger): void {
     })
 }
 
+// Front-loads the release-read failure signal to worker boot. Without this the only alert is
+// emitted lazily inside the poll loop on the first version mismatch, so a mis-packaged worker
+// that hasn't polled yet looks healthy. A '0.0.0' read pauses polling and will NOT self-heal
+// on reconnect. The once-guard flag in pageOnceForUnreadableWorkerVersion dedupes with the
+// poll-time page.
+function assertReleaseReadable(): void {
+    if (AP_VERSION !== UNKNOWN_VERSION) {
+        logger.info({ release: { version: AP_VERSION } }, 'Release version detected from package.json')
+        return
+    }
+    logger.error({ release: { version: AP_VERSION } }, 'Worker could not read its release version from package.json (reported as 0.0.0); polling is paused and will NOT self-heal on reconnect until the deployment is fixed (check cwd/packaging)')
+    pageOnceForUnreadableWorkerVersion(logger)
+}
+
 let socket: Socket | null = null
 let polling = false
 let connectionGeneration = 0
@@ -64,6 +78,7 @@ const SANDBOX_INFO_REFRESH_MS = 15_000
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
+        assertReleaseReadable()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         socket = io(socketUrl.url, {
             auth: { token: workerToken, workerId, workerGroupId },

@@ -21,6 +21,24 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # package.json is the single runtime source of truth for the release version
+      # (apVersionUtil.getCurrentRelease reads it), and it is baked into the image from the
+      # checked-out source. The `tag` input is free-text, so a mistyped tag would publish an
+      # image whose real version disagrees with its tag/git-tag/GitHub-release — invisible until
+      # it is mixed with a correctly-built peer and the worker↔app version gate silently
+      # withholds jobs. Fail closed here. Hotfix/rc suffixes (0.79.2-hotfix.1, 0.79.2-rc.1) are
+      # deploy-only and are not in package.json, so compare against the base X.Y.Z only.
+      - name: Verify tag matches package.json
+        run: |
+          PACKAGE_VERSION="$(jq -r .version package.json)"
+          TAG_BASE="${{ inputs.tag }}"
+          TAG_BASE="${TAG_BASE%%-*}"
+          if [ "$TAG_BASE" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Release tag '${{ inputs.tag }}' (base '$TAG_BASE') does not match package.json version '$PACKAGE_VERSION'. Bump package.json or fix the tag before releasing."
+            exit 1
+          fi
+          echo "Release tag base '$TAG_BASE' matches package.json version '$PACKAGE_VERSION'."
+
       - name: Fail if tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
 

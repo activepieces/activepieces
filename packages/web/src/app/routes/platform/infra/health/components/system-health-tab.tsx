@@ -1,6 +1,12 @@
 import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Cpu, HardDrive, MemoryStick, Package } from 'lucide-react';
+import {
+  Cpu,
+  GitCompareArrows,
+  HardDrive,
+  MemoryStick,
+  Package,
+} from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
@@ -27,6 +33,46 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     if (!currentVersion || !latestVersion) return false;
     return semver.gte(currentVersion, latestVersion);
   }, [currentVersion, latestVersion]);
+
+  const release = systemHealth?.release;
+  const releaseIntegrityOk =
+    !!release?.readOk && release?.workers.versionMismatched === 0;
+  const releaseIntegrityMessage = (() => {
+    if (!release) {
+      return null;
+    }
+    if (!release.readOk) {
+      return (
+        <span>
+          {t(
+            'The release version could not be read from package.json (reported as 0.0.0). Worker job dispatch is gated and will not recover until the deployment is fixed.',
+          )}
+        </span>
+      );
+    }
+    if (release.workers.versionMismatched > 0) {
+      return (
+        <span>
+          {t(
+            '{count, plural, =1 {# connected worker is running an incompatible version ({versions}). Job dispatch is paused for it until it is upgraded to {current}.} other {# connected workers are running incompatible versions ({versions}). Job dispatch is paused for them until they are upgraded to {current}.}}',
+            {
+              count: release.workers.versionMismatched,
+              versions: release.workers.mismatchedVersions.join(', '),
+              current: release.current,
+            },
+          )}
+        </span>
+      );
+    }
+    return (
+      <span>
+        {t(
+          'All {total, plural, =1 {# connected worker matches} other {# connected workers match}} the app release {current}.',
+          { total: release.workers.total, current: release.current },
+        )}
+      </span>
+    );
+  })();
 
   const technicalChecks = [
     {
@@ -70,6 +116,15 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
         </div>
       ),
       link: 'https://github.com/activepieces/activepieces/releases',
+    },
+    {
+      id: 'release-integrity',
+      title: t('Release Integrity'),
+      icon: <GitCompareArrows />,
+      isChecked: releaseIntegrityOk,
+      message: releaseIntegrityMessage,
+      loading: isPending,
+      link: 'https://www.activepieces.com/docs/install/configuration/overview',
     },
     {
       id: 'disk-size',

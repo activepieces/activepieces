@@ -34,6 +34,10 @@ export const apVersionUtil = {
     getCurrentRelease(): string {
         return readCurrentRelease()
     },
+    getReleaseInfo(): ReleaseInfo {
+        const version = readCurrentRelease()
+        return { version, readOk: version !== UNKNOWN_VERSION }
+    },
     async getLatestRelease(): Promise<string> {
         try {
             if (cachedLatestRelease) {
@@ -69,4 +73,9 @@ export const UNKNOWN_VERSION = '0.0.0'
 
 type PackageJson = {
     version: string
+}
+
+type ReleaseInfo = {
+    version: string
+    readOk: boolean
 }
