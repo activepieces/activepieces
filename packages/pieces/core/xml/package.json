@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/json2xml": "0.1.4",
-    "vitest": "3.0.8",
+    "vitest": "3.2.6",
     "tslib": "2.6.2"
   }
 }

@@ -18,6 +18,7 @@ vi.mock('../src/file-system-utils', () => ({
 vi.mock('systeminformation', () => ({
     default: {
         mem: vi.fn(),
+        processes: vi.fn(),
     },
 }))
 
@@ -33,6 +34,7 @@ import { fileSystemUtils } from '../src/file-system-utils'
 const mockFileExists = vi.mocked(fileSystemUtils.fileExists)
 const mockReadFile = vi.mocked(fs.promises.readFile)
 const mockMem = vi.mocked(si.mem)
+const mockProcesses = vi.mocked(si.processes)
 const mockCheckDiskSpace = vi.mocked(checkDiskSpace)
 
 function mockCgroupFile(path: string, content: string) {
@@ -64,11 +66,70 @@ describe('getContainerMemoryUsage', () => {
         mockCgroupFiles({
             '/sys/fs/cgroup/memory.max': String(totalBytes),
             '/sys/fs/cgroup/memory.current': String(usedBytes),
+            '/sys/fs/cgroup/memory.stat': 'inactive_file 0',
         })
 
         const result = await systemUsage.getContainerMemoryUsage()
         expect(result.totalRamInBytes).toBe(totalBytes)
         expect(result.ramUsage).toBeCloseTo(50)
+    })
+
+    it('should keep container-scoped cgroup usage when memory.stat is unreadable, never host memory', async () => {
+        const totalBytes = 1024 * 1024 * 1024 // 1 GiB cap
+        const currentBytes = 1024 * 1024 * 760 // 760 MiB
+        mockCgroupFiles({
+            '/sys/fs/cgroup/memory.max': String(totalBytes),
+            '/sys/fs/cgroup/memory.current': String(currentBytes),
+        })
+
+        // si.mem() would report a much larger host total; it must not be used here.
+        mockMem.mockResolvedValue({ total: 32_000_000_000, used: 1_000_000_000 } as never)
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.totalRamInBytes).toBe(totalBytes)
+        expect(result.ramUsage).toBeCloseTo((currentBytes / totalBytes) * 100)
+    })
+
+    it('should subtract inactive_file (reclaimable cache) from cgroup v2 usage, matching docker stats', async () => {
+        const totalBytes = 1024 * 1024 * 1024 // 1 GiB
+        const currentBytes = 1024 * 1024 * 760 // 760 MiB reported by memory.current
+        const inactiveFileBytes = 1024 * 1024 * 600 // 600 MiB reclaimable page cache
+        mockCgroupFiles({
+            '/sys/fs/cgroup/memory.max': String(totalBytes),
+            '/sys/fs/cgroup/memory.current': String(currentBytes),
+            '/sys/fs/cgroup/memory.stat': `anon 167772160\nfile 629145600\ninactive_file ${inactiveFileBytes}\nactive_file 31457280`,
+        })
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.totalRamInBytes).toBe(totalBytes)
+        expect(result.ramUsage).toBeCloseTo(((currentBytes - inactiveFileBytes) / totalBytes) * 100)
+    })
+
+    it('should subtract total_inactive_file from cgroup v1 usage', async () => {
+        const totalBytes = 1024 * 1024 * 512 // 512 MiB
+        const usageBytes = 1024 * 1024 * 400 // 400 MiB
+        const inactiveFileBytes = 1024 * 1024 * 200 // 200 MiB
+        mockCgroupFiles({
+            '/sys/fs/cgroup/memory/memory.limit_in_bytes': String(totalBytes),
+            '/sys/fs/cgroup/memory/memory.usage_in_bytes': String(usageBytes),
+            '/sys/fs/cgroup/memory/memory.stat': `total_inactive_file ${inactiveFileBytes}\ntotal_active_file 100000`,
+        })
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.totalRamInBytes).toBe(totalBytes)
+        expect(result.ramUsage).toBeCloseTo(((usageBytes - inactiveFileBytes) / totalBytes) * 100)
+    })
+
+    it('should clamp usage to zero when inactive_file exceeds reported usage', async () => {
+        const totalBytes = 1024 * 1024 * 512 // 512 MiB
+        mockCgroupFiles({
+            '/sys/fs/cgroup/memory.max': String(totalBytes),
+            '/sys/fs/cgroup/memory.current': String(1024 * 1024 * 100),
+            '/sys/fs/cgroup/memory.stat': `inactive_file ${1024 * 1024 * 200}`,
+        })
+
+        const result = await systemUsage.getContainerMemoryUsage()
+        expect(result.ramUsage).toBe(0)
     })
 
     it('should skip cgroup v1 when limit is sentinel (unlimited)', async () => {
@@ -210,5 +271,46 @@ describe('getCpuUsage', () => {
         const result = systemUsage.getCpuUsage()
         expect(result).toBeGreaterThanOrEqual(0)
         expect(result).toBeLessThanOrEqual(100)
+    })
+})
+
+describe('getProcessTreeMemoryBytesByPids', () => {
+    function mockProcessList(list: { pid: number, parentPid: number, memRss: number }[]) {
+        mockProcesses.mockResolvedValue({ list } as never)
+    }
+
+    it('returns an empty map without scanning when given no pids', async () => {
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([])
+        expect(result.size).toBe(0)
+        expect(mockProcesses).not.toHaveBeenCalled()
+    })
+
+    it('sums the rss of each pid and its descendants (memRss is KiB)', async () => {
+        // 100 -> 200 -> 300, and an unrelated 999. memRss is in KiB, summed as bytes.
+        mockProcessList([
+            { pid: 100, parentPid: 1, memRss: 10 },
+            { pid: 200, parentPid: 100, memRss: 20 },
+            { pid: 300, parentPid: 200, memRss: 30 },
+            { pid: 999, parentPid: 1, memRss: 50 },
+        ])
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 999])
+        expect(result.get(100)).toBe((10 + 20 + 30) * 1024)
+        expect(result.get(999)).toBe(50 * 1024)
+    })
+
+    it('scans the process table only once for many pids', async () => {
+        mockProcessList([
+            { pid: 100, parentPid: 1, memRss: 10 },
+            { pid: 200, parentPid: 1, memRss: 20 },
+        ])
+        await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
+        expect(mockProcesses).toHaveBeenCalledTimes(1)
+    })
+
+    it('maps every pid to 0 when the scan fails', async () => {
+        mockProcesses.mockRejectedValue(new Error('scan failed'))
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
+        expect(result.get(100)).toBe(0)
+        expect(result.get(200)).toBe(0)
     })
 })

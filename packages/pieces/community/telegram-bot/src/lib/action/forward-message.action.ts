@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { forwardMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramForwardMessageAction = createAction({
   auth: telegramBotAuth,
@@ -31,6 +32,7 @@ export const telegramForwardMessageAction = createAction({
     disable_notification: telegramCommons.disableNotificationProp(),
     protect_content: telegramCommons.protectContentProp(),
   },
+  outputSchema: forwardMessageActionOutputSchema,
   async run(ctx) {
     return await httpClient.sendRequest<never>({
       method: HttpMethod.POST,

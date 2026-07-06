@@ -8,6 +8,7 @@ import {
 } from '../common/common';
 import { commonProps } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
+import { readDataRangeActionOutputSchema } from '../output-schemas';
 
 export const readDataRangeAction = createAction({
 	auth: googleSheetsAuth,
@@ -53,6 +54,7 @@ export const readDataRangeAction = createAction({
 			},
 		}),
 	},
+	outputSchema: readDataRangeActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { spreadsheetId, sheetId, range, majorDimension, valueRenderOption } = propsValue;
 

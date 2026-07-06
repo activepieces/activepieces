@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
+import { getPageCommentsActionOutputSchema } from '../output-schemas';
 
 export const getPageComments = createAction({
   auth: notionAuth,
@@ -18,6 +19,7 @@ export const getPageComments = createAction({
   props: {
     page_id: notionCommon.page,
   },
+  outputSchema: getPageCommentsActionOutputSchema,
   async run(context) {
     const { page_id } = context.propsValue;
 

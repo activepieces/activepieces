@@ -7,6 +7,7 @@ import {
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { areSheetIdsValid, getAccessToken } from '../common/common';
+import { exportSheetActionOutputSchema } from '../output-schemas';
 
 export const exportSheetAction = createAction({
   name: 'export_sheet',
@@ -41,6 +42,7 @@ export const exportSheetAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: exportSheetActionOutputSchema,
   async run({ propsValue, auth, files }) {
     const { spreadsheetId, sheetId, format, returnAsText } = propsValue;
 

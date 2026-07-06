@@ -87,8 +87,15 @@ function ConnectionSelect(params: ConnectionSelectProps) {
       connection.externalId ===
       removeBrackets(form.getValues().settings.input.auth ?? ''),
   );
-  const isGlobalConnection =
+  const isSelectedConnectionGlobal =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
+  // The create/reconnect dialog runs in global (PLATFORM) scope ONLY when
+  // reconnecting an existing global connection. Creating a brand-new connection
+  // from a project flow must default to PROJECT scope, otherwise it silently
+  // inherits the selected connection's platform scope and (for non-admins) hits
+  // the platform-admin-only global-connections endpoint (GIT-1587).
+  const isReconnectingGlobalConnection =
+    reconnectConnection?.scope === AppConnectionScope.PLATFORM;
   const dynamicInputModeToggled =
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
@@ -97,7 +104,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     ? getConnectionStatusDisplay(selectedConnection.status)
     : null;
   const canShowConnectionStatus =
-    !!selectedConnection && (!isGlobalConnection || isPlatformAdmin);
+    !!selectedConnection && (!isSelectedConnectionGlobal || isPlatformAdmin);
   const openReconnectDialog = () => {
     setReconnectConnection(selectedConnection ?? null);
     setSelectConnectionOpen(false);
@@ -146,7 +153,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
               >
                 <CreateOrEditConnectionDialog
                   reconnectConnection={reconnectConnection}
-                  isGlobalConnection={isGlobalConnection}
+                  isGlobalConnection={isReconnectingGlobalConnection}
                   piece={pieceWithCorrectVersion}
                   key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
                   open={connectionDialogOpen}

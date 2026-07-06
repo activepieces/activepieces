@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendChatActionActionOutputSchema } from '../output-schemas';
 
 export const telegramSendChatActionAction = createAction({
   auth: telegramBotAuth,
@@ -37,6 +38,7 @@ export const telegramSendChatActionAction = createAction({
       defaultValue: 'typing',
     }),
   },
+  outputSchema: sendChatActionActionOutputSchema,
   async run(ctx) {
     return await httpClient.sendRequest<never>({
       method: HttpMethod.POST,

@@ -13,6 +13,7 @@ import {
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
 import FormData from 'form-data';
+import { sendMediaActionOutputSchema } from '../output-schemas';
 
 export const telegramSendMediaAction = createAction({
   auth: telegramBotAuth,
@@ -130,6 +131,7 @@ export const telegramSendMediaAction = createAction({
     protect_content: telegramCommons.protectContentProp(),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: sendMediaActionOutputSchema,
   async run(ctx) {
     const mediaType = ctx.propsValue['media_type'];
     if (!mediaType) {

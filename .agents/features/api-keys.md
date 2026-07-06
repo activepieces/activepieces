@@ -16,6 +16,9 @@ Platform API Keys allow platform admins to generate long-lived service credentia
 Enterprise and Cloud. Gated by `platform.plan.apiKeysEnabled`. The module registers the hook: `platformMustHaveFeatureEnabled((platform) => platform.plan.apiKeysEnabled)`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **API Key**: A platform-scoped service credential used for programmatic access.
 - **hashedValue**: SHA-256 hash of the raw key, used for lookup on every request.
 - **truncatedValue**: Last 4 characters of the raw key, shown in the UI for identification.

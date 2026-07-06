@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
+import { deleteRowActionOutputSchema } from '../output-schemas';
 
 export const deleteRowAction = createAction({
   auth: googleSheetsAuth,
@@ -22,6 +23,7 @@ export const deleteRowAction = createAction({
       required: true,
     }),
   },
+  outputSchema: deleteRowActionOutputSchema,
   async run(context) {
     const { spreadsheetId, sheetId, rowId } = context.propsValue;
 

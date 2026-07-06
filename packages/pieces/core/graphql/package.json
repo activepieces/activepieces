@@ -6,7 +6,7 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "axios": "1.15.2",
+    "axios": "1.16.0",
     "https-proxy-agent": "7.0.4",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"

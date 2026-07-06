@@ -8,6 +8,7 @@ import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
 import { Client, collectPaginatedAPI, isFullBlock } from '@notionhq/client';
 import { PartialBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import { getPageOrBlockChildrenActionOutputSchema } from '../output-schemas';
 
 export const getPageOrBlockChildren = createAction({
   auth: notionAuth,
@@ -52,6 +53,7 @@ export const getPageOrBlockChildren = createAction({
       },
     }),
   },
+  outputSchema: getPageOrBlockChildrenActionOutputSchema,
   async run(context) {
     const notion = new Client({
       auth: getNotionToken(context.auth),

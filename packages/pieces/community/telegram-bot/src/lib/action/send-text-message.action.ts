@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendTextMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramSendMessageAction = createAction({
   auth: telegramBotAuth,
@@ -32,6 +33,7 @@ export const telegramSendMessageAction = createAction({
     }),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: sendTextMessageActionOutputSchema,
   async run(ctx) {
     return await httpClient.sendRequest<never>({
       method: HttpMethod.POST,

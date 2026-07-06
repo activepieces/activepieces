@@ -7,6 +7,7 @@ import {
   NotionDatabase,
   NotionDatabaseProperty,
 } from '../common/types';
+import { retrieveDatabaseActionOutputSchema } from '../output-schemas';
 
 export const retrieveDatabase = createAction({
   auth: notionAuth,
@@ -23,6 +24,7 @@ export const retrieveDatabase = createAction({
   props: {
     database_id: notionCommon.database_id,
   },
+  outputSchema: retrieveDatabaseActionOutputSchema,
   async run(context) {
     const { database_id } = context.propsValue;
 

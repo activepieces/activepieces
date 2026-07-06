@@ -3,7 +3,6 @@ import {
 	createAction,
 	DropdownOption,
 	DynamicPropsValue,
-	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -21,6 +20,7 @@ import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { parse } from 'csv-parse/sync';
 import { commonProps } from '../common/props';
+import { googleSheetsInsertMultipleRowsActionOutputSchema } from '../output-schemas';
 
 type RowValueType = Record<string, any>;
 
@@ -243,6 +243,7 @@ export const insertMultipleRowsAction = createAction({
 			defaultValue: 1,
 		}),
 	},
+	outputSchema: googleSheetsInsertMultipleRowsActionOutputSchema,
 
 	async run(context) {
 		const {

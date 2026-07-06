@@ -1,5 +1,4 @@
 import {
-  PiecePropValueSchema,
   Property,
   Store,
   StoreScope,
@@ -18,6 +17,7 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { getWorkSheetGridSize } from '../triggers/helpers';
 import { commonProps } from '../common/props';
+import { getNextRowsActionOutputSchema } from '../output-schemas';
 
 async function getRows(
   store: Store,
@@ -149,6 +149,7 @@ export const getRowsAction = createAction({
       defaultValue: 1,
     }),
   },
+  outputSchema: getNextRowsActionOutputSchema,
   async run({ store, auth, propsValue }) {
     const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId, useHeaderNames} = propsValue;
 

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendPollActionOutputSchema } from '../output-schemas';
 
 export const telegramSendPollAction = createAction({
   auth: telegramBotAuth,
@@ -80,6 +81,7 @@ export const telegramSendPollAction = createAction({
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: sendPollActionOutputSchema,
   async run(ctx) {
     const options = (ctx.propsValue.options ?? []).map((option) => String(option));
     if (options.length < 2 || options.length > 10) {

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { getFileActionOutputSchema } from '../output-schemas';
 
 type TelegramFileInfo = {
   file_id: string;
@@ -35,6 +36,7 @@ export const telegramGetFileAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: getFileActionOutputSchema,
   async run(ctx) {
     const fileInfoResponse = await httpClient.sendRequest<TelegramGetFileResponse>({
       method: HttpMethod.POST,

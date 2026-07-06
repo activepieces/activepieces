@@ -30,6 +30,7 @@ export enum WorkerSystemProp {
     CONTAINER_TYPE = 'AP_CONTAINER_TYPE',
     WORKER_TOKEN = 'AP_WORKER_TOKEN',
     PORT = 'AP_PORT',
+    LOG_FILE = 'AP_LOG_FILE',
     LOG_LEVEL = 'AP_LOG_LEVEL',
     LOG_PRETTY = 'AP_LOG_PRETTY',
     LOG_SAMPLE_RATE_INFO = 'AP_LOG_SAMPLE_RATE_INFO',
@@ -45,6 +46,7 @@ export enum WorkerSystemProp {
     BETTERSTACK_HOST = 'AP_BETTERSTACK_HOST',
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
     WORKER_GROUP_ID = 'AP_WORKER_GROUP_ID',
+    PROJECT_WORKER = 'AP_PROJECT_WORKER',
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
@@ -55,6 +57,7 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.PORT]: '3000',
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
+    [WorkerSystemProp.LOG_FILE]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
     // Transitional default (ADR 0004): N boxes per worker preserves main's historical behavior.
     // The destination is concurrency 1 + horizontal replicas (ADR 0003).

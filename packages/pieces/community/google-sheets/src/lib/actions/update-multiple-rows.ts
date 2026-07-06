@@ -18,6 +18,7 @@ import { isString } from '@activepieces/pieces-framework';
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
 import { commonProps } from '../common/props';
+import { updateMultipleRowsActionOutputSchema } from '../output-schemas';
 
 export const updateMultipleRowsAction = createAction({
   auth: googleSheetsAuth,
@@ -111,6 +112,7 @@ export const updateMultipleRowsAction = createAction({
       defaultValue: 1,
     }),
   },
+  outputSchema: updateMultipleRowsActionOutputSchema,
   async run(context) {
     const {
       spreadsheetId: inputSpreadsheetId,

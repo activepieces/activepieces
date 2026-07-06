@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { createGoogleClient } from '../common/common';
+import { findWorksheetActionOutputSchema } from '../output-schemas';
 
 export const findWorksheetAction = createAction({
 	auth: googleSheetsAuth,
@@ -30,6 +31,7 @@ export const findWorksheetAction = createAction({
 			defaultValue: false,
 		}),
 	},
+	outputSchema: findWorksheetActionOutputSchema,
 	async run(context) {
 		const spreadsheetId = context.propsValue.spreadsheetId;
 		const title = context.propsValue.title;

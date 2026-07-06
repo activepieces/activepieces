@@ -1,6 +1,6 @@
-import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
@@ -19,12 +19,17 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getWorkerGroupQueueName, QueueName } from '../job'
+import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-const getPollQueueName = (workerGroupId?: string): string => {
-    return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
+const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
+    if (isNil(assignment)) {
+        return QueueName.WORKER_JOBS
+    }
+    return assignment.scope === WorkerGroupScope.PROJECT
+        ? getProjectGroupQueueName(assignment.id)
+        : getPlatformGroupQueueName(assignment.id)
 }
 
 let pagedForUnreadableAppVersion = false
@@ -43,11 +48,11 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
     })
 }
 
-export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ worker: { id: input.workerId }, workerGroupId }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, workerGroupId)
+            log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection(input, assignment)
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
             if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
@@ -63,8 +68,8 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 }
                 return null
             }
-            const pollQueueName = getPollQueueName(workerGroupId)
-            const job = await jobBroker(log).poll(pollQueueName)
+            const pollQueueName = getPollQueueName(assignment)
+            const job = await jobBroker(log).poll(pollQueueName, connectionId)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }
@@ -266,23 +271,48 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async getChatConfig(input) {
-            return chatRpcHandlers(log).getChatConfig(input)
+            return chatRpcHandlers(chatRpcLog(log, input)).getChatConfig(input)
         },
 
         async saveChatMessages(input) {
-            return chatRpcHandlers(log).saveChatMessages(input)
+            return chatRpcHandlers(chatRpcLog(log, input)).saveChatMessages(input)
+        },
+
+        async saveChatFile(input) {
+            return chatRpcHandlers(chatRpcLog(log, input)).saveChatFile(input)
         },
 
         async updateChatProgress(input) {
-            return chatRpcHandlers(log).updateChatProgress(input)
+            return chatRpcHandlers(chatRpcLog(log, input)).updateChatProgress(input)
+        },
+
+        async heartbeatChatConversation(input) {
+            return chatRpcHandlers(chatRpcLog(log, input)).heartbeatChatConversation(input)
         },
 
         async updateProjectContext(input) {
-            return chatRpcHandlers(log).updateProjectContext(input)
+            return chatRpcHandlers(chatRpcLog(log, input)).updateProjectContext(input)
         },
 
         async executeChatTool(input) {
-            return chatRpcHandlers(log).executeChatTool(input)
+            const runId = typeof input.toolInput.runId === 'string' ? input.toolInput.runId : undefined
+            const conversationId = input.conversationId ?? (typeof input.toolInput.conversationId === 'string' ? input.toolInput.conversationId : undefined)
+            return chatRpcHandlers(chatRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeChatTool(input)
+        },
+
+        async sendChatEmail(input) {
+            return chatRpcHandlers(chatRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendChatEmail(input)
         },
     }
+}
+
+// Binds conversation/run/platform/user to the per-call logger so every chat RPC
+// log line correlates with the worker turn and the analyze-logs timeline.
+function chatRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runId?: string, platformId?: string, userId?: string }): FastifyBaseLogger {
+    return log.child({
+        ...spreadIfDefined('conversation', isNil(ids.conversationId) ? undefined : { id: ids.conversationId }),
+        ...spreadIfDefined('run', isNil(ids.runId) ? undefined : { id: ids.runId }),
+        ...spreadIfDefined('platform', isNil(ids.platformId) ? undefined : { id: ids.platformId }),
+        ...spreadIfDefined('user', isNil(ids.userId) ? undefined : { id: ids.userId }),
+    })
 }

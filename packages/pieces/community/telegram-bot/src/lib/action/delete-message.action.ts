@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { deleteMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramDeleteMessageAction = createAction({
   auth: telegramBotAuth,
@@ -19,6 +20,7 @@ export const telegramDeleteMessageAction = createAction({
       required: true,
     }),
   },
+  outputSchema: deleteMessageActionOutputSchema,
   async run(ctx) {
     return await httpClient.sendRequest<never>({
       method: HttpMethod.POST,

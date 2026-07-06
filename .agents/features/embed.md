@@ -27,6 +27,9 @@ The cryptographic core is **Signing Keys**: RSA-4096 key pairs generated server-
 Enterprise and Cloud. Gated by `platform.plan.embeddingEnabled`. Module hook: `platformMustHaveFeatureEnabled((platform) => platform.plan.embeddingEnabled)`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Signing Key**: An RSA key pair; only the public key is persisted; the private key is returned once on creation.
 - **KeyAlgorithm**: Enum with value `RSA` (the only supported algorithm, using RS256 for JWT signing).
 - **kid (Key ID)**: The `id` of the signing key, embedded in the JWT header by the vendor so Activepieces knows which public key to use for verification.

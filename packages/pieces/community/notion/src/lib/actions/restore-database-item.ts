@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
+import { restoreDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const restoreDatabaseItem = createAction({
   auth: notionAuth,
@@ -19,6 +20,7 @@ export const restoreDatabaseItem = createAction({
     database_id: notionCommon.database_id,
     archived_item_id: notionCommon.archived_database_item_id,
   },
+  outputSchema: restoreDatabaseItemActionOutputSchema,
   async run(context) {
     const { database_id, archived_item_id } = context.propsValue;
 

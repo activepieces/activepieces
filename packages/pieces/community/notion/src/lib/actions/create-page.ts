@@ -3,6 +3,7 @@ import { Client } from '@notionhq/client';
 
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
+import { createPageActionOutputSchema } from '../output-schemas';
 
 export const createPage = createAction({
   auth: notionAuth,
@@ -29,6 +30,7 @@ export const createPage = createAction({
       required: false,
     }),
   },
+  outputSchema: createPageActionOutputSchema,
 
   async run(context) {
     const { pageId, title, content } = context.propsValue;

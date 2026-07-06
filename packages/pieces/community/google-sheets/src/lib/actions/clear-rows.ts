@@ -3,6 +3,7 @@ import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
+import { clearRowsActionOutputSchema } from '../output-schemas';
 
 export const clearRowsAction = createAction({
 	auth: googleSheetsAuth,
@@ -25,6 +26,7 @@ export const clearRowsAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: clearRowsActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { spreadsheetId, sheetId, startingRow, endingRow } = propsValue;
 

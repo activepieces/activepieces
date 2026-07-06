@@ -9,6 +9,7 @@ import { googleSheetsAuth } from '../common/common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { columnNameProp, commonProps } from '../common/props';
+import { findRowsActionOutputSchema } from '../output-schemas';
 
 export const findRowsAction = createAction({
 	auth: googleSheetsAuth,
@@ -59,6 +60,7 @@ description: 'Look up rows in a worksheet based on a column value.',
 			defaultValue: false,
 		}),
 	},
+	outputSchema: findRowsActionOutputSchema,
 	async run({ propsValue, auth }) {
 		await propsValidation.validateZod(propsValue, {
 			startingRow: z.optional(z.number().check(z.minimum(1))),

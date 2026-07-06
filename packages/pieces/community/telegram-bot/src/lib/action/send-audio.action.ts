@@ -11,6 +11,7 @@ import {
 import FormData from 'form-data';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendAudioActionOutputSchema } from '../output-schemas';
 
 export const telegramSendAudioAction = createAction({
   auth: telegramBotAuth,
@@ -60,6 +61,7 @@ export const telegramSendAudioAction = createAction({
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: sendAudioActionOutputSchema,
   async run(ctx) {
     const file = ctx.propsValue.audio as ApFile | undefined;
     const audioId = ctx.propsValue.audio_id;

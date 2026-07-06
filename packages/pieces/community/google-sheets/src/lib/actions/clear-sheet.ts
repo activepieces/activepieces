@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { commonProps, isFirstRowHeaderProp } from '../common/props';
+import { clearSheetActionOutputSchema } from '../output-schemas';
 
 export const clearSheetAction = createAction({
 	auth: googleSheetsAuth,
@@ -24,6 +25,7 @@ export const clearSheetAction = createAction({
 			defaultValue: 1,
 		}),
 	},
+	outputSchema: clearSheetActionOutputSchema,
 	async run({ propsValue, auth }) {
 		const {
 			spreadsheetId,

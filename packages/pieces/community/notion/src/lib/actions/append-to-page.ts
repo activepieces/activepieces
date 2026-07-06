@@ -5,6 +5,7 @@ import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
 import { markdownToBlocks } from '@tryfabric/martian';
 import { BlockObjectRequest } from '@notionhq/client/build/src/api-endpoints';
+import { appendToPageActionOutputSchema } from '../output-schemas';
 
 export const appendToPage = createAction({
   auth: notionAuth,
@@ -26,6 +27,7 @@ export const appendToPage = createAction({
       required: true,
     }),
   },
+  outputSchema: appendToPageActionOutputSchema,
   async run(context) {
     const { pageId, content } = context.propsValue;
 

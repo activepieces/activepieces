@@ -7,6 +7,7 @@ import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from '../common/models';
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
+import { createDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const createDatabaseItem = createAction({
   auth: notionAuth,
@@ -29,6 +30,7 @@ export const createDatabaseItem = createAction({
       required: false,
     }),
   },
+  outputSchema: createDatabaseItemActionOutputSchema,
   async run(context) {
     const database_id = context.propsValue.database_id;
     const databaseFields = context.propsValue.databaseFields;
