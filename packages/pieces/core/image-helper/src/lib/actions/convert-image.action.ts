@@ -5,6 +5,7 @@ import jimp from 'jimp';
 import * as mime from 'mime-types';
 
 export const convertImageFormat = createAction({
+  audience: 'human',
   name: 'convert_image_format',
   displayName: 'Image Conversion Helper',
   description: 'Converts a image to supported formats',
@@ -45,7 +46,7 @@ export const convertImageFormat = createAction({
     switch (sourceMimetype) {
       case 'image/heic':
       case 'image/heif':
-        inputData = Buffer.from(await convert({ buffer: image.data, format: 'JPEG', quality: 1 }));
+        inputData = Buffer.from(await convert({ buffer: image.data, format: 'PNG' }));
         break;
       default:
         inputData = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data);
