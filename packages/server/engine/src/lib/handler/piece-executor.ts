@@ -273,33 +273,40 @@ type CreateRespondHookParams = {
 }
 
 function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
-    return async (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
+    return (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
+        // Throw synchronously (not from inside the async body) so that the deprecated pause() hook —
+        // which does `createWaitpoint(...).catch(() => process.exit(1))` — never attaches its catch and
+        // the error propagates as a FAILED step instead of killing the worker on a rejected promise.
         assertAdhocCannotSuspend(constants)
-        assertDelayWithinTimeout(req.resumeDateTime)
-        if (!isNil(req.responseToSend)) {
-            hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
-        }
-        const result = await waitpointClient.create({
-            apiUrl: constants.internalApiUrl,
-            engineToken: constants.engineToken,
-            flowRunId: constants.flowRunId,
-            projectId: constants.projectId,
-            stepName,
-            type: req.type,
-            version: req.version ?? 'V1',
-            resumeDateTime: req.resumeDateTime,
-            responseToSend: req.responseToSend,
-            workerHandlerId: constants.workerHandlerId ?? undefined,
-            httpRequestId: constants.httpRequestId ?? undefined,
-        })
-        return {
-            ...result,
-            buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
-                const url = new URL(`${result.resumeUrl}${params.sync ? '/sync' : ''}`)
-                url.search = new URLSearchParams(params.queryParams).toString()
-                return url.toString()
-            },
-        }
+        return submitWaitpoint({ constants, stepName, hookParams, req })
+    }
+}
+
+async function submitWaitpoint({ constants, stepName, hookParams, req }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
+    assertDelayWithinTimeout(req.resumeDateTime)
+    if (!isNil(req.responseToSend)) {
+        hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
+    }
+    const result = await waitpointClient.create({
+        apiUrl: constants.internalApiUrl,
+        engineToken: constants.engineToken,
+        flowRunId: constants.flowRunId,
+        projectId: constants.projectId,
+        stepName,
+        type: req.type,
+        version: req.version ?? 'V1',
+        resumeDateTime: req.resumeDateTime,
+        responseToSend: req.responseToSend,
+        workerHandlerId: constants.workerHandlerId ?? undefined,
+        httpRequestId: constants.httpRequestId ?? undefined,
+    })
+    return {
+        ...result,
+        buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
+            const url = new URL(`${result.resumeUrl}${params.sync ? '/sync' : ''}`)
+            url.search = new URLSearchParams(params.queryParams).toString()
+            return url.toString()
+        },
     }
 }
 

@@ -106,7 +106,6 @@ import { templateModule } from './template/template.module'
 import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
-import { userBadgeModule } from './user/badges/badge-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
@@ -257,7 +256,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(knowledgeBaseModule)
     await app.register(userModule)
     await app.register(templateModule)
-    await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
 
     // Dev-only: accept browser debug logs into the shared evlog fs drain so a
