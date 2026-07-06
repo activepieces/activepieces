@@ -48,6 +48,8 @@ export type PreWarmSandboxParams = {
     log: ApLogger
     apiClient?: WorkerToApiContract
     publicApiUrl?: string
+    // Warm just this flow (e.g. on publish) instead of the platform's whole active set.
+    flow?: { id: string, versionId: string, projectId: string }
 }
 
 // The Resolver's output and the pool's input. The pool installs each piece straight from a link: it

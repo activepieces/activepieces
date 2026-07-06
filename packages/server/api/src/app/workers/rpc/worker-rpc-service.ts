@@ -169,6 +169,15 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async getPrewarmData(input) {
             const empty: PrewarmDataResponse = { flows: [], platformId: '', engineToken: '' }
+
+            // Targeted prewarm (flowPublished): the flow is already known, so skip listing active flows
+            // and just mint a token for its project.
+            if (!isNil(input.flow)) {
+                const platformId = await projectService(log).getPlatformId(input.flow.projectId)
+                const engineToken = await accessTokenManager(log).generateEngineToken({ projectId: input.flow.projectId, platformId })
+                return { flows: [input.flow], platformId, engineToken }
+            }
+
             let projectIds: string[] | undefined = undefined
             let platformId: string | undefined = undefined
 
