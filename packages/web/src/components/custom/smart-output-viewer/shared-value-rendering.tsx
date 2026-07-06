@@ -4,11 +4,9 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { VirtualizedList } from '@/components/ui/virtualized-list';
-import { stringUtils } from '@/lib/string-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
 
-const formatKey = stringUtils.titleCase;
 const MAX_NESTED_DEPTH = 10;
 
 function truncateValue(value: unknown): string {
@@ -83,11 +81,7 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
               estimateSize={30}
               getItemKey={(index) => nestedEntries[index][0]}
               renderItem={([key, childValue]) => (
-                <ValueRow
-                  label={Array.isArray(value) ? key : formatKey(key)}
-                  value={childValue}
-                  depth={depth + 1}
-                />
+                <ValueRow label={key} value={childValue} depth={depth + 1} />
               )}
             />
           </div>
@@ -120,7 +114,7 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
   );
 }
 
-export { ValueRow, formatKey, truncateValue };
+export { ValueRow, truncateValue };
 
 type ValueRowProps = {
   label: string;

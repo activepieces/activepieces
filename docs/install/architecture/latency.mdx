@@ -30,7 +30,7 @@ A **synchronous webhook** holds the connection open until your flow returns, so 
 - A burst exceeds your warm worker count. Each worker runs one flow at a time, so the surplus queues or starts cold.
 
 <Tip>
-Size **statically for peak** so a warm slot is always waiting. Autoscaling's boot lag cannot defend a 30 s sync budget. Cold starts are not Cloud-specific, they are how the engine boots, and you will see them anywhere.
+Size **statically for peak** so a warm slot is always waiting. Autoscaling's boot lag cannot defend a 30 s sync budget ([measured numbers](/install/architecture/autoscaling)). Cold starts are not Cloud-specific, they are how the engine boots, and you will see them anywhere.
 </Tip>
 
 ## Per-run breakdown
