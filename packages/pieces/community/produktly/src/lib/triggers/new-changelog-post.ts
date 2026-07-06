@@ -22,7 +22,7 @@ const polling: Polling<
   AppConnectionValueForAuthProperty<typeof produktlyAuth>,
   StaticPropsValue<typeof triggerProps>
 > = {
-  strategy: DedupeStrategy.TIMEBASED,
+  strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
     const response = await produktlyApiCall<{
       data: Array<{
@@ -40,7 +40,7 @@ const polling: Polling<
       queryParams: { limit: '100' },
     });
     return response.body.data.map((post) => ({
-      epochMilliSeconds: Date.parse(post.date),
+      id: String(post.id),
       data: {
         post_id: post.id,
         changelog_id: propsValue.changelog,
