@@ -14,6 +14,10 @@ export const newReleaseTrigger = createTrigger({
   name: 'new_release',
   displayName: 'New Release',
   description: 'Triggers when a new release is added.',
+  aiMetadata: {
+    description:
+      'Fires when a release is created in the chosen repository (release event filtered to the created action). Represents a newly created release.',
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
   },

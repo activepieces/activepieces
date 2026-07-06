@@ -8,6 +8,8 @@ export const updateItemAction = createAction({
   name: 'update_item',
   displayName: 'Update Item',
   description: 'Update an existing record in a Podio app with specified field values. Only provided fields will be updated.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields on an existing Podio item identified by item id; only the fields you supply are changed (via structured app-field inputs or a raw legacy-fields JSON map). Use when modifying an existing record rather than creating one; requires the app id and item id. Idempotent — repeating with the same values leaves the item in the same state.', idempotent: true },
   props: {
     appId: dynamicAppProperty,
     itemId: dynamicItemProperty,

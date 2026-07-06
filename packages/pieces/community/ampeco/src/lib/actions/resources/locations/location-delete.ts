@@ -14,6 +14,8 @@ export const locationDeleteAction = createAction({
   name: 'locationDelete',
   displayName: 'Resources - Locations - Delete',
   description: 'Delete a location.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes one AMPECO charging location by its numeric ID. Use only when the location should be removed entirely; requires the location ID. Idempotent in effect: repeating the call converges to the same removed state, though a second call may report the location as already gone.', idempotent: true },
   props: {
         
   location: Property.Number({

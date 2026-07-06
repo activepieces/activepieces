@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { notionAuth } from './lib/auth';
 import { getNotionToken, NotionAuthValue } from './lib/common';
 import { appendToPage } from './lib/actions/append-to-page';
@@ -19,6 +19,8 @@ import { addComment } from './lib/actions/add-comment';
 import { retrieveDatabase } from './lib/actions/retrieve-database';
 import { getPageComments } from './lib/actions/get-page-comments';
 import { findPage } from './lib/actions/find-page';
+import { listDatabases } from './lib/actions/list-databases';
+import { listDatabasePages } from './lib/actions/list-database-pages';
 
 export const notion = createPiece({
   displayName: 'Notion',
@@ -38,9 +40,11 @@ export const notion = createPiece({
   ],
   auth: notionAuth,
   actions: [
+    listDatabases,
     createDatabaseItem,
     updateDatabaseItem,
     findDatabaseItem,
+    listDatabasePages,
     createPage,
     appendToPage,
     getPageOrBlockChildren,

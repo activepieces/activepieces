@@ -12,6 +12,9 @@ export const companyAdded = createTrigger({
   name: 'company_added',
   displayName: 'Company Added',
   description: 'Fires when a new company is added to your Folk workspace.',
+  aiMetadata: {
+    description: 'Fires when a new company is created in the connected Folk workspace, optionally scoped to a single group. The event payload carries the new company ID and a URL to fetch its full details.',
+  },
   props: {
     groupId: folkProps.group_id(false, 'Group ID'),
   },

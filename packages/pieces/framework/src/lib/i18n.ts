@@ -1,5 +1,6 @@
 import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./piece-metadata"
-import { LocalesEnum, MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/shared"
+import { LocalesEnum } from "@activepieces/core-utils"
+import { MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/core-piece-types"
 import path from 'path';
 import fs from 'fs/promises';
 

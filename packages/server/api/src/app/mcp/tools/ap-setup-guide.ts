@@ -1,5 +1,6 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AIProviderName, isNil, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -28,7 +29,7 @@ export const apSetupGuideTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 return await aiProviderGuide(mcp, log)
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_setup_guide failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_setup_guide failed')
                 return mcpUtils.mcpToolError('Failed to generate setup guide', err)
             }
         },
@@ -68,7 +69,7 @@ async function connectionGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
     })
 
     if (isNil(piece)) {
-        return { content: [{ type: 'text', text: `❌ Piece "${pieceName}" not found. Use ap_list_pieces to find valid piece names.` }] }
+        return { content: [{ type: 'text', text: `❌ Piece "${pieceName}" not found. Use ap_research_pieces to find valid piece names.` }] }
     }
 
     const rawAuth = piece.auth

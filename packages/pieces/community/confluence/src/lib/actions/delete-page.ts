@@ -9,6 +9,8 @@ export const deletePageAction = createAction({
 	name: 'delete-page',
 	displayName: 'Delete Page',
 	description: 'Trashes or permanently deletes a page.',
+	audience: 'both',
+	aiMetadata: { description: 'Deletes a Confluence page by ID; by default it is moved to the trash, or when "purge permanently" is enabled it is removed from the trash for good. Use to remove a page. Not idempotent in practice: it mutates page state and re-running after deletion errors rather than returning the same result, and a purge is irreversible.', idempotent: false },
 	props: {
 		spaceId: spaceIdProp,
 		pageId: pageIdProp,

@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { textToSpeech } from './lib/actions/text-to-speech-action';
 import {
   createClient,

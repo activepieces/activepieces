@@ -9,6 +9,12 @@ export const getCompanyProfile = createAction({
   displayName: 'Get Company Profile',
   description:
     'Get structured data of a Company Profile from a professional network URL (1 credit)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Retrieve a full structured company profile from a known professional-network company URL; read-only and safe to retry. Use this when you already have the company's profile URL. If you only have a name or domain, call Look Up Company first to resolve the URL. Optional add-ons (funding, acquisitions, categories, extra Crunchbase data) cost extra credits.",
+    idempotent: true,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'Company URL',

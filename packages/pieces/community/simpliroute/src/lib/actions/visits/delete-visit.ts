@@ -8,6 +8,8 @@ export const delete_visit = createAction({
     auth: simplirouteAuth,
     displayName: 'Delete Visit',
     description: 'Delete a visit by its ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently delete a single visit by its ID. Destructive and not safely repeatable: once deleted the visit is gone and a repeat call will fail, so confirm the ID before calling.', idempotent: false },
     props: {
         visit_id: Property.Number({ 
             displayName: 'visit_id', 

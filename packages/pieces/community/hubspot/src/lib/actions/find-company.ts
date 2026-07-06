@@ -1,4 +1,4 @@
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
@@ -14,6 +14,8 @@ export const findCompanyAction = createAction({
     name: 'find-company',
     displayName: 'Find Company',
     description: 'Finds a company by searching.',
+    audience: 'both',
+    aiMetadata: { description: 'Searches companies via the HubSpot CRM search API, matching on one or two property name/value pairs (exact match, combined as AND), and returns matching companies. Use to locate a company by domain, name, or another property before reading or updating it; prefer Get Company when you already have the company ID. Read-only and idempotent.', idempotent: true },
     props: {
         firstSearchPropertyName: standardObjectPropertiesDropdown(
             {

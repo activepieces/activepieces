@@ -13,6 +13,9 @@ export const threadReplyTrigger = createTrigger({
   displayName: 'Thread Reply Received',
   description:
     'Triggers when someone replies to an existing email thread. Useful for follow-up and support automation.',
+  aiMetadata: {
+    description: 'Fires via webhook when an inbound reply lands on an existing email thread, optionally scoped to a single inbox. Each event represents one follow-up message carrying both its email id and the parent thread id. Use to drive follow-up or support automation that should run only on replies, not on new conversations.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     inbox_id: inboxIdDropdownOptional,

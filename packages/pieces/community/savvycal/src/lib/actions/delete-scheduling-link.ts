@@ -8,6 +8,8 @@ export const deleteSchedulingLinkAction = createAction({
   name: 'delete_scheduling_link',
   displayName: 'Delete Scheduling Link',
   description: 'Permanently deletes a scheduling link from your SavvyCal account.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a scheduling link by its id; this cannot be undone. Use only when a link should be fully removed. The first call deletes the link and subsequent calls for the same id will fail, so treat it as a destructive, non-idempotent mutation.', idempotent: false },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,

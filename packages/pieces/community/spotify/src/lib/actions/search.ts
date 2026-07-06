@@ -5,6 +5,11 @@ export default createAction({
   name: 'search',
   displayName: 'Search',
   description: 'Searches for tracks, artists, albums, etc.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Searches the Spotify catalog by keyword and returns matching items, scoped to the object types you select (tracks, artists, albums, playlists). Use it to resolve a name or phrase into Spotify URIs/IDs before playing or adding to a playlist. Read-only and repeatable; supports limit/offset paging.',
+    idempotent: true,
+  },
   auth: spotifyCommon.authentication,
   props: {
     search_text: Property.ShortText({

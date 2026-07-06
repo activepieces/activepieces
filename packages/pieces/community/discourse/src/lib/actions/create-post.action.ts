@@ -7,6 +7,8 @@ export const createPost = createAction({
   auth: discourseAuth,
   name: 'create_post',
   description: 'Create a new post in discourse',
+  audience: 'both',
+  aiMetadata: { description: 'Add a reply post to an existing Discourse topic, identified by its numeric topic ID. Use when an agent needs to append a message to a thread that already exists (to start a new thread instead, use Create Topic). Each call creates a new post, so it is not idempotent.', idempotent: false },
   displayName: 'Create Post',
   props: {
     raw: Property.LongText({

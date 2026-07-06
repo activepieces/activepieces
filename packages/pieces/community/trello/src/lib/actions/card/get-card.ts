@@ -13,6 +13,8 @@ export const getCard = createAction({
   name: 'get_card',
   displayName: 'Get Card',
   description: 'Gets a card by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full details of a single Trello card by its card ID. Use to look up the current name, description, due date, labels, list, and other fields of a card before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     cardId: Property.ShortText({
       description: 'The card ID',

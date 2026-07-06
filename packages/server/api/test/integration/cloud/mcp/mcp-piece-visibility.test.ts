@@ -1,18 +1,13 @@
-import { beforeAll, afterAll, describe, it, expect } from 'vitest'
+import { apId } from '@activepieces/core-utils'
+import { FilteredPieceBehavior, McpServerType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import {
-    apId,
-    FilteredPieceBehavior,
-    McpServer,
-    PackageType,
-    PieceType,
-} from '@activepieces/shared'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { createTestContext } from '../../../helpers/test-context'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
+import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
-import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
-import { apListPiecesTool } from '../../../../src/app/mcp/tools/ap-list-pieces'
+import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -27,7 +22,7 @@ afterAll(async () => {
 })
 
 describe('MCP piece visibility', () => {
-    it('ap_list_pieces — does NOT return pieces hidden by platform admin (BLOCKED behavior)', async () => {
+    it('ap_research_pieces — does NOT return pieces hidden by platform admin (BLOCKED behavior)', async () => {
         const blockedPieceName = '@activepieces/piece-hidden-by-admin'
 
         const ctx = await createTestContext(app, {
@@ -51,13 +46,15 @@ describe('MCP piece visibility', () => {
         await db.save('piece_metadata', blockedPiece)
         await pieceCache(mockLog).setup()
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({})
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({})
 
-        expect(text(result)).toContain('✅')
+        // The only seeded piece is blocked, so the correct successful result is "no pieces matched"
+        // (a ⚠️ guidance message, not an ❌ error) — assert it succeeded and excludes the blocked piece.
+        expect(text(result)).not.toContain('❌')
         expect(text(result)).not.toContain(blockedPieceName)
     })
 
-    it('ap_list_pieces — returns pieces NOT in the platform blocklist', async () => {
+    it('ap_research_pieces — returns pieces NOT in the platform blocklist', async () => {
         const visiblePieceName = '@activepieces/piece-visible'
 
         const ctx = await createTestContext(app, {
@@ -81,21 +78,23 @@ describe('MCP piece visibility', () => {
         await db.save('piece_metadata', visiblePiece)
         await pieceCache(mockLog).setup()
 
-        const result = await apListPiecesTool(mcp, mockLog).execute({})
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({})
 
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain(visiblePieceName)
     })
 })
 
-function makeMcp(projectId: string): McpServer {
+function makeMcp(projectId: string): ProjectScopedMcpServer {
     return {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
+        platformId: null,
+        type: McpServerType.PROJECT,
         token: apId(),
-        enabledTools: null,
+        disabledTools: null,
     }
 }
 

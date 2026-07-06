@@ -14,6 +14,10 @@ export const rowsCreatedTrigger = createTrigger({
   displayName: 'New Rows (Batch)',
   description:
     'Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.',
+  aiMetadata: {
+    description:
+      'Fires when one or more new rows are created in the selected Baserow table, delivering all rows from a single create event together as one batch. Use to process bulk inserts at once; for one event per row use New Row.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),

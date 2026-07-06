@@ -1,4 +1,5 @@
-import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, PrincipalType, SeekPage, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/shared'
+import { SeekPage } from '@activepieces/core-utils'
+import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, PrincipalType, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -36,6 +37,7 @@ export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => 
             platformId: req.principal.platform.id,
             projectId: undefined,
             url: req.body.url,
+            event: req.body.event,
         })
     })
 }

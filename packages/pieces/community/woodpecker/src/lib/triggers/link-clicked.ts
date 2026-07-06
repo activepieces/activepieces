@@ -7,6 +7,9 @@ export const linkClicked = createTrigger({
   name: 'link_clicked',
   displayName: 'Prospect Clicked a Link',
   description: 'Triggers when a prospect clicks a link in an email',
+  aiMetadata: {
+    description: 'Fires when a prospect clicks a tracked link inside a campaign email. Represents a link-click engagement event for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'link_clicked',

@@ -7,7 +7,7 @@ import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 type StripeWebhookPayload = {
   data: {
@@ -22,6 +22,10 @@ export const stripeCanceledSubscription = createTrigger({
   name: 'canceled_subscription',
   displayName: 'Canceled Subscription',
   description: 'Fires when a subscription is canceled.',
+  aiMetadata: {
+    description:
+      'Fires when a subscription is canceled in Stripe (the customer.subscription.deleted event), emitting the canceled subscription including any cancellation details. An optional customer ID filter narrows firing to one customer. Use to react to churn, such as revoking access or sending a win-back flow.',
+  },
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',

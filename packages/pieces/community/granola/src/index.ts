@@ -3,7 +3,7 @@ import {
   createCustomApiCallAction,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { listNotesAction } from './lib/actions/list-notes';
 import { getNoteAction } from './lib/actions/get-note';
 import { newNoteTrigger } from './lib/triggers/new-note';

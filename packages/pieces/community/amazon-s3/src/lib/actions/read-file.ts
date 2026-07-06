@@ -1,13 +1,17 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { S3 } from '@aws-sdk/client-s3';
-import { amazonS3Auth } from '../auth';
-import { createS3 } from '../common';
+import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
+import { resolveS3Client } from '../common';
 
 export const readFile = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'read-file',
   displayName: 'Read File',
   description: 'Read a file from S3 to use it in other steps',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Downloads a single object from the configured S3 bucket by its full key (path) and makes its contents available as a file for later steps. Use to fetch a known file when you have its exact key. Reading the same key repeatedly returns the same content with no side effect (idempotent).',
+    idempotent: true,
+  },
   props: {
     key: Property.ShortText({
       displayName: 'File Path',
@@ -16,9 +20,10 @@ export const readFile = createAction({
     }),
   },
   async run(context) {
-    const { bucket } = context.auth.props;
+    const authProps: S3AuthProps = context.auth.props;
+    const { bucket } = authProps;
     const { key } = context.propsValue;
-    const s3 = createS3(context.auth.props);
+    const s3 = await resolveS3Client({ authProps, server: context.server });
 
     const file = await s3.getObject({
       Bucket: bucket,

@@ -4,9 +4,11 @@ import {
     Property,
     createAction,
   } from '@activepieces/pieces-framework';
-  import { ExecutionType, StopResponse } from '@activepieces/shared';
-  import { StatusCodes } from 'http-status-codes';
-  
+  import { ExecutionType, StopResponse } from '@activepieces/pieces-framework';
+
+  const HTTP_STATUS_OK = 200;
+  const HTTP_STATUS_MOVED_PERMANENTLY = 301;
+
   enum ResponseType {
     JSON = 'json',
     RAW = 'raw',
@@ -16,6 +18,7 @@ import {
 
   const RESUME_WEBHOOK_HEADER = 'x-activepieces-resume-webhook-url';
   export const returnResponseAndWaitForNextWebhook = createAction({
+    audience: 'human',
     name: 'return_response_and_wait_for_next_webhook',
     displayName: 'Respond and Wait for Next Webhook',
     description: 'return a response and wait for the next webhook to resume the flow',
@@ -102,7 +105,7 @@ import {
       const headers = fields['headers'] ?? {};
       const status = fields['status'];
       const response: StopResponse = {
-        status: status ?? StatusCodes.OK,
+        status: status ?? HTTP_STATUS_OK,
         headers,
       };
 
@@ -114,7 +117,7 @@ import {
           response.body = bodyInput;
           break;
         case ResponseType.REDIRECT:
-          response.status = StatusCodes.MOVED_PERMANENTLY;
+          response.status = HTTP_STATUS_MOVED_PERMANENTLY;
           response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) };
           response.body = bodyInput;
           break;

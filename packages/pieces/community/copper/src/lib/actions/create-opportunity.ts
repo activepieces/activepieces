@@ -8,6 +8,12 @@ export const createOpportunity = createAction({
   name: 'createOpportunity',
   displayName: 'Create Opportunity',
   description: 'Adds a new opportunity.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new opportunity (deal) in Copper CRM with a name, placing it in a chosen pipeline and stage and optionally linking a primary contact. Use to open a new deal in the sales pipeline; requires a name and pipeline. Not idempotent: each call creates a separate opportunity even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

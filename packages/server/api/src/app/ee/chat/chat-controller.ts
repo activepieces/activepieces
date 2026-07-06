@@ -1,18 +1,20 @@
-import {
-    CreateChatConversationRequest,
-    PrincipalType,
-    SendChatMessageRequest,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    SetProjectContextRequest,
-    UpdateChatConversationRequest,
-} from '@activepieces/shared'
-import { pipeUIMessageStreamToResponse } from 'ai'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
+import { chatHelpers } from './chat-helpers'
+import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
+import { chatAnalyticsTelemetry } from './chat-sync-job'
+import { findConnectionsForPiece } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
@@ -70,62 +72,202 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
-        const { content, files } = request.body
-        const log = request.log
-
-        const { stream, closeMcpClient } = await chatService(log).sendMessage({
-            conversationId: request.params.id,
+    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
+        // Cloud rollout: record that this user opened the chat page, then refresh the console
+        // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
+        await chatRolloutService.recordLanding({
             userId: request.principal.id,
             platformId: request.principal.platform.id,
-            content,
-            files,
+        })
+        chatAnalyticsTelemetry(request.log).sendRolloutFunnelUpdate()
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
+    app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
+        const { content, runId: clientRunId, files } = request.body
+        const conversationId = request.params.id
+        const userId = request.principal.id
+        const platformId = request.principal.platform.id
+        const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
+
+        log.info({ filesCount: files?.length ?? 0, contentLength: content.length }, '[chatController] Chat message received')
+
+        const conversation = await chatService(log).getConversationOrThrow({
+            id: conversationId,
+            platformId,
+            userId,
         })
 
-        await reply.hijack()
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
+        // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
+        // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
+        // Awaited before the credit check below so the managed key is created (and topped up) once.
+        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
+        if (needsCreditDecision) {
+            await maybeGrantFreeChatCredits({ platformId, userId, log })
+        }
+        // Refresh the console rollout funnel snapshot (chatted count just changed).
+        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
 
-        try {
-            pipeUIMessageStreamToResponse({
-                response: reply.raw,
-                stream,
-                headers: {
-                    'X-Accel-Buffering': 'no',
-                },
-            })
-            await new Promise<void>((resolve) => {
-                reply.raw.on('close', resolve)
-            })
-        }
-        catch (err: unknown) {
-            const isClientDisconnect = err instanceof Error && 'code' in err && err.code === 'ECONNRESET'
-            if (isClientDisconnect) {
-                log.debug({ err }, 'Chat stream ended (client disconnect)')
+        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
+        const runLog = log.child({ run: { id: runId } })
+
+        // Claim ownership atomically in the DB — the single source of truth that
+        // saveChatMessages/updateChatProgress/heartbeat fence against. A late write from the
+        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
+        // with no Redis/DB split to race through. The prior owner is read from the same row.
+        const preemptedRunId = conversation.status === ChatConversationStatus.STREAMING
+            ? conversation.activeRunId
+            : null
+        await chatHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
+
+        if (conversation.status === ChatConversationStatus.STREAMING) {
+            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[chatController] Cancelling in-flight run before new message')
+            const cancelPromises = [
+                chatApprovalGate.requestCancel({ conversationId }),
+            ]
+            if (preemptedRunId) {
+                cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
             }
-            else {
-                log.error({ err }, 'Chat stream error')
-            }
+            await Promise.all(cancelPromises)
+            await chatHelpers.conversationRepo().update(conversationId, {
+                status: ChatConversationStatus.IDLE,
+            })
+            await chatApprovalGate.clearPendingGate({ conversationId })
         }
-        finally {
-            await closeMcpClient()
-        }
+
+        await assertAiCreditsNotExhausted({ platformId, log })
+
+        await jobQueue(runLog).add({
+            id: apId(),
+            type: JobType.ONE_TIME,
+            data: {
+                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
+                conversationId,
+                runId,
+                projectId: conversation.projectId ?? null,
+                platformId,
+                userId,
+                userMessage: content,
+                modelName: conversation.modelName ?? null,
+                files,
+            },
+        })
+        runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
+
+        return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
+        request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[chatController] Tool approval received')
         await chatApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
+            payload: request.body.payload,
+            log: request.log,
         })
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
-    app.post('/conversations/:id/project-context', SetProjectContextRoute, async (request) => {
-        return chatService(request.log).setProjectContext({
-            id: request.params.id,
-            platformId: request.principal.platform.id,
-            userId: request.principal.id,
-            projectId: request.body.projectId ?? null,
+    app.post('/conversations/:id/cancel', CancelConversationRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
+        const conversation = await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const activeRunId = conversation.activeRunId
+        log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[chatController] Cancel requested')
+        const cancelPromises = [
+            chatApprovalGate.requestCancel({ conversationId }),
+        ]
+        if (activeRunId) {
+            cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
+        }
+        await Promise.all(cancelPromises)
+        await chatHelpers.conversationRepo().update(conversationId, {
+            status: ChatConversationStatus.IDLE,
         })
+        await chatApprovalGate.clearPendingGate({ conversationId })
+        return reply.status(StatusCodes.OK).send({ success: true })
     })
+
+    app.get('/conversations/:id/pending-gate', GetPendingGateRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        const conversation = await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const gate = await chatApprovalGate.getPendingGate({ conversationId })
+        // A preempted run can leave (or race in) a pending gate keyed by conversation; only surface
+        // the gate when it belongs to the run that currently owns the conversation.
+        const gateRunId = gate?.runId
+        const staleGate = !isNil(gateRunId) && !isNil(conversation.activeRunId) && gateRunId !== conversation.activeRunId
+        return reply.status(StatusCodes.OK).send(staleGate ? null : gate)
+    })
+
+    app.get('/conversations/:id/connections', GetPickerConnectionsRoute, async (request, reply) => {
+        const conversationId = request.params.id
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const pieceName = request.query.pieceName
+        const cached = await chatApprovalGate.getAvailableConnections({ conversationId, pieceName })
+        if (cached.length > 0) {
+            return reply.status(StatusCodes.OK).send(cached)
+        }
+        const projects = await chatHelpers.getUserProjects({ platformId, userId, log: request.log })
+        const result = await findConnectionsForPiece({ pieceName, projects, platformId, log: request.log })
+        if ('pickConnection' in result) {
+            await chatApprovalGate.storeAvailableConnections({ conversationId, pieceName, connections: result.connections })
+            return reply.status(StatusCodes.OK).send(result.connections)
+        }
+        return reply.status(StatusCodes.OK).send([])
+    })
+
+}
+
+const FREE_CHAT_CREDIT_USD = 10
+
+async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
+    // Claim first so the decision is settled exactly once across concurrent messages and paid users
+    // stop re-checking after this point (needsCreditDecision becomes false). A losing/duplicate
+    // caller exits immediately.
+    const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
+    if (!claimed) {
+        return
+    }
+    // Everything after the claim is best-effort and must never fail the user's message. Any error —
+    // the plan lookup or the top-up — rolls the claim back so a later message retries
+    // (needsCreditDecision goes true again). Paid platforms (license key) keep the claim with no
+    // grant owed, so they stop re-checking.
+    const { error } = await tryCatch(async () => {
+        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (isNil(plan.licenseKey)) {
+            await platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD })
+        }
+    })
+    if (!isNil(error)) {
+        await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
+        log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
+    }
+}
+
+async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
+    if (!chatProvider || chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
+        return
+    }
+    const usage = await platformAiCreditsService(log).getUsage(platformId)
+    if (usage.usageRemaining <= 0) {
+        log.warn({ usage: usage.usage, limit: usage.limit }, '[chatController] AI credits exhausted, rejecting message')
+        throw new ActivepiecesError({
+            code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
+            params: {
+                usage: usage.usage,
+                limit: usage.limit,
+            },
+        })
+    }
 }
 
 const CreateConversationRoute = {
@@ -212,6 +354,16 @@ const SendMessageRoute = {
     },
 }
 
+const FunnelLandingRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
+
 const ToolApprovalRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
@@ -220,11 +372,11 @@ const ToolApprovalRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({ gateId: z.string() }),
-        body: z.object({ approved: z.boolean() }),
+        body: z.object({ approved: z.boolean(), payload: z.record(z.string(), z.unknown()).optional() }),
     },
 }
 
-const SetProjectContextRoute = {
+const GetPendingGateRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
     },
@@ -232,6 +384,29 @@ const SetProjectContextRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
-        body: SetProjectContextRequest,
     },
 }
+
+const GetPickerConnectionsRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: z.object({ pieceName: z.string() }),
+    },
+}
+
+const CancelConversationRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+    },
+}
+

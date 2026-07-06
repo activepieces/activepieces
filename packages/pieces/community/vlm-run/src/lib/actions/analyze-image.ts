@@ -10,6 +10,8 @@ export const analyzeImage = createAction({
   displayName: 'Analyze Image',
   description:
     'Process an image (file or URL), extracting descriptions, detecting objects, etc.',
+  audience: 'both',
+  aiMetadata: { description: 'Analyze an image (passed as a file or URL) with VLM Run, selecting an analysis domain that switches the task between classification, captioning, TV-news parsing, or visual Q&A. Choose this for any single-image visual understanding need. The domain input is required and determines what is extracted; each call launches a new prediction job and polls until complete, so it is not idempotent.', idempotent: false },
   props: analyzeImageProperties,
   async run({ auth: apiKey, propsValue }) {
     await propsValidation.validateZod(propsValue, analyzeImageSchema);

@@ -9,6 +9,8 @@ export const createPageFromTemplateAction = createAction({
     name:'create-page-from-template',
     displayName:'Create Page from Template',
     description:'Creates a new page from a template with the given title and variables.',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new Confluence page by fetching a template, substituting its declared variables with the provided values, and posting the rendered content as a page (published or draft) in the given space. Use when a page should follow a predefined template rather than free-form body. Requires the template ID and matching variable names. Not idempotent: each call creates another page.', idempotent: false },
     props:{
         spaceId:spaceIdProp,
         templateId:templateIdProp,

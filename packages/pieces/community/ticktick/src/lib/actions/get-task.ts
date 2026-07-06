@@ -9,6 +9,12 @@ export const getTaskAction = createAction({
 	name: 'get_task',
 	displayName: 'Get Task',
 	description: 'Retrieves the details of a specific task.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Fetches the full details of a single TickTick task by its list (project) ID and task ID. Use when you already know both IDs and need the task data; to discover a task ID by title, use Find Task first. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		projectId: projectId({
 			displayName: 'List',

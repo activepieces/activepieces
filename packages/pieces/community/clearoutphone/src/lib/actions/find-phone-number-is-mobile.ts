@@ -8,6 +8,8 @@ export const findPhoneNumberIsMobile = createAction({
   displayName: 'Find Phone Number Is Mobile',
   description:
     'Determine if a phone number is a mobile number using ClearoutPhone API',
+  audience: 'both',
+  aiMetadata: { description: 'Check whether a single phone number is a mobile (vs. landline or other) line type via ClearoutPhone. Use when an agent needs to decide if a number can receive SMS or routing depends on mobile vs. fixed lines. Requires the number in international format (e.g. +447766733573); this is a read-only lookup and is idempotent.', idempotent: true },
   props: {
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',

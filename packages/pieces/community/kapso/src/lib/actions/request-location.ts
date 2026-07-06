@@ -1,14 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
-import { phoneNumberIdDropdown } from '../common/props';
+import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 
 export const requestLocation = createAction({
   auth: kapsoAuth,
   name: 'request_user_location',
   displayName: 'Request User Location',
   description: 'Send a location request message to a WhatsApp user.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an interactive prompt asking a WhatsApp user to share their current location, with a body text explaining the request. Use to collect a location from the recipient; to share a location you already have, use Send Location instead. Each call delivers a new request message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
+    businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
     to: Property.ShortText({
       displayName: 'Recipient Phone Number',

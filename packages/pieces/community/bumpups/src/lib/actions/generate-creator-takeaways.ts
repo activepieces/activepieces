@@ -9,6 +9,8 @@ export const generateCreatorTakeaways = createAction({
   displayName: 'Generate Creator Takeaways',
   description:
     'Generates key takeaways for a YouTube video based on its content.',
+  audience: 'both',
+  aiMetadata: { description: 'Calls the Bumpups AI model on a public YouTube video URL to generate key takeaways summarizing the video content, optionally including emojis. Use when an agent needs a bullet-style summary of the main points of a specific YouTube video; the video URL is required and an optional language code sets the output language. Not idempotent — each call invokes the model and may produce different text.', idempotent: false },
   props: {
     videoUrl: Property.ShortText({
       displayName: 'Video URL',

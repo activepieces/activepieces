@@ -1,6 +1,6 @@
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { projectId, taskId, workspaceId } from '../common/props';
@@ -12,6 +12,10 @@ export const newTimeEntryTrigger = createTrigger({
 	name: 'new-time-entry',
 	displayName: 'New Time Entry',
 	description: 'Triggers when a new time entry is created.',
+	aiMetadata: {
+		description:
+			'Fires when a new time entry is created, emitting the entry. Scope is narrowed by the optional project and task: with neither set it watches the whole workspace, with a project it watches that project, and with a task it watches that task.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		workspaceId: workspaceId({

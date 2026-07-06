@@ -1,16 +1,17 @@
 
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { redisHelper } from '../../database/redis'
 import { redisConnections } from '../../database/redis-connections'
 
-const DELETE_LEGACY_REDIS_KEYS_KEY = 'delete_legacy_redis_keys'
+const DELETE_LEGACY_REDIS_KEYS_KEY = 'delete_legacy_redis_keys_v2'
 
 const LEGACY_PATTERNS = [
     'tasks:project:*',
     'tasks:platform:*',
     'project-usage:*',
     'project-*-usage-tasks:*',
+    'platform:*:worker_group_id',
 ]
 
 export const deleteLegacyRedisKeys = (log: FastifyBaseLogger) => ({

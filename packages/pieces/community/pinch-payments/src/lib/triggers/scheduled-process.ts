@@ -7,6 +7,9 @@ export const scheduledProcessTrigger = createTrigger({
   name: 'scheduled_process',
   displayName: 'Scheduled Process',
   description: 'Triggers when scheduled payments are processed (daily on business days)',
+  aiMetadata: {
+    description: 'Fires when Pinch Payments runs its scheduled-payment process (daily on business days), submitting that day batch of due payments. Represents the start/result of the daily batch run rather than a single payment; use to react to the daily processing cycle.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

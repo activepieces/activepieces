@@ -1,17 +1,7 @@
 import { createHash } from 'crypto'
+import { isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import {
-    AuthenticationResponse,
-    isNil,
-    PiecesFilterType,
-    PlatformRole,
-    PrincipalType,
-    Project,
-    ProjectType,
-    User,
-    UserIdentity,
-    UserIdentityProvider,
-} from '@activepieces/shared'
+import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'

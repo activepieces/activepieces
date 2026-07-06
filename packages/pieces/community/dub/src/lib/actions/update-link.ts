@@ -7,6 +7,12 @@ export const updateLink = createAction({
   name: 'update_link',
   displayName: 'Update Link',
   description: 'Update an existing Dub link. Only the fields you fill in will be updated.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Dub link identified by its link ID, applying only the fields supplied (destination URL, slug, tags, UTM parameters, expiration, password, device redirects, archived state, etc.). Use when an agent needs to modify a known link rather than create one. Requires the link ID and at least one field to change. Idempotent: applying the same field values repeatedly leaves the link in the same state.',
+    idempotent: true,
+  },
   auth: dubAuth,
   props: {
     linkId: Property.ShortText({

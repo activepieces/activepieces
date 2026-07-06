@@ -5,6 +5,8 @@ export const getTokenCounters = createAction({
   name: 'get_token_counters',
   displayName: 'Get Token Counters',
   description: 'Get token counters (holders count, transfers count, etc.)',
+  audience: 'both',
+  aiMetadata: { description: 'Get aggregate counts for one token by its contract address, such as total number of holders and total transfers. Read-only. Use this when you just need the summary numbers; to enumerate the actual holders or transfers use Get Token Holders or Get Token Transfers instead.', idempotent: true },
   // category: 'Tokens',
   props: {
     addressHash: Property.ShortText({

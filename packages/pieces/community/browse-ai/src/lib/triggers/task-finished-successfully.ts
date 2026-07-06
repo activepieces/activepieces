@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { browseAiAuth } from '../common/auth';
 import { browseAiApiCall } from '../common/client';
 import { robotIdDropdown } from '../common/props';
@@ -13,6 +13,10 @@ export const taskFinishedSuccessfullyTrigger = createTrigger({
   displayName: 'Task Finished Successfully',
   description:
     'Triggers when a robot finishes a task successfully.',
+  aiMetadata: {
+    description:
+      'Fires when a task run for the selected Browse AI robot completes successfully, delivering the finished task record with its captured/extracted data. Use to process scrape results as soon as they are ready.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     robotId: robotIdDropdown,

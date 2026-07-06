@@ -1,3 +1,4 @@
+import { isNil, stringifyNullOrUndefined } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -6,11 +7,10 @@ import {
   flowOperations,
   flowStructureUtil,
   FlowVersion,
-  isNil,
   LoopStepOutput,
   SampleDataFileType,
   StepRunResponse,
-  stringifyNullOrUndefined,
+  TestStepProgressEvent,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { Socket } from 'socket.io-client';
@@ -34,6 +34,7 @@ export type RunState = {
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   loopsIndexes: Record<string, number>;
   setLoopIndex: (stepName: string, index: number) => void;
+  selectFailedStep: () => void;
   addActionTestListener: ({
     runId,
     stepName,
@@ -62,7 +63,7 @@ type RunStateInitialState = {
   socket: Socket;
 };
 type StepTestListener = {
-  onProgress: (response: StepRunResponse) => void;
+  onProgress: (response: TestStepProgressEvent) => void;
   onFinish: (response: StepRunResponse) => void;
   error: (error: any) => void;
 };
@@ -76,30 +77,53 @@ export const createRunState = (
     run: initialState.run,
     loopsIndexes:
       initialState.run && initialState.run.steps
-        ? flowRunUtils.findLoopsState(initialState.run, {})
+        ? flowRunUtils.pinLoopsToIterationsWithFailedStep(initialState.run, {})
         : {},
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set((state) => {
         get().removeAllStepTestsListeners();
-        const loopsIndexes = flowRunUtils.findLoopsState(
+        const isNewRun = state.run?.id !== run.id;
+        const loopsIndexes = flowRunUtils.pinLoopsToIterationsWithFailedStep(
           run,
           state.loopsIndexes,
+          {
+            liveFollowPaused:
+              !isNewRun && state.userManuallySelectedStepDuringRun,
+          },
         );
         return {
           loopsIndexes,
           run,
           flowVersion,
           readonly: true,
+          userManuallySelectedStepDuringRun: isNewRun
+            ? false
+            : state.userManuallySelectedStepDuringRun,
+          isStepDataPanelOpen: isNewRun ? true : state.isStepDataPanelOpen,
         };
       }),
+    selectFailedStep: () => {
+      const { run, selectStepByName } = get();
+      if (isNil(run) || isNil(run.failedStep)) {
+        return;
+      }
+      set((state) => ({
+        loopsIndexes: flowRunUtils.pinLoopsToIterationsWithFailedStep(
+          run,
+          state.loopsIndexes,
+        ),
+      }));
+      selectStepByName(run.failedStep.name);
+    },
     clearRun: (userHasPermissionToEditFlow: boolean) =>
       set({
         run: null,
         readonly: !userHasPermissionToEditFlow,
         loopsIndexes: {},
         selectedBranchIndex: null,
+        userManuallySelectedStepDuringRun: false,
+        isStepDataPanelOpen: false,
       }),
-
     setLoopIndex: (stepName: string, index: number) => {
       set((state) => {
         const parentLoop = flowStructureUtil.getStepOrThrow(
@@ -141,6 +165,8 @@ export const createRunState = (
         });
         return {
           loopsIndexes,
+          userManuallySelectedStepDuringRun:
+            state.userManuallySelectedStepDuringRun || !isNil(state.run),
         };
       });
     },
@@ -208,7 +234,7 @@ export const createRunState = (
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
       socket.on('error', handleError);
-      const handleOnProgress = (response: StepRunResponse) => {
+      const handleOnProgress = (response: TestStepProgressEvent) => {
         if (response.runId === runId && response.output) {
           get().setSampleDataLocally({
             stepName: stepName,

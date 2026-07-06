@@ -8,6 +8,8 @@ export const getEventAction = createAction({
   name: 'get_event',
   displayName: 'Get Event',
   description: 'Retrieves the details of a specific scheduled meeting by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single SavvyCal event by its event id. Use to look up a known booking (attendee, times, state, link); obtain the id from a trigger, List Events, or the event URL. Read-only and idempotent.', idempotent: true },
   props: {
     event_id: Property.ShortText({
       displayName: 'Event ID',

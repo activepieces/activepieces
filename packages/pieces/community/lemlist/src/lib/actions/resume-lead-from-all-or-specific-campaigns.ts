@@ -8,6 +8,8 @@ export const resumeLeadFromAllOrSpecificCampaigns = createAction({
   name: 'resumeLeadFromAllOrSpecificCampaigns',
   displayName: 'Resume Lead From All or Specific Campaigns',
   description: 'Resume a lead’s outreach across all or specific campaigns.',
+  audience: 'both',
+  aiMetadata: { description: 'Resumes (restarts) outreach sequencing for a previously paused lead, identified by email. Operates in two modes: supply a campaign to resume the lead only in that campaign, or leave the campaign empty to resume across all campaigns. Idempotent: re-running leaves the lead active.', idempotent: true },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'], required: false }),
     email: Property.ShortText({

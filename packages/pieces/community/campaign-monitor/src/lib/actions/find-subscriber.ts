@@ -9,6 +9,12 @@ export const findSubscriberAction = createAction({
   name: 'find_subscriber',
   displayName: 'Find Subscriber',
   description: 'Find a subscriber by email in a specific list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a single subscriber by exact email address within a specific Campaign Monitor list under a client, returning their details and tracking preference. Choose this to check whether a contact exists on a list or to read their state before adding/updating; a missing subscriber resolves as not found rather than an error. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     clientId: clientId,
     listId: listId,

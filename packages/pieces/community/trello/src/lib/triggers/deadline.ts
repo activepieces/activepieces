@@ -45,6 +45,9 @@ export const deadlineTrigger = createTrigger({
     name: 'deadline',
     displayName: 'Card Deadline',
     description: 'Triggers at a specified time before a card deadline.',
+    aiMetadata: {
+        description: 'Fires for each card whose due date falls within a configured lead time (e.g. 24 hours) ahead of now, scoped to a board or an optional list. Represents an approaching, not-yet-completed card deadline; polls periodically and skips cards already marked due-complete.',
+    },
     type: TriggerStrategy.POLLING,
     props: {
         board_id: trelloCommon.board_id,

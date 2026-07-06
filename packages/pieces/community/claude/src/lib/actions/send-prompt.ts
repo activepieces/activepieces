@@ -7,27 +7,21 @@ import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../auth';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-import { billingIssueMessage, modelOptions, unauthorizedMessage } from '../common/common';
+import { isNil } from '@activepieces/pieces-framework';
+import { spreadIfDefined } from '@activepieces/pieces-framework';
+import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
+import { askClaudeActionOutputSchema } from '../output-schemas';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
+  audience: 'human',
   auth: claudeAuth,
   name: 'ask_claude',
   displayName: 'Ask Claude',
   description: 'Ask Claude anything you want!',
   props: {
-    model: Property.StaticDropdown({
-      displayName: 'Model',
-      required: true,
-      description:
-        'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
-      defaultValue: 'claude-3-haiku-20240307',
-      options: {
-        disabled: false,
-        options: modelOptions,
-      },
-    }),
+    model: modelDropdown,
     systemPrompt: Property.LongText({
       displayName: 'System Prompt',
       required: false,
@@ -89,9 +83,10 @@ export const askClaude = createAction({
       },
     }),
   },
+  outputSchema: askClaudeActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(1.0).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
     });
 
     const anthropic = new Anthropic({
@@ -104,10 +99,9 @@ export const askClaude = createAction({
     if (propsValue.model) {
       model = propsValue.model;
     }
-    let temperature = 0.5;
-    if (propsValue.temperature) {
-      temperature = Number(propsValue.temperature);
-    }
+    const temperature = isNil(propsValue.temperature)
+      ? undefined
+      : Number(propsValue.temperature);
     let maxTokens = 1000;
     if (propsValue.maxTokens) {
       maxTokens = Number(propsValue.maxTokens);
@@ -185,15 +179,16 @@ export const askClaude = createAction({
             .filter((block) => block.type === 'text')[0]
             .text.trim();
         } else {
-          const req = await anthropic?.messages.create({
+          const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
             model: model,
             max_tokens: maxTokens,
-            temperature: temperature,
             system: systemPrompt,
             messages: roles,
-          });
+            ...spreadIfDefined('temperature', temperature),
+          };
+          const req = await anthropic.messages.create(params);
 
-          response = (req?.content[0] as TextBlock).text?.trim();
+          response = (req.content[0] as TextBlock).text?.trim();
         }
 
         break; // Break out of the loop if the request is successful

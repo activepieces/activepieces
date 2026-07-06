@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
-import { ExecutionType } from '@activepieces/shared';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { discordCommon } from '../common';
 
 export const discordSendApprovalMessage = createAction({
@@ -13,6 +13,8 @@ export const discordSendApprovalMessage = createAction({
   name: 'request_approval_message',
   description:
     'send a message to a channel asking for approval and wait for a response',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a message with a single button linking to a confirmation page where a human chooses Approve or Disapprove to a Discord channel, then pauses the flow until they respond and resumes with the decision. Use as a human-in-the-loop approval gate before an agent proceeds with a consequential step. Blocks until a response arrives; each call posts a new approval message, so it is not idempotent.', idempotent: false },
   displayName: 'Request Approval in a Channel',
   props: {
     content: Property.LongText({
@@ -28,12 +30,7 @@ export const discordSendApprovalMessage = createAction({
         type: 'WEBHOOK',
       });
 
-      const approvalLink = waitpoint.buildResumeUrl({
-        queryParams: { action: 'approve' },
-      });
-      const disapprovalLink = waitpoint.buildResumeUrl({
-        queryParams: { action: 'disapprove' },
-      });
+      const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
 
       const request: HttpRequest = {
         method: HttpMethod.POST,
@@ -46,15 +43,9 @@ export const discordSendApprovalMessage = createAction({
               components: [
                 {
                   type: 2,
-                  label: 'Approve',
+                  label: 'Review & Respond',
                   style: 5,
-                  url: approvalLink,
-                },
-                {
-                  type: 2,
-                  label: 'Disapprove',
-                  style: 5,
-                  url: disapprovalLink,
+                  url: confirmationLink,
                 },
               ],
             },

@@ -11,6 +11,11 @@ export const freshSalesCreateContact = createAction({
   name: 'freshsales_create_contact',
   displayName: 'Create Contact',
   description: 'Add new contact in Freshsales CRM',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new contact record in Freshsales CRM with the given details (email is required; name, phone, address, social handles, owner/territory/account IDs, and marketing attribution fields are optional). Use when an agent needs to add a person to the CRM. Not idempotent: each call creates a new contact and may produce duplicates if repeated.',
+    idempotent: false,
+  },
   props: {
     first_name: Property.ShortText({
       displayName: 'First name',

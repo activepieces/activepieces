@@ -15,6 +15,8 @@ export const updateParkingSpaceAction = createAction({
   name: 'updateParkingSpace',
   displayName: 'Resources - Parking Spaces - Update',
   description: 'Update Parking Space.',
+  audience: 'both',
+  aiMetadata: { description: 'Update a parking space by its numeric ID, replacing fields such as label, location, status, occupancy status, accessibility, external ID, and associated EVSEs. Uses a full PUT replacement, so re-running with the same values is safe. Use to modify a known parking space.', idempotent: true },
   props: {
         
   parkingSpace: Property.Number({

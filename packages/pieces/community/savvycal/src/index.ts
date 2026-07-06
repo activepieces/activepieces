@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { getCurrentUserAction } from './lib/actions/get-current-user';
 import { listEventsAction } from './lib/actions/list-events';
@@ -33,20 +33,24 @@ export const savvyCal = createPiece({
   auth: savvyCalAuth,
   authors: ['bst1n','sanket-a11y', 'onyedikachi-david'],
   actions: [
-    getCurrentUserAction,
-    listEventsAction,
-    getEventAction,
-    cancelEventAction,
     createEventAction,
+    cancelEventAction,
+    getEventAction,
+    listEventsAction,
     findEventsByEmailAction,
+
     listSchedulingLinksAction,
     getSchedulingLinkAction,
-    deleteSchedulingLinkAction,
-    duplicateSchedulingLinkAction,
-    toggleSchedulingLinkAction,
     getLinkSlotsAction,
+    toggleSchedulingLinkAction,
+    duplicateSchedulingLinkAction,
+    deleteSchedulingLinkAction,
+
     listWorkflowsAction,
     getWorkflowRulesAction,
+
+    getCurrentUserAction,
+
     createCustomApiCallAction({
       baseUrl: () => SAVVYCAL_BASE_URL,
       auth: savvyCalAuth,

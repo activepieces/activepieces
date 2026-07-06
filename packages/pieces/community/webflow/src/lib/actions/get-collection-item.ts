@@ -9,6 +9,8 @@ export const webflowGetCollectionItem = createAction({
 	name: 'get_collection_item',
 	description: 'Get collection item in a collection by ID',
 	displayName: 'Get a Collection Item by ID',
+	audience: 'both',
+	aiMetadata: { description: 'Retrieves a single Webflow CMS collection item by its collection ID and item ID. Use when the agent already knows the item ID and needs its full field data; if the ID is unknown, find it first with Find a Collection Item by Field. Read-only and idempotent.', idempotent: true },
 	props: {
 		site_id: webflowProps.site_id,
 		collection_id: webflowProps.collection_id,

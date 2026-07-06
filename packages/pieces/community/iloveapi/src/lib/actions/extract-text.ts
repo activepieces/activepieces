@@ -9,6 +9,12 @@ export const extractTextPdfAction = createAction({
   displayName: 'Extract Text from PDF',
   description:
     'Extract plain or detailed text (with positions and font metadata) from a PDF.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Extract the text content of a PDF via the iLoveAPI service. Pick this to pull readable text out of a PDF (e.g. for parsing or downstream analysis); enable detailed mode when you need per-block positional and font metadata for layout-aware parsing rather than plain text. Each call re-runs extraction and writes a fresh output file, so repeated runs are not idempotent.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

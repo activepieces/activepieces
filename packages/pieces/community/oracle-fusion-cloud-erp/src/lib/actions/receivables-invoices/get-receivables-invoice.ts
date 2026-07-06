@@ -7,6 +7,8 @@ export const getReceivablesInvoice = createAction({
     name: 'get_receivables_invoice',
     displayName: 'Get Receivables Invoice',
     description: 'Retrieves details of a specific receivables invoice by ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetch one accounts-receivable (customer) invoice by its CustomerTransactionId. Read-only and idempotent. Use when you already have the AR invoice ID; to look one up by transaction number, customer, or date range use Find Receivables Invoices first. Distinct from Get Invoice, which retrieves payables (supplier) invoices.', idempotent: true },
     props: {
         customerTransactionId: Property.ShortText({
             displayName: 'Customer Transaction ID',

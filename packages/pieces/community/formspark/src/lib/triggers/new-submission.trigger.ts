@@ -4,7 +4,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 const liveMarkdown = `**Live URL:**
 \`\`\`text
@@ -29,6 +29,10 @@ export const newSubmissionTrigger = createTrigger({
   displayName: 'New Submission',
   auth: PieceAuth.None(),
   description: 'Triggers when form receives a new submission.',
+  aiMetadata: {
+    description:
+      'Fires when a Formspark form receives a new submission, delivered via webhook. The event represents one completed form submission and carries the submitted field values as its payload.',
+  },
   props: {
     liveMarkdown: Property.MarkDown({
       value: liveMarkdown,

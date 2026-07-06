@@ -11,6 +11,8 @@ export const sendVideoToChannelAction = createAction({
   name: 'whatsscale_send_video_to_channel',
   displayName: 'Send a Video to a Channel',
   description: 'Broadcast a video to a WhatsApp Channel selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Broadcasts a video to a WhatsApp Channel whose ID is chosen from the session channel list, with an optional caption. Pick this for one-to-many channel broadcasts rather than the contact/group/CRM variants used for direct chats. Requires a directly downloadable video URL. Not idempotent: each call posts another video to the channel.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     channel: whatsscaleProps.channel,

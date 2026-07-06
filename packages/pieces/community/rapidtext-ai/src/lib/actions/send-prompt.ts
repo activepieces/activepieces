@@ -8,6 +8,8 @@ export const sendPromptAction = createAction({
   auth: rapidTextAiAuth,
   displayName: 'Send Prompt',
   description: 'Send prompt to RapidTextAI.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a freeform prompt to a selected RapidTextAI model and returns the completion, with optional sampling controls (max tokens, temperature, top-p, frequency/presence penalties). Choose this for general chat-style or short text generation; use Generate Article for full article drafting. Requires a prompt and a model; each call produces fresh non-deterministic output, so it is not idempotent.', idempotent: false },
   props: {
     model: modelDropdown,
     prompt: Property.LongText({

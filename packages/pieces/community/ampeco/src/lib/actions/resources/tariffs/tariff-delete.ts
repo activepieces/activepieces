@@ -14,6 +14,8 @@ export const tariffDeleteAction = createAction({
   name: 'tariffDelete',
   displayName: 'Resources - Tariffs - Delete',
   description: 'Delete a tariff.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an AMPECO tariff by its numeric ID. Destructive: removes the pricing definition and cannot be undone, so confirm the tariff is no longer assigned before calling. Deleting an already-removed tariff will error rather than succeed silently.', idempotent: false },
   props: {
         
   tariff: Property.Number({

@@ -1,13 +1,15 @@
-import { isNil, McpToolDefinition } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { mcpProjectSelection } from '../mcp-project-selection'
+import { mcpProjectSelection, ProjectSelectionScope } from '../mcp-project-selection'
 
-export const apSetProjectContextTool = ({ platformId, userId, log }: {
+export const apSetProjectContextTool = ({ platformId, userId, selectionScope, log }: {
     platformId: string
     userId: string
+    selectionScope: ProjectSelectionScope
     log: FastifyBaseLogger
 }): McpToolDefinition => ({
     title: 'ap_set_project_context',
@@ -40,7 +42,7 @@ export const apSetProjectContextTool = ({ platformId, userId, log }: {
                     }],
                 }
             }
-            mcpProjectSelection.set({ platformId, userId, projectId })
+            await mcpProjectSelection.set({ scope: selectionScope, projectId })
             const projectList = projects.map(p => {
                 const marker = p.id === projectId ? '>' : ' '
                 return `${marker} ${p.displayName} (${p.id})`
@@ -53,7 +55,7 @@ export const apSetProjectContextTool = ({ platformId, userId, log }: {
             }
         }
 
-        mcpProjectSelection.clear({ platformId, userId })
+        await mcpProjectSelection.clear(selectionScope)
         const projectList = projects.map(p => `- ${p.displayName} (${p.id})`).join('\n')
         return {
             content: [{

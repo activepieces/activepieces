@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument } from 'pdf-lib';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export function pageRangeToIndexes(
   startPage: number,
@@ -60,6 +60,7 @@ This action can extract or rearrange the pages in a PDF.
 `;
 
 export const extractPdfPages = createAction({
+  audience: 'human',
   name: 'extractPdfPages',
   displayName: 'Extract PDF Pages',
   description: 'Extract or rearrange page(s)from PDF File.',

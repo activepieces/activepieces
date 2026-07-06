@@ -4,7 +4,7 @@ import { addContact } from './lib/actions/add-contact';
 import { sendANewSms } from './lib/actions/send-a-new-sms';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const octopushSms = createPiece({
   displayName: 'Octopush SMS',

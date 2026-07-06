@@ -3,13 +3,20 @@ import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailProps } from '../common/props';
+import { createDraftReplyActionOutputSchema } from '../output-schemas';
 
 export const gmailCreateDraftReplyAction = createAction({
   auth: gmailAuth,
   name: 'create_draft_reply',
   description: 'Creates a draft reply to an existing email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Builds a draft reply to an existing email and saves it (unsent) in the thread, addressing the original sender (reply) or all participants (reply all) and optionally quoting the original message. Use this when a human should review and send the response rather than sending it automatically; requires the Gmail message ID of the email being replied to. Not idempotent: each call creates a new draft.',
+    idempotent: false,
+  },
   displayName: 'Create Draft Reply',
   props: {
     message_id: GmailProps.message,
@@ -78,10 +85,11 @@ export const gmailCreateDraftReplyAction = createAction({
       required: false,
     }),
   },
+  outputSchema: createDraftReplyActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const originalMessage = await gmail.users.messages.get({
       userId: 'me',

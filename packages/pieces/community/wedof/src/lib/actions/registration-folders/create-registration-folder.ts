@@ -8,6 +8,12 @@ export const createRegistrationFolder = createAction({
   name: 'createRegistrationFolder',
   displayName: "Créer un dossier de formation hors CPF",
   description: "Permet de créer un nouveau dossier de formation",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Creates a new non-CPF training registration folder for a given session and learner, with a price and funding type (individual, OPCO, Pôle Emploi, or company). Not idempotent: each call creates a separate folder. The Pôle Emploi fields are required only when the funding type is poleEmploi.",
+    idempotent: false,
+  },
   props: {
     sessionId: Property.Number({
       displayName: 'ID de session',

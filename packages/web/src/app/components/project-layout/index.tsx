@@ -1,4 +1,5 @@
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -122,7 +123,7 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider hoverMode={!searchOpen}>
+    <SidebarProvider defaultOpen={false} hoverMode={!searchOpen}>
       {!isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
         <div

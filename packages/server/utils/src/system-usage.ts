@@ -1,6 +1,7 @@
 import fs from 'fs'
 import os from 'os'
-import { MachineInformation, tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils';
+import { MachineInformation } from '@activepieces/shared';
 import checkDiskSpace from 'check-disk-space'
 import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'
@@ -19,19 +20,37 @@ async function readCgroupFile(path: string): Promise<string | null> {
     return data
 }
 
+async function readCgroupStatValue(path: string, key: string): Promise<number | null> {
+    const content = await readCgroupFile(path)
+    if (!content) return null
+    for (const line of content.split('\n')) {
+        const [name, rawValue] = line.split(' ')
+        if (name === key) {
+            const value = parseInt(rawValue)
+            return isNaN(value) ? null : value
+        }
+    }
+    return null
+}
+
 async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: number } | null> {
     const paths = [
-        { limit: '/sys/fs/cgroup/memory.max', usage: '/sys/fs/cgroup/memory.current' },
-        { limit: '/sys/fs/cgroup/memory/memory.limit_in_bytes', usage: '/sys/fs/cgroup/memory/memory.usage_in_bytes' },
+        { limit: '/sys/fs/cgroup/memory.max', usage: '/sys/fs/cgroup/memory.current', stat: '/sys/fs/cgroup/memory.stat', inactiveFileKey: 'inactive_file' },
+        { limit: '/sys/fs/cgroup/memory/memory.limit_in_bytes', usage: '/sys/fs/cgroup/memory/memory.usage_in_bytes', stat: '/sys/fs/cgroup/memory/memory.stat', inactiveFileKey: 'total_inactive_file' },
     ]
-    for (const { limit, usage } of paths) {
+    for (const { limit, usage, stat, inactiveFileKey } of paths) {
         const limitStr = await readCgroupFile(limit)
         if (!limitStr || limitStr === 'max') continue
         const usageStr = await readCgroupFile(usage)
         if (!usageStr) continue
         const totalRamInBytes = parseInt(limitStr)
-        const usedBytes = parseInt(usageStr)
-        if (isNaN(totalRamInBytes) || isNaN(usedBytes) || totalRamInBytes <= 0 || totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES) continue
+        const rawUsedBytes = parseInt(usageStr)
+        if (isNaN(totalRamInBytes) || isNaN(rawUsedBytes) || totalRamInBytes <= 0 || totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES) continue
+        // When memory.stat is unreadable we keep the container-scoped cgroup usage
+        // (slightly over-reported, includes cache) rather than skipping to host memory,
+        // which would make a capped worker look far emptier than it is.
+        const inactiveFileBytes = await readCgroupStatValue(stat, inactiveFileKey) ?? 0
+        const usedBytes = Math.max(0, rawUsedBytes - inactiveFileBytes)
         return {
             totalRamInBytes,
             ramUsage: (usedBytes / totalRamInBytes) * 100,
@@ -131,4 +150,45 @@ export const systemUsage = {
         if (cgroupCores) return cgroupCores
         return os.availableParallelism?.() ?? os.cpus().length
     },
+
+    async getProcessTreeMemoryBytesByPids(pids: number[]): Promise<Map<number, number>> {
+        const result = new Map<number, number>()
+        if (pids.length === 0) {
+            return result
+        }
+        // si.processes() walks the whole process table — do it once for all pids, never per-pid.
+        const { data, error } = await tryCatch(() => si.processes())
+        if (error || !data) {
+            for (const pid of pids) {
+                result.set(pid, 0)
+            }
+            return result
+        }
+        const childrenByParent = new Map<number, number[]>()
+        const rssBytesByPid = new Map<number, number>()
+        for (const proc of data.list) {
+            rssBytesByPid.set(proc.pid, proc.memRss * 1024)
+            const siblings = childrenByParent.get(proc.parentPid) ?? []
+            siblings.push(proc.pid)
+            childrenByParent.set(proc.parentPid, siblings)
+        }
+        for (const pid of pids) {
+            result.set(pid, sumProcessTreeRssBytes({ rootPid: pid, rssBytesByPid, childrenByParent }))
+        }
+        return result
+    },
+}
+
+function sumProcessTreeRssBytes({ rootPid, rssBytesByPid, childrenByParent }: { rootPid: number, rssBytesByPid: Map<number, number>, childrenByParent: Map<number, number[]> }): number {
+    let total = 0
+    const queue = [rootPid]
+    const visited = new Set<number>()
+    while (queue.length > 0) {
+        const current = queue.shift()!
+        if (visited.has(current)) continue
+        visited.add(current)
+        total += rssBytesByPid.get(current) ?? 0
+        queue.push(...(childrenByParent.get(current) ?? []))
+    }
+    return total
 }

@@ -2,20 +2,9 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-} from '@activepieces/shared';
-
-const chatIdInfo = `
-**How to obtain Chat ID:**
-1. Search for the bot "@getmyid_bot" in Telegram.
-2. Start a conversation with the bot.
-3. Send the command "/my_id" to the bot.
-4. The bot will reply with your chat ID.
-
-**Note: Remember to initiate the chat with the bot, or you'll get an error for "chat not found."**
-`;
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
+import { requestApprovalMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramRequestApprovalMessageAction = createAction({
   auth: telegramBotAuth,
@@ -23,59 +12,23 @@ export const telegramRequestApprovalMessageAction = createAction({
   displayName: 'Request Approval Message',
   description:
     'Send an approval message to a chat and wait until the message is approved or disapproved',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a message with a single button linking to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond and resumes with the decision. Use as a human approval gate before a sensitive downstream step. Not idempotent: each call sends a new message and opens a new pause/wait.', idempotent: false },
   props: {
-    instructions: Property.MarkDown({
-      value: chatIdInfo,
-    }),
-    chat_id: Property.ShortText({
-      displayName: 'Chat Id',
-      required: true,
-    }),
+    instructions: telegramCommons.chatIdInstructions(),
+    chat_id: telegramCommons.chatIdProp(),
     message: Property.LongText({
       displayName: 'Message',
       description: 'The approval message to be sent',
       required: true,
     }),
-    parse_mode: Property.StaticDropdown({
-      displayName: 'Format',
-      description: 'Choose format for the message',
-      required: false,
-      options: {
-        options: [
-          {
-            label: 'Markdown',
-            value: 'MarkdownV2',
-          },
-          {
-            label: 'HTML',
-            value: 'HTML',
-          },
-          {
-            label: 'Plain Text',
-            value: 'None',
-          },
-        ],
-      },
-      defaultValue: 'MarkdownV2',
-    }),
-    approve_button_text: Property.ShortText({
-      displayName: 'Approve Button Text',
-      description: 'Text for the approve button',
-      required: false,
-      defaultValue: 'Approve',
-    }),
-    disapprove_button_text: Property.ShortText({
-      displayName: 'Disapprove Button Text',
-      description: 'Text for the disapprove button',
-      required: false,
-      defaultValue: 'Disapprove',
-    }),
+    parse_mode: telegramCommons.parseModeProp(),
   },
+  outputSchema: requestApprovalMessageActionOutputSchema,
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       const token = context.auth.secret_text;
-      const { chat_id, message, parse_mode, approve_button_text, disapprove_button_text } =
-        context.propsValue;
+      const { chat_id, message, parse_mode } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');
       assertNotNullOrUndefined(message, 'message');
@@ -85,14 +38,11 @@ export const telegramRequestApprovalMessageAction = createAction({
       const waitpoint = await context.run.createWaitpoint({
         type: 'WEBHOOK',
       });
-      const approvalLink = waitpoint.buildResumeUrl({
-        queryParams: { action: 'approve', chat_id },
-      });
-      const disapprovalLink = waitpoint.buildResumeUrl({
-        queryParams: { action: 'disapprove', chat_id },
-      });
+      const confirmationLink = `${waitpoint.resumeUrl}/confirm?chat_id=${encodeURIComponent(chat_id)}`;
 
-      // Send message with inline keyboard buttons
+      // Send message with a single button opening the confirmation page (the recipient
+      // chooses Approve/Disapprove there). A single link keeps the message-preview
+      // prefetch from consuming the waitpoint.
       const response = await httpClient.sendRequest<{
         ok: boolean;
         result: { message_id: number };
@@ -102,17 +52,13 @@ export const telegramRequestApprovalMessageAction = createAction({
         body: {
           chat_id,
           text: message,
-          parse_mode: parse_mode || 'MarkdownV2',
+          parse_mode: telegramCommons.resolveParseMode(parse_mode),
           reply_markup: {
             inline_keyboard: [
               [
                 {
-                  text: approve_button_text || 'Approve',
-                  url: approvalLink,
-                },
-                {
-                  text: disapprove_button_text || 'Disapprove',
-                  url: disapprovalLink,
+                  text: 'Review & Respond',
+                  url: confirmationLink,
                 },
               ],
             ],

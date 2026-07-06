@@ -1,23 +1,5 @@
-import { ApId, ApplicationEventName,
-    CountFlowsRequest,
-    CreateFlowRequest,
-    FlowOperationRequest,
-    FlowOperationType,
-    FlowStatus,
-    flowStructureUtil,
-    FlowTrigger,
-    GetFlowQueryParamsRequest,
-    GetFlowTemplateRequestQuery,
-    GitPushOperationType,
-    ListFlowsRequest,
-    Permission,
-    PlatformUsageMetric,
-    PopulatedFlow,
-    PrincipalType,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    SharedTemplate,
-} from '@activepieces/shared'
+import { ApId, Permission, PlatformUsageMetric, SeekPage } from '@activepieces/core-utils'
+import { ApplicationEventName, CountFlowsRequest, CreateFlowRequest, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -146,6 +128,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         return flowService(request.log).list({
             projectIds: [request.projectId],
             folderId: request.query.folderId,
+            folderIds: request.query.folderIds,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,

@@ -7,6 +7,8 @@ export const searchPeopleAction = createAction({
   name: 'search_people',
   displayName: 'Search People',
   description: 'Search for people in Proxycurl using lightweight keyword filters.',
+  audience: 'both',
+  aiMetadata: { description: 'Find people via Proxycurl using keyword filters (country, headline keywords, summary keywords) when you do not already have a specific LinkedIn profile URL; to enrich a known URL use Get Person Profile instead. At least one filter must be provided or the call fails. Read-only search, safe to repeat.', idempotent: true },
   auth: proxycurlAuth,
   props: {
     country: Property.ShortText({

@@ -6,6 +6,8 @@ export const findOrder = createAction({
   name: 'find_order',
   displayName: 'Find Order',
   description: 'Search for an order by its ID',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single Shippo order by its object ID. Use to look up the full details of a known order. Requires the exact order ID; it does not search by order number or other fields. Read-only and idempotent.', idempotent: true },
   auth: shippoAuth,
   props: {
     order_id: Property.ShortText({

@@ -8,6 +8,8 @@ export const get_route = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Route',
     description: 'Retrieve details of a specific route.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetch the full details of one route by its UUID, including assigned vehicle, driver and stops. Use when you already have a route id; to find routes by date use Get Routes instead. Read-only and idempotent.', idempotent: true },
     props: {
         route_id: Property.ShortText({ 
             displayName: 'route_id', 

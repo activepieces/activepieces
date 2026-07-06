@@ -8,6 +8,8 @@ export const removeSubscriberFromTag = createAction({
   name: 'remove_subscriber_from_tag',
   displayName: 'Remove Subscriber from Tag',
   description: 'Remove a subscriber from a specific tag in your Mailchimp audience.',
+  audience: 'both',
+  aiMetadata: { description: 'Deactivates a tag on a subscriber, identified by email within a given audience (list). Use to un-segment or un-label a contact. Idempotent: removing a tag the member does not have leaves the state unchanged.', idempotent: true },
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({

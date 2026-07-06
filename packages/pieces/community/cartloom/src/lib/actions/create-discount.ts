@@ -8,6 +8,8 @@ export const createDiscountAction = createAction({
   auth: cartloomAuth,
   displayName: 'Create Discount',
   description: 'Create a discount in Cartloom',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new discount in the connected Cartloom store, as either a fixed-amount or percentage discount applied to all products, selected products, or the order total. Use to set up a promotion or coupon; supply a code for a redeemable coupon or leave it blank for an automatic discount, and provide start/stop dates. Not idempotent — each call creates a separate discount.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

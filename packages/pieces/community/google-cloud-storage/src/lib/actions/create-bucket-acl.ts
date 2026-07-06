@@ -9,6 +9,8 @@ export const createBucketAcl = createAction({
   name: 'create_bucket_acl',
   displayName: 'Create Bucket ACL',
   description: 'Add an ACL entry at bucket level. Perfect for granting permission to manage the bucket.',
+  audience: 'both',
+  aiMetadata: { description: 'Grants an entity (user, group, domain, or special scope) a role on a bucket\'s own access-control list. Use to let someone read or manage the bucket itself. Not idempotent: adding an entry that already exists fails. Only works on buckets using fine-grained ACLs, not uniform bucket-level access; requires bucket, entity, and role.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

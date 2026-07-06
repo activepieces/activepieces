@@ -1,3 +1,4 @@
+import { LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -9,7 +10,6 @@ import {
   ApEdition,
   FlowActionType,
   flowPieceUtil,
-  LocalesEnum,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
   FlowTriggerType,
@@ -19,6 +19,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import semver from 'semver';
 
@@ -38,6 +39,7 @@ import {
   usePieceSelectorTabs,
 } from '../stores/piece-selector-tabs-provider';
 import { pieceSearchUtils } from '../utils/piece-search-utils';
+import { pieceSelectorCustomization } from '../utils/piece-selector-customization';
 
 import { stepsHooks } from './steps-hooks';
 
@@ -94,6 +96,7 @@ export const piecesHooks = {
       pieceModel: query.data,
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
+      isError: query.isError,
       refetch: query.refetch,
     };
   },
@@ -131,6 +134,25 @@ export const piecesHooks = {
         staleTime: Infinity,
       })),
     });
+  },
+  usePieceSummariesByNames: ({ names }: UseMultiplePiecesProps) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({});
+    const summaries = useMemo(() => {
+      if (!pieces) return [];
+      const byName = new Map(pieces.map((p) => [p.name, p]));
+      return names
+        .map((name) => byName.get(name))
+        .filter((p): p is PieceMetadataModelSummary => !!p);
+    }, [pieces, names]);
+    return { summaries, isLoading };
+  },
+  usePieceSummary: ({ name }: { name: string }) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({});
+    const summary = useMemo(
+      () => pieces?.find((p) => p.name === name),
+      [pieces, name],
+    );
+    return { summary, isLoading };
   },
   usePieces: ({
     searchQuery,
@@ -170,7 +192,7 @@ export const piecesHooks = {
     isLoading: boolean;
     data: CategorizedStepMetadataWithSuggestions[];
   } => {
-    const { selectedTab } = usePieceSelectorTabs();
+    const { selectedTab, selectedCustomTabId } = usePieceSelectorTabs();
     const { capture } = useTelemetry();
     const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
       ApFlagId.ENVIRONMENT,
@@ -258,6 +280,39 @@ export const piecesHooks = {
           isLoading: false,
           data: [],
         };
+      case PieceSelectorTabType.CUSTOM: {
+        const customTab = pieceSelectorCustomization.getCustomTab({
+          config: platform.pieceSelectorConfig,
+          customTabId: selectedCustomTabId,
+        });
+        const categories: CategorizedStepMetadataWithSuggestions[] = [];
+        const flatPieces = getPinnedPieces(
+          piecesMetadataWithoutEmptySuggestions,
+          customTab?.pieceNames ?? [],
+        );
+        if (flatPieces.length > 0) {
+          categories.push({
+            title: customTab?.title ?? t('All'),
+            metadata: flatPieces,
+          });
+        }
+        for (const section of customTab?.sections ?? []) {
+          const sectionPieces = getPinnedPieces(
+            piecesMetadataWithoutEmptySuggestions,
+            section.pieceNames,
+          );
+          if (sectionPieces.length > 0) {
+            categories.push({
+              title: section.title,
+              metadata: sectionPieces,
+            });
+          }
+        }
+        return {
+          isLoading: false,
+          data: categories,
+        };
+      }
       case PieceSelectorTabType.APPS: {
         const popularAppsCategory = {
           ...popularCategory,

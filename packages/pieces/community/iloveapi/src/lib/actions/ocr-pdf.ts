@@ -9,6 +9,12 @@ export const ocrPdfAction = createAction({
   displayName: 'OCR PDF',
   description:
     'Run OCR on a PDF to make scanned documents searchable. Supports 100+ languages.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Add a searchable, selectable text layer to a scanned or image-only PDF via OCR, defaulting to English when no language is given (accepts one or more ISO 639-2 codes such as eng, fra, deu, chi_sim). Use this before extracting or searching text in scanned documents. Each run produces a new output file.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

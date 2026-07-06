@@ -7,6 +7,9 @@ export const linearRemovedProject = createTrigger({
   name: 'removed_project',
   displayName: 'Removed Project',
   description: 'Triggers when an existing Linear project is removed',
+  aiMetadata: {
+    description: 'Fires when an existing project is deleted anywhere in the Linear workspace. Represents the project as it was at the time of removal.',
+  },
   props: {},
   sampleData: {
     action: 'remove',

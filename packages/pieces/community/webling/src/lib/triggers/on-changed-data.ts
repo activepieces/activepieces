@@ -36,6 +36,10 @@ export const onChangedData = createTrigger({
   displayName: 'On Changed Data',
   description:
     'Triggers when anything was added, updated or deleted since last request.',
+  aiMetadata: {
+    description:
+      'Fires when any Webling data changes since the last poll, covering creations, updates, and deletions across all object types (members, accounts, calendar events, documents, and more). Represents a batch of changed and deleted record IDs since the previous request, not a single record event.',
+  },
   props: {},
   sampleData: {
     objects: {

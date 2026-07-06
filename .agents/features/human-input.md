@@ -8,13 +8,13 @@ The Human Input feature exposes public-facing endpoints that allow external user
 - `packages/server/api/src/app/flows/flow/human-input/chat-controller.ts` — GET `/chat/:flowId` endpoint
 - `packages/server/api/src/app/flows/flow/human-input/human-input.service.ts` — resolves flow, validates trigger type, builds response
 - `packages/server/api/src/app/flows/flow/human-input/human-input.module.ts` — registers both controllers
-- `packages/shared/src/lib/automation/flows/form.ts` — `FormInputType`, `FormInput`, `FormProps`, `FormResponse`, `ChatUIProps`, `ChatUIResponse`, `USE_DRAFT_QUERY_PARAM_NAME`
+- `packages/core/shared/src/lib/automation/flows/form.ts` — `FormInputType`, `FormInput`, `FormProps`, `FormResponse`, `ChatUIProps`, `ChatUIResponse`, `USE_DRAFT_QUERY_PARAM_NAME`
 - `packages/web/src/features/forms/components/ap-form.tsx` — form rendering component
 - `packages/web/src/features/forms/api/` — frontend API client for form metadata
 - `packages/web/src/features/forms/hooks/` — TanStack Query hooks
 - `packages/web/src/features/chat/` — chat UI components (bubble, input, message list, intro)
-- `packages/web/src/app/routes/forms/` — public-facing form page
-- `packages/web/src/app/routes/chat/` — public-facing chat page
+- `packages/web/src/app/routes/forms/` — public-facing form page (`index.tsx`)
+- `packages/web/src/app/routes/chat/` — public-facing chat page (`index.tsx`), the reusable chat shell (`flow-chat.tsx`), and the in-builder Drawer wrapper used for testing `chat_submission`-trigger flows from the builder (`chat-drawer.tsx`, paired with `builder/state/chat-state.ts`)
 
 ## Edition Availability
 - **Community (CE)**: Fully available — no plan flag required.
@@ -22,6 +22,9 @@ The Human Input feature exposes public-facing endpoints that allow external user
 - **Cloud**: Fully available.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Forms piece** (`@activepieces/piece-forms`): The Activepieces piece that provides three triggers: `form_submission`, `file_submission`, and `chat_submission`.
 - **form_submission trigger**: Accepts structured text/toggle/textarea fields defined by the flow author. `waitForResponse` controls whether the flow pauses to return a value to the form submitter.
 - **file_submission trigger**: Simplified single-file upload form. The field schema is hardcoded server-side (one required FILE input with `waitForResponse: true`).

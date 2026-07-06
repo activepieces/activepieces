@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ExecutionMode } from '@activepieces/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../../../../src/app/workers/machine/machine-cache', () => ({
     workerMachineCache: vi.fn(() => ({
@@ -16,7 +16,7 @@ vi.mock('../../../../../src/app/helper/system/system', () => ({
     },
 }))
 
-vi.mock('../../../../../src/app/ee/custom-domains/domain-helper', () => ({
+vi.mock('../../../../../src/app/helper/domain-helper', () => ({
     domainHelper: {
         getPublicUrl: vi.fn().mockResolvedValue('https://example.com'),
     },

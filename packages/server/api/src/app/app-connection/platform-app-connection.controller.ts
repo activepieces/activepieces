@@ -1,11 +1,5 @@
-import {
-    ListPlatformAppConnectionsRequestQuery,
-    PlatformAppConnectionOwnersResponse,
-    PlatformAppConnectionsListItem,
-    PrincipalType,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-} from '@activepieces/shared'
+import { SeekPage } from '@activepieces/core-utils'
+import { ListPlatformAppConnectionsRequestQuery, PlatformAppConnectionOwnersResponse, PlatformAppConnectionsListItem, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -41,10 +35,8 @@ const ListPlatformAppConnectionsRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
-        tags: ['platform-app-connections'],
         querystring: ListPlatformAppConnectionsRequestQuery,
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'List app connections across every project on the platform',
         response: {
             [StatusCodes.OK]: SeekPage(PlatformAppConnectionsListItem),
         },
@@ -56,9 +48,7 @@ const ListPlatformAppConnectionOwnersRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
-        tags: ['platform-app-connections'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'List distinct connection owners across every project on the platform',
         response: {
             [StatusCodes.OK]: PlatformAppConnectionOwnersResponse,
         },

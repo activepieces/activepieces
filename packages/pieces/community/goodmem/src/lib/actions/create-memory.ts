@@ -8,6 +8,8 @@ export const createMemory = createAction({
   name: 'create_memory',
   displayName: 'Create Memory',
   description: 'Store a document as a new memory in a space. The memory is processed asynchronously - chunked into searchable pieces and embedded into vectors. Accepts a file or plain text.',
+  audience: 'both',
+  aiMetadata: { description: 'Stores content as a new memory in a GoodMem space, which is then chunked and embedded asynchronously for later semantic retrieval. Provide the content either as a file or as plain text (the file takes priority when both are given), along with the target space ID. Use it to ingest documents into a memory store. Not idempotent: each call creates a separate memory, so repeated calls produce duplicates.', idempotent: false },
   props: {
     spaceId: spaceIdDropdown,
     file: Property.File({

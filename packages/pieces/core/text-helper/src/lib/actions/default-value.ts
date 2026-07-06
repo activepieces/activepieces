@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const defaultValue = createAction({
+  audience: 'human',
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'defaultValue',
   errorHandlingOptions: {

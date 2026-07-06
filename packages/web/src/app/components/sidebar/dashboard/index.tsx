@@ -1,6 +1,5 @@
+import { isNil } from '@activepieces/core-utils';
 import {
-  ApFlagId,
-  isNil,
   PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
@@ -38,6 +37,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
   projectCollectionUtils,
@@ -45,7 +45,6 @@ import {
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -73,8 +72,6 @@ export function ProjectDashboardSidebar({
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showChat } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_CHAT);
-
   useEffect(() => {
     if (!searchOpen) {
       setSearchQuery('');
@@ -154,11 +151,14 @@ export function ProjectDashboardSidebar({
     type: 'link',
     to: '/chat',
     label: t('Chat'),
-    show: showChat ?? false,
+    show: platform.plan.chatEnabled,
     icon: SendIcon,
     hasPermission: true,
     isSubItem: false,
     badge: t('Beta'),
+    onClick: () => {
+      window.dispatchEvent(new Event(chatUtils.newChatEvent));
+    },
   };
 
   const exploreLink: SidebarItemType = {

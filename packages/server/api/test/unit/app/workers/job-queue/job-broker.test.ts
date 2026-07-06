@@ -1,5 +1,5 @@
 import { InterceptorVerdict } from '../../../../../src/app/workers/job-queue/job-interceptor'
-import { Job, Worker as BullMQWorker } from 'bullmq'
+import { Worker as BullMQWorker, Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 

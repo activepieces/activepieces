@@ -14,6 +14,12 @@ export const createAppointmentAction = createAction({
 	name: 'create_appointment',
 	displayName: 'Create Appointment',
 	description: 'Creates a new appointment.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Books a new appointment for a client on Acuity given a datetime, appointment type, and client name. Operates in two modes: standard booking enforces availability/attribute checks and auto-assigns a calendar, while admin booking (enable Book as Admin) bypasses those checks, allows setting notes, and requires a calendar ID. Use to schedule a client; not idempotent — each call creates a separate appointment.',
+		idempotent: false,
+	},
 	props: {
 		datetime: Property.DateTime({
 			displayName: 'DateTime',

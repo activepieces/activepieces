@@ -7,6 +7,8 @@ export default createAction({
   name: 'insert_documents',
   displayName: 'Insert Documents',
   description: 'Insert one or more documents into a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Inserts new documents into a MongoDB collection; accepts either a single document object or an array of documents. Use to add records. Not idempotent: each call creates new documents with fresh _id values, so repeating it appends duplicates.', idempotent: false },
   props: {
     database: mongodbCommon.database,
     collection: mongodbCommon.collection(),

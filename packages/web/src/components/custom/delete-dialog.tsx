@@ -79,9 +79,11 @@ export const ConfirmationDeleteDialog = ({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent onClick={(e) => e.stopPropagation()}>
-        <DialogHeader>
+        <DialogHeader className="min-w-0">
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="pt-2">{message}</DialogDescription>
+          <DialogDescription className="pt-2 truncate">
+            {message}
+          </DialogDescription>
         </DialogHeader>
         {warning && (
           <Alert variant="warning">

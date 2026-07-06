@@ -8,6 +8,8 @@ export const createNote = createAction({
   auth: wealthboxAuth,
   displayName: 'Create Note',
   description: 'Adds a note linked to a contact. Log call summaries against client records.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a note in Wealthbox and links it to a specified contact, optionally with visibility scope and tags. Use to log call summaries, meeting notes, or client interactions against a contact record; requires the note content and a contact id. Not idempotent: each call appends a new note even with identical content.', idempotent: false },
   props: {
     content: Property.LongText({
       displayName: 'Note Content',

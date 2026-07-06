@@ -9,7 +9,7 @@ import {
   AuthenticationType,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 import { wooAuth } from '../auth';
 
@@ -17,6 +17,12 @@ export const wooCreateCoupon = createAction({
   name: 'Create Coupon',
   displayName: 'Create Coupon',
   description: 'Create a coupon',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new discount coupon in a WooCommerce store with a code, discount type (fixed_cart, fixed_product, percent, or percent_product), amount, and minimum order amount. Use when an agent needs to issue a promotional or discount code. Not idempotent: each call posts a new coupon, and the code must be unique in the store.',
+    idempotent: false,
+  },
   auth: wooAuth,
   props: {
     code: Property.ShortText({
@@ -62,7 +68,7 @@ export const wooCreateCoupon = createAction({
   },
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
-      minimum_amount: z.number().min(0),
+      minimum_amount: z.number().check(z.minimum(0)),
     });
 
     const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');

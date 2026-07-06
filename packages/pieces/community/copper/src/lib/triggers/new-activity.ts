@@ -55,6 +55,10 @@ export const newActivity = createTrigger({
   name: 'newActivity',
   displayName: 'New Activity',
   description: 'Triggers when a new activity is logged',
+  aiMetadata: {
+    description:
+      'Fires when a new activity (note or logged interaction) is recorded in Copper CRM. Polls for activities by creation date, emitting one event per newly logged activity.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

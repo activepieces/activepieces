@@ -16,7 +16,7 @@ import {
   XaiResponse,
   CategorizationResult
 } from '../common/utils';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 interface Category {
   name: string;
@@ -24,6 +24,7 @@ interface Category {
 }
 
 export const categorizeText = createAction({
+  audience: 'human',
   auth: grokAuth,
   name: 'categorize_text',
   displayName: 'Categorize Text',
@@ -98,9 +99,9 @@ export const categorizeText = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      maxCompletionTokens: z.number().min(50).max(4000).optional(),
-      text: z.string().min(1).max(100000),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      maxCompletionTokens: z.optional(z.number().check(z.minimum(50), z.maximum(4000))),
+      text: z.string().check(z.minLength(1), z.maxLength(100000)),
     });
 
     const {

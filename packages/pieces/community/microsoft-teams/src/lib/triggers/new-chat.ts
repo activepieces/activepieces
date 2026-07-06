@@ -5,7 +5,7 @@ import {
 	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { createGraphClient, withGraphRetry } from '../common/graph';
 import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Chat, ChatType } from '@microsoft/microsoft-graph-types';
@@ -20,6 +20,9 @@ export const newChatTrigger = createTrigger({
 	name: 'new-chat',
 	displayName: 'New Chat',
 	description: 'Triggers when a new chat is created.',
+	aiMetadata: {
+		description: 'Fires when a new chat (one-on-one or group) involving the authenticated user is created in Microsoft Teams. Each event represents the newly created chat and its metadata. Polls periodically by creation time, so events appear with a short delay rather than instantly.',
+	},
 	props: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {

@@ -9,6 +9,12 @@ export const runApp = createAction({
   displayName: 'Run App',
   description:
     'Triggers the execution of a specific Flipando application by ID, initiating a background job for application completion.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a Flipando AI application identified by its numeric application ID, kicking off an asynchronous completion job (retrieve the result later via Get Task). Use it to run a known app with optional JSON input variables and an optional document upload. A file_description is required whenever a file is attached. Not idempotent: each call launches a new run.',
+    idempotent: false,
+  },
   props: {
     application_id: Property.Number({
       displayName: 'Application ID',

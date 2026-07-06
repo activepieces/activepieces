@@ -10,7 +10,7 @@ jobs:
     name: Update BetterStack Playwright monitor
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Upload script to BetterStack monitor
         env:

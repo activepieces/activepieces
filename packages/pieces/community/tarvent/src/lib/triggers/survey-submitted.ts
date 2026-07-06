@@ -8,6 +8,9 @@ export const surveySubmittedTrigger = createTrigger({
   name: 'tarvent_survey_submitted',
   displayName: 'Survey Submission Received',
   description: 'Triggers when a known or unknown contact submits a survey.',
+  aiMetadata: {
+    description: 'Fires when a known or unknown contact submits a Tarvent survey. Represents a survey submission and its responses.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

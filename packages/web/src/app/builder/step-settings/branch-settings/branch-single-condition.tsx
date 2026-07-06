@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
 
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import {
@@ -24,28 +23,28 @@ import {
 import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
-  [BranchOperator.TEXT_CONTAINS]: t('(Text) Contains'),
-  [BranchOperator.TEXT_DOES_NOT_CONTAIN]: t('(Text) Does not contain'),
-  [BranchOperator.TEXT_EXACTLY_MATCHES]: t('(Text) Exactly matches'),
+  [BranchOperator.TEXT_CONTAINS]: t('Contains (Text)'),
+  [BranchOperator.TEXT_DOES_NOT_CONTAIN]: t('Does not contain (Text)'),
+  [BranchOperator.TEXT_EXACTLY_MATCHES]: t('Exactly matches (Text)'),
   [BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH]: t(
-    '(Text) Does not exactly match',
+    'Does not exactly match (Text)',
   ),
-  [BranchOperator.TEXT_STARTS_WITH]: t('(Text) Starts with'),
-  [BranchOperator.TEXT_DOES_NOT_START_WITH]: t('(Text) Does not start with'),
-  [BranchOperator.TEXT_ENDS_WITH]: t('(Text) Ends with'),
-  [BranchOperator.TEXT_DOES_NOT_END_WITH]: t('(Text) Does not end with'),
-  [BranchOperator.LIST_CONTAINS]: t('(List) Contains'),
-  [BranchOperator.LIST_DOES_NOT_CONTAIN]: t('(List) Does not contain'),
-  [BranchOperator.NUMBER_IS_GREATER_THAN]: t('(Number) Is greater than'),
-  [BranchOperator.NUMBER_IS_LESS_THAN]: t('(Number) Is less than'),
-  [BranchOperator.NUMBER_IS_EQUAL_TO]: t('(Number) Is equal to'),
-  [BranchOperator.DATE_IS_AFTER]: t('(Date/time) After'),
-  [BranchOperator.DATE_IS_BEFORE]: t('(Date/time) Before'),
-  [BranchOperator.DATE_IS_EQUAL]: t('(Date/time) Equals'),
-  [BranchOperator.BOOLEAN_IS_TRUE]: t('(Boolean) Is true'),
-  [BranchOperator.BOOLEAN_IS_FALSE]: t('(Boolean) Is false'),
-  [BranchOperator.LIST_IS_EMPTY]: t('(List) Is empty'),
-  [BranchOperator.LIST_IS_NOT_EMPTY]: t('(List) Is not empty'),
+  [BranchOperator.TEXT_STARTS_WITH]: t('Starts with (Text)'),
+  [BranchOperator.TEXT_DOES_NOT_START_WITH]: t('Does not start with (Text)'),
+  [BranchOperator.TEXT_ENDS_WITH]: t('Ends with (Text)'),
+  [BranchOperator.TEXT_DOES_NOT_END_WITH]: t('Does not end with (Text)'),
+  [BranchOperator.LIST_CONTAINS]: t('Contains (List)'),
+  [BranchOperator.LIST_DOES_NOT_CONTAIN]: t('Does not contain (List)'),
+  [BranchOperator.NUMBER_IS_GREATER_THAN]: t('Is greater than (Number)'),
+  [BranchOperator.NUMBER_IS_LESS_THAN]: t('Is less than (Number)'),
+  [BranchOperator.NUMBER_IS_EQUAL_TO]: t('Is equal to (Number)'),
+  [BranchOperator.DATE_IS_AFTER]: t('After (Date/time)'),
+  [BranchOperator.DATE_IS_BEFORE]: t('Before (Date/time)'),
+  [BranchOperator.DATE_IS_EQUAL]: t('Equals (Date/time)'),
+  [BranchOperator.BOOLEAN_IS_TRUE]: t('Is true (Boolean)'),
+  [BranchOperator.BOOLEAN_IS_FALSE]: t('Is false (Boolean)'),
+  [BranchOperator.LIST_IS_EMPTY]: t('Is empty (List)'),
+  [BranchOperator.LIST_IS_NOT_EMPTY]: t('Is not empty (List)'),
   [BranchOperator.EXISTS]: t('Exists'),
   [BranchOperator.DOES_NOT_EXIST]: t('Does not exist'),
 };
@@ -89,94 +88,90 @@ const BranchSingleCondition = ({
       ('secondValue' in condition && condition.secondValue?.length === 0);
   return (
     <>
-      <div className="flex items-center gap-2">
-        {isInvalid && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('Incomplete condition')}
-            </TooltipContent>
-          </Tooltip>
-        )}
-        <div
-          className={cn('grid gap-2 grow', {
-            'grid-cols-2': isSingleValueCondition,
-            'grid-cols-3': !isSingleValueCondition,
-          })}
-        >
-          <FormField
-            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
-            control={form.control}
-            render={({ field }) => {
-              return (
-                <FormItem>
-                  <TextInputWithMentions
-                    disabled={readonly}
-                    placeholder={t('First value')}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      form.trigger();
-                    }}
-                    initialValue={field.value}
-                  ></TextInputWithMentions>
-                </FormItem>
-              );
-            }}
-          />
-          <FormField
-            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <SearchableSelect
+      <div className="flex flex-col gap-3 grow">
+        <FormField
+          name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
+          control={form.control}
+          render={({ field }) => {
+            return (
+              <FormItem className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <Label>{t('First value')}</Label>
+                  {isInvalid && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {t('Incomplete condition')}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+                <TextInputWithMentions
                   disabled={readonly}
-                  value={field.value}
-                  options={operationOptions}
-                  placeholder={''}
-                  onChange={(e) => {
-                    if (
-                      isSingleValueCondition &&
-                      e !== null &&
-                      !singleValueConditions.includes(e as BranchOperator)
-                    ) {
-                      //TODO: fix this
-                      //@ts-expect-ignore
-                      form.setValue(
-                        `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
-                        '' as any,
-                      );
-                    }
-                    field.onChange(e);
+                  onChange={(value) => {
+                    field.onChange(value);
                     form.trigger();
                   }}
-                />
+                  initialValue={field.value}
+                ></TextInputWithMentions>
+              </FormItem>
+            );
+          }}
+        />
+        <FormField
+          name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
+          control={form.control}
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-1">
+              <Label>{t('Condition')}</Label>
+              <SearchableSelect
+                disabled={readonly}
+                value={field.value}
+                options={operationOptions}
+                placeholder={''}
+                onChange={(e) => {
+                  if (
+                    isSingleValueCondition &&
+                    e !== null &&
+                    !singleValueConditions.includes(e as BranchOperator)
+                  ) {
+                    //TODO: fix this
+                    //@ts-expect-ignore
+                    form.setValue(
+                      `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
+                      '' as any,
+                    );
+                  }
+                  field.onChange(e);
+                  form.trigger();
+                }}
+              />
+            </FormItem>
+          )}
+        />
+        {!isSingleValueCondition && (
+          <FormField
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-1">
+                <Label>{t('Second value')}</Label>
+                <TextInputWithMentions
+                  disabled={readonly}
+                  initialValue={field.value || ''}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    form.trigger();
+                  }}
+                ></TextInputWithMentions>
               </FormItem>
             )}
           />
-          {!isSingleValueCondition && (
-            <FormField
-              name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <TextInputWithMentions
-                    placeholder={t('Second value')}
-                    disabled={readonly}
-                    initialValue={field.value || ''}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      form.trigger();
-                    }}
-                  ></TextInputWithMentions>
-                </FormItem>
-              )}
-            />
-          )}
-        </div>
+        )}
       </div>
 
       <div className="flex justify-start items-center gap-2 mt-2">

@@ -7,6 +7,8 @@ export const updateReceivablesInvoice = createAction({
     name: 'update_receivables_invoice',
     displayName: 'Update Receivables Invoice',
     description: 'Updates an existing receivables invoice. Note: Only InvoiceStatus, PaymentTerms, and TransactionDate can be updated.',
+    audience: 'both',
+    aiMetadata: { description: 'Modify an existing accounts-receivable invoice identified by CustomerTransactionId; only invoice status, payment terms, and transaction date are editable. At least one field must be supplied or the call fails. Effectively idempotent since it sets fields to the values given. The invoice must already exist; use Create Receivables Invoice to add a new one.', idempotent: true },
     props: {
         customerTransactionId: Property.ShortText({
             displayName: 'Customer Transaction ID',

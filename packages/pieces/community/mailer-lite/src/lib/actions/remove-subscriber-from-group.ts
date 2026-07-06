@@ -8,6 +8,12 @@ export const removeSubscriberFromGroupAction = createAction({
 	name: 'remove_subscriber_from_group',
 	displayName: 'Remove Subscriber from a Group',
 	description: 'Removes subscriber from a specific group.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Unassign a MailerLite subscriber from a group, given the subscriber ID and group ID. Use this to remove a contact from a specific list/group without deleting the subscriber. Idempotent — re-running for a subscriber not in the group leaves membership unchanged.',
+		idempotent: true,
+	},
 	props: {
 		subscriberId: mailerLiteCommon.subscriberId(true),
 		subscriberGroupId: mailerLiteCommon.subscriberGroupId(true),

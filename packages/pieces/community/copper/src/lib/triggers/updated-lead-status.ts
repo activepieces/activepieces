@@ -10,6 +10,10 @@ export const updatedLeadStatus = createTrigger({
     name: 'updatedLeadStatus',
     displayName: 'Updated Lead Status',
     description: 'Triggers when the status of a lead changes.',
+    aiMetadata: {
+      description:
+        "Fires only when a lead's status changes in Copper CRM (other lead edits are ignored), via a Copper webhook. Emits a status-change event with the previous and current status.",
+    },
     props: {},
     sampleData: {},
     type: TriggerStrategy.WEBHOOK,

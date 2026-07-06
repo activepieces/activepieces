@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const languageTranslation = createAction({
+  audience: 'human',
   name: 'language_translation',
   auth: huggingFaceAuth,
   displayName: 'Language Translation',

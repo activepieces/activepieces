@@ -13,6 +13,9 @@ export const updatedRecord = createTrigger({
 	name: 'updated_record',
 	displayName: 'Updated Record',
 	description: 'Triggers when a record is updated in the specified table.',
+	aiMetadata: {
+		description: 'Fires when an existing record is updated in the specified SmartSuite solution and table, delivering the changed record. Use to start a flow whenever a row in that table is modified.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	auth: smartsuiteAuth,
 	props: {

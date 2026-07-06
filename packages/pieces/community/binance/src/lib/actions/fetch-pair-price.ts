@@ -5,6 +5,8 @@ export const fetchCryptoPairPrice = createAction({
   name: 'fetch_crypto_pair_price',
   displayName: 'Fetch Pair Price',
   description: 'Fetch the current price of a pair (e.g. BTC/USDT)',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the current spot price of a trading pair from the public Binance market data API by combining two coin symbols (e.g. first coin BTC + second coin USDT). Use to look up the live exchange rate of one crypto asset against another. No authentication required; the symbol must be a pair that exists on Binance or the request fails. Read-only lookup, idempotent.', idempotent: true },
   props: {
     first_coin: Property.ShortText({
       displayName: 'First Coin Symbol',

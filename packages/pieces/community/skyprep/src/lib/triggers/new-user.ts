@@ -47,6 +47,10 @@ export const newUser = createTrigger({
   name: 'newUser',
   displayName: 'New User',
   description: 'Trigger when a new user is created in SkyPrep',
+  aiMetadata: {
+    description:
+      'Fires when a new user account is created in SkyPrep, emitting the new user record. Use to react to learner onboarding, such as auto-enrolling new users into courses or groups.',
+  },
   props: {},
   sampleData: {
     id: 32,

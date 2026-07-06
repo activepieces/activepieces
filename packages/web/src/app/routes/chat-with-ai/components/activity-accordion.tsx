@@ -1,138 +1,99 @@
-import { isObject } from '@activepieces/shared';
+import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
-import { useMemo, useState } from 'react';
+import { ChevronDown, Code } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useCallback, useMemo, useState } from 'react';
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { TextShimmer } from '@/components/ui/text-shimmer';
-import { DynamicToolPart } from '@/features/chat/lib/chat-types';
+import {
+  AnyToolPart,
+  ThinkingStep,
+  chatPartUtils,
+} from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
-import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { toolIconUtils } from '@/features/chat/lib/tool-icons';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
-import { normalizePieceName } from '../lib/message-parsers';
-
-const HIDDEN_TOOL_NAMES = new Set([
-  'ap_set_session_title',
-  'ap_select_project',
-  'ap_deselect_project',
-]);
-
 export function ThinkingBlock({
-  toolParts,
+  thinkingSteps,
   reasoningText,
   isStreaming,
+  thinkingDurationMs,
+  onOpenChange,
 }: {
-  toolParts: DynamicToolPart[];
+  thinkingSteps: ThinkingStep[];
   reasoningText: string;
   isStreaming: boolean;
+  thinkingDurationMs?: number;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const visibleParts = useMemo(
-    () => toolParts.filter((p) => !HIDDEN_TOOL_NAMES.has(p.toolName)),
-    [toolParts],
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      setIsOpen(open);
+      onOpenChange?.(open);
+    },
+    [onOpenChange],
   );
 
-  const steps = useMemo(() => groupIntoSteps(visibleParts), [visibleParts]);
-
   const hasReasoning = reasoningText.length > 0;
-  const hasVisibleParts = visibleParts.length > 0;
-  const currentStep = useMemo(() => {
-    if (!isStreaming) return null;
-    if (steps.length > 0) return steps[steps.length - 1];
-    return null;
-  }, [isStreaming, steps]);
+  const hasSteps = thinkingSteps.length > 0;
 
-  if (!hasVisibleParts && !hasReasoning && !isStreaming) return null;
+  if (!hasSteps && !hasReasoning && !isStreaming) return null;
 
-  const doneLabel =
-    visibleParts.length > 0
-      ? t('stepsCompleted', { count: steps.length })
-      : t('Thought for a few seconds');
-  const collapsedLabel = isStreaming ? null : doneLabel;
+  const isExpandable = hasSteps;
 
-  const hasExpandableContent = hasReasoning || steps.length > 0;
+  const doneLabel = formatThinkingDuration(thinkingDurationMs);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={isStreaming ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger
-          disabled={!hasExpandableContent}
+      <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
+        <button
+          type="button"
+          disabled={!isExpandable}
+          onClick={() => handleOpenChange(!isOpen)}
           className={cn(
-            'flex flex-col gap-0.5 text-sm text-muted-foreground text-left',
-            hasExpandableContent &&
+            'flex items-center gap-1.5 text-sm text-muted-foreground text-left w-full',
+            isExpandable &&
               'hover:text-foreground transition-colors cursor-pointer',
           )}
         >
-          <div className="flex items-center gap-1">
-            {isStreaming ? (
-              <TextShimmer className="text-sm" duration={3}>
-                {t('Thinking...')}
-              </TextShimmer>
-            ) : (
-              <span>{collapsedLabel}</span>
+          {isStreaming ? (
+            <TextShimmer className="text-sm" duration={2}>
+              {t('Thinking...')}
+            </TextShimmer>
+          ) : (
+            <span>{doneLabel}</span>
+          )}
+          <ChevronDown
+            className={cn(
+              'size-3.5 shrink-0 transition-all duration-300',
+              isOpen && 'rotate-180',
+              isExpandable ? 'opacity-50 text-muted-foreground' : 'opacity-0',
             )}
-            {hasExpandableContent && (
-              <ChevronDown
-                className={cn(
-                  'size-4 shrink-0 transition-transform duration-300',
-                  isOpen && 'rotate-180',
-                )}
-              />
-            )}
-          </div>
-        </CollapsibleTrigger>
-
-        {isStreaming && currentStep && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${currentStep.action}-${currentStep.chipLabel}`}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.25 }}
-              className="mt-1 space-y-0.5"
-            >
-              <p className="text-xs text-muted-foreground">
-                {currentStep.summary}
-              </p>
-              <div className="inline-flex items-center gap-1 rounded-md border bg-muted/30 px-2.5 py-1 text-xs">
-                <TextShimmer className="text-xs" duration={3}>
-                  {currentStep.chipLabel}
-                </TextShimmer>
-                {currentStep.pieceNames.length > 0 && (
-                  <div className="flex items-center gap-0.5">
-                    {currentStep.pieceNames.map((name) => (
-                      <PieceIconWithPieceName
-                        key={name}
-                        pieceName={normalizePieceName(name)}
-                        size="xs"
-                        border={false}
-                        showTooltip={true}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        )}
+          />
+        </button>
 
         <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-          <div className="mt-1.5 space-y-1.5">
-            {hasReasoning && <ReasoningBlock text={reasoningText} />}
-            {steps.map((step, i) => (
-              <StepRow key={`${step.action}-${i}`} step={step} />
+          <div className="mt-2 space-y-0.5">
+            {thinkingSteps.map((step, idx) => (
+              <StepRenderer
+                key={
+                  step.kind === 'tool'
+                    ? step.part.toolCallId
+                    : `${step.kind}-${idx}`
+                }
+                step={step}
+              />
             ))}
           </div>
         </CollapsibleContent>
@@ -141,272 +102,274 @@ export function ThinkingBlock({
   );
 }
 
-function ReasoningBlock({ text }: { text: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const truncateLength = 180;
-  const isTruncatable = text.length > truncateLength;
-  const displayText =
-    expanded || !isTruncatable ? text : text.slice(0, truncateLength) + '...';
+function StepRenderer({ step }: { step: ThinkingStep }) {
+  switch (step.kind) {
+    case 'thinking-status':
+      return (
+        <div className="py-0.5">
+          <p className="text-sm text-muted-foreground">{step.text}</p>
+        </div>
+      );
+    case 'tool':
+      return <ToolStepRow part={step.part} description={step.description} />;
+  }
+}
+
+function ToolStepRow({
+  part,
+  description,
+}: {
+  part: AnyToolPart;
+  description: string | null;
+}) {
+  const status = chatPartUtils.deriveToolStatus(part);
+  const { activeTitle, doneTitle } = chatPartUtils.extractToolTitles(part);
+  const activeFallback = chatUtils.formatToolActionName({ part });
+  const doneFallback = chatUtils.formatToolDoneTitle({ part });
+  const rawInput = isObject(part.input) ? part.input : undefined;
+  const isRunCode = chatPartUtils.getToolPartName(part) === 'ap_run_code';
+  const recipeLines = useMemo(() => {
+    if (!isRunCode || !Array.isArray(rawInput?.recipe)) return [];
+    return rawInput.recipe.filter(
+      (line): line is string => typeof line === 'string',
+    );
+  }, [isRunCode, rawInput]);
+  const codeSource = useMemo(() => {
+    if (!isRunCode || !rawInput) return null;
+    const code = typeof rawInput.code === 'string' ? rawInput.code : '';
+    const packageJson =
+      typeof rawInput.packageJson === 'string' ? rawInput.packageJson : '';
+    if (!code && !packageJson) return null;
+    return packageJson ? `${code}\n\n// package.json\n${packageJson}` : code;
+  }, [isRunCode, rawInput]);
+  const resolvedDescription =
+    description ??
+    (rawInput &&
+    typeof rawInput.description === 'string' &&
+    rawInput.description
+      ? rawInput.description
+      : null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const input = useMemo(() => {
+    if (!rawInput) return undefined;
+    const {
+      title: _t,
+      description: _d,
+      activeTitle: _a,
+      doneTitle: _dt,
+      ...rest
+    } = rawInput;
+    if (isRunCode) {
+      delete rest.code;
+      delete rest.packageJson;
+      delete rest.inputFileIds;
+      delete rest.input;
+      delete rest.recipe;
+    }
+    return Object.keys(rest).length > 0 ? rest : undefined;
+  }, [rawInput, isRunCode]);
+  const output = chatPartUtils.extractToolOutputText(part);
+  const hasInput = input && Object.keys(input).length > 0;
+  const hasOutput = Boolean(output);
+  const hasDetails = hasInput || hasOutput;
+  const parsedOutput = useMemo(
+    () => (detailsOpen && output ? tryParseJson(output) : undefined),
+    [detailsOpen, output],
+  );
+  const pieceNames = useMemo(
+    () => chatPartUtils.extractPieceNames(rawInput),
+    [rawInput],
+  );
+  const { summaries: pieceSummaries } = piecesHooks.usePieceSummariesByNames({
+    names: pieceNames,
+  });
+  const matchedPieces = pieceSummaries.filter((p) => p.logoUrl);
+
+  const ToolIcon = toolIconUtils.getToolIcon(
+    chatPartUtils.getToolPartName(part),
+  );
+
+  const label =
+    status === 'running'
+      ? activeTitle ?? activeFallback
+      : status === 'completed'
+      ? doneTitle ?? doneFallback
+      : doneFallback;
 
   return (
-    <div className="text-xs text-muted-foreground/80 py-1">
-      <p className="whitespace-pre-wrap break-words">{displayText}</p>
-      {isTruncatable && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded(!expanded);
-          }}
-          className="text-primary text-xs mt-0.5 hover:underline"
+    <div className="py-1">
+      {recipeLines.length > 0 ? (
+        <div className="mb-1.5 overflow-hidden rounded-lg border border-border bg-muted/20">
+          <div className="flex items-center gap-2 border-b border-border/60 px-3 py-1">
+            <Code className="size-3 shrink-0 text-primary/80" />
+            <span className="text-[11px] font-medium text-muted-foreground">
+              {t('What this code does')}
+            </span>
+          </div>
+          <div className="space-y-0.5 px-3 py-2 font-mono text-xs leading-relaxed">
+            {recipeLines.map((line, idx) => (
+              <div
+                key={`${idx}-${line}`}
+                className="flex items-start gap-2 text-foreground/75"
+              >
+                <span className="select-none pt-px text-primary/70">›</span>
+                <span>{line}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        resolvedDescription && (
+          <p className="text-sm text-muted-foreground mb-1.5">
+            {resolvedDescription}
+          </p>
+        )
+      )}
+      <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+        {status === 'running' ? (
+          <TextShimmer
+            as="div"
+            className={cn(
+              'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm border-border',
+              hasDetails && 'cursor-pointer',
+            )}
+            duration={2}
+            onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
+          >
+            <ToolIcon className="size-4 shrink-0 text-muted-foreground animate-pulse motion-reduce:animate-none" />
+            {label}
+            {matchedPieces.map((piece) => (
+              <PieceIcon
+                key={piece.name}
+                displayName={piece.displayName}
+                logoUrl={piece.logoUrl!}
+                size="xxs"
+                border={false}
+                showTooltip={false}
+              />
+            ))}
+          </TextShimmer>
+        ) : (
+          <div>
+            <div
+              className={cn(
+                'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm border-border',
+                hasDetails && 'cursor-pointer',
+              )}
+              onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
+            >
+              <ToolIcon className="size-4 shrink-0 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">{label}</span>
+              {matchedPieces.map((piece) => (
+                <PieceIcon
+                  key={piece.name}
+                  displayName={piece.displayName}
+                  logoUrl={piece.logoUrl!}
+                  size="xxs"
+                  border={false}
+                  showTooltip={false}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        {hasDetails && (
+          <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+            <div className="mt-1 rounded-lg bg-muted/30 px-3 py-2 space-y-2 text-[11px]">
+              {hasInput && input && (
+                <div>
+                  <p className="text-muted-foreground font-medium mb-0.5">
+                    {t('Input')}
+                  </p>
+                  <SimpleJsonViewer
+                    data={input}
+                    hideCopyButton={true}
+                    maxHeight={100}
+                    fontSize="11px"
+                  />
+                </div>
+              )}
+              {hasOutput && parsedOutput !== undefined && (
+                <div>
+                  <p className="text-muted-foreground font-medium mb-0.5">
+                    {t('Output')}
+                  </p>
+                  <SimpleJsonViewer
+                    data={parsedOutput}
+                    hideCopyButton={true}
+                    maxHeight={120}
+                    fontSize="11px"
+                  />
+                </div>
+              )}
+            </div>
+          </CollapsibleContent>
+        )}
+      </Collapsible>
+      {codeSource && (
+        <Collapsible
+          open={codeOpen}
+          onOpenChange={setCodeOpen}
+          className="mt-1.5"
         >
-          {expanded ? t('Show less') : t('Show more')}
-        </button>
+          <button
+            type="button"
+            onClick={() => setCodeOpen(!codeOpen)}
+            className="flex items-center gap-1 text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            <Code className="size-3 shrink-0" />
+            {codeOpen ? t('Hide code') : t('View code')}
+          </button>
+          <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+            <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-muted/40 px-3 py-2 text-[11px] font-mono whitespace-pre-wrap break-words text-muted-foreground">
+              {codeSource}
+            </pre>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );
 }
 
-function StepRow({ step }: { step: ToolStep }) {
-  return (
-    <div className="space-y-0.5">
-      <p className="text-xs text-muted-foreground">{step.summary}</p>
-      <div className="inline-flex items-center gap-1 rounded-md border bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground">
-        <span>{step.chipLabel}</span>
-        {step.pieceNames.length > 0 && (
-          <div className="flex items-center gap-0.5">
-            {step.pieceNames.map((name) => (
-              <PieceIconWithPieceName
-                key={name}
-                pieceName={normalizePieceName(name)}
-                size="xs"
-                border={false}
-                showTooltip={true}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function groupIntoSteps(parts: DynamicToolPart[]): ToolStep[] {
-  if (parts.length === 0) return [];
-
-  const groups: Array<{ action: string; tools: DynamicToolPart[] }> = [];
-  let currentAction = '';
-  let currentTools: DynamicToolPart[] = [];
-
-  for (const part of parts) {
-    const action = classifyToolAction(part);
-    if (action !== currentAction && currentTools.length > 0) {
-      groups.push({ action: currentAction, tools: [...currentTools] });
-      currentTools = [];
-    }
-    currentAction = action;
-    currentTools.push(part);
+function formatThinkingDuration(ms: number | undefined): string {
+  if (ms === undefined) return t('Thought for a few seconds');
+  const totalSeconds = Math.round(ms / 1000);
+  if (totalSeconds <= 0) return t('Thought for a moment');
+  if (totalSeconds < 60) {
+    return t(
+      'Thought for {seconds} {seconds, plural, =1 {second} other {seconds}}',
+      {
+        seconds: totalSeconds,
+      },
+    );
   }
-  if (currentTools.length > 0) {
-    groups.push({ action: currentAction, tools: currentTools });
+  const minutes = Math.floor(totalSeconds / 60);
+  if (minutes < 60) {
+    return t(
+      'Thought for {minutes} {minutes, plural, =1 {minute} other {minutes}}',
+      {
+        minutes,
+      },
+    );
   }
-
-  return groups.map((g) => buildStep(g));
+  const hours = Math.floor(minutes / 60);
+  const remainMinutes = minutes % 60;
+  if (remainMinutes > 0) {
+    return t(
+      'Thought for {hours} {hours, plural, =1 {hour} other {hours}} {minutes} {minutes, plural, =1 {minute} other {minutes}}',
+      { hours, minutes: remainMinutes },
+    );
+  }
+  return t('Thought for {hours} {hours, plural, =1 {hour} other {hours}}', {
+    hours,
+  });
 }
 
-function classifyToolAction(part: DynamicToolPart): string {
-  const name = (part.title ?? part.toolName).toLowerCase();
-  if (name.includes('list_pieces') || name.includes('list_across_projects'))
-    return 'discover';
-  if (name.includes('list_connections')) return 'connections';
-  if (name.includes('create_flow') || name.includes('build_flow'))
-    return 'create';
-  if (
-    name.includes('validate') ||
-    name.includes('test') ||
-    name.includes('update_trigger') ||
-    name.includes('update_step') ||
-    name.includes('add_step') ||
-    name.includes('resolve_property') ||
-    name.includes('get_piece_props')
-  )
-    return 'build';
-  if (name.includes('lock_and_publish') || name.includes('change_flow_status'))
-    return 'publish';
-  if (name.includes('manage_notes')) return 'notes';
-  if (name.includes('list_flows') || name.includes('flow_structure'))
-    return 'flows';
-  if (name.includes('list_runs') || name.includes('get_run')) return 'runs';
-  if (name.includes('run_action') || name.includes('run_one_time'))
-    return 'execute';
-  return 'other';
-}
-
-function buildStep({
-  action,
-  tools,
-}: {
-  action: string;
-  tools: DynamicToolPart[];
-}): ToolStep {
-  const allPieceNames = collectPieceNames(tools);
-  const done = tools.every((t) => t.state === 'output-available');
-  const friendlyNames = allPieceNames
-    .map((n) => chatUtils.humanizePieceName(n))
-    .join(', ');
-
-  switch (action) {
-    case 'discover':
-      return {
-        action,
-        summary: done
-          ? t('Found the right tools for your task.')
-          : t('Looking for the right tools...'),
-        chipLabel: friendlyNames
-          ? t('Checked {name}', { name: friendlyNames })
-          : t('Checked integrations'),
-        pieceNames: allPieceNames,
-      };
-    case 'connections':
-      return {
-        action,
-        summary: done
-          ? friendlyNames
-            ? t('Located your {name} account.', { name: friendlyNames })
-            : t('Located your accounts.')
-          : friendlyNames
-          ? t('Looking for your {name} account...', {
-              name: friendlyNames,
-            })
-          : t('Looking for your accounts...'),
-        chipLabel: friendlyNames
-          ? t('Found {name} accounts', { name: friendlyNames })
-          : t('Found accounts'),
-        pieceNames: allPieceNames,
-      };
-    case 'create':
-      return {
-        action,
-        summary: done
-          ? t('Started building your automation.')
-          : t('Creating your automation...'),
-        chipLabel: t('Created flow'),
-        pieceNames: allPieceNames,
-      };
-    case 'build':
-      return {
-        action,
-        summary: done
-          ? friendlyNames
-            ? t('Set up the {name} step.', { name: friendlyNames })
-            : t('Added a step to your flow.')
-          : friendlyNames
-          ? t('Setting up {name}...', { name: friendlyNames })
-          : t('Adding a step to your flow...'),
-        chipLabel: friendlyNames
-          ? t('Configured {name}', { name: friendlyNames })
-          : t('Configured steps'),
-        pieceNames: allPieceNames,
-      };
-    case 'publish':
-      return {
-        action,
-        summary: done
-          ? t('Turned on your automation.')
-          : t('Turning on your automation...'),
-        chipLabel: t('Published flow'),
-        pieceNames: [],
-      };
-    case 'notes':
-      return {
-        action,
-        summary: done
-          ? t('Added notes to your flow.')
-          : t('Adding notes to your flow...'),
-        chipLabel: t('Added notes'),
-        pieceNames: [],
-      };
-    case 'flows':
-      return {
-        action,
-        summary: done
-          ? t('Looked at your existing automations.')
-          : t('Looking at your automations...'),
-        chipLabel: t('Reviewed flows'),
-        pieceNames: [],
-      };
-    case 'runs':
-      return {
-        action,
-        summary: done
-          ? t('Checked your recent activity.')
-          : t('Checking your recent activity...'),
-        chipLabel: t('Checked runs'),
-        pieceNames: [],
-      };
-    case 'execute':
-      return {
-        action,
-        summary: done
-          ? friendlyNames
-            ? t('Ran a {name} action.', { name: friendlyNames })
-            : t('Ran an action for you.')
-          : friendlyNames
-          ? t('Running {name}...', { name: friendlyNames })
-          : t('Running an action...'),
-        chipLabel: friendlyNames
-          ? t('Ran {name}', { name: friendlyNames })
-          : t('Ran action'),
-        pieceNames: allPieceNames,
-      };
-    default:
-      return {
-        action,
-        summary: done ? t('Completed a step.') : t('Working...'),
-        chipLabel: t('Completed step'),
-        pieceNames: allPieceNames,
-      };
+function tryParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
   }
 }
-
-function collectPieceNames(tools: DynamicToolPart[]): string[] {
-  const names = new Set<string>();
-  for (const tool of tools) {
-    const input = isObject(tool.input) ? tool.input : undefined;
-    if (input && typeof input.pieceName === 'string') {
-      names.add(chatUtils.stripPiecePrefix(input.pieceName));
-    }
-    if (
-      input &&
-      isObject(input.settings) &&
-      typeof input.settings.pieceName === 'string'
-    ) {
-      names.add(chatUtils.stripPiecePrefix(input.settings.pieceName));
-    }
-    if (tool.state === 'output-available' && isObject(tool.output)) {
-      const output = tool.output;
-      if (Array.isArray(output.pieces)) {
-        for (const p of output.pieces.slice(0, 4)) {
-          if (isObject(p) && typeof p.name === 'string') {
-            names.add(chatUtils.stripPiecePrefix(p.name));
-          }
-        }
-      }
-      if (Array.isArray(output.data)) {
-        for (const item of output.data.slice(0, 4)) {
-          if (isObject(item) && typeof item.pieceName === 'string') {
-            names.add(chatUtils.stripPiecePrefix(item.pieceName));
-          }
-        }
-      }
-    }
-  }
-  return [...names].slice(0, 5);
-}
-
-type ToolStep = {
-  action: string;
-  summary: string;
-  chipLabel: string;
-  pieceNames: string[];
-};

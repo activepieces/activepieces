@@ -10,6 +10,12 @@ export const listAccounts = createAction({
   displayName: 'List Accounts',
   description:
     'List accounts from your Wafeq chart of accounts. Useful for exporting your chart of accounts or finding account IDs you need elsewhere.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists accounts from the Wafeq chart of accounts, optionally filtered by classification (Revenue/Expense/Asset/Liability/Equity), payment-enabled status, or external_id. Choose this to resolve the account IDs other actions require (e.g. a sales, expense, or bank account) or to export the chart of accounts. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     classification: Property.StaticDropdown({
       displayName: 'Account Type',

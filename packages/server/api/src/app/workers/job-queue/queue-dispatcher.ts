@@ -1,85 +1,53 @@
-import { ConsumeJobRequest, isNil, tryCatch } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ConsumeJobRequest } from '@activepieces/shared'
 import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 
-const WAITER_TIMEOUT_MS = 50_000
+
+// worker's RPC timeout is 60s, and drainDelay is 15s, so we can safely set WAITER_TIMEOUT_MS to 40s. 
+const WAITER_TIMEOUT_MS = 40_000
 const ERROR_RETRY_DELAY_MS = 5_000
 
 function createQueueDispatcher(params: {
     queueName: string
     worker: BullMQWorker
     dequeue: (worker: BullMQWorker, queueName: string, log: FastifyBaseLogger) => Promise<ConsumeJobRequest | null>
-    onOrphanedJob: (jobId: string, token: string, queueName: string, log: FastifyBaseLogger) => Promise<void>
     log: FastifyBaseLogger
 }): QueueDispatcher {
-    const { queueName, worker, dequeue, onOrphanedJob, log } = params
-    const waiters: Waiter[] = []
-    let loopRunning = false
+    const { queueName, worker, dequeue, log } = params
+    let activePolls = 0
+    let closed = false
+
 
     async function poll(): Promise<ConsumeJobRequest | null> {
-        return new Promise<ConsumeJobRequest | null>((resolve) => {
-            const timer = setTimeout(() => {
-                const idx = waiters.findIndex(w => w.resolve === resolve)
-                if (idx !== -1) {
-                    waiters.splice(idx, 1)
+        activePolls++
+        try {
+            const deadline = Date.now() + WAITER_TIMEOUT_MS
+            while (!closed && Date.now() < deadline) {
+                const { error, data: job } = await tryCatch(() => dequeue(worker, queueName, log))
+                if (error) {
+                    if (closed) return null
+                    log.error({ queueName, error: String(error) }, '[QueueDispatcher] dequeue error, retrying')
+                    await sleep(ERROR_RETRY_DELAY_MS)
+                    continue
                 }
-                resolve(null)
-            }, WAITER_TIMEOUT_MS)
-
-            waiters.push({ resolve, timer })
-            startLoop()
-        })
-    }
-
-    function startLoop(): void {
-        if (loopRunning) return
-        loopRunning = true
-        void runLoop()
-    }
-
-    async function runLoop(): Promise<void> {
-        while (waiters.length > 0) {
-            const { error, data: job } = await tryCatch(() => dequeue(worker, queueName, log))
-
-            if (error) {
-                log.error({ queueName, error: String(error) }, '[QueueDispatcher] dequeue error, retrying')
-                await sleep(ERROR_RETRY_DELAY_MS)
-                continue
-            }
-
-            if (isNil(job)) {
-                if (waiters.length === 0) break
-                continue
-            }
-
-            const waiter = waiters.shift()
-            if (isNil(waiter)) {
-                log.warn({ queueName, jobId: job.jobId }, '[QueueDispatcher] job dequeued but no waiter available, returning to queue')
-                const { error: orphanError } = await tryCatch(() => onOrphanedJob(job.jobId, job.token, job.queueName, log))
-                if (orphanError) {
-                    log.error({ queueName, jobId: job.jobId, error: String(orphanError) }, '[QueueDispatcher] failed to return orphaned job to queue')
+                if (!isNil(job)) {
+                    return job
                 }
-                continue
             }
-
-            clearTimeout(waiter.timer)
-            waiter.resolve(job)
+            return null
         }
-        loopRunning = false
+        finally {
+            activePolls--
+        }
     }
 
     function close(): void {
-        for (const waiter of waiters) {
-            clearTimeout(waiter.timer)
-            waiter.resolve(null)
-        }
-        waiters.length = 0
-        // Do not reset loopRunning here — the in-flight runLoop will exit
-        // naturally when it sees waiters.length === 0 after dequeue returns.
+        closed = true
     }
 
     function waiterCount(): number {
-        return waiters.length
+        return activePolls
     }
 
     return { poll, close, waiterCount }
@@ -87,11 +55,6 @@ function createQueueDispatcher(params: {
 
 function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-type Waiter = {
-    resolve: (value: ConsumeJobRequest | null) => void
-    timer: ReturnType<typeof setTimeout>
 }
 
 export type QueueDispatcher = {

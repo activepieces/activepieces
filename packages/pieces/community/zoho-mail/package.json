@@ -1,21 +1,23 @@
 {
   "name": "@activepieces/piece-zoho-mail",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
-    "form-data": "4.0.4",
+    "form-data": "4.0.6",
     "mailparser": "3.9.3",
-    "tslib": "2.6.2"
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/mailparser": "3.4.6"
+    "@types/mailparser": "3.4.6",
+    "tslib": "2.6.2"
   }
 }

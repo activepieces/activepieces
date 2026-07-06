@@ -9,6 +9,12 @@ export const getArticleById = createAction({
   displayName: 'Get Article by ID',
   description:
     'Retrieve a single article or multiple articles by their UUID(s)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches one or more news articles by their AskNews UUID(s). Choose this when you already hold article UUIDs (e.g. from a prior search) and need their full enriched records. Requires at least one valid UUID. Read-only lookup and idempotent.',
+    idempotent: true,
+  },
   props: {
     articleIds: Property.Array({
       displayName: 'Article ID(s)',

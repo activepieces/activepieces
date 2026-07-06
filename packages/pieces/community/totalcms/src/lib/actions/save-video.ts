@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { saveContent } from '../api';
 import { cmsAuth } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveVideoAction = createAction({
@@ -12,6 +12,8 @@ export const saveVideoAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Video Content',
   description: 'Save video content to Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a video-type CMS field in Total CMS, identified by its CMS ID (slug), to a given video URL (must be a valid URL). Use to write or update the stored video reference. Idempotent: the value is keyed on the slug, so repeating with the same URL leaves the same result.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',
@@ -26,7 +28,7 @@ export const saveVideoAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      video: z.string().url(),
+      video: z.string().check(z.url()),
     });
 
     const slug = context.propsValue.slug;

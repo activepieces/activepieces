@@ -8,6 +8,9 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
   name: 'record_created_or_updated',
   displayName: 'Record Created or Updated',
   description: 'Fires when a record is created or updated in Fireberry.',
+  aiMetadata: {
+    description: 'Polls a chosen Fireberry object type and fires for records that were recently created or modified. The trigger type selects which events qualify: created only, updated only, or both. Each emitted item represents one matching record.',
+  },
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,

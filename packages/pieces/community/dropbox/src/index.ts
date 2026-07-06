@@ -2,7 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { dropboxCopyFile } from './lib/actions/copy-file';
 import { dropboxCopyFolder } from './lib/actions/copy-folder';
 import { dropboxCreateNewFolder } from './lib/actions/create-new-folder';

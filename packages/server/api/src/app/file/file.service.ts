@@ -1,17 +1,5 @@
-import {
-    ActivepiecesError,
-    apId,
-    assertNotNullOrUndefined,
-    ErrorCode,
-    File,
-    FileCompression,
-    FileId,
-    FileLocation,
-    FileType,
-    isMultipartFile,
-    isNil,
-    ProjectId,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isMultipartFile, isNil, ProjectId } from '@activepieces/core-utils'
+import { File, FileCompression, FileId, FileLocation, FileType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
@@ -164,32 +152,45 @@ export const fileService = (log: FastifyBaseLogger) => ({
     async deleteStaleBulk(types: FileType[]) {
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
         const maximumFilesToDeletePerIteration = 4000
-        let affected: undefined | number = undefined
+        const maximumFilesToDeletePerRun = 1_000_000
         let totalAffected = 0
-        while (isNil(affected) || affected === maximumFilesToDeletePerIteration) {
-            const staleFiles = await fileRepo().find({
-                select: ['id', 'created', 's3Key'],
-                where: {
-                    type: In(types),
-                    created: LessThanOrEqual(retentionDateBoundary),
-                },
-                take: maximumFilesToDeletePerIteration,
-            })
+        // Iterate one type at a time with an equality predicate so the select hits the
+        // (type, created) index (idx_file_type_created_desc) as an index scan. A `type IN (...)`
+        // predicate makes the planner fall back to a sequential scan of the file table (140M+ rows),
+        // which, as the cleanup deletes rows, wades through dead tuples and hits statement_timeout —
+        // so the cleanup never drains and the backlog grows. The delete is by primary key only.
+        // Cap the work per run so a large backlog drains across the hourly schedule instead of one
+        // multi-hour run (which could outlive its worker lock); the next run resumes from the oldest.
+        for (const type of types) {
+            let affected: undefined | number = undefined
+            while ((isNil(affected) || affected === maximumFilesToDeletePerIteration) && totalAffected < maximumFilesToDeletePerRun) {
+                const staleFiles = await fileRepo().find({
+                    select: ['id', 's3Key'],
+                    where: {
+                        type,
+                        created: LessThanOrEqual(retentionDateBoundary),
+                    },
+                    take: maximumFilesToDeletePerIteration,
+                })
 
-            const s3Keys = staleFiles.filter(f => !isNil(f.s3Key)).map(f => f.s3Key!)
-            await s3Helper(log).deleteFiles(s3Keys)
+                if (staleFiles.length === 0) {
+                    affected = 0
+                    break
+                }
 
-            const result = await fileRepo().delete({
-                type: In(types),
-                created: LessThanOrEqual(retentionDateBoundary),
-                id: In(staleFiles.map(file => file.id)),
-            })
-            affected = result.affected || 0
-            totalAffected += affected
-            log.info({
-                counts: affected,
-                types,
-            }, '[FileService#deleteStaleBulk] iteration completed')
+                const s3Keys = staleFiles.filter(f => !isNil(f.s3Key)).map(f => f.s3Key!)
+                await s3Helper(log).deleteFiles(s3Keys)
+
+                const result = await fileRepo().delete({
+                    id: In(staleFiles.map(file => file.id)),
+                })
+                affected = result.affected || 0
+                totalAffected += affected
+                log.info({
+                    counts: affected,
+                    type,
+                }, '[FileService#deleteStaleBulk] iteration completed')
+            }
         }
         log.info({
             totalAffected,
@@ -301,7 +302,7 @@ function normalizeTypeFilter(type: FileType | FileType[] | undefined) {
 
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
-    if (isExecutionDataFileThatExpires(type)) {
+    if (type === FileType.FLOW_BUNDLE || isExecutionDataFileThatExpires(type)) {
         return FILE_LOCATION
     }
     return FileLocation.DB

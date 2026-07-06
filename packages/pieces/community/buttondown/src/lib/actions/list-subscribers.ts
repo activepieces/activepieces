@@ -14,6 +14,12 @@ export const listSubscribers = createAction({
   name: 'listSubscribers',
   displayName: 'List Subscribers',
   description: 'Retrieve subscribers from Buttondown.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists subscribers from a Buttondown newsletter, optionally filtered by type, source, tags, email substring, or referrer URL; with no filters it returns all subscribers. Use to look up or enumerate subscribers. Read-only and idempotent. Returns one page (default 100); pass the returned cursor to page through results.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Page Size',

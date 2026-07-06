@@ -9,6 +9,8 @@ export const createProductDescription = createAction({
   name: 'create_product_description',
   displayName: 'Create Product Description',
   description: 'Create a product description using details like name, brand, category, features, keywords.',
+  audience: 'both',
+  aiMetadata: { description: 'Generate a marketing product description with TextCortex AI from product attributes (name, brand, category, features, and comma-separated keywords). All fields are optional, so supply whatever product details are available; model, formality, and language are configurable. Not idempotent: each call produces fresh, non-deterministic text and consumes account credits.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',

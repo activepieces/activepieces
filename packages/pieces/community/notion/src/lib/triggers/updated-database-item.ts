@@ -12,16 +12,22 @@ import dayjs from 'dayjs';
 import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { updatedDatabaseItemTriggerOutputSchema } from '../output-schemas';
 
 export const updatedDatabaseItem = createTrigger({
   auth: notionAuth,
   name: 'updated_database_item',
   displayName: 'Updated Database Item',
   description: 'Triggers when an item is updated in a database.',
+  aiMetadata: {
+    description:
+      'Fires when an existing item in the selected Notion database is edited (any property change), emitting the updated page. Use to react to record changes such as status or field updates in a specific database.',
+  },
   props: {
     database_id: notionCommon.database_id,
   },
+  outputSchema: updatedDatabaseItemTriggerOutputSchema,
   sampleData: {
     id: 'd23872cd-c106-4afa-b33d-d3fd66064ccb',
     url: 'https://www.notion.so/Take-Fig-on-a-walk-d23872cdc1064afab33dd3fd66064ccb',

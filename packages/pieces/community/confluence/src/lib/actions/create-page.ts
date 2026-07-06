@@ -9,6 +9,8 @@ export const createPageAction = createAction({
 	name: 'create-page',
 	displayName: 'Create Page',
 	description: 'Creates a new page in a space with the given title and body.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new Confluence page in the given space with a title and body, optionally nested under a parent page, and either published (current) or saved as a draft. The body is interpreted in the chosen format (storage XHTML, wiki markup, or atlas doc format). Use to author a brand-new page. Not idempotent: each call creates another page even with identical input.', idempotent: false },
 	props: {
 		spaceId: spaceIdProp,
 		parentId: parentPageIdProp,

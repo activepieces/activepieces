@@ -9,6 +9,9 @@ export const proxyConnectionDetectedTrigger = createTrigger({
   name: 'proxy_connection_detected',
   displayName: 'Proxy Connection Detected',
   description: 'Triggers when a new proxy connection is detected',
+  aiMetadata: {
+    description: 'Fires when Greip detects an incoming connection from a proxy, Tor, relay, bot, or hosting IP. Delivered via a Greip webhook (proxy_detected event) that must be configured manually in the Greip dashboard.',
+  },
   auth: greipAuth,
   props: {
     webhookInstructions: Property.MarkDown({

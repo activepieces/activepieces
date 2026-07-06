@@ -8,6 +8,8 @@ export const unsubscribeALead	 = createAction({
   name: 'unsubscribeALead',
   displayName: 'Unsubscribe a Lead',
   description: 'Unsubscribe a lead from a campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Unsubscribes a lead, identified by email, from a specific Lemlist campaign, stopping further emails to them in it. Use to honor an opt-out or stop contacting a lead in one campaign; requires both the campaign and the lead email. Idempotent: re-running leaves the lead unsubscribed.', idempotent: true },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({

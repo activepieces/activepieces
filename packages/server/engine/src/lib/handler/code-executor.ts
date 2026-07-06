@@ -1,6 +1,7 @@
 import path from 'path'
+import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
@@ -23,18 +24,19 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
     const stepStartTime = performance.now()
-    const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
-        unresolvedInput: action.settings.input,
-        executionState,
-    })
-
     const stepOutput = GenericStepOutput.create({
-        input: censoredInput,
+        input: {},
         type: FlowActionType.CODE,
         status: StepOutputStatus.RUNNING,
     })
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
+            unresolvedInput: action.settings.input,
+            executionState,
+        })
+        stepOutput.input = censoredInput
+
         await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: await executionState.upsertStep(action.name, stepOutput),

@@ -14,6 +14,10 @@ export const newLabelTrigger = createTrigger({
   name: 'new_label',
   displayName: 'New Label',
   description: 'Triggers when a new label is created in a repository.',
+  aiMetadata: {
+    description:
+      'Fires when a new label is created in the chosen repository (label event with action created; edits and deletions are ignored). Represents a newly added label definition.',
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
   },

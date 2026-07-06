@@ -2,26 +2,28 @@ import { PiecePropertyMap } from "./property";
 import { WebhookRenewConfiguration } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
-import { z } from "zod";
-import { LocalesEnum, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
+import * as z from "zod/mini";
+import { LocalesEnum } from "@activepieces/core-utils";
+import { PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/core-piece-types";
 import { ContextVersion } from "./context/versioning";
+import type { OutputSchema } from "./output-schema";
 
-const I18nForPiece = z.record(z.string(), z.record(z.string(), z.string())).optional();
+const I18nForPiece = z.optional(z.record(z.string(), z.record(z.string(), z.string())));
 export type I18nForPiece = Partial<Record<LocalesEnum, Record<string, string>>> | undefined
 export const PieceBase = z.object({
-  id: z.string().optional(),
+  id: z.optional(z.string()),
   name: z.string(),
   displayName: z.string(),
   logoUrl: z.string(),
   description: z.string(),
   authors: z.array(z.string()),
-  platformId: z.string().optional(),
-  directoryPath: z.string().optional(),
-  auth: z.union([PieceAuthProperty, z.array(PieceAuthProperty)]).optional(),
+  platformId: z.optional(z.string()),
+  directoryPath: z.optional(z.string()),
+  auth: z.optional(z.union([PieceAuthProperty, z.array(PieceAuthProperty)])),
   version: z.string(),
-  categories: z.array(z.nativeEnum(PieceCategory)).optional(),
-  minimumSupportedRelease: z.string().optional(),
-  maximumSupportedRelease: z.string().optional(),
+  categories: z.optional(z.array(z.enum(PieceCategory))),
+  minimumSupportedRelease: z.optional(z.string()),
+  maximumSupportedRelease: z.optional(z.string()),
   i18n: I18nForPiece,
 })
 
@@ -45,13 +47,25 @@ export type PieceBase = {
 }
 
 
+export const Audience = z.enum(['human', 'ai', 'both'])
+export type Audience = z.infer<typeof Audience>
+
+export const AiMetadata = z.object({
+  description: z.optional(z.string()),
+  idempotent: z.optional(z.boolean()),
+})
+export type AiMetadata = z.infer<typeof AiMetadata>
+
 export const ActionBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
   props: PiecePropertyMap,
   requireAuth: z.boolean(),
-  errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
+  errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
+  outputSchema: z.optional(z.custom<OutputSchema>()),
+  audience: z.optional(Audience),
+  aiMetadata: z.optional(AiMetadata),
 })
 
 export type ActionBase = {
@@ -61,6 +75,9 @@ export type ActionBase = {
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
+  outputSchema?: OutputSchema;
+  audience?: Audience;
+  aiMetadata?: AiMetadata;
 }
 
 export const TriggerBase = z.object({
@@ -68,14 +85,16 @@ export const TriggerBase = z.object({
   displayName: z.string(),
   description: z.string(),
   props: PiecePropertyMap,
-  errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
-  type: z.nativeEnum(TriggerStrategy),
+  errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
+  type: z.enum(TriggerStrategy),
   sampleData: z.unknown(),
-  handshakeConfiguration: z.custom<WebhookHandshakeConfiguration>().optional(),
-  renewConfiguration: WebhookRenewConfiguration.optional(),
-  testStrategy: z.nativeEnum(TriggerTestStrategy),
+  handshakeConfiguration: z.optional(z.custom<WebhookHandshakeConfiguration>()),
+  renewConfiguration: z.optional(WebhookRenewConfiguration),
+  testStrategy: z.enum(TriggerTestStrategy),
+  outputSchema: z.optional(z.custom<OutputSchema>()),
+  aiMetadata: z.optional(AiMetadata),
 })
-export type TriggerBase = ActionBase & {
+export type TriggerBase = Omit<ActionBase, 'audience'> & {
   type: TriggerStrategy;
   sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;
@@ -100,8 +119,8 @@ export const PieceMetadataSummary = z.object({
   ...PieceBase.shape,
   actions: z.number(),
   triggers: z.number(),
-  suggestedActions: z.array(TriggerBase).optional(),
-  suggestedTriggers: z.array(ActionBase).optional(),
+  suggestedActions: z.optional(z.array(TriggerBase)),
+  suggestedTriggers: z.optional(z.array(ActionBase)),
 })
 export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
   actions: number;
@@ -113,11 +132,11 @@ export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> &
 
 const PiecePackageMetadata = z.object({
   projectUsage: z.number(),
-  tags: z.array(z.string()).optional(),
-  pieceType: z.nativeEnum(PieceType),
-  packageType: z.nativeEnum(PackageType),
-  platformId: z.string().optional(),
-  archiveId: z.string().optional(),
+  tags: z.optional(z.array(z.string())),
+  pieceType: z.enum(PieceType),
+  packageType: z.enum(PackageType),
+  platformId: z.optional(z.string()),
+  archiveId: z.optional(z.string()),
 })
 type PiecePackageMetadata = z.infer<typeof PiecePackageMetadata>
 

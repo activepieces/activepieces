@@ -4,6 +4,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 import { z, type ZodTypeAny } from 'zod';
 
 export const markdownToHTML = createAction({
+  audience: 'human',
   name: 'markdown_to_html',
   displayName: 'Markdown to HTML',
   description: 'Convert markdown to HTML',
@@ -79,7 +80,6 @@ export const markdownToHTML = createAction({
       simpleLineBreaks: context.propsValue.simpleLineBreaks,
       openLinksInNewWindow: context.propsValue.openLinksInNewWindow,
     });
-    console.log('noHeaderId', context.propsValue.noHeaderId);
     converter.setFlavor(context.propsValue.flavor as Flavor);
     return converter.makeHtml(context.propsValue.markdown);
   },

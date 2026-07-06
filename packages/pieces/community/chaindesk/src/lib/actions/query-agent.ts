@@ -13,6 +13,8 @@ export const queryAgentAction = createAction({
   name: 'query-agent',
   auth: chaindeskAuth,
   description: 'Asks question to your Agent.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a query to a specific Chaindesk agent (selected by agent ID) and returns its generated answer. Use to get a conversational AI response grounded in the agent\'s configured datastores. Pass a conversation ID to continue an existing thread, or omit it to start a new conversation. Not idempotent: each call is a generative request and may create a new conversation.', idempotent: false },
   props: {
     agentId: agentIdDropdown,
     query: Property.LongText({

@@ -7,6 +7,8 @@ export const sendEmail = createAction({
   name: 'send_email',
   displayName: 'Send Email',
   description: 'Send a text, HTML or template email through Mailjet',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an email to one or more recipients via the Mailjet transactional send API. Supply the body inline as plain text and/or HTML, or set a Mailjet template ID to render a predefined template with optional variables. Use when delivering a notification, alert, or transactional message; the sender address must be a verified Mailjet sender. Not idempotent — each call dispatches a new email.', idempotent: false },
   props: {
     fromEmail: Property.ShortText({
       displayName: 'From (Email)',

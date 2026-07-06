@@ -60,7 +60,8 @@ function McpToolTestingDialog({
 }: McpToolTestingDialogProps) {
   const form = useFormContext<FlowTrigger>();
   const formValues = form.getValues();
-  const formProps = formValues.settings.input.inputSchema as McpFormField[];
+  const formProps = (formValues.settings.input.inputSchema ??
+    []) as McpFormField[];
   const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
     testStepHooks.useSaveMockData({
       onSuccess: () => {

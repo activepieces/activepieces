@@ -6,6 +6,8 @@ export const listOrgApiCallsAction = createAction({
   name: 'list_org_api_calls',
   displayName: 'List Organization API Calls',
   description: 'List API calls made by your organization',
+  audience: 'both',
+  aiMetadata: { description: 'List API calls billed to the authenticated organization, with optional limit/offset paging. Use the org scope here; for calls tied to your own user use list-user-api-calls, and to fetch one known call use get-org-api-call. Read-only with no side effects.', idempotent: true },
   auth: zooAuth,
   // category: 'API Calls',
   props: {

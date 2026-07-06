@@ -12,6 +12,12 @@ export const findContactAction = createAction({
   name: 'find-contact',
   displayName: 'Find Contact',
   description: 'Finds a contact by email address.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a GetResponse contact by exact email address, optionally scoped to a single campaign; without a campaign it searches across the account. Use to check whether a subscriber exists or to retrieve their details before acting. Read-only and idempotent; returns a found flag indicating whether a match was located.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

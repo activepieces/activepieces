@@ -8,6 +8,11 @@ export const listMessages = createAction({
   name: 'list_messages',
   displayName: 'List Messages',
   description: 'List Knock messages with optional filters and pagination.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists Knock messages (notification instances), optionally narrowed by channel, delivery status, source workflow, or tenant; with no filters it returns all messages. Choose this to find messages or audit delivery. Supports cursor pagination via the after cursor and a page size clamped to 1-50. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

@@ -1,6 +1,6 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   ApFlagId,
-  isNil,
   PieceAction,
   PieceActionSettings,
   PieceTrigger,
@@ -135,7 +135,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               key={selectedTrigger.name}
               prefixValue={'settings.input'}
               props={triggerPropsWithoutAuth}
-              useMentionTextInput={false}
+              useMentionTextInput={true}
               propertySettings={selectedStep.settings.propertySettings}
               disabled={props.readonly}
               markdownVariables={markdownVariables}

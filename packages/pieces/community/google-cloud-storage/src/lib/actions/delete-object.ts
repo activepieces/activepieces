@@ -9,6 +9,8 @@ export const deleteObject = createAction({
   name: 'delete_object',
   displayName: 'Delete Object',
   description: 'Permanently delete a specific object. Perfect for removing obsolete files.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes an object from a bucket, optionally a specific generation/revision for versioned objects. Use to remove an obsolete or unwanted file. Not idempotent: the first call removes the object and a repeat fails because it no longer exists. Requires the bucket and object name.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

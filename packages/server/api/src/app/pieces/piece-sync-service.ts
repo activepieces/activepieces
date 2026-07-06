@@ -1,22 +1,27 @@
-import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
+import { groupBy, tryCatch } from '@activepieces/core-utils'
+import { apVersionUtil } from '@activepieces/server-utils'
+import { PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
-import { pubsub } from '../helper/pubsub'
 import { system } from '../helper/system/system'
-import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { PIECE_METADATA_REFRESH_CHANNEL, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './metadata/piece-cache'
+import { isToolSearchEnabled } from '../tool-search/tool-search-flag'
+import { toolSearchReindexJob } from '../tool-search/tool-search-reindex.job'
+import { pieceCache } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
+import { pieceBundle } from './piece-bundle'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
+        pieceBundle(log).registerJobHandler()
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
             await pieceSyncService(log).sync({ publishCacheRefresh: true })
         })
@@ -57,6 +62,15 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 deleted,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
+
+            // React to the catalog-change signal: enqueue an async tool-search reconcile (never inline
+            // — embedding must not block sync). The hash-gate means an unchanged catalog re-embeds
+            // nothing, so this is cheap; only fire when something changed AND the engine is enabled —
+            // without the flag guard a delta would enqueue a reconcile even when tool-search is off,
+            // which (if an OpenAI key exists but pgvector does not) crashes silently on every change.
+            if ((added > 0 || deleted > 0) && isToolSearchEnabled()) {
+                rejectedPromiseHandler(toolSearchReindexJob(log).enqueue({ type: 'all' }), log)
+            }
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')
@@ -81,7 +95,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
             const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
             const response = await fetch(url)
             if (!response.ok) {
-                log.warn({ pieceName: piece.name, version: piece.version, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
+                log.warn({ piece: { name: piece.name, version: piece.version }, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
                 return
             }
             const pieceMetadata = await response.json()
@@ -92,13 +106,12 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 publishCacheRefresh: false,
             }))
             if (error) {
-                log.debug({ pieceName: piece.name, version: piece.version }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
+                log.debug({ piece: { name: piece.name, version: piece.version } }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
             }
         }))
     }
     if (newPiecesToFetch.length > 0) {
-        const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
-        await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
+        await pieceCache(log).invalidate()
     }
     return newPiecesToFetch.length
 }
@@ -107,7 +120,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
 async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await apVersionUtil.getCurrentRelease())
+    queryParams.append('release', apVersionUtil.getCurrentRelease())
     const response = await fetch(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
     if (!response.ok) {
         throw new Error(`Failed to fetch cloud pieces: ${response.status}`)

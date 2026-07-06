@@ -8,6 +8,12 @@ export const createANewsletter = createAction({
   name: 'createANewsletter',
   displayName: 'Create a Newsletter',
   description: 'Create an automated newsletter powered by news and AI',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new automated AskNews newsletter that recurrently generates and emails AI-written news digests on a cron schedule, defined by a natural-language query. Choose this to set up a recurring news email; requires a name, query, cron expression, model, and sender, plus a Resend API key to actually send. Not idempotent — each call creates a separate newsletter.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Newsletter Name',

@@ -48,6 +48,9 @@ export const newTimeEntryStarted = createTrigger({
   name: 'new_time_entry_started',
   displayName: 'New Time Entry Started',
   description: 'Fires when a new time entry is started and is currently running.',
+  aiMetadata: {
+    description: 'Fires when a time entry is started and is currently running (open-ended, negative duration) for the authenticated user, delivering the running entry. Polls Toggl periodically and emits newly started running entries, optionally scoped to the configured workspace.',
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
   },

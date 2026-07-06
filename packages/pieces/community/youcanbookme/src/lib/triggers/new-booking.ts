@@ -9,6 +9,10 @@ export const newBooking = createTrigger({
   name: 'newBooking',
   displayName: 'New Booking',
   description: 'Trigger when a new booking is made',
+  aiMetadata: {
+    description:
+      'Fires when a YouCanBookMe webhook notification is received for a booking event. Configured against a booking page notification (e.g. after a new booking is made), it represents an incoming booking with details such as start/end times, time zone, and the booker\'s name and email.',
+  },
   props: {
     webhook_setup: Property.MarkDown({
       value: `

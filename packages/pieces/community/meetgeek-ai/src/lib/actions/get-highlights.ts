@@ -9,6 +9,11 @@ export const getHighlights = createAction({
   name: 'getHighlights',
   displayName: 'Get Highlights',
   description: 'Retrieves all highlights for a meeting by meeting ID',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch the AI-generated highlights for a single MeetGeek meeting, identified by its meeting ID. Use to pull key moments after a meeting has been analyzed. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     meetingId: meetingIdDropdwon,
   },

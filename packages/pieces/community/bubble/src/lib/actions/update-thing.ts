@@ -13,6 +13,8 @@ export const bubbleUpdateThingAction = createAction({
   name: 'bubble_update_thing',
   displayName: 'Update Thing',
   description: 'Updates a thing',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing record ("thing") in a Bubble app, identified by its unique id and data type, by patching the supplied fields via the Bubble Data API. Use to modify specific fields of a known record; only the provided fields are changed. Targets one record so repeats with the same input converge, but it mutates server state on each call.', idempotent: false },
   props: {
     typename: bubbleCommon.typename,
     thing_id: bubbleCommon.thing_id,

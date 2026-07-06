@@ -3,11 +3,14 @@ import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
+import { createMessageReactionOutputSchema } from '../../output-schemas';
 
 export const createClickupMessageReaction = createAction({
   auth: clickupAuth,
   name: 'create_message_reaction',
   description: 'Creates a reaction to a message in a ClickUp channel',
+  audience: 'both',
+  aiMetadata: { description: 'Add an emoji reaction to a Chat message in a ClickUp workspace, given the workspace and message IDs plus the emoji. Adding the same emoji again has no additional effect, but this is a write that changes the message state.', idempotent: false },
   displayName: 'Create Message Reaction',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -23,6 +26,7 @@ export const createClickupMessageReaction = createAction({
     }),
   },
 
+  outputSchema: createMessageReactionOutputSchema,
   async run(configValue) {
     const { workspace_id, message_id, emoji } = configValue.propsValue;
     const response = await callClickUpApi3(

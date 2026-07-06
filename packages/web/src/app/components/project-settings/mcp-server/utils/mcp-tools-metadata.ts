@@ -33,9 +33,9 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
       },
       {
-        name: 'ap_list_pieces',
+        name: 'ap_research_pieces',
         description:
-          'List pieces with actions and triggers — required before adding or updating steps',
+          'Research pieces with actions and triggers — required before adding or updating steps',
       },
       {
         name: 'ap_get_piece_props',
@@ -46,6 +46,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         name: 'ap_resolve_property_options',
         description:
           'Resolve dropdown options for a specific piece property — returns available choices with labels and IDs',
+      },
+      {
+        name: 'ap_resolve_property_chain',
+        description:
+          'Resolve a chain of dependent dropdown properties in one call — for cascading fields like Spreadsheet → Sheet → Columns',
       },
       {
         name: 'ap_validate_step_config',

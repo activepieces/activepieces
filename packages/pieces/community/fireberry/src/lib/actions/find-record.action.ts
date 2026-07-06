@@ -47,6 +47,8 @@ export const findRecordAction = createAction({
   name: 'find_record',
   displayName: 'Find Records',
   description: 'Search for records in Fireberry.',
+  audience: 'both',
+  aiMetadata: { description: 'Queries records of a given Fireberry object type with optional pagination, sorting, and field selection. Leave the search query empty to fetch all records, or supply criteria (e.g. "accountname=John") to filter to matches. Use to look up or list records before acting on them. Read-only and idempotent.', idempotent: true },
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,

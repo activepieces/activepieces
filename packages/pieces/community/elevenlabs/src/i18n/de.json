@@ -6,7 +6,7 @@
   "default - https://api.elevenlabs.io": "Standard - https://api.elevenlabs.io",
   "US - https://api.us.elevenlabs.io": "US - https://api.us.elevenlabs.io",
   "EU - https://api.eu.residency.elevenlabs.io": "EU - https://api.eu.residency.elevenlabs.io",
-  "\nFollow these instructions to get your API Key:\n1. Visit your Elevenlabs dashboard.\n2. Once there, click on your account in the bottom left corner.\n3. Press Profile + API Key.\n4. Copy the API Key.\n": "\nFolgen Sie diesen Anweisungen, um Ihren API-Schlüssel zu erhalten:\n1. Besuchen Sie Ihr Elevenlabs-Dashboard.\n2. Klicken Sie auf Ihr Konto in der linken unteren Ecke.\n3. Drücke Profil + API-Schlüssel.\n4. Kopiere den API-Schlüssel.\n",
+  "\nFollow these instructions to get your API Key:\n1. Visit your Elevenlabs dashboard.\n2. Once there, click on your account in the bottom left corner.\n3. Press Profile + API Key.\n4. Create or copy your API Key. Make sure to enable the following permissions: **user:read**, **text_to_speech**, **voices:read**, and **models**.\n": "\nFolgen Sie diesen Anweisungen, um Ihren API-Schlüssel zu erhalten:\n1. Besuchen Sie Ihr Elevenlabs-Dashboard.\n2. Klicken Sie auf Ihr Konto in der linken unteren Ecke.\n3. Drücken Sie Profil + API-Schlüssel.\n4. Erstellen oder kopieren Sie Ihren API-Schlüssel. Stellen Sie sicher, dass Sie die folgenden Berechtigungen aktivieren: **user:read**, **text_to_speech**, **voices:read** und **models**.\n",
   "Text to Speech": "Text-zu-Sprache",
   "Custom API Call": "Eigener API-Aufruf",
   "Convert text to speech using Elevenlabs": "Text in Sprache mit Elevenlabs konvertieren",

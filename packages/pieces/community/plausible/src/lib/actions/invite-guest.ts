@@ -8,6 +8,8 @@ export const inviteGuest = createAction({
   name: 'invite_guest',
   displayName: 'Invite Guest',
   description: 'Invite a guest to access a site or find an existing invitation',
+  audience: 'both',
+  aiMetadata: { description: 'Grants a guest access to a site at a chosen role (viewer or editor) by email, or returns the existing invitation if one is already present (find-or-create). Use to share a site with another user. Idempotent, as re-inviting the same email returns the existing invitation rather than sending a duplicate.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
     email: Property.ShortText({

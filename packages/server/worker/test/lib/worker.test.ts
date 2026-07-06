@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
-import { Server as IOServer } from 'socket.io'
+import { Server as IOServer, Socket } from 'socket.io'
 import {
     createRpcServer,
     PackageType,
@@ -22,13 +22,19 @@ vi.mock('../../src/lib/execute/job-registry', () => ({
     getHandler: (...args: unknown[]) => mockGetHandler(...args),
 }))
 
-vi.mock('../../src/lib/config/worker-settings', () => ({
-    workerSettings: {
-        set: vi.fn(),
-        waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000' }),
-        getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000' }),
-    },
-}))
+// APP_VERSION must match the worker's own AP_VERSION (apVersionUtil.getCurrentRelease, read from the
+// same cwd package.json) or the worker↔app version gate fail-closes and pauses polling forever.
+vi.mock('../../src/lib/config/worker-settings', async () => {
+    const { apVersionUtil } = await vi.importActual<typeof import('@activepieces/server-utils')>('@activepieces/server-utils')
+    const appVersion = apVersionUtil.getCurrentRelease()
+    return {
+        workerSettings: {
+            set: vi.fn(),
+            waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000', APP_VERSION: appVersion }),
+            getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000', APP_VERSION: appVersion }),
+        },
+    }
+})
 
 vi.mock('../../src/lib/config/logger', () => ({
     logger: {
@@ -43,6 +49,27 @@ vi.mock('../../src/lib/config/logger', () => ({
             debug: vi.fn(),
         }),
     },
+}))
+
+type StubRuntime = {
+    execute: ReturnType<typeof vi.fn>
+    getActiveExecutors: ReturnType<typeof vi.fn>
+    shutdown: ReturnType<typeof vi.fn>
+}
+
+const createdRuntimes: StubRuntime[] = []
+
+vi.mock('@activepieces/sandbox', () => ({
+    createResolver: vi.fn(() => ({})),
+    createSandboxRuntime: vi.fn(() => {
+        const rt: StubRuntime = {
+            execute: vi.fn(),
+            getActiveExecutors: vi.fn(() => []),
+            shutdown: vi.fn().mockResolvedValue(undefined),
+        }
+        createdRuntimes.push(rt)
+        return rt
+    }),
 }))
 
 import { worker } from '../../src/lib/worker'
@@ -93,11 +120,17 @@ describe('worker integration', () => {
         })
         process.env.AP_FRONTEND_URL = `http://127.0.0.1:${port}`
         process.env.AP_CONTAINER_TYPE = 'WORKER'
+        // These integration tests assert strict per-job ordering, which only holds with a single
+        // poll loop. Pin concurrency to 1 so the multi-box transitional default (5) doesn't drain
+        // the queued poll sequence out of order. See ADR 0004.
+        process.env.AP_WORKER_CONCURRENCY = '1'
+        createdRuntimes.length = 0
     })
 
     afterEach(async () => {
         await worker.stop()
         mockGetHandler.mockReset()
+        delete process.env.AP_WORKER_CONCURRENCY
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
         })
@@ -162,9 +195,6 @@ describe('worker integration', () => {
                     getPiece: vi.fn(),
                     getPieceArchive: vi.fn(),
                     extendLock: vi.fn(),
-                    getPayloadFile: vi.fn(),
-                    getUsedPieces: vi.fn().mockResolvedValue([]),
-                    markPieceAsUsed: vi.fn(),
                     disableFlow: vi.fn(),
                 }
                 createRpcServer<WorkerToApiContract>(serverSocket, handlers)
@@ -468,6 +498,88 @@ describe('worker integration', () => {
             expect(completeJobCalls[2].jobId).toBe('valid-2')
             expect(completeJobCalls[2].status).toBe(EngineResponseStatus.OK)
             expect(mockGetHandler).toHaveBeenCalledTimes(2)
+        }, 15_000)
+    })
+
+    describe('runtime lifecycle on reconnect', () => {
+        async function waitFor(predicate: () => boolean, timeoutMs = 5_000): Promise<void> {
+            const start = Date.now()
+            while (!predicate()) {
+                if (Date.now() - start > timeoutMs) {
+                    throw new Error('waitFor timed out')
+                }
+                await new Promise<void>((resolve) => setTimeout(resolve, 20))
+            }
+        }
+
+        function acceptConnections(serverSockets: Socket[]): void {
+            ioServer.on('connection', (serverSocket) => {
+                serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
+                    const callback = args[args.length - 1]
+                    if (typeof callback === 'function') {
+                        callback({
+                            PUBLIC_URL: 'http://localhost:3000',
+                            ENVIRONMENT: 'test',
+                            EXECUTION_MODE: 'SANDBOX_CODE_AND_PROCESS',
+                            TRIGGER_TIMEOUT_SECONDS: 60,
+                            TRIGGER_HOOKS_TIMEOUT_SECONDS: 60,
+                            PAUSED_FLOW_TIMEOUT_DAYS: 30,
+                            FLOW_TIMEOUT_SECONDS: 600,
+                            LOG_LEVEL: 'info',
+                            LOG_PRETTY: 'false',
+                            APP_WEBHOOK_SECRETS: '{}',
+                            MAX_FLOW_RUN_LOG_SIZE_MB: 10,
+                            MAX_FILE_SIZE_MB: 10,
+                            SANDBOX_MEMORY_LIMIT: '1024',
+                            SANDBOX_PROPAGATED_ENV_VARS: [],
+                            DEV_PIECES: [],
+                            OTEL_ENABLED: false,
+                            FILE_STORAGE_LOCATION: '/tmp',
+                            S3_USE_SIGNED_URLS: 'false',
+                            EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
+                            EDITION: 'community',
+                        })
+                    }
+                })
+                // Park the worker idle: never ack poll so it neither hot-loops nor consumes jobs.
+                createRpcServer<WorkerToApiContract>(serverSocket, {
+                    poll: vi.fn(() => new Promise(() => {})),
+                    completeJob: vi.fn(),
+                    updateRunProgress: vi.fn(),
+                    uploadRunLog: vi.fn(),
+                    sendFlowResponse: vi.fn(),
+                    updateStepProgress: vi.fn(),
+                    submitPayloads: vi.fn(),
+                    savePayloads: vi.fn(),
+                    getFlowVersion: vi.fn(),
+                    getPiece: vi.fn(),
+                    getPieceArchive: vi.fn(),
+                    extendLock: vi.fn(),
+                    disableFlow: vi.fn(),
+                } as unknown as WorkerToApiContract)
+                serverSockets.push(serverSocket)
+            })
+        }
+
+        it('shuts down the old runtime and brings up a fresh one when the server drops the connection', async () => {
+            const serverSockets: Socket[] = []
+            acceptConnections(serverSockets)
+
+            worker.start({
+                apiUrl: `http://127.0.0.1:${port}/api/`,
+                socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+                workerToken: 'test-token',
+            })
+
+            await waitFor(() => createdRuntimes.length === 1)
+
+            // Simulate the API restarting during a deploy: the server drops the socket, which the client
+            // sees as 'io server disconnect' and reconnects to. The reconnect must tear down the old
+            // runtime (killing any in-flight box) and build a fresh one — not reuse the old box.
+            serverSockets[0].disconnect(true)
+
+            await waitFor(() => createdRuntimes.length === 2)
+            expect(createdRuntimes[0].shutdown).toHaveBeenCalledTimes(1)
         }, 15_000)
     })
 

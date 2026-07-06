@@ -13,6 +13,12 @@ export const executeStoredProcedureAction = createAction({
   name: 'execute_stored_procedure',
   displayName: 'Execute Stored Procedure',
   description: 'Call a stored procedure in Snowflake and return its result.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Calls a named stored procedure in a Snowflake database/schema with optional positional arguments and returns its result (CALL). Use to invoke server-side procedural logic rather than ad-hoc SQL. Idempotency depends on what the procedure does internally; assume not idempotent since a procedure may mutate data or have side effects on each call.',
+    idempotent: false,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

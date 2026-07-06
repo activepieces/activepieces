@@ -14,6 +14,11 @@ export const deleteRecord = createAction({
 	name: 'deleteRecord',
 	displayName: 'Delete Record',
 	description: 'Deletes a record from a table.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Permanently removes one record from a Ninox table, addressed by team, database, table, and record id. Use when the target record id is known and it should be deleted. Idempotent in effect — once removed, repeating the call leaves the record absent.',
+		idempotent: true,
+	},
 	props: {
 		teamid: teamidDropdown,
 		dbid: databaseIdDropdown,

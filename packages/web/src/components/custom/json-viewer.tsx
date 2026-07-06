@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Copy, Download, Eye, EyeOff } from 'lucide-react';
 import React, { useLayoutEffect, useMemo } from 'react';
@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 type JsonViewerProps = {
   json: any;
-  title: string;
+  title: React.ReactNode;
   hideDownload?: boolean;
   hideHeader?: boolean;
   className?: string;
@@ -99,7 +99,7 @@ const JsonViewer = React.memo(
     const handleDownloadFile = (fileUrl: string, ext = '') => {
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = `${title}${ext}`;
+      link.download = `${typeof title === 'string' ? title : 'data'}${ext}`;
       link.click();
       URL.revokeObjectURL(fileUrl);
     };

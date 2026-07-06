@@ -9,6 +9,8 @@ export const addCommentToConversation = createAction({
   name: 'add_comment_to_conversation',
   displayName: 'Add Comment to Conversation',
   description: 'Add an internal comment/note to a conversation in Respond.io.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts an internal comment (note visible to team members, not the contact) on a contact\'s conversation in Respond.io. Use to leave context for agents rather than to message the contact. Requires the contact identifier and comment text (max 1000 chars); supports @-mentioning users via {{@user.ID}}. Not idempotent — each call appends another comment.', idempotent: false },
   props: {
     identifier: contactIdentifierDropdown,
     text: Property.LongText({

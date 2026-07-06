@@ -9,6 +9,10 @@ export const documentGroupCompletedTrigger = createTrigger({
   name: 'document_group_completed',
   displayName: 'Document Group Completed',
   description: 'Triggers when all signers have filled in and signed the document group.',
+  aiMetadata: {
+    description:
+      'Fires when a SignNow document group is fully completed, meaning every signer has filled in and signed all documents in the group. Use to act on a finished multi-document signing package.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

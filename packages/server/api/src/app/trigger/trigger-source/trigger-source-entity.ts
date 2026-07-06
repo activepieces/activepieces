@@ -76,6 +76,12 @@ export const TriggerSourceEntity = new EntitySchema<TriggerSourceSchema>({
             name: 'idx_trigger_project_id',
             unique: false,
         },
+        {
+            columns: ['flowVersionId'],
+            name: 'idx_trigger_flow_version_id',
+            where: 'deleted IS NULL',
+            unique: false,
+        },
     ],
     relations: {
         flow: {

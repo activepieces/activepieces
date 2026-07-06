@@ -62,6 +62,9 @@ export const newRegistration = createTrigger({
   name: 'new_registration',
   displayName: 'New Registration',
   description: 'Triggers when new registrations are added.',
+  aiMetadata: {
+    description: 'Fires when a new time-entry registration is added in TimeOps. Polls the registrations list and emits each newly seen registration, including its user, project, times, and billable flag. Use to react to logged time, such as updating reports or invoicing.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

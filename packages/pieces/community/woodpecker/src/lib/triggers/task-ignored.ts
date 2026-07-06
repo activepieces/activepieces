@@ -7,6 +7,9 @@ export const taskIgnored = createTrigger({
   name: 'task_ignored',
   displayName: 'Task Ignored',
   description: 'Triggers when a task is ignored',
+  aiMetadata: {
+    description: 'Fires when a manual task in Woodpecker is dismissed or ignored rather than completed. Represents a skipped follow-up task for a prospect and includes the associated prospect.',
+  },
   props: {},
   sampleData: {
     method: 'task_ignored',

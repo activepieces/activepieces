@@ -7,6 +7,8 @@ export const createInvoice = createAction({
     name: 'create_invoice',
     displayName: 'Create Invoice',
     description: 'Creates a new payables invoice in Oracle Fusion Cloud ERP.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new payables (supplier) invoice, requiring invoice number, business unit, supplier and supplier site, amount, currencies, key dates, and payment method. Not idempotent: each call inserts a new invoice and repeats create duplicates (the supplier invoice number is not deduplicated here). Use for bills you owe suppliers; for customer billing use Create Receivables Invoice instead.', idempotent: false },
     props: {
         invoiceNumber: Property.ShortText({
             displayName: 'Invoice Number',

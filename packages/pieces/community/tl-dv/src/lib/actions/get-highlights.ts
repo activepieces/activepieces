@@ -9,6 +9,11 @@ export const getHighlights = createAction({
   name: 'get_highlights',
   displayName: 'Get Highlights',
   description: 'Get meeting highlights (notes) by meeting ID',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the highlights and notes captured for a tl;dv meeting identified by its meeting id. Use to pull the key moments or noted points from a meeting rather than the full transcript. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     meetingId: meetingIdProperty,
   },

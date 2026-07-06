@@ -10,6 +10,9 @@ export const newCallCreated = createTrigger({
   name: 'newCallCreated',
   displayName: 'New Call Created',
   description: 'Triggers when a new call log is created',
+  aiMetadata: {
+    description: 'Fires when a new call log entry is created in Bigin CRM, via a Calls.create webhook. Represents a newly recorded phone interaction.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

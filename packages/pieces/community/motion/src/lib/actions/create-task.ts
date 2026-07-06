@@ -16,6 +16,8 @@ export const createTask = createAction({
   name: 'create-task',
   displayName: 'Create Task',
   description: 'Creates a new task.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new task in a Motion workspace, with optional due date, duration, status, priority, project, assignee, and labels. Use when an agent needs to add a to-do or scheduled item to Motion. Requires the target workspace ID and a task name. Not idempotent: each call creates a separate task.', idempotent: false },
   props: {
     workspaceId: workspaceId('Workspace ID'),
     name: Property.ShortText({

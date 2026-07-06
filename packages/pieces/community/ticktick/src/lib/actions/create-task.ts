@@ -16,6 +16,12 @@ export const createTaskAction = createAction({
 	name: 'create_task',
 	displayName: 'Create Task',
 	description: 'Creates a new in a specific list.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new task in a TickTick list, with optional content, checklist description, start/due dates, and priority. Use to add a to-do item. Requires the target list (project) ID and a task title. Not idempotent: each call creates a separate task even with identical input.',
+		idempotent: false,
+	},
 	props: {
 		projectId: projectId({
 			displayName: 'List',

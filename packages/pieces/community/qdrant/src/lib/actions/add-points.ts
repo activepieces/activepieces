@@ -11,6 +11,12 @@ export const addPointsToCollection = createAction({
   displayName: 'Add points to collection',
   description:
     'Insert a point (= embedding or vector + other infos) to a specific collection, if the collection does not exist it will be created',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upsert one or more points (vectors plus optional payload) into a Qdrant collection, auto-creating the collection with the chosen distance metric if it does not yet exist. Use to load embeddings into a vector store. Embeddings are passed as a file and must all share the same dimensionality. Not idempotent: when point ids are omitted they are randomly generated, so each call appends new points; supply stable ids to overwrite the same points instead.',
+    idempotent: false,
+  },
   props: {
     collectionName,
     embeddings: Property.File({

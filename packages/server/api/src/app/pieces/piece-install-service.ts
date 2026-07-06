@@ -1,24 +1,11 @@
+import { ActivepiecesError, ErrorCode, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    AddPieceRequestBody,
-    EngineResponse,
-    EngineResponseStatus,
-    ErrorCode,
-    ExecuteExtractPieceMetadata,
-    FileCompression,
-    FileId,
-    FileType,
-    isNil,
-    PackageType,
-    PiecePackage,
-    PieceType,
-    PlatformId,
-    ProjectId,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { AddPieceRequestBody, EngineResponse, EngineResponseStatus, ExecuteExtractPieceMetadata, FileCompression, FileId, FileType, PackageType, PiecePackage, PieceType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { isToolSearchEnabled } from '../tool-search/tool-search-flag'
+import { toolSearchReindexJob } from '../tool-search/tool-search-reindex.job'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
 
@@ -50,10 +37,16 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 pieceType: PieceType.CUSTOM,
                 archiveId,
             })
+            // Reconcile tool-search for this tenant only (async, never blocking the install) so the new
+            // custom piece's actions/triggers become searchable. Scoped → the shared catalog is untouched.
+            // Gated on the flag so an install never enqueues a reconcile while tool-search is disabled.
+            if (isToolSearchEnabled()) {
+                rejectedPromiseHandler(toolSearchReindexJob(log).enqueue({ type: 'platform', platformId }), log)
+            }
             return savedPiece
         }
         catch (error) {
-            log.error({ err: error }, '[pieceInstallService#add] Failed to add piece')
+            log.error({ error }, '[pieceInstallService#add] Failed to add piece')
 
             if (error instanceof ActivepiecesError && error.error.code === ErrorCode.VALIDATION) {
                 throw error

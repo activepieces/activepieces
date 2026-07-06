@@ -1,5 +1,6 @@
+import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
@@ -13,12 +14,31 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         executionState,
         constants,
     }) {
-        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
-            unresolvedInput: {
-                ...action.settings,
-            },
-            executionState,
-        })
+        const stepStartTime = performance.now()
+        const { data: resolved, error: resolveError } = await utils.tryCatchAndThrowOnEngineError(() =>
+            constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
+                unresolvedInput: {
+                    ...action.settings,
+                },
+                executionState,
+            }),
+        )
+        if (resolveError) {
+            const errorMessage = utils.formatError(resolveError)
+            const failedStepOutput = RouterStepOutput.init({ input: {} })
+                .setStatus(StepOutputStatus.FAILED)
+                .setErrorMessage(errorMessage)
+                .setDuration(performance.now() - stepStartTime)
+            return (await executionState.upsertStep(action.name, failedStepOutput)).setVerdict({
+                status: FlowRunStatus.FAILED,
+                failedStep: {
+                    name: action.name,
+                    displayName: action.displayName,
+                    message: errorMessage,
+                },
+            })
+        }
+        const { censoredInput, resolvedInput } = resolved
 
         switch (resolvedInput.executionType) {
             case RouterExecutionType.EXECUTE_ALL_MATCH:

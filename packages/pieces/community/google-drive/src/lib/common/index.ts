@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken, createGoogleClient } from '../auth';
 
 const FOLDER_DROPDOWN_PAGE_SIZE = 1000;
@@ -49,6 +49,7 @@ export const common = {
             q: qParts.join(' and '),
             includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
             supportsAllDrives: 'true',
+            corpora: include_team_drives ? 'allDrives' : 'user',
             pageSize: String(FOLDER_DROPDOWN_PAGE_SIZE),
             fields: 'nextPageToken, files(id, name)',
           },
@@ -105,7 +106,7 @@ export const common = {
   ) {
     const authClient = await createGoogleClient(auth);
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const q: string[] = [];
     if (search?.parent) q.push(`'${search.parent}' in parents`);
@@ -125,6 +126,7 @@ export const common = {
         orderBy: order ?? 'createdTime desc',
         supportsAllDrives: true,
         includeItemsFromAllDrives: search?.includeTeamDrive,
+        corpora: search?.includeTeamDrive ? 'allDrives' : 'user',
       };
       if (pageToken) listParams.pageToken = pageToken;
       const response = await drive.files.list(listParams);
@@ -147,7 +149,7 @@ export const common = {
   ) {
     const authClient = await createGoogleClient(auth);
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const q: string[] = [`mimeType='application/vnd.google-apps.folder'`];
     if (search?.parent) q.push(`'${search.parent}' in parents`);
@@ -167,6 +169,7 @@ export const common = {
         orderBy: order ?? 'createdTime desc',
         supportsAllDrives: true,
         includeItemsFromAllDrives: search?.includeTeamDrive,
+        corpora: search?.includeTeamDrive ? 'allDrives' : 'user',
       };
       if (pageToken) listParams.pageToken = pageToken;
       const response = await drive.files.list(listParams);

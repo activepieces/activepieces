@@ -9,12 +9,14 @@ import { shopifyAuth } from '../..';
 export const createShopifyWebhookTrigger = ({
   name,
   description,
+  aiMetadata,
   displayName,
   sampleData,
   topic,
 }: {
   name: string;
   description: string;
+  aiMetadata?: { description: string };
   displayName: string;
   topic: string;
   sampleData: Record<string, unknown>;
@@ -23,6 +25,7 @@ export const createShopifyWebhookTrigger = ({
     auth: shopifyAuth,
     name,
     description,
+    aiMetadata,
     displayName,
     props: {},
     sampleData: sampleData,

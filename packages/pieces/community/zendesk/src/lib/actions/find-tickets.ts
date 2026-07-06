@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs'
 
 type AuthProps = {
@@ -19,6 +19,8 @@ export const findTicketsAction = createAction({
   name: 'find-tickets',
   displayName: 'Find Ticket(s)',
   description: 'Search tickets by ID, field, or content.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Zendesk tickets and returns matching records. A required search-type selector chooses the mode: match by ticket ID, status, priority, type, tag, requester or assignee email, subject/content text, or pass a raw Zendesk search-syntax string via the Custom Query mode. Optional date-time filters narrow by created/updated/solved/due date with comparison operators. Use to locate tickets or a ticket ID before commenting or updating; results can be sorted. Read-only and idempotent.', idempotent: true },
   props: {
     search_type: Property.StaticDropdown({
       displayName: 'Search Type',

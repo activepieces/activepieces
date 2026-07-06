@@ -1,0 +1,11 @@
+{
+  "Access Chess.com player data": "Chess.com プレイヤーのデータにアクセス",
+  "Get Player Profile": "プレイヤープロフィールを取得",
+  "Get Player Stats": "プレイヤーの統計情報を取得",
+  "Get Daily Puzzle": "毎日のパズルを入手",
+  "Retrieve a Chess.com player's public profile by username (avatar, country, join date, followers).": "ユーザー名（アバター、国、日付、フォロワーに参加）でChess.com プレイヤーの公開プロフィールを取得します。",
+  "Retrieve a Chess.com player's ratings and W/D/L for rapid, blitz, bullet, and chess960.": "迅速、blitz、buld、およびchess960のChess.comプレーヤーの評価とW/D/Lを取得します。",
+  "Retrieve today's Chess.com daily puzzle.": "今日のChess.com毎日のパズルを取得します。",
+  "Username": "ユーザー名",
+  "The Chess.com username to look up.": "Chess.com のユーザー名を検索します。"
+}

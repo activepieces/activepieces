@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
 
 import { authenticationSession } from './authentication-session';
 
@@ -10,6 +10,7 @@ export const routesThatRequireProjectId = {
   automations: '/automations',
   connections: '/connections',
   singleConnection: '/connections/:connectionId',
+  variables: '/variables',
   tables: '/tables',
   singleTable: '/tables/:tableId',
   settings: '/settings',
@@ -17,9 +18,18 @@ export const routesThatRequireProjectId = {
   singleRelease: '/releases/:releaseId',
 };
 
-export const determineDefaultRoute = (
-  checkAccess: (permission: Permission) => boolean,
-) => {
+export const CHAT_ROUTE = '/chat';
+
+export const determineDefaultRoute = ({
+  checkAccess,
+  chatEnabled,
+}: {
+  checkAccess: (permission: Permission) => boolean;
+  chatEnabled?: boolean;
+}) => {
+  if (chatEnabled) {
+    return CHAT_ROUTE;
+  }
   if (checkAccess(Permission.READ_FLOW) || checkAccess(Permission.READ_TABLE)) {
     return authenticationSession.appendProjectRoutePrefix('/automations');
   }

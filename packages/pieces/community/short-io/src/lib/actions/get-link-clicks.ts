@@ -9,6 +9,8 @@ export const getLinkClicksAction = createAction({
   name: 'get-link-clicks',
   displayName: 'Get Link Clicks',
   description: 'Retrieve click statistics for specific short links by their IDs.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves click statistics for one or more specific short links (by their link IDs) on a domain, optionally scoped to a start/end date range. Use to measure performance of particular links rather than a whole domain. Requires the domain and at least one link ID, and if filtering by date both start and end must be supplied; read-only and idempotent.', idempotent: true },
   props: {
     domain: {
       ...domainIdDropdown,

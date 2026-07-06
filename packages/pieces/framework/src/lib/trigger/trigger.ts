@@ -1,9 +1,11 @@
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
-import { TriggerBase } from '../piece-metadata';
+import type { OutputSchema } from '../output-schema';
+import { AiMetadata, TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
-import { isNil, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/core-piece-types';
 export { TriggerStrategy }
 
 export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
@@ -54,6 +56,8 @@ type BaseTriggerParams<
   test?: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
   onStart?: OnStartRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps>,
   sampleData: unknown
+  outputSchema?: OutputSchema
+  aiMetadata?: AiMetadata
 }
 
 type WebhookTriggerParams<
@@ -98,6 +102,8 @@ export class ITrigger<
     public readonly test: (ctx: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
     public readonly testStrategy: TriggerTestStrategy,
+    public readonly outputSchema?: OutputSchema,
+    public readonly aiMetadata?: AiMetadata,
   ) { }
 }
 
@@ -134,6 +140,8 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
+        params.outputSchema,
+        params.aiMetadata,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
@@ -154,6 +162,8 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
+        params.outputSchema,
+        params.aiMetadata,
       )
     case TriggerStrategy.MANUAL:
       return new ITrigger(
@@ -174,6 +184,8 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
+        params.outputSchema,
+        params.aiMetadata,
       )
     case TriggerStrategy.APP_WEBHOOK:
       return new ITrigger(
@@ -194,6 +206,8 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
+        params.outputSchema,
+        params.aiMetadata,
       )
   }
 }

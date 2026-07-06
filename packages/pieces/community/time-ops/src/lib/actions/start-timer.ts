@@ -8,6 +8,8 @@ export const startTimer = createAction({
   name: 'start_timer',
   displayName: 'Start Timer',
   description: 'Starts the timer by creating a new Registration.',
+  audience: 'both',
+  aiMetadata: { description: 'Starts a running time entry (registration) for a given user in TimeOps, optionally tied to a project and tagged as billable. Use to begin live time tracking when the stop time is not yet known; pair with Stop Timer to close it out. Requires the user id. Not idempotent: each call opens another running registration.', idempotent: false },
   props: {
     userId: Property.Dropdown({
       displayName: 'User',

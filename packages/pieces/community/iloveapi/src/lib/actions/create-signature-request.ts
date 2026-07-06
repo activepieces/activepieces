@@ -32,6 +32,12 @@ export const createSignatureRequestAction = createAction({
   displayName: 'Create Signature Request',
   description:
     'Send one or more PDF documents for electronic signature, with custom signers and signature placeholders.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Start an electronic signature request: upload one or more PDFs and define the signers (by name and email, each as signer, validator, or viewer) plus optional field placeholders matched to signers by email. Returns a requester token used by the status, reminder, void, expiration, and download actions. Each call creates a brand-new request and dispatches invitation emails, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     files: Property.Array({
       displayName: 'PDF Files',

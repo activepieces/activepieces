@@ -8,7 +8,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/shared'
+import { AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
@@ -75,8 +75,8 @@ export async function createAIModel({
         }
         case AIProviderName.AZURE: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { resourceName } = config as AzureProviderConfig
-            const provider = createAzure({ resourceName, apiKey })
+            const { resourceName, apiVersion } = config as AzureProviderConfig
+            const provider = createAzure({ resourceName, apiKey, apiVersion })
             if (isImage) {
                 return provider.imageModel(modelId)
             }
@@ -190,6 +190,18 @@ export async function createAIModel({
             }
             return provider.chatModel(modelId)
         }
+        case AIProviderName.MISTRAL: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            if (isImage) {
+                throw new Error(`Provider ${AIProviderName.MISTRAL} does not support image models`)
+            }
+            const provider = createOpenAICompatible({
+                name: 'mistral',
+                baseURL: 'https://api.mistral.ai/v1',
+                apiKey,
+            })
+            return provider.chatModel(modelId)
+        }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -251,8 +263,8 @@ export async function createEmbeddingModel({
             return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: {} }
         }
         case AIProviderName.AZURE: {
-            const { resourceName } = config as AzureProviderConfig
-            const p = createAzure({ resourceName, apiKey })
+            const { resourceName, apiVersion } = config as AzureProviderConfig
+            const p = createAzure({ resourceName, apiKey, apiVersion })
             return { model: p.embeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         }
         case AIProviderName.ACTIVEPIECES:

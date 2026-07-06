@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import { convertAttachment, parseStream } from '../common/data';
 import { GmailProps } from '../common/props';
 import { GmailLabel } from '../common/models';
+import { gmailSearchMailActionOutputSchema } from '../output-schemas';
 
 export const gmailSearchMailAction = createAction({
   auth: gmailAuth,
@@ -11,6 +12,12 @@ export const gmailSearchMailAction = createAction({
   displayName: 'Find Email',
   description:
     'Find emails using advanced search criteria. If no filters are provided, the latest emails are returned.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches the mailbox for emails matching combinable filters (sender, recipient, subject, body text, label, category, date range, attachment presence/name) and returns the matched messages with parsed contents. Use this to locate messages or discover their IDs before reading or replying; with no filters it returns the most recent emails. Bound results with Max Results (1-500, default 10). Idempotent: a read-only search that does not modify the mailbox.',
+    idempotent: true,
+  },
   props: {
     from: GmailProps.from,
     to: GmailProps.to,
@@ -31,7 +38,7 @@ export const gmailSearchMailAction = createAction({
       description: 'Search for emails with specific attachment filename',
       required: false,
     }),
-    label: GmailProps.label,
+    label: GmailProps.label({ required: false }),
     category: GmailProps.category,
     after_date: Property.DateTime({
       displayName: 'After Date',
@@ -58,10 +65,11 @@ export const gmailSearchMailAction = createAction({
       defaultValue: 10,
     }),
   },
+  outputSchema: gmailSearchMailActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const queryParts: string[] = [];
 

@@ -1,10 +1,12 @@
-import { ApEdition, FlowRun, FlowTriggerType, isFailedState, isFlowRunStateTerminal, isManualPieceTrigger, isNil, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { isManualPieceTrigger, isNil, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, FlowRun, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { system } from '../../helper/system/system'
 import { flowVersionService } from '../flow-version/flow-version.service'
+import { aiUsageTracker } from './ai-usage-tracker'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -23,7 +25,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
                 flowRun,
             } satisfies UpdateRunProgressRequest)
         }
-        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStep?.name)) {
+        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStep)) {
             const date = dayjs(flowRun.created).toISOString()
             const issueToAlert = {
                 projectId: flowRun.projectId,
@@ -33,11 +35,19 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
             }
 
             if (paidEditions) {
-                await alertsService(log).sendAlertOnRunFinish({ issueToAlert, flowRunId: flowRun.id })
+                await alertsService(log).sendAlertOnRunFinish({
+                    issueToAlert,
+                    flowRunId: flowRun.id,
+                    failedStep: flowRun.failedStep,
+                })
             }
         }
-        if (!paidEditions) {
+        if (!paidEditions || isNil(flowVersion)) {
             return
+        }
+        const { error } = await tryCatch(() => aiUsageTracker(log).track({ flowRun, flowVersion }))
+        if (error) {
+            log.warn({ error, flowRun: { id: flowRun.id } }, 'Failed to capture AI usage event')
         }
     },
 })

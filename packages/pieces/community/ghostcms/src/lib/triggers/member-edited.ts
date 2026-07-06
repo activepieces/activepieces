@@ -8,6 +8,9 @@ export const memberEdited = createTrigger({
   name: 'member_edited',
   displayName: 'Member Edited',
   description: 'Triggers when a member is edited',
+  aiMetadata: {
+    description: 'Fires when an existing member is updated in the Ghost publication (member.edited), e.g. a changed email, name, note, or newsletter subscription. Payload carries the current and previous member values.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

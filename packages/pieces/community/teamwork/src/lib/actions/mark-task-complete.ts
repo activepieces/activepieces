@@ -7,6 +7,8 @@ export const markTaskComplete = createAction({
 	name: 'mark_task_complete',
 	displayName: 'Mark Task Complete',
 	description: 'Set a task’s status to complete.',
+	audience: 'both',
+	aiMetadata: { description: 'Marks an existing Teamwork task as complete by its task ID. Use to close out a task once its work is done. Idempotent — re-running on an already-completed task leaves it completed with no additional effect.', idempotent: true },
 	auth: teamworkAuth,
 	props: {
 		taskId: Property.Dropdown({

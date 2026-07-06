@@ -9,6 +9,11 @@ export const listEnvironmentVariables = createAction({
   name: 'list_environment_variables',
   displayName: 'List Environment Variables',
   description: 'Retrieve environment variables for a Vercel project.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List the environment variables configured on a Vercel project, optionally filtered to a specific Git branch (preview-scoped vars only) and optionally requesting decrypted values where permitted. Use this to discover existing keys before reading or upserting a variable. Requires the target project. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     project: vercelProjectDropdown,
     decrypt: Property.Checkbox({

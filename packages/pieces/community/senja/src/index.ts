@@ -5,11 +5,13 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { listTestimonialsAction } from './lib/actions/list-testimonials';
 import { getTestimonialAction } from './lib/actions/get-testimonial';
 import { createTestimonialAction } from './lib/actions/create-testimonial';
+import { updateTestimonialAction } from './lib/actions/update-testimonial';
+import { deleteTestimonialAction } from './lib/actions/delete-testimonial';
 import { testimonialEventTrigger } from './lib/triggers/testimonial-event';
 import { SENJA_BASE_URL } from './lib/common';
 
@@ -50,6 +52,8 @@ export const senja = createPiece({
     listTestimonialsAction,
     getTestimonialAction,
     createTestimonialAction,
+    updateTestimonialAction,
+    deleteTestimonialAction,
     createCustomApiCallAction({
       baseUrl: () => SENJA_BASE_URL,
       auth: senjaAuth,

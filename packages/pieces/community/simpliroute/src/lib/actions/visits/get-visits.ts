@@ -8,6 +8,8 @@ export const get_visits = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Visits',
     description: 'Retrieve all registered visits. Can be filtered by planned visit date.',
+    audience: 'both',
+    aiMetadata: { description: 'List registered visits filtered by planned date. Read-only and idempotent; use to enumerate the visits scheduled for a day. For a single visit by ID use the get-visit or get-visit-detail action instead.', idempotent: true },
     props: {
         planned_date: Property.ShortText({ 
             displayName: 'planned_date', 

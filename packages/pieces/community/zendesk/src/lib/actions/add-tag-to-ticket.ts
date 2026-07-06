@@ -18,6 +18,8 @@ export const addTagToTicketAction = createAction({
   name: 'add-tag-to-ticket',
   displayName: 'Add Tag to Ticket',
   description: 'Apply one or more tags to a ticket.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds one or more tags to a ticket identified by ticket ID, merging with the ticket\'s existing tags rather than replacing them (unlike Update Ticket, which overwrites the tag set). Use to label or categorize a ticket without disturbing tags already present. At least one tag is required. Effectively idempotent for tags already present (Zendesk de-duplicates), so re-running with the same tags leaves the set unchanged.', idempotent: true },
   props: {
     ticket_id: ticketIdDropdown,
     tags: Property.Array({

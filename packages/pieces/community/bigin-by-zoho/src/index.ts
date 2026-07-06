@@ -3,7 +3,7 @@ import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework
 import { DATA_CENTER_REGIONS } from "./lib/common/constants";
 import { getZohoBiginAccountAuthorizationUrl } from "./lib/common/helpers";
 import { newContactCreated } from "./lib/triggers/new-contact-created";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { companyUpdated } from "./lib/triggers/company-updated";
 import { contactUpdated } from "./lib/triggers/contact-updated";
 import { newCallCreated } from "./lib/triggers/new-call-created";

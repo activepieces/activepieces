@@ -33,15 +33,18 @@ const ProjectRolePage = React.lazy(() =>
 const SecretManagersPage = React.lazy(
   () => import('./platform/security/secret-managers'),
 );
-const SigningKeysPage = React.lazy(() =>
-  import('./platform/security/signing-keys').then((m) => ({
-    default: m.SigningKeysPage,
+const EmbedPage = React.lazy(() =>
+  import('./platform/security/embed').then((m) => ({
+    default: m.EmbedPage,
   })),
 );
 const SSOPage = React.lazy(() =>
   import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
 );
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
+const AiCapabilitiesPage = React.lazy(
+  () => import('./platform/setup/ai-capabilities'),
+);
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const BrandingPage = React.lazy(() =>
   import('./platform/setup/branding').then((m) => ({
@@ -136,6 +139,18 @@ export const platformRoutes = [
         <PageTitle title="AI">
           <SuspenseWrapper>
             <AIProvidersPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/setup/ai-capabilities',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Capabilities">
+          <SuspenseWrapper>
+            <AiCapabilitiesPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -280,12 +295,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/signing-keys',
+    path: '/platform/security/embed',
     element: (
       <PlatformLayout>
         <PageTitle title="Embedding">
           <SuspenseWrapper>
-            <SigningKeysPage />
+            <EmbedPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -341,7 +356,7 @@ export const platformRoutes = [
     path: '/platform/infrastructure/health',
     element: (
       <PlatformLayout>
-        <PageTitle title="System Health">
+        <PageTitle title="Health">
           <SuspenseWrapper>
             <SettingsHealthPage />
           </SuspenseWrapper>

@@ -2,13 +2,13 @@ import { googleGeminiAuth } from '../auth';
 import { ApFile, DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { GenerateContentParameters, GoogleGenAI } from '@google/genai';
-import { isEmpty, MarkdownVariant } from '@activepieces/shared';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { nanoid } from 'nanoid';
-import { promises as fs } from 'fs';
+import { isEmpty } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
+import mime from 'mime-types';
+import { generateContentActionOutputSchema } from '../output-schemas';
 
 export const generateContentAction = createAction({
+  audience: 'human',
 	description: 'Generate content using Google Gemini using the "gemini-pro" model',
 	displayName: 'Generate Content',
 	name: 'generate_content',
@@ -105,6 +105,7 @@ export const generateContentAction = createAction({
 			},
 		}),
 	},
+	outputSchema: generateContentActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { model, prompt, toolType } = propsValue;
 		const toolProperties = propsValue.toolProperties ?? {};
@@ -129,17 +130,16 @@ export const generateContentAction = createAction({
 			case 'file-search': {
 				const { file, fileStoreName } = toolProperties as { file: ApFile; fileStoreName: string };
 
-				const tempFilePath = join(tmpdir(), `gemini-file-${nanoid()}.${file.extension}`);
-
-				const fileBuffer = Buffer.from(file.base64, 'base64');
-				await fs.writeFile(tempFilePath, fileBuffer);
+				const fileBlob = new Blob([Buffer.from(file.base64, 'base64')], {
+					type: mime.lookup(file.extension || file.filename) || undefined,
+				});
 
 				const fileSearchStore = await genAI.fileSearchStores.create({
 					config: { displayName: fileStoreName },
 				});
 
 				let operation = await genAI.fileSearchStores.uploadToFileSearchStore({
-					file: tempFilePath,
+					file: fileBlob,
 					fileSearchStoreName: fileSearchStore.name!,
 					config: {
 						displayName: file.filename,

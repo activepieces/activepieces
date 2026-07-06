@@ -6,6 +6,8 @@ export const startDeploy = createAction({
   name: "start_deploy",
   displayName: "Start Deploy",
   description: "Triggers a new build for a site on Netlify. Supports clearing build cache.",
+  audience: 'both',
+  aiMetadata: { description: 'Triggers a new build/deploy for a Netlify site, identified by its site ID. Optionally clears the build cache before building. Not idempotent: each call queues a fresh deploy, so calling repeatedly starts multiple builds.', idempotent: false },
   props: {
     siteId: Property.Dropdown({
       auth: netlifyAuth,      displayName: "Site",

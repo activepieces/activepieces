@@ -15,6 +15,8 @@ export const reservationReadAction = createAction({
   name: 'reservationRead',
   displayName: 'Resources - Reservations - Reservation Read',
   description: 'Get information for a reservation by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single AMPECO EVSE reservation by its numeric ID, returning its status and details. Use when you already know the reservation ID; to find reservations by EVSE, user, status, or date range use the reservations listing action. Read-only and idempotent.', idempotent: true },
   props: {
         
   reservation: Property.Number({

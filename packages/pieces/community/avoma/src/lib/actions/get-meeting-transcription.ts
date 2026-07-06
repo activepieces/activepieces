@@ -7,6 +7,8 @@ export const getMeetingTranscription = createAction({
   name: 'get_meeting_transcription',
   displayName: 'Get Meeting Transcription',
   description: 'Returns transcription with speakers, timestamps, and VTT file URL',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the transcription for a single Avoma meeting by its transcription UUID, including speaker-labeled segments and a downloadable VTT subtitle URL. Use to retrieve the text of a recorded meeting or call. Read-only and idempotent.', idempotent: true },
   props: {
     transcription_uuid: avomaCommon.transcriptionDropdown
   },

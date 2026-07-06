@@ -10,6 +10,11 @@ export const sendChannelMessageAction = createAction({
   name: 'microsoft_teams_send_channel_message',
   displayName: 'Send Channel Message',
   description: "Sends a message to a teams's channel.",
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts a new top-level message to a Microsoft Teams channel, identified by team ID and channel ID. Use to broadcast to a channel rather than a private chat; to answer an existing thread use Reply to Channel Message instead. Supports @username mentions, which are resolved to team members before posting. Not idempotent — each call posts another message.',
+    idempotent: false,
+  },
   props: {
     teamId: microsoftTeamsCommon.teamId,
     channelId: microsoftTeamsCommon.channelId,

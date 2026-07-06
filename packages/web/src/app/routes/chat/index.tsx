@@ -1,4 +1,5 @@
-import { isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
@@ -18,7 +19,9 @@ export function ChatPage() {
 
   const [messages, setMessages] = useState<Messages>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
-  const { data: flow, isLoading } = flowHooks.useGetFlow(flowId ?? '');
+  const { data: flow, isLoading } = flowHooks.useGetFlow({
+    flowId: flowId ?? '',
+  });
   useEffect(() => {
     if (!chatSessionId) {
       setChatSessionId(nanoid());

@@ -8,6 +8,12 @@ export const githubCreateDiscussionCommentAction = createAction({
   name: 'github_create_discussion_comment',
   displayName: 'Create Discussion Comment',
   description: 'Creates a comment on a discussion in a GitHub repository',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts a comment on a GitHub Discussion (via the GraphQL API) identified by its discussion ID. Use to reply to a repository discussion thread. Not idempotent: each call adds a new comment.',
+    idempotent: false,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     discussion_number: Property.Number({

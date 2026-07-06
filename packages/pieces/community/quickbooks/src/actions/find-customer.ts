@@ -8,6 +8,11 @@ export const findCustomerAction = createAction({
 	name: 'find_customer',
 	displayName: 'Find Customer',
 	description: 'Search for a customer by display name in QuickBooks.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Look up a single QuickBooks customer by exact display name, returning the first match. Use to resolve a customer name to its full record (including its Id) before referencing it elsewhere; the match is exact, not fuzzy. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		search_term: Property.ShortText({
 			displayName: 'Customer Name',

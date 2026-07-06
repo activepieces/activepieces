@@ -11,6 +11,10 @@ export const customerAddressUpdated = createTrigger({
   name: 'customerAddressUpdated',
   displayName: 'Customer Address Updated',
   description: 'Triggers when a new customer address is updated',
+  aiMetadata: {
+    description:
+      'Fires when an existing customer address is updated in the BigCommerce store. The event identifies the affected customer.',
+  },
   props: {},
   sampleData:{
     producer: 'stores/xqcaklwsso',

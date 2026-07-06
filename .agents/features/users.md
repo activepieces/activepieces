@@ -14,8 +14,8 @@ Manages user identity, platform membership, roles, session security, and a gamif
 - `packages/server/api/src/app/user/badges/checks/flow-content.ts` — flow content badge checks
 - `packages/server/api/src/app/user/platform/platform-user-controller.ts` — platform admin user management endpoints (EE)
 - `packages/server/api/src/app/user/platform/platform-user-module.ts` — platform user module
-- `packages/shared/src/lib/core/user/user.ts` — User, UserWithMetaInformation, UserWithBadges schemas; PlatformRole and UserStatus enums
-- `packages/shared/src/lib/core/user/badges/index.ts` — UserBadge schema
+- `packages/core/shared/src/lib/core/user/user.ts` — User, UserWithMetaInformation, UserWithBadges schemas; PlatformRole and UserStatus enums
+- `packages/core/shared/src/lib/core/user/badges/index.ts` — UserBadge schema
 - `packages/web/src/app/routes/platform/users/index.tsx` — platform admin user list page
 - `packages/web/src/app/routes/platform/users/columns.tsx` — user table column definitions
 - `packages/web/src/app/routes/platform/users/actions/user-actions.tsx` — action menu for a user row
@@ -34,6 +34,9 @@ Manages user identity, platform membership, roles, session security, and a gamif
 - Cloud: same as EE for multi-tenant platform management
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **User** — a platform-scoped membership record; one identity can have many users across platforms
 - **UserIdentity** — the canonical credential record (email, hashed password, OAuth provider, verified flag, tokenVersion)
 - **PlatformRole** — `ADMIN` (full control), `MEMBER` (own projects only), `OPERATOR` (read access to all projects)

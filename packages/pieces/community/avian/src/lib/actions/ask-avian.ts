@@ -2,7 +2,7 @@ import { avianAuth } from '../auth';
 import { createAction, Property, StoreScope } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { baseUrl } from '../common/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation, httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export const askAvian = createAction({
@@ -10,6 +10,8 @@ export const askAvian = createAction({
   name: 'ask_avian',
   displayName: 'Ask Avian',
   description: 'Ask Avian anything you want!',
+  audience: 'both',
+  aiMetadata: { description: 'Generate a text (or JSON) completion from an Avian language model for a given prompt, choosing the model and sampling parameters (temperature, top_p, penalties, max tokens). Use it for free-form LLM generation, Q&A, or rewriting against Avian. Optionally pass a memory key to persist and continue a conversation across runs. Not idempotent: each call produces a fresh generation and, when a memory key is set, appends to stored chat history.', idempotent: false },
   props: {
     model: Property.Dropdown({
       auth: avianAuth,
@@ -129,8 +131,8 @@ export const askAvian = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      memoryKey: z.string().max(128).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
     const openai = new OpenAI({
       baseURL: baseUrl,

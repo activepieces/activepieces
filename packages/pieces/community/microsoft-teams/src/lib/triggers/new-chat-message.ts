@@ -11,7 +11,7 @@ import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 type Props = {
 	chatId: string;
@@ -22,6 +22,9 @@ export const newChatMessageTrigger = createTrigger({
 	name: 'new-chat-message',
 	displayName: 'New Chat Message',
 	description: 'Triggers when a new message is received in a chat.',
+	aiMetadata: {
+		description: 'Fires when a new message is received in the selected Microsoft Teams chat (by chat ID). Each event represents the new chat message and its content. Polls periodically, so events appear with a short delay rather than instantly.',
+	},
 	props: {
 		chatId: microsoftTeamsCommon.chatId,
 	},

@@ -5,7 +5,7 @@ import { DimoClient, getNumberExpression } from '../../common/helpers';
 import { CreateWebhookParams, WebhookInfo, WebhookPayload } from '../../common/types';
 import { TriggerField } from '../../common/constants';
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'dimo-battery-power-trigger';
 
@@ -14,6 +14,10 @@ export const batteryPowerTrigger = createTrigger({
 	name: 'battery-power-trigger',
 	displayName: 'Battery Current Power Trigger',
 	description: 'Triggers when vehicle battery current power meets the specified condition.',
+	aiMetadata: {
+		description:
+			'Fires via DIMO webhook when a monitored vehicle reports a traction-battery current-power reading (watts) that satisfies the configured comparison operator against the threshold. Each event represents a single battery-power telemetry signal and includes the vehicle token ID, timestamp, power in watts/kilowatts, and a derived status (Charging when negative, Discharging when positive, Idle). Use to monitor instantaneous battery power draw or charge flow.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		vehicleTokenIds: Property.Array({

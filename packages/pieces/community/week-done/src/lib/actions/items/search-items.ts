@@ -12,6 +12,8 @@ export const searchItemsAction = createAction({
   name: 'search_items',
   displayName: 'Search Items',
   description: 'Search for items.',
+  audience: 'both',
+  aiMetadata: { description: 'List/search Weekdone items (OKR plans, progress, problems, etc.), optionally narrowing by user, team, and reporting period; leave the filters empty to retrieve all accessible items. Use to find an item or its ID before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     user_id: Property.Dropdown({
       auth: weekdoneAuth,

@@ -1,4 +1,5 @@
-import { apId, JobData, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { ExecutionType, JobData, ResumeReason, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -91,8 +92,26 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
             }
         },
     }
+    const bridgeV8ToV9: JobMigration = {
+        runAtSchemaVersion: 8,
+        migrate: async (job: JobData) => ({ ...job, schemaVersion: 9 }),
+    }
+    const addResumeReason: JobMigration = {
+        runAtSchemaVersion: 9,
+        migrate: async (job: JobData) => {
+            if (job.jobType !== WorkerJobType.EXECUTE_FLOW || job.executionType !== ExecutionType.RESUME) {
+                return { ...job, schemaVersion: 10 }
+            }
+            const isLegacyRetry = job.payload.type === 'inline' && isNil(job.payload.value)
+            return {
+                ...job,
+                schemaVersion: 10,
+                resumeReason: isLegacyRetry ? ResumeReason.RETRY : ResumeReason.WAITPOINT,
+            }
+        },
+    }
 
-    return [enrichFlowId, migratePayloadToUnion, renameProgressAndHandlerFields, dropLogsUploadUrl, backfillRequiredExecuteFlowFields]
+    return [enrichFlowId, migratePayloadToUnion, renameProgressAndHandlerFields, dropLogsUploadUrl, backfillRequiredExecuteFlowFields, bridgeV8ToV9, addResumeReason]
 }
 
 function migrateProgressUpdateType(progressUpdateType: string | undefined): StreamStepProgress {
@@ -107,8 +126,8 @@ export const jobMigrations = (log: FastifyBaseLogger) => ({
         let jobData = job as JobData
         log.info({
             schemaVersion: jobData.schemaVersion,
-            jobType: jobData.jobType,
-            projectId: jobData.projectId,
+            job: { type: jobData.jobType },
+            project: { id: jobData.projectId },
         }, '[jobMigrations] Apply migration for job')
         const migrations = createMigrations(log)
         for (const migration of migrations) {

@@ -9,6 +9,9 @@ export const formTranscribed = createTrigger({
     name: 'formTranscribed',
     displayName: 'Form transcribed',
     description: 'Triggered when a form is transcribed',
+    aiMetadata: {
+        description: 'Fires when a response submitted to a specific VideoAsk form finishes transcription, signaling that text transcripts of the respondent\'s audio/video answers are now available alongside the contact and form data. Scoped to one form via a registered webhook.',
+    },
     props: {
         organizationId: organizationIdDropdown,
         formId: videoaskIdDropdown,

@@ -8,6 +8,8 @@ export const getFacetData = createAction({
     name: 'get_facet_data',
     displayName: 'Get Facet Data',
     description: 'Get list of Facet data against realm.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve catalog facet data (e.g. distinct classification codes) for a SAP Ariba realm. Use to enumerate facet values for filtering or grouping catalog content; requires realm, the facet field to select, and an RSQL filter expression. Read-only and idempotent.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

@@ -9,6 +9,12 @@ export const getPersonSearch = createAction({
   displayName: 'Search People',
   description:
     'Search for people matching a set of criteria across an exhaustive dataset (3 credits per profile URL returned)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Find people by querying a large professional dataset on attributes like name, location, current/past role and company, education, skills, languages, and follower counts. Pick this for discovery when you do not already have a specific profile URL; read-only and idempotent, but billed per result so narrow filters before running. Set Enrich Profiles to return full profile records instead of just URLs (costs extra credits each).',
+    idempotent: true,
+  },
   props: {
     country: Property.ShortText({
       displayName: 'Country',

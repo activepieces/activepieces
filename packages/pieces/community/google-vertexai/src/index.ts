@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { vertexAiAuth } from "./lib/auth";
 import { generateContent, generateImage, customApiCall } from "./lib/actions";
 

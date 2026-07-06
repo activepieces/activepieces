@@ -11,6 +11,8 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in the CRM.',
+  audience: 'both',
+  aiMetadata: { description: 'Imports an invoice into the ChargeKeep/Sperse CRM for a contact (identified by Contact ID or External Contact ID), with billing/shipping addresses, a single line item, and an optional transaction record. Use to record or bill an invoice; requires an Invoice No., status, currency, date, due date, a description, line quantity, and a transaction date. Because the import is keyed on the Invoice No., reusing the same number updates that invoice rather than creating a duplicate; set Historical Data to true when recording a past (non-live) transaction.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     contactId: Property.Number({

@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { askLocalAI } from './lib/actions/send-prompt';
 
 export const localaiAuth = PieceAuth.CustomAuth({

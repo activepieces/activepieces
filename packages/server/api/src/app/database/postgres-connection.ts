@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { isNil, spreadIfDefined } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -49,6 +49,9 @@ import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
+import { AddUiMessagesToChatConversation1778983371000 } from './migration/common/1778983371000-AddUiMessagesToChatConversation'
+import { AddStatusToChatConversation1779500000000 } from './migration/common/1779500000000-AddStatusToChatConversation'
+import { AddTimelineToFlowRun1800000000000 } from './migration/common/1800000000000-AddTimelineToFlowRun'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -364,16 +367,33 @@ import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/177640
 import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/1777370308000-AddRunStatusCoverIndex'
 import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
 import { AddTeamsBotInstallation1778753444131 } from './migration/postgres/1778753444131-AddTeamsBotInstallation'
+import { AddThemeColorsToPlatform1781206955649 } from './migration/postgres/1781206955649-AddThemeColorsToPlatform'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
+import { AddEmbedSubdomainTable1787000000000 } from './migration/postgres/1787000000000-AddEmbedSubdomainTable'
 import { MakeChatConversationPlatformWide1787000000000 } from './migration/postgres/1787000000000-MakeChatConversationPlatformWide'
 import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787100000000-AddSsoDomainVerification'
 import { AddProjectIdsGinIndexToAppConnection1787200000000 } from './migration/postgres/1787200000000-AddProjectIdsGinIndexToAppConnection'
 import { AddPlatformMcpServer1788000000000 } from './migration/postgres/1788000000000-AddPlatformMcpServer'
 import { MakeMcpOAuthProjectIdNullable1789000000000 } from './migration/postgres/1789000000000-MakeMcpOAuthProjectIdNullable'
 import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000000000-RemoveMcpServerStatus'
+import { RenameEnabledToolsToDisabledTools1791000000000 } from './migration/postgres/1791000000000-RenameEnabledToolsToDisabledTools'
+import { AddTriggerSourceFlowVersionIdIndex1792000000000 } from './migration/postgres/1792000000000-AddTriggerSourceFlowVersionIdIndex'
+import { AddVariableTable1793000000000 } from './migration/postgres/1793000000000-AddVariableTable'
+import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
+import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
+import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
+import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
+import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
+import { AddWorkerGroupsEnabledToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddWorkerGroupsEnabledToPlatformPlan'
+import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
+import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/1798000000000-AddWorkerGroupIdToProject'
+import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
+import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
+import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
+import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -751,11 +771,12 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatTables1776200000000,
         AddMcpServerTokenIndex1776400000000,
         AddRunStatusCoverIndex1777370308000,
+        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         DropChatTokenColumns1782000000000,
         AddUserSandboxTable1784000000000,
-        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         ReplacesSandboxWithVercelAiSdk1785000000000,
         AddChatCompactionColumns1786000000000,
+        AddEmbedSubdomainTable1787000000000,
         AddSsoDomainVerification1787100000000,
         AddProjectIdsGinIndexToAppConnection1787200000000,
         AddPlatformMcpServer1788000000000,
@@ -763,6 +784,25 @@ export const getMigrations = (): (new () => Migration)[] => {
         MakeChatConversationPlatformWide1787000000000,
         RemoveMcpServerStatus1790000000000,
         AddTeamsBotInstallation1778753444131,
+        RenameEnabledToolsToDisabledTools1791000000000,
+        AddTriggerSourceFlowVersionIdIndex1792000000000,
+        AddUiMessagesToChatConversation1778983371000,
+        AddVariableTable1793000000000,
+        AddCreatedByToFlow1794000000000,
+        AddStatusToChatConversation1779500000000,
+        AddDataManipulationEnabledToPlatformPlan1794000000000,
+        AddThemeColorsToPlatform1781206955649,
+        AddExternalIdToFolder1795000000000,
+        AddPieceSelectorConfigToPlatform1796000000000,
+        AddWorkerGroupsEnabledToPlatformPlan1797000000000,
+        AddWorkerGroupIdToProject1798000000000,
+        AddAiToolConfigTable1797000000000,
+        AddChatConversationActiveRunId1798000000000,
+        AddChatRolloutUserTable1799000000000,
+        AddTimelineToFlowRun1800000000000,
+        AddToolSearchIndexTable1801000000000,
+        AddChatRolloutFreeCreditGrant1802000000000,
+        DropDataManipulationEnabledFromPlatformPlan1803000000000,
     ]
     return migrations
 }

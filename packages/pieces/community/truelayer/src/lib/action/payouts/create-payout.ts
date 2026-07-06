@@ -8,6 +8,8 @@ export const createPayout = createAction({
   name: 'create-payout',
   displayName: 'Create payout',
   description: 'Pay out from one of your merchant accounts. ',
+  audience: 'both',
+  aiMetadata: { description: 'Initiate a payout (transfer of funds) from one of your TrueLayer merchant accounts to a beneficiary. This moves money and is not idempotent on its own, so supply the required idempotency key so retries do not duplicate the payout. To check a payout afterward use Get Payout, and to authorize it use Start authorization flow.', idempotent: false },
   props: {
     IdempotencyKeyHeader: Property.ShortText({
       displayName: 'Used to ensure idempotent requests',

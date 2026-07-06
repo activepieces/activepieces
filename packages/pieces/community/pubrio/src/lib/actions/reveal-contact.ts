@@ -8,6 +8,12 @@ export const revealContact = createAction({
   name: 'reveal_contact',
   displayName: 'Reveal Contact',
   description: 'Reveal email or phone number for a person (uses credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Reveal a person's contact details (work/personal email and/or phone) for a single individual identified by people_search_id or LinkedIn URL. This consumes account credits and is not idempotent in cost, so call it only once contacts are actually needed. Use for one person at a time after locating them via Search People or Lookup Person.",
+    idempotent: false,
+  },
   props: {
     lookup_type: Property.StaticDropdown({
       displayName: 'Lookup Type',

@@ -8,6 +8,12 @@ export const updateClientAction = createAction({
 	name: 'update_client',
 	displayName: 'Update Client',
 	description: 'Updates an existing client.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			"Updates an existing Acuity client's details (name, email, phone, notes), identifying the client by their current first and last name (and optionally current phone to disambiguate). At least one new field must be supplied. Use to edit a known client rather than create one. Idempotent — applying the same field overwrites repeatedly yields the same client state.",
+		idempotent: true,
+	},
 	props: {
 		currentFirstName: Property.ShortText({
 			displayName: 'Current First Name (Identifier)',

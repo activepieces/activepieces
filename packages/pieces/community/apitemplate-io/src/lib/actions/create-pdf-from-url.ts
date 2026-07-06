@@ -8,6 +8,8 @@ export const createPdfFromUrl = createAction({
   name: 'createPdfFromUrl',
   displayName: 'Create PDF From URL',
   description: 'Creates a PDF from a webpage URL.',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a new PDF by loading and capturing a live webpage at the given URL, with optional page settings (size, orientation, margins), viewport sizing, full-page capture, and wait-for-selector/timeout controls for dynamic content. Use when the source is a public web page rather than supplied HTML or a saved template. Requires the URL. Not idempotent: each call generates and stores a new PDF.', idempotent: false },
   props: {
     url: Property.ShortText({
       displayName: 'URL',

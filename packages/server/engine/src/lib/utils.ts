@@ -1,8 +1,9 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
+import { formatPieceError, Result, tryCatch } from '@activepieces/core-utils'
 import { ConnectionsManager, ContextVersion, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { ExecutionError, ExecutionErrorType, RespondResponse, Result, tryCatch } from '@activepieces/shared'
+import { ExecutionError, ExecutionErrorType, RespondResponse } from '@activepieces/shared'
 import { createConnectionResolver } from './piece-context/connection-resolver'
 
 export type FileEntry = {
@@ -43,23 +44,10 @@ export const utils = {
         return entries
     },
     formatExecutionError(value: ExecutionError): string {
-        try {
-            return JSON.stringify({
-                ...value,
-                ...JSON.parse(value.message),
-            }, null, 2)
-        }
-        catch (e) {
-            return inspect(value)
-        }
+        return JSON.stringify(formatPieceError(value, { raw: inspect(value) }))
     },
     formatError(value: Error): string {
-        try {
-            return JSON.stringify(JSON.parse(value.message), null, 2)
-        }
-        catch (e) {
-            return inspect(value)
-        }
+        return JSON.stringify(formatPieceError(value, { raw: inspect(value) }))
     },
     async folderExists(filePath: string): Promise<boolean> {
         try {

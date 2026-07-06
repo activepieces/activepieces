@@ -8,6 +8,8 @@ export const updateRowAction = createAction({
   name: 'update_row',
   displayName: 'Update Row',
   description: 'Update rows in an Oracle table',
+  audience: 'both',
+  aiMetadata: { description: 'Updates rows in an Oracle Database table, setting the given column values on every row that matches the filter (WHERE) conditions. Use to modify existing records. Critical: an empty filter object updates ALL rows in the table, so always scope the filter unless a full-table update is intended. Repeating the same call re-applies the same values (effectively idempotent for fixed values), but counts as a mutation each time.', idempotent: false },
   props: {
     tableName: oracleDbProps.tableName(),
     values: Property.Object({

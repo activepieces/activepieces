@@ -11,6 +11,12 @@ export const runAgent = createAction({
   displayName: 'Run Agent',
   description:
     'Execute an agent with provided inputs and return results immediately',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a configured Roe AI agent by its agent ID, passing dynamic input fields (text or file inputs the agent expects) and optional metadata, and returns the execution result synchronously. Use to invoke a prebuilt agent rather than write a raw query. Each call triggers a fresh agent run, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     agent_id: agentIdDropdown,
     agent_input: Property.Object({

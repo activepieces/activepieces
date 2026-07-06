@@ -9,6 +9,8 @@ export const updateSubscriberAction = createAction({
   name: 'update_subscriber',
   displayName: 'Update Subscriber',
   description: 'Update an existing subscriber\'s data',
+  audience: 'both',
+  aiMetadata: { description: "Updates an existing subscriber's name, phone, or custom fields in a Sender account, identified by subscriber ID. Use when the contact already exists and you only need to change attributes; to create-or-update by email use Add / Update Subscriber instead. Idempotent: applying the same values repeatedly yields the same result.", idempotent: true },
   props: {
     subscriber: subscriberDropdownSingle,
     email: Property.ShortText({

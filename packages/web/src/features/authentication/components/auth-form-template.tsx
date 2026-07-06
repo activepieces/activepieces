@@ -17,6 +17,7 @@ import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 
 import { AuthAnimation } from './auth-animation';
+import { SamlLoginForm } from './saml-login-form';
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
@@ -100,9 +101,12 @@ const AuthSeparator = ({
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
     );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
+  const hasThirdPartyLogin =
+    thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml || isCloud;
 
-  return (thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml) &&
-    isEmailAuthEnabled ? (
+  return hasThirdPartyLogin && isEmailAuthEnabled ? (
     <HorizontalSeparatorWithText className="my-5 text-muted-foreground">
       {t('or')}
     </HorizontalSeparatorWithText>
@@ -173,6 +177,7 @@ const AuthFormTemplate = React.memo(
     const token = authenticationSession.getToken();
     const redirectAfterLogin = useRedirectAfterLogin();
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
+    const [showSamlLogin, setShowSamlLogin] = useState(false);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
       ApFlagId.EMAIL_AUTH_ENABLED,
     );
@@ -197,20 +202,35 @@ const AuthFormTemplate = React.memo(
       return null;
     }
 
+    if (showSamlLogin) {
+      return (
+        <AuthLayout isSignUp={isSignUp}>
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-bold tracking-tight font-sentient">
+              {t('Sign in with SAML')}
+            </h1>
+          </div>
+          <SamlLoginForm onBack={() => setShowSamlLogin(false)} />
+        </AuthLayout>
+      );
+    }
+
     return (
       <AuthLayout isSignUp={isSignUp}>
         {!showCheckYourEmailNote && (
           <div className="mb-6 text-center">
-            <h1
-              className="text-2xl font-bold tracking-tight"
-              style={{ fontFamily: "'Sentient', serif" }}
-            >
+            <h1 className="text-2xl font-bold tracking-tight font-sentient">
               {data.title}
             </h1>
           </div>
         )}
 
-        {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
+        {!showCheckYourEmailNote && (
+          <ThirdPartyLogin
+            isSignUp={isSignUp}
+            onSamlClick={() => setShowSamlLogin(true)}
+          />
+        )}
         <AuthSeparator
           isEmailAuthEnabled={
             (isEmailAuthEnabled ?? true) && !showCheckYourEmailNote

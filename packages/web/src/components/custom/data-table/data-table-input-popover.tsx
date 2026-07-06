@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { SearchIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useDebounce } from 'use-debounce';
+import { useState } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { SearchInput } from '@/components/custom/search-input';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+
+const DEBOUNCE_MS = 500;
 
 type DataTableInputPopoverProps = {
   title?: string;
@@ -24,13 +26,6 @@ const DataTableInputPopover = ({
   filterValue,
   handleFilterChange,
 }: DataTableInputPopoverProps) => {
-  const [searchQuery, setSearchQuery] = useState(filterValue);
-  const [debouncedQuery] = useDebounce(searchQuery, 300);
-
-  useEffect(() => {
-    handleFilterChange(debouncedQuery);
-  }, [debouncedQuery]);
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -51,14 +46,38 @@ const DataTableInputPopover = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
-        <SearchInput
-          placeholder={t('Search')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e)}
-        />
+        <SearchPopoverContent
+          key={filterValue}
+          filterValue={filterValue}
+          handleFilterChange={handleFilterChange}
+        ></SearchPopoverContent>
       </PopoverContent>
     </Popover>
   );
 };
 
+const SearchPopoverContent = ({
+  filterValue,
+  handleFilterChange,
+}: Pick<DataTableInputPopoverProps, 'filterValue' | 'handleFilterChange'>) => {
+  const [searchQuery, setSearchQuery] = useState(filterValue);
+  const debouncedFilterChange = useDebouncedCallback(
+    handleFilterChange,
+    DEBOUNCE_MS,
+  );
+
+  const onSearchChange = (value: string) => {
+    setSearchQuery(value);
+    debouncedFilterChange(value);
+  };
+
+  return (
+    <SearchInput
+      key={filterValue}
+      placeholder={t('Search')}
+      value={searchQuery}
+      onChange={onSearchChange}
+    />
+  );
+};
 export { DataTableInputPopover };

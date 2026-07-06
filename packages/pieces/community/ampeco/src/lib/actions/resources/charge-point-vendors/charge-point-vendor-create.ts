@@ -15,6 +15,8 @@ export const chargePointVendorCreateAction = createAction({
   name: 'chargePointVendorCreate',
   displayName: 'Resources - Charge Point Vendors - Create',
   description: 'Create new Charge Point Vendor.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new AMPECO charge-point vendor (manufacturer) with the given name. Not idempotent: each call creates a separate vendor record, so guard against duplicate names. Use the update action to rename an existing vendor.', idempotent: false },
   props: {
         
   name: Property.ShortText({

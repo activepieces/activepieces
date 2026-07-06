@@ -17,12 +17,12 @@ A built-in relational database feature that lets users store structured data dir
 - `packages/server/api/src/app/tables/record/cell.entity.ts` — Cell entity
 - `packages/server/api/src/app/tables/record/record-side-effects.ts` — fires TableWebhook flows on record events
 - `packages/server/api/src/app/tables/tables.module.ts` — module registration
-- `packages/shared/src/lib/automation/tables/table.ts` — Table schema
-- `packages/shared/src/lib/automation/tables/field.ts` — Field schema and FieldType enum
-- `packages/shared/src/lib/automation/tables/record.ts` — Record schema
-- `packages/shared/src/lib/automation/tables/cell.ts` — Cell schema
-- `packages/shared/src/lib/automation/tables/table-webhook.ts` — TableWebhook schema
-- `packages/shared/src/lib/automation/tables/dto/` — request/response DTOs
+- `packages/core/shared/src/lib/automation/tables/table.ts` — Table schema
+- `packages/core/shared/src/lib/automation/tables/field.ts` — Field schema and FieldType enum
+- `packages/core/shared/src/lib/automation/tables/record.ts` — Record schema
+- `packages/core/shared/src/lib/automation/tables/cell.ts` — Cell schema
+- `packages/core/shared/src/lib/automation/tables/table-webhook.ts` — TableWebhook schema
+- `packages/core/shared/src/lib/automation/tables/dto/` — request/response DTOs
 - `packages/web/src/app/routes/tables/id/index.tsx` — the table editor page (react-data-grid based)
 - `packages/web/src/features/tables/components/ap-table-header.tsx` — header bar with table name, actions
 - `packages/web/src/features/tables/components/ap-table-state-provider.tsx` — state context for the table
@@ -45,6 +45,9 @@ A built-in relational database feature that lets users store structured data dir
 - Cloud: available
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Table** — a named collection of typed columns (fields) and rows (records), scoped to a project
 - **Field** — a typed column definition; types: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`
 - **Record** — a single row in a table; stored as a row entity with associated cells
@@ -72,7 +75,7 @@ A built-in relational database feature that lets users store structured data dir
 ## Key Service Methods
 
 - `table.create()` — creates table + optional fields
-- `table.list()` — paginated with optional row count, name filter, folder filter, externalIds filter
+- `table.list()` — paginated with optional row count, name filter, single-folder filter (`folderId`), multi-folder filter (`folderIds`), externalIds filter
 - `table.update()` — rename, move to folder, change trigger/status
 - `table.delete()` — cascades to fields, records, cells, webhooks
 - `table.exportTable()` — returns fields + rows as JSON
@@ -81,6 +84,19 @@ A built-in relational database feature that lets users store structured data dir
 - `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS)
 - `record.update()` — update cells (empty fields unchanged)
 - `record.delete()` / `record.deleteAll()` — bulk delete
+
+## Access Control
+
+All table / field / record routes use `securityAccess.project([...], <permission>, <resource>)`. The required permission per resource:
+
+- **Read** (`GET /v1/tables`, `GET /v1/tables/:id`, `GET /v1/fields`, `GET /v1/fields/:id`, `GET /v1/records`, `GET /v1/records/:id`): `READ_TABLE`
+- **Write** (`POST /v1/tables`, `POST /v1/tables/:id`, `DELETE /v1/tables/:id`, `POST /v1/fields`, `POST /v1/fields/:id`, `DELETE /v1/fields/:id`, `POST /v1/records`, `POST /v1/records/:id`, `DELETE /v1/records`): `WRITE_TABLE`
+
+Default project roles: `ADMIN` and `EDITOR` have both; `VIEWER` has only `READ_TABLE`. Custom roles inherit whatever permissions are configured.
+
+`ENGINE` and `SERVICE` principals skip the per-role permission check entirely — `ENGINE` is gated on `principal.projectId === projectId` and `SERVICE` on platform-equality only — so flow steps that call the records API and service API keys are unaffected by the role-permission model.
+
+When adding a new route (read or write) on tables / fields / records, the `permission` argument to `securityAccess.project(...)` is required; passing `undefined` short-circuits the rbac check to allow any project member.
 
 ## Side Effects
 

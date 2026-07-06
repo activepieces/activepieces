@@ -24,7 +24,6 @@ type AutomationsTableProps = {
   isLoading: boolean;
   selectedItems: SelectedItemsMap;
   expandedFolders: Set<string>;
-  loadingFolders: Set<string>;
   projectMembers: ProjectMemberWithUser[] | undefined;
   folders: FolderDto[];
   selectableCount: number;
@@ -53,12 +52,47 @@ type AutomationsTableProps = {
 const rowClassName =
   'group flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-muted/50';
 
+function AutomationsSkeletonRow({
+  indent = 0,
+  isEmbedded,
+}: {
+  indent?: number;
+  isEmbedded: boolean;
+}) {
+  return (
+    <div className="flex items-center py-2.5 border-b">
+      <div className="w-10 shrink-0" />
+      <div className="w-8 shrink-0" />
+      <div
+        className="flex-1 min-w-[200px] pl-2 flex items-center"
+        style={indent ? { paddingLeft: indent } : undefined}
+      >
+        <Skeleton className="h-4 w-48" />
+      </div>
+      <div className="w-[230px] shrink-0 px-2 flex items-center">
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <div className="w-[200px] shrink-0 px-2 flex items-center">
+        <Skeleton className="h-4 w-28" />
+      </div>
+      {!isEmbedded && (
+        <div className="w-[250px] shrink-0 px-2 flex items-center">
+          <Skeleton className="h-4 w-32" />
+        </div>
+      )}
+      <div className="w-[160px] shrink-0 px-2 flex items-center">
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <div className="w-[80px] shrink-0 px-2" />
+    </div>
+  );
+}
+
 export const AutomationsTable = ({
   items,
   isLoading,
   selectedItems,
   expandedFolders,
-  loadingFolders,
   projectMembers,
   folders,
   selectableCount,
@@ -119,7 +153,7 @@ export const AutomationsTable = ({
               {t('Owner')}
             </div>
           )}
-          <div className="w-[120px] shrink-0 px-2 flex items-center gap-1.5">
+          <div className="w-[160px] shrink-0 px-2 flex items-center gap-1.5">
             <Activity className="h-3.5 w-3.5" />
             {t('Status')}
           </div>
@@ -127,11 +161,12 @@ export const AutomationsTable = ({
         </div>
 
         {isLoading ? (
-          <div className="p-2">
+          <div>
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="w-full h-9 mb-3 rounded-sm">
-                <Skeleton className="w-full min-h-9" />
-              </div>
+              <AutomationsSkeletonRow
+                key={i}
+                isEmbedded={embedState.isEmbedded}
+              />
             ))}
           </div>
         ) : (
@@ -160,7 +195,6 @@ export const AutomationsTable = ({
                         isSelected={isItemSelected(group.item)}
                         isExpanded={expandedFolders.has(group.item.id)}
                         isPinned={isPinned(group.item.id)}
-                        isFolderLoading={loadingFolders.has(group.item.id)}
                         projectMembers={projectMembers}
                         folders={folders}
                         onRowClick={() => onRowClick(group.item)}

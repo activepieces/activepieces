@@ -8,23 +8,6 @@ export const kapsoAuth = PieceAuth.SecretText({
   description:
     'Your Kapso API key. You can obtain it from your [Kapso dashboard](https://app.kapso.ai).',
   required: true,
-  validate: async ({ auth }) => {
-    try {
-      const client = makeClient(auth);
-      await client.phoneNumbers.settings.get({
-        phoneNumberId: 'me',
-      });
-
-      return {
-        valid: true,
-      };
-    } catch(e) {
-      return {
-        valid: false,
-        error: e instanceof Error ? e.message : String(e),
-      };
-    }
-  },
 });
 
 export function makeClient(apiKey: string): WhatsAppClient {

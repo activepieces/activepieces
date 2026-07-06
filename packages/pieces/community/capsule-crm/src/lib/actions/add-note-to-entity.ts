@@ -13,6 +13,12 @@ export const addNoteToEntityAction = createAction({
   displayName: 'Add Note to Entity',
   description:
     'Add a comment/note to an entity (e.g., contact, opportunity, project).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Appends a note entry to one Capsule CRM record, where the entity type selector chooses whether the note attaches to a party (contact), an opportunity, or a project. Use to log a comment or activity against a known record. Not idempotent: each call appends a new note, so repeating it adds duplicate notes.',
+    idempotent: false,
+  },
   props: {
     content: Property.LongText({
       displayName: 'Note Content',

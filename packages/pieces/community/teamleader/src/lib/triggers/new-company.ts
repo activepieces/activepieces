@@ -14,6 +14,9 @@ export const newCompany = createTrigger({
   name: 'new_company',
   displayName: 'New Company',
   description: 'Triggers when a new company is created',
+  aiMetadata: {
+    description: 'Fires when a new company (business entity) is added in Teamleader Focus CRM, via the company.added webhook. Emits the full company record. Use to react to newly created organizations, such as onboarding or enrichment flows.',
+  },
   auth: teamleaderAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

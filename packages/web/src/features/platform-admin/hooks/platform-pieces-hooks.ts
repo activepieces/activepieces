@@ -1,3 +1,4 @@
+import { PieceSelectorConfig } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
@@ -53,6 +54,26 @@ export const platformPiecesMutations = {
       },
     });
   },
+  useUpdatePieceSelectorConfig: ({
+    platformId,
+    refetch,
+  }: {
+    platformId: string;
+    refetch: () => Promise<void>;
+  }) => {
+    return useMutation({
+      mutationFn: async (pieceSelectorConfig: PieceSelectorConfig | null) => {
+        await platformApi.update({ pieceSelectorConfig }, platformId);
+        await refetch();
+      },
+      onSuccess: () => {
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+      onError: () => {
+        toast.error(t('Failed to save changes. Please try again.'));
+      },
+    });
+  },
   useSyncPieces: () => {
     return useMutation({
       mutationFn: async () => {
@@ -64,6 +85,37 @@ export const platformPiecesMutations = {
             'Pieces have been synced from the activepieces cloud.',
           ),
         });
+      },
+    });
+  },
+  useBulkSetPiecesVisibility: ({
+    platformId,
+    filteredPieceNames,
+    refetch,
+  }: {
+    platformId: string;
+    filteredPieceNames: string[];
+    refetch: () => Promise<void>;
+  }) => {
+    return useMutation({
+      mutationFn: async ({
+        pieceNames,
+        hidden,
+      }: {
+        pieceNames: string[];
+        hidden: boolean;
+      }) => {
+        const next = hidden
+          ? [...new Set([...filteredPieceNames, ...pieceNames])]
+          : filteredPieceNames.filter((n) => !pieceNames.includes(n));
+        await platformApi.update({ filteredPieceNames: next }, platformId);
+        await refetch();
+      },
+      onSuccess: () => {
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      },
+      onError: () => {
+        toast.error(t('Failed to save changes. Please try again.'));
       },
     });
   },

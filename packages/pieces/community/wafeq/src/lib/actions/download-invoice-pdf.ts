@@ -9,6 +9,12 @@ export const downloadInvoicePdf = createAction({
   displayName: 'Download Invoice PDF',
   description:
     'Download an invoice as a PDF. You can attach the file to a Gmail / Outlook email, save it to Google Drive or Dropbox, or upload it anywhere else in the flow.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches an existing Wafeq invoice as a PDF file for downstream use (email attachment, cloud storage, upload). Choose this when a flow needs the rendered invoice document rather than its data fields. Requires the invoice ID; the file name is optional. Read-only and idempotent — re-running returns the same PDF.',
+    idempotent: true,
+  },
   props: {
     invoice: wafeqProps.invoiceDropdown({
       description: 'Pick which invoice to download.',

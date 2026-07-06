@@ -1,14 +1,21 @@
 import { googleSheetsAuth } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { createGoogleClient } from '../common/common';
+import { findWorksheetActionOutputSchema } from '../output-schemas';
 
 export const findWorksheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find-worksheet',
 	displayName: 'Find Worksheet(s)',
 	description: 'Finds a worksheet(s) by title.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Searches the worksheets (tabs) of a given spreadsheet for ones whose title matches a query (exact or contains). Use to resolve a worksheet/sheet id from its tab name before acting on it. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
 		spreadsheetId: spreadsheetIdProp('Spreadsheet', ''),
@@ -24,6 +31,7 @@ export const findWorksheetAction = createAction({
 			defaultValue: false,
 		}),
 	},
+	outputSchema: findWorksheetActionOutputSchema,
 	async run(context) {
 		const spreadsheetId = context.propsValue.spreadsheetId;
 		const title = context.propsValue.title;
@@ -31,7 +39,7 @@ export const findWorksheetAction = createAction({
 
 		const authClient = await createGoogleClient(context.auth);
 
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId,

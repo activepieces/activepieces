@@ -8,6 +8,12 @@ export const createContact = createAction({
   name: 'createContact',
   displayName: 'Create Contact',
   description: 'Create a new contact in Quaderno (customer or vendor)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new contact (customer or vendor) in Quaderno via POST, capturing name, address, tax ID/status, and contact details. Use when an agent needs to register a party before billing or recording expenses against them. Requires first name and a 2-letter ISO country code; the Kind prop selects person vs. company. Not idempotent — each call creates another contact even with identical input.',
+    idempotent: false,
+  },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

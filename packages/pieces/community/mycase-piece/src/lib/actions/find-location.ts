@@ -7,6 +7,8 @@ export const findLocation = createAction({
   name: 'find_location',
   displayName: 'Find Location',
   description: 'Searches for locations with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'List or search MyCase office/event locations, optionally filtering by last-updated date and limiting page size. Use to resolve a location name to its ID before referencing it elsewhere (e.g. when creating an event). Read-only and idempotent.', idempotent: true },
   props: {
     updated_after: Property.DateTime({
       displayName: 'Updated After',

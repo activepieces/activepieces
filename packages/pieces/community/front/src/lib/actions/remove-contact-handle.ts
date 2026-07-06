@@ -10,6 +10,12 @@ export const removeContactHandle = createAction({
   displayName: 'Remove Contact Handle',
   description:
     'Remove a handle (email, phone number, etc.) from an existing Contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Remove a specific handle (matched by value and source type) from an existing Front contact, the inverse of "Add Contact Handle". The Force option deletes the whole contact if this is their last handle, so use with care. Effectively idempotent: removing a handle that is already gone leaves the contact unchanged.',
+    idempotent: true,
+  },
   props: {
     contact_id: contactIdDropdown,
     handle: Property.ShortText({

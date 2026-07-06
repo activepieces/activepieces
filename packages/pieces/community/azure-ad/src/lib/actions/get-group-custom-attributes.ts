@@ -8,6 +8,12 @@ export const getGroupCustomAttributesAction = createAction({
     name: 'get_group_custom_attributes',
     displayName: 'Get Group Custom Attributes',
     description: 'Gets extension and custom attributes for an Azure AD group. Returns schema extensions and open extensions.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Reads only the extension/custom attributes (extension_* and ext_* properties) of an Azure AD group, along with its ID and display name. Read-only and idempotent. Pick Get Group by ID when you need the standard group profile rather than custom attributes.',
+        idempotent: true,
+    },
     props: {
         groupId: groupDropdown,
     },

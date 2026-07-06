@@ -1,14 +1,5 @@
-import {
-    apId,
-    EngineHttpResponse,
-    ExecutionType,
-    FlowRun,
-    FlowRunId,
-    FlowRunStatus,
-    isFlowRunStateTerminal,
-    RunEnvironment,
-    StreamStepProgress,
-} from '@activepieces/shared'
+import { apId, FlowRunId } from '@activepieces/core-utils'
+import { EngineHttpResponse, ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, ResumeReason, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectService } from '../../../project/project-service'
@@ -119,10 +110,10 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
         streamStepProgress: flowRun.environment === RunEnvironment.TESTING
             ? StreamStepProgress.WEBSOCKET
             : StreamStepProgress.NONE,
-        executeTrigger: false,
         executionType: ExecutionType.RESUME,
+        resumeReason: ResumeReason.WAITPOINT,
     }, log)
-    await flowRunSideEffects(log).onResume(flowRun)
+    await flowRunSideEffects(log).onResume({ flowRun, platformId })
 }
 
 type SyncResumePayload = {

@@ -7,6 +7,12 @@ export const createVideo = createAction({
   name: 'createVideo',
   displayName: 'Create Video',
   description: 'Generate a video using a studio avatar',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits a video-generation job to VidLab7 from a studio avatar, a script, and a voice (avatar ID, voice ID, and script text are required). By default returns immediately with the video ID and status; enable wait-for-completion to poll until the video finishes and return its URL (this blocks for up to 300 seconds). Each call starts a new generation job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     avatarId: Property.ShortText({
       displayName: 'Avatar ID',

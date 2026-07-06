@@ -5,12 +5,15 @@ import qs from 'qs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { ClickupTask } from '../../common/models';
+import { filterTimeEntriesOutputSchema } from '../../output-schemas';
 
 export const filterClickupWorkspaceTimeEntries = createAction({
   auth: clickupAuth,
   name: 'list_workspace_time_entries',
   displayName: 'List Time Entries',
   description: 'Retrieves time entries filtered by start and end date.',
+  audience: 'both',
+  aiMetadata: { description: 'List tracked time entries across a ClickUp workspace, optionally narrowed by date range, assignee, and a single scope (task, list, folder, or space). Pick this to report on or audit logged time; it is read-only and idempotent. Scope filters are mutually exclusive, with task taking precedence over list, folder, then space.', idempotent: true },
   props: {
     workspace_id: clickupCommon.workspace_id(true),
 
@@ -50,6 +53,7 @@ export const filterClickupWorkspaceTimeEntries = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: filterTimeEntriesOutputSchema,
   async run(context) {
     const { task_id, list_id, folder_id, space_id, workspace_id, ...params } =
       context.propsValue;

@@ -8,12 +8,19 @@ import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
 import { Client, collectPaginatedAPI, isFullBlock } from '@notionhq/client';
 import { PartialBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import { getPageOrBlockChildrenActionOutputSchema } from '../output-schemas';
 
 export const getPageOrBlockChildren = createAction({
   auth: notionAuth,
   name: 'getPageOrBlockChildren',
   displayName: 'Get block content',
   description: 'Retrieve the actual content of a page (represented by blocks).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reads the body content of a Notion page or block by recursively listing its child blocks, optionally rendered as markdown. Use when an agent needs to read what is actually written inside a page (text, nested blocks) rather than its metadata; requires the page or parent block id. Idempotent read-only fetch.',
+    idempotent: true,
+  },
   props: {
     parentId: Property.ShortText({
       displayName: 'Page or parent block ID',
@@ -46,6 +53,7 @@ export const getPageOrBlockChildren = createAction({
       },
     }),
   },
+  outputSchema: getPageOrBlockChildrenActionOutputSchema,
   async run(context) {
     const notion = new Client({
       auth: getNotionToken(context.auth),

@@ -6,8 +6,8 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 ## Key Files
 - `packages/server/api/src/app/ee/platform/` — backend service and controller
 - `packages/server/api/src/app/ee/billing/` — Stripe webhook, checkout, billing controller
-- `packages/shared/src/lib/ee/billing/index.ts` — shared plan constants, Zod schemas, `STANDARD_CLOUD_PLAN`, `OPEN_SOURCE_PLAN`
-- `packages/shared/src/lib/management/platform/` — `PlatformPlan` type and all feature-flag fields
+- `packages/core/shared/src/lib/ee/billing/index.ts` — shared plan constants, Zod schemas, `STANDARD_CLOUD_PLAN`, `OPEN_SOURCE_PLAN`
+- `packages/core/shared/src/lib/management/platform/` — `PlatformPlan` type and all feature-flag fields
 - `packages/web/src/features/billing/api/billing-plans-api.ts` — `platformBillingApi` (portal, checkout, AI credits, auto top-up)
 - `packages/web/src/features/billing/hooks/billing-hooks.ts` — `billingQueries`, `billingMutations`
 - `packages/web/src/features/billing/components/` — `SubscriptionInfo`, `ActiveFlowAddon`, `AICreditUsage`, `LicenseKey`, `PurchaseAICreditsDialog`, `AutoTopUpConfigDialog`
@@ -19,6 +19,9 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 - **Cloud**: Full Stripe integration. `STANDARD_CLOUD_PLAN` is the default; paid addons unlock higher active-flow limits and AI credits. Cloud Enterprise has all flags enabled.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **PlatformPlan**: The single entity (one-per-platform) holding all billing state, feature flags, and limits.
 - **Active Flows**: Published and enabled flows that count against the `activeFlowsLimit` quota.
 - **AI Credits**: Usage currency for OpenRouter-backed AI actions. 1000 credits = $1 USD.
@@ -33,7 +36,7 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 
 **AI Credits**: includedAiCredits, lastFreeAiCreditsRenewalDate, aiCreditsAutoTopUpState (ENABLED/DISABLED), aiCreditsAutoTopUpCreditsToAdd, aiCreditsAutoTopUpThreshold, maxAutoTopUpCreditsMonthly.
 
-**Feature Flags** (boolean): tablesEnabled, eventStreamingEnabled, environmentsEnabled, analyticsEnabled, showPoweredBy, auditLogEnabled, embeddingEnabled, agentsEnabled, managePiecesEnabled, manageTemplatesEnabled, customAppearanceEnabled, projectRolesEnabled, customDomainsEnabled, globalConnectionsEnabled, customRolesEnabled, apiKeysEnabled, ssoEnabled, scimEnabled, secretManagersEnabled.
+**Feature Flags** (boolean): tablesEnabled, eventStreamingEnabled, environmentsEnabled, analyticsEnabled, showPoweredBy, auditLogEnabled, embeddingEnabled, agentsEnabled, managePiecesEnabled, manageTemplatesEnabled, customAppearanceEnabled, projectRolesEnabled, globalConnectionsEnabled, customRolesEnabled, apiKeysEnabled, ssoEnabled, scimEnabled, secretManagersEnabled.
 
 **Limits**: activeFlowsLimit (nullable), projectsLimit (nullable), teamProjectsLimit (NONE/ONE/UNLIMITED).
 
@@ -75,7 +78,7 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 
 ## Admin Endpoints (Cloud only, API_KEY auth)
 
-- `POST /v1/admin/pieces` — register piece metadata
+- `POST /v1/admin/pieces` — register piece metadata; its action/trigger body schema mirrors the framework's `ActionBase`/`TriggerBase` (incl. `outputSchema`, `aiMetadata`, `audience`) so no fields are stripped on ingest. Keep it in sync when the framework contract gains fields.
 - `POST /v1/admin/platforms/runs/retry` — batch retry failed runs
 - `POST /v1/admin/platforms/apply-license-key` — activate license by email
 - `POST /v1/admin/platforms/increase-ai-credits` — manually add credits

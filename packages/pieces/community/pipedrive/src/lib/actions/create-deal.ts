@@ -10,13 +10,19 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField, GetDealResponse } from '../common/types';
 import dayjs from 'dayjs';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const createDealAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-deal',
 	displayName: 'Create Deal',
 	description: 'Creates a new deal.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new deal with a required title and optional value, currency, pipeline/stage, status, owner, and linked person/organization. Use to add a sales opportunity to a pipeline (use Update Deal to edit one, or Add Product to Deal to attach line items). Not idempotent: each call creates a separate deal, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		title: Property.ShortText({
 			displayName: 'Title',

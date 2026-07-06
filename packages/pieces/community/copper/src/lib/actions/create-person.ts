@@ -7,6 +7,12 @@ export const createPerson = createAction({
   name: 'createPerson',
   displayName: 'Create Person',
   description: 'Adds a new person/contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new person (contact) in Copper CRM with a name, one or more categorized emails, and optional phone numbers and address. Use to add a contact to the CRM. Requires at least one valid email. Not idempotent: each call creates a separate person record even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({ displayName: 'Full Name', required: true }),
     emails: Property.Array({

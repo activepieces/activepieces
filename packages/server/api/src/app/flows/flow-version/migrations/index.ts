@@ -1,4 +1,5 @@
-import { FlowVersion, FlowVersionState, FlowVersionTemplate, ProjectId } from '@activepieces/shared'
+import { ProjectId } from '@activepieces/core-utils'
+import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
@@ -13,6 +14,8 @@ import { migrateV17AddLastUpdatedDate } from './migrate-v17-add-last-updated-dat
 import { migrateV18TablesFieldIds } from './migrate-v18-tables-find-records-field-ids'
 import { migrateV19StripPieceVersionWildcards } from './migrate-v19-strip-piece-version-wildcards'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
+import { migrateV20GoogleModelPrefix } from './migrate-v20-google-model-prefix'
+import { migrateV21StepOutputNesting } from './migrate-v21-step-output-nesting'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
@@ -52,6 +55,8 @@ const migrations: Migration[] = [
     migrateV17AddLastUpdatedDate,
     migrateV18TablesFieldIds,
     migrateV19StripPieceVersionWildcards,
+    migrateV20GoogleModelPrefix,
+    migrateV21StepOutputNesting,
 ] as const
 
 export const flowMigrations = {

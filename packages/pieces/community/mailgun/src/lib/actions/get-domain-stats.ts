@@ -8,6 +8,12 @@ export const getDomainStats = createAction({
   displayName: 'Get Domain Stats',
   description:
     'Retrieve aggregated email statistics for a Mailgun domain (delivered, failed, opened, etc.). Useful for monitoring delivery health and detecting anomalies.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve aggregated counts for a Mailgun domain across selected event types over a chosen duration (1 hour to 30 days), summed into totals. Use for delivery-health dashboards or anomaly detection rather than per-message detail. Idempotent: a read-only aggregation.',
+    idempotent: true,
+  },
   props: {
     domain: mailgunCommon.domainDropdown,
     event: Property.StaticMultiSelectDropdown({

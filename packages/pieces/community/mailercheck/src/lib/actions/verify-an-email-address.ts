@@ -6,6 +6,8 @@ export const verifyAnEmailAddress = createAction({
   name: 'verifyAnEmailAddress',
   displayName: 'Verify an Email Address',
   description: 'Verify a single email address in real-time',
+  audience: 'both',
+  aiMetadata: { description: 'Validates one email address in real time against MailerCheck and reports its deliverability status (e.g. valid, invalid, risky). Use to check a single address before sending or storing it; pass exactly one email. Read-only lookup that does not change anything, so repeating it for the same address is safe.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

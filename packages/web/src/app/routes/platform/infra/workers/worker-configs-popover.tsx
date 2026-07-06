@@ -1,3 +1,4 @@
+import { WorkerProps } from '@activepieces/shared';
 import { t } from 'i18next';
 import { SlidersHorizontal } from 'lucide-react';
 import React from 'react';
@@ -53,5 +54,5 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
 };
 
 type Props = {
-  workerProps: Record<string, string>;
+  workerProps: WorkerProps;
 };

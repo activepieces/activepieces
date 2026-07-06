@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { deepgramAuth } from '../common/auth';
-import { BASE_URL, LANG_OPTIONS, MODEL_OPTIONS } from '../common/constants';
+import { BASE_URL, LANG_OPTIONS } from '../common/constants';
+import { deepgramModels } from '../common/models';
 import mime from 'mime-types';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,16 +10,43 @@ export const createSummaryAction = createAction({
   name: 'create_summary',
   displayName: 'Create Summary',
   description: 'Produces a summary of the content from an audio file.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads an audio file to Deepgram and returns an AI-generated summary of its spoken content (summarize v2), synchronously. Pick this over Create Transcription when you need a condensed overview rather than the full text; by default it falls back to the full transcript if no summary is available. Re-running re-processes the audio and incurs another billed request, though it creates no persistent resource.',
+    idempotent: false,
+  },
   props: {
     audioFile: Property.File({
       displayName: 'Audio File',
       required: true,
     }),
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
+      auth: deepgramAuth,
       displayName: 'Model',
       required: false,
-      options: {
-        options: MODEL_OPTIONS,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Enter your API key first',
+            options: [],
+          };
+        }
+        try {
+          const options = await deepgramModels.fetchSttModelOptions({
+            apiKey: auth.secret_text,
+          });
+          return { disabled: false, options };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder:
+              "Couldn't load models, check your API key or try again.",
+          };
+        }
       },
     }),
     language: Property.StaticDropdown({

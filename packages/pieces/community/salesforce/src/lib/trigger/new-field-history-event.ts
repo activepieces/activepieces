@@ -19,6 +19,9 @@ export const newFieldHistoryEvent = createTrigger({
     name: 'new_field_history_event',
     displayName: 'New Field History Event',
     description: 'Fires when a tracked field is updated on a specified object.',
+    aiMetadata: {
+        description: 'Fires once for each field-history entry recorded when a history-tracked field changes on the selected Salesforce object (for example Account, Contact, or a custom object). Each event represents a single field change and includes the field name, old value, and new value. Requires field history tracking to be enabled for that object and field in Salesforce; standard objects use the <Object>History table and custom objects use the <Object>__History table.',
+    },
     props: {
         object: salesforcesCommon.object,
     },

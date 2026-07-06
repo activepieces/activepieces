@@ -24,6 +24,8 @@ dayjs.extend(isSameOrBefore);
 		auth: excelAuth,
 		name: 'get_worksheet_rows',
 		description: 'Retrieve rows from a worksheet',
+		audience: 'both',
+		aiMetadata: { description: 'Read rows from a worksheet — either a specific A1-notation range or the entire used range — with optional header-row keying and column filters (text/number/date comparisons, in-list, exists). Use for general worksheet reads; for a defined Excel table use Get Table Rows, or Get Cells in Range for a fixed block. Read-only and idempotent.', idempotent: true },
 		displayName: 'Get Worksheet Rows',
 		props: {
 			storageSource: commonProps.storageSource,

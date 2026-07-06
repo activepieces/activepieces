@@ -10,12 +10,17 @@ import {
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
 import { clickupAuth } from '../auth';
+import { taskEventTriggerOutputSchema } from '../output-schemas';
 
 export const triggerTaskTagUpdated = createTrigger({
   auth: clickupAuth,
   name: 'task_tag_updated',
   displayName: 'Task Tag Updated',
   description: 'Triggered when a tag is added or removed or renamed on a task.',
+  aiMetadata: {
+    description:
+      'Fires when a tag on a ClickUp task changes — a tag is added to the task, removed from it, or renamed. The event represents the updated tag state for that task, useful for reacting to tag-based categorization or status labeling in the selected workspace and space.',
+  },
   sampleData: {
     "event": "taskTagUpdated",
     "history_items": [
@@ -55,6 +60,7 @@ export const triggerTaskTagUpdated = createTrigger({
     list_id: clickupCommon.list_id(false),
     task_id: clickupCommon.task_id(false),
   },
+  outputSchema: taskEventTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const { workspace_id } = context.propsValue

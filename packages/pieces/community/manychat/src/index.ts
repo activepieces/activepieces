@@ -6,7 +6,7 @@ import { setCustomFieldAction } from './lib/actions/set-custom-fields';
 import { removeTagFromUserAction } from './lib/actions/remove-tag-from-user';
 import { addTagToUserAction } from './lib/actions/add-tag-to-user';
 import { findUserByNameAction } from './lib/actions/find-user-by-name';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/props';
 import { manychatAuth } from './lib/auth';

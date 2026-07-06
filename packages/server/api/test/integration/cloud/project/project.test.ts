@@ -1,17 +1,5 @@
-import {
-    ApiKeyResponseWithValue,
-    DefaultProjectRole,
-    FlowStatus,
-
-    Permission,
-    Platform,
-    PlatformRole,
-    PrincipalType,
-    Project,
-    ProjectType,
-    RoleType,
-    UpdateProjectPlatformRequest,
-    User } from '@activepieces/shared'
+import { Permission, RoleType } from '@activepieces/core-utils'
+import { ApiKeyResponseWithValue, DefaultProjectRole, FlowStatus, Platform, PlatformRole, PrincipalType, Project, ProjectType, UpdateProjectPlatformRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -1191,12 +1179,8 @@ describe('Project API', () => {
             const sharedIdentity = createMockUserIdentity({ verified: true })
             await db.save('user_identity', sharedIdentity)
 
-            const { mockPlatform: platformOne } = await mockAndSaveBasicSetup({
-                plan: { customDomainsEnabled: false },
-            })
-            const { mockPlatform: platformTwo } = await mockAndSaveBasicSetup({
-                plan: { customDomainsEnabled: false },
-            })
+            const { mockPlatform: platformOne } = await mockAndSaveBasicSetup()
+            const { mockPlatform: platformTwo } = await mockAndSaveBasicSetup()
 
             const userOnOne = createMockUser({
                 identityId: sharedIdentity.id,

@@ -9,6 +9,9 @@ export const workflowRunCompleted = createTrigger({
   name: 'workflow_run_completed',
   displayName: 'Workflow Run Completed',
   description: 'Triggers when a workflow run is completed. Requires Gitea Actions to be enabled on your Gitea instance.',
+  aiMetadata: {
+    description: 'Fires when a Gitea Actions workflow run finishes in the selected repository, regardless of success or failure. Each event represents a completed run and includes its conclusion. Requires Gitea Actions to be enabled on the instance.',
+  },
   props: {
     repository: giteaCommon.repositoryDropdown,
   },

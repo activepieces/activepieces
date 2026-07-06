@@ -38,6 +38,10 @@ export const updatedIssue = createTrigger({
 	name: 'updated_issue',
 	displayName: 'Updated Issue',
 	description: 'Triggers when an issue is updated',
+	aiMetadata: {
+		description:
+			'Fires when an existing issue is updated in Jira Data Center/Server (polls by last-updated time, so any field change counts). An optional JQL filter narrows which issues are watched; each matching issue emits an event when its updated timestamp advances.',
+	},
 	auth: jiraDataCenterAuth,
 	type: TriggerStrategy.POLLING,
 	props: {

@@ -33,6 +33,9 @@ export const getCollectionsTrigger = createTrigger({
   name: 'get_collections',
   displayName: 'Get Collections',
   description: 'Triggers when there are new collections',
+  aiMetadata: {
+    description: 'Fires when a new Billplz collection appears on the authenticated account. Polls the collections list and emits one event per newly detected collection, representing a container into which bills can be created.',
+  },
   auth: billplzAuth,
   props: {},
   type: TriggerStrategy.POLLING,

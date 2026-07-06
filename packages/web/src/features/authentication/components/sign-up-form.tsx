@@ -1,9 +1,9 @@
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   OtpType,
   ApEdition,
   ApFlagId,
-  ErrorCode,
-  isNil,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -89,11 +90,13 @@ const SignUpForm = ({
 
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
+  const { capture } = useTelemetry();
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data, false);
+
         if (isNil(data.projectId)) {
           navigate('/create-platform');
           return;
@@ -108,6 +111,10 @@ const SignUpForm = ({
         const errorCode: ErrorCode | undefined = (
           error.response?.data as { code: ErrorCode }
         )?.code;
+        capture({
+          name: TelemetryEventName.SIGN_UP_FAILED,
+          payload: { errorCode: errorCode ?? 'UNKNOWN' },
+        });
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),
@@ -160,6 +167,10 @@ const SignUpForm = ({
     form.setError('root.serverError', {
       message: undefined,
     });
+    capture({
+      name: TelemetryEventName.SIGN_UP_SUBMITTED,
+      payload: { method: 'email' },
+    });
     mutate({
       ...data,
       email: data.email.trim().toLowerCase(),
@@ -177,7 +188,7 @@ const SignUpForm = ({
   ) : (
     <>
       <Form {...form}>
-        <form className="grid space-y-4">
+        <form className="flex flex-col space-y-4">
           <div className={'flex flex-row gap-2'}>
             <FormField
               control={form.control}
@@ -186,7 +197,7 @@ const SignUpForm = ({
                 required: t('First name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-1">
+                <FormItem className="w-full">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
                   <Input
                     {...field}
@@ -208,7 +219,7 @@ const SignUpForm = ({
                 required: t('Last name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-1">
+                <FormItem className="w-full">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
                   <Input
                     {...field}

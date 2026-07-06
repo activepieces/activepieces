@@ -14,6 +14,8 @@ export const evseStartChargingWithEvseIdAction = createAction({
   name: 'evseStartChargingWithEvseId',
   displayName: 'Actions - EVSE - Start Charging With EVSE Id',
   description: 'Start a charging session.',
+  audience: 'both',
+  aiMetadata: { description: 'Remotely start a charging session on a given EVSE, optionally on behalf of a user with a chosen payment method, linked booking, and an OCPP charging profile. If a payment method ID is supplied, a user ID is required. Not idempotent: each call initiates a new charging session.', idempotent: false },
   props: {
         
   evse: Property.Number({

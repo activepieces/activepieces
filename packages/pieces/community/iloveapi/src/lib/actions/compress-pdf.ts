@@ -8,6 +8,12 @@ export const compressPdfAction = createAction({
   name: 'compress_pdf',
   displayName: 'Compress PDF',
   description: 'Reduce the size of a PDF file using iLoveAPI.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Shrink a PDF file size, choosing a compression level: "extreme" for the smallest file at lower quality, "recommended" for a balanced result (default), or "low" for the largest file at best quality. Each run produces a new compressed file.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

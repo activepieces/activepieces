@@ -1,4 +1,5 @@
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, PlatformRole, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -146,6 +147,32 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         }
     },
 
+    async assertEmailMatchesSsoDomain({
+        email,
+        platformId,
+    }: AssertEmailMatchesSsoDomainParams): Promise<void> {
+        const edition = system.getEdition()
+        if (edition !== ApEdition.CLOUD) {
+            return
+        }
+        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+        if (!platform.plan.ssoEnabled) {
+            return
+        }
+        if (isNil(platform.ssoDomain) || platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+            return
+        }
+        const emailDomain = email.split('@')[1]?.toLowerCase() ?? ''
+        if (emailDomain !== platform.ssoDomain) {
+            throw new ActivepiecesError({
+                code: ErrorCode.DOMAIN_NOT_ALLOWED,
+                params: {
+                    domain: emailDomain,
+                },
+            })
+        }
+    },
+
     async assertEmailAuthIsEnabled({
         platformId,
         provider,
@@ -172,12 +199,18 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
     async sendTelemetry({
         user,
         identity,
+        projectId,
     }: SendTelemetryParams): Promise<void> {
         try {
+            const { email, firstName, lastName } = identity
             await telemetry(log).identify(identity, user)
+            await telemetry(log).trackProject(projectId, {
+                name: TelemetryEventName.SIGNED_UP,
+                payload: { userId: user.id, email, firstName, lastName, projectId },
+            })
         }
         catch (e) {
-            log.warn({ err: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
+            log.warn({ error: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
         }
     },
 
@@ -200,7 +233,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             await response.json()
         }
         catch (error) {
-            log.warn({ err: error }, '[authenticationUtils#saveNewsLetterSubscriber] Failed to save newsletter subscriber')
+            log.warn({ error }, '[authenticationUtils#saveNewsLetterSubscriber] Failed to save newsletter subscriber')
         }
     },
     async extractUserIdFromRequest(request: FastifyRequest): Promise<string> {
@@ -221,7 +254,8 @@ function findPersonalProject(projects: Project[], userId: string): Project | und
 
 type SendTelemetryParams = {
     identity: UserIdentity
-    user?: User
+    user: User
+    projectId: string
 }
 
 type AssertDomainIsAllowedParams = {
@@ -232,6 +266,11 @@ type AssertDomainIsAllowedParams = {
 type AssertEmailAuthIsEnabledParams = {
     platformId: string
     provider: UserIdentityProvider
+}
+
+type AssertEmailMatchesSsoDomainParams = {
+    email: string
+    platformId: string
 }
 
 type AssertUserIsInvitedToPlatformOrProjectParams = {

@@ -3,7 +3,7 @@ import { kapsoAuth } from '../common';
 import { makeClient } from '../common';
 import {
   phoneNumberIdDropdown,
-  businessAccountIdDropdown,
+  businessAccountIdProp,
   templateDropdown,
 } from '../common/props';
 
@@ -12,8 +12,13 @@ export const sendTemplate = createAction({
   name: 'send_template_message',
   displayName: 'Send Template Message',
   description: 'Send a pre-approved WhatsApp template message.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a pre-approved WhatsApp template message, substituting values into named header, body, and button parameters. Use this to initiate conversations outside the 24-hour customer service window, where free-form text (Send Text Message) is not allowed; the template must already be approved for the business account. Supports text/image/video/document/location headers and quick-reply, URL, OTP, and flow buttons. Each call delivers a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
-    businessAccountId: businessAccountIdDropdown,
+    businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,
     to: Property.ShortText({
       displayName: 'Recipient Phone Number',

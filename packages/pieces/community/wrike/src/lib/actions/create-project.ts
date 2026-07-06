@@ -7,6 +7,8 @@ export const createProject = createAction({
     name: 'create_project',
     displayName: 'Create Project',
     description: 'Create a new project in Wrike',
+    audience: 'both',
+    aiMetadata: { description: 'Create a project in Wrike (a folder configured as a project) at root level or under a parent folder ID, with optional owners, shared users, and start/end dates. Use when an agent needs a project container rather than a plain folder. Each call creates a new project, so it is not idempotent.', idempotent: false },
     auth: wrikeAuth,
     props: {
         parentFolderId: Property.ShortText({

@@ -15,6 +15,8 @@ export const userGroupsListingAction = createAction({
   name: 'userGroupsListing',
   displayName: 'Resources - User Groups - Listing',
   description: 'Get all user groups.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO user groups, optionally filtered by partner (a specific partner ID, or only groups with/without a partner). Read-only and idempotent; enable Paginate Results to fetch all pages. To retrieve one group by its ID use the user group read action instead.', idempotent: true },
   props: {
         
   filter__noPartner: Property.ShortText({

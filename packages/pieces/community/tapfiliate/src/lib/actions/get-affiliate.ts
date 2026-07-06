@@ -8,6 +8,8 @@ export const getAffiliateAction = createAction({
   name: 'get_affiliate',
   displayName: 'Get Affiliate',
   description: 'Retrieves a Tapfiliate affiliate by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single Tapfiliate affiliate by its unique affiliate ID. Use it to look up an affiliate\'s details when you already have its ID. Read-only and idempotent.', idempotent: true },
   props: {
     affiliateId: Property.ShortText({
       displayName: 'Affiliate ID',

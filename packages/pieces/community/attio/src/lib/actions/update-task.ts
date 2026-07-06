@@ -3,13 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { linkedRecordDropdown, objectTypeIdDropdown, taskIdDropdown } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const updateTaskAction = createAction({
 	auth: attioAuth,
 	name: 'update_task',
 	displayName: 'Update Task',
 	description: 'Update an existing task in Attio.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing task by ID, changing any supplied fields: content, deadline, completion status, linked record, or assignee email. At least one field must be provided. Choose this to modify a task you already know the ID of. Idempotent — re-applying the same values leaves the task in the same state.', idempotent: true },
 	props: {
 		task_id: taskIdDropdown({
 			displayName: 'Task',

@@ -11,6 +11,10 @@ export const productCreated = createTrigger({
   name: 'productCreated',
   displayName: 'Product Created',
   description: 'Triggers when a new product is created',
+  aiMetadata: {
+    description:
+      'Fires when a new product is added to the BigCommerce store catalog. The event identifies the new product.',
+  },
   props: {},
   sampleData: {
     producer: 'stores/xqcaklwsso',

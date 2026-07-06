@@ -53,10 +53,10 @@ export const McpServerSettings = () => {
                 )}
               </p>
               <McpTools
-                enabledTools={mcpServer.enabledTools}
+                disabledTools={mcpServer.disabledTools}
                 isPending={isUpdating}
-                onUpdateEnabledTools={(tools) =>
-                  updateMcpServer({ enabledTools: tools })
+                onUpdateDisabledTools={(tools) =>
+                  updateMcpServer({ disabledTools: tools })
                 }
               />
             </div>

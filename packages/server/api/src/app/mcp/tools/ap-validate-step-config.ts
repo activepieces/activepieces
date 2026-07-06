@@ -86,7 +86,7 @@ async function validatePieceComponent({ pieceName, componentName, componentType,
         componentType,
     })
 
-    if (diagnosis.missing.length === 0) {
+    if (diagnosis.missing.length === 0 && diagnosis.invalidEnums.length === 0) {
         const uiHint = diagnosis.uiRequired.length > 0
             ? `\nNote: these fields require configuration in the Activepieces UI: ${diagnosis.uiRequired.join(', ')}.`
             : ''
@@ -141,7 +141,7 @@ function validateRouter(settings: Record<string, unknown> | undefined): McpToolR
                     branchName: 'Branch 1',
                     branchType: BranchExecutionType.CONDITION,
                     conditions: [[{
-                        firstValue: '{{trigger.status}}',
+                        firstValue: '{{trigger[\'output\'].status}}',
                         operator: 'TEXT_EXACTLY_MATCHES',
                         secondValue: 'active',
                     }]],

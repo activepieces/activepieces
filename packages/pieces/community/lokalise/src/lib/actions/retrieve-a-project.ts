@@ -9,6 +9,8 @@ export const retrieveAProject = createAction({
   name: 'retrieveAProject',
   displayName: 'Retrieve a project',
   description: 'Retrieve detailed information about a Lokalise project',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details and settings of a single Lokalise project by its project ID. Use to inspect project configuration or confirm a project exists. Read-only and idempotent.', idempotent: true },
   props: {
     projectId: projectDropdown,
   },
