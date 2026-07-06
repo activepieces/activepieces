@@ -393,6 +393,7 @@ import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/17990
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
+import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -801,6 +802,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddToolSearchIndexTable1801000000000,
         AddChatRolloutFreeCreditGrant1802000000000,
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
+        DropBadges1804000000000,
     ]
     return migrations
 }

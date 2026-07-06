@@ -1,7 +1,6 @@
 import {
   AP_MAXIMUM_PROFILE_PICTURE_SIZE,
   PROFILE_PICTURE_ALLOWED_TYPES,
-  UserWithBadges,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -10,7 +9,6 @@ import { useRef } from 'react';
 import { toast } from 'sonner';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
-import { UserBadges } from '@/components/custom/user-badges';
 import {
   Dialog,
   DialogContent,
@@ -116,8 +114,6 @@ export function AccountSettingsDialog({
                 </div>
               </div>
             </div>
-
-            <UserBadges user={user as UserWithBadges | null} />
 
             <Separator />
 
