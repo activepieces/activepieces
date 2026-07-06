@@ -52,6 +52,9 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({
             path: '',
         })
+        modifiedFlags[ApFlagId.MCP_URL] = await domainHelper.getMcpUrl({
+            path: '',
+        })
         modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = await authnSsoSamlService(request.log).getAcsUrl(platformId)
 
         const embedSubdomainUrl = await embedSubdomainService(request.log).getActiveSubdomainUrl({ platformId })

@@ -38,6 +38,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
+                ApFlagId.MCP_URL,
                 ApFlagId.PRIVACY_POLICY_URL,
                 ApFlagId.PIECES_SYNC_MODE,
                 ApFlagId.PRIVATE_PIECES_ENABLED,
@@ -219,6 +220,14 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.MCP_URL,
+                value: await domainHelper.getMcpUrl({
+                    path: '',
+                }),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.FLOW_RUN_TIME_SECONDS,
                 value: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 created,
@@ -349,6 +358,7 @@ function getSupportedAppWebhooks(): string[] {
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
+    | BaseFlagStructure<ApFlagId.MCP_URL, string>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
