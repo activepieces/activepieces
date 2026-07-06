@@ -265,6 +265,7 @@ export const PlatformBillingInformation = z.object({
     nextBillingDate: z.string(),
     nextBillingAmount: z.number(),
     cancelAt: Nullable(z.string()),
+    trialEndsAt: Nullable(z.string()),
     autoTopUps: z.array(AutoTopUpConfig),
     topUpFeatures: z.array(ToppableFeature),
     billingPortalAvailable: z.boolean(),

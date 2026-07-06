@@ -5,7 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
 
 function defaultBillingInfo(): BillingInfo {
-    return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
+    return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
 }
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
@@ -236,6 +236,7 @@ export type BillingInfo = {
     endDate: string
     nextBillingAmount: number
     cancelAt: string | null
+    trialEndsAt: string | null
     planId: string | null
     planName: string | null
     scheduledPlanName: string | null

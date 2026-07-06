@@ -11,7 +11,7 @@ import {
     type TrackParams,
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
+import { BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
@@ -20,7 +20,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://polo-roof-apply-paris.trycloudflare.com'
+const AUTUMN_CONSOLE_URL = 'https://london-boxed-zshops-threaded.trycloudflare.com'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
@@ -110,6 +110,10 @@ export const autumnUtils = {
         const entitlements = toAutumnEntitlements(customer)
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
         await autumnUtils.writeCustomerStateCaches(platformId, customer)
+        await autumnUtils.invalidateBillingOverview(platformId)
+    },
+    async invalidateBillingOverview(platformId: string): Promise<void> {
+        await distributedStore.delete(getBillingOverviewKey(platformId))
     },
     mapAutumnFeaturesToPlatformPlan(entitlements: AutumnEntitlements): Partial<PlatformPlanLimits> {
         const flags: Partial<PlatformPlanLimits> = {}
