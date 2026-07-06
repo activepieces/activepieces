@@ -2,6 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { deleteRowsActionOutputSchema } from '../output-schemas';
 
 export const deleteRows = createAction({
     name: 'delete_rows',
@@ -137,6 +138,7 @@ export const deleteRows = createAction({
             defaultValue: false,
         })
     },
+    outputSchema: deleteRowsActionOutputSchema,
     async run(context) {
         const { 
             table_name, 

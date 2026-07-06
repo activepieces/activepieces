@@ -2,7 +2,7 @@ import { ChildProcess } from 'child_process'
 import { randomBytes, timingSafeEqual } from 'crypto'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
@@ -62,25 +62,18 @@ export function createSandbox(
     processMaker: SandboxProcessMaker,
 ): Sandbox {
     let childProcess: ChildProcess | null = null
-    let httpServer: HttpServer | null = null
     let io: SocketIOServer | null = null
     let connectedSocket: Socket | null = null
     let connectionResolve: (() => void) | null = null
     let wsRpcToken: string | null = null
     let busy = false
     let killedByShutdown = false
+    let nativeStdOut = ''
+    let nativeStdError = ''
 
-    function createSocketServer(): number {
-        httpServer = createServer()
-        io = new SocketIOServer(httpServer, {
-            path: '/worker/ws',
-            maxHttpBufferSize: options.maxHttpBufferSizeBytes,
-            cors: { origin: '*' },
-        })
-
-        io.use(authenticateHandshake({ getExpectedToken: () => wsRpcToken, log, sandboxId }))
-
-        io.on('connection', (socket) => {
+    function wireConnectionHandler(ioServer: SocketIOServer): void {
+        ioServer.use(authenticateHandshake({ getExpectedToken: () => wsRpcToken, log, sandboxId }))
+        ioServer.on('connection', (socket) => {
             if (!isNil(connectedSocket) && connectedSocket.connected) {
                 log.warn({ sandbox: { id: sandboxId }, socketId: socket.id }, '[WebSocket] Rejecting extra connection — sandbox already has an active socket')
                 socket.disconnect(true)
@@ -101,14 +94,51 @@ export function createSandbox(
                 connectionResolve = null
             }
         })
+    }
 
-        httpServer.listen(options.wsRpcPort ?? 0)
+    // In isolate mode the ws port is fixed per box (WS_RPC_BASE_PORT + boxId). A reused box whose
+    // previous server hasn't finished releasing that port — or a brief double-allocation under high
+    // concurrency — makes the bind emit EADDRINUSE. Without an 'error' listener that event is an
+    // UNHANDLED exception that crashes the ENTIRE worker process (and every in-flight sandbox on it),
+    // which is exactly what made busy workers crash-loop. Await the bind, and on a bind error retry a
+    // few times (a concurrent close frees the port within a beat); if it never frees, fail just this
+    // sandbox with a catchable error. A random port (listen(0)) can't collide, so it needs no retries.
+    async function createSocketServer(): Promise<number> {
+        const requestedPort = options.wsRpcPort ?? 0
+        const maxAttempts = requestedPort === 0 ? 1 : 30
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            const server = createServer()
+            const ioServer = new SocketIOServer(server, {
+                path: '/worker/ws',
+                maxHttpBufferSize: options.maxHttpBufferSizeBytes,
+                cors: { origin: '*' },
+            })
+            wireConnectionHandler(ioServer)
 
-        const address = httpServer.address()
-        if (typeof address === 'object' && address !== null) {
-            return address.port
+            const { error } = await tryCatch(() => listenOnce(server, requestedPort))
+            if (isNil(error)) {
+                io = ioServer
+                const address = server.address()
+                if (typeof address === 'object' && address !== null) {
+                    return address.port
+                }
+                throw new Error('Could not determine socket.io server port')
+            }
+
+            await tryCatch(() => closeServer(ioServer))
+            if (attempt === maxAttempts) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.SANDBOX_INTERNAL_ERROR,
+                    params: {
+                        reason: `Failed to bind sandbox ws port ${requestedPort} after ${maxAttempts} attempts: ${String(error)}`,
+                        standardOutput: '',
+                        standardError: '',
+                    },
+                })
+            }
+            await delay(100)
         }
-        throw new Error('Could not determine socket.io server port')
+        throw new Error('Could not start sandbox socket server')
     }
 
     function waitForConnection(): Promise<void> {
@@ -145,7 +175,7 @@ export function createSandbox(
             }, 'Starting sandbox')
 
             wsRpcToken = randomBytes(32).toString('hex')
-            const port = createSocketServer()
+            const port = await createSocketServer()
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
             const customPieceMounts: SandboxMount[] = []
@@ -188,14 +218,27 @@ export function createSandbox(
                 },
             })
 
+            nativeStdOut = ''
+            nativeStdError = ''
+            childProcess.stdout?.on('data', (data: Buffer) => {
+                nativeStdOut = appendBounded(nativeStdOut, data.toString())
+                process.stdout.write(data)
+            })
+            childProcess.stderr?.on('data', (data: Buffer) => {
+                nativeStdError = appendBounded(nativeStdError, data.toString())
+                process.stderr.write(data)
+            })
+
             const exitPromise = new Promise<never>((_, reject) => {
-                childProcess!.once('exit', (code, signal) => {
-                    reject(new Error(`Sandbox ${sandboxId} exited before connecting (code=${code}, signal=${signal})`))
+                // 'close' (not 'exit') so the child's stdout/stderr pipes are fully drained first —
+                // 'exit' can fire before the final 'data' chunk, leaving nativeStdError empty.
+                childProcess!.once('close', (code, signal) => {
+                    reject(new Error(`Sandbox ${sandboxId} exited before connecting (code=${code}, signal=${signal}) standardError=${nativeStdError}`))
                 })
             })
 
             await Promise.race([waitForConnection(), exitPromise])
-            childProcess!.removeAllListeners('exit')
+            childProcess!.removeAllListeners('close')
 
             log.debug({
                 sandbox: { id: sandboxId },
@@ -209,6 +252,10 @@ export function createSandbox(
             let timeout: NodeJS.Timeout | null = null
             const executeSocket = connectedSocket
             const executeProcess = childProcess
+            // Reset per-execute so a reused sandbox doesn't prefix this run's crash output with
+            // native output accumulated during previous (healthy) executions.
+            nativeStdOut = ''
+            nativeStdError = ''
             const operationPromise = new Promise<SandboxResult>((resolve, reject) => {
                 assertNotNullOrUndefined(executeProcess, 'Sandbox process should not be null')
                 assertNotNullOrUndefined(executeSocket, 'Connected socket should not be null')
@@ -237,7 +284,7 @@ export function createSandbox(
                     log.error({ sandbox: { id: sandboxId }, error: String(error) }, 'Sandbox process error')
                 })
 
-                executeProcess.on('exit', (code, signal) => {
+                executeProcess.on('close', (code, signal) => {
                     handleProcessExit(log, {
                         sandboxId,
                         operationType,
@@ -245,8 +292,8 @@ export function createSandbox(
                         signal,
                         killedByTimeout,
                         killedByShutdown,
-                        stdOut,
-                        stdError,
+                        stdOut: stdOut + nativeStdOut,
+                        stdError: stdError + nativeStdError,
                         reject,
                     })
                 })
@@ -276,7 +323,7 @@ export function createSandbox(
                     clearTimeout(timeout)
                 }
                 executeSocket?.removeAllListeners('rpc-notify')
-                executeProcess?.removeAllListeners('exit')
+                executeProcess?.removeAllListeners('close')
                 executeProcess?.removeAllListeners('error')
             }
         },
@@ -297,10 +344,45 @@ export function createSandbox(
                 await io.close()
             }
             io = null
-            httpServer = null
             wsRpcToken = null
         },
     }
+}
+
+function listenOnce(server: HttpServer, port: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        const onError = (err: Error): void => {
+            server.removeListener('listening', onListening)
+            reject(err)
+        }
+        const onListening = (): void => {
+            server.removeListener('error', onError)
+            resolve()
+        }
+        server.once('error', onError)
+        server.once('listening', onListening)
+        server.listen(port)
+    })
+}
+
+function closeServer(ioServer: SocketIOServer): Promise<void> {
+    return new Promise<void>((resolve) => {
+        ioServer.close(() => resolve())
+    })
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise<void>((resolve) => setTimeout(resolve, ms))
+}
+
+const MAX_NATIVE_OUTPUT_CHARS = 8192
+
+function appendBounded(existing: string, chunk: string): string {
+    const combined = existing + chunk
+    if (combined.length <= MAX_NATIVE_OUTPUT_CHARS) {
+        return combined
+    }
+    return combined.slice(combined.length - MAX_NATIVE_OUTPUT_CHARS)
 }
 
 function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void {

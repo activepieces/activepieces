@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { unpinMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramUnpinMessageAction = createAction({
   auth: telegramBotAuth,
@@ -21,6 +22,7 @@ export const telegramUnpinMessageAction = createAction({
       required: false,
     }),
   },
+  outputSchema: unpinMessageActionOutputSchema,
   async run(ctx) {
     return await httpClient.sendRequest<never>({
       method: HttpMethod.POST,

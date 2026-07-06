@@ -20,6 +20,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { getEvents } from '../common/helper';
+import { eventOutputSchema } from '../output-schemas';
 
 
 const polling: Polling<
@@ -155,6 +156,7 @@ export const eventCancelled = createTrigger({
       },
     }),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: 'abc123def456_cancelled',

@@ -56,9 +56,10 @@ export function ChatWithAIPage() {
   );
   const isMobile = useIsMobile();
 
-  // Cloud funnel: count this user as having landed on the chat page (deduped server-side, no-op off cloud).
   useEffect(() => {
-    void chatApi.recordLanding().catch(() => undefined);
+    // Record the chat-page landing for the cloud rollout funnel (server is cloud-gated; no-op otherwise).
+    chatApi.recordLanding().catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleSidebar = useCallback(() => {
