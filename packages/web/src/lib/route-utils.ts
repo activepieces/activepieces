@@ -25,7 +25,7 @@ export const determineDefaultRoute = ({
   chatEnabled,
 }: {
   checkAccess: (permission: Permission) => boolean;
-  chatEnabled: boolean;
+  chatEnabled?: boolean;
 }) => {
   if (chatEnabled) {
     return CHAT_ROUTE;

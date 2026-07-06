@@ -33,6 +33,9 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - **Cloud**: Available — same as EE; cloud OAuth2 uses `secrets.activepieces.com` for token exchange.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **AppConnection**: An encrypted credential record bound to a platform and optionally scoped to one or more projects.
 - **AppConnectionScope**: `PROJECT` (restricted to projects in `projectIds[]`) or `PLATFORM` (available to all projects).
 - **AppConnectionType**: One of `OAUTH2`, `CLOUD_OAUTH2`, `PLATFORM_OAUTH2`, `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH`, `NO_AUTH`, `OIDC`.
@@ -147,7 +150,7 @@ Inside piece actions/triggers, `context.auth.access_token` holds the cached toke
 - `GET /v1/app-connections` — list with filters (pieceName, displayName ILIKE, status, scope, externalIds)
 - `GET /v1/app-connections/owners` — list connection owners (platform admins + project members)
 - `POST /v1/app-connections/replace` — replace a source connection with a target across the current project's flows; source may be project-scoped or platform/global, and deleting a platform source is rejected if other projects it is shared with still use it
-- `DELETE /v1/app-connections/:id` — hard delete
+- `DELETE /v1/app-connections/:id` — hard delete; rejects `PLATFORM`-scope connections with `403` (delete those via the platform admin `DELETE /v1/global-connections/:id` instead)
 - `POST /v1/app-connections/oauth2/authorization-url` — generate OAuth redirect URL from piece metadata; accepts optional scopes array to restrict the authorization to a user-selected subset of the piece's declared scopes (all piece scopes used when omitted)
 
 ## Connection → Flow Integration
@@ -163,4 +166,4 @@ All connection values encrypted with `encryptUtils.encryptObject()` (AES-256) be
 
 ## Frontend
 
-The project connections page (`/connections`) shows a data table with status badges, piece icons, scope indicators, and bulk-delete support. The `new-connection-dialog` opens `create-edit-connection-dialog` which renders piece-auth-specific form fields. The "Replace" action opens `replace-connections-dialog` which calls the replace endpoint. The platform admin global connections page (`/platform/setup/connections`) uses `global-connections-hooks` and surfaces `edit-global-connection-dialog` for managing platform-scope connections and their `projectIds` assignment. The builder uses `connection-select` inside step settings to pick, create, or reconnect connections inline; active connections show a "Connected" status with a compact reconnect icon, while connections needing re-authentication keep a "Reconnect" action.
+The project connections page (`/connections`) shows a data table with status badges, piece icons, scope indicators, and bulk-delete support. Bulk-delete operates only on `PROJECT`-scope rows — `PLATFORM`-scope (global) connections are filtered out client-side and the delete button reflects only the deletable count; global connections must be deleted from the platform admin global connections page. The `new-connection-dialog` opens `create-edit-connection-dialog` which renders piece-auth-specific form fields. The "Replace" action opens `replace-connections-dialog` which calls the replace endpoint. The platform admin global connections page (`/platform/setup/connections`) uses `global-connections-hooks` and surfaces `edit-global-connection-dialog` for managing platform-scope connections and their `projectIds` assignment. The builder uses `connection-select` inside step settings to pick, create, or reconnect connections inline; active connections show a "Connected" status with a compact reconnect icon, while connections needing re-authentication keep a "Reconnect" action.

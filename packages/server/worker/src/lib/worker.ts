@@ -65,8 +65,9 @@ const SANDBOX_INFO_REFRESH_MS = 15_000
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
+        const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -145,6 +146,9 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
+    }
+    if (concurrency === 1) {
+        await sandboxConfig.primeFullContainerMemory()
     }
     // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
     // along with its box (usually already done by the disconnect handler), so it fails fast and is
@@ -383,7 +387,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
 
 function getWorkerProps(): WorkerProps {
     try {
-        const settings = workerSettings.getSettings()
+        const settings = sandboxConfig.getSandboxSettings()
         return {
             EXECUTION_MODE: settings.EXECUTION_MODE,
             WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
