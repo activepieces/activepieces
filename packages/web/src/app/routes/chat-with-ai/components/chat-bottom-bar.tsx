@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { motion } from 'motion/react';
+import { ReactNode } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -16,17 +16,13 @@ import {
 } from '../lib/message-parsers';
 
 import { ActionPreviewCard } from './action-preview-card';
+import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
-import {
-  ConnectionRequiredData,
-  ConnectionsRequiredCard,
-} from './connections-required-card';
+import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
-import { PlanApprovalForm } from './plan-approval-form';
 import { ProjectPickerCard } from './project-picker-card';
-import { ToolApprovalForm } from './tool-approval-form';
 
 export function ChatBottomBar({
   isStreaming,
@@ -38,19 +34,8 @@ export function ChatBottomBar({
   lastAssistantMessage,
   lastMessageId,
   placeholder,
+  banner,
 }: ChatBottomBarProps) {
-  const pendingPlanPart = useChatStoreContext((s) =>
-    chatStoreSelectors.pendingPlanApproval({
-      state: s,
-      lastAssistantMessage,
-    }),
-  );
-  const pendingMcpApproval = useChatStoreContext((s) =>
-    chatStoreSelectors.pendingMcpApproval({
-      state: s,
-      lastAssistantMessage,
-    }),
-  );
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -72,55 +57,27 @@ export function ChatBottomBar({
 
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const rejectGate = useChatStoreContext((s) => s.rejectGate);
-  const dismissGate = useChatStoreContext((s) => s.dismissGate);
   const dismissForm = useChatStoreContext((s) => s.dismissForm);
 
-  // Plan approval from tool state
-  if (pendingPlanPart) {
-    const input = pendingPlanPart.input as
-      | { planSummary?: string; steps?: string[] }
-      | undefined;
-    const toolCallId = chatPartUtils.getToolCallId(pendingPlanPart);
-    return (
-      <PlanApprovalForm
-        key={toolCallId}
-        planSummary={input?.planSummary ?? ''}
-        steps={input?.steps ?? []}
-        onApprove={() => approveGate(toolCallId)}
-        onReject={() => rejectGate(toolCallId)}
-        onDismiss={() => dismissGate(toolCallId)}
-      />
-    );
-  }
-
-  // MCP tool approval from toolCallMeta
-  if (pendingMcpApproval) {
-    return (
-      <ToolApprovalForm
-        key={pendingMcpApproval.toolCallId}
-        displayName={pendingMcpApproval.displayName}
-        onApprove={() => approveGate(pendingMcpApproval.toolCallId)}
-        onReject={() => rejectGate(pendingMcpApproval.toolCallId)}
-        onDismiss={() => dismissGate(pendingMcpApproval.toolCallId)}
-      />
-    );
-  }
+  let activeCard: ReactNode = null;
+  let dismissActiveCard: (() => void) | null = null;
 
   if (pendingActionPreview) {
-    return (
+    const toolCallId = pendingActionPreview.toolCallId;
+    dismissActiveCard = () => rejectGate(toolCallId);
+    activeCard = (
       <ActionPreviewCard
-        key={pendingActionPreview.toolCallId}
+        key={toolCallId}
         preview={pendingActionPreview}
-        onRun={() => approveGate(pendingActionPreview.toolCallId)}
-        onCancel={() => rejectGate(pendingActionPreview.toolCallId)}
+        onRun={() => approveGate(toolCallId)}
+        onCancel={() => rejectGate(toolCallId)}
+        onDismiss={() => rejectGate(toolCallId)}
       />
     );
-  }
-
-  // Display tool card (connection picker, questions, etc.) from tool state
-  if (activeDisplayTool) {
+  } else if (activeDisplayTool) {
     const toolCallId = chatPartUtils.getToolCallId(activeDisplayTool);
-    return (
+    dismissActiveCard = () => rejectGate(toolCallId);
+    activeCard = (
       <BlockingDisplayCard
         toolPart={activeDisplayTool}
         toolCallId={toolCallId}
@@ -129,11 +86,11 @@ export function ChatBottomBar({
         rejectGate={rejectGate}
       />
     );
-  }
-
-  // Questions from history (tool already completed but not dismissed)
-  if (hasActiveForm && !isStreaming) {
-    return (
+  } else if (hasActiveForm && !isStreaming) {
+    dismissActiveCard = () => {
+      if (lastMessageId) dismissForm(lastMessageId);
+    };
+    activeCard = (
       <MultiQuestionForm
         key={lastMessageId}
         questions={activeQuestions}
@@ -149,26 +106,38 @@ export function ChatBottomBar({
     );
   }
 
+  // Typing a free-text reply abandons the active card. onSend resets interaction
+  // state (clearing dismissals); dismissing afterwards re-marks the gate as
+  // dismissed/rejected so the card doesn't flash back before the worker unblocks.
+  const handleSend = (text: string, files?: File[]) => {
+    void onSend(text, files);
+    dismissActiveCard?.();
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2 }}
-    >
-      <ChatInput
-        isStreaming={isStreaming}
-        onSend={onSend}
-        onStop={onStop}
-        onInputChange={onInputChange}
-        placeholder={placeholder ?? t('Reply...')}
-        rightActions={
-          <ChatModelSelector
-            selectedModel={selectedModel}
-            onModelChange={onModelChange}
-          />
-        }
-      />
-    </motion.div>
+    <div className="flex flex-col gap-2">
+      {activeCard}
+      <div className="overflow-hidden rounded-2xl border border-foreground/20 transition-colors hover:border-foreground/40 focus-within:border-foreground/40">
+        {banner}
+        <ChatInput
+          isStreaming={activeCard ? false : isStreaming}
+          onSend={handleSend}
+          onStop={onStop}
+          onInputChange={onInputChange}
+          placeholder={
+            activeCard
+              ? t('Or reply in your own words')
+              : placeholder ?? t('Reply...')
+          }
+          rightActions={
+            <ChatModelSelector
+              selectedModel={selectedModel}
+              onModelChange={onModelChange}
+            />
+          }
+        />
+      </div>
+    </div>
   );
 }
 
@@ -188,6 +157,10 @@ function BlockingDisplayCard({
   const toolName = chatPartUtils.getToolPartName(toolPart);
   const data = toolPart.input as Record<string, unknown>;
 
+  if (toolPart.state === 'input-streaming') {
+    return <ChatCardSkeleton />;
+  }
+
   switch (toolName) {
     case 'ap_show_questions':
       return (
@@ -199,17 +172,20 @@ function BlockingDisplayCard({
         />
       );
     case 'ap_show_connection_required':
-      return (
-        <ConnectionsRequiredCard
-          connections={[data as unknown as ConnectionRequiredData]}
-          onResolve={(payload) => approveGate(toolCallId, payload)}
-        />
-      );
     case 'ap_show_connection_picker':
       return (
         <ConnectionPickerCard
           picker={data as unknown as ConnectionPickerData}
           onResolve={(payload) => approveGate(toolCallId, payload)}
+          onDismiss={() => rejectGate(toolCallId)}
+        />
+      );
+    case 'ap_show_mcp_reconnect':
+      return (
+        <McpReconnectCard
+          reconnect={data as unknown as McpReconnectData}
+          onResolve={(payload) => approveGate(toolCallId, payload)}
+          onDismiss={() => rejectGate(toolCallId)}
         />
       );
     case 'ap_show_project_picker':
@@ -217,6 +193,7 @@ function BlockingDisplayCard({
         <ProjectPickerCard
           picker={data as unknown as ProjectPickerData}
           onResolve={(payload) => approveGate(toolCallId, payload)}
+          onDismiss={() => rejectGate(toolCallId)}
         />
       );
     default:
@@ -234,4 +211,5 @@ type ChatBottomBarProps = {
   lastAssistantMessage: ChatUIMessage | undefined;
   lastMessageId: string | undefined;
   placeholder?: string;
+  banner?: ReactNode;
 };

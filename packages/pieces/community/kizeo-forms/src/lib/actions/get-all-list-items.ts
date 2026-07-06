@@ -5,7 +5,7 @@ import {
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { endpoint, kizeoFormsCommon } from '../common';
 import { kizeoFormsAuth } from '../..';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const getAllListItems = createAction({
@@ -14,6 +14,8 @@ export const getAllListItems = createAction({
   name: 'get_all_list_items',
   displayName: 'Get All List Items',
   description: 'Get all items from a specific list',
+  audience: 'both',
+  aiMetadata: { description: 'List items from a Kizeo Forms external list by its list ID, with optional search pattern, pagination (offset/limit) and sorting; leaving the search empty returns all items while a search value filters to matches. Use to browse or look up items when you do not have a specific item ID. Read-only and idempotent.', idempotent: true },
   props: {
     search: Property.ShortText({
       displayName: 'Search',
@@ -43,7 +45,7 @@ export const getAllListItems = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      limit: z.number().min(1).optional(),
+      limit: z.optional(z.number().check(z.minimum(1))),
     });
     const { listId, search, offset, limit, sort, direction } =
       context.propsValue;

@@ -50,6 +50,9 @@ export const newCommentTrigger = createTrigger({
   name: 'new_comment',
   displayName: 'New Comment',
   description: 'Triggers when a new public comment or internal note is added in Frill.',
+  aiMetadata: {
+    description: 'Fires when a new comment is added on any Frill idea (polled), covering both public comments and private internal notes. Represents new discussion activity on feedback.',
+  },
   props: {},
   sampleData: {
     idx: 'cmt_xyz789',

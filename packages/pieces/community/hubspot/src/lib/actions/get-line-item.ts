@@ -1,6 +1,6 @@
 import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
@@ -10,6 +10,8 @@ export const getLineItemAction = createAction({
 	name: 'get-line-item',
 	displayName: 'Get Line Item',
 	description: 'Gets a line item.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches a single line item by its HubSpot line item ID, returning default and any requested additional properties. Use when you already have the line item ID and need its details (price, quantity, product). Read-only and idempotent.', idempotent: true },
 	props: {
 		lineItemId: Property.ShortText({
 			displayName: 'Line Item ID',

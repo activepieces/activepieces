@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
     FlowTriggerType,
     FlowVersionState,
     TriggerHookType,
 } from '@activepieces/shared'
 import type { ExecuteTriggerOperation, FlowVersion } from '@activepieces/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockDownload } = vi.hoisted(() => ({
     mockDownload: vi.fn(),
 }))
-vi.mock('../../src/lib/engine-file-api', () => ({
+vi.mock('../../src/lib/api/engine-file-api', () => ({
     engineFileApi: {
         download: mockDownload,
         upload: vi.fn(),

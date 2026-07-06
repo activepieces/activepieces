@@ -19,6 +19,12 @@ export const updateObject = createAction({
   displayName: 'Update Object',
   description:
     'Updates a record by ID in the selected Coupa module (Purchase Orders, Suppliers, or Contracts).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing Coupa record by ID — in purchase orders, suppliers, contracts, or any other resource via the custom-module option — by PUTting a raw JSON body of the fields to change. Requires a known record ID; use Create Object for new records. Effectively idempotent: re-sending the same body to the same ID yields the same record state.',
+    idempotent: true,
+  },
   props: {
     module: moduleProperty,
     customResource: customModuleResourceProperty,

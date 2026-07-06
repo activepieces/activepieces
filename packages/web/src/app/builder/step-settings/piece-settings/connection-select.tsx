@@ -1,3 +1,4 @@
+import { Permission, isNil } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -6,11 +7,9 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
-  Permission,
   PieceAction,
   PieceTrigger,
   PropertyExecutionType,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -108,7 +107,11 @@ function ConnectionSelect(params: ConnectionSelectProps) {
   return (
     <FormField
       control={form.control}
-      key={form.getValues().settings.input.auth}
+      key={
+        dynamicInputModeToggled
+          ? 'auth-dynamic'
+          : `auth-${form.getValues().settings.input.auth}`
+      }
       name={'settings.input.auth'}
       render={({ field }) => (
         <>

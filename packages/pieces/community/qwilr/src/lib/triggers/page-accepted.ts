@@ -33,6 +33,9 @@ export const pageAcceptedTrigger = createTrigger({
   name: 'page_accepted',
   displayName: 'Page Accepted',
   description: 'Triggers when a Qwilr page is accepted',
+  aiMetadata: {
+    description: 'Fires when a recipient fully accepts a Qwilr page (all accept blocks signed off), signaling the proposal or quote has been agreed to. Use to kick off downstream deal-won workflows such as invoicing or CRM updates.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

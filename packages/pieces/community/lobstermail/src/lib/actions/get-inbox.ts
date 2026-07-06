@@ -12,6 +12,8 @@ export const getInbox = createAction({
   name: 'get_inbox',
   displayName: 'Get Inbox',
   description: 'Get details for a single inbox including its address, status, and settings.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up one LobsterMail inbox by its id and returns its address, active status, and settings. Use to resolve or verify an inbox before sending or reading mail. Requires a known inbox id (obtain it via List Inboxes). Read-only and idempotent.', idempotent: true },
   props: {
     inbox_id: inboxIdDropdown,
   },

@@ -7,7 +7,8 @@ import {
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
@@ -91,6 +92,10 @@ export const newCustomObjectTrigger = createTrigger({
 	name: 'new-custom-object',
 	displayName: 'New Custom Object',
 	description: 'Triggers when new custom object is available.',
+	aiMetadata: {
+		description:
+			'Fires when a new record of the selected HubSpot custom object type is created. Each event represents one custom-object record with the properties chosen to retrieve plus standard fields like object ID and create date. Polls by creation date; does not fire on updates to existing records.',
+	},
 	props: {
 		customObjectType: customObjectDropdown,
 		markdown: Property.MarkDown({

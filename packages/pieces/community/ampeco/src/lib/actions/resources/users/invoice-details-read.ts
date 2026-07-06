@@ -15,6 +15,8 @@ export const invoiceDetailsReadAction = createAction({
   name: 'invoiceDetailsRead',
   displayName: 'Resources - Users - Invoice Details Read',
   description: 'Invoice details / Read.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the stored billing/invoice details for a single AMPECO user, identified by user id. Read-only and idempotent. Use to inspect current invoice settings before changing them with Invoice Details Create Or Update.', idempotent: true },
   props: {
         
   user: Property.Number({

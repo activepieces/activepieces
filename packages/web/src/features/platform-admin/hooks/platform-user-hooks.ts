@@ -1,8 +1,6 @@
+import { isNil, Permission, SeekPage } from '@activepieces/core-utils';
 import {
   InvitationType,
-  isNil,
-  Permission,
-  SeekPage,
   UpdateUserRequestBody,
   User,
   UserStatus,

@@ -7,6 +7,8 @@ export const askChatbot = createAction({
   name: 'ask_chatbot',
   displayName: 'Ask Chatbot',
   description: 'Sends a message to an existing thread with a chatbot.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a user message to an existing re:tune chatbot conversation thread and returns the bot\'s generated reply. Use this to interact with a configured re:tune chatbot; requires both a thread ID (a conversation context that must already exist) and the message text. Not idempotent — each call appends a turn to the thread and produces a fresh AI response.', idempotent: false },
   props: {
     thread: Property.Dropdown({
       auth: retuneAuth,

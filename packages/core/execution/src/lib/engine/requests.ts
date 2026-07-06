@@ -1,0 +1,79 @@
+import { z } from 'zod'
+import { RunInternalError } from '../flow-run/execution/execution-output'
+import { FlowRunStatus } from '../flow-run/execution/flow-execution'
+import { StepOutput } from '../flow-run/execution/step-output'
+import { FailedStep, FlowRun } from '../flow-run/flow-run'
+import { StepRunResponse } from '../flows/sample-data'
+import { StreamStepProgress } from './engine-operation'
+
+
+
+export const UploadRunLogsRequest = z.object({
+    runId: z.string(),
+    tags: z.array(z.string()).optional(),
+    // Optional so the worker can post a timings-only update (provision/boot/run) after a successful
+    // execute without re-asserting the terminal status the engine already reported.
+    status: z.nativeEnum(FlowRunStatus).optional(),
+    projectId: z.string(),
+    streamStepProgress: z.nativeEnum(StreamStepProgress).optional(),
+    logsFileId: z.string().optional(),
+    stepNameToTest: z.string().optional(),
+    failedStep: FailedStep.optional(),
+    startTime: z.string().optional(),
+    finishTime: z.string().optional(),
+    stepResponse: StepRunResponse.optional(),
+    stepsCount: z.number().optional(),
+    internalError: RunInternalError.optional(),
+    provisionMs: z.number().optional(),
+    bootMs: z.number().optional(),
+    runMs: z.number().optional(),
+})
+
+export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
+
+
+export const UpdateStepProgressRequest = z.object({
+    projectId: z.string(),
+    runId: z.string(),
+    output: z.unknown(),
+})
+export type UpdateStepProgressRequest = z.infer<typeof UpdateStepProgressRequest>
+
+export const FileTransportQueryParams = z.object({
+    token: z.string(),
+})
+export type FileTransportQueryParams = z.infer<typeof FileTransportQueryParams>
+
+export const FileReadToken = z.object({
+    fileId: z.string(),
+    fileType: z.string().optional(),
+})
+export type FileReadToken = z.infer<typeof FileReadToken>
+
+export const SendFlowResponseRequest = z.object({
+    workerHandlerId: z.string(),
+    httpRequestId: z.string(),
+    runResponse: z.object({
+        // The return_response piece stores status/headers as dynamic props that are not always coerced
+        // (e.g. a literal "200" or a {{...}} that resolves to a number). Coerce here so a valid user
+        // response succeeds instead of 400ing — which the engine would mis-report as an INTERNAL_ERROR.
+        status: z.coerce.number(),
+        body: z.any(),
+        headers: z.record(z.string(), z.coerce.string()),
+    }),
+})
+export type SendFlowResponseRequest = z.infer<typeof SendFlowResponseRequest>
+export const GetFlowVersionForWorkerRequest = z.object({
+    versionId: z.string(),
+})
+
+export type GetFlowVersionForWorkerRequest = z.infer<typeof GetFlowVersionForWorkerRequest>
+
+export type UpdateRunProgressRequest = {
+    flowRun: Omit<FlowRun, 'steps'>
+    step?: {
+        name: string
+        path: readonly [string, number][]
+        output: StepOutput
+    }
+}

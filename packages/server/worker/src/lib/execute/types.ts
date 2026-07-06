@@ -1,6 +1,6 @@
+import { Resolver, Runtime } from '@activepieces/sandbox'
+import { type ApLogger } from '@activepieces/server-utils'
 import { EngineResponseStatus, JobData, WorkerJobType, WorkerToApiContract } from '@activepieces/shared'
-import { Logger } from 'pino'
-import { SandboxManager } from './sandbox-manager'
 
 export enum JobResultKind {
     FIRE_AND_FORGET = 'FIRE_AND_FORGET',
@@ -9,12 +9,14 @@ export enum JobResultKind {
 
 export type JobContext = {
     apiClient: WorkerToApiContract
-    sandboxManager: SandboxManager
+    runtime: Runtime
+    resolver: Resolver
+    workerIndex: number
     jobId: string
     engineToken: string
     internalApiUrl: string
     publicApiUrl: string
-    log: Logger
+    log: ApLogger
 }
 
 export type FireAndForgetJobResult = {

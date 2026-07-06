@@ -7,6 +7,8 @@ export const getAddressDetails = createAction({
     name: 'get_address_details',
     displayName: 'Get Address Details',
     description: 'Returns address details including chain and mempool stats',
+    audience: 'both',
+    aiMetadata: { description: 'Returns aggregate statistics for a Bitcoin address: total funded/spent amounts and transaction counts split across confirmed chain and pending mempool. Read-only and idempotent. Use this to compute an address balance or activity summary in one call; use the transaction-list actions to enumerate individual transactions or Get Address UTXO for spendable outputs.', idempotent: true },
     // category: 'Addresses',
     props: {
         address: Property.ShortText({

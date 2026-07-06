@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
+import { createNewGdriveFolderActionOutputSchema } from '../output-schemas';
 
 export const googleDriveCreateNewFolder = createAction({
   auth: googleDriveAuth,
@@ -19,10 +20,11 @@ export const googleDriveCreateNewFolder = createAction({
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: createNewGdriveFolderActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const response = await drive.files.create({
       requestBody: {

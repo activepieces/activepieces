@@ -14,6 +14,9 @@ export const newDeal = createTrigger({
   name: 'new_deal',
   displayName: 'New Deal',
   description: 'Triggers when a new deal is created',
+  aiMetadata: {
+    description: 'Fires when a new sales deal/opportunity is created in Teamleader, via the deal.created webhook. Emits the full deal record. Use to react to newly opened pipeline opportunities; this fires on creation regardless of phase or outcome (use Deal Won for the won event).',
+  },
   auth: teamleaderAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

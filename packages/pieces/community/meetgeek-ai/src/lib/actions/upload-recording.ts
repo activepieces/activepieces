@@ -9,6 +9,11 @@ export const uploadRecording = createAction({
   displayName: 'Upload Recording',
   description:
     'Upload a video or audio file for analysis and receive a notification upon completion via webhook',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Submit a video or audio recording to MeetGeek for transcription and AI analysis by passing a publicly accessible download URL (e.g. an S3 signed URL); analysis runs asynchronously and completion is signaled via the New Meeting webhook. Use to ingest an external recording into MeetGeek. Not idempotent: each call queues a new analysis job.',
+    idempotent: false,
+  },
   props: {
     download_url: Property.ShortText({
       displayName: 'Download URL',

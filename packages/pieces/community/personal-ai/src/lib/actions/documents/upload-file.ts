@@ -8,6 +8,8 @@ export const uploadFile = createAction({
   name: 'upload_file',
   displayName: 'Upload File',
   description: 'Upload a file to AI assistant.',
+  audience: 'both',
+  aiMetadata: { description: 'Upload a binary file (sent as multipart form data) to the Personal AI assistant so it can reference the content, with optional tags, source, and add-to-memory flag. Use when the source is an actual file; use Upload Document for plain text or Upload URL Content to fetch from a link. Each call creates a new uploaded file, so it is not idempotent.', idempotent: false },
   // category: 'Documents',
   props: {
     file: Property.File({

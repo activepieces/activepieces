@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { sendMessage } from './lib/actions/send-message';
 
 export const matrixAuth = PieceAuth.CustomAuth({

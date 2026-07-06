@@ -19,6 +19,12 @@ export const getObjectById = createAction({
   displayName: 'Get Object by ID',
   description:
     'Retrieves a single record by ID from Purchase Orders, Suppliers, or Contracts.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch one Coupa record by its ID from purchase orders, suppliers, contracts, or any other resource via the custom-module option, with optional query parameters such as a fields filter. Use this when you already know the record ID; use Search Objects to find records by criteria. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     module: moduleProperty,
     customResource: customModuleResourceProperty,

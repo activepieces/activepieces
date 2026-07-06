@@ -7,6 +7,12 @@ export const retrieveBookingById = createAction({
   name: 'retrieveBookingById',
   displayName: 'Retrieve Booking by ID',
   description: 'Retrieve a booking by its ID from YouCanBookMe',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a single YouCanBookMe booking by its booking ID, optionally restricting the returned fields and the time zone times are displayed in. Use when an agent already has a booking ID and needs its details. Read-only and idempotent — repeating the call returns the same booking without side effects.',
+    idempotent: true,
+  },
   props: {
     bookingId: Property.ShortText({
       displayName: 'Booking ID',

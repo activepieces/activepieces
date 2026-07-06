@@ -15,6 +15,8 @@ export const updateRoamingCustomTariffFilterAction = createAction({
   name: 'updateRoamingCustomTariffFilter',
   displayName: 'Resources - Roaming Operators - Update Roaming Custom Tariff Filter',
   description: 'Update an existing custom tariff filter.',
+  audience: 'both',
+  aiMetadata: { description: 'Update fields of an existing custom tariff filter for a roaming operator, identified by the roaming operator ID and filter ID. Only the fields you supply are changed. Idempotent on the supplied values; note that setting an already-used order value reshuffles the other filters in the sequence.', idempotent: true },
   props: {
         
   roamingOperator: Property.Number({

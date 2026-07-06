@@ -28,6 +28,8 @@ export const uploadToFolderAction = createAction({
   displayName: 'Upload File to Folder',
   description:
     'Upload a file (or HTTPS URL) and save it to your SimplyPrint user file system, optionally inside a specific folder. URL uploads stream with ~95 MiB peak RAM; File uploads are buffered by AP. Files over 95 MiB are chunked automatically.',
+  audience: 'both',
+  aiMetadata: { description: 'Upload a print file (File input or HTTPS URL) and save it as a persistent user-file inside a chosen folder of the SimplyPrint file system, returning a user-file UID. Pick this over plain upload-file when the file should live in the library/folders; pick upload-and-queue instead when the goal is to print it. Not idempotent — each call creates a new user-file.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

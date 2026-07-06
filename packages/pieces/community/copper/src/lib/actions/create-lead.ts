@@ -8,6 +8,12 @@ export const createLead = createAction({
   name: 'createLead',
   displayName: 'Create Lead',
   description: 'Adds a new lead.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new lead in Copper CRM with a name, a single categorized email, and optional phone numbers and address. Use to capture a prospect not yet qualified into a person/opportunity. Not idempotent: each call creates a separate lead even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({ displayName: 'Full Name', required: true }),
     email: Property.ShortText({

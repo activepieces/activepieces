@@ -9,6 +9,8 @@ export const createOrUpdateContactAction = createAction({
   displayName: 'Create or Update Contact',
   description:
     'Add a new contact to Reply.io, or update their details if a contact with that email already exists.',
+  audience: 'both',
+  aiMetadata: { description: 'Upsert a contact in Reply.io keyed on email: creates the contact if the email is new, otherwise updates the existing record with the supplied fields. Use to store or refresh contact details without enrolling them in any campaign. Email and first name are required; repeating with the same input converges to the same stored record.', idempotent: true },
   auth: replyIoAuth,
   props: {
     email: Property.ShortText({

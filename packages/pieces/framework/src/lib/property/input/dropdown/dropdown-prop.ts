@@ -1,7 +1,7 @@
 import { BasePropertySchema, TPropertyValue } from "../common";
 import { DropdownState } from "./common";
 import { AppConnectionValueForAuthProperty, PropertyContext } from "../../../context";
-import { z } from "zod";
+import * as z from "zod/mini";
 import { PropertyType } from "../property-type";
 import { PieceAuthProperty } from "../../authentication";
 

@@ -10,6 +10,8 @@ export const createTagAction = createAction({
   displayName: 'Create or Update Tag',
   description:
     'Create a new custom tag, or rename / re-style an existing one (pass the tag ID to edit).',
+  audience: 'both',
+  aiMetadata: { description: 'Create a custom tag with a name and badge color, or edit an existing one by passing its tag ID. Pick it to manage the tag catalog itself, not to attach/remove tags from entities (use the attach/detach tools for that). Create mode is not idempotent (a repeat call makes another tag); edit mode by stable ID is idempotent.', idempotent: false },
   props: {
     tagId: Property.Number({
       displayName: 'Tag ID (edit existing)',

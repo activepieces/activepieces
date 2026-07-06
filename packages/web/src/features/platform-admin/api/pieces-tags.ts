@@ -1,7 +1,7 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   UpsertTagRequest,
   ListTagsRequest,
-  SeekPage,
   SetPieceTagsRequest,
   Tag,
 } from '@activepieces/shared';

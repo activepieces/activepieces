@@ -13,6 +13,8 @@ export const findView = createAction({
   name: 'find_view',
   displayName: 'Find View',
   description: 'Finds a view based on name (URL name)',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single Tableau view by its URL name (the slug from /views/workbook/<name>, e.g. "Sheet1") and returns its metadata including the resolved view ID, owner, workbook, and project. Use to resolve a human-facing view name into the ID needed by other actions; errors if no matching view exists. Read-only and idempotent.', idempotent: true },
   auth: tableauAuth,
   props: {
     viewName: Property.ShortText({

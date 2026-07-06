@@ -8,6 +8,8 @@ export const addContactToCampaign = createAction({
   name: 'addContactToCampaign',
   displayName: 'Add Contact to Campaign',
   description: 'Add a single contact to a campaign',
+  audience: 'both',
+  aiMetadata: { description: 'Adds one contact (first name and email required, with optional last name, login URL, username, and password) to a specific Let\'s Calendar campaign identified by its campaign ID. Use to enroll a person into an existing campaign. Not idempotent: each call appends the contact again, so repeating it may create duplicate entries.', idempotent: false },
   props: {
     campaign_id: Property.ShortText({
       displayName: 'Campaign ID',

@@ -7,6 +7,9 @@ export const sessionStarted = createSessionsUsWebhookTrigger({
   name: 'session_started',
   displayName: 'Session Started',
   description: 'Triggered when a session starts.',
+  aiMetadata: {
+    description: 'Fires when a session goes live (the meeting begins). The payload includes the session details and its participants.',
+  },
   trigger: SessionsUsWebhookTrigger.SESSION_STARTED,
   storeKey: 'sessions_session_started_trigger',
   sampleData: {

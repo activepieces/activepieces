@@ -11,6 +11,12 @@ export const findSupplierPayment = createAction({
 	name: 'find_supplier_payment',
 	displayName: 'Find Supplier Payment',
 	description: 'Finds supplier payments in Workday using WQL.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Searches supplier payments via a Workday Query Language (WQL) query against the supplierPayments dataset. Both filters are optional: supply a supplier ID and/or a specific payment ID to narrow results, or omit both to list all supplier payments. Use to look up a payment or enumerate a supplier’s payments. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		supplierId: Property.ShortText({
 			displayName: 'Supplier ID',

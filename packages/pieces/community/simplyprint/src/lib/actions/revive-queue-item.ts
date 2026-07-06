@@ -9,6 +9,12 @@ export const reviveQueueItemAction = createAction({
   name: 'revive_queue_item',
   displayName: 'Revive Queue Item',
   description: 'Bring a completed (done) queue item back to the active queue.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Move a previously-completed queue item back into the active print queue by its numeric ID. Pick this to re-print or re-process a job that was already marked done; it changes queue state, so re-running it after the item is already active has no further effect.',
+    idempotent: false,
+  },
   props: {
     queueItemId: Property.Number({
       displayName: 'Queue item ID',

@@ -9,6 +9,12 @@ export const getRoleLookup = createAction({
   displayName: 'Look Up Role at Company',
   description:
     'Find the person who most closely matches a specified role at a company (3 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Find the single person who best matches a given role (e.g. "ceo", "vp of engineering") at a named company. Read-only and safe to retry. Use when you need the one person holding a role; to get many people by job-title keyword use Search Company Employees. Profile enrichment adds a credit.',
+    idempotent: true,
+  },
   props: {
     company_name: Property.ShortText({
       displayName: 'Company Name',

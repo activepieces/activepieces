@@ -1,0 +1,1 @@
+Most users self-host; we develop against Cloud where secrets/keys/env vars are pre-provisioned. Any feature needing a new env var, secret, key, piece auth method, or DB extension must default to **zero setup** — never ship something that looks enabled in the UI but is silently broken without manual setup. See `docs/handbook/engineering/playbooks/building-for-self-hosting.mdx`.

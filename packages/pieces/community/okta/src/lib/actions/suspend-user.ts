@@ -8,6 +8,8 @@ export const suspendUserAction = createAction({
   name: 'suspend_user',
   displayName: 'Suspend User',
   description: 'Temporarily suspend a user in Okta',
+  audience: 'both',
+  aiMetadata: { description: 'Transitions an existing Okta user (by user ID) to the SUSPENDED lifecycle state, temporarily blocking sign-in without deactivating the account. Use for a reversible hold; reverse it with the unsuspend/activate flow. Idempotent on end-state — re-running leaves the user suspended.', idempotent: true },
   props: {
     userId: userIdDropdown(),
   },

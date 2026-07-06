@@ -1,7 +1,7 @@
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { cloudconvertAuth } from './lib/common/auth';
 import { newJob } from './lib/triggers/new-job';
 import { jobFinished } from './lib/triggers/job-finished';

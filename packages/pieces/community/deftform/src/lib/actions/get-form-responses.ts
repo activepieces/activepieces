@@ -8,6 +8,8 @@ export const getFormResponses = createAction({
     name: 'get_form_responses',
     displayName: 'Get Form Responses',
     description: 'Retrieves all submissions (responses) for a specific form. Useful for reporting and data exports.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve all submitted responses for one form, with each response answers flattened by field key plus submission metadata (id, uuid, number, timestamps). Use it for reporting, exports, or to look up a response UUID needed by Get Submission PDF. Requires the form id. Read-only and idempotent.', idempotent: true },
     props: {
         formId: DeftformCommon.formDropdown,
     },

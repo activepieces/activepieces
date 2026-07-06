@@ -9,7 +9,7 @@ import {
   HttpRequest,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { saasticCommon } from '../common';
 import { saasticAuth } from '../..';
 
@@ -18,6 +18,8 @@ export const createCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create or Update a Customer',
   description: 'Create or update a customer.',
+  audience: 'both',
+  aiMetadata: { description: 'Upserts a customer record in Saastic (the analytics layer over Stripe), keyed on email: creates the customer if the email is new, otherwise updates the existing record with the supplied name, phone, and signup date. Use to register or refresh customer details before attributing charges. Idempotent — repeating with the same email and fields leaves the customer in the same state. Requires a valid email.', idempotent: true },
 
   props: {
     first_name: Property.LongText({
@@ -49,8 +51,8 @@ export const createCustomer = createAction({
 
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
-      signed_up_at: z.string().datetime().optional(),
+      email: z.string().check(z.email()),
+      signed_up_at: z.optional(z.string().check(z.iso.datetime())),
     });
 
     const request: HttpRequest = {

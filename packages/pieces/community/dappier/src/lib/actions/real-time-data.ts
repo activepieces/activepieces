@@ -9,6 +9,12 @@ export const realTimeWebSearch = createAction({
   displayName: 'Real Time Data',
   description:
     'Access real-time Google web search results including the latest news, weather, travel, deals and more.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a real-time Google-style web search via Dappier and returns AI-summarized results for a free-text query covering general topics like news, weather, travel, and deals. Choose this for broad, up-to-the-minute open-web lookups rather than a specific vertical (stocks, sports, or lifestyle). Requires a natural-language search query; read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

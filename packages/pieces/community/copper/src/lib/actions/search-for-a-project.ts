@@ -8,6 +8,12 @@ export const searchForAProject = createAction({
   name: 'searchForAProject',
   displayName: 'Search for a Project',
   description: 'Lookup a project.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches projects in Copper CRM, filtering by any combination of name, assignee, status (Open/Completed), tags, followed state, and creation/modification dates, with sorting and paging. Use to find one or more projects; with no filters it lists projects across the account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

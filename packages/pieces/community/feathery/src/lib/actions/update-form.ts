@@ -8,6 +8,8 @@ export const updateFormAction = createAction({
   name: 'update_form',
   displayName: 'Update Form',
   description: 'Update a form\'s properties including status and translations.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Feathery form identified by its form ID, optionally setting a new name, enabled/disabled status, and text translations. Use to rename, enable/disable, or localize a form. Note that supplied translations overwrite the form\'s existing translation set. Idempotent: re-running with the same input leaves the form in the same state.', idempotent: true },
   props: {
     form_id: Property.Dropdown({
       displayName: 'Form',

@@ -4,7 +4,8 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import dayjs from 'dayjs';
-import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { hubspotAuth } from '../auth';
 import { Client } from '@hubspot/api-client';
@@ -73,6 +74,10 @@ export const newCompanyTrigger = createTrigger({
 	name: 'new-company',
 	displayName: 'New Company',
 	description: 'Trigger when a new company is added.',
+	aiMetadata: {
+		description:
+			'Fires when a new company is created in HubSpot. Each event represents one company record with properties such as name, domain, industry, address, employee count, revenue, and lifecycle stage. Polls for companies by creation date; does not fire on updates to existing companies.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

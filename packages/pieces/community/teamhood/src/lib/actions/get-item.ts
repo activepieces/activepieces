@@ -15,6 +15,12 @@ export const getItemAction = createAction({
   name: 'get_item',
   displayName: 'Get Item',
   description: 'Retrieve a single Teamhood item by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Teamhood item by its item ID. Use to read the full details of a known item before acting on it. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     workspaceId: workspaceIdDropdown(true),
     boardId: boardIdDropdown(false),

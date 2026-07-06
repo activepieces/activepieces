@@ -18,12 +18,15 @@ export function createPrinterAction(opts: {
   displayName: string;
   description: string;
   path: string;
+  aiMetadata?: { description: string; idempotent?: boolean };
 }) {
   return createAction({
     auth: simplyprintAuth,
     name: opts.name,
     displayName: opts.displayName,
     description: opts.description,
+    audience: 'both',
+    aiMetadata: opts.aiMetadata,
     props: {
       printerId: Property.Number({
         displayName: 'Printer ID',

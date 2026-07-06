@@ -8,6 +8,8 @@ export const deleteMessageAction = createAction({
   name: 'delete_message',
   displayName: 'Delete Post',
   description: 'Permanently deletes a post. Only posts in a deletable state (e.g. SCHEDULED) can be removed.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a Hootsuite post by its ID. Use to cancel or remove a scheduled post before it sends. Only posts in a deletable state (e.g. SCHEDULED) can be removed; already-sent posts cannot. Not idempotent: the first call removes the post and subsequent calls with the same ID will fail since it no longer exists.', idempotent: false },
   props: {
     messageId: Property.ShortText({
       displayName: 'Post ID',

@@ -9,6 +9,12 @@ export const enrollAUserIntoACource = createAction({
   name: 'enrollAUserIntoACource',
   displayName: 'Enroll a User Into a Course',
   description: 'Enroll a user into a course by user email or user ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrolls a SkyPrep user into a specific course, identifying the user by their user ID and targeting the course by its course ID. Use to grant a learner access to course content. Not idempotent: each call registers an enrollment as a side effect.',
+    idempotent: false,
+  },
   props: {
     user_id: user_idDropdown,
     course_id: courceID,

@@ -1,4 +1,5 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, KnowledgeBaseFile, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { KnowledgeBaseFile } from '@activepieces/shared'
 import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Not } from 'typeorm'

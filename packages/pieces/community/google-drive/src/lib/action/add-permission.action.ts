@@ -1,7 +1,8 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { googleDriveAuth, createGoogleClient } from '../auth';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { common } from "../common";
+import { updatePermissionsActionOutputSchema } from '../output-schemas';
 
 export const addPermission = createAction({
     auth: googleDriveAuth,
@@ -58,13 +59,14 @@ export const addPermission = createAction({
             required: true,
         }),
        },
+    outputSchema: updatePermissionsActionOutputSchema,
 
     async run(context) {
         const {fileId, user_email, permission_name, send_invitation_email,include_team_drives} = context.propsValue;
 
         const authClient = await createGoogleClient(context.auth);
 
-        const drive = google.drive({ version: 'v3', auth: authClient });
+        const drive = googleDrive({ version: 'v3', auth: authClient });
 
         const permission = { 'type': 'user', 'role': permission_name, 'emailAddress': user_email };
 

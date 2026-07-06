@@ -1,4 +1,4 @@
-import { AP_FUNCTIONS, ApFunction } from '@activepieces/shared';
+import { AP_FUNCTIONS, ApFunction } from '@activepieces/core-formula';
 import { ExternalLink } from 'lucide-react';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';

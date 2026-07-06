@@ -17,6 +17,10 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/core-utils": ["packages/core/utils/src/index.ts"],
+      "@activepieces/core-formula": ["packages/core/formula/src/index.ts"],
+      "@activepieces/core-piece-types": ["packages/core/piece-types/src/index.ts"],
+      "@activepieces/core-execution": ["packages/core/execution/src/index.ts"],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/engine": ["packages/server/engine/src/main.ts"],
@@ -369,6 +373,9 @@
       ],
       "@activepieces/piece-datadog": [
         "packages/pieces/community/datadog/src/index.ts"
+      ],
+      "@activepieces/piece-dataforb2b": [
+        "packages/pieces/community/dataforb2b/src/index.ts"
       ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/core/date-helper/src/index.ts"
@@ -917,6 +924,9 @@
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
+      "@activepieces/piece-outseta": [
+        "packages/pieces/community/outseta/src/index.ts"
+      ],
       "@activepieces/piece-open-phone": [
         "packages/pieces/community/open-phone/src/index.ts"
       ],
@@ -992,6 +1002,9 @@
       ],
       "@activepieces/piece-podio": [
         "packages/pieces/community/podio/src/index.ts"
+      ],
+      "@activepieces/piece-polydoc": [
+        "packages/pieces/community/polydoc/src/index.ts"
       ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
@@ -1244,6 +1257,9 @@
       ],
       "@activepieces/piece-softr": [
         "packages/pieces/community/softr/src/index.ts"
+      ],
+      "@activepieces/piece-sofya": [
+        "packages/pieces/community/sofya/src/index.ts"
       ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"
@@ -1545,7 +1561,8 @@
         "packages/pieces/community/meistertask/src/index.ts"
       ],
       "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
-      "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/sandbox": ["packages/server/sandbox/src/index.ts"],
+      "@activepieces/shared": ["packages/core/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
@@ -1687,6 +1704,9 @@
       ],
       "@activepieces/piece-linkup": [
         "packages/pieces/community/linkup/src/index.ts"
+      ],
+      "@activepieces/piece-linkupapi": [
+        "packages/pieces/community/linkupapi/src/index.ts"
       ],
       "@activepieces/piece-youform": [
         "packages/pieces/community/youform/src/index.ts"
@@ -1866,7 +1886,7 @@
       "@activepieces/piece-omnihr": [
         "packages/pieces/community/omnihr/src/index.ts"
       ],
-      "@activepieces/piece-clicdata": [
+      "@activepieces/piece-clicdog": [
         "packages/pieces/community/clicdata/src/index.ts"
       ],
       "@activepieces/piece-katana": [

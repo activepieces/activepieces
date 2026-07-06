@@ -1,10 +1,5 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    PieceType,
-    PrincipalType,
-    PackageType,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { DefaultProjectRole, FlowTriggerType, PackageType, PieceType, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -13,9 +8,12 @@ import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
+    createMockFlow,
+    createMockFlowVersion,
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
-import { createTestContext } from '../../../helpers/test-context'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -284,6 +282,248 @@ describe('Piece Metadata CE API', () => {
             const response = await ctx.get('/v1/pieces/@activepieces/piece-all-incompatible')
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('DELETE /v1/pieces/:id', () => {
+        it('should delete a custom piece owned by the platform', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/deletable-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).toBeNull()
+        })
+
+        it('should return 404 for a non-existent piece id', async () => {
+            const ctx = await createTestContext(app!)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${apId()}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('should delete all versions of the custom piece', async () => {
+            const ctx = await createTestContext(app!)
+            const versionOne = createMockPieceMetadata({
+                name: '@custom/multi-version-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            const versionTwo = createMockPieceMetadata({
+                name: '@custom/multi-version-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.2.0',
+            })
+            await db.save('piece_metadata', [versionOne, versionTwo])
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${versionTwo.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findBy({ name: '@custom/multi-version-piece' })
+            expect(remaining).toHaveLength(0)
+        })
+
+        it('should reject deleting a platform-owned official piece with 403', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@activepieces/official-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).not.toBeNull()
+        })
+
+        it('should reject deletion by a non-admin platform member with 403', async () => {
+            const ownerCtx = await createTestContext(app!)
+            const memberCtx = await createMemberContext(app!, ownerCtx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/member-cannot-delete',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ownerCtx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await memberCtx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).not.toBeNull()
+        })
+
+        it('should not delete a custom piece owned by another platform', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/other-platform-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: apId(),
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).not.toBeNull()
+        })
+
+        it('should reject deleting a custom piece that is still used by a flow', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/in-use-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            const mockFlow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', mockFlow)
+            const mockFlowVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                displayName: 'My Webhook Flow',
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    name: 'trigger',
+                    settings: {
+                        pieceName: mockPiece.name,
+                        pieceVersion: mockPiece.version,
+                        input: {},
+                        propertySettings: {},
+                        triggerName: 'sample_trigger',
+                    },
+                    valid: true,
+                    displayName: 'Trigger',
+                },
+            })
+            await db.save('flow_version', mockFlowVersion)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response?.json().params.message).toContain('My Webhook Flow')
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).not.toBeNull()
+        })
+
+        it('should allow deleting a custom piece that is only referenced by a stale flow version', async () => {
+            const ctx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/stale-version-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            const mockFlow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', mockFlow)
+            const staleVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                created: '2020-01-01T00:00:00.000Z',
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    name: 'trigger',
+                    settings: {
+                        pieceName: mockPiece.name,
+                        pieceVersion: mockPiece.version,
+                        input: {},
+                        propertySettings: {},
+                        triggerName: 'sample_trigger',
+                    },
+                    valid: true,
+                    displayName: 'Trigger',
+                },
+            })
+            const latestVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                created: '2024-01-01T00:00:00.000Z',
+            })
+            await db.save('flow_version', [staleVersion, latestVersion])
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).toBeNull()
+        })
+
+        it('should allow deleting a custom piece used only by a flow in another platform', async () => {
+            const ctx = await createTestContext(app!)
+            const otherCtx = await createTestContext(app!)
+            const mockPiece = createMockPieceMetadata({
+                name: '@custom/cross-platform-usage-piece',
+                pieceType: PieceType.CUSTOM,
+                packageType: PackageType.REGISTRY,
+                platformId: ctx.platform.id,
+                version: '0.1.0',
+            })
+            await db.save('piece_metadata', mockPiece)
+            const otherFlow = createMockFlow({ projectId: otherCtx.project.id })
+            await db.save('flow', otherFlow)
+            const otherFlowVersion = createMockFlowVersion({
+                flowId: otherFlow.id,
+                updatedBy: otherCtx.user.id,
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    name: 'trigger',
+                    settings: {
+                        pieceName: mockPiece.name,
+                        pieceVersion: mockPiece.version,
+                        input: {},
+                        propertySettings: {},
+                        triggerName: 'sample_trigger',
+                    },
+                    valid: true,
+                    displayName: 'Trigger',
+                },
+            })
+            await db.save('flow_version', otherFlowVersion)
+            await pieceCache(mockLog).setup()
+
+            const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const remaining = await databaseConnection().getRepository('piece_metadata').findOneBy({ id: mockPiece.id })
+            expect(remaining).toBeNull()
         })
     })
 

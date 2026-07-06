@@ -5,7 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { posthogCreateEvent } from './lib/actions/create-event';
 import { posthogCreateProject } from './lib/actions/create-project';
 import { posthogGetFeatureFlags } from './lib/actions/get-feature-flags';

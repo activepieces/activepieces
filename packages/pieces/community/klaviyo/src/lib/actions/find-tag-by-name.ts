@@ -16,6 +16,11 @@ export const findTagByName = createAction({
   name: 'findTagByName',
   displayName: 'Find Tag by Name',
   description: 'Find tags whose name contains the search query.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Searches Klaviyo tags by a partial (contains) name match and returns matching tags with their IDs. Use to discover tag IDs by keyword. Requires a search value; matching is substring-based, not exact. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     search_query: Property.ShortText({
       displayName: 'Tag Name',

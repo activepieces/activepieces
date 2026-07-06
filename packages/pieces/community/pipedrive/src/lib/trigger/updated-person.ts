@@ -8,7 +8,7 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { PERSON_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedrivePersonV2 {
@@ -81,6 +81,10 @@ export const updatedPerson = createTrigger({
 	name: 'updated_person',
 	displayName: 'Updated Person',
 	description: 'Triggers when a person is updated.',
+	aiMetadata: {
+		description:
+			'Fires when any field of an existing person (contact) record changes in Pipedrive, such as their name, emails, phones, owner, associated organization, labels, or custom fields. Use to react to edits on contact records in the CRM.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

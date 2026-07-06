@@ -30,6 +30,11 @@ export const pdfToWordAction = createAction({
   name: 'pdf_to_word',
   displayName: 'Convert PDF to Word',
   description: 'Converts a PDF file to an editable Microsoft Word (DOCX) document.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Converts a PDF into an editable Word (DOCX) document via the PDF4me API, with a quality mode (Draft for one-call processing vs. High per-page processing) and optional OCR for scanned/image-based PDFs. Use when an agent needs the text of a PDF as an editable Word file; the PDF file is required, and setting the correct document language improves OCR accuracy. A pure conversion that is idempotent — the same input and settings always yield the same DOCX with no stored side effect.',
+    idempotent: true,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

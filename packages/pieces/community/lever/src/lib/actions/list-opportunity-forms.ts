@@ -12,6 +12,12 @@ export const listOpportunityForms = createAction({
   displayName: 'List opportunity forms',
   description:
     'Get all forms for a given opportunity, optionally for a given form template',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Retrieve the completed forms attached to a Lever opportunity, identified by opportunity ID. Returns all of the opportunity's forms by default, or only forms matching a chosen form template when one is supplied (filtered client-side by base template). Read-only and idempotent.",
+    idempotent: true,
+  },
   auth: leverAuth,
   props: {
     opportunityId: Property.ShortText({

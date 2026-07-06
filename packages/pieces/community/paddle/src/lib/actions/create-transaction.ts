@@ -11,6 +11,12 @@ const createTransactionAction = createAction({
   displayName: 'Create Transaction',
   description:
     'Creates a Paddle transaction. When you use recurring prices, completing the transaction starts the subscription.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Paddle transaction for a customer against a recurring price (with optional quantity and custom data); since the price is recurring, completing the transaction begins the associated subscription. Requires a valid customer ID, billing address ID, and recurring price ID. Each call creates a separate transaction, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     customerId: paddleProps.customer(),
     addressId: paddleProps.address(),

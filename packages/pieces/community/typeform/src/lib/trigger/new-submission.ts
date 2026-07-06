@@ -9,6 +9,10 @@ export const typeformNewSubmission = createTrigger({
   name: 'new_submission',
   displayName: 'New Submission',
   description: 'Triggers when Typeform receives a new submission',
+  aiMetadata: {
+    description:
+      'Fires when a respondent completes and submits the specified Typeform form. The event represents a single finished submission, delivered via webhook, and provides the form response payload including the submission token, landing/submission timestamps, the form definition, and the respondent\'s answers.',
+  },
   props: {
     form_id: formsDropdown,
   },

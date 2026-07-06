@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
 
 export const calculateSum = createAction({
+  audience: 'human',
   name: 'calculateSum',
   displayName: 'Calculate Sum',
   description: 'Calculates the sum of a list of values.',

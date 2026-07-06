@@ -8,6 +8,11 @@ export const addCustomer = createAction({
   name: 'addCustomer',
   displayName: 'Add Customer',
   description: 'Add a new customer to your Cryptolens account',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new customer record in a Cryptolens account, optionally enabling a customer portal so the customer can self-manage their licenses and device activations. Use to onboard a license holder before associating keys with them. Requires name, email, and company name; not idempotent — each call creates a separate customer.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

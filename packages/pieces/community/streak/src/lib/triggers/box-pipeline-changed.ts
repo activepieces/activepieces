@@ -5,6 +5,10 @@ export const boxPipelineChangedTrigger = createPipelineWebhookTrigger({
   displayName: 'Box Moved to Different Pipeline',
   description:
     'Triggers when a box is moved out of (or into) the selected pipeline.',
+  aiMetadata: {
+    description:
+      'Fires when a box is moved between pipelines relative to the selected pipeline (moved into or out of it), representing a record being reassigned to a different pipeline; the event includes the previous pipeline key.',
+  },
   event: 'BOX_CHANGE_PIPELINE',
   sampleData: {
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSA0JveBiAgIDAj-iiCgw',

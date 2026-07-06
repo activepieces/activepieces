@@ -92,6 +92,10 @@ export const newCandidateApplicationTrigger = createTrigger({
   name: 'new_candidate_application',
   displayName: 'New Candidate Application',
   description: 'Triggers when a new application is submitted by a candidate.',
+  aiMetadata: {
+    description:
+      'Fires when a new candidate application is created in Greenhouse, representing a candidate applying to (or being added against) a job or prospect pool. Polls for newly created applications and emits each one once.',
+  },
   props: {},
   sampleData: {
     id: 985314,

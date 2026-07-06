@@ -15,6 +15,8 @@ export const getDowntimePeriodNoticeAction = createAction({
   name: 'getDowntimePeriodNotice',
   displayName: 'Resources - Downtime Period Notices - Get',
   description: 'Get Downtime Period Notice.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single downtime period notice by its numeric ID. Use when you already know the ID and need its details; read-only and safe to retry. To search or browse multiple notices use the list action instead.', idempotent: true },
   props: {
         
   notice: Property.Number({

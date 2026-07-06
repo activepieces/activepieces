@@ -11,6 +11,12 @@ export const grantApproval = createAction({
   displayName: 'Grant Approval',
   description:
     'Approves a pending approval in Coupa (e.g. a requisition or purchase order awaiting your decision). Pick the approval from the dropdown.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Approve a pending Coupa approval (e.g. a requisition or purchase order awaiting decision) by its approval ID, advancing the document through its approval chain. Use Reject Approval to decline instead. Not idempotent: the approval must be in a pending state, and re-running after it is decided may fail.',
+    idempotent: false,
+  },
   props: {
     approvalId: pendingApprovalDropdown,
   },

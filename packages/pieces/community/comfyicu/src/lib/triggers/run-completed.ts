@@ -61,6 +61,9 @@ export const runCompletedTrigger = createTrigger({
   name: 'run-completed',
   displayName: 'Run Completed',
   description: 'Triggers when a workflow run is successfully completed.',
+  aiMetadata: {
+    description: 'Fires when a run of the selected Comfy.ICU workflow reaches COMPLETED status, emitting the finished run with its outputs. Scoped to a single workflow chosen by workflow ID; polls that workflow\'s runs for newly completed ones.',
+  },
   props: {
     workflow_id: commonProps.workflow_id,
   },

@@ -13,6 +13,9 @@ export const newUnsubscriberTrigger = createTrigger({
   name: 'new_unsubscriber',
   displayName: 'New Unsubscriber',
   description: 'Fires when subscriber unsubscribes',
+  aiMetadata: {
+    description: 'Fires when a contact unsubscribes from the selected SendPulse mailing list (address book). Each event represents one unsubscribe and includes the email, the reason if provided, and whether they opted out of all lists.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     mailingListId: mailingListDropdown,

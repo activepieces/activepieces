@@ -8,6 +8,7 @@ import {
 import { baseUrlv0, baseUrlv1 } from '../common/common';
 
 export const ragPromptCompletion = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'rag_prompt_completion',
   displayName: 'RAG Prompt Completion',

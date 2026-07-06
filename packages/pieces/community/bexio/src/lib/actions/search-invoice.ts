@@ -7,6 +7,8 @@ export const searchInvoiceAction = createAction({
   name: 'search_invoice',
   displayName: 'Search Invoice',
   description: 'Search for invoices using various criteria',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Bexio sales invoices by one or more field criteria (document number, contact, status, totals, dates, etc.) with operators such as contains, equals, or comparison, with ordering and paging. Use to locate invoices before exporting, sending, or reconciling them; pick Search Order or Search Quote for those document types. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({
       displayName: 'Search Criteria',

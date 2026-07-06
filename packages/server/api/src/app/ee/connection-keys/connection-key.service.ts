@@ -1,23 +1,6 @@
 import crypto from 'crypto'
-import {
-    ActivepiecesError,
-    apId,
-    AppConnectionScope,
-    AppConnectionType,
-    AppConnectionWithoutSensitiveData,
-    AppCredentialType,
-    ConnectionKey,
-    ConnectionKeyId,
-
-    Cursor, ErrorCode,
-    GetOrDeleteConnectionFromTokenRequest,
-    isNil,
-    ProjectId,
-    SeekPage,
-    UpsertApiKeyConnectionFromToken,
-    UpsertConnectionFromToken,
-    UpsertOAuth2ConnectionFromToken,
-    UpsertSigningKeyConnection } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { AppConnectionScope, AppConnectionType, AppConnectionWithoutSensitiveData, AppCredentialType, ConnectionKey, ConnectionKeyId, GetOrDeleteConnectionFromTokenRequest, UpsertApiKeyConnectionFromToken, UpsertConnectionFromToken, UpsertOAuth2ConnectionFromToken, UpsertSigningKeyConnection } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import jsonwebtoken from 'jsonwebtoken'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'

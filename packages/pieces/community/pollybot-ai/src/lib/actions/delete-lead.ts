@@ -8,6 +8,8 @@ export const deleteLead = createAction({
   name: 'delete_lead',
   displayName: 'Delete Lead',
   description: 'Permanently deletes a lead from your PollyBot chatbot.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a lead from the configured PollyBot chatbot by its unique lead ID. Use only when a lead should be removed for good; this cannot be undone. Idempotent on the end state once the lead is gone, though a repeat call on a missing ID may error.', idempotent: true },
   auth: pollybotAuth,
   props: {
     id: Property.ShortText({

@@ -15,6 +15,8 @@ export const getFlexibilityActivationRequestAction = createAction({
   name: 'getFlexibilityActivationRequest',
   displayName: 'Resources - Flexibility Activation Requests - Get Flexibility Activation Request',
   description: 'Get a flexibility activation request.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single flexibility activation request by its numeric id. Read-only and idempotent. Use when you already know the request id; to browse requests or filter by flexibility asset use listFlexibilityActivationRequests.', idempotent: true },
   props: {
         
   flexibilityActivationRequest: Property.Number({

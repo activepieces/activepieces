@@ -8,6 +8,8 @@ export const createAnnouncement = createAction({
   name: 'create_announcement',
   displayName: 'Create Announcement',
   description: 'Publish a changelog or product update announcement.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a changelog or product-update announcement in Frill, either published immediately or saved as a draft depending on the publish flag, optionally filed under a category. Use to broadcast product updates. Not idempotent: each call creates a separate announcement.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Title',

@@ -15,6 +15,8 @@ export const listRoamingConnectionsAction = createAction({
   name: 'listRoamingConnections',
   displayName: 'Resources - Roaming Connections - List Roaming Connections',
   description: 'Get all Roaming Connections.',
+  audience: 'both',
+  aiMetadata: { description: 'List all roaming connections on the account. Read-only and safe to repeat. Enable Paginate Results to fetch every connection; to retrieve one known connection by ID use get-roaming-connection.', idempotent: true },
   props: {
         
     per_page: Property.Number({

@@ -11,6 +11,12 @@ export const sendGcodeAction = createAction({
   name: 'send_gcode',
   displayName: 'Send G-code',
   description: 'Send raw G-code commands to an operational printer (requires Print Farm plan).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send raw G-code commands (one per line, up to 200 lines) to an operational printer by ID. Pick this for low-level printer control — homing, temperature, movement, custom macros — when no higher-level action exists. Not idempotent: commands execute on the physical printer each time, so re-running repeats the motion/heating. Requires the Print Farm plan.',
+    idempotent: false,
+  },
   props: {
     printerId: Property.Number({
       displayName: 'Printer ID',

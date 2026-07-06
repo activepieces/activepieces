@@ -7,6 +7,9 @@ export const prospectMaybeLater = createTrigger({
   name: 'prospect_maybe_later',
   displayName: 'Prospect Maybe Later',
   description: 'Triggers when a prospect is marked as maybe later',
+  aiMetadata: {
+    description: 'Fires when a prospect is categorized as MAYBE_LATER in Woodpecker, signaling deferred interest. Represents a follow-up-later intent for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_maybe_later',

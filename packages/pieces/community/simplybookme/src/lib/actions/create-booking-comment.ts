@@ -6,6 +6,8 @@ export const createBookingComment = createAction({
   name: 'create_booking_comment',
   displayName: 'Set Booking Comment',
   description: 'Set a comment for a booking',
+  audience: 'both',
+  aiMetadata: { description: 'Sets (overwrites) the admin comment text on an existing booking in SimplyBook.me, identified by its booking ID. Use to attach or update an internal note on an appointment. Idempotent: re-sending the same booking ID and comment leaves the comment in the same state.', idempotent: true },
   props: {
     bookingId: bookingDropdown,
     comment: Property.LongText({

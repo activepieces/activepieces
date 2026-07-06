@@ -15,6 +15,8 @@ export const chargePointResetAction = createAction({
   name: 'chargePointReset',
   displayName: 'Actions - Charge Point - Reset',
   description: 'Reset a charge point.',
+  audience: 'both',
+  aiMetadata: { description: 'Reboot a charge point, either a soft reset (restart the application) or a hard reset (full power cycle). Not idempotent: each call issues a new reboot command to the device.', idempotent: false },
   props: {
         
   chargePoint: Property.Number({

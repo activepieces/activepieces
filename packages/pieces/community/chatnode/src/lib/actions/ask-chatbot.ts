@@ -12,6 +12,11 @@ export const askChatbotAction = createAction({
   auth: chatnodeAuth,
   displayName: 'Ask Chatbot',
   description: 'Sends a message to your bot and get back an answer.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a user message to a ChatNode chatbot (identified by Bot ID) and returns the bot\'s generated answer. Choose this to query a ChatNode-trained knowledge-base bot conversationally. Optionally pass a Chat Session ID to continue an existing conversation thread; omitting it starts a fresh session each call. Not idempotent: each call posts a new message and produces a new model-generated response.',
+    idempotent: false,
+  },
   props: {
     botId: Property.ShortText({
       displayName: 'Bot ID',

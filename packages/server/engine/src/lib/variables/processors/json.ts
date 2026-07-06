@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import { ProcessorFn } from './types'
 
 export const jsonProcessor: ProcessorFn = (_property, value) => {

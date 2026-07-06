@@ -1,8 +1,8 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   FlowStatus,
   FolderDto,
   PopulatedFlow,
-  SeekPage,
   Table,
   UncategorizedFolderId,
 } from '@activepieces/shared';

@@ -7,6 +7,10 @@ export const pubrioWebhookTrigger = createTrigger({
 	displayName: 'Monitor Event (Webhook)',
 	description:
 		'Triggers once per signal (signal_first mode) or once per company (company_first mode) when a Pubrio monitor fires. Copy the webhook URL into your Pubrio monitor destination configuration.',
+	aiMetadata: {
+		description:
+			'Fires when a Pubrio monitor detects a matching event and posts to this webhook. In signal_first detection mode it emits one event per detected signal (e.g. a job posting or news item), each enriched with the matched companies and people; in company_first mode it emits one event per matched company. Each event includes the monitor definition and the triggered_at timestamp, representing newly detected sales/intent signals or companies to act on.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable() {},

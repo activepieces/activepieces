@@ -38,6 +38,9 @@ export const newVideoLiked = createTrigger({
   name: 'new_video_liked',
   displayName: 'New Video I\'ve Liked',
   description: 'Triggers when you like a new video on Vimeo',
+  aiMetadata: {
+    description: 'Fires when the authenticated user likes a new video on Vimeo. Polls the user\'s likes list and emits each newly liked video.',
+  },
   auth: vimeoAuth,
   props: {
   },

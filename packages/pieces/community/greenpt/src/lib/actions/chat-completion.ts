@@ -4,6 +4,7 @@ import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const chatCompletion = createAction({
+  audience: 'human',
   auth: greenptAuth,
   name: 'chatCompletion',
   displayName: 'Ask GreenPT',

@@ -17,6 +17,12 @@ export const enrichCompanyBulk = createAction({
   displayName: 'Enrich Company (Bulk)',
   description:
     'Get detailed information for up to 10 companies in a single request. Each result contains either company data or an error.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only batch lookup of detailed firmographics for up to 10 companies, each identified by domain, LinkedIn URL, or generic url. Use when you already have multiple known companies; for one company use Enrich Company, and for criteria-based discovery use Search Companies. Per-row errors are returned for misses. Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     identifiers: Property.Array({
       displayName: 'Identifiers',

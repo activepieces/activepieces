@@ -1,4 +1,5 @@
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ApEdition, CreateTrialLicenseKeyRequestBody, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -161,7 +162,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 agentsEnabled: key.agentsEnabled,
                 aiProvidersEnabled: key.aiProvidersEnabled ?? true,
                 chatEnabled: key.chatEnabled ?? false,
-                dataManipulationEnabled: key.dataManipulationEnabled ?? false,
+                workerGroupsEnabled: key.workerGroupsEnabled ?? false,
             },
         })
     },
@@ -188,5 +189,5 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     agentsEnabled: false,
     aiProvidersEnabled: false,
     chatEnabled: false,
-    dataManipulationEnabled: false,
+    workerGroupsEnabled: false,
 }

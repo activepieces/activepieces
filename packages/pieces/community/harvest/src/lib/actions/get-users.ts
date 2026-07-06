@@ -6,13 +6,15 @@ import {
 } from '@activepieces/pieces-common';
 import { callHarvestApi, filterDynamicFields } from '../common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const getUsers = createAction({
   name: 'get_users',
   auth: harvestAuth,
   displayName: 'Get Users',
   description: 'Fetches Users',
+  audience: 'both',
+  aiMetadata: { description: 'Lists users (team members) in a Harvest account; with no filters it returns every user, or narrow by active/inactive state or updated-since timestamp. Use to resolve a person to their user ID or enumerate the team. Read-only and idempotent.', idempotent: true },
   props: {
     is_active: Property.ShortText({
     description: 'Pass `true` to only return active users and `false` to return inactive users.',
@@ -38,14 +40,7 @@ export const getUsers = createAction({
 async run(context) {
   // Validate the input properties using Zod
   await propsValidation.validateZod(context.propsValue, {
-    per_page: z
-    .string()
-    .optional()
-    .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
-    .refine(
-      (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
-      'Per Page must be a number between 1 and 2000.'
-    ),
+    per_page: z.pipe(z.optional(z.string()), z.transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))).check(z.refine((val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000), 'Per Page must be a number between 1 and 2000.')),
   });
 
   const params = filterDynamicFields(context.propsValue);

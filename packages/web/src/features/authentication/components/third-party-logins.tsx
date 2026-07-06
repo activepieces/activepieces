@@ -3,6 +3,7 @@ import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
@@ -10,6 +11,7 @@ import React from 'react';
 import { authenticationApi } from '@/api/authentication-api';
 import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '@/assets/img/custom/auth/saml.svg';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { oauth2Utils } from '@/features/connections/utils/oauth2-utils';
@@ -37,6 +39,7 @@ const ThirdPartyLogin = React.memo(
     const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
     const isCloud = edition === ApEdition.CLOUD;
     const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
+    const { capture } = useTelemetry();
 
     const handleProviderClick = async (
       event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -44,6 +47,15 @@ const ThirdPartyLogin = React.memo(
     ) => {
       event.preventDefault();
       event.stopPropagation();
+      capture({
+        name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
+        payload: {
+          provider:
+            providerName === ThirdPartyAuthnProviderEnum.GOOGLE
+              ? 'google'
+              : 'saml',
+        },
+      });
       const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
         providerName,
       );
@@ -75,7 +87,13 @@ const ThirdPartyLogin = React.memo(
           <Button
             variant="outline"
             className="w-full rounded-sm"
-            onClick={onSamlClick}
+            onClick={() => {
+              capture({
+                name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
+                payload: { provider: 'saml' },
+              });
+              onSamlClick();
+            }}
           >
             <ThirdPartyIcon icon={SamlIcon} />
             {isSignUp
@@ -88,6 +106,10 @@ const ThirdPartyLogin = React.memo(
             variant="outline"
             className="w-full rounded-sm"
             onClick={() => {
+              capture({
+                name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
+                payload: { provider: 'saml' },
+              });
               window.location.href = '/api/v1/authn/saml/login';
             }}
           >

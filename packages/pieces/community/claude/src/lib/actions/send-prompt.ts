@@ -7,12 +7,15 @@ import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../auth';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-import { isNil, spreadIfDefined } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { spreadIfDefined } from '@activepieces/pieces-framework';
 import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
+import { askClaudeActionOutputSchema } from '../output-schemas';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
+  audience: 'human',
   auth: claudeAuth,
   name: 'ask_claude',
   displayName: 'Ask Claude',
@@ -80,9 +83,10 @@ export const askClaude = createAction({
       },
     }),
   },
+  outputSchema: askClaudeActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(1.0).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
     });
 
     const anthropic = new Anthropic({

@@ -20,6 +20,10 @@ export const postFailed = createTrigger({
   name: 'post_failed',
   displayName: 'Post Failed',
   description: 'Triggers when a post fails to publish to a platform',
+  aiMetadata: {
+    description:
+      'Fires when SendIt fails to publish a post to a connected social platform, representing a failed publication attempt. Each event carries the platform, the post content, and an error message describing why it failed.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

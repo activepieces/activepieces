@@ -9,6 +9,12 @@ export const getProduct = createAction({
   displayName: 'Get Product',
   description:
     'Fetch a single product by its Qawafel ID. Returns the full product including price, descriptions, and active status.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single product by its Qawafel product id (the `prod_` identifier). Use when you already have a product id — from a list, trigger, or earlier step — and need its current details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

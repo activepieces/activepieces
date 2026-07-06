@@ -29,6 +29,8 @@ export const updateLeadAction = createAction({
     name: 'update-lead',
     displayName: 'Update Lead',
     description: 'Modify existing lead data.',
+    audience: 'both',
+    aiMetadata: { description: 'Updates fields on an existing lead identified by its lead ID, overwriting only the provided contact, company, list, or custom-attribute values. Use to correct or enrich a known lead. Requires the lead ID and at least one field to change; idempotent since re-sending the same values yields the same final state.', idempotent: true },
     props: {
         lead_id: leadSelectDropdownProp,
         email: emailProp,

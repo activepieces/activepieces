@@ -6,6 +6,8 @@ export const convertPressureAction = createAction({
   name: 'convert_pressure',
   displayName: 'Convert Pressure',
   description: 'Convert pressure measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single pressure value between pascal, kilopascal, bar, atmosphere, and psi. Use only for pressure; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {

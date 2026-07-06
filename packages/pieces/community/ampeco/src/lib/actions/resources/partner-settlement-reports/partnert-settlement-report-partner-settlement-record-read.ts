@@ -15,6 +15,8 @@ export const partnertSettlementReportPartnerSettlementRecordReadAction = createA
   name: 'partnertSettlementReportPartnerSettlementRecordRead',
   displayName: 'Resources - Partner Settlement Reports - Read Partner Settlement Record',
   description: 'Read Partner Settlement Record.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single settlement record from a partner settlement report, identified by the report id plus the record id. Read-only and idempotent. Use when you know both ids; to enumerate records use Listing Partner Settlement Records.', idempotent: true },
   props: {
         
   partnerSettlementReport: Property.Number({

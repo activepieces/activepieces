@@ -5,6 +5,8 @@ export const getAddressCounters = createAction({
   name: 'get_address_counters',
   displayName: 'Get Address Counters',
   description: 'Get counters (transactions count, token transfers count, etc.) for an address',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch aggregate activity counts for an Ethereum address (total transactions, token transfers, gas usage). Pick this for a quick summary of how active an address is rather than retrieving the underlying records. Read-only lookup on eth.blockscout.com; requires a 0x address hash.', idempotent: true },
   // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({

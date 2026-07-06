@@ -1,12 +1,11 @@
+import { LocalesEnum, isNil } from '@activepieces/core-utils';
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import {
   FlowAction,
   FlowActionType,
   FlowTrigger,
   FlowTriggerType,
-  LocalesEnum,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -237,7 +236,29 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           };
         }
 
+        const schema = schemaMap[step.name];
+
         if (Array.isArray(stepData) && stepData.length > 0) {
+          const arrayKind = schemaTreeUtils.selectArrayTreeKind(schema);
+          // A whole-output wrapper schema (single value:'' field) names the
+          // array itself — render it object-style so the wrapper field sits at
+          // the top with rows beneath, instead of wrapping each row in Item N.
+          if (schema && arrayKind === 'wrapper') {
+            return schemaTreeUtils.buildTreeFromSchema({
+              stepName: step.name,
+              displayName,
+              schema,
+              sampleData: stepData,
+            });
+          }
+          if (schema && arrayKind === 'perItem') {
+            return schemaTreeUtils.buildTreeFromArrayWithSchema({
+              stepName: step.name,
+              displayName,
+              schema,
+              items: stepData,
+            });
+          }
           return schemaTreeUtils.buildTreeFromArray({
             stepName: step.name,
             displayName,
@@ -245,7 +266,6 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           });
         }
 
-        const schema = schemaMap[step.name];
         if (schema) {
           return schemaTreeUtils.buildTreeFromSchema({
             stepName: step.name,

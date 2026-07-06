@@ -9,6 +9,8 @@ export const updateLeadAction = createAction({
   name: 'update_lead',
   displayName: 'Update Lead',
   description: 'Update existing lead info.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Kommo CRM lead (deal) identified by lead ID, changing only the supplied fields (name, price, pipeline/status, responsible user, loss reason) and adding or removing tags. Use to move a lead through its pipeline or amend its details; resolve the lead ID first via Find Lead if unknown. Idempotent — repeating the same update yields the same lead state.', idempotent: true },
   props: {
     leadId: leadDropdown,
     name: Property.ShortText({

@@ -7,6 +7,8 @@ export const updateCompanyAction = createAction({
   name: 'update_company',
   displayName: 'Update Company',
   description: 'Update an existing company contact',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields on an existing company-type contact in Bexio identified by its contact id; only supplied fields change. Use to modify a known organization; pick Create Company to add a new one or Update Person for an individual. Resolve the contact id with Find Company first. Idempotent: re-sending the same values converges to the same contact state.', idempotent: true },
   props: {
     contact_id: Property.Dropdown({
       auth: bexioAuth,

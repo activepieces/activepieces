@@ -8,6 +8,8 @@ export const get_visit_detail = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Visit Detail',
     description: 'Get detailed information about a specific visit.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetch the extended detail view of one visit by ID. Read-only and idempotent; pick this over get-visit when you need the fuller plan-level detail payload rather than the basic visit record.', idempotent: true },
     props: {
         visit_id: Property.Number({ 
             displayName: 'visit_id', 

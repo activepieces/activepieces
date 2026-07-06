@@ -9,6 +9,12 @@ export const updateQueueItemAction = createAction({
   name: 'update_queue_item',
   displayName: 'Update Queue Item',
   description: 'Update a queue item (amount, note, etc.).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates editable fields (quantity, note) on an existing queue item identified by its numeric ID. Use to adjust a known queue entry in place; only the fields you pass are changed. Idempotent: applying the same values keyed to the same item ID converges to the same state.',
+    idempotent: true,
+  },
   props: {
     queueItemId: Property.Number({
       displayName: 'Queue item ID',

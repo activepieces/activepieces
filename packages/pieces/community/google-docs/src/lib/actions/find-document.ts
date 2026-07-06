@@ -4,8 +4,10 @@ import {
 	DynamicPropsValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
+import { docs as googleDocs } from '@googleapis/docs';
 import { folderIdProp } from '../common/props';
+import { findDocumentActionOutputSchema } from '../output-schemas';
 
 export const findDocumentAction = createAction({
 	auth: googleDocsAuth,
@@ -51,14 +53,15 @@ export const findDocumentAction = createAction({
 			},
 		}),
 	},
+	outputSchema: findDocumentActionOutputSchema,
 	async run(context) {
 		const { name: documentName, folderId, createIfNotFound, newDocumentProps } = context.propsValue;
 		const newDocumentContent = newDocumentProps?.['content'] as string;
 
 		const authClient = await createGoogleClient(context.auth);
 
-		const drive = google.drive({ version: 'v3', auth: authClient });
-		const docs = google.docs({ version: 'v1', auth: authClient });
+		const drive = googleDrive({ version: 'v3', auth: authClient });
+		const docs = googleDocs({ version: 'v1', auth: authClient });
 
 		// Search for the document in Google Drive
 		const query: string[] = [

@@ -1,17 +1,5 @@
-import {
-    BranchCondition,
-    BranchExecutionType,
-    FlowActionType,
-    flowCanvasUtils,
-    flowStructureUtil,
-    FlowTriggerType,
-    isNil,
-    McpToolDefinition,
-    Note,
-    Permission,
-    ProjectScopedMcpServer,
-    StepLocationRelativeToParent,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { BranchCondition, BranchExecutionType, FlowActionType, flowCanvasUtils, flowStructureUtil, FlowTriggerType, McpToolDefinition, Note, ProjectScopedMcpServer, StepLocationRelativeToParent } from '@activepieces/shared'
 import type { Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'

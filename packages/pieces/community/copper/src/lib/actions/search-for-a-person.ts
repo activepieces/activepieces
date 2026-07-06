@@ -13,6 +13,12 @@ export const searchForAPerson = createAction({
   name: 'searchForAPerson',
   displayName: 'Search for a Person',
   description: 'Lookup a person using match criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches people (contacts) in Copper CRM, filtering by any combination of name, email, phone, contact type, assignee, company, opportunity, location, tags, socials, interaction counts/dates, and creation date, with sorting and paging. Use to find one or more contacts; with no filters it lists people across the account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

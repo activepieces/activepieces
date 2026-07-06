@@ -15,6 +15,8 @@ export const idTagReadAction = createAction({
   name: 'idTagRead',
   displayName: 'Resources - Id Tags - Read',
   description: 'Get a Id Tag.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single ID tag by its numeric id, returning its status, type, associated user and payment method. Read-only and idempotent. Use when you already know the tag id; to find tags by other criteria, list them through another action.', idempotent: true },
   props: {
         
   idTag: Property.Number({

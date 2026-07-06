@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { freshdeskAuth } from '../..';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const getTicketStatus = createAction({
   auth: freshdeskAuth,
@@ -9,6 +9,8 @@ export const getTicketStatus = createAction({
   displayName: 'Get Ticket Status',
   description:
     'Get Ticket status from Freshdesk. Returns ticket_status, assigned_status, assigned_id',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single Freshdesk ticket by its numeric ticket ID and report its workflow state, returning a human-readable status (Open, Pending, Resolved, or Closed) plus whether the ticket is assigned to an agent. Use when you have a specific ticket ID and need just its status/assignment rather than the full ticket record. Requires a valid ticket ID. Read-only and idempotent.', idempotent: true },
 
   props: {
     ticketid: Property.ShortText({

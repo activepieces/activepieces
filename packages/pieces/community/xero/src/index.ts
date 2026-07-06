@@ -4,7 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { xeroCreateContact } from './lib/actions/create-contact';
 import { xeroCreateInvoice } from './lib/actions/create-invoice';
 import { xeroAllocateCreditNoteToInvoice } from './lib/actions/allocate-credit-note-to-invoice';

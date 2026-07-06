@@ -4,7 +4,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createChannelAction } from './lib/actions/create-channel';
 import { createChatAndSendMessageAction } from './lib/actions/create-chat-and-send-message';
 import { createPrivateChannelAction } from './lib/actions/create-private-channel';
@@ -29,7 +29,7 @@ import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
 export const microsoftTeams = createPiece({
   displayName: 'Microsoft Teams',
   auth: microsoftTeamsAuth,
-  minimumSupportedRelease: '0.82.0',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-teams.png',
   categories: [
     PieceCategory.BUSINESS_INTELLIGENCE,

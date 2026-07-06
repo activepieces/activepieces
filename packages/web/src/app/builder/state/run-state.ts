@@ -1,3 +1,4 @@
+import { isNil, stringifyNullOrUndefined } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -6,11 +7,10 @@ import {
   flowOperations,
   flowStructureUtil,
   FlowVersion,
-  isNil,
   LoopStepOutput,
   SampleDataFileType,
   StepRunResponse,
-  stringifyNullOrUndefined,
+  TestStepProgressEvent,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { Socket } from 'socket.io-client';
@@ -63,7 +63,7 @@ type RunStateInitialState = {
   socket: Socket;
 };
 type StepTestListener = {
-  onProgress: (response: StepRunResponse) => void;
+  onProgress: (response: TestStepProgressEvent) => void;
   onFinish: (response: StepRunResponse) => void;
   error: (error: any) => void;
 };
@@ -234,7 +234,7 @@ export const createRunState = (
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
       socket.on('error', handleError);
-      const handleOnProgress = (response: StepRunResponse) => {
+      const handleOnProgress = (response: TestStepProgressEvent) => {
         if (response.runId === runId && response.output) {
           get().setSampleDataLocally({
             stepName: stepName,

@@ -1,11 +1,13 @@
-import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions } from '@activepieces/shared'
+import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
-import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
 const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
@@ -69,9 +71,76 @@ function formatOptionsHint(options: Array<{ label: string, value: unknown }> | u
     return ` — options: ${values.join(', ')}`
 }
 
+function levenshtein(a: string, b: string): number {
+    const rows = Array.from({ length: a.length + 1 }, (_, i) => [i, ...new Array<number>(b.length).fill(0)])
+    for (let j = 1; j <= b.length; j++) {
+        rows[0][j] = j
+    }
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1
+            rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + cost)
+        }
+    }
+    return rows[a.length][b.length]
+}
+
+function suggestClosestKey(key: string, validKeys: string[]): string | null {
+    const loweredKey = key.toLowerCase()
+    const containing = validKeys.find((valid) => {
+        const loweredValid = valid.toLowerCase()
+        return loweredValid.includes(loweredKey) || loweredKey.includes(loweredValid)
+    })
+    if (containing) {
+        return containing
+    }
+    const threshold = Math.max(2, Math.floor(key.length / 2))
+    let best: string | null = null
+    let bestDistance = Infinity
+    for (const valid of validKeys) {
+        const distance = levenshtein(loweredKey, valid.toLowerCase())
+        if (distance < bestDistance) {
+            bestDistance = distance
+            best = valid
+        }
+    }
+    return best !== null && bestDistance <= threshold ? best : null
+}
+
+const EMPTY_CONTAINER_DEFAULTS: Partial<Record<PropertyType, () => unknown>> = {
+    [PropertyType.OBJECT]: () => ({}),
+    [PropertyType.ARRAY]: () => [],
+}
+
+function coerceEmptyContainerInputs({ props, input }: { props: PiecePropertyMap, input: Record<string, unknown> }): Record<string, unknown> {
+    const coerced: Record<string, unknown> = { ...input }
+    for (const [propName, prop] of Object.entries(props)) {
+        const makeDefault = EMPTY_CONTAINER_DEFAULTS[prop.type]
+        if (makeDefault === undefined) {
+            continue
+        }
+        const value = coerced[propName]
+        const valueProvided = value !== undefined && value !== null && value !== ''
+        // An empty free-form bag means "none", so normalize a wrong-shape empty container
+        // (`[]` for an OBJECT prop, `{}` for an ARRAY prop) to the prop's type rather than
+        // letting validation bounce it.
+        const emptyWrongShapeContainer = (prop.type === PropertyType.OBJECT && Array.isArray(value) && value.length === 0)
+            || (prop.type === PropertyType.ARRAY && isObject(value) && !Array.isArray(value) && Object.keys(value).length === 0)
+        // But a structured ARRAY (one with sub-`properties`) is genuine required data: defaulting an
+        // absent one to [] would mask the missing-required diagnosis and run the action with no rows.
+        const isStructuredArray = prop.type === PropertyType.ARRAY
+            && isObject(prop.properties) && Object.keys(prop.properties).length > 0
+        if (emptyWrongShapeContainer || (!valueProvided && !isStructuredArray)) {
+            coerced[propName] = makeDefault()
+        }
+    }
+    return coerced
+}
+
 function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
     const missing: string[] = []
     const uiRequired: string[] = []
+    const invalidEnums: string[] = []
     const allProps: string[] = []
     const validPropKeys = new Set<string>()
     for (const [propName, prop] of Object.entries(props)) {
@@ -79,19 +148,28 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             continue
         }
         validPropKeys.add(propName)
-        allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
-        if (prop.required) {
-            const value = input[propName]
-            if (value === undefined || value === null || value === '') {
-                if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
-                    uiRequired.push(`${propName} (${prop.displayName})`)
-                }
-                else {
-                    const hint = (prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN)
-                        ? formatOptionsHint(prop.options?.options)
-                        : ''
-                    missing.push(`${propName} (${prop.type}${hint})`)
-                }
+        const isStaticDropdown = prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
+        const optionsHint = isStaticDropdown
+            ? formatOptionsHint(prop.options?.options)
+            : (prop.type === PropertyType.DYNAMIC ? ' — DYNAMIC: resolve sub-fields with ap_get_piece_props' : '')
+        allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''}${optionsHint})`)
+        const value = input[propName]
+        const valueProvided = value !== undefined && value !== null && value !== ''
+        if (prop.required && !valueProvided) {
+            const descriptionHint = prop.description ? ` — ${prop.description}` : ''
+            if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
+                uiRequired.push(`${propName} (${prop.displayName})${descriptionHint}`)
+            }
+            else {
+                missing.push(`${propName} (${prop.type}${isStaticDropdown ? optionsHint : ''})${descriptionHint}`)
+            }
+        }
+        if (isStaticDropdown && valueProvided && prop.options?.options) {
+            const allowed = prop.options.options.map((o) => o.value)
+            const provided = Array.isArray(value) ? value : [value]
+            const bad = provided.filter((v) => !allowed.some((a) => a === v))
+            if (bad.length > 0) {
+                invalidEnums.push(`${propName}: ${bad.map((b) => JSON.stringify(b)).join(', ')} not allowed${optionsHint}`)
             }
         }
     }
@@ -108,13 +186,23 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
             .map(([name, prop]) => `- ${name} (${prop.type}): ${prop.description ?? prop.displayName}`)
             .join('\n')
-        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}. Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
+        const suggestions = unknownKeys
+            .map((key) => {
+                const closest = suggestClosestKey(key, [...validPropKeys])
+                return closest ? `'${key}' → did you mean '${closest}'?` : null
+            })
+            .filter((suggestion): suggestion is string => suggestion !== null)
+        const suggestionLine = suggestions.length > 0 ? `\nSuggestions: ${suggestions.join('; ')}.` : ''
+        parts.push(`Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.${suggestionLine} Valid properties for this action are:\n${validPropDescriptions}\nPlease retry with correct property names.`)
+    }
+    if (invalidEnums.length > 0) {
+        parts.push(`Invalid option values: ${invalidEnums.join('; ')}. Use one of the listed option values exactly (case-sensitive).`)
     }
     if (missing.length > 0) {
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
     }
     if (uiRequired.length > 0) {
-        parts.push(`These inputs require selection from your account and must be configured in the Activepieces UI: ${uiRequired.join(', ')}.`)
+        parts.push(`These inputs are dropdown/dynamic fields — resolve their values with ap_resolve_property_options (or ap_get_piece_props with auth) and pass the returned value (ID), then retry: ${uiRequired.join(', ')}.`)
     }
     if (allProps.length > 0 && unknownKeys.length === 0) {
         parts.push(`Expected inputs: ${allProps.join(', ')}.`)
@@ -122,7 +210,38 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     if (hasAuth && !input.auth) {
         parts.push(`This ${componentType} requires authentication.`)
     }
-    return { parts, missing, unknownKeys, uiRequired, hasAuth }
+    return { parts, missing, unknownKeys, uiRequired, invalidEnums, hasAuth }
+}
+
+async function detectUnknownInputProps({ pieceName, pieceVersion, componentName, componentType, input, platformId, log }: DetectUnknownInputPropsParams): Promise<{ unknownKeys: string[], message: string }> {
+    if (!isObject(input) || Object.keys(input).length === 0) {
+        return { unknownKeys: [], message: '' }
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
+        const component = componentType === 'action' ? piece.actions[componentName] : piece.triggers[componentName]
+        if (isNil(component)) {
+            return { unknownKeys: [], message: '' }
+        }
+        const { unknownKeys, parts } = diagnosePieceProps({ props: component.props, input, pieceAuth: piece.auth, requireAuth: component.requireAuth, componentType })
+        if (unknownKeys.length === 0) {
+            return { unknownKeys: [], message: '' }
+        }
+        const unknownMessage = parts.find((p) => p.startsWith('Unknown properties:')) ?? `Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.`
+        return { unknownKeys, message: unknownMessage }
+    }
+    catch (err) {
+        log.warn({ error: err, piece: { name: pieceName }, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
+        return { unknownKeys: [], message: '' }
+    }
+}
+
+async function rejectUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<McpToolResult | null> {
+    const { unknownKeys, message } = await detectUnknownInputProps(params)
+    if (unknownKeys.length === 0) {
+        return null
+    }
+    return { content: [{ type: 'text', text: `❌ ${message}` }] }
 }
 
 const MAX_PROP_DEPTH = 3
@@ -158,6 +277,91 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
             }
             return summary
         })
+}
+
+const RESOLUTION_SENTINEL = '<resolve with ap_resolve_property_options>'
+
+function exampleValueForProp(prop: PropSummary): unknown {
+    if (prop.options && prop.options.length > 0) {
+        return prop.options[0].value
+    }
+    switch (prop.type) {
+        case PropertyType.OBJECT:
+        case PropertyType.JSON:
+            return {}
+        case PropertyType.ARRAY:
+            return []
+        case PropertyType.CHECKBOX:
+            return prop.defaultValue ?? false
+        case PropertyType.NUMBER:
+            return prop.defaultValue ?? 0
+        case PropertyType.DROPDOWN:
+        case PropertyType.MULTI_SELECT_DROPDOWN:
+            return RESOLUTION_SENTINEL
+        case PropertyType.DYNAMIC:
+            return prop.dynamicFields && prop.dynamicFields.length > 0
+                ? buildExampleInput(prop.dynamicFields)
+                : RESOLUTION_SENTINEL
+        default:
+            return prop.defaultValue ?? `<${prop.displayName}>`
+    }
+}
+
+function buildExampleInput(props: PropSummary[]): Record<string, unknown> {
+    const example: Record<string, unknown> = {}
+    for (const prop of props) {
+        if (prop.required) {
+            example[prop.name] = exampleValueForProp(prop)
+        }
+    }
+    return example
+}
+
+function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], needsResolution: string[] } {
+    const provideNow: string[] = []
+    const needsResolution: string[] = []
+    for (const prop of props.filter((p) => p.required)) {
+        if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
+            needsResolution.push(prop.name)
+        }
+        else {
+            provideNow.push(prop.name)
+        }
+    }
+    return { provideNow, needsResolution }
+}
+
+function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
+    return fields.flatMap((field) => {
+        const path = prefix ? `${prefix}.${field.key}` : field.key
+        if (field.children && field.children.length > 0) {
+            return flattenOutputSchemaFields(field.children, path)
+        }
+        if (field.listItems && field.listItems.length > 0) {
+            return flattenOutputSchemaFields(field.listItems, `${path}[]`)
+        }
+        const typeHint = field.format ? ` (${field.format})` : ''
+        const dynamicNote = field.dynamicKey ? ' (dynamic key)' : ''
+        return [`${path}${typeHint}${dynamicNote}`]
+    })
+}
+
+function deriveFieldPathsFromSample(value: unknown, prefix = ''): string[] {
+    if (Array.isArray(value)) {
+        return value.length > 0
+            ? deriveFieldPathsFromSample(value[0], `${prefix}[]`)
+            : (prefix ? [`${prefix}[]`] : [])
+    }
+    if (value !== null && typeof value === 'object') {
+        const entries = Object.entries(value)
+        return entries.length > 0
+            ? entries.flatMap(([key, val]) => deriveFieldPathsFromSample(val, prefix ? `${prefix}.${key}` : key))
+            : (prefix ? [`${prefix} (object)`] : [])
+    }
+    if (!prefix) {
+        return []
+    }
+    return [`${prefix} (${value === null ? 'null' : typeof value})`]
 }
 
 function normalizePieceName(pieceName: string | undefined): string | undefined {
@@ -316,7 +520,7 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
         settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
     }
     catch (err) {
-        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
+        log.warn({ error: err, piece: { name: pieceName }, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
     }
 }
 
@@ -398,14 +602,175 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 
 const RESOLVE_TIMEOUT_MS = 30_000
 
+async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
+    pieceName: string
+    pieceVersion: string
+    actionOrTriggerName: string
+    propertyName: string
+    auth?: string
+    input?: Record<string, unknown>
+    searchValue?: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PropertyResolutionResult> {
+    const piecePackage = await getPiecePackageWithoutArchive(log, platformId, { pieceName, pieceVersion })
+    const resolvedInput: Record<string, unknown> = {
+        ...(input ?? {}),
+        ...(auth ? { auth: `{{connections['${auth}']}}` } : {}),
+    }
+
+    const { data: result, error } = await tryCatch(() => withTimeout({
+        promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
+            options: Array<{ label: string, value: unknown }> | PiecePropertyMap
+            disabled?: boolean
+        }>>({
+            jobType: WorkerJobType.EXECUTE_PROPERTY,
+            platformId,
+            projectId,
+            flowVersion: undefined,
+            propertyName,
+            actionOrTriggerName,
+            input: resolvedInput,
+            sampleData: {},
+            searchValue,
+            piece: piecePackage,
+        }, log),
+        ms: RESOLVE_TIMEOUT_MS,
+    }))
+
+    if (error || result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
+        return { status: 'failed', message: error instanceof Error ? error.message : 'Could not resolve options' }
+    }
+
+    const { options } = result.response
+    const optionsArray = extractOptionsArray(options)
+    if (optionsArray !== null) {
+        return {
+            status: 'options',
+            options: optionsArray.map((o) => ({ label: String(o.label ?? ''), value: o.value })),
+        }
+    }
+    if (isObject(options) && !Array.isArray(options)) {
+        return { status: 'dynamic', props: options }
+    }
+    return { status: 'failed', message: 'Unrecognized options format' }
+}
+
+// Classify an action by how many records it returns, from its name. This is the signal the agent
+// lacks today: it reaches for find_record (one match) when it meant to enumerate, then thrashes on
+// the empty result. 'enumerate' = list/search/plural-find; 'single' = find/get one; 'other' = a write
+// or anything else. Used to redirect empty-result feedback and to rank actions by intent.
+function classifyActionCardinality(actionName: string): ActionCardinality {
+    const name = actionName.toLowerCase()
+    // 'list'/'search' only signal enumerate as the leading VERB (or '_search' verb) — not when 'list'
+    // is a noun mid-name (find_list_entry is a find-ONE). Plural-record suffixes also mean enumerate.
+    const isEnumerate = /^(list|search)/.test(name) || /_search(_|$)/.test(name) || /_(records|rows|items|entries|results|messages|contacts|files)$/.test(name)
+    if (isEnumerate) {
+        return 'enumerate'
+    }
+    if (/(^|_)(find|get|fetch|read|retrieve|lookup)(_|$)/.test(name)) {
+        return 'single'
+    }
+    return 'other'
+}
+
+// A1 — collapse the discovery chain. The agent used to fetch props, then call ap_resolve_property_*
+// once per dropdown, then re-fetch dynamic sub-fields — many round-trips. This resolves the WHOLE
+// dependent chain in one pass: resolve every currently-resolvable prop, seed each result's first
+// option so dependent dropdowns unlock, and repeat until stable. With options + dynamicFields filled,
+// buildExampleInput emits a runnable, sentinel-free example. `resolveOne` is injected (the engine call
+// in the tool; a fake in tests) so this loop is deterministically unit-testable without the engine.
+async function resolveTransitively({ props, componentProps, auth, providedInput, resolveOne, maxIterations = 6 }: {
+    props: PropSummary[]
+    componentProps: PiecePropertyMap
+    auth: string | undefined
+    providedInput: Record<string, unknown>
+    resolveOne: (params: { prop: PropSummary, input: Record<string, unknown> }) => Promise<PropertyResolutionResult>
+    maxIterations?: number
+}): Promise<void> {
+    const accumulated: Record<string, unknown> = { ...providedInput }
+    const resolved = new Set<string>()
+    for (let iteration = 0; iteration < maxIterations; iteration++) {
+        const batch = findResolvableProps({ props, componentProps, auth, providedInput: accumulated })
+            .filter((prop) => !resolved.has(prop.name))
+        if (batch.length === 0) {
+            break
+        }
+        await Promise.all(batch.map(async (prop) => {
+            resolved.add(prop.name)
+            const result = await resolveOne({ prop, input: accumulated })
+            if (result.status === 'dynamic') {
+                prop.dynamicFields = buildPropSummaries(result.props)
+                prop.note = undefined
+            }
+            else if (result.status === 'options') {
+                prop.options = result.options
+                prop.note = undefined
+                // Seed the first option with a real value so dependent dropdowns unlock next
+                // iteration and the example input stays runnable. Skip empty/placeholder options
+                // (e.g. a "Select…" sentinel) so dependents don't resolve against a blank value.
+                // Never override a value the caller actually provided.
+                const seedOption = result.options.find((option) => option.value !== undefined && option.value !== null && option.value !== '')
+                if (accumulated[prop.name] === undefined && seedOption !== undefined) {
+                    accumulated[prop.name] = prop.type === PropertyType.MULTI_SELECT_DROPDOWN
+                        ? [seedOption.value]
+                        : seedOption.value
+                }
+            }
+        }))
+    }
+}
+
+function intentWantsEnumerate(forIntent: string): boolean {
+    return /\b(all|every|each|list|show|browse|enumerate|how many|count|total)\b/.test(forIntent.toLowerCase())
+}
+
+function tokenizeIntent(intent: string): string[] {
+    return [...new Set(intent.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3 && !INTENT_STOP_WORDS.has(t)))]
+}
+
+// Rank a piece's actions by how well they match the user's stated intent, with a CARDINALITY bias:
+// when the intent is to enumerate ("show all companies"), promote list/search actions and demote
+// find-one ones — so the agent picks list_records over find_record up front instead of thrashing on
+// an empty find. Returns up to 5 action names, best first.
+function rankActionsByIntent({ actions, forIntent }: { actions: RankableAction[], forIntent: string }): string[] {
+    const tokens = tokenizeIntent(forIntent)
+    const wantsEnumerate = intentWantsEnumerate(forIntent)
+    const cardinalityBonus = (c: ActionCardinality): number => {
+        if (!wantsEnumerate) return 0
+        if (c === 'enumerate') return 2
+        if (c === 'single') return -1
+        return 0
+    }
+    const scored = actions.map((a) => {
+        const haystack = `${a.displayName} ${a.description} ${a.aiDescription ?? ''}`.toLowerCase()
+        const tokenScore = tokens.reduce((acc, t) => acc + (haystack.includes(t) ? 1 : 0), 0)
+        return { name: a.name, score: tokenScore + cardinalityBonus(a.cardinality) }
+    })
+    return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, 5).map((s) => s.name)
+}
+
+const INTENT_STOP_WORDS = new Set(['the', 'all', 'any', 'and', 'for', 'with', 'get', 'from', 'into', 'out', 'list', 'show', 'find', 'see', 'view', 'fetch', 'pull'])
+
 export const mcpUtils = {
+    classifyActionCardinality,
+    rankActionsByIntent,
+    resolveTransitively,
     mcpToolError,
     truncate,
     resolveRouterStep,
     routerInvalidWarning,
     publishedFlowWarning,
     diagnosePieceProps,
+    coerceEmptyContainerInputs,
+    detectUnknownInputProps,
+    rejectUnknownInputProps,
     buildPropSummaries,
+    buildExampleInput,
+    buildRequiredInputs,
+    flattenOutputSchemaFields,
+    deriveFieldPathsFromSample,
     normalizePieceName,
     lookupPieceComponent,
     findResolvableProps,
@@ -418,6 +783,7 @@ export const mcpUtils = {
     withTimeout,
     rewriteAllReferences,
     extractOptionsArray,
+    executePropertyResolution,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
@@ -425,11 +791,26 @@ export const mcpUtils = {
 
 export type { PropSummary }
 
+export type PropertyResolutionResult =
+    | { status: 'options', options: Array<{ label: string, value: unknown }> }
+    | { status: 'dynamic', props: PiecePropertyMap }
+    | { status: 'failed', message: string }
+
 type FindResolvablePropsParams = {
     props: PropSummary[]
     componentProps: PiecePropertyMap
     auth: string | undefined
     providedInput: Record<string, unknown>
+}
+
+type DetectUnknownInputPropsParams = {
+    pieceName: string
+    pieceVersion: string
+    componentName: string
+    componentType: 'action' | 'trigger'
+    input: unknown
+    platformId: string
+    log: FastifyBaseLogger
 }
 
 type DiagnosePiecePropsParams = {
@@ -445,6 +826,7 @@ type DiagnosisResult = {
     missing: string[]
     unknownKeys: string[]
     uiRequired: string[]
+    invalidEnums: string[]
     hasAuth: boolean
 }
 
@@ -471,7 +853,7 @@ type LookupPieceComponentParams = {
 }
 
 type LookupPieceComponentResult =
-    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
+    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never }
     | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveRouterStepResult =
@@ -481,3 +863,13 @@ type ResolveRouterStepResult =
 type ResolveLatestPieceVersionResult =
     | { pieceVersion: string, normalizedPieceName: string, error?: never }
     | { error: McpToolResult, pieceVersion?: never, normalizedPieceName?: never }
+
+export type ActionCardinality = 'enumerate' | 'single' | 'other'
+
+export type RankableAction = {
+    name: string
+    displayName: string
+    description: string
+    cardinality: ActionCardinality
+    aiDescription?: string
+}

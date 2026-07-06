@@ -15,6 +15,8 @@ export const evseDowntimePeriodsListingAction = createAction({
   name: 'evseDowntimePeriodsListing',
   displayName: 'Resources - Evse Downtime Periods - Listing',
   description: 'Get all EVSE Downtime Periods.',
+  audience: 'both',
+  aiMetadata: { description: 'List EVSE downtime periods with optional filters by EVSE, charge point, location, entry mode (manual/automatic), type (downtime/exempt), duration, and time windows. Read-only and safe to repeat. Enable Paginate Results to fetch all matches; to read one known period by ID use evse-downtime-period-read.', idempotent: true },
   props: {
         
   filter__evseId: Property.Number({

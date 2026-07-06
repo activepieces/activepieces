@@ -9,6 +9,12 @@ export const officeToPdfAction = createAction({
   displayName: 'Office to PDF',
   description:
     'Convert Office documents (DOCX, XLSX, PPTX, ODT, etc.) to PDF.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Convert a single Office document (DOCX, XLSX, PPTX, ODT, ODS, ODP, RTF, or TXT) into a PDF. Use this when the source is an Office/text file; for images use JPG to PDF and for web pages use HTML to PDF. Each run produces a new converted file.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'Office File',

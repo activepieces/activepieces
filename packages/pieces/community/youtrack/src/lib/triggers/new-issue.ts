@@ -30,6 +30,9 @@ export const newIssueTrigger = createTrigger({
   name: 'new_issue',
   displayName: 'New Issue',
   description: 'Triggers when a new issue is created in any project you can access.',
+  aiMetadata: {
+    description: 'Fires when a new issue is created in any YouTrack project the connected account can access. Each event represents one newly created issue with its summary, project, reporter, and field values.',
+  },
   props: {},
   sampleData: {
     idReadable: 'SP-42', summary: 'Fix login page crash', project_name: 'Sample Project',

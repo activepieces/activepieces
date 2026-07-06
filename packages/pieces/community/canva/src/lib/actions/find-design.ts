@@ -16,6 +16,12 @@ export const findDesign = createAction({
   name: 'find_design',
   displayName: 'Find Design',
   description: 'Search and list designs from your Canva library. Use this to find existing designs before creating new ones.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Searches the user's Canva design library by keyword, with ownership (owned/shared) and sort filters plus continuation-token pagination; an empty query lists all designs. Pick this to discover or look up design IDs before getting, exporting, or moving a design, rather than creating a duplicate. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: '🔍 Search Query',

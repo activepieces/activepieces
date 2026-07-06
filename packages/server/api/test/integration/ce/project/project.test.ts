@@ -1,15 +1,11 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    ErrorCode,
-    PrincipalType,
-    ProjectType,
-    TeamProjectsLimit,
-} from '@activepieces/shared'
+import { ErrorCode } from '@activepieces/core-utils'
+import { PrincipalType, ProjectType, TeamProjectsLimit } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

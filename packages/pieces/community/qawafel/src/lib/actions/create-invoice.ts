@@ -10,6 +10,12 @@ export const createInvoice = createAction({
   displayName: 'Create Invoice',
   description:
     'Create an invoice in Qawafel for a customer. The invoice starts in `draft` state — use the **Generate Invoice** action (or call it from your dashboard) to finalize and issue a ZATCA-compliant copy.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a draft invoice in Qawafel for a customer merchant, with line items, issue and due dates, and an optional linked order id. The invoice starts in draft and must be finalized separately to issue a ZATCA-compliant copy. Requires the customer merchant id, issue/due dates, and line items. Not idempotent: each call creates a new invoice.',
+    idempotent: false,
+  },
   props: {
     merchant_id: qawafelProps.merchantDropdown({
       displayName: 'Customer',

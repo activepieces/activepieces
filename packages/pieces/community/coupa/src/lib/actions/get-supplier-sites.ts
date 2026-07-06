@@ -11,6 +11,12 @@ export const getSupplierSites = createAction({
   displayName: 'Get Supplier Sites by Supplier',
   description:
     'Lists supplier sites for a supplier (`GET /api/suppliers/:id/supplier_sites`).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List all supplier sites (locations/storefronts) configured under a given Coupa supplier ID. Use this to enumerate a supplier\'s sites; use Get Remit-To Addresses for payment addresses instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     supplierId: supplierDropdown,
   },

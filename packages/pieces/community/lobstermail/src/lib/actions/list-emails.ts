@@ -12,6 +12,8 @@ export const listEmails = createAction({
   name: 'list_emails',
   displayName: 'List Emails',
   description: 'List emails in a specific inbox.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists emails in a single inbox, newest first, returning metadata and previews but not full bodies. Optionally narrow by direction (inbound received vs. outbound sent), restrict to unread only, and cap the count (1-50). Requires a known inbox id; use Get Email to fetch a full message body. Read-only and idempotent.', idempotent: true },
   props: {
     inbox_id: inboxIdDropdown,
     direction: Property.StaticDropdown({

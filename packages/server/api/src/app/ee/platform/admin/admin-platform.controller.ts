@@ -1,5 +1,6 @@
-import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ChatConversation, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ChatConversation, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -162,11 +163,14 @@ const Action = z.object({
     description: z.string(),
     requireAuth: z.boolean(),
     props: z.unknown(),
-    errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
+    errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
+    outputSchema: z.optional(z.custom<OutputSchema>()),
+    aiMetadata: z.optional(AiMetadata),
+    audience: z.optional(Audience),
 })
 
-const Trigger = Action.extend({
-    renewConfiguration: WebhookRenewConfiguration.optional(),
+const Trigger = Action.omit({ audience: true }).extend({
+    renewConfiguration: z.optional(WebhookRenewConfiguration),
     handshakeConfiguration: WebhookHandshakeConfiguration,
     sampleData: z.unknown().optional(),
     type: z.nativeEnum(TriggerStrategy),

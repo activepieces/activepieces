@@ -9,6 +9,8 @@ export const updateIssueAction = createAction({
   name: 'update_issue',
   displayName: 'Update Issue',
   description: 'Updates an existing issue - summary, description, or custom fields.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing issue identified by its ID, changing summary, description, and/or custom fields (priority, assignee, etc.); only the fields you provide are modified. Use to edit issue content or set field values. Idempotent: re-applying the same values leaves the issue in the same state.', idempotent: true },
   props: {
     issue: issueDropdown,
     summary: Property.ShortText({ displayName: 'Summary', description: 'New summary. Leave empty to keep.', required: false }),

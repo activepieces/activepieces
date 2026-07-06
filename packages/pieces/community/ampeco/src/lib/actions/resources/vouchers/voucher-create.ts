@@ -14,6 +14,8 @@ export const voucherCreateAction = createAction({
   name: 'voucherCreate',
   displayName: 'Resources - Vouchers - Voucher Create',
   description: 'Create new Voucher.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new voucher with an amount and optional expiry/validity period, assign-before date, code prefix, description, and localized titles. Not idempotent: each call mints a distinct voucher, so avoid retrying on uncertain failures. To change an existing voucher use Voucher Update instead.', idempotent: false },
   props: {
         
   amount: Property.Number({

@@ -11,7 +11,7 @@ import { landingPageHeadlines } from './lib/actions/landing-page-headlines';
 import { sentenceExpander } from './lib/actions/sentence-expander';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { writesonicBulkAuth } from './lib/common/auth';
 import { BASE_URL } from './lib/common/client';
 

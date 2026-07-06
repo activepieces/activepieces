@@ -22,6 +22,11 @@ export const findOrCreateRecord = createAction({
   name: 'find_or_create_record',
   displayName: 'Find or Create Record',
   description: 'Find an existing record or create a new one if not found',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Look up a record by matching a chosen merge field value, returning it if found, otherwise create a new record with the supplied fields. Use to avoid duplicates when the record may or may not already exist. Requires the app, table, a merge field, and a value for it. Idempotent on the merge key: once the record exists, repeat calls find rather than recreate it.',
+    idempotent: true,
+  },
   auth: quickbaseAuth,
   props: {
     appId: appIdProp,

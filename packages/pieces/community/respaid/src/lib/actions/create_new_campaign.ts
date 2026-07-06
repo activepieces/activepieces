@@ -8,6 +8,8 @@ export const createNewCampaign = createAction({
   name: 'create_new_campaign',
   displayName: 'Create New Campaign',
   description: 'Action for creating a new campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Respaid debt-collection campaign by importing a batch of invoices/debtor records (each with debtor contact details, due amount, and invoice info). Use to kick off collection on a set of unpaid invoices. Requires importData to be an array of invoice objects; creates a new campaign on every call, so it is not idempotent.', idempotent: false },
   auth: respaidAuth,
   props: {
     campaign_name: Property.ShortText({

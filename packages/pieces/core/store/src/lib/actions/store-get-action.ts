@@ -8,7 +8,7 @@ import {
   StoreScope,
 } from '@activepieces/pieces-framework';
 import { getScopeAndKey, PieceStoreScope } from './common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 async function executeStorageGet(context: ActionContext<PieceAuthProperty | undefined, {
@@ -17,7 +17,7 @@ async function executeStorageGet(context: ActionContext<PieceAuthProperty | unde
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
 }>, isTestMode = false) {
   await propsValidation.validateZod(context.propsValue, {
-    key: z.string().max(128),
+    key: z.string().check(z.maxLength(128)),
   });
 
   const { key, scope } = getScopeAndKey({
@@ -32,6 +32,7 @@ async function executeStorageGet(context: ActionContext<PieceAuthProperty | unde
 }
 
 export const storageGetAction = createAction({
+  audience: 'human',
   name: 'get',
   displayName: 'Get',
   description: 'Get a value from storage',

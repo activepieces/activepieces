@@ -1,11 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import OpenAI, { toFile } from 'openai';
 import { randomBytes } from 'node:crypto';
-import { kebabCase } from '@activepieces/shared';
+import { kebabCase } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import { openaiAuth } from '../auth';
 
 export const editImage = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'edit_image',
   displayName: 'Edit Image',

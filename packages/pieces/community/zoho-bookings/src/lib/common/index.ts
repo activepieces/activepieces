@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { OAuth2GrantType } from '@activepieces/shared';
+import { OAuth2GrantType } from '@activepieces/pieces-framework';
 import * as schemas from './schemas';
 
 export const zohoBookingsAuth = PieceAuth.OAuth2({

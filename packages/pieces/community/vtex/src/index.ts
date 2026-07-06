@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createBrand } from './lib/actions/Brand/create-brand';
 import { deleteBrand } from './lib/actions/Brand/delete-brand';
 import { getBrandById } from './lib/actions/Brand/get-brand-by-id';

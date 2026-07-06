@@ -1,4 +1,4 @@
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import jwt from 'jsonwebtoken';

@@ -36,6 +36,8 @@ export const updateTask = createAction({
 	name: 'update_task',
 	displayName: 'Update Task',
 	description: 'Modify a task’s fields (due date, assignee, content, priority, etc.).',
+	audience: 'both',
+	aiMetadata: { description: 'Updates fields on an existing Teamwork task identified by task ID — only the fields you supply (content, description, assignees, start/due dates, priority, tags) are changed. Use to edit a task after it exists. Idempotent — repeating the same update yields the same final task state.', idempotent: true },
 	auth: teamworkAuth,
 	props: {
 		taskId: Property.Dropdown({

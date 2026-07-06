@@ -12,6 +12,12 @@ export const updateBoxAction = createAction({
   displayName: 'Update Box',
   description:
     'Update the name, notes, stage, assignees, or custom fields on an existing box.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update fields on an existing box identified by its box key, setting any of name, stage, notes, assignee emails, or custom fields (only provided fields change). Use when an agent needs to modify or advance an existing Streak record, such as moving a deal to a new stage. Idempotent: re-applying the same values leaves the box in the same state.',
+    idempotent: true,
+  },
   props: {
     pipelineKey: pipelineDropdown,
     boxKey: boxDropdown,

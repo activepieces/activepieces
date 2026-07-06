@@ -10,6 +10,12 @@ export const deleteFoldersAction = createAction({
   displayName: 'Delete Folders',
   description:
     'Delete one or more folders (and everything in them). All-or-nothing: if any folder isn\'t modifiable by the caller, the whole call fails.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes one or more user-file folders and all of their contents, given numeric folder IDs. The call is all-or-nothing: it fails entirely if any listed folder is not modifiable by the caller. Idempotent in effect: re-deleting an already-gone folder converges to the same end state, but verify IDs first since this destroys files.',
+    idempotent: true,
+  },
   props: {
     folderIds: Property.Array({
       displayName: 'Folder IDs',

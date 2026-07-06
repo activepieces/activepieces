@@ -6,6 +6,11 @@ export const addContactToListAction = createAction({
     name: 'add-contact-to-list',
     displayName: 'Add Contacts to List',
     description: 'Add a contact or multiple contacts to an existing contact list.',
+    audience: 'both',
+    aiMetadata: {
+        description: 'Append one or more contacts to an existing contact list (by list ID); each contact requires a phone_number and may include a name and template_variables. Use it to grow a list without touching existing members; use Edit Contact List to fully replace the list instead. Not idempotent — repeating the call appends the contacts again.',
+        idempotent: false,
+    },
     auth: kallabotAuth,
 
     props: {

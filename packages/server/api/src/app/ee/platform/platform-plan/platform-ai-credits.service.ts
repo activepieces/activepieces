@@ -1,4 +1,5 @@
-import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, isNil, PlatformPlan, tryCatch, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
+import { AiCreditsAutoTopUpState, CreateAICreditCheckoutSessionParamsSchema, PlatformPlan, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
@@ -157,10 +158,31 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             limit: key.limit! + amount,
         })
     },
+
+    // Tops up the platform's managed AI key by a fixed USD amount (used for the one-time
+    // free-chat-credit grant). Resolving the auth config creates the OpenRouter key if needed,
+    // so the worker later reuses the same key instead of minting a second one.
+    async grantFreeChatCredits({ platformId, amountUsd }: { platformId: string, amountUsd: number }): Promise<void> {
+        const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
+        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+        await openRouterApi.updateKey({
+            hash: apiKeyHash,
+            limit: (key.limit ?? 0) + amountUsd,
+        })
+
+        // Invalidate the cached usage so the credit check that runs immediately after this grant
+        // (in the same request) sees the topped-up balance instead of a stale within-TTL zero.
+        await distributedStore.delete(openRouterUsageCacheKey(apiKeyHash))
+    },
 })
 
+function openRouterUsageCacheKey(apiKeyHash: string): string {
+    return `openrouter_usage_${apiKeyHash}`
+}
+
 async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogger): Promise<Pick<OpenRouterApikey, 'usage' | 'limit' | 'limit_remaining' | 'usage_monthly'>> {
-    const cacheKey = `openrouter_usage_${apiKeyHash}`
+    const cacheKey = openRouterUsageCacheKey(apiKeyHash)
 
     const cachedUsage = await distributedStore.get<OpenRouterApikey>(cacheKey)
     if (!isNil(cachedUsage)) {
@@ -232,7 +254,7 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
 
         if (autoTopUpCreditsThisMonthAfterThisTopUp > plan.maxAutoTopUpCreditsMonthly) {
             log.info({
-                platformId: plan.platformId,
+                platform: { id: plan.platformId },
                 totalCreditsThisMonth,
                 creditsToAdd: plan.aiCreditsAutoTopUpCreditsToAdd,
                 maxMonthlyLimit: plan.maxAutoTopUpCreditsMonthly,

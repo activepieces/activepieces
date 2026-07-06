@@ -10,7 +10,7 @@ import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { JiraAuth, jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { IssueFieldMetaData, IssueTypeMetadata } from './types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 
 export function getProjectIdDropdown(data?: DropdownParams) {

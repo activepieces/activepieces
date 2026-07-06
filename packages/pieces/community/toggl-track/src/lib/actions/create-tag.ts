@@ -8,6 +8,8 @@ export const createTag = createAction({
   name: 'create_tag',
   displayName: 'Create Tag',
   description: 'Create a new tag in the workspace.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new tag in a Toggl Track workspace, given a workspace ID and tag name. Use when an agent needs a label to later attach to time entries. Not idempotent: each call creates a new tag even if the name already exists.', idempotent: false },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({

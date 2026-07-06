@@ -7,6 +7,9 @@ export const subscriptionPaymentRefundedTrigger = createTrigger({
   name: 'subscription_payment_refunded',
   displayName: 'Subscription Payment Refunded',
   description: 'Triggers when a subscription payment is refunded',
+  aiMetadata: {
+    description: 'Fires when a subscription payment in Lemon Squeezy is refunded. Represents the refunded subscription invoice.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

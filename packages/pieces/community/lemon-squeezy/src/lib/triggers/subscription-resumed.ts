@@ -7,6 +7,9 @@ export const subscriptionResumedTrigger = createTrigger({
   name: 'subscription_resumed',
   displayName: 'Subscription Resumed',
   description: 'Triggers when a subscription is resumed after being previously cancelled',
+  aiMetadata: {
+    description: 'Fires when a previously cancelled subscription in Lemon Squeezy is resumed and returns to active billing. Represents the reactivated subscription with its restored renewal date.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

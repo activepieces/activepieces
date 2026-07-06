@@ -1,8 +1,7 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AgentPieceProps,
   AgentProviderModel,
-  AIProviderName,
-  isNil,
   PieceAction,
   PieceActionSettings,
 } from '@activepieces/shared';

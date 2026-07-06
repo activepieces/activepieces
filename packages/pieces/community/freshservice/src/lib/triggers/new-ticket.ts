@@ -59,6 +59,9 @@ export const newTicket = createTrigger({
   name: 'new_ticket',
   displayName: 'New Ticket',
   description: 'Triggers when a new ticket is created in Freshservice.',
+  aiMetadata: {
+    description: 'Fires when a new ticket is created in Freshservice, representing a freshly logged incident or service request. Polls newest-first by creation time across all tickets in the account.',
+  },
   props: {},
   sampleData: {
     id: 1,

@@ -47,6 +47,9 @@ export const newNote = createTrigger({
     name: 'new_note',
     displayName: 'New Note',
     description: 'Fires when a new note is added to a record (lead, contact, deal) (polls for new records).',
+    aiMetadata: {
+      description: 'Fires when a new note is added to any lead, contact, or deal in Zendesk Sell. Each event represents one newly created note along with the resource type and ID it is attached to, discovered by polling sorted by creation time.',
+    },
     props: {},
     sampleData: {
         "id": 1,

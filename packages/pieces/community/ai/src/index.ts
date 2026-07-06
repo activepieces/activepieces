@@ -1,6 +1,6 @@
 
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { askAI } from './lib/actions/text/ask-ai';
 import { summarizeText } from './lib/actions/text/summarize-text';
 import { generateImageAction } from "./lib/actions/image/generate-image";

@@ -13,6 +13,9 @@ export const newAppResult = createTrigger({
   name: 'new_app_result',
   displayName: 'New App Result',
   description: 'Triggers when there is a new app result from PromptMate',
+  aiMetadata: {
+    description: 'Fires via webhook when a PromptMate app produces a new result, either at the row level (once per individual result row) or the job level (once when a whole job finishes), depending on the configured trigger level. Can optionally be restricted to specific apps; left unrestricted it fires for results from any app on the account.',
+  },
   props: {
     restrictedAppIds: Property.MultiSelectDropdown({
       displayName: 'Restrict to Apps',

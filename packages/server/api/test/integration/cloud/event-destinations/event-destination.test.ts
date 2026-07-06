@@ -1,9 +1,5 @@
-import {
-    apId,
-    ApplicationEventName,
-    PlatformRole,
-    PrincipalType,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { ApplicationEventName, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'

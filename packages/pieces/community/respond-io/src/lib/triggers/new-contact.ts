@@ -10,6 +10,9 @@ export const newContactTrigger = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created in Respond.io.',
+  aiMetadata: {
+    description: 'Fires when a new contact is created in Respond.io, delivering the newly created contact. Use to react to contact onboarding; for changes to existing contacts use the Contact Updated trigger instead. Requires manually configuring a contact.created webhook in Respond.io.',
+  },
   auth: respondIoAuth,
   props: {
     webhookInstructions: Property.MarkDown({

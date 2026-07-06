@@ -7,6 +7,12 @@ export const createCandidateAction = createAction({
   name: 'create_candidate',
   displayName: 'Create Candidate',
   description: 'Creates a new candidate profile in Greenhouse.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new candidate record in Greenhouse from name plus optional contact details, current role, links, and tags. Use when adding someone to the candidate database; first and last name are required. Not idempotent — each call creates a separate candidate even with identical input, so to avoid duplicates use Find or Create Candidate when the person may already exist.',
+    idempotent: false,
+  },
   auth: greenhouseAuth,
   props: {
     first_name: Property.ShortText({

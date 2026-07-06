@@ -1,7 +1,11 @@
+import { isObject } from '@activepieces/core-utils';
 import {
   ActionReceiptEvent,
+  BuildPlanEvent,
+  BuildPlanStep,
   ChatHistoryMessage,
-  isObject,
+  FileProducedEvent,
+  ImageGeneratedEvent,
   PersistedChatMessage,
   PersistedChatPart,
   PersistedChatPartType,
@@ -10,7 +14,13 @@ import {
 
 import { formatUtils } from '@/lib/format-utils';
 
-import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
+import {
+  AnyToolPart,
+  ChatUIMessage,
+  EMPTY_QUICK_REPLIES_DATA,
+  QuickRepliesData,
+  chatPartUtils,
+} from './chat-types';
 
 function stripPiecePrefix(name: string): string {
   return name.replace(/^@activepieces\/piece-/, '');
@@ -28,13 +38,13 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
     active: 'Checking connections',
     done: 'Checked connections',
   },
+  ap_show_mcp_reconnect: {
+    active: 'Reconnecting integration',
+    done: 'Reconnected integration',
+  },
   ap_list_across_projects: {
     active: 'Listing resources',
     done: 'Listed resources',
-  },
-  ap_request_plan_approval: {
-    active: 'Requesting approval',
-    done: 'Requested approval',
   },
   ap_research_pieces: {
     active: 'Searching integrations',
@@ -70,6 +80,15 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
   ap_resolve_property_chain: {
     active: 'Loading field options',
     done: 'Loaded field options',
+  },
+  ap_generate_image: { active: 'Generating image', done: 'Generated image' },
+  ap_run_code: { active: 'Writing code', done: 'Ran code' },
+  ap_web_search: { active: 'Searching the web', done: 'Searched the web' },
+  ap_fetch_url: { active: 'Reading the page', done: 'Read the page' },
+  ap_scrape_url: { active: 'Reading the page', done: 'Read the page' },
+  ap_explore_data: {
+    active: 'Exploring your data',
+    done: 'Explored your data',
   },
 };
 
@@ -233,8 +252,38 @@ function persistedPartToUIPart(
         errorText: part.errorText ?? 'Tool call failed',
       };
     }
+    case PersistedChatPartType.SOURCE_URL:
+      return {
+        type: 'source-url',
+        sourceId: part.sourceId,
+        url: part.url,
+        title: part.title,
+      };
+    case PersistedChatPartType.SOURCE_DOCUMENT:
+      return {
+        type: 'source-document',
+        sourceId: part.sourceId,
+        mediaType: part.mediaType,
+        title: part.title,
+        filename: part.filename,
+      };
+    case PersistedChatPartType.BUILD_PLAN:
+      return {
+        type: 'dynamic-tool',
+        toolCallId: `build-plan-${part.buildId}-${idx}`,
+        toolName: 'ap_set_build_plan',
+        title: 'ap_set_build_plan',
+        state: 'output-available',
+        input:
+          typeof part.data['phase'] === 'string'
+            ? { phase: part.data['phase'] }
+            : {},
+        output: JSON.stringify({ ok: true, buildId: part.buildId }),
+      };
     case PersistedChatPartType.BATCH_PROGRESS:
     case PersistedChatPartType.ACTION_RECEIPT:
+    case PersistedChatPartType.IMAGE:
+    case PersistedChatPartType.FILE:
       return { type: 'text', text: '' } as ChatUIMessage['parts'][number];
     default: {
       const _exhaustive: never = part;
@@ -281,9 +330,13 @@ function mapHistoryToUIMessages(
   return result;
 }
 
-function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
+function extractQuickRepliesFromHistory(
+  messages: ChatUIMessage[],
+): QuickRepliesData {
   const lastMessage = messages[messages.length - 1];
-  if (!lastMessage || lastMessage.role !== 'assistant') return [];
+  if (!lastMessage || lastMessage.role !== 'assistant') {
+    return EMPTY_QUICK_REPLIES_DATA;
+  }
 
   for (let i = lastMessage.parts.length - 1; i >= 0; i--) {
     const p = lastMessage.parts[i];
@@ -291,13 +344,25 @@ function extractQuickRepliesFromHistory(messages: ChatUIMessage[]): string[] {
       chatPartUtils.isAnyToolPart(p) &&
       chatPartUtils.getToolPartName(p) === 'ap_show_quick_replies'
     ) {
-      const input = p.input as { replies?: string[] } | undefined;
-      if (input?.replies) {
-        return input.replies;
-      }
+      return chatPartUtils.readQuickRepliesInput(p.input);
     }
   }
-  return [];
+  return EMPTY_QUICK_REPLIES_DATA;
+}
+
+function formatToolActiveTitle({ part }: { part: AnyToolPart }): string {
+  const input = isObject(part.input) ? part.input : undefined;
+  if (input && typeof input.activeTitle === 'string' && input.activeTitle) {
+    return input.activeTitle;
+  }
+  const raw = chatPartUtils.getToolPartName(part);
+  if (raw.startsWith('mcp__')) {
+    return cleanMcpToolName(raw);
+  }
+  return (
+    TOOL_LABELS[raw]?.active ??
+    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
+  );
 }
 
 function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
@@ -331,13 +396,190 @@ function extractReceiptsFromHistory(
   return receipts;
 }
 
+function extractImagesFromHistory(
+  data: PersistedChatMessage[] | ChatHistoryMessage[],
+): Record<string, ImageGeneratedEvent> {
+  const images: Record<string, ImageGeneratedEvent> = {};
+  if (data.length === 0 || !isPersistedFormat(data)) return images;
+  for (const msg of data) {
+    for (const part of msg.parts) {
+      if (part.type === PersistedChatPartType.IMAGE) {
+        const { type: _type, ...rest } = part;
+        images[part.toolCallId] = rest;
+      }
+    }
+  }
+  return images;
+}
+
+function extractFilesFromHistory(
+  data: PersistedChatMessage[] | ChatHistoryMessage[],
+): Record<string, FileProducedEvent[]> {
+  const files: Record<string, FileProducedEvent[]> = {};
+  if (data.length === 0 || !isPersistedFormat(data)) return files;
+  for (const msg of data) {
+    for (const part of msg.parts) {
+      if (part.type === PersistedChatPartType.FILE) {
+        const { type: _type, ...rest } = part;
+        const existing = files[part.toolCallId] ?? [];
+        existing.push(rest);
+        files[part.toolCallId] = existing;
+      }
+    }
+  }
+  return files;
+}
+
+function extractBuildsFromHistory(
+  data: PersistedChatMessage[] | ChatHistoryMessage[],
+): Record<string, BuildPlanEvent> {
+  const builds: Record<string, BuildPlanEvent> = {};
+  if (data.length === 0) return builds;
+
+  if (isPersistedFormat(data)) {
+    for (const msg of data) {
+      for (const part of msg.parts) {
+        if (part.type !== PersistedChatPartType.BUILD_PLAN) continue;
+        const event = toBuildPlanEvent({
+          buildId: part.buildId,
+          data: part.data,
+        });
+        if (event && shouldReplaceBuild(builds[event.buildId], event)) {
+          builds[event.buildId] = event;
+        }
+      }
+    }
+    return builds;
+  }
+
+  for (const msg of data) {
+    if (msg.role !== 'assistant' || !msg.toolCalls) continue;
+    for (const tc of msg.toolCalls) {
+      if (
+        tc.title !== 'ap_set_build_plan' ||
+        tc.status !== 'completed' ||
+        !tc.input
+      ) {
+        continue;
+      }
+      const buildId = extractBuildIdFromToolOutput(tc.output);
+      if (!buildId) continue;
+      const event = toBuildPlanEvent({ buildId, data: tc.input });
+      if (event && shouldReplaceBuild(builds[buildId], event)) {
+        builds[buildId] = event;
+      }
+    }
+  }
+  return builds;
+}
+
+const BUILD_PLAN_PHASES: BuildPlanEvent['phase'][] = [
+  'detecting',
+  'building',
+  'testing',
+  'done',
+  'failed',
+];
+const BUILD_PLAN_STEP_STATUSES: BuildPlanStep['status'][] = [
+  'pending',
+  'in_progress',
+  'done',
+  'failed',
+];
+
+function parsePhase(value: unknown): BuildPlanEvent['phase'] | null {
+  return BUILD_PLAN_PHASES.find((phase) => phase === value) ?? null;
+}
+
+function buildPlanPhaseRank(phase: BuildPlanEvent['phase']): number {
+  const idx = BUILD_PLAN_PHASES.indexOf(phase);
+  return idx === -1 ? 0 : idx;
+}
+
+// A single build emits many plan updates (detecting → building → done), and the
+// persisted history can replay them out of order, so we keep the most advanced
+// phase rather than the last one seen.
+function shouldReplaceBuild(
+  existing: BuildPlanEvent | undefined,
+  candidate: BuildPlanEvent,
+): boolean {
+  if (!existing) return true;
+  return (
+    buildPlanPhaseRank(candidate.phase) >= buildPlanPhaseRank(existing.phase)
+  );
+}
+
+function extractBuildIdFromToolOutput(
+  output: string | undefined,
+): string | null {
+  if (!output) return null;
+  try {
+    const parsed: unknown = JSON.parse(output);
+    if (isObject(parsed) && typeof parsed['buildId'] === 'string') {
+      return parsed['buildId'];
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function parseSteps(value: unknown): BuildPlanStep[] | null {
+  if (!Array.isArray(value)) return null;
+  const steps: BuildPlanStep[] = [];
+  for (const item of value) {
+    if (!isObject(item)) return null;
+    const { id, label, status } = item;
+    const validStatus = BUILD_PLAN_STEP_STATUSES.find((s) => s === status);
+    if (typeof id !== 'string' || typeof label !== 'string' || !validStatus) {
+      return null;
+    }
+    steps.push({ id, label, status: validStatus });
+  }
+  return steps;
+}
+
+function toBuildPlanEvent({
+  buildId,
+  data,
+}: {
+  buildId: string;
+  data: Record<string, unknown>;
+}): BuildPlanEvent | null {
+  const phase = parsePhase(data['phase']);
+  const steps = parseSteps(data['steps']);
+  if (!phase || !steps) return null;
+  return {
+    buildId,
+    phase,
+    steps,
+    flowName:
+      typeof data['flowName'] === 'string' ? data['flowName'] : undefined,
+    tagline: typeof data['tagline'] === 'string' ? data['tagline'] : undefined,
+    iconName:
+      typeof data['iconName'] === 'string' ? data['iconName'] : undefined,
+    flowId: typeof data['flowId'] === 'string' ? data['flowId'] : undefined,
+    projectId:
+      typeof data['projectId'] === 'string' ? data['projectId'] : undefined,
+    updatedAt: typeof data['updatedAt'] === 'string' ? data['updatedAt'] : '',
+  };
+}
+
+function sanitizeTitle(title: string): string {
+  return title.replace(/[*_`~#]/g, '').trim();
+}
+
 export const chatUtils = {
+  newChatEvent: 'ap:new-chat',
+  sanitizeTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),
-  formatToolActionName: ({ part }: { part: AnyToolPart }) =>
-    formatToolName({ part, includeContext: false }),
+  formatToolActionName: formatToolActiveTitle,
   formatToolDoneTitle,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
   extractReceiptsFromHistory,
+  extractImagesFromHistory,
+  extractFilesFromHistory,
+  extractBuildsFromHistory,
 };

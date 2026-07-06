@@ -9,6 +9,12 @@ export const searchRecordsAction = createAction({
   name: 'search-records',
   displayName: 'Search Records',
   description: 'Retrieves a list of records.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists records of a chosen entity type from a Microsoft Dynamics 365 Business Central company. Optionally filters by exact, case-sensitive matches on one or more property fields (all conditions are AND-ed); leave the filter fields empty to return all records of that type. Use to find records when you do not have a specific id. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     company_id: commonProps.company_id,
     record_type: Property.StaticDropdown({

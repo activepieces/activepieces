@@ -4,7 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
 import { googleTasksCommon } from './lib/common';
 import { newTaskTrigger } from './lib/triggers/new-task';

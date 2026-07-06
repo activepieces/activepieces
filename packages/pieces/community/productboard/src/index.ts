@@ -8,7 +8,7 @@ import { getFeature } from "./lib/actions/get-feature";
 import { newFeature } from "./lib/triggers/new-feature";
 import { newNote } from "./lib/triggers/new-note";
 import { updatedFeature } from "./lib/triggers/updated-feature";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const productboard = createPiece({
     displayName: "Productboard",

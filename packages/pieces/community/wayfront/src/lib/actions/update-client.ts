@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { wayfrontAuth } from '../auth';
 import {
   clientsDropdown,
@@ -14,6 +14,12 @@ export const updateClientAction = createAction({
   name: 'update_client',
   displayName: 'Update Client',
   description: 'Updates a client in your Wayfront workspace. Only provided fields are changed.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Wayfront client identified by its user ID, applying a partial patch — only the fields you supply (contact details, status, balance, assigned employees, address, custom fields) are changed; omitted fields are left untouched. Use to edit a known client; requires a valid user ID. Idempotent: re-sending the same patch leaves the client in the same state.',
+    idempotent: true,
+  },
   props: {
     user_id: clientsDropdown,
     email: Property.ShortText({

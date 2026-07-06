@@ -49,6 +49,9 @@ export const newProject = createTrigger({
   name: 'new_project',
   displayName: 'New Project',
   description: 'Triggers when a new project is created.',
+  aiMetadata: {
+    description: 'Fires when a new project is created in TimeOps. Polls the project list and emits each newly seen project record, including its customer association and billing settings. Use to react to project kickoff, such as creating tasks or alerting stakeholders.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

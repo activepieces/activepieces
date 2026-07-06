@@ -7,6 +7,8 @@ export const stopPayment = createAction({
     name: 'stop_payment',
     displayName: 'Stop Payment',
     description: 'Initiates a stop payment request for a payment.',
+    audience: 'both',
+    aiMetadata: { description: 'Place a stop-payment request on an issued payables payment by CheckId, with an optional reason and reference, to prevent it from being cashed. State-changing; effectively idempotent since repeating the request leaves the payment stopped. Use when a payment has gone out but should not clear; to fully reverse one already cleared use Void Payment instead.', idempotent: true },
     props: {
         checkId: Property.ShortText({
             displayName: 'Check ID',

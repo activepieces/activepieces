@@ -3,13 +3,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { activityTypeIdProp, filterIdProp, ownerIdProp } from '../common/props';
 import { pipedrivePaginatedV2ApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const findActivityAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-activity',
 	displayName: 'Find Activity',
 	description: 'Finds an activity by subject.',
+	audience: 'both',
+	aiMetadata: { description: 'Search activities by subject text, optionally narrowed by owner, type, done/not-done status, or a saved filter. Pick this to locate existing activities; matching is case-insensitive substring by default but can be made exact-match. Read-only and may return multiple matches.', idempotent: true },
 	props: {
 		subject: Property.ShortText({
 			displayName: 'Subject',

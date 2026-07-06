@@ -122,6 +122,10 @@ export const newRowTrigger = createTrigger({
   displayName: 'New Row',
   description:
     'Triggers when a new row is added to a BigQuery table. Polls every 5 minutes by comparing the latest value in a sort column against the previous check.',
+  aiMetadata: {
+    description:
+      'Fires for each new row appended to a BigQuery table, detected by polling a TIMESTAMP/DATETIME sort column for values newer than the previous check. Each event represents one newly inserted row. Detection depends entirely on the chosen sort column advancing for new rows.',
+  },
   props,
   sampleData: {
     id: '1',

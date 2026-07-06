@@ -4,13 +4,14 @@ import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { crispAuth } from '../common/auth';
 import { websiteIdProp } from '../common/props';
 import { crispApiCall } from '../common/client';
-import { HttpStatusCode } from 'axios';
 
 export const createOrUpdateContactAction = createAction({
 	auth: crispAuth,
 	name: 'create_update_contact',
 	displayName: 'Create/Update Contact',
 	description: 'Creates a new contact or updates an existing contact.',
+	audience: 'both',
+	aiMetadata: { description: 'Upserts a person profile in a Crisp website by email: updates the existing contact if one matches, otherwise creates it. Use to keep contact details (name, phone, address, company, website, notepad) in sync. Idempotent: keyed on the stable email, so repeating with the same input yields the same contact.', idempotent: true },
 	props: {
 		websiteId: websiteIdProp,
 		email: Property.ShortText({
@@ -68,7 +69,7 @@ export const createOrUpdateContactAction = createAction({
 			});
 		} catch (e) {
 			const err = e as HttpError;
-			if (err.response.status === HttpStatusCode.NotFound) {
+			if (err.response.status === 404) {
 				await crispApiCall({
 					auth: context.auth,
 					method: HttpMethod.POST,

@@ -14,6 +14,12 @@ export const runMultipleQueries = createAction({
   displayName: 'Run Multiple Queries',
   description:
     'Execute multiple SQL statements in sequence against your Snowflake database. Optionally wrap them in a transaction so all changes are rolled back if any statement fails.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs an ordered list of SQL statements against Snowflake in a single connection, with an option to wrap the whole batch in one transaction so a failure rolls back all preceding changes. Use this for multi-statement scripts or when several statements must succeed or fail together; for a single statement use Run Query. Bind shared dynamic values via numbered `:1`/`:2` placeholders (avoid `?` here). Not idempotent when the batch contains DML/DDL, since those mutate state on each call.',
+    idempotent: false,
+  },
   auth: snowflakeAuth,
   props: {
     sqlTexts: Property.Array({

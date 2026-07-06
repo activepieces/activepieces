@@ -7,6 +7,8 @@ export const refundPaymentAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Refund a Payment',
   description: 'Issue a refund (full or partial) for a captured payment. Supports split refunds, line items, and bank account destinations.',
+  audience: 'both',
+  aiMetadata: { description: 'Refunds a captured Checkout.com payment, fully (omit amount) or partially (specify amount in minor units), with optional split allocations to sub-entities, line items, and a bank-account destination for methods like giropay/EPS. Requires the payment ID, resolved from an order reference. Choose it to return funds to a payer. Not idempotent: each call issues a separate refund and moves money.', idempotent: false },
   props: {
     reference: Property.ShortText({
       displayName: 'Reference',

@@ -8,12 +8,26 @@ export class AutomationsPage extends BasePage {
     await this.waitFor();
   }
 
+  // Login may land on the chat page when chat is enabled, so navigate to
+  // automations explicitly instead of relying on the landing page.
+  async open() {
+    await this.page.waitForURL(
+      (url) =>
+        !url.pathname.includes('/sign-in') &&
+        !url.pathname.includes('/sign-up'),
+      { timeout: 15000 },
+    );
+    await this.visit();
+    await this.waitFor();
+  }
+
   async waitFor() {
     await this.page.waitForURL('**/automations**');
-    await Promise.race([
-      this.page.waitForSelector('text="Get started with Activepieces"'),
-      this.page.waitForSelector('button:has-text("Create New")'),
-    ]);
+    await this.page
+      .locator('text="Get started with Activepieces"')
+      .or(this.page.locator('button:has-text("Create New")'))
+      .first()
+      .waitFor();
   }
 
   async newFlowFromScratch() {

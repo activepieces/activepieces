@@ -9,7 +9,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { heartbeatAuth } from '../..';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const heartBeatCreateUser = createAction({
   auth: heartbeatAuth,
@@ -168,10 +168,10 @@ export const heartBeatCreateUser = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email(),
-      linkedin: z.string().url().optional(),
-      twitter: z.string().url().optional(), 
-      instagram: z.string().url().optional()
+      email: z.string().check(z.email()),
+      linkedin: z.optional(z.string().check(z.url())),
+      twitter: z.optional(z.string().check(z.url())), 
+      instagram: z.optional(z.string().check(z.url()))
     });
 
     const response = await httpClient.sendRequest({

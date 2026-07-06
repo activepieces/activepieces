@@ -15,6 +15,8 @@ export const subOperatorReadAction = createAction({
   name: 'subOperatorRead',
   displayName: 'Resources - Sub Operators - Read',
   description: 'Get a sub operator.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single sub operator from AMPECO by its numeric id. Read-only and idempotent. Use when you already have the sub operator id; to discover ids first use Sub Operators Listing.', idempotent: true },
   props: {
         
   subOperator: Property.Number({

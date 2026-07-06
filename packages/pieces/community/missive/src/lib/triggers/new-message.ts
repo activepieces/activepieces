@@ -9,6 +9,9 @@ export const newMessage = createTrigger({
   name: 'new_message',
   displayName: 'New Message',
   description: 'Triggers when new messages are received (email, SMS, WhatsApp, Facebook, etc.)',
+  aiMetadata: {
+    description: 'Fires when a message arrives on a Missive conversation across any configured channel (email, SMS, WhatsApp, Messenger, Instagram, Twitter, live chat). Delivered via a Missive webhook rule the user sets up manually; each event carries the conversation and the latest message. Use to react to inbound communications.',
+  },
   auth: missiveAuth,
   props: {
     setupInstructions: Property.MarkDown({

@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { telegramAnswerCallbackQueryAction } from './lib/action/answer-callback-query.action';
 import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
 import { telegramDeleteMessageAction } from './lib/action/delete-message.action';
@@ -43,7 +43,7 @@ export const telegramBotAuth = PieceAuth.SecretText({
 export const telegramBot = createPiece({
   displayName: 'Telegram Bot',
   description: 'Build chatbots for Telegram',
-  minimumSupportedRelease: '0.82.0',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: telegramBotAuth,

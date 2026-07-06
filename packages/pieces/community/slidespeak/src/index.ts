@@ -10,7 +10,7 @@ import { createPresentationAction } from './lib/actions/create-presentation';
 import { editPresentationAction } from './lib/actions/edit-presentation';
 import { getTaskStatusAction } from './lib/actions/get-task-status';
 import { newPresentationTrigger } from './lib/triggers/new-presentation';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { slidespeakAuth } from './lib/auth';
 
 export const slidespeak = createPiece({

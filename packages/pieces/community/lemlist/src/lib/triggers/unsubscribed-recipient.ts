@@ -9,6 +9,9 @@ export const unsubscribedRecipient = createTrigger({
   name: 'unsubscribedRecipient',
   displayName: 'Unsubscribed Recipient',
   description: 'Triggers when a recipient unsubscribes.',
+  aiMetadata: {
+    description: 'Fires via webhook when a recipient unsubscribes from outreach (Lemlist emailsUnsubscribed event). Represents an opt-out signal for a single lead.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

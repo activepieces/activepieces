@@ -9,6 +9,10 @@ export const updatedLead = createTrigger({
   name: 'updatedLead',
   displayName: 'Updated Lead',
   description: 'Triggers when a lead is modified.',
+  aiMetadata: {
+    description:
+      'Fires when an existing lead is modified in Copper CRM (any field change), via a Copper webhook. Emits the updated lead record.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

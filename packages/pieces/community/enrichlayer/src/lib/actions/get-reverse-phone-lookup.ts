@@ -9,6 +9,12 @@ export const getReversePhoneLookup = createAction({
   displayName: 'Reverse Phone Lookup',
   description:
     'Find social media profiles from a phone number (3 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up the social media profiles associated with a phone number supplied in E.164 format. Pick this when a phone number is your only identifier and you want to resolve it to people/profiles; read-only and idempotent, billed per call.',
+    idempotent: true,
+  },
   props: {
     phone_number: Property.ShortText({
       displayName: 'Phone Number',
