@@ -205,3 +205,105 @@ giving up during churn; the runs themselves all succeeded.)
 - Scale-down is lossless and sub-second — aggressive scale-down policies are safe.
 - For sync webhooks (30 s budget) the new-node path cannot arrive in time: keep min replicas at
   the sync peak, autoscale the burst headroom above it (matches `production-setup.mdx`).
+
+---
+
+## Experiment 3 — Props-resolution / isolated-vm copy overhead
+
+**Question.** When a step output is large (a big API response, or a parsed CSV/spreadsheet), how
+much CPU and memory does *resolving* a downstream expression that references it actually cost — and
+where does that cost blow up (censoring, router branches, per-token isolates, payload size)? This is
+the bug class behind PR [#14047](https://github.com/activepieces/activepieces/pull/14047) (still
+**open** — `main` is exposed); the full audit is in
+[PROPS_RESOLVER_AUDIT.md](./PROPS_RESOLVER_AUDIT.md).
+
+### Rig
+
+Two layers, measured separately:
+
+| Layer | What it isolates | How |
+|---|---|---|
+| **Engine microbench** | The `resolve()` clone/isolate cost alone — no HTTP callbacks, no loop iteration | [`run-action-resolution.perf.test.ts`](../packages/server/engine/test/variables/run-action-resolution.perf.test.ts), Vitest, `SANDBOX_CODE_ONLY` (Node + isolated-vm), `--expose-gc` for clean heap deltas |
+| **Full-stack load** | End-to-end container CPU/RAM under real webhook load, incl. loop iteration + callbacks | `benchmark/` docker-compose + `hey`, metrics via `GET /v1/worker-machines` (`poll-metrics.sh`) |
+
+The microbench measures `createPropsResolver().resolve()` on an input that references a large upstream
+step output — the exact clone a `LOOP_ON_ITEMS` `items` expression, a router condition, or a piece
+input pays. It deliberately does **not** drive `flowExecutor.execute` over the whole loop: in the unit
+harness each loop iteration attempts a progress callback to a non-running mock API, so full-loop
+numbers there are a test artifact, not signal. Whole-loop iteration cost is left to the load fixtures,
+where the real stack serves those callbacks.
+
+> Microbench numbers below are from a local WSL2 dev machine (single-threaded), so treat them as
+> **ratios and scaling shapes**, not absolute production latencies. The scaling (per-branch,
+> per-token, heap-vs-payload) is what transfers.
+
+### The fixtures
+
+- [`setup-loop-huge.sh`](./setup-loop-huge.sh) — webhook → CODE emits a Google-Docs-shaped payload
+  (`PARAGRAPH_COUNT`, default 10k) → `LOOP_ON_ITEMS` over it → response. Deeply-nested shape.
+- [`setup-router-wide.sh`](./setup-router-wide.sh) — webhook → CODE emits the payload → `ROUTER` with
+  `BRANCH_COUNT` branches (non-matching branches reference the payload, only the fallback matches) →
+  response. Isolates eager-all-branches resolution.
+- [`setup-csv-huge.sh`](./setup-csv-huge.sh) — webhook → CODE builds **and parses a `ROW_COUNT`-row
+  CSV (default 100k) × 8 columns** into row objects → `LOOP_ON_ITEMS` over the rows → response. The
+  realistic "process a big spreadsheet/export" case: many small uniform objects, tens of MB.
+- OOM control: `CODE_INPUT_SUM="$(cat oom-expression.txt)" benchmark/setup.sh` — confirms
+  `MEMORY_LIMIT_EXCEEDED` still fires when a code step genuinely exceeds the 128 MB isolate cap.
+
+### How to reproduce
+
+```bash
+# Engine microbench (hard numbers, no infra) — ~2 min
+cd packages/server/engine
+NODE_OPTIONS="--expose-gc" npx vitest run test/variables/run-action-resolution.perf.test.ts
+
+# Full-stack load (docker) — sweep the CSV row count to find the memory cliff
+benchmark/poll-metrics.sh metrics.ndjson &          # TOKEN from setup output
+ROW_COUNT=100000 benchmark/setup-csv-huge.sh        # or 10000 / 50000 to sweep
+hey -n 200 -c 2 -t 120 "http://localhost:8080/api/v1/webhooks/$FLOW_ID/sync"
+```
+
+### Results — engine microbench (measured)
+
+| Scenario | Payload | Time | Heap Δ | Confirms |
+|---|---|---:|---:|---|
+| Loop `items` resolution (nested) | 6.3 MB | 517 ms | **47.7 MB** (7.5×) | RUN-path resolver clone cost |
+| CSV `items` resolution (100k rows) | 18.5 MB | 1,177 ms | **109.5 MB** (5.9×) | large parsed-array clone |
+| Censoring double-pass (2 tokens) | 3.8 MB | 309 ms | — | ~2× tax vs ~155 ms single-pass (finding #2) |
+| Router, 3 branches | 6.3 MB | 558 ms | — | ~150 ms/branch |
+| Router, 10 branches | 6.3 MB | 1,585 ms | — | eager-all-branches, linear (finding #3) |
+| Router, 30 branches | 6.3 MB | 4,407 ms | — | ~147 ms/branch — no payload dependence |
+| Isolate churn, 1 token | 3.1 MB | 94 ms | — | baseline |
+| Isolate churn, 3 tokens | 3.1 MB | 221 ms | — | ~62 ms/token |
+| Isolate churn, 5 tokens | 3.1 MB | 309 ms | — | linear per-token (finding #4) |
+
+**The memory headline.** Resolving a single expression clones the referenced payload several times
+over (the `JSON.stringify` string + the `JSON.parse` clone + the `ivm.ExternalCopy` into the isolate +
+the resolved output), so **heap grows to ~6–7× the payload size**. At 18.5 MB the resolution alone
+touches ~110 MB of heap — meaning a step output of only ~20–25 MB pushed through resolution already
+approaches the hardcoded **128 MB** isolate cap, at which point the step OOMs and the job is
+SIGKILLed/retried (the exact `MEMORY_LIMIT_EXCEEDED` path). That is the practical ceiling on how big a
+CSV/API-response a flow can carry through an expression today.
+
+**The CPU headlines.** Router cost is ~150 ms per branch and is **independent of which branch
+matches** — a 30-branch router pays ~4.4 s resolving branches that never run (finding #3). Per-token
+isolate churn is ~62 ms per `{{...}}` token because each token spins up and tears down its own 128 MB
+V8 isolate (finding #4). The censoring double-pass roughly doubles resolution wall-clock for
+step-output tokens that never need censoring (finding #2).
+
+### Results — full-stack load (to run)
+
+Container-level CPU/RAM under `hey` load and the CSV `ROW_COUNT` cliff (row count at which container
+memory saturates / `MEMORY_LIMIT_EXCEEDED` first fires) are pending a docker run of the fixtures
+above. The OOM control fixture intentionally triggers isolate OOM + retry churn, so run it
+deliberately, not as part of a clean throughput sweep.
+
+### Takeaways
+
+- **Fix order** (from the audit): land PR #14047 → kill the censoring double-pass (finding #2, every
+  run, ~2× today) → scope router branch resolution to the matched branch (finding #3) → then the
+  architectural per-token isolate reuse (finding #4).
+- **Heap ≈ 6–7× payload during resolution** is the number to design around: keep single step outputs
+  that feed expressions well under ~15–20 MB, or the 128 MB isolate cap becomes reachable. For big
+  CSVs/exports, stream or paginate rather than carrying the whole parsed array through one expression.
+- Router latency scales with **branch count, not payload** — wide routers are the silent cost.
