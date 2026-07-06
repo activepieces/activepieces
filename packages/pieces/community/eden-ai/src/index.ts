@@ -25,9 +25,10 @@ import { PieceCategory } from '@activepieces/pieces-framework';
           return { valid: false, error: 'Invalid API key format.' };
         }
         try {
+          // Validate against the v3 OpenAI-compatible model catalogue (lightweight, semantically correct).
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: 'https://api.edenai.run/v2/video/explicit_content_detection_async',
+            url: 'https://api.edenai.run/v3/models',
             headers: {
               'Authorization': `Bearer ${auth}`,
               'Content-Type': 'application/json',

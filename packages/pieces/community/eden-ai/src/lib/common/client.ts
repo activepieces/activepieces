@@ -1,6 +1,10 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-const BASE_URL = 'https://api.edenai.run/v2';
+// Eden AI exposes two surfaces:
+//  - v2: native per-feature endpoints (OCR, parsers, TTS, translation, moderation…) — used by most actions here.
+//  - v3: unified, OpenAI-compatible endpoint (/v3/chat/completions, /v3/models) — used by LLM chat.
+export const EDENAI_V2_BASE_URL = 'https://api.edenai.run/v2';
+export const EDENAI_V3_BASE_URL = 'https://api.edenai.run/v3';
 const DEFAULT_TIMEOUT = 20000;
 const MAX_RETRIES = 3;
 const RETRY_BACKOFF = 1000;
@@ -33,6 +37,7 @@ export async function edenAiApiCall<T = any>({
   headers: customHeaders = {},
   timeout = DEFAULT_TIMEOUT,
   maxRetries = MAX_RETRIES,
+  baseUrl = EDENAI_V2_BASE_URL,
 }: {
   apiKey: string;
   method: HttpMethod;
@@ -42,6 +47,8 @@ export async function edenAiApiCall<T = any>({
   headers?: Record<string, string>;
   timeout?: number;
   maxRetries?: number;
+  // Defaults to the v2 feature API; pass EDENAI_V3_BASE_URL for the OpenAI-compatible LLM endpoint.
+  baseUrl?: string;
 }): Promise<T> {
   if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length < 10) {
     throw new Error('Missing or invalid Eden AI API key. Please check your credentials.');
@@ -52,7 +59,7 @@ export async function edenAiApiCall<T = any>({
     ...customHeaders,
   };
 
-  const url = `${BASE_URL}${resourceUri}`;
+  const url = `${baseUrl}${resourceUri}`;
   let lastError;
   const stringQueryParams = query
     ? Object.fromEntries(Object.entries(query).map(([k, v]) => [k, String(v)]))

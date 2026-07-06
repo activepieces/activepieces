@@ -1,23 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { edenAiApiCall } from '../common/client';
-import { createStaticDropdown } from '../common/providers';
+import { edenAiApiCall, EDENAI_V3_BASE_URL } from '../common/client';
+import { createStaticDropdown, modelDropdownOptions, providerDropdownOptions } from '../common/providers';
 import * as z from 'zod/mini'
 import { edenAiAuth } from '../..';
-
-const CHAT_PROVIDERS = [
-  { label: 'OpenAI GPT-4o', value: 'openai' },
-  { label: 'Anthropic Claude', value: 'anthropic' },
-  { label: 'Google Gemini', value: 'google' },
-  { label: 'Meta Llama', value: 'meta' },
-  { label: 'Mistral', value: 'mistral' },
-  { label: 'Cohere', value: 'cohere' },
-  { label: 'XAI Grok', value: 'xai' },
-  { label: 'Amazon Nova', value: 'amazon' },
-  { label: 'Microsoft', value: 'microsoft' },
-  { label: 'DeepSeek', value: 'deepseek' },
-  { label: 'Groq', value: 'groq' }
-];
 
 const REASONING_EFFORT_OPTIONS = [
   { label: 'Low - Quick responses', value: 'low' },
@@ -25,23 +11,17 @@ const REASONING_EFFORT_OPTIONS = [
   { label: 'High - In-depth reasoning', value: 'high' }
 ];
 
-function normalizeChatResponse(provider: string, response: any) {
-  const providerResult = response[provider];
-  if (!providerResult) {
-    return { provider, content: '', usage: null, raw: response };
-  }
-
-  const choices = providerResult.choices || [];
-  const firstChoice = choices[0];
+// v3 /chat/completions returns a standard OpenAI-shaped response (not provider-keyed like v2 /llm/chat).
+function normalizeChatResponse(response: any) {
+  const firstChoice = response?.choices?.[0];
   const message = firstChoice?.message;
 
   return {
-    provider,
     content: message?.content || '',
     role: message?.role || 'assistant',
     finish_reason: firstChoice?.finish_reason || '',
-    usage: providerResult.usage || null,
-    model: providerResult.model || '',
+    usage: response?.usage || null,
+    model: response?.model || '',
     raw: response
   };
 }
@@ -51,21 +31,44 @@ export const generateTextAction = createAction({
   name: 'generate_text',
   displayName: 'Generate Text',
   description:
-    'Generate text completions using various AI providers through Eden AI chat endpoint.',
+    'Generate text completions across 500+ models from every major provider through Eden AI\'s single OpenAI-compatible endpoint. Optionally restrict to EU-hosted models for GDPR data residency.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Generate a chat/LLM completion from a prompt through Eden AI, routing to a chosen provider (OpenAI, Anthropic, Google, Meta, Mistral, and others) with optional system prompt, model override, temperature, and fallback providers. Choose it for one-shot text generation when you want provider flexibility behind a single call rather than calling a specific LLM piece directly. Requires a provider and prompt; optionally pass an image URL for vision-capable models. Generative and non-deterministic, but stateless — repeating the call creates no extra side effect.',
+      'Generate a chat/LLM completion from a prompt through Eden AI, routing to any of 500+ models across providers (OpenAI, Anthropic, Google, Mistral, and others) behind one API key, with optional system prompt, temperature, and fallback models. For GDPR-sensitive data, enable "EU Data Residency" to restrict the model list to Eden AI\'s EU-hosted models (processing stays within the EU). Choose it for one-shot text generation when you want provider flexibility behind a single call rather than calling a specific LLM piece directly. Requires a model and prompt; optionally pass an image URL for vision-capable models. Generative and non-deterministic, but stateless — repeating the call creates no extra side effect.',
     idempotent: true,
   },
   props: {
+    eu_residency: Property.Checkbox({
+      displayName: 'EU Data Residency (GDPR)',
+      description:
+        'Restrict the Provider and Model lists to Eden AI\'s EU-hosted models, so inference is processed within the European Union. EU-hosted models are flagged with 🇪🇺.',
+      required: false,
+      defaultValue: false,
+    }),
     provider: Property.Dropdown({
-      auth: edenAiAuth,   
+      auth: edenAiAuth,
       displayName: 'Provider',
-      description: 'The AI provider to use for text generation.',
+      description: 'Optionally filter the Model list to a single provider. Leave empty to browse all providers.',
+      required: false,
+      refreshers: ['eu_residency'],
+      options: async ({ auth, eu_residency }) => {
+        const opts = await providerDropdownOptions(auth);
+        // eu_residency is applied at the model level; providers with no EU model still list here,
+        // but the Model dropdown will show "no EU-hosted models" for those.
+        void eu_residency;
+        return opts;
+      },
+    }),
+    model: Property.Dropdown({
+      auth: edenAiAuth,
+      displayName: 'Model',
+      description:
+        'The model to use, as the exact Eden AI `provider/model` id. When "EU Data Residency" is on, only EU-hosted models (🇪🇺) are listed.',
       required: true,
-      refreshers: [],
-      options: createStaticDropdown(CHAT_PROVIDERS)
+      refreshers: ['provider', 'eu_residency'],
+      options: async ({ auth, provider, eu_residency }) =>
+        modelDropdownOptions(auth, provider as string | undefined, eu_residency as boolean | undefined),
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
@@ -76,12 +79,6 @@ export const generateTextAction = createAction({
       displayName: 'System Prompt',
       description:
         'System message to set the behavior and context for the AI assistant (e.g., "You are a helpful coding assistant").',
-      required: false
-    }),
-    model: Property.ShortText({
-      displayName: 'Model',
-      description:
-        'Specific model to use (e.g., gpt-4o, claude-3-sonnet-latest, gemini-2.0-flash). Leave empty for provider-specific defaults.',
       required: false
     }),
     temperature: Property.Number({
@@ -100,34 +97,35 @@ export const generateTextAction = createAction({
     reasoning_effort: Property.Dropdown({
       auth: edenAiAuth,
       displayName: 'Reasoning Effort',
-      description: 'Level of reasoning depth for the response.',
+      description: 'Level of reasoning depth for the response (only used by reasoning-capable models).',
       required: false,
       refreshers: [],
       options: createStaticDropdown(REASONING_EFFORT_OPTIONS)
     }),
-    fallback_providers: Property.MultiSelectDropdown({
+    fallback_models: Property.MultiSelectDropdown({
       auth: edenAiAuth,
-      displayName: 'Fallback Providers',
-      description: 'Alternative providers to try if the main provider fails.',
+      displayName: 'Fallback Models',
+      description: 'Alternative models (exact `provider/model` ids) to try if the primary model fails.',
       required: false,
-      refreshers: [],
-      options: createStaticDropdown(CHAT_PROVIDERS)
+      refreshers: ['eu_residency'],
+      options: async ({ auth, eu_residency }) =>
+        modelDropdownOptions(auth, undefined, eu_residency as boolean | undefined),
     }),
-         include_image: Property.Checkbox({
-       displayName: 'Include Image',
-       description: 'Include an image in your prompt (for vision-capable models).',
-       required: false,
-       defaultValue: false,
-     }),
-     image_url: Property.ShortText({
-       displayName: 'Image URL',
-       description: 'URL of the image to include in the prompt (only used if "Include Image" is enabled).',
-       required: false,
-     }),
+    include_image: Property.Checkbox({
+      displayName: 'Include Image',
+      description: 'Include an image in your prompt (for vision-capable models).',
+      required: false,
+      defaultValue: false,
+    }),
+    image_url: Property.ShortText({
+      displayName: 'Image URL',
+      description: 'URL of the image to include in the prompt (only used if "Include Image" is enabled).',
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      model: z.string().check(z.minLength(1, 'Model is required')),
       prompt: z.string().check(z.minLength(1, 'Prompt is required')),
       temperature: z.nullish(z.number().check(z.minimum(0), z.maximum(2))),
       max_completion_tokens: z.nullish(z.number().check(z.minimum(1))),
@@ -135,14 +133,13 @@ export const generateTextAction = createAction({
     });
 
     const {
-      provider,
+      model,
       prompt,
       system_prompt,
-      model,
       temperature,
       max_completion_tokens,
       reasoning_effort,
-      fallback_providers,
+      fallback_models,
       include_image,
       image_url
     } = propsValue;
@@ -157,52 +154,40 @@ export const generateTextAction = createAction({
     }
 
     const userContent: any[] = [{ type: 'text', text: prompt }];
-    
-     if (include_image && image_url) {
-       userContent.push({
-         type: 'image_url',
-         image_url: { url: image_url }
-       });
-     }
+
+    if (include_image && image_url) {
+      userContent.push({
+        type: 'image_url',
+        image_url: { url: image_url }
+      });
+    }
 
     messages.push({
       role: 'user',
       content: userContent
     });
 
+    // v3 /chat/completions takes the exact "provider/model" id (EU-hosted models are chosen via the
+    // Model dropdown when EU Data Residency is enabled — there is no suffix to append).
     const body: Record<string, any> = {
-      providers: provider,
+      model,
       messages
     };
 
-    const defaultModels: Record<string, string> = {
-      'openai': 'gpt-4o',
-      'anthropic': 'claude-3-sonnet-latest',
-      'google': 'gemini-2.0-flash',
-      'meta': 'llama-3.1-70b-instruct',
-      'mistral': 'mistral-large-latest',
-      'cohere': 'command-r-plus',
-      'xai': 'grok-2-latest',
-      'amazon': 'nova-pro-v1:0',
-      'microsoft': 'gpt-4o',
-      'deepseek': 'deepseek-chat',
-      'groq': 'llama-3.1-70b-versatile'
-    };
-    
-    body['model'] = model || defaultModels[provider] || 'gpt-4o';
-
     if (temperature !== undefined) body['temperature'] = temperature;
-    if (max_completion_tokens !== undefined) body['max_completion_tokens'] = max_completion_tokens;
+    if (max_completion_tokens !== undefined) body['max_tokens'] = max_completion_tokens;
     if (reasoning_effort) body['reasoning_effort'] = reasoning_effort;
-    if (fallback_providers && fallback_providers.length > 0) {
-      body['fallback_providers'] = fallback_providers;
+    if (fallback_models && fallback_models.length > 0) {
+      // Eden AI extension to the OpenAI-compatible endpoint: models tried on failure.
+      body['fallback_providers'] = fallback_models;
     }
 
     try {
       const response = await edenAiApiCall({
         apiKey: auth.secret_text,
         method: HttpMethod.POST,
-        resourceUri: '/llm/chat',
+        baseUrl: EDENAI_V3_BASE_URL,
+        resourceUri: '/chat/completions',
         body
       });
 
@@ -210,7 +195,7 @@ export const generateTextAction = createAction({
         throw new Error('Invalid response from Eden AI API.');
       }
 
-      return normalizeChatResponse(provider, response);
+      return normalizeChatResponse(response);
     } catch (err: any) {
       if (err.response?.body?.error) {
         throw new Error(`Eden AI API error: ${err.response.body.error}`);
