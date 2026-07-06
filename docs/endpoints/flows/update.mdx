@@ -2,3 +2,7 @@
 title: 'Apply Flow Operation'
 openapi: POST /v1/flows/{id}
 ---
+
+<Info>
+When a flow carries embed [Publish Constraints](/embedding/publish-constraints), some operations are guarded: an `UPDATE_METADATA` operation cannot drop the reserved `embedConstraints` key, and `UPDATE_TRIGGER` / `IMPORT_FLOW` operations that swap a `locked` or `frozen` trigger are rejected with `409 CONFLICT`.
+</Info>

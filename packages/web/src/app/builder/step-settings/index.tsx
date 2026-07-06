@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  embedConstraintsUtil,
   FlowAction,
   FlowActionType,
   FlowOperationType,
@@ -7,6 +8,7 @@ import {
   FlowTriggerType,
   flowPieceUtil,
   flowStructureUtil,
+  TriggerLockMode,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import deepEqual from 'deep-equal';
@@ -50,11 +52,12 @@ const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [
-    readonly,
+    builderReadonly,
     exitStepSettings,
     applyOperation,
     saving,
     flowVersion,
+    flow,
     selectedBranchIndex,
     setSelectedBranchIndex,
     run,
@@ -66,12 +69,22 @@ const StepSettingsContainer = () => {
     state.applyOperation,
     state.saving,
     state.flowVersion,
+    state.flow,
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
     state.run,
     state.stepDataPanelView,
     state.isStepDataPanelOpen,
   ]);
+
+  const isTriggerStep =
+    selectedStep.type === FlowTriggerType.PIECE ||
+    selectedStep.type === FlowTriggerType.EMPTY;
+  const triggerFrozen =
+    isTriggerStep &&
+    embedConstraintsUtil.getEmbedConstraints(flow)?.triggerLock ===
+      TriggerLockMode.enum.frozen;
+  const readonly = builderReadonly || triggerFrozen;
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,

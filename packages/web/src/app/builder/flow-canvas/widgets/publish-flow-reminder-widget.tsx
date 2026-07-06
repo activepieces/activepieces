@@ -1,5 +1,6 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import {
+  embedConstraintsUtil,
   FlowRun,
   FlowVersion,
   FlowVersionState,
@@ -18,6 +19,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowHooks } from '@/features/flows';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -54,6 +56,17 @@ const PublishFlowReminderWidget = () => {
     run,
     isSaving,
   });
+  const embedConstraints = embedConstraintsUtil.getEmbedConstraints(flow);
+  const satisfiesRequiredPiece =
+    embedConstraintsUtil.flowSatisfiesRequiredPiece({
+      version: flowVersion,
+      constraints: embedConstraints,
+    });
+  const { summaries: requiredPieceSummaries } =
+    piecesHooks.usePieceSummariesByNames({
+      names: embedConstraints?.requiredPieceNames ?? [],
+    });
+  const canPublish = isValid && satisfiesRequiredPiece;
   const { mutate: discardChange, isPending: isDiscardingChanges } = useMutation(
     {
       mutationFn: async () => {
@@ -126,15 +139,29 @@ const PublishFlowReminderWidget = () => {
                   //for e2e tests
                   name="Publish"
                   onClick={() => publish()}
-                  disabled={!isValid}
+                  disabled={!canPublish}
                 >
                   {t('Publish')}
                 </Button>
               </div>
             </TooltipTrigger>
             {isSaving && <TooltipContent>{t('Saving...')}</TooltipContent>}
-            {!isValid && (
+            {!isSaving && !isValid && (
               <TooltipContent>{t('You have incomplete steps')}</TooltipContent>
+            )}
+            {!isSaving && isValid && !satisfiesRequiredPiece && (
+              <TooltipContent>
+                {requiredPieceSummaries.length > 0
+                  ? t(
+                      'This flow must include the {pieceName} step to publish',
+                      {
+                        pieceName: requiredPieceSummaries
+                          .map((piece) => piece.displayName)
+                          .join(t(' or ')),
+                      },
+                    )
+                  : t('This flow is missing a required step to publish')}
+              </TooltipContent>
             )}
           </Tooltip>
         </div>
