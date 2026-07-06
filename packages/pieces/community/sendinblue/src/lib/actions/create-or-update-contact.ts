@@ -90,7 +90,6 @@ export const createOrUpdateContact = createAction({
       Object.entries(contact).filter(([_, value]) => Boolean(value))
     );
 
-    console.log('Contact update request ' + identifier);
     await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api.sendinblue.com/v3/contacts`,
