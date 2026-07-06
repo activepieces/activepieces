@@ -393,7 +393,9 @@ import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/17990
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
-import { CreatePieceSetTable1804000000000 } from './migration/postgres/1804000000000-CreatePieceSetTable'
+import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
+import { AddAdhocRunTable1805000000000 } from './migration/postgres/1805000000000-AddAdhocRunTable'
+import { CreatePieceSetTable1806000000000 } from './migration/postgres/1806000000000-CreatePieceSetTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -802,7 +804,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddToolSearchIndexTable1801000000000,
         AddChatRolloutFreeCreditGrant1802000000000,
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
-        CreatePieceSetTable1804000000000,
+        DropBadges1804000000000,
+        AddAdhocRunTable1805000000000,
+        CreatePieceSetTable1806000000000,
     ]
     return migrations
 }

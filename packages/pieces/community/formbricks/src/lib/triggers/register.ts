@@ -33,6 +33,12 @@ export const formBricksRegisterTrigger = ({
     description,
     aiMetadata,
     props: {
+      workspaceId: Property.ShortText({
+        displayName: 'Workspace ID',
+        description:
+          'The Workspace ID can be found in the URL when you are logged into Formbricks. For example, if the URL is https://app.formbricks.com/workspaces/cljold01t0000qh8ewzigzmjk, then the Workspace ID is cljold01t0000qh8ewzigzmjk.',
+        required: true,
+      }),
       survey_id: Property.MultiSelectDropdown({
         auth: formBricksAuth,
         displayName: 'Survey',
@@ -86,6 +92,8 @@ export const formBricksRegisterTrigger = ({
         method: HttpMethod.POST,
         url: `${context.auth.props.appUrl}/api/v1/webhooks`,
         body: {
+          name: `Activepieces ${name} trigger`,
+          workspaceId : context.propsValue.workspaceId, // formbricks docs dont have this field but it is required in the API
           url: context.webhookUrl,
           triggers: [eventType],
           surveyIds: context.propsValue.survey_id ?? [],

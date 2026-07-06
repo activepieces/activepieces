@@ -74,9 +74,11 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tags: [],
             },
         }
-        const outputContext = flowRunProgressReporter.createOutputContext({
-            engineConstants: constants,
-        })
+        const outputContext = constants.adhocMode
+            ? { update: async (): Promise<void> => { /* no-op: ad-hoc runs have no live progress channel */ } }
+            : flowRunProgressReporter.createOutputContext({
+                engineConstants: constants,
+            })
 
         const isPaused = executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
@@ -137,7 +139,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 stop: createStopHook(params),
                 respond: createRespondHook(params),
                 createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
-                waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
+                waitForWaitpoint: createWaitForWaitpointHook({ constants, hookParams: params }),
             },
             project: {
                 id: constants.projectId,
@@ -271,41 +273,58 @@ type CreateRespondHookParams = {
 }
 
 function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
-    return async (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
-        assertDelayWithinTimeout(req.resumeDateTime)
-        if (!isNil(req.responseToSend)) {
-            hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
-        }
-        const result = await waitpointClient.create({
-            apiUrl: constants.internalApiUrl,
-            engineToken: constants.engineToken,
-            flowRunId: constants.flowRunId,
-            projectId: constants.projectId,
-            stepName,
-            type: req.type,
-            version: req.version ?? 'V1',
-            resumeDateTime: req.resumeDateTime,
-            responseToSend: req.responseToSend,
-            workerHandlerId: constants.workerHandlerId ?? undefined,
-            httpRequestId: constants.httpRequestId ?? undefined,
-        })
-        return {
-            ...result,
-            buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
-                const url = new URL(`${result.resumeUrl}${params.sync ? '/sync' : ''}`)
-                url.search = new URLSearchParams(params.queryParams).toString()
-                return url.toString()
-            },
-        }
+    return (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
+        // Throw synchronously (not from inside the async body) so that the deprecated pause() hook —
+        // which does `createWaitpoint(...).catch(() => process.exit(1))` — never attaches its catch and
+        // the error propagates as a FAILED step instead of killing the worker on a rejected promise.
+        assertAdhocCannotSuspend(constants)
+        return submitWaitpoint({ constants, stepName, hookParams, req })
     }
 }
 
-function createWaitForWaitpointHook({ hookParams }: { hookParams: { hookResponse: HookResponse } }): WaitForWaitpointHook {
+async function submitWaitpoint({ constants, stepName, hookParams, req }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
+    assertDelayWithinTimeout(req.resumeDateTime)
+    if (!isNil(req.responseToSend)) {
+        hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
+    }
+    const result = await waitpointClient.create({
+        apiUrl: constants.internalApiUrl,
+        engineToken: constants.engineToken,
+        flowRunId: constants.flowRunId,
+        projectId: constants.projectId,
+        stepName,
+        type: req.type,
+        version: req.version ?? 'V1',
+        resumeDateTime: req.resumeDateTime,
+        responseToSend: req.responseToSend,
+        workerHandlerId: constants.workerHandlerId ?? undefined,
+        httpRequestId: constants.httpRequestId ?? undefined,
+    })
+    return {
+        ...result,
+        buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
+            const url = new URL(`${result.resumeUrl}${params.sync ? '/sync' : ''}`)
+            url.search = new URLSearchParams(params.queryParams).toString()
+            return url.toString()
+        },
+    }
+}
+
+function createWaitForWaitpointHook({ constants, hookParams }: { constants: EngineConstants, hookParams: { hookResponse: HookResponse } }): WaitForWaitpointHook {
     return (_waitpointId: string) => {
+        assertAdhocCannotSuspend(constants)
         hookParams.hookResponse = {
             ...hookParams.hookResponse,
             type: 'paused',
         }
+    }
+}
+
+// Thrown as a plain Error (USER-level) so the step ends FAILED, not INTERNAL_ERROR — a waitpoint
+// in ad-hoc mode is a usage error, not an engine bug, and must not page oncall.
+function assertAdhocCannotSuspend(constants: EngineConstants): void {
+    if (constants.adhocMode) {
+        throw new Error('This action pauses the run (waitpoint) and can only run inside a flow, not ad-hoc.')
     }
 }
 

@@ -2285,7 +2285,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apRunActionTool(mcp, mockLog).execute({
+        const result = await apRunActionTool({ mcp }, mockLog).execute({
             pieceName: '@activepieces/piece-nonexistent',
             actionName: 'any_action',
             input: {},
@@ -2300,7 +2300,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apRunActionTool(mcp, mockLog).execute({
+        const result = await apRunActionTool({ mcp }, mockLog).execute({
             pieceName: '@activepieces/piece-test-array',
             actionName: 'action_that_does_not_exist',
             input: {},
@@ -2315,7 +2315,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apRunActionTool(mcp, mockLog).execute({
+        const result = await apRunActionTool({ mcp }, mockLog).execute({
             pieceName: '@activepieces/piece-test-array',
             actionName: 'action_with_array',
             input: {},
@@ -2330,7 +2330,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apRunActionTool(mcp, mockLog).execute({
+        const result = await apRunActionTool({ mcp }, mockLog).execute({
             pieceName: '@activepieces/piece-test-email',
             actionName: 'send_email',
             input: { to: 'x@y.z', subject: 'hi' },
@@ -2345,7 +2345,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apRunActionTool(mcp, mockLog).execute({
+        const result = await apRunActionTool({ mcp }, mockLog).execute({
             pieceName: '@activepieces/piece-test-email',
             actionName: 'send_email',
             input: { to: 'x@y.z', subject: 'hi' },
@@ -2360,7 +2360,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        const result = await apRunActionTool(mcp, mockLog).execute({
+        const result = await apRunActionTool({ mcp }, mockLog).execute({
             pieceName: '@activepieces/piece-test-email',
             actionName: 'send_email',
             input: { to: 'x@y.z', subject: 'hi' },
