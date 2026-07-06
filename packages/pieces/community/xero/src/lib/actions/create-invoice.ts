@@ -108,7 +108,6 @@ export const xeroCreateInvoice = createAction({
     };
 
     const result = await httpClient.sendRequest(request);
-    console.debug('Invoice creation response', result);
 
     if (result.status === 200) {
       return result.body;

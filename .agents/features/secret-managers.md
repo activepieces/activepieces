@@ -18,6 +18,9 @@ Secret Managers let platform admins connect Activepieces to an external secret m
 Enterprise and Cloud. Gated by `platform.plan.secretManagersEnabled`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **SecretManagerConnection**: A configured connection to an external secret manager instance.
 - **SecretManagerProviderId**: Enum of supported providers: `hashicorp`, `aws`, `cyberark-conjur`, `onepassword`.
 - **SecretManagerConnectionScope**: `PLATFORM` (accessible to all projects) or `PROJECT` (restricted to specific projects).

@@ -33,6 +33,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             }
             const sandbox = manager.acquire({ log })
 
+            const provisionStartedAt = Date.now()
             const { error: provisionError } = await tryCatch(() => localExecutionCache(log, basePath, getSettings).provision({
                 pieces: provision.pieces,
                 codeSteps: provision.codes,
@@ -43,8 +44,11 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 await manager.invalidate(log)
                 throw provisionError
             }
+            const provisionMs = Date.now() - provisionStartedAt
 
             try {
+                let bootMs = 0
+                let runMs = 0
                 // Break the engine timeline into its two worker-observable phases:
                 //   sandboxStart = fork the engine child + Node boot + parse main.js (V8-cached) +
                 //                  isolated-vm init + socket connect handshake.
@@ -53,6 +57,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 const result = await wideEvent.timed({
                     name: 'execution',
                     fn: async () => {
+                        const bootStartedAt = Date.now()
                         await wideEvent.timed({
                             name: 'sandboxStart',
                             fn: () => sandbox.start({
@@ -61,14 +66,18 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                                 mounts: [],
                             }),
                         })
-                        return wideEvent.timed({
+                        bootMs = Date.now() - bootStartedAt
+                        const runStartedAt = Date.now()
+                        const runResult = await wideEvent.timed({
                             name: 'sandboxRun',
                             fn: () => sandbox.execute(operationType, operation, { timeoutInSeconds }),
                         })
+                        runMs = Date.now() - runStartedAt
+                        return runResult
                     },
                 })
                 await manager.release(log)
-                return result
+                return { ...result, timings: { provisionMs, bootMs, runMs } }
             }
             catch (error) {
                 await manager.invalidate(log)

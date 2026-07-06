@@ -1,4 +1,4 @@
-import { FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus, StepRunResponse, StreamStepProgress, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus, StreamStepProgress, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { generateMockEngineConstants } from '../handler/test-helper'
@@ -6,7 +6,7 @@ import { generateMockEngineConstants } from '../handler/test-helper'
 const { uploadRunLogMock, updateRunProgressMock, updateStepProgressMock } = vi.hoisted(() => ({
     uploadRunLogMock: vi.fn<(params: { apiUrl: string, engineToken: string, request: UploadRunLogsRequest }) => Promise<void>>(async () => undefined),
     updateRunProgressMock: vi.fn<(params: { apiUrl: string, engineToken: string, request: UpdateRunProgressRequest }) => Promise<void>>(async () => undefined),
-    updateStepProgressMock: vi.fn<(params: { apiUrl: string, engineToken: string, request: { projectId: string, stepResponse: StepRunResponse } }) => Promise<void>>(async () => undefined),
+    updateStepProgressMock: vi.fn<(params: { apiUrl: string, engineToken: string, request: { projectId: string, runId: string, output: unknown } }) => Promise<void>>(async () => undefined),
 }))
 
 vi.mock('../../src/lib/api/engine-run-api', () => ({
@@ -119,6 +119,8 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
     beforeEach(() => {
         uploadRunLogMock.mockClear()
         updateRunProgressMock.mockClear()
+        updateStepProgressMock.mockClear()
+        updateStepProgressMock.mockImplementation(async () => undefined)
     })
 
     afterEach(async () => {
@@ -160,7 +162,7 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
         expect(stepResponse!.output).toEqual(big)
     })
 
-    it('streams the original payload via updateStepProgress even when upsertStep slices the output', async () => {
+    it('streams the raw payload (runId + output), never a fabricated terminal StepRunResponse', async () => {
         const engineConstants = generateMockEngineConstants({
             streamStepProgress: StreamStepProgress.WEBSOCKET,
             engineToken: 'mock-engine-token',
@@ -168,34 +170,63 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
             logsFileId: 'logs-1',
         })
 
-        let flowExecutorContext = FlowExecutorContext.empty({
-            engineApi: { engineToken: engineConstants.engineToken, internalApiUrl: engineConstants.internalApiUrl },
-            slicingEnabled: true,
-        })
-
-        const seedStep = GenericStepOutput.create({
-            type: FlowActionType.PIECE,
-            status: StepOutputStatus.SUCCEEDED,
-            input: {},
-            output: undefined,
-        }) as GenericStepOutput<FlowActionType.PIECE, unknown>
-
-        // Seed the journal so we can read it back and inspect what was stored
-        flowExecutorContext = await flowExecutorContext.upsertStep('streaming_step', seedStep)
-
-        const outputContext = flowRunProgressReporter.createOutputContext({
-            engineConstants,
-            flowExecutorContext,
-            stepName: 'streaming_step',
-            stepOutput: seedStep,
-        })
+        const outputContext = flowRunProgressReporter.createOutputContext({ engineConstants })
 
         const big = { big: 'x'.repeat(40_000) }
         await outputContext.update({ data: big })
 
         const lastCall = updateStepProgressMock.mock.calls.at(-1)
         expect(lastCall).toBeDefined()
-        // The live UI update must carry the actual payload, never the LogSliceRef
-        expect(lastCall![0].request.stepResponse.output).toEqual(big)
+        // The streaming frame must carry the actual payload and only progress fields —
+        // never the terminal success/standardError fields that 400'd the run (#13885).
+        expect(lastCall![0].request).toEqual({
+            projectId: engineConstants.projectId,
+            runId: engineConstants.flowRunId,
+            output: big,
+        })
+    })
+
+    it('is best-effort: a failed streaming push never throws out of update()', async () => {
+        const engineConstants = generateMockEngineConstants({
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            engineToken: 'mock-engine-token',
+            internalApiUrl: 'http://127.0.0.1:65535/',
+            logsFileId: 'logs-1',
+        })
+        updateStepProgressMock.mockRejectedValueOnce(new Error('Failed to POST step-progress: 400 Bad Request'))
+
+        const outputContext = flowRunProgressReporter.createOutputContext({ engineConstants })
+
+        // Must resolve, not reject — a streaming failure must not fail the run.
+        await expect(outputContext.update({ data: { partial: true } })).resolves.toBeUndefined()
+    })
+
+    it('backup emits standardError as "" for a non-success step that has no errorMessage', async () => {
+        const engineConstants = generateMockEngineConstants({
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            engineToken: 'mock-engine-token',
+            internalApiUrl: 'http://127.0.0.1:65535/',
+            logsFileId: 'logs-1',
+            stepNameToTest: 'failing_step',
+        })
+
+        let flowExecutorContext = FlowExecutorContext.empty({
+            engineApi: { engineToken: engineConstants.engineToken, internalApiUrl: engineConstants.internalApiUrl },
+            slicingEnabled: false,
+        })
+        flowExecutorContext.verdict = { status: FlowRunStatus.RUNNING }
+        flowExecutorContext = await flowExecutorContext.upsertStep('failing_step', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.FAILED,
+            input: {},
+            output: undefined,
+        }))
+
+        flowRunProgressReporter.init()
+        await flowRunProgressReporter.sendUpdate({ engineConstants, flowExecutorContext })
+        await flowRunProgressReporter.backup()
+
+        const stepResponse = uploadRunLogMock.mock.calls.at(-1)![0].request.stepResponse
+        expect(stepResponse!.standardError).toBe('')
     })
 })

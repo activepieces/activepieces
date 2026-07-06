@@ -1,4 +1,4 @@
-import { StepRunResponse } from '@activepieces/core-execution'
+import { StepRunResponse, UpdateStepProgressRequest } from '@activepieces/core-execution'
 import { z } from 'zod'
 
 export enum WebsocketClientEvent {
@@ -8,7 +8,6 @@ export enum WebsocketClientEvent {
     TEST_STEP_PROGRESS = 'TEST_STEP_PROGRESS',
     REFRESH_PIECE = 'REFRESH_PIECE',
     FLOW_RUN_PROGRESS = 'FLOW_RUN_PROGRESS',
-    BADGE_AWARDED = 'BADGE_AWARDED',
     UPDATE_RUN_PROGRESS = 'UPDATE_RUN_PROGRESS',
     RESOURCE_LOCKED = 'RESOURCE_LOCKED',
     RESOURCE_UNLOCKED = 'RESOURCE_UNLOCKED',
@@ -31,11 +30,6 @@ export enum WebsocketServerEvent {
     JOIN_PRESENCE = 'JOIN_PRESENCE',
     LEAVE_PRESENCE = 'LEAVE_PRESENCE',
 }
-
-export const BadgeAwarded = z.object({
-    badge: z.string(),
-    userId: z.string(),
-})
 
 export const LockResourceRequest = z.object({
     resourceId: z.string(),
@@ -76,12 +70,12 @@ export const PresenceUpdatedEvent = z.object({
     users: z.array(PresenceUser),
 })
 
-export type BadgeAwarded = z.infer<typeof BadgeAwarded>
 export type LockResourceRequest = z.infer<typeof LockResourceRequest>
 export type LockResourceResponse = z.infer<typeof LockResourceResponse>
 export type ResourceLockedEvent = z.infer<typeof ResourceLockedEvent>
 export type ResourceUnlockedEvent = z.infer<typeof ResourceUnlockedEvent>
 export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string }
+export type TestStepProgressEvent = UpdateStepProgressRequest | EmitTestStepProgressRequest
 export type PresenceRequest = z.infer<typeof PresenceRequest>
 export type PresenceUser = z.infer<typeof PresenceUser>
 export type PresenceUpdatedEvent = z.infer<typeof PresenceUpdatedEvent>

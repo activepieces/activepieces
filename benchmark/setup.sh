@@ -102,6 +102,12 @@ else
   CODE_STEP_SRC=$'export const code = async (inputs) => {\n  return { result: Number(inputs.sum) + 1 };\n};\n'
 fi
 
+# CODE step input (parameterizable for the memory-limit smoke: a `{{ ... }}` expression here is
+# evaluated inside the engine process in UNSANDBOXED mode, so it can exhaust the sandbox memory).
+if [ -z "${CODE_INPUT_SUM:-}" ]; then
+  CODE_INPUT_SUM='{{step_3}}'
+fi
+
 if [ -z "${RESPONSE_BODY:-}" ]; then
   RESPONSE_BODY_JSON='{"hello":"world"}'
 elif [ "$RESPONSE_BODY" = "{{step_2}}" ]; then
@@ -117,6 +123,7 @@ IMPORT_PAYLOAD=$(jq -n \
   --arg code "$CODE_STEP_SRC" \
   --arg webhookV "$WEBHOOK_VERSION" \
   --arg mathV "$MATH_VERSION" \
+  --arg sumInput "$CODE_INPUT_SUM" \
   --argjson body "$RESPONSE_BODY_JSON" \
   '{
     type: "IMPORT_FLOW",
@@ -170,7 +177,7 @@ IMPORT_PAYLOAD=$(jq -n \
             type: "CODE",
             valid: true,
             settings: {
-              input: { sum: "{{step_3}}" },
+              input: { sum: $sumInput },
               sampleData: {},
               sourceCode: { code: $code, packageJson: "{}" },
               errorHandlingOptions: {
