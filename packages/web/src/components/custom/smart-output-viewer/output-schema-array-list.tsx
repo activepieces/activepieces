@@ -3,6 +3,8 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { VirtualizedList } from '@/components/ui/virtualized-list';
+
 import { OutputFieldList } from './output-field-list';
 import { schemaUtils } from './resolve-schema';
 import { truncateValue } from './shared-value-rendering';
@@ -33,7 +35,7 @@ function SchemaArrayItemRow({
   // static row instead of a clickable chevron that opens to nothing.
   if (!isObject(item)) {
     return (
-      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers last:border-b-0">
+      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers">
         <span className="text-sm font-medium text-muted-foreground shrink-0">
           {label}
         </span>
@@ -77,11 +79,13 @@ function OutputSchemaArrayList({ items, schema }: OutputSchemaArrayListProps) {
   }
 
   return (
-    <div>
-      {items.map((item, idx) => (
-        <SchemaArrayItemRow key={idx} item={item} index={idx} schema={schema} />
-      ))}
-    </div>
+    <VirtualizedList
+      items={items}
+      estimateSize={37}
+      renderItem={(item, idx) => (
+        <SchemaArrayItemRow item={item} index={idx} schema={schema} />
+      )}
+    />
   );
 }
 

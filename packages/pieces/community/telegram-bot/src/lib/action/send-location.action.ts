@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendLocationActionOutputSchema } from '../output-schemas';
 
 export const telegramSendLocationAction = createAction({
   auth: telegramBotAuth,
@@ -51,6 +52,7 @@ export const telegramSendLocationAction = createAction({
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: sendLocationActionOutputSchema,
   async run(ctx) {
     return await httpClient.sendRequest<never>({
       method: HttpMethod.POST,

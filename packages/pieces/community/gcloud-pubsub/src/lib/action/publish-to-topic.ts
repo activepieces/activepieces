@@ -42,15 +42,12 @@ export const publishToTopic = createAction({
       messages: [{ data: Buffer.from(json).toString('base64') }],
     });
 
-    const { data } = await client.request<{ messageIds: string[] }>({
+    await client.request<{ messageIds: string[] }>({
       url,
       method: 'POST',
       body,
     });
 
-    console.debug(
-      `Message sended to topic[${topic}]: ${json}, ack: ${data.messageIds[0]}`
-    );
     return json;
   },
 });

@@ -3,6 +3,7 @@ import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
+import { createMessageReactionOutputSchema } from '../../output-schemas';
 
 export const createClickupMessageReaction = createAction({
   auth: clickupAuth,
@@ -25,6 +26,7 @@ export const createClickupMessageReaction = createAction({
     }),
   },
 
+  outputSchema: createMessageReactionOutputSchema,
   async run(configValue) {
     const { workspace_id, message_id, emoji } = configValue.propsValue;
     const response = await callClickUpApi3(
