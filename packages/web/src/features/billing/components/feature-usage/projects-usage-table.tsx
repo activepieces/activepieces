@@ -5,9 +5,13 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Coins } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import {
+  CURSOR_QUERY_PARAM,
+  DataTable,
+  RowDataWithActions,
+} from '@/components/custom/data-table';
 import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { billingQueries } from '@/features/billing';
@@ -24,18 +28,22 @@ export function ProjectsUsageTable({
     from: dayjs().subtract(30, 'day').startOf('day').toDate(),
     to: dayjs().endOf('day').toDate(),
   }));
+  const [searchParams] = useSearchParams();
+  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
 
   const { data, isLoading } = billingQueries.useProjectsUsage(
     platformId,
-    { startDate: range.from.toISOString(), endDate: range.to.toISOString() },
+    {
+      startDate: range.from.toISOString(),
+      endDate: range.to.toISOString(),
+      cursor,
+    },
     enabled,
   );
 
-  const page: SeekPage<ProjectUsageRow> = {
-    data: (data ?? []).map((row) => ({ ...row, id: row.projectId })),
-    next: null,
-    previous: null,
-  };
+  const page: SeekPage<ProjectUsageRow> | undefined = data
+    ? { ...data, data: data.data.map((row) => ({ ...row, id: row.projectId })) }
+    : undefined;
 
   return (
     <div className="flex flex-col gap-4">
@@ -56,8 +64,6 @@ export function ProjectsUsageTable({
         columns={COLUMNS}
         page={page}
         isLoading={isLoading}
-        clientPagination
-        initialSorting={[{ id: 'creditsUsed', desc: true }]}
         emptyStateIcon={<Coins className="size-14 text-muted-foreground" />}
         emptyStateTextTitle={t('No project usage yet')}
         emptyStateTextDescription={t(

@@ -83,7 +83,8 @@ export const projectCollectionUtils = {
     return useMutation({
       mutationFn: (request: CreatePlatformProjectRequest) =>
         api.post<ProjectWithLimits>('/v1/projects', request),
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await projectCollection.preload();
         projectCollection.utils.writeInsert(data);
         onSuccess(data);
       },
@@ -104,7 +105,8 @@ export const projectCollectionUtils = {
         projectId: string;
         request: UpdateProjectPlatformRequest;
       }) => api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request),
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await projectCollection.preload();
         projectCollection.utils.writeUpdate(data);
         onSuccess();
       },

@@ -1,3 +1,4 @@
+import { SeekPage } from '@activepieces/core-utils'
 import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -11,6 +12,7 @@ import { platformService } from '../../../platform/platform.service'
 import { platformPlanService } from './platform-plan.service'
 
 const FORCE_REFRESH_DEDUP_SECONDS = 60
+const DEFAULT_USAGE_PAGE_SIZE = 10
 
 export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => {
 
@@ -37,6 +39,10 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
             platformId: request.principal.platform.id,
             startDate: request.query.startDate,
             endDate: request.query.endDate,
+            cursor: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_USAGE_PAGE_SIZE,
+            userId: request.principal.id,
+            principalType: request.principal.type,
         })
     })
 
@@ -155,9 +161,11 @@ const ProjectsUsageRequest = {
         querystring: z.object({
             startDate: z.string().optional(),
             endDate: z.string().optional(),
+            cursor: z.string().optional(),
+            limit: z.coerce.number().optional(),
         }),
         response: {
-            [StatusCodes.OK]: z.array(ProjectCreditUsage),
+            [StatusCodes.OK]: SeekPage(ProjectCreditUsage),
         },
     },
     config: {

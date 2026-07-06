@@ -3,11 +3,14 @@ import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
 import { AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import {
     Autumn,
+    type AggregateEventsResponse,
     type Balance,
     type CheckParams,
+    type EventsAggregateParams,
     type GetCustomerParams,
     type GetCustomerResponse,
     type ListPlansParams,
+    Range,
     type TrackParams,
 } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
@@ -23,6 +26,9 @@ import { platformPlanService } from '../platform-plan.service'
 const AUTUMN_CONSOLE_URL = 'https://london-boxed-zshops-threaded.trycloudflare.com'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
+
+const PROJECT_ID_PROPERTY = 'projectId'
+const CREDIT_USAGE_MAX_GROUPS = 250
 
 const AUTUMN_FLAG_FEATURE_IDS = [
     'tablesEnabled',
@@ -70,14 +76,44 @@ export const autumnUtils = {
             listPlans(params?: ListPlansParams) {
                 return client.plans.list(params)
             },
+            aggregateEvents(params: WithoutCustomerId<EventsAggregateParams>) {
+                return client.events.aggregate({ customerId, ...params })
+            },
         }
     },
-    async resolveClientForPlatform(log: FastifyBaseLogger, platformId: string) {
+    async loadAutumnCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
         const { autumnCustomerId, autumnApiKey } = await platformPlanService(log).getAutumnCredentials(platformId)
-        if (isNil(autumnCustomerId) || isNil(autumnApiKey)) {
+        if (isNil(autumnCustomerId) && isNil(autumnApiKey)) {
             return null
         }
-        return autumnUtils.client({ secretKey: autumnApiKey, customerId: autumnCustomerId })
+        if (isNil(autumnCustomerId) || isNil(autumnApiKey)) {
+            log.error({ platform: { id: platformId } }, 'Autumn credentials incomplete for an enrolled platform; billing and entitlement calls will silently no-op until repaired')
+            return null
+        }
+        return { autumnCustomerId, autumnApiKey }
+    },
+    async resolveClientForPlatform(log: FastifyBaseLogger, platformId: string) {
+        const creds = await autumnUtils.loadAutumnCreds(log, platformId)
+        if (isNil(creds)) {
+            return null
+        }
+        return autumnUtils.client({ secretKey: creds.autumnApiKey, customerId: creds.autumnCustomerId })
+    },
+    async getCreditUsage(log: FastifyBaseLogger, platformId: string, startDate?: string, endDate?: string): Promise<CreditUsage> {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { total: 0, byProject: [] }
+        }
+        const timeRange = !isNil(startDate) && !isNil(endDate)
+            ? { customRange: { start: new Date(startDate).getTime(), end: new Date(endDate).getTime() } }
+            : { range: Range.Thirtyd }
+        const result = await client.aggregateEvents({
+            featureId: AutumnFeatureId.AP_CREDITS,
+            groupBy: `properties.${PROJECT_ID_PROPERTY}`,
+            maxGroups: CREDIT_USAGE_MAX_GROUPS,
+            ...timeRange,
+        })
+        return toCreditUsage(result)
     },
     async ensureEnrolled(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
@@ -264,14 +300,6 @@ export const autumnConsole = {
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
     },
-    async creditUsage({ autumnCustomerId, autumnApiKey, startDate, endDate }: ConsoleCustomerCall & { startDate?: string, endDate?: string }): Promise<CreditUsage> {
-        const response = await safeHttp.axios.post<{ data: CreditUsage }>(
-            `${AUTUMN_CONSOLE_URL}/api/billing/credit-usage`,
-            { autumnCustomerId, startDate, endDate },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
-        return response.data.data
-    },
     async compAppSumo({ log, platformId, action }: { log: FastifyBaseLogger, platformId: string, action: AppSumoAction }): Promise<void> {
         const creds = await autumnConsole.getCreds(log, platformId)
         assertNotNullOrUndefined(creds, 'Autumn credentials must exist before applying an AppSumo plan')
@@ -286,12 +314,23 @@ export const autumnConsole = {
         )
     },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
-        const { autumnCustomerId, autumnApiKey } = await platformPlanService(log).getAutumnCredentials(platformId)
-        if (isNil(autumnCustomerId) || isNil(autumnApiKey)) {
-            return null
-        }
-        return { autumnCustomerId, autumnApiKey }
+        return autumnUtils.loadAutumnCreds(log, platformId)
     },
+}
+
+function toCreditUsage(response: AggregateEventsResponse): CreditUsage {
+    const featureId = AutumnFeatureId.AP_CREDITS
+    const byProjectMap = new Map<string, number>()
+    for (const bin of response.list ?? []) {
+        const grouped = bin.groupedValues?.[featureId] ?? {}
+        for (const [projectId, value] of Object.entries(grouped)) {
+            byProjectMap.set(projectId, (byProjectMap.get(projectId) ?? 0) + value)
+        }
+    }
+    return {
+        total: response.total?.[featureId]?.sum ?? 0,
+        byProject: [...byProjectMap].map(([projectId, creditsUsed]) => ({ projectId, creditsUsed })),
+    }
 }
 
 async function getPlatformOwnerEmail(log: FastifyBaseLogger, platformId: string): Promise<string> {

@@ -167,7 +167,8 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
       },
       {
         label: 'Embedding',
-        tooltip: 'Embed Acitvepieces (flows/chat/connections/tables..etc) directly inside your own product.',
+        tooltip:
+          'Embed Activepieces (flows/chat/connections/tables..etc) directly inside your own product.',
       },
       {
         label: 'Piece management',

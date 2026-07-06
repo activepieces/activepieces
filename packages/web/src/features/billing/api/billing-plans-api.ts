@@ -1,3 +1,4 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   ConsumableProductTopupParams,
   ConsumableProductAutoTopupParams,
@@ -50,8 +51,13 @@ export const platformBillingApi = {
       params,
     );
   },
-  getProjectsUsage(params: { startDate?: string; endDate?: string }) {
-    return api.get<ProjectCreditUsage[]>(
+  getProjectsUsage(params: {
+    startDate?: string;
+    endDate?: string;
+    cursor?: string;
+    limit?: number;
+  }) {
+    return api.get<SeekPage<ProjectCreditUsage>>(
       '/v1/platform-billing/projects-usage',
       params,
     );

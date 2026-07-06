@@ -1,5 +1,4 @@
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 
@@ -70,30 +69,21 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
 
       {!isUnlimited && (
         <div className="flex flex-col gap-1.5">
-          <Progress
-            value={percent}
-            indicatorClassName={usageIndicatorClass(
-              metric.used / metric.included!,
-            )}
-          />
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{percent}%</span>
-            {!isNil(metric.footer) && <span>{metric.footer}</span>}
+          <Progress value={percent} usage />
+          <div className="flex items-center text-xs text-muted-foreground">
+            <span>
+              {t('{amount} remaining', {
+                amount: Math.max(
+                  0,
+                  metric.included! - metric.used,
+                ).toLocaleString(),
+              })}
+            </span>
           </div>
         </div>
       )}
     </div>
   );
-}
-
-function usageIndicatorClass(ratio: number): string {
-  if (ratio >= 1) {
-    return 'bg-destructive';
-  }
-  if (ratio > 0.8) {
-    return 'bg-amber-500';
-  }
-  return 'bg-primary';
 }
 
 function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
@@ -105,7 +95,6 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
       icon: Coins,
       used: usage.creditsUsed,
       included: plan.includedCredits > 0 ? plan.includedCredits : null,
-      footer: resolveCreditsResetLabel(info),
     },
     {
       key: 'users',
@@ -144,26 +133,10 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
   );
 }
 
-function resolveCreditsResetLabel(
-  info: PlatformBillingInformation,
-): string | undefined {
-  if (!isNil(info.trialEndsAt)) {
-    return t('Trial ends {date}', {
-      date: dayjs(info.trialEndsAt).format('MMM D, YYYY'),
-    });
-  }
-  const resetAt = info.usage.creditsNextResetAt ?? info.nextBillingDate;
-  if (isNil(resetAt)) {
-    return undefined;
-  }
-  return t('Resets {date}', { date: dayjs(resetAt).format('MMM D, YYYY') });
-}
-
 type UsageMetric = {
   key: string;
   label: string;
   icon: LucideIcon;
   used: number;
   included: number | null;
-  footer?: string;
 };

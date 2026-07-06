@@ -194,11 +194,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         }
     },
     getCreditUsage: async ({ platformId, startDate, endDate }) => {
-        const creds = await autumnConsole.getCreds(log, platformId)
-        if (isNil(creds)) {
-            return { total: 0, byProject: [] }
-        }
-        return autumnConsole.creditUsage({ ...creds, startDate, endDate })
+        return autumnUtils.getCreditUsage(log, platformId, startDate, endDate)
     },
 })
 
@@ -271,7 +267,7 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
     }
 }
 
-function toCreditsGateState(balance: CreditsBalanceCache | null, billingEnforced: boolean): CreditsGateState {
+export function toCreditsGateState(balance: CreditsBalanceCache | null, billingEnforced: boolean): CreditsGateState {
     const exhausted = !isNil(balance) && !balance.unlimited && balance.remaining <= 0
     return {
         blocked: billingEnforced && exhausted,
@@ -282,9 +278,7 @@ function toCreditsGateState(balance: CreditsBalanceCache | null, billingEnforced
     }
 }
 
-// AppSumo AI credits are a hard cap independent of metered billing enforcement, so unlike
-// AP credits their exhaustion blocks even when billingEnforced is false (lifetime-deal customers).
-function toAppSumoGateState(balance: CreditsBalanceCache | null): CreditsGateState {
+export function toAppSumoGateState(balance: CreditsBalanceCache | null): CreditsGateState {
     const exhausted = !isNil(balance) && !balance.unlimited && balance.remaining <= 0
     return {
         blocked: exhausted,

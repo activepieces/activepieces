@@ -1,5 +1,5 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, PlatformUsageMetric, SeekPage, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
@@ -11,6 +11,7 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { billingProvider } from '../../../platform/billing-provider'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
+import { platformProjectService } from '../../projects/platform-project-service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 
 export const platformPlanRepo = repoFactory(PlatformPlanEntity)
@@ -103,23 +104,29 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             appSumoAiCreditsRemaining: isNil(appSumo) ? null : Math.max(0, appSumo.limit - appSumo.usage),
         }
     },
-    async getCreditUsageByProject({ platformId, startDate, endDate }: { platformId: string, startDate?: string, endDate?: string }): Promise<ProjectCreditUsage[]> {
-        const { byProject: usage } = await billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate })
-        if (usage.length === 0) {
-            return []
-        }
-        const namesByProjectId = await projectService(log).getDisplayNamesByIds({
+    async getCreditUsageByProject({ platformId, startDate, endDate, cursor, limit, userId, principalType }: GetCreditUsageByProjectParams): Promise<SeekPage<ProjectCreditUsage>> {
+        const user = await userService(log).getOneOrFail({ id: userId })
+        const projectsPage = await platformProjectService(log).getForPlatform({
             platformId,
-            projectIds: usage.map((entry) => entry.projectId),
+            userId,
+            cursorRequest: cursor,
+            limit,
+            isPrivileged: userService(log).isUserPrivileged(user),
+            principalType,
         })
-        return usage
-            .filter((entry) => namesByProjectId.has(entry.projectId))
-            .map((entry): ProjectCreditUsage => ({
-                projectId: entry.projectId,
-                projectName: namesByProjectId.get(entry.projectId) ?? entry.projectId,
-                creditsUsed: entry.creditsUsed,
-            }))
-            .sort((a, b) => b.creditsUsed - a.creditsUsed)
+
+        const { byProject } = await billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate })
+        const creditsByProjectId = new Map(byProject.map((entry) => [entry.projectId, entry.creditsUsed]))
+
+        return {
+            data: projectsPage.data.map((project): ProjectCreditUsage => ({
+                projectId: project.id,
+                projectName: project.displayName,
+                creditsUsed: creditsByProjectId.get(project.id) ?? 0,
+            })),
+            next: projectsPage.next,
+            previous: projectsPage.previous,
+        }
     },
     checkActiveFlowsExceededLimit: async (platformId: string): Promise<void> => {
         if (ApEdition.COMMUNITY === edition) {
@@ -235,4 +242,14 @@ type SetAutumnCredentialsParams = {
     platformId: string
     autumnCustomerId: string | null
     autumnApiKey: string | null
+}
+
+type GetCreditUsageByProjectParams = {
+    platformId: string
+    startDate?: string
+    endDate?: string
+    cursor: Cursor | null
+    limit: number
+    userId: string
+    principalType: PrincipalType
 }
