@@ -16,6 +16,9 @@ SCIM (System for Cross-domain Identity Management) 2.0 integration allows enterp
 Enterprise and Cloud. Gated by `platform.plan.scimEnabled`. Module hook: `platformMustHaveFeatureEnabled((platform) => platform.plan.scimEnabled)`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **SCIM User** → Activepieces `User` + `UserIdentity` on the platform.
 - **SCIM Group** → Activepieces `Project` with `type = TEAM`.
 - **externalId**: Vendor-side stable identifier for users and groups, stored on the Activepieces entity.

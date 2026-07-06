@@ -18,6 +18,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { eventOutputSchema } from '../output-schemas';
 
 interface GoogleCalendarEventList {
   items: GoogleCalendarEvent[];
@@ -165,6 +166,7 @@ export const eventStartTimeBefore = createTrigger({
       defaultValue: 'minutes',
     }),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {},
 

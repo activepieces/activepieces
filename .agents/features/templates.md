@@ -24,6 +24,9 @@ The Templates feature provides a library of reusable flow (and table) blueprints
 - **Cloud**: OFFICIAL templates stored directly in DB. CUSTOM templates available when `manageTemplatesEnabled` is enabled.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **TemplateType**: `OFFICIAL` (Activepieces-curated, platformId = null), `CUSTOM` (platform-owned, requires `manageTemplatesEnabled`), `SHARED` (ad-hoc share, not listable).
 - **TemplateStatus**: `PUBLISHED` (visible in listing) or `ARCHIVED` (hidden).
 - **FlowVersionTemplate**: A flow version stripped of runtime-only fields (id, flowId, state, etc.) for embedding in a template.

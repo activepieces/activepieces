@@ -36,6 +36,9 @@ Cloud (`AP_EDITION=cloud`) and Enterprise (`AP_EDITION=ee`). The service checks 
 No specific plan flag gates this feature — the edition check is in the service logic.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Alert**: A subscription record tying a project to an email receiver.
 - **AlertChannel**: Currently only `EMAIL`.
 - **Receiver**: The email address that will receive the alert notification. Stored and compared **case-insensitively** (lowercased on insert; lookup uses `LOWER(receiver)`).

@@ -32,13 +32,13 @@ const TS_CONFIG_CONTENT = `
 }
 `
 
+const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '__AP_ERROR_MESSAGE__'
+
 const INVALID_ARTIFACT_TEMPLATE = `
     exports.code = async (params) => {
-      throw new Error(\`\${ERROR_MESSAGE}\`);
+      throw new Error(${INVALID_ARTIFACT_ERROR_PLACEHOLDER});
     };
     `
-
-const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) => ({
     async processCodeStep({
@@ -66,16 +66,28 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
 
                 await fileSystemUtils.threadSafeMkdir(codePath)
 
-                await wideEvent.timed({
+                const installError = await wideEvent.timed({
                     name: 'codeDeps',
                     fn: async () => {
-                        await installDependencies({
+                        const { error } = await tryCatch(() => installDependencies({
                             path: codePath,
                             packageJson: getPackageJson(packageJson, getSettings),
-                        }, log)
-                        log.info({ path: codePath }, 'Installed dependencies')
+                        }, log))
+                        if (error) {
+                            log.info({ codePath, error }, 'Dependency installation error')
+                        }
+                        else {
+                            log.info({ path: codePath }, 'Installed dependencies')
+                        }
+                        return error
                     },
                 })
+
+                if (installError) {
+                    await handleInstallError({ codePath, error: installError })
+                    await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
+                    return currentHash
+                }
 
                 await wideEvent.timed({
                     name: 'codeCompile',
@@ -155,17 +167,20 @@ async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Pr
 }
 
 async function handleCompilationError({ codePath, error }: HandleCompilationErrorParams): Promise<void> {
-    const errorHasStdout =
-        typeof error === 'object' && error && 'stdout' in error
-    const stdoutError = errorHasStdout ? error.stdout : undefined
-    const genericError = `${error ?? 'error compiling'}`
-    const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
+    const errorMessage = `Compilation Error ${error ?? 'error compiling'}`
+    await writeInvalidArtifact({ codePath, errorMessage })
+}
 
+async function handleInstallError({ codePath, error }: HandleInstallErrorParams): Promise<void> {
+    const errorMessage = `Failed to install dependencies. ${error ?? 'error installing dependencies'}`
+    await writeInvalidArtifact({ codePath, errorMessage })
+}
+
+async function writeInvalidArtifact({ codePath, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
     const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
-        errorMessage,
+        () => JSON.stringify(errorMessage),
     )
-
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
 }
 
@@ -187,4 +202,14 @@ type CompileCodeParams = {
 type HandleCompilationErrorParams = {
     codePath: string
     error: unknown
+}
+
+type HandleInstallErrorParams = {
+    codePath: string
+    error: unknown
+}
+
+type WriteInvalidArtifactParams = {
+    codePath: string
+    errorMessage: string
 }

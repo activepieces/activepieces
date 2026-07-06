@@ -1,6 +1,5 @@
 import {
   AppConnectionValueForAuthProperty,
-  PiecePropValueSchema,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -13,6 +12,7 @@ import {
 import dayjs from 'dayjs';
 import { googleDriveAuth } from '../auth';
 import { common } from '../common';
+import { newFolderTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
@@ -46,6 +46,7 @@ export const newFolder = createTrigger({
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: newFolderTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
