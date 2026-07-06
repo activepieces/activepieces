@@ -21,12 +21,14 @@ type PieceActionsProps = {
   pieceName: string;
   pieceDisplayName: string;
   isEnabled: boolean;
+  isHidden: boolean;
 };
 
 const PieceActions = ({
   pieceName,
   pieceDisplayName,
   isEnabled,
+  isHidden,
 }: PieceActionsProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
@@ -87,9 +89,9 @@ const PieceActions = ({
               variant="ghost"
               size={'sm'}
               loading={isPinPending}
-              disabled={!isEnabled}
+              disabled={!isEnabled || isHidden}
               onClick={(e) => {
-                if (!isEnabled) {
+                if (!isEnabled || isHidden) {
                   e.preventDefault();
                   return;
                 }

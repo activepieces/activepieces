@@ -50,6 +50,7 @@ import {
 import { platformPieceFilterQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 import { PieceSetsTab } from './piece-sets/piece-sets-tab';
 
@@ -113,7 +114,11 @@ const PiecesListTab = () => {
           ),
           cell: ({ row }) => {
             return (
-              <div className="flex items-center gap-2">
+              <div
+                className={cn('flex items-center gap-2', {
+                  'opacity-50': isPieceHidden(row.original.name),
+                })}
+              >
                 <PieceIcon
                   size={'sm'}
                   border={true}
@@ -152,7 +157,15 @@ const PiecesListTab = () => {
             />
           ),
           cell: ({ row }) => {
-            return <div className="text-left">{row.original.name}</div>;
+            return (
+              <div
+                className={cn('text-left', {
+                  'opacity-50': isPieceHidden(row.original.name),
+                })}
+              >
+                {row.original.name}
+              </div>
+            );
           },
         },
         {
@@ -166,12 +179,20 @@ const PiecesListTab = () => {
             />
           ),
           cell: ({ row }) => {
-            return <div className="text-left">{row.original.version}</div>;
+            return (
+              <div
+                className={cn('text-left', {
+                  'opacity-50': isPieceHidden(row.original.name),
+                })}
+              >
+                {row.original.version}
+              </div>
+            );
           },
         },
         {
           id: 'actions',
-          size: 80,
+          size: 190,
           cell: ({ row }) => {
             return (
               <div className="flex justify-end">
@@ -189,6 +210,7 @@ const PiecesListTab = () => {
                   pieceName={row.original.name}
                   pieceDisplayName={row.original.displayName}
                   isEnabled={isEnabled}
+                  isHidden={isPieceHidden(row.original.name)}
                 />
                 {row.original.pieceType === PieceType.CUSTOM && (
                   <ConfirmationDeleteDialog
@@ -222,7 +244,7 @@ const PiecesListTab = () => {
           },
         },
       ],
-      [isEnabled, refetchPieces, refetchPiecesOAuth2AppsMap],
+      [isEnabled, refetchPieces, refetchPiecesOAuth2AppsMap, isPieceHidden],
     );
 
   return (
@@ -277,8 +299,9 @@ const PiecesListTab = () => {
         }}
         isLoading={isLoading}
         getRowClassName={(row) =>
-          isPieceHidden(row.name) ? 'bg-muted/40 opacity-80' : ''
+          isPieceHidden(row.name) ? 'bg-muted/40' : ''
         }
+        isRowSelectionDisabled={(row) => isPieceHidden(row.name)}
         bulkActions={[
           {
             render: (selectedRows) => (
@@ -340,7 +363,7 @@ const PlatformPiecesPage = () => {
         <Tabs
           value={activeTab}
           onValueChange={(v) => setTab(v as TabValue)}
-          className="flex flex-col flex-1 min-h-0"
+          className="flex flex-col flex-1 min-h-0 min-w-0"
         >
           <TabsList
             variant="outline"
@@ -357,13 +380,13 @@ const PlatformPiecesPage = () => {
           </TabsList>
           <TabsContent
             value="pieces"
-            className="flex-1 min-h-0 flex flex-col mt-0"
+            className="flex-1 min-h-0 flex flex-col mt-0 min-w-0"
           >
             <PiecesListTab />
           </TabsContent>
           <TabsContent
             value="piece-sets"
-            className="flex-1 min-h-0 flex flex-col mt-0"
+            className="flex-1 min-h-0 flex flex-col mt-0 min-w-0"
           >
             <PieceSetsTab />
           </TabsContent>

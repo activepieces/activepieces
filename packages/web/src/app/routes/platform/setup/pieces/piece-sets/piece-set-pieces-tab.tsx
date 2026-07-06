@@ -228,7 +228,11 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             />
           ),
           cell: ({ row }) => (
-            <div className="flex items-center gap-2">
+            <div
+              className={cn('flex items-center gap-2', {
+                'opacity-50': isPlatformHidden(row.original.name),
+              })}
+            >
               <PieceIcon
                 size={'sm'}
                 border={true}
@@ -266,7 +270,13 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             />
           ),
           cell: ({ row }) => (
-            <div className="text-left">{row.original.name}</div>
+            <div
+              className={cn('text-left', {
+                'opacity-50': isPlatformHidden(row.original.name),
+              })}
+            >
+              {row.original.name}
+            </div>
           ),
         },
         {
@@ -280,7 +290,13 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             />
           ),
           cell: ({ row }) => (
-            <div className="text-left">{row.original.version}</div>
+            <div
+              className={cn('text-left', {
+                'opacity-50': isPlatformHidden(row.original.name),
+              })}
+            >
+              {row.original.version}
+            </div>
           ),
         },
         {
@@ -423,8 +439,9 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
         isLoading={isLoading}
         clientFiltering={true}
         getRowClassName={(row) =>
-          isPlatformHidden(row.name) ? 'opacity-60' : ''
+          isPlatformHidden(row.name) ? 'bg-muted/40' : ''
         }
+        isRowSelectionDisabled={(row) => isPlatformHidden(row.name)}
         bulkActions={[
           {
             render: (selectedRows, resetSelection) => (
