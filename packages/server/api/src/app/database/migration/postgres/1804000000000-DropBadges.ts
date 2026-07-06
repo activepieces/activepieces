@@ -1,7 +1,11 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { QueryRunner } from 'typeorm'
+import { Migration } from '../../migration'
 
-export class DropBadges1804000000000 implements MigrationInterface {
+export class DropBadges1804000000000 implements Migration {
     name = 'DropBadges1804000000000'
+    breaking = true
+    release = '0.85.7'
+    transaction = true
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
