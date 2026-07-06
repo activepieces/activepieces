@@ -29,12 +29,15 @@ jobs:
       # withholds jobs. Fail closed here. Hotfix/rc suffixes (0.79.2-hotfix.1, 0.79.2-rc.1) are
       # deploy-only and are not in package.json, so compare against the base X.Y.Z only.
       - name: Verify tag matches package.json
+        # TAG is passed via env (not inlined as ${{ inputs.tag }} in the script) to avoid shell
+        # expression injection — a crafted tag would otherwise run as shell in the run block.
+        env:
+          TAG: ${{ inputs.tag }}
         run: |
           PACKAGE_VERSION="$(jq -r .version package.json)"
-          TAG_BASE="${{ inputs.tag }}"
-          TAG_BASE="${TAG_BASE%%-*}"
+          TAG_BASE="${TAG%%-*}"
           if [ "$TAG_BASE" != "$PACKAGE_VERSION" ]; then
-            echo "::error::Release tag '${{ inputs.tag }}' (base '$TAG_BASE') does not match package.json version '$PACKAGE_VERSION'. Bump package.json or fix the tag before releasing."
+            echo "::error::Release tag '$TAG' (base '$TAG_BASE') does not match package.json version '$PACKAGE_VERSION'. Bump package.json or fix the tag before releasing."
             exit 1
           fi
           echo "Release tag base '$TAG_BASE' matches package.json version '$PACKAGE_VERSION'."

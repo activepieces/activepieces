@@ -46,6 +46,7 @@ describe('System Health API', () => {
 
             const response = await ctx.get('/v1/health/system')
 
+            expect(response?.statusCode).toBe(StatusCodes.OK)
             const { release } = response?.json()
             expect(release.workers.total).toBe(0)
             expect(release.workers.versionMismatched).toBe(0)

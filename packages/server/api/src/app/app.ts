@@ -423,7 +423,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
 // emitted lazily on the first worker poll (worker-rpc-service.ts), so a mis-packaged app that
 // no worker has polled yet looks healthy. A '0.0.0' read fail-closes the dispatch gate and will
 // NOT self-heal on deploy completion, so page immediately and log at error (see the "Release
-// Version Detection" section in packages/server/CLAUDE.md).
+// Version Detection" section in packages/server/AGENTS.md).
 function assertReleaseReadable(log: FastifyBaseLogger): void {
     const version = apVersionUtil.getCurrentRelease()
     if (version !== UNKNOWN_VERSION) {
