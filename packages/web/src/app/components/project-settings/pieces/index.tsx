@@ -1,7 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Package, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
+import { Info, Package, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { RequestTrial } from '@/app/components/request-trial';
@@ -9,10 +10,12 @@ import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
 import { LockedAlert } from '@/components/custom/locked-alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { pieceSetQueries } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
+import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-
-import { ManagePiecesDialog } from './manage-pieces-dialog';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -77,15 +80,15 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
 
 const PiecesSettings = () => {
   const { platform } = platformHooks.useCurrentPlatform();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const [searchQuery, setSearchQuery] = useState('');
-  const { pieces, isLoading, refetch } = piecesHooks.usePieces({
+  const { pieces, isLoading } = piecesHooks.usePieces({
     searchQuery,
     isTableQuery: true,
   });
 
-  const toolbarButtons = useMemo(
-    () => [<ManagePiecesDialog key="manage" onSuccess={() => refetch()} />],
-    [refetch],
+  const { data: pieceSet } = pieceSetQueries.usePieceSet(
+    project.pieceSetId ?? '',
   );
 
   const customFilters = useMemo(
@@ -116,6 +119,21 @@ const PiecesSettings = () => {
           }
         />
       )}
+      {platform.plan.managePiecesEnabled && (
+        <Alert variant="primary">
+          <Info className="size-4" />
+          <AlertDescription className="flex items-center gap-2">
+            {t(
+              "This project's pieces are controlled by a Piece Set. Contact a platform admin to change it.",
+            )}
+            {!isNil(pieceSet) && (
+              <Badge variant="outline" className="ml-1 font-medium">
+                {pieceSet.name}
+              </Badge>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       <DataTable
         emptyStateTextTitle={t('No pieces found')}
         emptyStateTextDescription={t(
@@ -131,7 +149,6 @@ const PiecesSettings = () => {
         }}
         isLoading={isLoading}
         hidePagination={true}
-        toolbarButtons={platform.plan.managePiecesEnabled ? toolbarButtons : []}
       />
     </div>
   );

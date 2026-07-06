@@ -1,6 +1,7 @@
 import { docsCommon } from '../common';
 import { googleDocsAuth, getAccessToken } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
+import { appendTextActionOutputSchema } from '../output-schemas';
 
 export const appendText = createAction({
     auth: googleDocsAuth,
@@ -25,6 +26,7 @@ export const appendText = createAction({
         required: true,
       })
     },
+    outputSchema: appendTextActionOutputSchema,
     async run(context) {
       return await docsCommon.writeToDocument(
         context.propsValue.documentId,

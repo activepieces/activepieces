@@ -15,6 +15,9 @@ Managed Auth (also called "Embedding" or "Managed Authentication") enables SaaS 
 Enterprise and Cloud. The endpoint itself is public (`securityAccess.public()`), but functional only when valid signing keys exist. Signing keys are gated by `platform.plan.embeddingEnabled`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **External Access Token**: A signed JWT issued by the vendor's backend, containing user and project information.
 - **Signing Key**: An RSA key pair registered on the platform; the public key is stored in Activepieces, the private key is kept by the vendor.
 - **External Principal**: The parsed, verified identity extracted from the JWT (platformId, externalUserId, externalProjectId, etc.).
@@ -42,10 +45,17 @@ The extractor supports three token versions:
 
 **v3** (explicit `version: "v3"` field):
 ```
-{ version: "v3", externalUserId, externalProjectId, firstName, lastName, role?, piecesFilterType?, piecesTags?, concurrencyPoolKey?, concurrencyPoolLimit? }
+{ version: "v3", externalUserId, externalProjectId, firstName, lastName, role?, piecesFilterType?, piecesTags?, pieceSet?, concurrencyPoolKey?, concurrencyPoolLimit? }
 ```
 
 The JWT header must include `kid` set to the Signing Key ID.
+
+The optional `pieceSet` claim (all payload versions) is a piece-set **externalId**. How piece access is provisioned depends on `platform.plan.managePiecesEnabled`:
+
+- **`managePiecesEnabled` on** — the project is assigned a **named** piece set: the explicit `pieceSet` externalId; else (legacy claims) the **first** `piecesTags` entry matched against set `externalId` (the backfill migration created one named set per tag, `externalId = tagName`); else the platform Default set (also the fallback, with a warn log, when the externalId matches no set). The project plan is **not** written.
+- **`managePiecesEnabled` off** — the **deprecated** legacy path is preserved: tags are resolved to piece names via `pieceTagService` and upserted into the project plan (`default-embeddings-limit`, `pieces`/`piecesFilterType`), which drives read-time filtering. No piece set is assigned. This path is scheduled for removal once flag-off platforms are migrated to piece sets.
+
+See [piece-sets.md](./piece-sets.md).
 
 ## Service Flow (`externalToken`)
 
@@ -53,7 +63,7 @@ The JWT header must include `kid` set to the Signing Key ID.
 2. Call `getOrCreateProject` — looks up project by `(platformId, externalProjectId)`; if absent, creates a new `TEAM` type project owned by the platform owner.
 3. Optionally update the project's `displayName` from `projectDisplayName` claim.
 4. Optionally upsert a concurrency pool and assign it to the project.
-5. Call `updateProjectLimits` — resolves allowed pieces from tags/filter type and upserts the project plan.
+5. Call `applyProjectPieceAccess` — under `managePiecesEnabled`, assigns the project's named piece set (`pieceSet` externalId → first legacy tag matched against set `externalId` → Default set); otherwise runs the deprecated legacy path that upserts tag-resolved pieces into the project plan. Runs on every token exchange, so claim/tag changes (and later enabling the flag) take effect at the next embed sign-in.
 6. Call `getOrCreateUser` — finds user by `(platformId, externalUserId)`; if absent, creates a user identity using a deterministic hashed email (`managed_<platformId>_<externalUserId>` SHA-256), then creates the platform user.
 7. Upsert project membership with the specified role (defaults to `EDITOR`).
 8. Generate a 7-day Activepieces access token and return the full `AuthenticationResponse`.

@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,11 +17,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { AIChatBox } from './ai-chat-box';
+import { ConversationSidebarToggle } from './components/conversation-sidebar-toggle';
 import { TypewriterText } from './components/typewriter-text';
 import { ConversationList } from './conversation-list';
+
+const SIDEBAR_PINNED_STORAGE_KEY = 'chat-sidebar-pinned';
 
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();
@@ -39,6 +51,24 @@ export function ChatWithAIPage() {
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const renameCancelledRef = useRef(false);
+  const [sidebarPinned, setSidebarPinned] = useState(
+    () => localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY) === 'true',
+  );
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    // Record the chat-page landing for the cloud rollout funnel (server is cloud-gated; no-op otherwise).
+    chatApi.recordLanding().catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarPinned((prev) => {
+      const next = !prev;
+      localStorage.setItem(SIDEBAR_PINNED_STORAGE_KEY, String(next));
+      return next;
+    });
+  }, []);
 
   const selectedConversationId = urlConversationId ?? null;
 
@@ -167,6 +197,12 @@ export function ChatWithAIPage() {
     return () => window.removeEventListener('keydown', handler);
   }, [handleNewChat]);
 
+  useEffect(() => {
+    const handler = () => handleNewChat();
+    window.addEventListener(chatUtils.newChatEvent, handler);
+    return () => window.removeEventListener(chatUtils.newChatEvent, handler);
+  }, [handleNewChat]);
+
   const activeConversationId = selectedConversationId ?? pendingConversationId;
   const cachedTitle = useMemo(() => {
     if (conversationTitle) return conversationTitle;
@@ -180,19 +216,52 @@ export function ChatWithAIPage() {
   }, [conversationTitle, selectedConversationId, queryClient]);
   const isTitleLoading =
     !!selectedConversationId && !cachedTitle && !titleResolved;
-  const displayTitle = cachedTitle ?? t('New Chat');
+  const displayTitle = cachedTitle
+    ? chatUtils.sanitizeTitle(cachedTitle)
+    : t('New Chat');
+  const effectivePinned = !isMobile && sidebarPinned;
 
   return (
     <div className="flex h-full overflow-hidden">
-      <div className="shrink-0 overflow-hidden opacity-70 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
-        <ConversationList
-          onNewChat={handleNewChat}
-          onSelect={handleSelectConversation}
-          selectedId={pendingConversationId ?? selectedConversationId}
-        />
-      </div>
+      {effectivePinned && (
+        <div className="shrink-0 overflow-hidden border-r animate-in slide-in-from-left-2 duration-200">
+          <ConversationList
+            onNewChat={handleNewChat}
+            onSelect={handleSelectConversation}
+            selectedId={pendingConversationId ?? selectedConversationId}
+          />
+        </div>
+      )}
       <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-        <div className="shrink-0 flex items-center gap-1.5 px-6 py-3 border-b">
+        <div className="shrink-0 flex items-center gap-1.5 px-3 sm:px-6 py-3 border-b">
+          <ConversationSidebarToggle
+            pinned={effectivePinned}
+            isMobile={isMobile}
+            onTogglePin={toggleSidebar}
+            onNewChat={handleNewChat}
+            onSelect={handleSelectConversation}
+            selectedId={pendingConversationId ?? selectedConversationId}
+          />
+          {!effectivePinned && (
+            <TooltipProvider delayDuration={400}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
+                    onClick={handleNewChat}
+                  >
+                    <PlusIcon size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="flex items-center gap-2">
+                  {t('New chat')}
+                  <span className="text-[11px] opacity-50">⇧⌘O</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {isRenaming ? (
             <Input
               autoFocus
@@ -232,7 +301,11 @@ export function ChatWithAIPage() {
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem
                       onClick={() => {
-                        setRenameValue(conversationTitle ?? '');
+                        setRenameValue(
+                          conversationTitle
+                            ? chatUtils.sanitizeTitle(conversationTitle)
+                            : '',
+                        );
                         setIsRenaming(true);
                       }}
                     >

@@ -81,8 +81,18 @@ if [ -z "$RUN_ID" ]; then
   FAIL=$((FAIL + 1))
 else
   echo "Latest run: $RUN_ID"
-  RUN=$(curl -s --fail-with-body "$API_URL/flow-runs/$RUN_ID" -H "$AUTH")
-  RUN_STATUS=$(echo "$RUN" | jq -r '.status // empty')
+  # Poll until the run reaches a terminal status — the run can still be RUNNING the moment its
+  # id first appears, which otherwise fails the status assertion spuriously.
+  RUN=""
+  RUN_STATUS=""
+  for i in $(seq 1 30); do
+    RUN=$(curl -s --fail-with-body "$API_URL/flow-runs/$RUN_ID" -H "$AUTH")
+    RUN_STATUS=$(echo "$RUN" | jq -r '.status // empty')
+    if [ "$RUN_STATUS" != "RUNNING" ] && [ "$RUN_STATUS" != "PAUSED" ] && [ -n "$RUN_STATUS" ]; then
+      break
+    fi
+    sleep 1
+  done
   HAS_STEPS=$(echo "$RUN" | jq -e '(.steps | type == "object") and (.steps | length > 0)' > /dev/null 2>&1 && echo "true" || echo "false")
 
   if [ "$RUN_STATUS" = "SUCCEEDED" ]; then

@@ -1,6 +1,7 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { supabaseAuth } from '../auth';
 import { supabaseCommon } from '../common/props';
+import { newRowTriggerOutputSchema } from '../output-schemas';
 
 export const newRow = createTrigger({
     name: 'new_row',
@@ -55,6 +56,7 @@ For more details, see [Supabase Database Webhooks documentation](https://supabas
             defaultValue: 'public'
         })
     },
+    outputSchema: newRowTriggerOutputSchema,
     async onEnable(context) {
         const { table_name, schema } = context.propsValue;
 

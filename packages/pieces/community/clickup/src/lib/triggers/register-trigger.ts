@@ -8,6 +8,7 @@ import {
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
 import { clickupAuth } from '../auth';
+import { clickupTriggerOutputSchemas } from '../output-schemas';
 
 export const clickupRegisterTrigger = ({
   name,
@@ -37,6 +38,7 @@ export const clickupRegisterTrigger = ({
       list_id: clickupCommon.list_id(false), // Optional, depends on folder or space
       task_id: clickupCommon.task_id(false), // Optional, depends on list
     },
+    outputSchema: clickupTriggerOutputSchemas[name],
     sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
@@ -68,7 +70,6 @@ export const clickupRegisterTrigger = ({
       const response = await httpClient.sendRequest<WebhookInformation>(
         request
       );
-      console.debug(`clickup.${eventType}.onEnable`, response);
 
       await context.store.put<WebhookInformation>(
         `clickup_${name}_trigger`,
@@ -88,8 +89,7 @@ export const clickupRegisterTrigger = ({
             token: context.auth['access_token'],
           },
         };
-        const response = await httpClient.sendRequest(request);
-        console.debug(`clickup.${eventType}.onDisable`, response);
+        await httpClient.sendRequest(request);
       }
     },
     async run(context) {
@@ -113,7 +113,6 @@ export const clickupRegisterTrigger = ({
           },
         ];
 
-        console.debug('payload enriched', enriched);
         return enriched;
       }
 
