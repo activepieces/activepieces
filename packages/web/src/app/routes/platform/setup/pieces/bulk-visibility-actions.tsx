@@ -3,8 +3,10 @@ import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { platformPiecesMutations } from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
+import {
+  platformPiecesMutations,
+  platformPieceFilterQueries,
+} from '@/features/platform-admin';
 
 type BulkVisibilityActionsProps = {
   selectedPieces: PieceMetadataModelSummary[];
@@ -19,17 +21,15 @@ const BulkVisibilityActions = ({
   resetSelection,
   isEnabled,
 }: BulkVisibilityActionsProps) => {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const { filteredPieceNames } = platform;
+  const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
+  const { filteredPieceNames } = pieceFilter;
 
   const {
     mutate: setVisibility,
     isPending,
     variables,
   } = platformPiecesMutations.useBulkSetPiecesVisibility({
-    platformId: platform.id,
     filteredPieceNames,
-    refetch,
   });
 
   const allHidden = selectedPieces.every((p) =>
