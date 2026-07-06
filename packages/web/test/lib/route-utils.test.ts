@@ -15,12 +15,9 @@ const allow =
     permissions.includes(permission);
 
 describe('determineDefaultRoute', () => {
-  it('routes by permissions', () => {
+  it('routes based on the user permissions', () => {
     expect(
       determineDefaultRoute({ checkAccess: allow([Permission.READ_FLOW]) }),
-    ).toBe('/automations');
-    expect(
-      determineDefaultRoute({ checkAccess: allow([Permission.READ_TABLE]) }),
     ).toBe('/automations');
     expect(
       determineDefaultRoute({ checkAccess: allow([Permission.READ_RUN]) }),

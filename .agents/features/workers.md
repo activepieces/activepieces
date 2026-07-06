@@ -11,13 +11,14 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 - `packages/server/worker/src/lib/worker.ts` — worker lifecycle (`worker.start/stop`), `pollAndExecute` loop (with version gate, tracks `inFlightJobs`), `getWorkerProps`; builds the `Runtime` via `createSandboxRuntime` and a per-job `Resolver` via `createResolver`. `stop()` drains in-flight jobs (`drainInFlightJobs`) before teardown; an unexpected disconnect aborts the runtime (`abortInFlightRuntime`)
 - `packages/server/worker/src/lib/runtime/sandbox-config.ts` — bridges worker settings → `SandboxSettings` + cache base path (merges the env-only `AP_REUSE_SANDBOX` override into the fetched `WorkerSettings`); when `concurrency === 1`, `primeFullContainerMemory()` (called on each startup/reconnect) reads the container's total RAM (cgroup-aware) and overrides `SANDBOX_MEMORY_LIMIT` so the single sandbox receives the full container memory (best-effort — the server-configured limit stays if the read fails)
 - `packages/server/sandbox/` — standalone `@activepieces/sandbox` library holding the in-process sandbox (`createSandboxRuntime`, `sandbox-manager`, isolate/fork process makers), cache/piece installation, the worker-side `createResolver`, and the `Runtime` / `Resolver` / `ProvisionInput` type contracts (`src/lib/types.ts`)
-- `packages/server/worker/src/lib/config/configs.ts` — worker env vars incl. `AP_REUSE_SANDBOX` (`WorkerSystemProp.REUSE_SANDBOX`, reuse the engine process between jobs) and `AP_WORKER_CONCURRENCY`
+- `packages/server/worker/src/lib/config/configs.ts` — worker env vars incl. `AP_REUSE_SANDBOX` (`WorkerSystemProp.REUSE_SANDBOX`, reuse the engine process between jobs), `AP_WORKER_CONCURRENCY`, `AP_WORKER_GROUP_ID`, and `AP_PROJECT_WORKER` (`WorkerSystemProp.PROJECT_WORKER`, boolean, default `true` — flags the group id as project-scoped; set `false` for a platform group)
 - `packages/server/worker/src/lib/config/worker-settings.ts` — caches the `WorkerSettingsResponse` fetched on connect
 - `packages/server/utils/src/ap-version.ts` — `apVersionUtil.getCurrentRelease()`; both sides read the deploy-root `package.json` version
 - `packages/core/shared/src/lib/automation/workers/index.ts` — `WorkerProps`, `MachineInformation`, `WorkerSettingsResponse`, `WorkerToApiContract` contracts
 
 ## Edition Availability
 - Community / Enterprise / Cloud: all editions run workers; topology differs (embedded `WORKER_AND_APP` for self-host single-container vs dedicated worker fleets on Cloud).
+- **Per-project worker routing** is an enterprise feature gated behind `platform_plan.isolatedWorkersEnabled`. The routing itself (queue resolution) is edition-agnostic, but assigning a project's `workerGroupId` and listing available project groups (`GET /v1/projects/worker-groups`) require the flag; unassigned projects always use the shared/platform queue.
 
 ## Domain Terms
 
@@ -28,6 +29,10 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 - **`WorkerSettingsResponse`** — runtime config the app hands a worker on connect; now includes `APP_VERSION` (the app's release).
 - **`connectionGeneration`** — worker-side counter bumped on every disconnect; in-flight poll loops exit when their captured generation goes stale, so a reconnect starts fresh loops.
 - **version gate** — both sides refuse to exchange jobs when worker release ≠ app release (see below).
+- **worker group (`AP_WORKER_GROUP_ID` + `AP_PROJECT_WORKER`)** — one unified routing primitive for both platform- and project-scoped dedicated pools. A worker advertises a **bare** id in the Socket.IO handshake auth plus a `projectWorker` boolean (from `AP_PROJECT_WORKER`, default `true`); the **flag — not a prefix — encodes scope**. There is no startup format check (the old required `pl_`/`pr_` prefix and its `assertValidWorkerGroupPrefix` guard were removed):
+  - `AP_PROJECT_WORKER=true` (default) → **project** scope → polls `project-<label>-jobs` (`getProjectGroupQueueName`); `<label>` is an arbitrary pool label matched against `project.workerGroupId`.
+  - `AP_PROJECT_WORKER=false` → **platform** scope → polls `platform-<id>-jobs` (`getPlatformGroupQueueName`); `<id>` matches `platform_plan.workerGroupId`.
+  The app parses both handshake values once with `parseWorkerGroupValue({ value, projectWorker })` (in `workers/job/index.ts`) into `{ scope, id }` (`WorkerGroupAssignment`) — scope from the flag, id used verbatim — and stores `{ workerGroupId, workerGroupScope }` on the cache entry. An empty/absent id yields no assignment (shared queue), regardless of the flag. **Project-scope groups route only `EXECUTE_FLOW`/`EXECUTE_WEBHOOK`** (`PROJECT_GROUP_ROUTABLE_JOB_TYPES`); all other job types use the platform group / shared queue. **Platform-scope groups route all job types** for the platform. Producer routing reads bare ids from the DB (scope implied by table), and the worker env is now bare too — scope travels beside the id, not inside it. A worker with any group must run a process sandbox mode and set `AP_REUSE_SANDBOX`.
 
 ## Connection & Poll Flow
 1. Worker connects → emits `FETCH_WORKER_SETTINGS`; app's `machineService.onConnection` returns `WorkerSettingsResponse` (incl. `APP_VERSION`) and registers `createHandlers` for the socket.
