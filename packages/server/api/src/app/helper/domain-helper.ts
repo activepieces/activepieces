@@ -34,6 +34,13 @@ export const domainHelper = {
         }
         return this.getInternalApiUrl({ path: path ?? '' })
     },
+    async getMcpUrl({ path }: PublicUrlParams): Promise<string> {
+        const mcpUrl = system.get(AppSystemProp.MCP_URL)
+        if (mcpUrl) {
+            return networkUtils.combineUrl(mcpUrl, path ?? '')
+        }
+        return this.getPublicUrl({ path })
+    },
 }
 
 function cleanLeadingSlash(path: string) {

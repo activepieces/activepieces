@@ -5,8 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
+import { domainHelper } from '../helper/domain-helper'
 import { mcpServerService } from './mcp-service'
 import { mcpOAuthTokenService } from './oauth/token/mcp-oauth-token.service'
 
@@ -36,9 +35,8 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
             platformId: req.principal.platform.id,
             projectId: req.projectId,
         })
-        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         return {
-            mcpServerUrl: `${frontendUrl}/mcp`,
+            mcpServerUrl: await domainHelper.getMcpUrl({ path: 'mcp' }),
             mcpToken,
         }
     })
