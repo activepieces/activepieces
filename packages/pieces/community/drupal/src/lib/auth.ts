@@ -57,7 +57,6 @@ export const drupalAuth = PieceAuth.CustomAuth({
           'Accept': 'application/vnd.api+json',
         },
       });
-      console.debug('Auth validation response', response);
       if (response.status === 200) {
         const data = (response.body as any).data;
         return {

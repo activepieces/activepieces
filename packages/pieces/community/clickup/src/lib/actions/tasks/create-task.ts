@@ -12,6 +12,7 @@ import {
   listAccessibleCustomFields,
 } from '../../common';
 import { clickupAuth } from '../../auth';
+import { taskOutputSchema } from '../../output-schemas';
 
 export const createClickupTask = createAction({
   auth: clickupAuth,
@@ -118,6 +119,7 @@ export const createClickupTask = createAction({
     }),
   },
 
+  outputSchema: taskOutputSchema,
   async run(configValue) {
     const {
       list_id,

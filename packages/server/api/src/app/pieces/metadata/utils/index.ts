@@ -1,7 +1,7 @@
 import { PlatformId } from '@activepieces/core-utils'
 import { PieceCategory, PieceOrderBy, PieceSortBy, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { enterpriseFilteringUtils } from '../../../ee/pieces/filters/piece-filtering-utils'
+import { enterpriseFilteringUtils, PieceFilterContext } from '../../../ee/pieces/filters/piece-filtering-utils'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { pieceSearching } from './piece-searching'
 import { pieceSorting } from './piece-sorting'
@@ -26,6 +26,7 @@ export const pieceListUtils = (log: FastifyBaseLogger) => ({
             includeHidden: params.includeHidden,
             platformId: params.platformId,
             projectId: params.projectId,
+            filterContext: params.filterContext,
         })
     },
 })
@@ -40,6 +41,7 @@ export type FilterPiecesParams = {
     orderBy?: PieceOrderBy
     pieces: PieceMetadataSchema[]
     suggestionType?: SuggestionType
+    filterContext?: PieceFilterContext | null
 }
 
 export * from './piece-cache-utils'

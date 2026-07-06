@@ -12,6 +12,7 @@ pieces-cache-db-*.sqlite
 .firecrawl/
 .claude/launch.json
 CONTEXT.md
+!.agents/contexts/**/CONTEXT.md
 packages/server/worker/test/lib/chat-eval/live/results/
 
 # compiled output

@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { createTaskCommentOutputSchema } from '../../output-schemas';
 
 export const createClickupTaskComment = createAction({
   auth: clickupAuth,
@@ -26,6 +27,7 @@ export const createClickupTaskComment = createAction({
       'ID of assignee for Task Comment'
     ),
   },
+  outputSchema: createTaskCommentOutputSchema,
   async run(configValue) {
     const { task_id, comment } = configValue.propsValue;
 

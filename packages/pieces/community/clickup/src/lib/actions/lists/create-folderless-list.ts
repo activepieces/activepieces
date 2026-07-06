@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { listOutputSchema } from '../../output-schemas';
 
 export const createClickupFolderlessList = createAction({
   auth: clickupAuth,
@@ -19,6 +20,7 @@ export const createClickupFolderlessList = createAction({
       required: true,
     }),
   },
+  outputSchema: listOutputSchema,
   async run(configValue) {
     const { space_id, name } = configValue.propsValue;
     const response = await callClickUpApi(

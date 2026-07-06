@@ -6,6 +6,7 @@ import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import Ajv from 'ajv';
 import mime from 'mime-types';
 import { modelDropdown } from '../common/common';
+import { extractStructuredDataActionOutputSchema } from '../output-schemas';
 
 export const extractStructuredDataAction = createAction({
   audience: 'human',
@@ -121,6 +122,7 @@ export const extractStructuredDataAction = createAction({
         "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)",
     }),
   },
+  outputSchema: extractStructuredDataActionOutputSchema,
   async run(context) {
     const { model, text, image, schema, prompt, maxTokens } =
       context.propsValue;

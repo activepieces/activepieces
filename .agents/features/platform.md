@@ -1,16 +1,17 @@
 # CE Platform Configuration
 
 ## Summary
-A Platform is the top-level tenant namespace in Activepieces. Every installation has at least one platform. It owns branding (logo, colors, favicon), authentication settings (email auth toggle, allowed auth domains, federated SSO providers), piece filtering rules, and a `PlatformPlan` that governs feature flags and resource limits. On Cloud a user can own multiple platforms; on CE/EE there is typically one. Platform admins can update branding, auth settings, and piece pinning. Platform deletion is Cloud-only and triggers async cleanup.
+A Platform is the top-level tenant namespace in Activepieces. Every installation has at least one platform. It owns branding (logo, colors, favicon), authentication settings (email auth toggle, allowed auth domains, federated SSO providers), piece filtering rules (including per-piece action and trigger visibility), and a `PlatformPlan` that governs feature flags and resource limits. On Cloud a user can own multiple platforms; on CE/EE there is typically one. Platform admins can update branding, auth settings, piece pinning, and per-action/trigger visibility. Platform deletion is Cloud-only and triggers async cleanup.
 
 ## Key Files
 - `packages/server/api/src/app/platform/platform.controller.ts` — POST `/:id` (update), GET `/:id` (read), DELETE `/:id` (Cloud only), GET `/assets/:id` (logo/favicon download)
-- `packages/server/api/src/app/platform/platform.service.ts` — CRUD service; `create`, `update`, `getOneWithPlanAndUsageOrThrow`, `listPlatformsForIdentityWithAtleastProject`
+- `packages/server/api/src/app/platform/platform-piece-filter.controller.ts` — GET `/` (read killswitch), POST `/` (update killswitch) under `/v1/platform-piece-filter`
+- `packages/server/api/src/app/platform/platform.service.ts` — CRUD service; `create`, `update`, `getPieceFilter`, `updatePieceFilter`, `getOneWithPlanAndUsageOrThrow`, `listPlatformsForIdentityWithAtleastProject`
 - `packages/server/api/src/app/platform/platform.entity.ts` — `platform` TypeORM entity
 - `packages/server/api/src/app/platform/platform.utils.ts` — `getPlatformIdForRequest`, `isCustomerOnDedicatedDomain`
 - `packages/server/api/src/app/platform/platform-jobs.ts` — `HARD_DELETE_PLATFORM` job handler
 - `packages/core/shared/src/lib/management/platform/platform.model.ts` — `Platform`, `PlatformWithoutSensitiveData`, `PlatformPlan`, `PlatformUsage`, `PlatformThemeColors`, `PieceSelectorConfig`, `PieceSelectorTabConfig`, `PieceSelectorTabSection` Zod schemas
-- `packages/core/shared/src/lib/management/platform/platform.request.ts` — `UpdatePlatformRequestBody`
+- `packages/core/shared/src/lib/management/platform/platform.request.ts` — `UpdatePlatformRequestBody`, `UpdatePlatformPieceFilterRequestBody`
 - `packages/web/src/hooks/platform-hooks.ts` — `useCurrentPlatform()` React Query hook
 - `packages/web/src/features/platform-admin/hooks/branding-hooks.ts` — branding mutation hooks
 
@@ -18,6 +19,9 @@ A Platform is the top-level tenant namespace in Activepieces. Every installation
 All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, `ssoEnabled`, `agentsEnabled`) control which capabilities are active. Community edition uses `OPEN_SOURCE_PLAN` with all booleans set to their CE defaults. `usage` is only populated on non-Community editions.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Platform** — tenant root; owns branding, auth config, piece filters
 - **PlatformPlan** — separate record (in EE module) storing feature flags, limits, Stripe subscription state
 - **FilteredPieceBehavior** — `ALLOWED` (allowlist) or `BLOCKED` (blocklist) applied to `filteredPieceNames`
@@ -27,6 +31,8 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 - **PieceSelectorConfig** — JSONB config controlling the order, visibility, names, and icons of the piece-selector tab strip in the flow builder; `null` means use the default built-in layout
 - **PieceSelectorTabConfig** — a single tab entry: either `BUILTIN` (referencing one of the five built-in tabs) or `CUSTOM` (a user-created tab with its own ordered piece list and optional sections)
 - **PieceSelectorTabSection** — a named sub-group inside a `CUSTOM` tab; holds a title and an ordered list of piece names
+- **filteredActionNames** — JSONB blocklist keyed by piece name; each value is a list of action names hidden from that piece's metadata response (EE/Cloud only, applied by `enterpriseFilteringUtils`)
+- **filteredTriggerNames** — same structure as `filteredActionNames` but for trigger names
 
 ## Entity
 
@@ -50,21 +56,27 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 | federatedAuthProviders | jsonb | OAuth2 + SAML config |
 | pinnedPieces | string[] | ordered piece name list |
 | pieceSelectorConfig | jsonb (nullable) | piece-selector tab layout (`PieceSelectorConfig`); null = default built-in tabs |
+| filteredActionNames | jsonb | `Record<pieceName, actionName[]>` — actions hidden per piece (EE/Cloud only) |
+| filteredTriggerNames | jsonb | `Record<pieceName, triggerName[]>` — triggers hidden per piece (EE/Cloud only) |
 
 ## Endpoints
 
 | Method | Path | Security | Description |
 |---|---|---|---|
-| GET | `/v1/platforms/:id` | publicPlatform (USER, SERVICE) | Get platform with plan and usage (sensitive SSO data stripped) |
-| POST | `/v1/platforms/:id` | platformAdminOnly (USER) | Update branding, auth settings, piece filters |
+| GET | `/v1/platforms/:id` | publicPlatform (USER, SERVICE) | Get platform with plan and usage (sensitive SSO data stripped). For USER principals, `plan.chatEnabled` is rewritten to the **effective per-user** chat visibility (`chatVisibilityHelper.resolveChatEnabledForUser` — edition + embed + cloud rollout/grandfather), and `licenseKey` is nulled for embedded users |
+| POST | `/v1/platforms/:id` | platformAdminOnly (USER) | Update branding, auth settings, piece pinning. Piece filter fields moved to `/v1/platform-piece-filter`; sending `filteredPieceNames`/`filteredPieceBehavior` here returns 400 |
 | DELETE | `/v1/platforms/:id` | platformAdminOnly (USER) | Cloud only: mark projects for deletion and schedule hard delete |
 | GET | `/v1/platforms/assets/:id` | public | Download a platform asset (logo/favicon) by file ID |
+| GET | `/v1/platform-piece-filter` | platformAdminOnly (USER, SERVICE) | Get the platform-wide piece/component visibility killswitch |
+| POST | `/v1/platform-piece-filter` | platformAdminOnly (USER, SERVICE) | Update the platform-wide piece/component visibility killswitch |
 
 ## Service Methods
 
 ### `platformService`
 - `create({ ownerId, name, primaryColor?, logoIconUrl?, fullLogoUrl?, favIconUrl? })` — creates platform record with defaults from `defaultTheme`; calls `userService.addOwnerToPlatform`
-- `update(params)` — merges fields; if `plan` is set delegates to `platformPlanService.update`; if SAML config changes, clears SAML client cache
+- `update(params)` — merges fields; if `plan` is set delegates to `platformPlanService.update`; if SAML config changes, clears SAML client cache. Does not accept piece filter fields (moved to `updatePieceFilter`)
+- `getPieceFilter(id)` — returns `filteredPieceNames`, `filteredPieceBehavior`, `filteredActionNames`, `filteredTriggerNames`
+- `updatePieceFilter({ id, ...filter })` — partial update of the platform-wide piece/component killswitch; returns the updated filter
 - `getOneWithPlanAndUsageOrThrow(id)` — full read with plan feature flags and usage metrics
 - `getOneWithPlanOrThrow(id)` — plan flags only (no usage); used in auth guards for fast plan checks
 - `listPlatformsForIdentityWithAtleastProject({ identityId })` — returns all platforms where the identity has at least one accessible project; used for platform-switcher
