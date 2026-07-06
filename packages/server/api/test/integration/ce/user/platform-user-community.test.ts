@@ -203,9 +203,162 @@ describe('User API', () => {
 
             expect(responseBody?.code).toBe('AUTHORIZATION')
         })
+
+        it('Allows invited admin to update a member', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+            const { mockUser: mockMember } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                id: mockAdmin.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/users/${mockMember.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().status).toBe(UserStatus.INACTIVE)
+        })
+
+        it('Fails if invited admin tries to update the platform owner', async () => {
+            // arrange
+            const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                id: mockAdmin.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/users/${mockOwner.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.json().code).toBe('AUTHORIZATION')
+        })
+
+        it('Fails if invited admin tries to update another admin', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin1 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+            const { mockUser: mockAdmin2 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                id: mockAdmin1.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/users/${mockAdmin2.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.json().code).toBe('AUTHORIZATION')
+        })
+
+        it('Fails if invited admin tries to update themselves', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                id: mockAdmin.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/users/${mockAdmin.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe('VALIDATION')
+        })
     })
 
-    describe('Delete user endpoint', () => {
+    describe('Delete user endpoint', () =>>,StartLine:200,TargetContent: {
         it('Removes a user', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
@@ -269,6 +422,145 @@ describe('User API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('AUTHORIZATION')
+        })
+
+        it('Allows invited admin to delete a member', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+            const { mockUser: mockMember } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                id: mockAdmin.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockMember.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('Fails if invited admin tries to delete the platform owner', async () => {
+            // arrange
+            const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                id: mockAdmin.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockOwner.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.json().code).toBe('AUTHORIZATION')
+        })
+
+        it('Fails if invited admin tries to delete another admin', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin1 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+            const { mockUser: mockAdmin2 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                id: mockAdmin1.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockAdmin2.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.json().code).toBe('AUTHORIZATION')
+        })
+
+        it('Fails if invited admin tries to delete themselves', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                id: mockAdmin.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockAdmin.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe('VALIDATION')
         })
     })
 })

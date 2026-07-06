@@ -1,10 +1,12 @@
-import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/core-utils'
-import { ApEdition, ListUsersRequestBody, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateUserRequestBody, UserWithMetaInformation } from '@activepieces/shared'
+import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, PlatformId, SeekPage } from '@activepieces/core-utils'
+import { ApEdition, ListUsersRequestBody, PlatformRole, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateUserRequestBody, User, UserWithMetaInformation } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { system } from '../../helper/system/system'
+import { platformService } from '../../platform/platform.service'
 import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncZod = async (app) => {
@@ -25,6 +27,17 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
+        const principalId = req.principal.id
+        assertNotNullOrUndefined(principalId, 'principalId')
+
+        const targetUser = await userService(req.log).getOrThrow({ id: req.params.id })
+        await validateUserOperation({
+            log: req.log,
+            principalId,
+            targetUser,
+            platformId,
+        })
+
         return userService(req.log).update({
             id: req.params.id,
             platformId,
@@ -37,6 +50,17 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
     app.delete('/:id', DeleteUserRequest, async (req, res) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
+
+        const principalId = req.principal.id
+        assertNotNullOrUndefined(principalId, 'principalId')
+
+        const targetUser = await userService(req.log).getOrThrow({ id: req.params.id })
+        await validateUserOperation({
+            log: req.log,
+            principalId,
+            targetUser,
+            platformId,
+        })
 
         const edition = system.getEdition()
         if (edition === ApEdition.CLOUD) {
@@ -54,6 +78,70 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+const ensureSamePlatform = (user: User, platformId: PlatformId): void => {
+    const isSamePlatform = user.platformId === platformId
+    if (!isSamePlatform) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'user',
+                entityId: user.id,
+            },
+        })
+    }
+}
+
+const ensureNotSelf = (principalId: string, targetUserId: string): void => {
+    const isSelf = principalId === targetUserId
+    if (isSelf) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'Permission denied: self-modification is not permitted.' },
+        })
+    }
+}
+
+async function validateUserOperation({ log, principalId, targetUser, platformId }: {
+    log: FastifyBaseLogger
+    principalId: string
+    targetUser: User
+    platformId: PlatformId
+}): Promise<void> {
+    ensureSamePlatform(targetUser, platformId)
+    ensureNotSelf(principalId, targetUser.id)
+
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    const isActingUserOwner = platform.ownerId === principalId
+
+    if (isActingUserOwner) {
+        return
+    }
+
+    const actingUser = await userService(log).getOrThrow({ id: principalId })
+    if (actingUser.platformRole !== PlatformRole.ADMIN) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'Permission denied: user management requires administrator or owner privileges.' },
+        })
+    }
+
+    const isTargetOwner = platform.ownerId === targetUser.id
+    if (isTargetOwner) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'Permission denied: the platform owner cannot be modified.' },
+        })
+    }
+
+    const isTargetAdmin = targetUser.platformRole === PlatformRole.ADMIN
+    if (isTargetAdmin) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'Permission denied: modifying another administrator is not allowed.' },
+        })
+    }
 }
 
 const ListUsersRequest = {
