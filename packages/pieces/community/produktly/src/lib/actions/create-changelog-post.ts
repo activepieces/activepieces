@@ -8,12 +8,14 @@ export const createChangelogPost = createAction({
   auth: produktlyAuth,
   name: 'create_changelog_post',
   displayName: 'Create Changelog Post',
-  description: 'Publish a new post inside a changelog. Visible to your users once active.',
+  description:
+    'Publish a new post inside a changelog. Visible to your users once active.',
   props: {
     changelog: produktlyProps.changelog,
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The headline shown to users (e.g. "New: Dark mode is here").',
+      description:
+        'The headline shown to users (e.g. "New: Dark mode is here").',
       required: true,
     }),
     description: Property.LongText({
@@ -23,7 +25,8 @@ export const createChangelogPost = createAction({
     }),
     date: Property.ShortText({
       displayName: 'Date',
-      description: 'Optional release date in ISO 8601 format (e.g. 2024-12-15). Defaults to today.',
+      description:
+        'Optional release date in ISO 8601 format (e.g. 2024-12-15). Defaults to today.',
       required: false,
     }),
     active: Property.Checkbox({
@@ -34,7 +37,8 @@ export const createChangelogPost = createAction({
     }),
     tag_names: Property.Array({
       displayName: 'Tag Names',
-      description: 'Optional list of tag names to attach. Must match existing tags (use "List Tags" to find them).',
+      description:
+        'Optional list of tag names to attach. Must match existing tags (use "List Tags" to find them).',
       required: false,
     }),
   },
@@ -45,7 +49,10 @@ export const createChangelogPost = createAction({
     };
     if (propsValue.description) body['description'] = propsValue.description;
     if (propsValue.date) body['date'] = propsValue.date;
-    if (Array.isArray(propsValue.tag_names) && propsValue.tag_names.length > 0) {
+    if (
+      Array.isArray(propsValue.tag_names) &&
+      propsValue.tag_names.length > 0
+    ) {
       body['tagNames'] = propsValue.tag_names;
     }
     const response = await produktlyApiCall<{
@@ -54,7 +61,12 @@ export const createChangelogPost = createAction({
       description: string;
       date: string;
       active: boolean;
-      tags: Array<{ id: number; name: string; backgroundColor: string; textColor: string }>;
+      tags: Array<{
+        id: number;
+        name: string;
+        backgroundColor: string;
+        textColor: string;
+      }>;
     }>({
       auth,
       method: HttpMethod.POST,

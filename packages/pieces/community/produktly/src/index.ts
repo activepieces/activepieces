@@ -31,7 +31,7 @@ export const produktly = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/produktly.png',
   categories: [PieceCategory.PRODUCTIVITY, PieceCategory.MARKETING],
   auth: produktlyAuth,
-  authors: [],
+  authors: ['cumonvip1'],
   actions: [
     listChangelogs,
     listChangelogPosts,
