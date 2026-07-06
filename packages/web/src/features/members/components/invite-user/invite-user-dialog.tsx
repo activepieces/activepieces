@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { ErrorCode, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   InvitationStatus,
@@ -41,7 +41,7 @@ import { projectCollectionUtils } from '@/features/projects/stores/project-colle
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { HttpError } from '@/lib/api';
+import { api, HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
@@ -181,7 +181,11 @@ export const InviteUserDialog = ({
       onInviteSuccess?.();
     },
     onError: (error) => {
-      toast.error(error.message || t('Failed to send invitations'), {
+      const message = error.message;
+      if (api.isApError(error, ErrorCode.QUOTA_EXCEEDED)) {
+        return;
+      }
+      toast.error(message || t('Failed to send invitations'), {
         duration: 4000,
       });
     },

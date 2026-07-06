@@ -1,54 +1,41 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, TrendingUp, TrendingDown } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import { platformHooks } from '@/hooks/platform-hooks';
 
-import { platformBillingApi } from '../api/billing-plans-api';
-import { billingKeys } from '../hooks/billing-hooks';
+import { billingMutations } from '../hooks/billing-hooks';
 
-const FINALIZE_POLLS = 3;
-const FINALIZE_INTERVAL_MS = 2500;
 const REDIRECT_DELAY_MS = 5000;
 
 export const Success = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
 
   const action = searchParams.get('action') || '';
 
-  // No webhooks: the Stripe→Autumn sync is async, so let React Query poll the subscription a few times after
-  // the redirect until the new entitlements land. `dataUpdateCount` lives on the query object, so the
-  // stop-after-N condition needs no counter state or effect.
-  const { isPending: finalizing } = useQuery({
-    queryKey: billingKeys.platformSubscription(platform.id),
-    queryFn: platformBillingApi.getSubscriptionInfo,
-    refetchInterval: (query) =>
-      query.state.dataUpdateCount >= FINALIZE_POLLS
-        ? false
-        : FINALIZE_INTERVAL_MS,
-  });
+  const {
+    mutate: finalize,
+    isPending,
+    isIdle,
+  } = billingMutations.useRefreshSubscription();
+  const finalizing = isIdle || isPending;
 
-  // The plan/flag caches only need to be fresh when the user leaves this page, so invalidate them in the
-  // navigation handler rather than on a poll timer.
-  const leave = useCallback(
-    (path: string) => {
-      queryClient.invalidateQueries({ queryKey: ['platform'] });
-      queryClient.invalidateQueries({ queryKey: ['flags'] });
-      navigate(path);
-    },
-    [queryClient, navigate],
-  );
+  useEffect(() => {
+    finalize();
+  }, []);
 
-  // Auto-redirect is a timer (an external system), the one case the React docs sanction an effect for: once
-  // the confirmed state is shown, a single timeout sends the user to billing.
+  function leave(path: string) {
+    queryClient.invalidateQueries({ queryKey: ['platform'] });
+    queryClient.invalidateQueries({ queryKey: ['flags'] });
+    navigate(path);
+  }
+
   useEffect(() => {
     if (finalizing) {
       return;
@@ -58,7 +45,7 @@ export const Success = () => {
       REDIRECT_DELAY_MS,
     );
     return () => clearTimeout(timer);
-  }, [finalizing, leave]);
+  }, [finalizing]);
 
   const getActionConfig = () => {
     switch (action) {

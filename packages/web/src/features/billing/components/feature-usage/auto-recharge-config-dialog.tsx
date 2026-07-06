@@ -44,7 +44,7 @@ import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 
-export function AutoTopUpConfigDialog({
+export function AutoRechargeConfigDialog({
   isOpen,
   onOpenChange,
   feature,
@@ -52,14 +52,14 @@ export function AutoTopUpConfigDialog({
   currentThreshold,
   currentCreditsToAdd,
   currentMaxMonthlyTopUps,
-}: AutoTopUpConfigDialogProps) {
+}: AutoRechargeConfigDialogProps) {
   const queryClient = useQueryClient();
 
   const simpleCap = Math.max(SIMPLE_BASE, Math.floor(includedCredits / 2));
   const creditOptions = simpleCreditOptions(simpleCap);
 
-  const form = useForm<AutoTopUpFormValues>({
-    resolver: zodResolver(AutoTopUpFormSchema),
+  const form = useForm<AutoRechargeFormValues>({
+    resolver: zodResolver(AutoRechargeFormSchema),
     defaultValues: {
       threshold: nearestOption(
         currentThreshold ?? feature.billingUnits,
@@ -81,7 +81,7 @@ export function AutoTopUpConfigDialog({
   const costPerTopUp =
     (creditsToAdd / feature.billingUnits) * feature.pricePerUnit;
 
-  const handleSave = (values: AutoTopUpFormValues) => {
+  const handleSave = (values: AutoRechargeFormValues) => {
     const params: ConsumableProductAutoTopupParams = {
       minThreshold: values.threshold,
       creditsToAdd: values.creditsToAdd,
@@ -377,13 +377,13 @@ const CREDITS_STEP = 1000;
 const MONTHLY_TOPUP_OPTIONS = [1, 2, 4, 6];
 const UNLIMITED_VALUE = 'unlimited';
 
-const AutoTopUpFormSchema = z.object({
+const AutoRechargeFormSchema = z.object({
   threshold: z.number(),
   creditsToAdd: z.number(),
   maxMonthlyTopUps: z.number().nullable(),
 });
 
-interface AutoTopUpConfigDialogProps {
+interface AutoRechargeConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   feature: ToppableFeature;
@@ -393,4 +393,4 @@ interface AutoTopUpConfigDialogProps {
   currentMaxMonthlyTopUps?: number | null;
 }
 
-type AutoTopUpFormValues = z.infer<typeof AutoTopUpFormSchema>;
+type AutoRechargeFormValues = z.infer<typeof AutoRechargeFormSchema>;

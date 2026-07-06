@@ -147,7 +147,7 @@ function BillingPageDetails() {
             }
           >
             <CreditsCard info={info} />
-            {isPaid && !isNil(creditsFeature) && (
+            {isPaid && isNil(info.trialEndsAt) && !isNil(creditsFeature) && (
               <AutoRechargeCard
                 feature={creditsFeature}
                 autoTopUp={creditsAutoTopUp}

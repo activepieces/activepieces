@@ -19,6 +19,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
       ? 0
       : Math.min(100, Math.round((used / total) * 100));
   const resetAt = resolveResetAt({ info, isPaid });
+  const footerDate = info.trialEndsAt ?? resetAt;
 
   return (
     <div className="flex flex-col rounded-xl border">
@@ -45,13 +46,13 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
           </>
         )}
       </div>
-      {!isNil(resetAt) && (
+      {!isNil(footerDate) && (
         <div className="flex items-center gap-2 border-t p-4 text-sm text-muted-foreground">
           <Clock className="size-4 shrink-0" />
           <span>
-            {t('Resets in')}{' '}
+            {info.trialEndsAt ? t('Trial ends') : t('Resets in')}{' '}
             <span className="font-semibold text-foreground">
-              {dayjs(resetAt).format('D MMM YYYY, h:mm A')}
+              {dayjs(footerDate).format('D MMM YYYY, h:mm A')}
             </span>
           </span>
         </div>

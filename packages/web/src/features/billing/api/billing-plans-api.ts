@@ -14,6 +14,12 @@ export const platformBillingApi = {
   getSubscriptionInfo() {
     return api.get<PlatformBillingInformation>('/v1/platform-billing/info');
   },
+  refreshSubscriptionInfo() {
+    return api.post<PlatformBillingInformation>(
+      '/v1/platform-billing/refresh',
+      {},
+    );
+  },
   listPlans() {
     return api.get<PurchasablePlan[]>('/v1/platform-billing/plans');
   },

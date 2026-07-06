@@ -34,7 +34,7 @@ export const platformHooks = {
     const query = useSuspenseQuery({
       queryKey: ['platform', currentPlatformId],
       queryFn: platformApi.getCurrentPlatform,
-      staleTime: Infinity,
+      staleTime: 10 * 1000,
     });
     return {
       platform: query.data,

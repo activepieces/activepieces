@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 
-import { AutoTopUpConfigDialog } from './auto-topup-config-dialog';
+import { AutoRechargeConfigDialog } from './auto-recharge-config-dialog';
 
 export const AutoRechargeCard = ({
   feature,
@@ -85,7 +85,7 @@ export const AutoRechargeCard = ({
           </Button>
         </>
       )}
-      <AutoTopUpConfigDialog
+      <AutoRechargeConfigDialog
         key={isDialogOpen ? 'auto-open' : 'auto-closed'}
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}

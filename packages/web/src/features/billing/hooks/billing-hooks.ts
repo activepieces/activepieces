@@ -91,6 +91,18 @@ export const billingMutations = {
       },
     });
   },
+  useRefreshSubscription: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: () => platformBillingApi.refreshSubscriptionInfo(),
+      onSuccess: (info) => {
+        queryClient.setQueriesData<PlatformBillingInformation>(
+          { queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY },
+          info,
+        );
+      },
+    });
+  },
   usePortalLink: () => {
     return useMutation({
       mutationFn: async () => {
@@ -162,6 +174,8 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
       enabled,
     });
   },

@@ -147,6 +147,11 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
 function resolveCreditsResetLabel(
   info: PlatformBillingInformation,
 ): string | undefined {
+  if (!isNil(info.trialEndsAt)) {
+    return t('Trial ends {date}', {
+      date: dayjs(info.trialEndsAt).format('MMM D, YYYY'),
+    });
+  }
   const resetAt = info.usage.creditsNextResetAt ?? info.nextBillingDate;
   if (isNil(resetAt)) {
     return undefined;

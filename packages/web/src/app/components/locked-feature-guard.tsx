@@ -1,4 +1,10 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { t } from 'i18next';
 import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { useManagePlanDialogStore } from '@/features/billing';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { FeatureKey, RequestTrial } from './request-trial';
 
@@ -23,6 +29,10 @@ export const LockedFeatureGuard = ({
   featureKey,
   showContactSales = true,
 }: LockedFeatureGuardProps) => {
+  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCommunity = edition === ApEdition.COMMUNITY;
+
   if (!locked) {
     return children;
   }
@@ -49,9 +59,17 @@ export const LockedFeatureGuard = ({
             )}
           </p>
 
-          {showContactSales && (
+          {isCommunity ? (
+            showContactSales && (
+              <div className="my-4">
+                <RequestTrial featureKey={featureKey} />
+              </div>
+            )
+          ) : (
             <div className="my-4">
-              <RequestTrial featureKey={featureKey} />
+              <Button onClick={() => openManagePlanDialog()}>
+                {t('Upgrade plan')}
+              </Button>
             </div>
           )}
         </div>

@@ -166,8 +166,8 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
           'Fully brand the platform with your own logo, colors, and domain.',
       },
       {
-        label: 'Embeddable builder',
-        tooltip: 'Embed the flow builder directly inside your own product.',
+        label: 'Embedding',
+        tooltip: 'Embed Acitvepieces (flows/chat/connections/tables..etc) directly inside your own product.',
       },
       {
         label: 'Piece management',
@@ -196,8 +196,6 @@ export const planSelectorUtils = {
   SALES_URL,
 };
 
-// Shared copy for the "drop to Free" confirmation, reused by the plan-selector downgrade and the
-// cancel-subscription flow so the two stay in sync (i18n keys — see en/translation.json).
 export const DROP_TO_FREE_MESSAGE =
   'This takes effect at the end of your current billing period.';
 export const DROP_TO_FREE_WARNING =

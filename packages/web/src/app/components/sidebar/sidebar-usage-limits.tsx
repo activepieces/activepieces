@@ -1,28 +1,75 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId, PlatformRole } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  AutumnFeatureId,
+  PlanName,
+  PlatformRole,
+} from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { ChevronRight, Info } from 'lucide-react';
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { ArrowUpCircle, Coins } from 'lucide-react';
+import React, { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  AutoRechargeConfigDialog,
+  billingQueries,
+  useManagePlanDialogStore,
+} from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
+
+const AMBER_THRESHOLD = 70;
+const RED_THRESHOLD = 90;
 
 const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const currentUser = userHooks.useCurrentUser();
-  const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
+  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const [autoRechargeOpen, setAutoRechargeOpen] = useState(false);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
+  const usage = platform.usage;
+  const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
+  const isPaid =
+    !isNil(platform.plan.plan) && platform.plan.plan !== PlanName.FREE;
+
+  const creditsRemaining = usage?.creditsRemaining ?? null;
+  const isUnlimited = isNil(creditsRemaining);
+  const creditsUsed = Math.round(usage?.creditsUsed ?? 0);
+  const total = isUnlimited ? 0 : creditsUsed + Math.round(creditsRemaining);
+  const percentUsed =
+    isUnlimited || total <= 0
+      ? 0
+      : Math.min(100, Math.round((creditsUsed / total) * 100));
+
+  const inWarning = !isUnlimited && percentUsed >= AMBER_THRESHOLD;
+  const canManage = isPlatformAdmin && inWarning;
+  const needsSubscription = canManage && isPaid;
+
+  const { data: info } = billingQueries.usePlatformSubscription(
+    platform.id,
+    needsSubscription,
+  );
+  const creditsFeature = info?.topUpFeatures.find(
+    (feature) => feature.featureId === AutumnFeatureId.AP_CREDITS,
+  );
+  const creditsAutoTopUp = info?.autoTopUps.find(
+    (config) => config.featureId === AutumnFeatureId.AP_CREDITS,
+  );
+  const autoRechargeEnabled =
+    (creditsAutoTopUp?.enabled ?? false) && !isNil(creditsAutoTopUp);
+  // Trial customers have no card, so they can't auto-recharge — steer them to upgrade (subscribe) like a free
+  // user instead.
+  const isTrial = !isNil(info?.trialEndsAt);
 
   // Billing/usage applies to both Cloud and EE self-hosting (plan management is gated EE+Cloud); only
   // Community has no billing.
@@ -30,108 +77,114 @@ const SidebarUsageLimits = React.memo(() => {
     return null;
   }
 
-  if (isNil(project)) {
+  if (isNil(project) || isNil(usage)) {
     return (
-      <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
-        <div className="flex flex-col gap-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Skeleton className="size-4" />
-                <Skeleton className="w-20 h-4" />
-              </div>
-              <Skeleton className="w-16 h-4" />
-            </div>
-          ))}
+      <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
+        <div className="flex items-center justify-between">
+          <Skeleton className="w-24 h-4" />
+          <Skeleton className="w-14 h-4" />
         </div>
+        <Skeleton className="w-20 h-3" />
       </div>
     );
   }
 
+  if (isNil(creditsRemaining)) {
+    return null;
+  }
+
+  const displayedCredits = Math.round(creditsRemaining);
+  const creditsText =
+    displayedCredits >= 1_000_000
+      ? formatUtils.formatNumberCompact(displayedCredits)
+      : formatUtils.formatNumber(displayedCredits);
+
+  const resetAt =
+    usage.creditsNextResetAt ??
+    (isPaid ? null : dayjs().add(1, 'day').startOf('day').toISOString());
+  const resetDays = isNil(resetAt)
+    ? null
+    : Math.max(
+        0,
+        dayjs(resetAt).startOf('day').diff(dayjs().startOf('day'), 'day'),
+      );
+
   return (
-    <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
-      <div className="flex flex-col gap-1.5">
-        <UsageRow
-          name={t('Credits')}
-          value={Math.round(platform.usage?.creditsUsed ?? 0)}
-          max={
-            isNil(platform.usage?.creditsRemaining)
-              ? null
-              : Math.round(
-                  (platform.usage?.creditsUsed ?? 0) +
-                    platform.usage.creditsRemaining,
-                )
-          }
-          tooltip={t(
-            'Credits are consumed by flow runs, AI steps, and chat. Shown as used / total.',
-          )}
-        />
-        {isPlatformAdmin && (
-          <Link
-            to="/platform/setup/billing"
-            className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground mt-3 w-fit"
-          >
-            <span>{t('Manage Plan')}</span>
-            <ChevronRight className="size-4" />
-          </Link>
-        )}
+    <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-baseline gap-1 min-w-0">
+          <span className="text-sm font-semibold truncate">{creditsText}</span>
+          <span className="text-xs text-muted-foreground">{t('credits')}</span>
+        </div>
+        <Badge className={cn('shrink-0', creditsBadgeClass(percentUsed))}>
+          {t('{percent}% used', { percent: percentUsed })}
+        </Badge>
       </div>
+
+      {!isNil(resetDays) && (
+        <span className="text-xs text-muted-foreground">
+          {t('creditsResetRelative', { count: resetDays })}
+        </span>
+      )}
+
+      {canManage && (!isPaid || isTrial) && (
+        <Button
+          variant="basic"
+          size="sm"
+          className="w-full border"
+          onClick={openManagePlanDialog}
+        >
+          <ArrowUpCircle className="size-4" />
+          {t('Upgrade plan')}
+        </Button>
+      )}
+
+      {canManage && isPaid && !isTrial && !isNil(creditsFeature) && (
+        <>
+          <Button
+            variant="basic"
+            size="sm"
+            className="w-full border"
+            onClick={() => setAutoRechargeOpen(true)}
+          >
+            <Coins className="size-4" />
+            {autoRechargeEnabled
+              ? t('Edit auto recharge')
+              : t('Enable auto recharge')}
+          </Button>
+          <AutoRechargeConfigDialog
+            key={autoRechargeOpen ? 'auto-open' : 'auto-closed'}
+            isOpen={autoRechargeOpen}
+            onOpenChange={setAutoRechargeOpen}
+            feature={creditsFeature}
+            includedCredits={platform.plan.includedCredits}
+            currentThreshold={
+              autoRechargeEnabled ? creditsAutoTopUp.threshold : undefined
+            }
+            currentCreditsToAdd={
+              autoRechargeEnabled ? creditsAutoTopUp.quantity : undefined
+            }
+            currentMaxMonthlyTopUps={
+              autoRechargeEnabled
+                ? creditsAutoTopUp.maxMonthlyTopUps
+                : undefined
+            }
+          />
+        </>
+      )}
     </div>
   );
 });
 
-type UsageRowProps = {
-  name: string;
-  value?: number | null;
-  max?: number | null;
-  isUnlimited?: boolean;
-  suffix?: string;
-  tooltip?: string;
-};
-
-const UsageRow = ({
-  name,
-  value,
-  max,
-  isUnlimited,
-  suffix,
-  tooltip,
-}: UsageRowProps) => {
-  const hasMax = !isNil(max);
-
-  return (
-    <div className="flex items-center justify-between gap-2 w-full text-xs">
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">•</span>
-        <span className="truncate font-medium">{name}</span>
-        {tooltip && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="size-3.5 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-[220px]">
-              <p className="text-sm">{tooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-      <div className="flex items-center gap-2 text-foreground">
-        {isUnlimited ? (
-          <span className="text-muted-foreground">{t('Unlimited')}</span>
-        ) : suffix ? (
-          <span>
-            {formatUtils.formatNumber(value ?? 0)} {suffix}
-          </span>
-        ) : (
-          <span>
-            {formatUtils.formatNumber(value ?? 0)} /{' '}
-            {hasMax ? formatUtils.formatNumber(max) : t('Unlimited')}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-};
+function creditsBadgeClass(percentUsed: number): string {
+  if (percentUsed >= RED_THRESHOLD) {
+    return 'border-destructive-600 bg-destructive-50 text-destructive-700 dark:border-destructive-400 dark:bg-destructive-950 dark:text-destructive-300';
+  }
+  if (percentUsed >= AMBER_THRESHOLD) {
+    return 'border-amber-600 bg-amber-50 text-amber-700 dark:border-amber-400 dark:bg-amber-950 dark:text-amber-300';
+  }
+  return 'border-primary/20 bg-primary/10 text-primary';
+}
 
 SidebarUsageLimits.displayName = 'UsageLimitsButton';
 export default SidebarUsageLimits;
