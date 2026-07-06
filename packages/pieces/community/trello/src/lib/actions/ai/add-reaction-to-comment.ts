@@ -38,10 +38,14 @@ export const addReactionToComment = createAction({
       const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `${trelloCommon.baseUrl}actions/${context.propsValue['action_id']}/reactions`,
-        headers: { Accept: 'application/json' },
-        queryParams: withAuthParams(context.auth, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        queryParams: withAuthParams(context.auth),
+        body: {
           shortName: context.propsValue['short_name'],
-        }),
+        },
       };
       const response = await httpClient.sendRequest(request);
       return response.body;
