@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
+import { edenAiAuth } from '../..';
 
 const SPELL_CHECK_PROVIDERS = [
   { label: 'Microsoft', value: 'microsoft' },
@@ -163,10 +164,18 @@ function normalizeSpellCheckResponse(provider: string, response: any) {
 
 export const spellCheckAction = createAction({
   name: 'spell_check',
+  auth: edenAiAuth,
   displayName: 'Spell Check',
   description: 'Identify and correct spelling or grammar errors using Eden AI. Supports multiple providers, languages, and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Spell- and grammar-check a text via Eden AI, routed to a chosen provider, returning detected errors with their offsets and suggested corrections. Use it to find and propose fixes for spelling/grammar issues in a passage. Requires a provider and the text; language defaults to auto-detection. Read-only analysis with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for spell checking and grammar correction.',
       required: true,
@@ -179,6 +188,7 @@ export const spellCheckAction = createAction({
       required: true,
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Text Language',
       description: 'The language of the input text. Choose "Auto Detection" if unsure.',
       required: false,
@@ -192,6 +202,7 @@ export const spellCheckAction = createAction({
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -207,12 +218,12 @@ export const spellCheckAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      text: z.string().min(1, 'Text is required'),
-      language: z.string().nullish(),
-      model: z.string().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      text: z.string().check(z.minLength(1, 'Text is required')),
+      language: z.nullish(z.string()),
+      model: z.nullish(z.string()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 
@@ -242,7 +253,7 @@ export const spellCheckAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/text/spell_check',
         body,

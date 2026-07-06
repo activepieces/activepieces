@@ -18,7 +18,7 @@ export const pylon = createPiece({
       baseUrl: () => 'https://api.usepylon.com',
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     })

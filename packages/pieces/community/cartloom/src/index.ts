@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createDiscountAction } from './lib/actions/create-discount';
 import { getDiscountAction } from './lib/actions/get-discount';
 import { getAllDiscountsAction } from './lib/actions/get-discounts';
@@ -28,10 +28,10 @@ export const cartloom = createPiece({
     getOrderEmailAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://${(auth as { domain: string }).domain}.cartloom.com/api`, // Replace with the actual base URL
+        `https://${auth?.props.domain}.cartloom.com/api`, // Replace with the actual base URL
       auth: cartloomAuth,
       authMapping: async (auth) => ({
-        'X-API-KEY': (auth as { apiKey: string }).apiKey,
+        'X-API-KEY': auth.props.apiKey,
       }),
     }),
   ],

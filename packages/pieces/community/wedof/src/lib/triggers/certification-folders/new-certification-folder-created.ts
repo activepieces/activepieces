@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,10 @@ export const newCertificationFolderCreated = createTrigger({
   displayName: 'Nouveau dossier de certification',
   description:
     "Se déclenche lorsqu'un nouveau dossier de certification est créé",
+  aiMetadata: {
+    description:
+      'Fires when a new Wedof certification folder (dossier de certification) is created. Represents a newly opened certification case for a candidate, and emits the full certification-folder record.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {
@@ -213,7 +217,7 @@ export const newCertificationFolderCreated = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

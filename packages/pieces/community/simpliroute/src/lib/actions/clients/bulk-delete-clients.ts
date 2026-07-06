@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const bulk_delete_clients = createAction({
@@ -8,6 +8,8 @@ export const bulk_delete_clients = createAction({
     auth: simplirouteAuth,
     displayName: 'Bulk Delete Clients',
     description: 'Delete multiple clients in a single call.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently remove several clients at once by passing a list of their numeric client IDs. Use for batch cleanup rather than deleting one at a time; destructive and irreversible. Re-running with already-deleted IDs has no further effect.', idempotent: false },
     props: {
         ids: Property.Array({
             displayName: 'IDs',
@@ -27,7 +29,7 @@ export const bulk_delete_clients = createAction({
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

@@ -6,12 +6,18 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooCreateProduct = createAction({
   name: 'Create Product',
   displayName: 'Create Product',
   description: 'Create a Product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new product in a WooCommerce store with a name, type (simple, grouped, external, or variable), regular price, descriptions, category IDs, and image URLs (categories and images are comma-separated lists). Use when an agent needs to add a catalog item. Not idempotent: each call creates a new product.',
+    idempotent: false,
+  },
   auth: wooAuth,
   props: {
     name: Property.ShortText({
@@ -72,7 +78,7 @@ export const wooCreateProduct = createAction({
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
 
     const name = configValue.propsValue['name'];
     const type = configValue.propsValue['type'];
@@ -103,8 +109,8 @@ export const wooCreateProduct = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: configValue.auth.consumerKey,
-        password: configValue.auth.consumerSecret,
+        username: configValue.auth.props.consumerKey,
+        password: configValue.auth.props.consumerSecret,
       },
       body,
     };

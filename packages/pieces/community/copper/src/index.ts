@@ -34,7 +34,7 @@ import { searchForACompany } from './lib/actions/search-for-a-company';
 import { searchForAnOpportunity } from './lib/actions/search-for-an-opportunity';
 import { searchForAProject } from './lib/actions/search-for-a-project';
 import { newActivity } from './lib/triggers/new-activity';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const copper = createPiece({
@@ -68,13 +68,13 @@ export const copper = createPiece({
       auth: CopperAuth,
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
-        const authValue = auth as PiecePropValueSchema<typeof CopperAuth>;
+        
         return {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          'X-PW-AccessToken': authValue.apiKey,
+          'X-PW-AccessToken': auth.props.apiKey,
           'X-PW-Application': 'developer_api',
-          'X-PW-UserEmail': authValue.email,
+          'X-PW-UserEmail': auth.props.email,
         };
       },
     }),

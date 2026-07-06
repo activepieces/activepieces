@@ -4,6 +4,9 @@ export const meetingRescheduled = createTrigger({
   name: 'meeting_rescheduled',
   displayName: 'Meeting Rescheduled',
   description: 'Triggers when a scheduled meeting is rescheduled',
+  aiMetadata: {
+    description: 'Fires when a meeting previously booked through an Avoma scheduling page is rescheduled to new times (the MEETING_BOOKED_VIA_SCHEDULER_RESCHEDULED event), providing the updated start/end times along with the booker and meeting details. Requires configuring the corresponding webhook in Avoma settings.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     setupInstructions: Property.MarkDown({

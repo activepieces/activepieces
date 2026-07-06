@@ -7,6 +7,8 @@ export const createNote = createAction({
   name: 'create_note',
   displayName: 'Create Note',
   description: 'Create a note (generic) in the system',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a calendar note in SimplyBook.me over a start/end date-time window, scoped by mode (service, provider, or all) and an optional provider and service, and can optionally block that time. Use to add an admin annotation or to reserve/block time on the calendar. Not idempotent: each call adds a new note.', idempotent: false },
   props: {
     startDateTime: Property.ShortText({
       displayName: 'Start Date Time',
@@ -43,6 +45,7 @@ export const createNote = createAction({
       defaultValue: true
     }),
     providerId: Property.Dropdown({
+      auth: simplybookAuth,
       displayName: 'Provider',
       description: 'Select a provider (optional)',
       required: false,
@@ -50,6 +53,7 @@ export const createNote = createAction({
       options: providerDropdown.options
     }),
     serviceId: Property.Dropdown({
+      auth: simplybookAuth,
       displayName: 'Service',
       description: 'Select a service (optional)',
       required: false,
@@ -58,7 +62,7 @@ export const createNote = createAction({
     })
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
+    const auth = context.auth.props;
     const accessToken = await getAccessToken(auth);
 
     const noteData: any = {

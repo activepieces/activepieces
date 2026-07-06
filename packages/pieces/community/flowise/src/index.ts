@@ -5,7 +5,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 const flowiseAuth = PieceAuth.CustomAuth({
   description: 'Enter your Flowise URL and API Key',
@@ -29,6 +29,8 @@ export const flowisePredict = createAction({
   name: 'make_prediction',
   displayName: 'Make Prediction',
   description: 'Run Flowise Predict',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a question/input to a specific Flowise chatflow by its Chatflow ID and returns the prediction, optionally passing prior conversation history and runtime override config. Use to invoke a deployed Flowise AI workflow (chatbot, RAG, agent) for inference. Requires the target Chatflow ID; not idempotent since each call generates a fresh model response.', idempotent: false },
   auth: flowiseAuth,
   props: {
     chatflow_id: Property.ShortText({
@@ -53,7 +55,7 @@ export const flowisePredict = createAction({
     }),
   },
   async run(ctx) {
-    const { base_url, access_token } = ctx.auth;
+    const { base_url, access_token } = ctx.auth.props;
     const chatflow_id = ctx.propsValue['chatflow_id'];
     const input = ctx.propsValue['input'];
     const url = `${base_url}/api/v1/prediction/${chatflow_id}`;
@@ -88,11 +90,11 @@ export const flowise = createPiece({
   actions: [
     flowisePredict,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: flowiseAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${
-          (auth as { access_token: string }).access_token
+          auth.props.access_token
         }`,
       }),
     }),

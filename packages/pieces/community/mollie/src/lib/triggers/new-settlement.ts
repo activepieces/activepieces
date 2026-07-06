@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
@@ -10,7 +11,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 import dayjs from 'dayjs';
 
 interface MollieSettlementResponse {
@@ -41,12 +42,12 @@ interface MollieSettlementResponse {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof mollieAuth>,
+  AppConnectionValueForAuthProperty<typeof mollieAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const apiKey = auth as string;
+    const apiKey = auth;
     const isTest = lastFetchEpochMS === 0;
 
     let from: string | undefined;
@@ -124,6 +125,10 @@ export const mollieNewSettlement = createTrigger({
   name: 'new_settlement',
   displayName: 'New Settlement',
   description: 'Fires upon a new settlement event (e.g. payout)',
+  aiMetadata: {
+    description:
+      'Fires when a new settlement appears in Mollie, representing a payout of accumulated payments (minus fees, refunds, and chargebacks) to the merchant bank account. Polls the settlement list and emits each new settlement. Use for reconciliation and payout-driven accounting.',
+  },
 
   type: TriggerStrategy.POLLING,
 

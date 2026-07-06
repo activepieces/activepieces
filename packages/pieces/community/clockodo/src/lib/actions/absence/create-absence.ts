@@ -6,13 +6,19 @@ import {
   reformatDate,
 } from '../../common';
 import { AbsenceStatus, AbsenceType } from '../../common/models/absence';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
   name: 'create_absence',
   displayName: 'Create Absence',
   description: 'Creates a absence in clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new clockodo absence (e.g. vacation, sick leave) for a user over a start/end date range, with an absence type and optional approved/half-day/sick-note flags. Use to request or record time off; requires a date range and absence type, and defaults to the requested status unless approved is set. Not idempotent: each call creates a separate absence record.',
+    idempotent: false,
+  },
   props: {
     date_since: Property.DateTime({
       displayName: 'Start Date',
@@ -42,12 +48,12 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.createAbsence({
       date_since: reformatDate(propsValue.date_since) as string,
       date_until: reformatDate(propsValue.date_until) as string,
       type: propsValue.type as AbsenceType,
-      users_id: propsValue.user_id,
+      users_id: propsValue.user_id as number,
       count_days: propsValue.half_days ? 0.5 : 1,
       status: propsValue.approved
         ? AbsenceStatus.APPROVED

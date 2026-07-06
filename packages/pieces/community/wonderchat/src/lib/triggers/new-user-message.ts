@@ -2,7 +2,8 @@ import {
   PiecePropValueSchema,
   createTrigger,
   TriggerStrategy,
-  Property
+  Property,
+  AppConnectionValueForAuthProperty
 } from '@activepieces/pieces-framework';
 import {
   Polling,
@@ -20,7 +21,7 @@ interface Message {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof wonderchatAuth>,
+  AppConnectionValueForAuthProperty<typeof wonderchatAuth>,
   { chatlogId: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -30,7 +31,7 @@ const polling: Polling<
       url: 'https://app.wonderchat.io/api/v1/messages',
       headers: { 'Content-Type': 'application/json' },
       body: {
-        apiKey: auth,
+        apiKey: auth.secret_text,
         chatlogId: propsValue.chatlogId
       }
     });
@@ -55,6 +56,10 @@ export const newUserMessage = createTrigger({
   displayName: 'New User Message',
   description:
     'Triggers when a new message is sent by a user in a specific chatlog.',
+  aiMetadata: {
+    description:
+      'Fires when an end user sends a new message in a specific Wonderchat chat session (identified by chatlogId). Polls the chatlog’s messages and emits only newly arrived user-typed messages (bot replies are excluded). Use to react to incoming visitor messages in a single tracked conversation.',
+  },
   props: {
     chatlogId: Property.ShortText({
       displayName: 'Chatlog ID',

@@ -7,6 +7,12 @@ export const createProduct = createAction({
   name: 'create-product',
   displayName: 'Create New Product',
   description: 'Create a new product in your catalog',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new product in a VTEX store catalog, requiring name, title, description, and an existing brand ID and category ID. Optionally pass a product ID to set it explicitly. Not idempotent: each call creates a separate product.',
+    idempotent: false,
+  },
   props: {
     Name: Property.ShortText({
       displayName: 'Name',
@@ -80,7 +86,7 @@ export const createProduct = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
 
     const product = new Product(hostUrl, appKey, appToken);
 

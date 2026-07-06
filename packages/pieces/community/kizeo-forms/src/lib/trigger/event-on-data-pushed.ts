@@ -17,6 +17,9 @@ export const eventOnDataPushed = createTrigger({
   name: 'event_on_data_pushed',
   displayName: 'Event On Data Pushed',
   description: 'Handle EventOnData push event via webhooks',
+  aiMetadata: {
+    description: 'Fires when a data record is pushed (sent) out on the chosen Kizeo Forms form, i.e. a prefilled submission is dispatched to a device. Represents an outgoing push of data for that form.',
+  },
   props: {
     format: Property.StaticDropdown({
       displayName: 'Output Format',
@@ -81,7 +84,7 @@ export const eventOnDataPushed = createTrigger({
         third_party_id: workflowId,
       },
       headers: {
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
       queryParams: {},
     };
@@ -102,7 +105,7 @@ export const eventOnDataPushed = createTrigger({
           endpoint +
           `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
         headers: {
-          Authorization: context.auth,
+          Authorization: context.auth.secret_text,
         },
       };
       await httpClient.sendRequest(request);

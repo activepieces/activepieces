@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { mindeePredictDocumentAction } from './lib/actions/predict-document';
 
 export const mindeeAuth = PieceAuth.SecretText({
@@ -29,7 +29,7 @@ export const mindee = createPiece({
       baseUrl: () => 'https://api.mindee.net/v1',
       auth: mindeeAuth,
       authMapping: async (auth) => ({
-        Authorization: `Token ${auth}`,
+        Authorization: `Token ${auth.secret_text}`,
       }),
     }),
   ],

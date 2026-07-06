@@ -1,6 +1,5 @@
-import { microsoftTeamsAuth } from '../../';
+import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
 import { createGraphClient, withGraphRetry } from '../common/graph';
 
@@ -9,6 +8,11 @@ export const getChannelMessageAction = createAction({
 	name: 'microsoft_teams_get_channel_message',
 	displayName: 'Get Channel Message',
 	description: 'Fetch a specific channel message by team, channel, and message ID (optionally a reply).',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Retrieves a single channel message from Microsoft Teams by team ID, channel ID, and message ID; supply an optional reply ID to fetch a specific reply under that message instead. Use to read the content or metadata of a known channel post. Idempotent read-only lookup.',
+		idempotent: true,
+	},
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 		channelId: microsoftTeamsCommon.channelId,
@@ -26,7 +30,8 @@ export const getChannelMessageAction = createAction({
 	async run(context) {
 		const { teamId, channelId, messageId, replyId } = context.propsValue;
 
-		const client = createGraphClient(context.auth.access_token);
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(context.auth.access_token, cloud);
 
 		// https://learn.microsoft.com/graph/api/chatmessage-get?view=graph-rest-1.0
 		const base = `/teams/${teamId}/channels/${channelId}/messages/${messageId}`;

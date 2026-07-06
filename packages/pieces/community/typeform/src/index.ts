@@ -4,7 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { typeformNewSubmission } from './lib/trigger/new-submission';
 
 export const typeformAuth = PieceAuth.OAuth2({
@@ -26,7 +26,7 @@ export const typeform = createPiece({
       baseUrl: () => 'https://api.typeform.com',
       auth: typeformAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

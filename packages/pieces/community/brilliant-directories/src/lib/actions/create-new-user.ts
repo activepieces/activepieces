@@ -8,6 +8,8 @@ export const createNewUser = createAction({
   auth: brilliantDirectoriesAuth,
   displayName: 'Create new User',
   description: 'Creates a new user in your brilliant directories site',
+  audience: 'both',
+  aiMetadata: { description: 'Registers a new member account on a Brilliant Directories site via the v2 user/create API. Use to onboard a member when you have their email, password, and a subscription ID that maps to a membership plan; extra profile fields can be passed through the Meta object. Not idempotent — each call creates a new account, so calling twice with the same email may produce a duplicate or fail.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -32,13 +34,13 @@ export const createNewUser = createAction({
   },
 
   async run(context) {
-    const siteUrl = parseDirectoryURL(context.auth.site_url);
+    const siteUrl = parseDirectoryURL(context.auth.props.site_url);
 
     // Compile the request
     const CREATE_NEW_USER_URL = siteUrl + '/v2/user/create';
     const headers = {
       accept: 'application/json',
-      'X-Api-Key': context.auth.api_key,
+      'X-Api-Key': context.auth.props.api_key,
       'Content-Type': 'application/x-www-form-urlencoded',
     };
     const body = {

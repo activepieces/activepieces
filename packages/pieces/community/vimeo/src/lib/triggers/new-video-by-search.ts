@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { vimeoAuth } from '../auth';
 import { apiRequest } from '../common';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
@@ -8,7 +8,7 @@ type Props = {
   query: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof vimeoAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof vimeoAuth>, Props> = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue, lastFetchEpochMS }) {
     const { query } = propsValue;
@@ -54,6 +54,9 @@ export const newVideoBySearch = createTrigger({
   name: 'new_video_by_search',
   displayName: 'New Video by Search',
   description: 'Triggers when a new video is added that matches a search query',
+  aiMetadata: {
+    description: 'Fires when a newly published public video on Vimeo matches the configured search query. Polls Vimeo\'s global video search sorted by date and emits each new match, letting an agent monitor public content by keyword.',
+  },
   auth: vimeoAuth,
   props: {
     query: Property.ShortText({

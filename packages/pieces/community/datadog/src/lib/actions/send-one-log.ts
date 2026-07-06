@@ -1,12 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { v2 } from '@datadog/datadog-api-client';
-import { datadogAuth } from '../..';
-import { getDatadogConfiguration } from '../common';
+import { getDatadogConfiguration } from '../common/helpers';
+import { datadogAuth } from '../common/auth';
 
 export const sendOneLog = createAction({
   name: 'sendOneLog',
   displayName: 'Send One log',
   description: 'Send one log to your Datadog platform over HTTP.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits a single log entry to Datadog via the Logs intake API. Use to ship one application or system log; requires a `message` and accepts optional `ddsource`, comma-separated `ddtags`, `hostname`, `service`, and additional key-value properties (e.g. status/level). Not idempotent — each call appends a new log entry, so re-running duplicates it.',
+    idempotent: false,
+  },
   auth: datadogAuth,
   requireAuth: true,
   props: {
@@ -37,7 +43,8 @@ export const sendOneLog = createAction({
     }),
     additionalProperties: Property.Json({
       displayName: 'Additional Properties',
-      description: 'Additional properties to send to Datadog, in key-value pairs like status, level, etc.',
+      description:
+        'Additional properties to send to Datadog, in key-value pairs like status, level, etc.',
       required: false,
     }),
   },
@@ -48,17 +55,19 @@ export const sendOneLog = createAction({
     const apiInstance = new v2.LogsApi(getDatadogConfiguration(auth));
 
     const params: v2.LogsApiSubmitLogRequest = {
-      body: [{
-        message: propsValue.message,
-        ddsource: propsValue.ddsource,
-        ddtags: propsValue.ddtags,
-        hostname: propsValue.hostname,
-        service: propsValue.service,
-        additionalProperties: propsValue.additionalProperties,
-      }],
+      body: [
+        {
+          message: propsValue.message,
+          ddsource: propsValue.ddsource,
+          ddtags: propsValue.ddtags,
+          hostname: propsValue.hostname,
+          service: propsValue.service,
+          additionalProperties: propsValue.additionalProperties,
+        },
+      ],
     };
 
-    await apiInstance.submitLog(params)
+    await apiInstance.submitLog(params);
     return {
       success: true,
       message: 'Logs sent successfully',

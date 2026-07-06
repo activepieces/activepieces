@@ -1,10 +1,10 @@
 import {
   createTrigger,
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../common';
 import {
   DedupeStrategy,
   Polling,
@@ -12,9 +12,10 @@ import {
 } from '@activepieces/pieces-common';
 import { getCalendars } from '../common/helper';
 import { CalendarObject } from '../common/types';
+import { calendarOutputSchema } from '../output-schemas';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleCalendarAuth>,
+  AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
   {
     access_role_filter: string[] | undefined;
     calendar_name_filter: string | undefined;
@@ -83,6 +84,9 @@ export const newCalendar = createTrigger({
   name: 'new_calendar',
   displayName: 'New Calendar',
   description: 'Fires when a new calendar is created or becomes accessible.',
+  aiMetadata: {
+    description: 'Fires when a calendar newly appears in the connected account\'s calendar list, whether created or shared in, detected by polling. Each fired item is the new calendar. Can be filtered by access role, a name/description text match, and an option to exclude shared calendars.',
+  },
   props: {
     access_role_filter: Property.StaticMultiSelectDropdown({
       displayName: 'Access Role Filter',
@@ -111,6 +115,7 @@ export const newCalendar = createTrigger({
       defaultValue: false,
     }),
   },
+  outputSchema: calendarOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: 'sample_calendar_id@group.calendar.google.com',

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ibmCognoseAuth } from '../../index';
+import { ibmCognoseAuth } from '../auth';
 import { CognosClient } from '../common/cognos-client';
 import { contentObjectDropdown } from '../common/content-object-dropdown';
 
@@ -9,6 +9,8 @@ export const updateContentObjectAction = createAction({
   name: 'update_content_object',
   displayName: 'Update Content Object',
   description: 'Update an existing content object',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing content-store object (report, dashboard, folder, etc.) identified by its id, changing its name and/or description. The object type is required, and an optional version enables optimistic-concurrency checking that rejects the update if the object changed since it was fetched. Idempotent: re-applying the same values leaves the object in the same state.', idempotent: true },
   props: {
     objectId: contentObjectDropdown,
     type: Property.ShortText({
@@ -36,7 +38,7 @@ export const updateContentObjectAction = createAction({
     const { objectId, defaultName, defaultDescriptions, type, version } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const updateDefinition: any = { type };
       

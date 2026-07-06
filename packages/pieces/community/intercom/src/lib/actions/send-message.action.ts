@@ -1,10 +1,12 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { commonProps, intercomClient } from '../common';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 
 export const sendMessageAction = createAction({
 	auth: intercomAuth,
 	description: 'Send a message to a contact (only allowed by admins)',
+	audience: 'both',
+	aiMetadata: { description: 'Send a new outbound message from an admin to a contact, as either an email (with subject and template) or an in-app chat message. Each call sends a new message and may open a conversation, so it is not idempotent. Use to initiate contact; to respond within an existing conversation use Reply to conversation.', idempotent: false },
 	displayName: 'Send Message',
 	name: 'send_message',
 	props: {
@@ -20,6 +22,7 @@ export const sendMessageAction = createAction({
 			defaultValue: 'email',
 		}),
 		email_required_fields: Property.DynamicProperties({
+			auth: intercomAuth,
 			displayName: 'Email Required Fields',
 			required: true,
 			refreshers: ['message_type'],

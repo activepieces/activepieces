@@ -5,20 +5,20 @@ import {
 } from '@activepieces/pieces-common';
 import {
     createTrigger,
-    PiecePropValueSchema,
+    AppConnectionValueForAuthProperty,
     TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { timelinesAiAuth, timelinesAiCommon } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof timelinesAiAuth>,
+  AppConnectionValueForAuthProperty<typeof timelinesAiAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth: apiKey, propsValue, lastFetchEpochMS }) => {
     const response = await timelinesAiCommon.getChats({
-      apiKey: apiKey as string,
+      apiKey: apiKey,
       closed: true,
     });
     const items = response.data.chats;
@@ -34,6 +34,9 @@ export const chatClosed = createTrigger({
   name: 'chatClosed',
   displayName: 'Chat Closed',
   description: 'Fires when a chat is closed.',
+  aiMetadata: {
+    description: 'Fires when a TimelinesAI WhatsApp chat is marked closed (resolved/archived). Polls for chats in the closed state and emits each newly closed conversation.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

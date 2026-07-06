@@ -93,10 +93,12 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The File or URL of the audio or video file.": "Le fichier ou l'URL du fichier audio ou vidéo.",
   "The URL of the audio or video file to transcribe.": "L'URL du fichier audio ou vidéo à transcrire.",
   "The language of your audio file. Possible values are found in [Supported Languages](https://www.assemblyai.com/docs/concepts/supported-languages).\nThe default value is 'en_us'.\n": "La langue de votre fichier audio. Les valeurs possibles sont trouvées dans [Langues Supportées](https://www.assemblyai.com/docs/concepts/supported-languages).\nLa valeur par défaut est 'en_us'.\n",
@@ -156,7 +158,7 @@
   "The temperature to use for the model.\nHigher values result in answers that are more creative, lower values are more conservative.\nCan be any value between 0.0 and 1.0 inclusive.\n": "La température à utiliser pour le modèle.\nDes valeurs plus élevées donnent des réponses plus créatives, des valeurs plus faibles sont plus conservatrices.\nPeut être n'importe quelle valeur comprise entre 0.0 et 1.0 inclusivement.\n",
   "The ID of the LeMUR request whose data you want to delete. This would be found in the response of the original request.": "L'ID de la requête LeMUR dont vous voulez supprimer les données. Cela se trouve dans la réponse de la requête originale.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "English (Global)": "Anglais (Global)",
   "English (Australian)": "Anglais (Australien)",
   "English (British)": "Anglais (britannique)",
@@ -340,5 +342,9 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "TÊTE",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut"
 }

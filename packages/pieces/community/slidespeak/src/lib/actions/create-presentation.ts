@@ -1,4 +1,4 @@
-import { slidespeakAuth } from '../../index';
+import { slidespeakAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { BASE_URL } from '../common/constants';
@@ -8,6 +8,8 @@ export const createPresentationAction = createAction({
   name: 'create-presentation',
   displayName: 'Create Presentation',
   description: 'Creates a new presentation.',
+  audience: 'both',
+  aiMetadata: { description: 'Generates a new AI-built slide deck from a topic prompt, optionally grounded in previously uploaded documents (pass their UUIDs) and styled with a template, tone, verbosity, language, and PowerPoint or PDF output. Use to produce a presentation from scratch; the call blocks while polling until generation finishes (up to ~5 minutes) and creates a new deck on each invocation, so it is not idempotent.', idempotent: false },
   props: {
     plain_text: Property.ShortText({
       displayName: 'Topic',
@@ -24,6 +26,7 @@ export const createPresentationAction = createAction({
       required: false,
     }),
     template: Property.Dropdown({
+      auth: slidespeakAuth,
       displayName: 'Dropdown',
       refreshers: [],
       required: false,
@@ -40,7 +43,7 @@ export const createPresentationAction = createAction({
           method: HttpMethod.GET,
           url: BASE_URL + '/presentation/templates',
           headers: {
-            'X-API-key': auth as string,
+            'X-API-key': auth.secret_text,
           },
         });
 
@@ -138,7 +141,7 @@ export const createPresentationAction = createAction({
       method: HttpMethod.POST,
       url: BASE_URL + '/presentation/generate',
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
       },
       body: {
         plain_text,
@@ -174,7 +177,7 @@ export const createPresentationAction = createAction({
         method: HttpMethod.GET,
         url: BASE_URL + `/task_status/${taskId}`,
         headers: {
-          'X-API-key': apiKey,
+          'X-API-key': apiKey.secret_text,
         },
       });
 

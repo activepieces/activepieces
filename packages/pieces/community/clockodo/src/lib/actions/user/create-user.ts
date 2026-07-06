@@ -1,12 +1,14 @@
 import { clockodoCommon, emptyToNull, makeClient } from '../../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
   name: 'create_user',
   displayName: 'Create User',
   description: 'Creates a user in clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new clockodo user with required name, email, and role, plus optional team, language, wage type, and permissions. Not idempotent: each call adds another user even with the same email, so guard against duplicates. To change an existing user use Update User.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -50,7 +52,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.createUser({
       name: propsValue.name,
       email: propsValue.email,

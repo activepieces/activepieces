@@ -2,41 +2,20 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
+import { productboardProps } from '../common/props';
 
+/**
+ * Action to update an existing feature in Productboard.
+ */
 export const updateFeature = createAction({
     name: 'update_feature',
     displayName: 'Update Feature',
     description: 'Updates an existing feature in Productboard.',
+    audience: 'both',
+    aiMetadata: { description: 'Updates an existing Productboard feature identified by its feature id, setting only the supplied fields (name, description, status, or archived flag) and leaving others unchanged. Use to edit a known feature; if no fields are provided it makes no change. Idempotent: re-applying the same field values leaves the feature in the same state.', idempotent: true },
     auth: productboardAuth,
     props: {
-        feature_id: Property.Dropdown({
-            displayName: 'Feature',
-            description: 'The feature to update.',
-            required: true,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first'
-                    };
-                }
-                const response = await productboardCommon.apiCall({
-                    auth: auth as string,
-                    method: HttpMethod.GET,
-                    resourceUri: '/features'
-                });
-                const features = response.body['data'] ?? [];
-                return {
-                    disabled: false,
-                    options: features.map((feature: { id: string; name: string }) => ({
-                        label: feature.name,
-                        value: feature.id
-                    }))
-                };
-            }
-        }),
+        feature_id: productboardProps.feature_id(),
         name: Property.ShortText({
             displayName: 'Feature Name',
             description: 'New name for the feature.',
@@ -47,34 +26,7 @@ export const updateFeature = createAction({
             description: 'New description for the feature.',
             required: false,
         }),
-        status: Property.Dropdown({
-            displayName: 'Status',
-            description: 'New status for the feature.',
-            required: false,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first'
-                    };
-                }
-                const response = await productboardCommon.apiCall({
-                    auth: auth as string,
-                    method: HttpMethod.GET,
-                    resourceUri: '/feature-statuses'
-                });
-                const statuses = response.body['data'] ?? [];
-                return {
-                    disabled: false,
-                    options: statuses.map((status: { id: string; name: string }) => ({
-                        label: status.name,
-                        value: status.id
-                    }))
-                };
-            }
-        }),
+        status: productboardProps.status_id(false),
         archived: Property.Checkbox({
             displayName: 'Archived',
             description: 'Whether the feature is archived.',
@@ -84,27 +36,25 @@ export const updateFeature = createAction({
     async run(context) {
         const { feature_id, name, description, status, archived } = context.propsValue;
 
-        const feature: Record<string, any> = {
-            data: {},
-        };
+        const data: Record<string, any> = {};
 
         if (name) {
-            feature['data'].name = name;
+            data['name'] = name;
         }
 
         if (description) {
-            feature['data'].description = description;
+            data['description'] = description;
         }
 
         if (status) {
-            feature['data'].status = { id: status };
+            data['status'] = { id: status };
         }
 
         if (archived !== undefined) {
-            feature['data'].archived = archived;
+            data['archived'] = archived;
         }
 
-        if (Object.keys(feature['data']).length === 0) {
+        if (Object.keys(data).length === 0) {
             return { success: true, message: 'No fields to update.' };
         }
 
@@ -112,7 +62,7 @@ export const updateFeature = createAction({
             auth: context.auth,
             method: HttpMethod.PATCH,
             resourceUri: `/features/${feature_id}`,
-            body: feature,
+            body: { data },
         });
 
         return response.body;

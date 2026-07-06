@@ -8,8 +8,11 @@ export const sendMessageAction = createAction({
   name: 'send-message',
   displayName: 'Send Message',
   description: 'Sends a message to an Amazon SNS topic.',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a message to an Amazon SNS topic, fanning it out to that topic\'s subscribers (email, SMS, HTTP/S, SQS, Lambda, etc.). Use to send a notification or alert through a pre-existing SNS topic; you must supply the target topic\'s ARN and the message body. Not idempotent — each call publishes a new message and delivers it again.', idempotent: false },
   props: {
     topic: Property.Dropdown({
+        auth: amazonSnsAuth,
         displayName: 'Topic',
         description: 'Select a topic',
         required: true,
@@ -22,7 +25,7 @@ export const sendMessageAction = createAction({
                     placeholder: 'Please authenticate first',
                 };
             }
-            const sns = await createSNS((auth as { accessKeyId: string, secretAccessKey: string, region: string, endpoint: string }));
+            const sns = await createSNS(auth.props);
             const topics = await sns.send(new ListTopicsCommand({}));
             if (topics.Topics) {
                 return {
@@ -48,7 +51,7 @@ export const sendMessageAction = createAction({
   },
   async run(context) {
       const { topic, message } = context.propsValue;
-      const sns = createSNS(context.auth);
+      const sns = createSNS(context.auth.props);
       const response = await sns.send(new PublishCommand({ TopicArn: topic, Message: message }));
 
       return response;

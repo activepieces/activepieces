@@ -12,10 +12,10 @@ import {
 	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { pipedriveAuth } from '../..';
+import { pipedriveAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { FieldsResponse, GetField, RequestParams } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedriveDealV2 {
@@ -96,6 +96,10 @@ export const updatedDeal = createTrigger({
 	name: 'updated_deal',
 	displayName: 'Updated Deal',
 	description: 'Triggers when a deal is updated.',
+	aiMetadata: {
+		description:
+			'Fires when any field of an existing deal changes in Pipedrive, such as its value, status, owner, stage, or custom fields. Can optionally be scoped to changes on a specific deal, pipeline, or stage. Use to react to edits on sales opportunities in the CRM.',
+	},
 	props: {
 		filter_by: Property.StaticDropdown({
 			displayName: 'Filter by',
@@ -115,6 +119,7 @@ export const updatedDeal = createTrigger({
 			},
 		}),
 		filter_by_field_value: Property.DynamicProperties({
+			auth: pipedriveAuth,
 			displayName: 'Field Values',
 			required: false,
 			refreshers: ['filter_by'],
@@ -125,7 +130,7 @@ export const updatedDeal = createTrigger({
 				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
 				const filterBy = filter_by as unknown as string;
 
-				if (filterBy === 'status') {
+				if (filterBy === 'status') {	
 					props['field_value'] = Property.StaticDropdown({
 						displayName: 'Deal Status',
 						required: true,
@@ -168,7 +173,8 @@ export const updatedDeal = createTrigger({
 				return props;
 			},
 		}),
-		field_to_watch: Property.Dropdown({
+		field_to_watch: Property.Dropdown({	
+			auth: pipedriveAuth,
 			displayName: 'Field to watch for Changes On',
 			required: false,
 			refreshers: [],

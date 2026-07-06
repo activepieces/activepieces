@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -7,6 +7,10 @@ export const registrationFolderUpdated = createTrigger({
   name: 'registrationFolderUpdated',
   displayName: 'Dossier de formation mis à jour',
   description: "Se déclenche lorsqu'un dossier de formation est mis à jour",
+  aiMetadata: {
+    description:
+      'Fires whenever a Wedof training registration folder (dossier de formation) is updated, regardless of which field changed. Emits the full updated folder record including attendee, state, billing, and training details.',
+  },
   props: {},
   sampleData: {
     withPoleEmploi: false,
@@ -219,7 +223,7 @@ export const registrationFolderUpdated = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

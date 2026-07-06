@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient } from '../../common/client';
+import { createClient } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { PaginatedResponse, Todo } from '../../common/types';
 import { assertLimit } from '../../common/validation';
@@ -26,12 +26,17 @@ export const listTodos = createAction({
   name: 'list-todos',
   displayName: 'List Todos',
   description: 'Retrieve todos assigned to you in Hedy.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List the todos assigned to the authenticated Hedy user across all sessions. Use for an account-wide todo view; use List Session Todos to scope to one session. Set Return All to fetch everything, otherwise results are capped by the limit. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     returnAll: commonProps.returnAll,
     limit: commonProps.limit,
   },
   async run(context) {
-    const client = new HedyApiClient(context.auth as string);
+    const client = createClient(context.auth);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;

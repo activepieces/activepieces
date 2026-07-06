@@ -6,7 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { calendlyCommon, CalendlyWebhookInformation } from '../common';
-import { calendlyAuth } from '../../';
+import { calendlyAuth } from '../auth';
 
 const triggerNameInStore = 'calendly_invitee_created_trigger';
 
@@ -15,6 +15,10 @@ export const calendlyInviteeCreated = createTrigger({
   name: 'invitee_created',
   displayName: 'Event Scheduled',
   description: 'Triggers when a new Calendly event is scheduled',
+  aiMetadata: {
+    description:
+      'Fires when an invitee schedules a new Calendly event (a booking is created). Emits the new event including the invitee details (name, email), the event URI, scheduling timestamps, and the event status set to "active".',
+  },
   props: {
     scope: calendlyCommon.scope,
   },
@@ -47,7 +51,7 @@ export const calendlyInviteeCreated = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const calendlyUser = await calendlyCommon.getUser(context.auth);
+    const calendlyUser = await calendlyCommon.getUser(context.auth.secret_text);
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${calendlyCommon.baseUrl}/webhook_subscriptions`,
@@ -59,7 +63,7 @@ export const calendlyInviteeCreated = createTrigger({
         events: ['invitee.created'],
       },
       authentication: {
-        token: context.auth,
+        token: context.auth.secret_text,
         type: AuthenticationType.BEARER_TOKEN,
       },
       queryParams: {},
@@ -81,7 +85,7 @@ export const calendlyInviteeCreated = createTrigger({
         method: HttpMethod.DELETE,
         url: `${calendlyCommon.baseUrl}/webhook_subscriptions/${response.webhookId}`,
         authentication: {
-          token: context.auth,
+          token: context.auth.secret_text,
           type: AuthenticationType.BEARER_TOKEN,
         },
       };

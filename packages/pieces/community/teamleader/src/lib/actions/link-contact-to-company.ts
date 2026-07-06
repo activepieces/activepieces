@@ -7,9 +7,12 @@ export const linkContactToCompany = createAction({
     name: 'link_contact_to_company',
     displayName: 'Link Contact to Company',
     description: 'Associate a contact with a company',
+    audience: 'both',
+    aiMetadata: { description: 'Associate an existing contact with an existing company in Teamleader, optionally recording the contact\'s position and whether they are a decision maker. Use after both records exist to express the employment/relationship link. Requires contact ID and company ID. Idempotent on the link itself: re-running establishes the same association.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Contact',
             description: 'Select the contact to link',
             required: true,
@@ -23,7 +26,7 @@ export const linkContactToCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/contacts.list',
                         body: {}
@@ -46,6 +49,7 @@ export const linkContactToCompany = createAction({
             }
         }),
         company_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Company',
             description: 'Select the company to link to',
             required: true,
@@ -59,7 +63,7 @@ export const linkContactToCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/companies.list',
                         body: {}

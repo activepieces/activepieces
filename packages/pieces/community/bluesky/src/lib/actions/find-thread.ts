@@ -8,6 +8,11 @@ export const findThread = createAction({
   name: 'findThread',
   displayName: 'Find Thread',
   description: 'Get a full conversation thread with replies',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the full conversation thread around a Bluesky post — parent posts and nested replies — given a bsky.app post URL or AT-URI, with configurable reply depth and parent height (each 0-1000). Use to read an entire discussion rather than a single post. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     postUrl: postUrlProperty,
     depth: threadDepthDropdown,
@@ -17,9 +22,9 @@ export const findThread = createAction({
     const { postUrl, depth = 6, parentHeight = 80 } = propsValue;
 
     try {
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
-      const postInfo = extractPostInfoFromUrl(postUrl);
+      const postInfo = extractPostInfoFromUrl(postUrl); 
       let atUri = postInfo.uri;
 
       if (!atUri && postInfo.handle && postInfo.postId) {

@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { beamerAuth } from '../../index';
+import { beamerAuth } from '../auth';
 import { beamerCommon } from '../common';
 
 export const createBeamerPost = createAction({
@@ -12,6 +12,11 @@ export const createBeamerPost = createAction({
   name: 'create_beamer_post',
   displayName: 'Create Beamer Post ',
   description: 'Create a new post in Beamer',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Publishes a new announcement post to a Beamer account, attributed to a user by email and tagged with a category (new, fix, coming soon, announcement, or improvement). Use to broadcast product news or changelog entries to users. Creates a distinct post on each call (not idempotent).',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',
@@ -126,7 +131,7 @@ export const createBeamerPost = createAction({
   },
 
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,

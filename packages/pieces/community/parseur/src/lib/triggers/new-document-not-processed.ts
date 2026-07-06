@@ -9,6 +9,10 @@ export const newDocumentNotProcessed = createTrigger({
   displayName: 'New Document Not Processed',
   description:
     'Fires when Parseur fails to parse a document (e.g. no matching template).',
+  aiMetadata: {
+    description:
+      'Fires when Parseur receives a document but cannot parse it because no matching template exists (template-needed). Use to react to documents that require a new template or manual attention. The mailbox filter is optional; without it, the event fires across mailboxes.',
+  },
   props: {
     mailboxId: parserDropdown({ required: false }),
   },
@@ -16,13 +20,13 @@ export const newDocumentNotProcessed = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const response = await parseurCommon.createWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       event: 'document.template_needed',
       target: context.webhookUrl,
       category: 'CUSTOM',
     });
     await parseurCommon.enableWebhook({
-      apiKey: context.auth as string,
+      apiKey: context.auth.secret_text,
       webhookId: response.id,
       mailboxId: context.propsValue.mailboxId as number,
     });
@@ -38,7 +42,7 @@ export const newDocumentNotProcessed = createTrigger({
       return;
     }
     await parseurCommon.deleteWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newDocumentNotProcessed');

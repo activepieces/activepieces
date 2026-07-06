@@ -1,0 +1,12 @@
+{
+  "ChatFly allows you to build AI chatbots trained on your data.": "ChatFlyでは、データで訓練されたAIチャットボットを構築できます。",
+  "Enter your ChatFly API key": "ChatFly API キーを入力してください",
+  "Send Message": "メッセージを送信",
+  "Send a message to ChatFly bot": "ChatFlyボットにメッセージを送信する",
+  "Bot ID": "Bot ID",
+  "Message": "メッセージ",
+  "Session ID": "セッションID",
+  "The ID of your bot": "BotのID",
+  "The message to send": "送信するメッセージ",
+  "The ID of the session": "セッションのID"
+}

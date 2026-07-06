@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -8,10 +8,13 @@ export const leadStatusChangedTrigger = createTrigger({
   name: 'lead_status_changed',
   displayName: 'Lead Status Changed',
   description: 'Triggers when a lead status is changed.',
+  aiMetadata: {
+    description: 'Fires when a lead in the Kommo CRM account moves to a different status (e.g. advances or regresses within its pipeline). Represents a stage change on an existing lead, emitting the full updated lead record.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const webhook = await makeRequest(
       { subdomain, apiToken },
@@ -27,7 +30,7 @@ export const leadStatusChangedTrigger = createTrigger({
   },
 
   async onDisable(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
     const webhookId = await context.store.get('webhookId');
 
     if (webhookId) {
@@ -41,7 +44,7 @@ export const leadStatusChangedTrigger = createTrigger({
   },
 
   async run(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const payload = context.payload.body as { leads: { status: { id: string }[] } }
     const leadId = payload.leads.status[0].id;
@@ -51,7 +54,7 @@ export const leadStatusChangedTrigger = createTrigger({
     return [response]
   },
   async test(context) {
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
 
     const response = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/leads?limit=5&order[updated_at]=desc');
 

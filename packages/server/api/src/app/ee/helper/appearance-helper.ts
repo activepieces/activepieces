@@ -1,20 +1,22 @@
-import { ApEdition, isNil, PlatformWithoutSensitiveData } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApEdition, PlatformWithoutSensitiveData } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { defaultTheme, generateTheme } from '../../flags/theme'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 
-const getPlatformByIdOrFallback = async (platformId: string | null) => {
+const getPlatformByIdOrFallback = async (platformId: string | null, log: FastifyBaseLogger) => {
     if (isNil(platformId)) {
         return defaultTheme
     }
-    const platform = await platformService.getOneWithPlanOrThrow(platformId)
-    
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+
     return enterpriseThemeChecker(platform)
 }
 
 export const appearanceHelper = {
-    async getTheme({ platformId }: { platformId: string | null }) {
-        return getPlatformByIdOrFallback(platformId)
+    async getTheme({ platformId, log }: { platformId: string | null, log: FastifyBaseLogger }) {
+        return getPlatformByIdOrFallback(platformId, log)
     },
 }
 
@@ -30,6 +32,7 @@ const enterpriseThemeChecker = async (platform: PlatformWithoutSensitiveData) =>
                 favIconUrl: platform.favIconUrl,
                 logoIconUrl: platform.logoIconUrl,
                 primaryColor: platform.primaryColor,
+                themeColors: platform.themeColors ?? undefined,
             })
         case ApEdition.ENTERPRISE:
             if (platform.plan.customAppearanceEnabled) {
@@ -39,6 +42,7 @@ const enterpriseThemeChecker = async (platform: PlatformWithoutSensitiveData) =>
                     favIconUrl: platform.favIconUrl,
                     logoIconUrl: platform.logoIconUrl,
                     primaryColor: platform.primaryColor,
+                    themeColors: platform.themeColors ?? undefined,
                 })
             }
             return defaultTheme

@@ -7,6 +7,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   Property,
@@ -26,6 +27,9 @@ export const newOrUpdatedRecord = createTrigger({
   displayName: 'New or Updated Record',
   description:
     'Triggers when a new record is introduced or a record is updated.',
+  aiMetadata: {
+    description: 'Fires when a record in the selected Vtiger module (element type) is created or modified, polling the sync API. Whether new records, updated records, or both fire is governed by the watched timestamp column (created time vs. modified time); the sync scope can be limited to the user, their groups, or the whole application.',
+  },
   props: {
     elementType: elementTypeProperty,
     watchBy: Property.StaticDropdown({
@@ -85,7 +89,7 @@ export const newOrUpdatedRecord = createTrigger({
 });
 
 const polling: Polling<
-  PiecePropValueSchema<typeof vtigerAuth>,
+  AppConnectionValueForAuthProperty<typeof vtigerAuth>,
   { elementType?: string; watchBy?: string; limit?: number; syncType?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -110,7 +114,7 @@ const fetchRecords = async ({
   propsValue,
   lastFetchEpochMS,
 }: {
-  auth: Record<string, string>;
+  auth: AppConnectionValueForAuthProperty<typeof vtigerAuth>;
   propsValue: Record<string, unknown>;
   lastFetchEpochMS: number;
 }) => {
@@ -118,7 +122,7 @@ const fetchRecords = async ({
   const limit = (propsValue['limit'] as number) ?? 100;
   const syncType = (propsValue['syncType'] as string) ?? 'application';
 
-  const baseUrl = `${auth['instance_url']}/restapi/v1/vtiger/default`;
+  const baseUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default`;
 
   // Vtiger expects UNIX timestamp (seconds)
   let modifiedTimeSec = Math.floor((lastFetchEpochMS || 0) / 1000);
@@ -136,8 +140,8 @@ const fetchRecords = async ({
       url: `${baseUrl}/sync`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth['username'],
-        password: auth['password'],
+        username: auth.props.username,
+        password: auth.props.password,
       },
       queryParams: {
         modifiedTime: String(modifiedTimeSec),
@@ -173,8 +177,8 @@ const fetchRecords = async ({
       url: `${baseUrl}/retrieve`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth['username'],
-        password: auth['password'],
+        username: auth.props.username,
+        password: auth.props.password,
       },
       queryParams: {
         id,

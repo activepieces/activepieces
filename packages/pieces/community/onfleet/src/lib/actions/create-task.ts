@@ -14,6 +14,12 @@ export const createTask = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Creates a task',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new Onfleet delivery or pickup task with a destination address and recipient. Each call creates a separate task, so it is not idempotent (re-running adds duplicates). Provide an existing recipient by ID, or supply recipient name and phone to create one inline; set the pickup flag to make it a pickup rather than a drop-off.',
+    idempotent: false,
+  },
   props: {
     merchant: Property.ShortText({
       displayName: 'Merchant ID',
@@ -28,6 +34,7 @@ export const createTask = createAction({
     destination: common.destination,
     unparsedDestination: common.unparsedDestination,
     recipient: Property.DynamicProperties({
+      auth: onfleetAuth,
       displayName: 'Destination',
       description: 'The task destination',
       required: true,
@@ -118,7 +125,7 @@ export const createTask = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
     let address;
     if (context.propsValue.unparsedDestination) {
       address = {

@@ -7,7 +7,7 @@ import {
 	pollingHelper,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	PiecePropValueSchema,
@@ -25,7 +25,8 @@ type EmailEventResponse = {
 	offset: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const eventType = propsValue.eventType;
@@ -71,6 +72,10 @@ export const newEmailEventTrigger = createTrigger({
 	name: 'new-email-event',
 	displayName: 'New Email Event',
 	description: 'Triggers when all,or specific new email event is available.',
+	aiMetadata: {
+		description:
+			'Fires when a new marketing-email event occurs in HubSpot, optionally filtered to a single event type (sent, delivered, open, click, bounce, dropped, deferred, processed, status change, or spam report). Each event represents one email engagement record with its recipient and timestamp. Polls the email events API by timestamp.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		eventType: Property.StaticDropdown({

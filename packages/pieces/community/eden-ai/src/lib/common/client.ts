@@ -48,7 +48,7 @@ export async function edenAiApiCall<T = any>({
   }
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${apiKey}`,
-    'Content-Type': 'application/json',
+    ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
     ...customHeaders,
   };
 

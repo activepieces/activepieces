@@ -38,18 +38,30 @@ export const triggers = [
 		name: 'subscriber.created',
 		displayName: 'Subscriber Created',
 		description: 'Triggers when a subscriber was created on your mailing list.',
+		aiMetadata: {
+			description:
+				'Fires when a new subscriber is added to the MailerLite account, regardless of source (manual, form, import, API). Represents a newly created contact and carries the subscriber record.',
+		},
 		sampleData: subscriberSample,
 	},
 	{
 		name: 'subscriber.updated',
 		displayName: 'Subscriber Fields Updated',
 		description: 'Triggers when the subscriber fields have been updated.',
+		aiMetadata: {
+			description:
+				"Fires when an existing subscriber's fields (name, custom fields, or other profile attributes) are changed. Represents an update to a contact's record and carries the updated subscriber.",
+		},
 		sampleData: subscriberSample,
 	},
 	{
 		name: 'subscriber.unsubscribed',
 		displayName: 'Subscriber Unsubscribed',
 		description: 'Triggers when a subscriber has unsubscribed from your mailing list.',
+		aiMetadata: {
+			description:
+				'Fires when a subscriber unsubscribes from the mailing list, with their status set to unsubscribed. Represents a contact opting out and carries the affected subscriber.',
+		},
 		sampleData: {
 			id: '112374478518880188',
 			email: 'example@gmail.com',
@@ -74,6 +86,10 @@ export const triggers = [
 		name: 'subscriber.added_to_group',
 		displayName: 'Subscriber Added to Group',
 		description: 'Triggers when a subscriber is added to a group.',
+		aiMetadata: {
+			description:
+				'Fires when a subscriber is assigned to a group/segment. Represents group membership being granted and carries both the subscriber and the group it was added to.',
+		},
 		sampleData: {
 			type: 'subscriber.added_to_group',
 			subscriber: subscriberSample,
@@ -86,11 +102,13 @@ export function register({
 	name,
 	displayName,
 	description,
+	aiMetadata,
 	sampleData,
 }: {
 	name: string;
 	displayName: string;
 	description: string;
+	aiMetadata: { description: string };
 	sampleData: unknown;
 }) {
 	return createTrigger({
@@ -98,6 +116,7 @@ export function register({
 		name,
 		displayName,
 		description,
+		aiMetadata,
 		props: {
 			name: Property.ShortText({
 				displayName: 'Webhook Name',
@@ -107,7 +126,7 @@ export function register({
 		sampleData: sampleData,
 		type: TriggerStrategy.WEBHOOK,
 		async onEnable(context) {
-			const mailerLite = new MailerLite({ api_key: context.auth });
+			const mailerLite = new MailerLite({ api_key: context.auth.secret_text });
 			mailerLite.webhooks
 				.create({
 					name: context.propsValue.name,
@@ -125,7 +144,7 @@ export function register({
 			const webhook = await context.store.get<Webhook>(name);
 
 			if (webhook?.data.id) {
-				const mailerLite = new MailerLite({ api_key: context.auth });
+				const mailerLite = new MailerLite({ api_key: context.auth.secret_text });
 				mailerLite.webhooks.delete(webhook?.data.id);
 			}
 		},

@@ -9,6 +9,8 @@ export const removeConversationTags = createAction({
   name: 'removeConversationTags',
   displayName: 'Remove Conversation Tags',
   description: 'Remove one or more tags from a conversation.',
+  audience: 'both',
+  aiMetadata: { description: 'Detach one or more existing tags from a Front conversation by conversation ID and tag IDs. This mutates the conversation and only removes tags (it does not delete the tags themselves or add new ones); removing a tag that is not present has no effect.', idempotent: false },
   props: {
     conversation_id: conversationIdDropdown,
     tag_ids: Property.Array({

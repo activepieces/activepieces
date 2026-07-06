@@ -7,6 +7,8 @@ export const getPaymentActionsAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Get Payment Actions',
   description: 'Build full transaction lifecycles for audit logs.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the list of actions (authorization, capture, refund, void, etc.) that have occurred on a single Checkout.com payment, identified by its payment ID (resolved from an order reference). Choose it to reconstruct a transaction\'s lifecycle for audit or status tracking. Read-only and idempotent.', idempotent: true },
   props: {
     reference: Property.ShortText({
       displayName: 'Reference',
@@ -14,12 +16,13 @@ export const getPaymentActionsAction = createAction({
       required: true,
     }),
     paymentId: Property.Dropdown({
+      auth: checkoutComAuth,
       displayName: 'Payment ID',
       description: 'Select the payment to get actions for',
       required: true,
       refreshers: ['reference'],
       options: async ({ auth, reference }) => {
-        if (!reference) {
+        if (!reference || !auth) {
           return {
             disabled: true,
             options: [],
@@ -28,7 +31,7 @@ export const getPaymentActionsAction = createAction({
         }
 
         try {
-          const { baseUrl } = getEnvironmentFromApiKey(auth as string);
+          const { baseUrl } = getEnvironmentFromApiKey(auth.secret_text);
           
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
@@ -38,7 +41,7 @@ export const getPaymentActionsAction = createAction({
               limit: '100',
             },
             headers: {
-              Authorization: `Bearer ${auth}`,
+              Authorization: `Bearer ${auth.secret_text}`,
               'Content-Type': 'application/json',
             },
           });
@@ -75,7 +78,7 @@ export const getPaymentActionsAction = createAction({
   async run(context) {
     const { paymentId } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     if (!paymentId.match(/^pay_[a-zA-Z0-9]{26}$/)) {
       throw new Error('Invalid payment ID format. Must start with "pay_" followed by 26 alphanumeric characters.');
@@ -86,7 +89,7 @@ export const getPaymentActionsAction = createAction({
         method: HttpMethod.GET,
         url: `${baseUrl}/payments/${paymentId}/actions`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
       });

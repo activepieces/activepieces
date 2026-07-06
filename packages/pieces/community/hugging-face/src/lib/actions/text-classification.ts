@@ -5,9 +5,10 @@ import {
   InferenceClient,
 } from '@huggingface/inference';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const textClassification = createAction({
+  audience: 'human',
   name: 'text_classification',
   auth: huggingFaceAuth,
   displayName: 'Text Classification',
@@ -131,6 +132,7 @@ export const textClassification = createAction({
       defaultValue: 'cardiffnlp/twitter-roberta-base-sentiment-latest',
     }),
     searchModel: Property.Dropdown({
+      auth: huggingFaceAuth,
       displayName: 'Search Models',
       description: 'Search from all available text classification models',
       required: false,
@@ -291,7 +293,7 @@ export const textClassification = createAction({
         isZeroShot = true;
     }
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
 
     if (isZeroShot) {
       // Handle zero-shot classification

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { browseAiAuth } from '../common/auth';
 import { browseAiApiCall } from '../common/client';
 import { robotIdDropdown } from '../common/props';
@@ -12,6 +12,10 @@ export const taskFinishedWithErrorTrigger = createTrigger({
   name: 'task_finished_with_error',
   displayName: 'Task Finished with Error',
   description: 'Triggers when a robot task run fails with an error.',
+  aiMetadata: {
+    description:
+      'Fires when a task run for the selected Browse AI robot finishes in a failed/error state, delivering the failed task record. Use to detect and react to scrapes that did not complete successfully.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     robotId: robotIdDropdown,
@@ -19,7 +23,7 @@ export const taskFinishedWithErrorTrigger = createTrigger({
 
   async onEnable(context) {
     const { robotId } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     try {
       // Verify robot exists and we have access
@@ -81,7 +85,7 @@ export const taskFinishedWithErrorTrigger = createTrigger({
     const { robotId } = context.propsValue;
 
     const webhookId = await context.store.get<string>(TRIGGER_KEY);
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     if (!isNil(webhookId)) {
       try {
@@ -116,7 +120,7 @@ export const taskFinishedWithErrorTrigger = createTrigger({
   async test(context) {
     const { robotId } = context.propsValue;
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const response = await browseAiApiCall<{
       result: { robotTasks: { items: { id: string }[] } };

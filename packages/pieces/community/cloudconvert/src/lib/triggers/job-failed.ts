@@ -14,6 +14,9 @@ export const jobFailed = createTrigger({
   name: 'job_failed',
   displayName: 'Job Failed',
   description: 'Triggers when a CloudConvert job has failed',
+  aiMetadata: {
+    description: 'Fires when a CloudConvert job fails (job.failed webhook event). Represents a job that ended in error, carrying the failed tasks along with their error message and code for handling or alerting.',
+  },
   auth: cloudconvertAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},
@@ -55,7 +58,7 @@ export const jobFailed = createTrigger({
     const webhookUrl = context.webhookUrl;
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${cloudconvertCommon.baseUrl((context.auth as any).region || 'auto')}/webhooks`,
+      url: `${cloudconvertCommon.baseUrl((context.auth).props?.['region'] as string || 'auto')}/webhooks`,
       body: {
         url: webhookUrl,
         events: ['job.failed']
@@ -81,7 +84,7 @@ export const jobFailed = createTrigger({
     // First, find the webhook by URL
     const listRequest: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${cloudconvertCommon.baseUrl((context.auth as any).region || 'auto')}/users/me/webhooks`,
+      url: `${cloudconvertCommon.baseUrl((context.auth).props?.['region'] as string || 'auto')}/users/me/webhooks`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
@@ -95,7 +98,7 @@ export const jobFailed = createTrigger({
         if (webhook) {
           const deleteRequest: HttpRequest = {
             method: HttpMethod.DELETE,
-            url: `${cloudconvertCommon.baseUrl((context.auth as any).region || 'auto')}/webhooks/${webhook.id}`,
+            url: `${cloudconvertCommon.baseUrl((context.auth).props?.['region'] as string || 'auto')}/webhooks/${webhook.id}`,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
               token: context.auth.access_token,

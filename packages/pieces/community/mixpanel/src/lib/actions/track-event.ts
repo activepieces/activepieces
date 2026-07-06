@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { mixpanelAuth } from '../../index';
+import { mixpanelAuth } from '../auth';
 
 const API_URL = 'https://api.mixpanel.com';
 
@@ -13,6 +13,12 @@ export const trackEvent = createAction({
   auth: mixpanelAuth,
   displayName: 'Track Event',
   description: 'Send an Event to Mixpanel.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Record a product-analytics event in Mixpanel by name (e.g. "Payment Made"), optionally tying it to a user via a distinct ID and attaching arbitrary event properties as key-value pairs. Use to log user actions or behavior for analytics. Not idempotent: each call appends a new event stamped with the current time, so repeating it records duplicates.',
+    idempotent: false,
+  },
   props: {
     event: Property.ShortText({
       displayName: 'Event',
@@ -57,7 +63,7 @@ export const trackEvent = createAction({
       },
       authentication: {
         type: AuthenticationType.BASIC,
-        username: projectToken,
+        username: projectToken.secret_text,
         password: '',
       },
     });

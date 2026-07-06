@@ -1,4 +1,4 @@
-import { openRouterAuth } from '../../index';
+import { openRouterAuth } from '../auth';
 import {
   Property,
   createAction,
@@ -10,16 +10,19 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { askLmmActionOutputSchema } from '../output-schemas';
 
 export const askOpenRouterAction = createAction({
+  audience: 'human',
   name: 'ask-lmm',
   displayName: 'Ask LLM',
   description: 'Ask any model supported by Open Router.',
   auth: openRouterAuth,
   props: {
     model: Property.Dropdown({
+      auth: openRouterAuth,
       displayName: 'Model',
       description:
         'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
@@ -27,12 +30,19 @@ export const askOpenRouterAction = createAction({
       refreshers: [],
       defaultValue: 'pygmalionai/mythalion-13b',
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         const request: HttpRequest = {
           url: 'https://openrouter.ai/api/v1/models',
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
         };
         try {
@@ -83,10 +93,11 @@ export const askOpenRouterAction = createAction({
         'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
     }),
   },
+  outputSchema: askLmmActionOutputSchema,
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      temperature: z.number().min(0).max(1.0).optional(),
-      topP: z.number().min(0).max(1.0).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
+      topP: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
     });
 
     const openRouterModel = context.propsValue.model;
@@ -103,7 +114,7 @@ export const askOpenRouterAction = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'HTTP-Referer': 'https://openrouter.ai/playground',

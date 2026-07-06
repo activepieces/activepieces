@@ -6,6 +6,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   Property,
   StaticPropsValue,
@@ -24,7 +25,7 @@ const props = {
   }),
 };
 
-const polling: Polling<PiecePropValueSchema<typeof cloudinaryAuth>, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof cloudinaryAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     let endpoint = '/resources/image'; // Default to all resources
@@ -47,6 +48,9 @@ export const newResourceInFolder = createTrigger({
   name: 'new_resource',
   displayName: 'New Resource',
   description: 'Triggers when a new image, video, or file is uploaded to a specific folder or account in Cloudinary.',
+  aiMetadata: {
+    description: 'Fires when a new asset is uploaded to Cloudinary, scoped to a specific asset folder or the whole account when no folder is given. Each event represents one newly created asset and its metadata.',
+  },
   props,
   sampleData: {
     "asset_id": "bcace221f5b11685dd6effb9d69d5ec3",

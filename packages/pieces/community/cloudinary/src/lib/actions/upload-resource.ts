@@ -25,6 +25,8 @@ export const uploadResource = createAction({
   name: 'uploadResource',
   displayName: 'Upload Resource',
   description: 'Upload a new image, video, or file to Cloudinary.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file (image, video, or raw) to Cloudinary, optionally placing it in a folder, tagging it, and assigning a public ID. Use to ingest media into the account before transforming, delivering, or referencing it. Not idempotent: each call uploads the file and, unless overwrite is enabled with a fixed public_id, creates a distinct asset.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',
@@ -37,6 +39,7 @@ export const uploadResource = createAction({
       required: false,
     }),
     folder: Property.Dropdown({
+      auth: cloudinaryAuth,
       displayName: 'Folder',
       description: 'Select an existing folder or type a new folder path (e.g., "samples/animals")',
       required: false,
@@ -75,6 +78,7 @@ export const uploadResource = createAction({
       },
     }),
     tags: Property.MultiSelectDropdown({
+      auth: cloudinaryAuth,
       displayName: 'Tags',
       description: 'Select existing tags or type new ones',
       required: false,
@@ -125,8 +129,8 @@ export const uploadResource = createAction({
   async run({ auth, propsValue }) {
     const { file, public_id, folder, tags, overwrite, use_filename } = propsValue;
     const timestamp = Math.floor(Date.now() / 1000);
-    const api_key = auth.api_key.trim();
-    const api_secret = auth.api_secret.trim();
+    const api_key = auth.props.api_key.trim();
+    const api_secret = auth.props.api_secret.trim();
     
     const paramsToSign: Record<string, any> = {
       timestamp,

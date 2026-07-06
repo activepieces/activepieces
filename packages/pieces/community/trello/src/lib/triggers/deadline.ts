@@ -1,5 +1,5 @@
 import { trelloAuth } from '../..';
-import { TriggerStrategy, createTrigger, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { trelloCommon, getCardsInBoard, getCardsInList } from '../common';
@@ -11,7 +11,7 @@ interface Props {
     time_unit: string;
 }
 
-const polling: Polling<PiecePropValueSchema<typeof trelloAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof trelloAuth>, Props> = {
     strategy: DedupeStrategy.TIMEBASED,
     async items({ auth, propsValue, lastFetchEpochMS }) {
         const { board_id, list_id_opt, time_before_due, time_unit } = propsValue;
@@ -45,6 +45,9 @@ export const deadlineTrigger = createTrigger({
     name: 'deadline',
     displayName: 'Card Deadline',
     description: 'Triggers at a specified time before a card deadline.',
+    aiMetadata: {
+        description: 'Fires for each card whose due date falls within a configured lead time (e.g. 24 hours) ahead of now, scoped to a board or an optional list. Represents an approaching, not-yet-completed card deadline; polls periodically and skips cards already marked due-complete.',
+    },
     type: TriggerStrategy.POLLING,
     props: {
         board_id: trelloCommon.board_id,

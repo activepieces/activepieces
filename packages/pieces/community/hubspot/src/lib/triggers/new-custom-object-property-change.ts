@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	DynamicPropsValue,
@@ -8,21 +8,23 @@ import {
 import {
 	customObjectDropdown,
 	customObjectPropertiesDropdown,
-	standardObjectPropertiesDropdown,
 } from '../common/props';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { chunk } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
+import { MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 
 type Props = {
 	customObjectType?: string;
 	propertyName?: DynamicPropsValue;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
@@ -48,10 +50,10 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		}
 		//fetch updated custom objects
 		const updatedCustomObjects = [];
-		let after;
+		let after: string | undefined;
 		do {
 			const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
-				limit: 100,
+				limit: MAX_SEARCH_PAGE_SIZE,
 				after,
 				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: [
@@ -72,6 +74,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			});
 			after = response.paging?.next?.after;
 			updatedCustomObjects.push(...response.results);
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		if (updatedCustomObjects.length === 0) {
@@ -124,6 +134,10 @@ export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	name: 'new-custom-object-property-change',
 	displayName: 'New Custom Object Property Change',
 	description: 'Triggers when a specified property is updated on a custom object.',
+	aiMetadata: {
+		description:
+			'Fires when the chosen property changes on a record of the selected HubSpot custom object type. Each event represents one custom-object record whose selected property was modified since the last poll, returning the record. Use to react to specific field updates on a custom object rather than every change.',
+	},
 	props: {
 		customObjectType: customObjectDropdown,
 		propertyName: customObjectPropertiesDropdown('Property Name', true, true),

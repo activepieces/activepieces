@@ -1,4 +1,4 @@
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient, tarventCommon } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -8,6 +8,9 @@ export const contactBouncedTrigger = createTrigger({
   name: 'tarvent_contact_bounced',
   displayName: 'Campaign Or Transactional Email Bounced',
   description: 'Triggers when a campaign or transactional email bounces (is rejected) for a contact.',
+  aiMetadata: {
+    description: 'Fires when a campaign or transactional email bounces (is rejected) for a contact. Can be scoped by entity (campaign vs. transactional) and by bounce type (any, hard, soft, block, DNS failure, etc.), and optionally by audience, group, or tag. Represents a failed delivery.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

@@ -8,6 +8,12 @@ export const createLink = createAction({
   name: 'createLink',
   displayName: 'Create Link',
   description: 'Create a Link in Front (name, external URL).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a reusable Front Link from a name and external URL (with an optional regex pattern) that can later be attached to conversations. Use this first when you need a link that does not yet exist before calling "Add Conversation Links". Not idempotent: repeated calls create duplicate links.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { linkaAuth } from '../..';
+import { linkaAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 // Helper function to get current date in the required format
@@ -11,6 +11,12 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in the CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an invoice for a contact in the Linka/Sperse CRM, including a single line item and an associated payment transaction. The contact is resolved by Contact ID or external Contact XREF; status, invoice number, dates, currency, and a description are required. Use to record a billable invoice. Not idempotent: each call records a new invoice and transaction, so repeating it appends duplicate billing records.',
+    idempotent: false,
+  },
   auth: linkaAuth,
   props: {
     contactId: Property.Number({
@@ -456,9 +462,9 @@ export const createInvoice = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportInvoice`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportInvoice`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

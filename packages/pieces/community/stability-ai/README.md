@@ -1,7 +1,5 @@
 # pieces-stability-ai
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-stability-ai` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-stability-ai` to build the library.

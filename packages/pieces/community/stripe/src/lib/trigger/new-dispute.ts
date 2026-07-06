@@ -7,7 +7,7 @@ import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 type StripeWebhookPayload = {
   data: {
@@ -22,6 +22,10 @@ export const stripeNewDispute = createTrigger({
   name: 'new_dispute',
   displayName: 'New Dispute',
   description: 'Fires when a customer disputes a charge.',
+  aiMetadata: {
+    description:
+      'Fires when a customer disputes a charge in Stripe (the charge.dispute.created event), emitting the dispute including its reason and evidence due date. Optional filters narrow firing to a specific charge ID or payment intent ID. Use to react to chargebacks, such as alerting a team or gathering evidence.',
+  },
   props: {
     charge: Property.ShortText({
       displayName: 'Charge ID',
@@ -63,7 +67,7 @@ export const stripeNewDispute = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'charge.dispute.created',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>('_new_dispute_trigger', {
       webhookId: webhook.id,
@@ -77,7 +81,7 @@ export const stripeNewDispute = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
@@ -85,12 +89,13 @@ export const stripeNewDispute = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/disputes',
+      url: 'https://api.stripe.com/v1/issuing/disputes',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
+        status: 'submitted',
         limit: '5',
       },
     });

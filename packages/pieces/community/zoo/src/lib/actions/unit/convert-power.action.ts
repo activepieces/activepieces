@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertPowerAction = createAction({
   name: 'convert_power',
   displayName: 'Convert Power',
   description: 'Convert power measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a power value between units (watts, kilowatts, megawatts, or horsepower) using Zoo\'s unit conversion API. Read-only and deterministic for the same inputs. Pick the power-specific action when converting power quantities rather than other unit types.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {
@@ -44,7 +46,7 @@ export const convertPowerAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/power/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

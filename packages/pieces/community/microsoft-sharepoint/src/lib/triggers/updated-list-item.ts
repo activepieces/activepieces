@@ -1,9 +1,10 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import {
   createTrigger,
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
 
@@ -14,6 +15,9 @@ export const updatedListItemTrigger = createTrigger({
   name: 'updated_list_item',
   displayName: 'Updated List Item',
   description: 'Fires when an existing item in a SharePoint list is updated.',
+  aiMetadata: {
+    description: 'Fires when an existing item in one specific SharePoint list on a given site is modified. Each event represents the updated list item with its current fields; newly created items are not the focus (use New List Item for creations).',
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     listId: microsoftSharePointCommon.listId,
@@ -38,15 +42,17 @@ export const updatedListItemTrigger = createTrigger({
   async onEnable(context) {
     const { siteId, listId } = context.propsValue;
     
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     try {
       const expirationDateTime = new Date();
-      expirationDateTime.setDate(expirationDateTime.getDate() + 2); 
+      expirationDateTime.setDate(expirationDateTime.getDate() + 2);
 
       const subscription = await client.api('/subscriptions').post({
         changeType: 'updated',
@@ -65,10 +71,12 @@ export const updatedListItemTrigger = createTrigger({
   async onDisable(context) {
     const subscriptionId = await context.store.get<string>('subscriptionId');
     if (subscriptionId) {
+      const cloud = context.auth.props?.['cloud'] as string | undefined;
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(context.auth.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
       });
       try {
         await client.api(`/subscriptions/${subscriptionId}`).delete();
@@ -92,10 +100,12 @@ export const updatedListItemTrigger = createTrigger({
       return [];
     }
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(context.auth.access_token),
         },
+        baseUrl: getGraphBaseUrl(cloud),
     });
       
     const updatedItemPayloads = [];

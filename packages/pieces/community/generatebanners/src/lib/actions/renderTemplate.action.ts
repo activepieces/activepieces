@@ -9,21 +9,24 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { generatebannersAuth } from '../../';
+import { generatebannersAuth } from '../auth';
 
 export const renderTemplate = createAction({
   auth: generatebannersAuth,
   name: 'render_template',
   description: 'Render a GenerateBanners template',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a GenerateBanners design template into an image or document and returns a signed URL to the generated file. Choose a template by id, pick the output file type (jpg, png, or pdf), and supply values for the template\'s variable fields to fill in dynamic text. Use this to produce banners, social posts, or PDFs from a predefined template. Read-only/idempotent: the same template id, file type, and variable values always yield the same rendered output with no extra side effect.', idempotent: true },
   displayName: 'Render Template',
   props: {
     template_id: Property.Dropdown({
       displayName: 'Template',
+      auth: generatebannersAuth,
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const authentication = auth as BasicAuthPropertyValue;
-        if (!auth) {
+        const authentication = auth;
+        if (!authentication) {
           return {
             disabled: true,
             options: [],
@@ -83,6 +86,7 @@ export const renderTemplate = createAction({
     }),
     variables: Property.DynamicProperties({
       displayName: 'Variables',
+      auth: generatebannersAuth,
       required: true,
       refreshers: ['template_id'],
       props: async ({ auth, template_id }) => {

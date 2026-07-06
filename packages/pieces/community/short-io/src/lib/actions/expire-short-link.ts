@@ -9,6 +9,8 @@ export const expireShortLinkAction = createAction({
   name: 'expire-short-link',
   displayName: 'Expire Short Link',
   description: 'Set an expiration date or click limit to deactivate a short link.',
+  audience: 'both',
+  aiMetadata: { description: 'Sets an expiration on an existing short link (identified by its link ID) so it deactivates at a given date/time or after a number of clicks, optionally redirecting expired visitors to a fallback URL. Use to schedule a link to stop working. Requires either an expiration date or a click limit; idempotent — re-applying the same expiry settings to the same link leaves it in the same state.', idempotent: true },
   props: {
     domain: domainIdDropdown,
     linkId: linkIdDropdown,

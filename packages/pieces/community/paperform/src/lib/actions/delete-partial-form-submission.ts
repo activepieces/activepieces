@@ -10,9 +10,12 @@ export const deletePartialFormSubmission = createAction({
   name: 'deletePartialFormSubmission',
   displayName: 'Delete Partial Form Submission',
   description: 'Deletes a partial/in-progress submission by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a partial (in-progress, not yet completed) Paperform submission by its ID from the given form. Use to discard an abandoned draft response; this is destructive and not idempotent.', idempotent: false },
   props: {
     formId: paperformCommonProps.formId,
     partialSubmissionId: Property.Dropdown({
+      auth: paperformAuth,
       displayName: 'Partial Submission ID',
       required: true,
       refreshers: ['auth', 'formId'],
@@ -28,7 +31,7 @@ export const deletePartialFormSubmission = createAction({
         try {
           const partialSubmissions = await paperformCommon.getPartialSubmissions({
             formSlugOrId: formId as string,
-            auth: auth as string,
+            auth: auth.secret_text,
             limit: 100,
           });
           
@@ -56,7 +59,7 @@ export const deletePartialFormSubmission = createAction({
       await paperformCommon.apiCall({
         method: HttpMethod.DELETE,
         url: `/partial-submissions/${partialSubmissionId}`,
-        auth: auth as string,
+        auth: auth.secret_text,
       });
       
       return {

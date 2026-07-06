@@ -4,13 +4,19 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const createVideoFromTemplate = createAction({
   name: 'createVideoFromTemplate',
   displayName: 'Create Video from Template',
   description: 'Creates a new video from templates',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts generation of a JoggAI video from a template, choosing the template from either the common library or the user’s own templates, and filling in template variables (text/script content or image/video URLs) plus optional avatar, voice, captions, and music. Use to render a video off a predefined template rather than building one from scratch; the call queues an async job whose output is polled via Get Generated Video. Not idempotent: each call queues and is billed for a new video.',
+    idempotent: false,
+  },
   auth: joggAiAuth,
   props: {
     template_type: Property.StaticDropdown({
@@ -25,6 +31,7 @@ export const createVideoFromTemplate = createAction({
       },
     }),
     template_id: Property.Dropdown({
+      auth: joggAiAuth,
       displayName: 'Template',
       description: 'Select a template to use',
       required: true,
@@ -48,7 +55,7 @@ export const createVideoFromTemplate = createAction({
             method: HttpMethod.GET,
             url,
             headers: {
-              'x-api-key': auth as string,
+              'x-api-key': auth.secret_text,
             },
           });
 
@@ -130,7 +137,8 @@ export const createVideoFromTemplate = createAction({
         ],
       },
     }),
-    avatar_id: Property.Dropdown({
+    avatar_id: Property.Dropdown({  
+      auth: joggAiAuth,
       displayName: 'Avatar',
       description: 'Select an avatar to use',
       required: false,
@@ -154,7 +162,7 @@ export const createVideoFromTemplate = createAction({
             method: HttpMethod.GET,
             url,
             headers: {
-              'x-api-key': auth as string,
+              'x-api-key': auth.secret_text,
             },
           });
 
@@ -221,19 +229,15 @@ export const createVideoFromTemplate = createAction({
     } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      template_id: z.number().min(1, 'Template ID is required'),
-      lang: z.string().min(1, 'Language cannot be empty'),
-      video_name: z.string().min(1, 'Video name cannot be empty').optional(),
-      variables: z
-        .array(
-          z.object({
+      template_id: z.number().check(z.minimum(1, 'Template ID is required')),
+      lang: z.string().check(z.minLength(1, 'Language cannot be empty')),
+      video_name: z.optional(z.string().check(z.minLength(1, 'Video name cannot be empty'))),
+      variables: z.optional(z.array(z.object({
             type: z.enum(['text', 'image', 'video', 'script']),
-            name: z.string().min(1, 'Variable name is required'),
-            content: z.string().optional(),
-            url: z.string().url('URL must be valid').optional(),
-          })
-        )
-        .optional(),
+            name: z.string().check(z.minLength(1, 'Variable name is required')),
+            content: z.optional(z.string()),
+            url: z.optional(z.string().check(z.url('URL must be valid'))),
+          }))),
     });
 
     const processedVariables =
@@ -317,7 +321,7 @@ export const createVideoFromTemplate = createAction({
       method: HttpMethod.POST,
       url: 'https://api.jogg.ai/v1/create_video_with_template',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,

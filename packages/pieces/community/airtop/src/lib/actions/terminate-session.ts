@@ -9,6 +9,11 @@ export const terminateSessionAction = createAction({
 	auth: airtopAuth,
 	displayName: 'Terminate Session',
 	description: 'Ends an existing browser session in Airtop.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Terminates an existing Airtop browser session by its session id, freeing its resources. Use this to clean up when done browsing. Not idempotent in effect since it changes server state, though a missing session is ignored without error.',
+		idempotent: false,
+	},
 	props: {
 		sessionId: sessionId,
 	},
@@ -16,7 +21,7 @@ export const terminateSessionAction = createAction({
 		const { sessionId } = context.propsValue;
 
 		const response = await airtopApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.DELETE,
 			resourceUri: `/sessions/${sessionId}`,
 		});

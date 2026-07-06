@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
+import { vboutAuth } from '../auth';
 import { makeClient } from '../common';
 
 export const createEmailMarketingCampaignAction = createAction({
@@ -7,8 +7,14 @@ export const createEmailMarketingCampaignAction = createAction({
   name: 'vbout_add_email_marketing_campaign',
   displayName: 'Create Email Marketing Campaign',
   description: 'Creates a new email campaign for specific list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new VBOUT email marketing campaign targeting one or more email lists, either standard or automated type. Use to set up an email send to existing recipients. Requires recipient list(s), name, subject, sender details, and message body; not idempotent, as each call creates a separate campaign.',
+    idempotent: false,
+  },
   props: {
     lists: Property.MultiSelectDropdown({
+      auth: vboutAuth,
       displayName: 'Campaign Recipients List',
       required: true,
       refreshers: [],
@@ -20,7 +26,7 @@ export const createEmailMarketingCampaignAction = createAction({
             options: [],
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth.secret_text);
         const res = await client.listEmailLists();
         return {
           disabled: false,
@@ -79,7 +85,7 @@ export const createEmailMarketingCampaignAction = createAction({
   async run(context) {
     const { lists, name, from_name, fromemail, reply_to, subject, body, type } =
       context.propsValue;
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth.secret_text);
     return await client.addCampaign({
       lists: lists.join(','),
       name,

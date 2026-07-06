@@ -7,6 +7,9 @@ export const newOutgoingChat = createTrigger({
   name: 'newOutgoingChat',
   displayName: 'New Outgoing Chat',
   description: 'Fires when a new outgoing chat is initiated.',
+  aiMetadata: {
+    description: 'Fires when a new outgoing TimelinesAI WhatsApp chat is initiated, i.e. the connected account starts a conversation with a contact. Represents the start of an outbound conversation, carrying the chat and WhatsApp account details.',
+  },
   props: {},
   sampleData: {
     event_type: 'chat:new',
@@ -45,7 +48,7 @@ export const newOutgoingChat = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const response = await timelinesAiCommon.createWebhook({
-      apiKey: context.auth as string,
+      apiKey: context.auth,
       event_type: 'chat:outgoing:new',
       url: context.webhookUrl,
       enabled: true,
@@ -61,7 +64,7 @@ export const newOutgoingChat = createTrigger({
     const webhook_id = webhookInfo?.webhook_id;
     if (webhook_id) {
       await timelinesAiCommon.deleteWebhook({
-        apiKey: context.auth as string,
+        apiKey: context.auth,
         webhook_id: webhook_id as number,
       });
     }

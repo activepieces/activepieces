@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,10 @@ export const registrationFolderSelected = createTrigger({
   displayName: 'Événement sur le dossier de formation',
   description:
     "Se déclenche lorsque l'événement choisi se produit sur un dossier de formation",
+  aiMetadata: {
+    description:
+      'Fires when a chosen lifecycle event occurs on a Wedof training registration folder (dossier de formation). The specific event to listen for is configured via the scope property. Emits the full folder record for the matching event.',
+  },
   props: {
     scope: wedofCommon.events,
   },
@@ -222,7 +226,7 @@ export const registrationFolderSelected = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

@@ -1,12 +1,18 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { clockodoCommon, makeClient, reformatDateTime } from '../../common';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
   name: 'update_entry',
   displayName: 'Update Entry',
   description: 'Updates an entry in clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Modifies an existing clockodo time-record entry identified by entry_id, changing any of its customer, project, service, user, time window, or description. Use to correct or amend an already-logged entry rather than creating a new one (use Create Entry for new records). Idempotent: applying the same field values to the same entry_id converges to the same state.',
+    idempotent: true,
+  },
   props: {
     entry_id: Property.Number({
       displayName: 'Entry ID',
@@ -30,7 +36,7 @@ export default createAction({
     user_id: clockodoCommon.user_id(false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.updateEntry(propsValue.entry_id, {
       customers_id: propsValue.customer_id,
       projects_id: propsValue.project_id,

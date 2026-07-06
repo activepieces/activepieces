@@ -7,7 +7,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { cometApiAuth } from '../common/auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { modelIdDropdown } from '../common/props';
 
 interface CometApiChatResponse {
@@ -36,6 +36,7 @@ interface ChatMessage {
 }
 
 export const askCometApiAction = createAction({
+  audience: 'human',
   name: 'ask-cometapi',
   displayName: 'Ask CometAPI',
   description: 'Sends a prompt to any AI model supported by CometAPI.',
@@ -76,9 +77,9 @@ export const askCometApiAction = createAction({
   async run(context) {
     // Validate input parameters
     await propsValidation.validateZod(context.propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      topP: z.number().min(0).max(1).optional(),
-      maxTokens: z.number().positive().optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      topP: z.optional(z.number().check(z.minimum(0), z.maximum(1))),
+      maxTokens: z.optional(z.number().check(z.positive())),
     });
 
     const { model, prompt, systemMessage, temperature, maxTokens, topP } =
@@ -117,7 +118,7 @@ export const askCometApiAction = createAction({
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'Content-Type': 'application/json',

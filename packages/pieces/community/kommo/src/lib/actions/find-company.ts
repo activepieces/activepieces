@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 
 export const findCompanyAction = createAction({
   auth: kommoAuth,
   name: 'find_company',
   displayName: 'Find Company',
   description: 'Find an existing company.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches companies in a Kommo CRM account by a free-text query matched against the companies\' filled fields, returning all matching companies. Use to resolve a company record (e.g. by name) before referencing or linking it; the query is required. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Query',
@@ -17,10 +19,7 @@ export const findCompanyAction = createAction({
   },
   async run(context) {
     const { query } = context.propsValue;
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+    const { subdomain, apiToken } = context.auth.props
 
     const result = await makeRequest(
       { apiToken, subdomain },

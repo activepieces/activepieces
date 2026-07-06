@@ -8,6 +8,8 @@ export const createContact = createAction({
     name: 'create_contact',
     displayName: 'Create Contact',
     description: 'Add a new contact within a specified contact book',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new contact in a given Missive contact book, optionally with names, phone/email/address infos, and organization/group memberships. Use to add a person to Missive contacts. Not idempotent: each call creates a separate contact even with identical input; to change an existing one use Update Contact.', idempotent: false },
     auth: missiveAuth,
     props: {
         contact_book: contactBookDropdown,
@@ -180,7 +182,7 @@ export const createContact = createAction({
             }
         }),
         memberships: Property.DynamicProperties({
-            displayName: 'Memberships',
+    auth: missiveAuth,            displayName: 'Memberships',
             description: 'Organizations and groups the contact belongs to',
             required: false,
             refreshers: ['contact_book'],
@@ -207,7 +209,7 @@ export const createContact = createAction({
 
                 try {
                     const orgsResponse = await missiveCommon.apiCall({
-                        auth: auth as any as string,
+                        auth: auth,
                         method: HttpMethod.GET,
                         resourceUri: '/organizations',
                     });
@@ -224,7 +226,7 @@ export const createContact = createAction({
                 if (contact_book) {
                     try {
                         const groupsResponse = await missiveCommon.apiCall({
-                            auth: auth as any as string,
+                            auth: auth,
                             method: HttpMethod.GET,
                             resourceUri: `/contact_groups?contact_book=${contact_book}&kind=group`,
                         });

@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { figmaCommon } from '../common';
 import { figmaGetRequest } from '../common/utils';
-import { figmaAuth } from '../../';
+import { figmaAuth } from '../auth';
 
 export const getCommentsAction = createAction({
   auth: figmaAuth,
   name: 'get_comments',
   displayName: 'Get File Comments',
   description: 'Get file comments',
+  audience: 'both',
+  aiMetadata: { description: 'List all comments on a Figma file, identified by its file key (the alphanumeric segment in a Figma file URL). Use to review feedback or discussion threads on a design. Read-only and idempotent.', idempotent: true },
   props: {
     file_key: Property.ShortText({
       displayName: 'File Key',

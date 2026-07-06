@@ -12,6 +12,8 @@ export const listEventsAction = createAction({
   auth: outlookCalendarAuth,
   name: 'list_events',
   description: 'List events in a calendar',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves events from a specified Microsoft Outlook calendar. Leave the filter empty to fetch all events, or supply an OData $filter expression to narrow results to matching events. Use to look up or browse existing events. Read-only and idempotent.', idempotent: true },
   displayName: 'List events in a calendar',
   props: {
     calendarId: outlookCalendarCommon.calendarDropdown,
@@ -27,9 +29,10 @@ export const listEventsAction = createAction({
 
     if (propsValue.filter) queryParams['$filter'] = propsValue.filter;
 
+    const cloud = (auth as unknown as { props?: Record<string, unknown> }).props?.['cloud'] as string | undefined;
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${outlookCalendarCommon.baseUrl}/calendars/${propsValue.calendarId}/events`,
+      url: `${outlookCalendarCommon.getBaseUrl(cloud)}/calendars/${propsValue.calendarId}/events`,
       queryParams,
       body: {},
       authentication: {

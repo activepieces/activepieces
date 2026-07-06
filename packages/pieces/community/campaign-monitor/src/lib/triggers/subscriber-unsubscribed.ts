@@ -5,8 +5,8 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest, transformCustomFields } from '../common/client';
-import { isNil } from '@activepieces/shared';
-import { campaignMonitorAuth } from '../../index';
+import { isNil } from '@activepieces/pieces-framework';
+import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 
 export const subscriberUnsubscribedTrigger = createTrigger({
@@ -14,6 +14,10 @@ export const subscriberUnsubscribedTrigger = createTrigger({
   name: 'subscriber_unsubscribed',
   displayName: 'Subscriber Unsubscribed',
   description: 'Triggered when a subscriber unsubscribes from a list',
+  aiMetadata: {
+    description:
+      'Fires when a contact unsubscribes from the specified Campaign Monitor list under a client, via a Deactivate webhook event with an Unsubscribed state, and reports the affected subscriber and their details.',
+  },
   props: {
     clientId: clientId,
     listId: listId,
@@ -30,7 +34,7 @@ export const subscriberUnsubscribedTrigger = createTrigger({
     const { listId } = context.propsValue;
 
     const response = await makeRequest(
-      { apiKey: context.auth as string },
+        { apiKey: context.auth.secret_text },
       HttpMethod.POST,
       `/lists/${listId}/webhooks.json`,
       {
@@ -51,7 +55,7 @@ export const subscriberUnsubscribedTrigger = createTrigger({
 
     if (!isNil(storedData)) {
       await makeRequest(
-        { apiKey: context.auth as string },
+        { apiKey: context.auth.secret_text },
         HttpMethod.DELETE,
         `/lists/${listId}/webhooks/${storedData}.json`
       );
@@ -72,7 +76,7 @@ export const subscriberUnsubscribedTrigger = createTrigger({
     for (const event of payload.Events) {
       if (event.Type === 'Deactivate' && event.State==='Unsubscribed') {
         const response = await makeRequest(
-          { apiKey: context.auth as string },
+          { apiKey: context.auth.secret_text },
           HttpMethod.GET,
           `/subscribers/${context.propsValue.listId}.json?email=${encodeURIComponent(
             event.EmailAddress

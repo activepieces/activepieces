@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { redditAuth } from '../../index';
+import { redditAuth } from '../auth';
 
 export const createRedditPost = createAction({
   auth: redditAuth,
   name: 'createRedditPost',
   displayName: 'Create Post',
   description: 'Submit a new self (text) post to a subreddit.',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a new self (text) post to a subreddit on behalf of the authenticated account. Use it to publish original text content; it cannot post links, images, or media. Requires the target subreddit, a title, and the text body. Not idempotent — each call creates a separate post.', idempotent: false },
   props: {
     subreddit: Property.ShortText({
       displayName: 'Subreddit',

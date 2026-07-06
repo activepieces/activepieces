@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { SESClient, UpdateTemplateCommand } from '@aws-sdk/client-ses';
-import { amazonSesAuth } from '../../index';
+import { amazonSesAuth } from '../auth';
 import {
   getEmailTemplates,
   getEmailTemplate,
@@ -18,14 +18,28 @@ export const updateEmailTemplate = createAction({
   name: 'update_email_template',
   displayName: 'Update Email Template',
   description: 'Modify an existing email template with new content',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites an existing Amazon SES email template, replacing its subject and HTML/text content; an optional preserve-unspecified mode keeps the current HTML or text when a field is left blank instead of clearing it. Use to edit a template that already exists, not to create one. Idempotent: repeating the call with the same input leaves the template in the same final state.',
+    idempotent: true,
+  },
   props: {
     templateName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Template to Update',
       description: 'Select template to modify',
       required: true,
       refreshers: ['loadCurrentContent'],
       options: async ({ auth }) => {
-        const templates = await getEmailTemplates(auth as any);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const templates = await getEmailTemplates(auth.props);
 
         if (templates.length === 0) {
           return {
@@ -101,7 +115,7 @@ export const updateEmailTemplate = createAction({
       sampleData,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
 

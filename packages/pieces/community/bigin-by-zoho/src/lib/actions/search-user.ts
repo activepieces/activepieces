@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { biginApiService } from '../common/request';
 
@@ -7,6 +7,8 @@ export const searchUser = createAction({
   name: 'searchUser',
   displayName: 'Search User',
   description: 'Locate users by email.',
+  audience: 'both',
+  aiMetadata: { description: 'Finds Bigin CRM org users whose email contains the given term (case-insensitive substring match), filtering client-side over the user list; an optional user-type filter (e.g. active, admin, current user) and pagination narrow the fetched set. Use to resolve a user id for assigning records as owner. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -43,7 +45,8 @@ export const searchUser = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
     const emailTerm = String(propsValue.email || '').toLowerCase();
 
     const params: any = {};

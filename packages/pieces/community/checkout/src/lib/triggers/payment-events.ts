@@ -6,9 +6,13 @@ export const paymentEventsTrigger = createTrigger({
   name: 'payment_events',
   displayName: 'Payment Events',
   description: 'Trigger order fulfillment when payment is approved.',
+  aiMetadata: {
+    description: 'Fires when a Checkout.com payment-gateway event occurs for one of the event types you subscribe to (such as payment approved, declined, captured, refunded, or voided, and card-verification events). Use it to react to payment lifecycle changes, for example to start order fulfillment once a payment is approved.',
+  },
   auth: checkoutComAuth,
   props: {
     eventTypes: Property.MultiSelectDropdown({
+      auth: checkoutComAuth,
       displayName: 'Event Types',
       description: 'Select the payment events you want to listen for',
       required: true,
@@ -23,13 +27,13 @@ export const paymentEventsTrigger = createTrigger({
         }
 
         try {
-          const { baseUrl } = getEnvironmentFromApiKey(auth as string);
+          const { baseUrl } = getEnvironmentFromApiKey(auth.secret_text);
           
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${baseUrl}/workflows/event-types`,
             headers: {
-              Authorization: `Bearer ${auth}`,
+              Authorization: `Bearer ${auth.secret_text}`,
               'Content-Type': 'application/json',
             },
           });
@@ -106,14 +110,14 @@ export const paymentEventsTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const { eventTypes } = context.propsValue;
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `${baseUrl}/workflows`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body: {
@@ -148,13 +152,13 @@ export const paymentEventsTrigger = createTrigger({
       const workflowData = await context.store.get<{ workflowId: string }>('checkout_payment_workflow');
       
       if (workflowData?.workflowId) {
-        const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+        const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
         
         await httpClient.sendRequest({
           method: HttpMethod.DELETE,
           url: `${baseUrl}/workflows/${workflowData.workflowId}`,
           headers: {
-            Authorization: `Bearer ${context.auth}`,
+            Authorization: `Bearer ${context.auth.secret_text}`,
           },
         });
       }

@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createPineconeClientFromAuth } from '../common/pinecone-client';
-import { pineconeAuth } from '../../index';
+import { pineconeAuth } from '../auth';
 
 export const searchIndex = createAction({
   auth: pineconeAuth,
   name: 'search_index',
   displayName: 'Search Index',
   description: 'Search indexes by name or list all indexes in your project.',
+  audience: 'both',
+  aiMetadata: { description: 'Discovers indexes in the connected Pinecone project, operating in one of two modes: list all indexes (optionally narrowed by a case-insensitive partial name filter) or describe one specific index by its exact name. Use to enumerate available indexes or confirm an index exists and inspect its configuration before other operations. Idempotent read-only lookup.', idempotent: true },
   props: {
     searchMode: Property.StaticDropdown({
       displayName: 'Search Mode',

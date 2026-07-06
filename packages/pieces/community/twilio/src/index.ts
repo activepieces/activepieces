@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { twilioSendSms } from './lib/action/send-sms';
 import { twilioNewIncomingSms } from './lib/trigger/new-incoming-sms';
 import { twilioPhoneNumberLookup } from './lib/action/phone-number-lookup';
@@ -46,8 +46,8 @@ export const twilio = createPiece({
       auth: twilioAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { username: string }).username}:${
-            (auth as { password: string }).password
+          `${auth.username}:${
+            auth.password
           }`
         ).toString('base64')}`,
       }),

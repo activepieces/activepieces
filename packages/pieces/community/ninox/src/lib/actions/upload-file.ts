@@ -15,6 +15,11 @@ export const uploadFile = createAction({
 	name: 'uploadFile',
 	displayName: 'Upload File',
 	description: 'Attach a file to a record.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Attaches a file as an upload to one Ninox record, addressed by team, database, table, and record id. Use to add a file attachment to an existing record. Not idempotent — each call appends another attachment.',
+		idempotent: false,
+	},
 	props: {
 		teamid: teamidDropdown,
 		dbid: databaseIdDropdown,
@@ -39,11 +44,11 @@ export const uploadFile = createAction({
 
 			// Create FormData for multipart/form-data upload
 			const formData = new FormData();
-			const blob = new Blob([file.data], { type: mimeType });
+			const blob = new Blob([file.data as unknown as ArrayBuffer], { type: mimeType });
 			formData.append('file', blob, file.filename);
 
 			const response = await makeRequest(
-				auth,
+				auth.secret_text,
 				HttpMethod.POST,
 				path,
 				formData,

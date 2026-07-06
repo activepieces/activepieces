@@ -1,14 +1,7 @@
-import {
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import {
-  CAPTAIN_DATA_BASE_URL,
-  captainDataAuth,
-  CaptainDataAuthType,
-} from '../..';
+import { captainDataAuth } from '../..';
+import { CAPTAIN_DATA_BASE_URL } from '../..';
 import { workflowProp } from '../common';
 
 export const launchWorkflow = createAction({
@@ -16,6 +9,12 @@ export const launchWorkflow = createAction({
   name: 'launchWorkflow',
   displayName: 'Launch a workflow',
   description: '',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Schedules a run of an existing Captain Data workflow, identified by its workflow UID, optionally supplying input rows, per-step account/parameter configuration, and a start delay. Use this to kick off a scraping/enrichment automation; it creates a new job on each call, so it is not idempotent. Each step requires the account UIDs and step UID matching the workflow definition.',
+    idempotent: false,
+  },
   auth: captainDataAuth,
   props: {
     workflow: workflowProp,
@@ -58,8 +57,8 @@ export const launchWorkflow = createAction({
       method: HttpMethod.POST,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `x-api-key ${(auth as CaptainDataAuthType).apiKey}`,
-        'x-project-id': (auth as CaptainDataAuthType).projectId,
+        Authorization: `x-api-key ${auth.props.apiKey}`,
+        'x-project-id': auth.props.projectId,
       },
       body: JSON.stringify(payload),
     });

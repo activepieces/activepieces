@@ -1,11 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { upgradechatAuth } from '../../';
+import { upgradechatAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContactExtended',
   displayName: 'Add or Update Contact (Extended)',
   description: 'Adds or updates a contact (extended version)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Imports a contact into the Sperse/Upgrade.chat CRM with the full field set: personal, business, home/work/company addresses, links, custom fields, optional user creation, tracking/UTM data, and up to three inline subscriptions. When 'Match Existing Contact' is enabled (default) or a Contact ID / Contact XREF is supplied it updates the existing record (upsert), otherwise it inserts a new one. Prefer this over the basic Add or Update Contact when you need company, address, or subscription detail. First or Last name is required (or a Company Name). Idempotent only when matching is enabled or a stable Contact ID/XREF is reused.",
+    idempotent: true,
+  },
   auth: upgradechatAuth,
   props: {
     matchExisting: Property.StaticDropdown({
@@ -1274,9 +1280,9 @@ export const addOrUpdateContactExtended = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportContact`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportContact`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

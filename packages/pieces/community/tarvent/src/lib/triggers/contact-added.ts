@@ -1,5 +1,5 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 
@@ -8,6 +8,9 @@ export const contactAddedTrigger = createTrigger({
   name: 'tarvent_contact_added',
   displayName: 'Contact Added',
   description: 'Triggers when a contact is added to the selected audience.',
+  aiMetadata: {
+    description: 'Fires when a new contact is added to a Tarvent audience, optionally scoped to a specific audience, group, or tag. Represents a newly created subscriber.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

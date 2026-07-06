@@ -9,13 +9,15 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { heartbeatAuth } from '../..';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const heartBeatCreateUser = createAction({
   auth: heartbeatAuth,
   name: 'heartbeat_create_user',
   displayName: 'Create User',
   description: 'Create a new user in a Heartbeat community',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a member in a Heartbeat community via the Heartbeat API, assigning a role and optionally adding them to groups and setting profile fields (bio, social links, status). Use to onboard a new person; the email must be unique to the community. Not idempotent: each call creates a member (a duplicate email is rejected) and, if a bio is supplied with the introduction-thread option enabled, also posts an introduction thread.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -28,6 +30,7 @@ export const heartBeatCreateUser = createAction({
       required: true,
     }),
     role_id: Property.Dropdown({
+      auth: heartbeatAuth,
       displayName: 'Roles',
       description: 'The role the user should have',
       required: true,
@@ -53,7 +56,7 @@ export const heartBeatCreateUser = createAction({
           },
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
           body: {},
         });
@@ -77,6 +80,7 @@ export const heartBeatCreateUser = createAction({
     }),
     group_ids: Property.MultiSelectDropdown({
       displayName: 'Groups',
+      auth: heartbeatAuth,
       description:
         'A list of the ids of the groups that the user should belong to.',
       required: false,
@@ -102,7 +106,7 @@ export const heartBeatCreateUser = createAction({
           },
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
           body: {},
         });
@@ -164,10 +168,10 @@ export const heartBeatCreateUser = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email(),
-      linkedin: z.string().url().optional(),
-      twitter: z.string().url().optional(), 
-      instagram: z.string().url().optional()
+      email: z.string().check(z.email()),
+      linkedin: z.optional(z.string().check(z.url())),
+      twitter: z.optional(z.string().check(z.url())), 
+      instagram: z.optional(z.string().check(z.url()))
     });
 
     const response = await httpClient.sendRequest({
@@ -178,7 +182,7 @@ export const heartBeatCreateUser = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: {
         name: propsValue.name,

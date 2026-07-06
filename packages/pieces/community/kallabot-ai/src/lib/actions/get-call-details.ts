@@ -6,6 +6,11 @@ export const getCallDetailsAction = createAction({
     name: 'get-call-details',
     displayName: 'Get Call Details',
     description: 'Retrieve details of a specific call by call SID.',
+    audience: 'both',
+    aiMetadata: {
+        description: 'Look up the full record of one past or in-progress call by its call SID, including status, duration, cost, recording URL, and transcription. Use it to inspect or report on a known call. Read-only and idempotent.',
+        idempotent: true,
+    },
     auth: kallabotAuth,
     props: {
         call_sid: Property.ShortText({
@@ -19,7 +24,7 @@ export const getCallDetailsAction = createAction({
             method: HttpMethod.GET,
             url: `https://api.kallabot.com/call-details/${context.propsValue.call_sid}`,
             headers: {
-                'Authorization': `Bearer ${context.auth}`,
+                'Authorization': `Bearer ${context.auth.secret_text}`,
                 'Content-Type': 'application/json'
             }
         });

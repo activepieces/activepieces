@@ -1,10 +1,8 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../auth';
+import { getNotionToken, notionCommon } from '../common';
+import { getPageCommentsActionOutputSchema } from '../output-schemas';
 
 export const getPageComments = createAction({
   auth: notionAuth,
@@ -12,9 +10,16 @@ export const getPageComments = createAction({
   displayName: 'Get Page Comments',
   description:
     'Retrieve all comments from a Notion page, organized by discussion threads. Perfect for tracking feedback, managing reviews, or monitoring page discussions.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all comments on a Notion page, grouped into discussion threads. Use when an agent must read existing feedback or review discussions on a page; requires the page id and the integration must have read-comments capability. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   props: {
     page_id: notionCommon.page,
   },
+  outputSchema: getPageCommentsActionOutputSchema,
   async run(context) {
     const { page_id } = context.propsValue;
 
@@ -23,7 +28,7 @@ export const getPageComments = createAction({
     }
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 

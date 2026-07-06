@@ -1,5 +1,5 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { customerIOAuth } from '../../index';
+import { customerIOAuth } from '../auth';
 import { customerIOCommon } from '../common';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -8,6 +8,8 @@ export const createEvent = createAction({
   name: 'create_event',
   displayName: 'Create Event',
   description: 'Create an event in Customer.io',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a behavioral/tracking event for a specific person to Customer.io via the Track API, identified by id, email, or cio_id per the workspace setting. Use to record that a customer did something so it can drive campaigns or segments. Provide the event payload either as key-value pairs or a raw JSON object (body_type). Not idempotent: each call appends a new event, even with identical input.', idempotent: false },
   props: {
     customer_identifier: Property.ShortText({
       displayName: 'Customer identifier',
@@ -39,6 +41,7 @@ export const createEvent = createAction({
       },
     }),
     body: Property.DynamicProperties({
+      auth: customerIOAuth,
       displayName: 'Body',
       refreshers: ['body_type'],
       required: false,
@@ -75,7 +78,7 @@ export const createEvent = createAction({
 
     const basic_track_api = `${
       Buffer.from(
-        `${context.auth.track_site_id}:${context.auth.track_api_key}`,
+        `${context.auth.props.track_site_id}:${context.auth.props.track_api_key}`,
         'utf8'
       ).toString('base64')
     }`
@@ -85,7 +88,7 @@ export const createEvent = createAction({
       'Content-Type': 'application/json',
     }
     const encoded_email = encodeURIComponent(context.propsValue.customer_identifier);
-    const url = customerIOCommon[context.auth.region || 'us'].trackUrl + 'customers/' + encoded_email + '/events';
+    const url = customerIOCommon[context.auth.props.region || 'us'].trackUrl + 'customers/' + encoded_email + '/events';
 
     const httprequestdata = {
       method: HttpMethod.POST,

@@ -9,6 +9,8 @@ export const getPostDetailsAction = createAction({
 	name: 'get_post_details',
 	displayName: 'Get Post Details',
 	description: 'Retrieves the complete details of a specific post.',
+	audience: 'both',
+	aiMetadata: { description: 'Retrieves the full details of a single Circle post by its post ID. Use to read a known post\'s content and metadata. Read-only and idempotent.', idempotent: true },
 	props: {
 		space_id: spaceIdDropdown,
 		post_id: postIdDropdown,
@@ -24,7 +26,7 @@ export const getPostDetailsAction = createAction({
 			method: HttpMethod.GET,
 			url: `${BASE_URL}/posts/${post_id}`,
 			headers: {
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 				'Content-Type': 'application/json',
 			},
 		});

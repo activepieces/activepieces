@@ -1,16 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 
 export const getTicketAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-ticket',
 	displayName: 'Get Ticket',
 	description: 'Gets a ticket.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches a single support ticket by its HubSpot ticket ID, returning default and any requested additional properties. Use when you already have the ticket ID; use Find Ticket to look one up by another property first. Read-only and idempotent.', idempotent: true },
 	props: {
 		ticketId: Property.ShortText({
 			displayName: 'Ticket ID',

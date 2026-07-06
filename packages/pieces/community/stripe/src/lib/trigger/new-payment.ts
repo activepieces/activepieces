@@ -3,13 +3,17 @@ import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const stripeNewPayment = createTrigger({
   auth: stripeAuth,
   name: 'new_payment',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is made',
+  aiMetadata: {
+    description:
+      'Fires when a payment succeeds in Stripe (the payment_intent.succeeded event), emitting the completed payment. Use to react to a successful payment, such as fulfilling an order or recording revenue.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -110,9 +114,9 @@ export const stripeNewPayment = createTrigger({
   },
   async onEnable(context) {
     const webhook = await stripeCommon.subscribeWebhook(
-      'charge.succeeded',
+      'payment_intent.succeeded',
       context.webhookUrl!,
-      context.auth
+      context.auth.secret_text
     );
     await context.store?.put<WebhookInformation>('_new_payment_trigger', {
       webhookId: webhook.id,
@@ -123,19 +127,23 @@ export const stripeNewPayment = createTrigger({
       '_new_payment_trigger'
     );
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(
+        response.webhookId,
+        context.auth.secret_text
+      );
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/payment_intents',
+      url: 'https://api.stripe.com/v1/payment_intents/search',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
+         'Stripe-Version': "2026-02-25.clover",
       },
       queryParams: {
-        status: 'succeeded',
+        query: 'status:"succeeded"',
         limit: '5',
       },
     });

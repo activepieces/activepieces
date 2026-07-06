@@ -4,13 +4,15 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 export const discordRemoveRoleFromMember = createAction({
   auth: discordAuth,
   name: 'remove_role_from_member',
   description: 'Remove Guild Member Role',
+  audience: 'both',
+  aiMetadata: { description: 'Removes a role from a guild member, identified by guild ID, user ID, and role ID. Use to revoke permissions or untag a user. Requires the bot to have Manage Roles and a higher role than the target; idempotent, since removing a role the member does not have leaves them unchanged.', idempotent: true },
   displayName: 'Remove role from member',
   props: {
     guild_id: discordCommon.guilds,
@@ -27,7 +29,7 @@ export const discordRemoveRoleFromMember = createAction({
       method: HttpMethod.DELETE,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members/${configValue.propsValue.user_id}/roles/${configValue.propsValue.role_id}`,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     };

@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
-import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../../';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 
@@ -11,6 +11,8 @@ export const getProductAction = createAction({
 	name: 'get-product',
 	displayName: 'Get Product',
 	description: 'Gets a product.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetch a single HubSpot product by its product ID, returning its default and any requested additional properties. Read-only and repeatable. Use Find Product when you only know property values rather than the ID.', idempotent: true },
 	props: {
 		productId: Property.ShortText({
 			displayName: 'Product ID',

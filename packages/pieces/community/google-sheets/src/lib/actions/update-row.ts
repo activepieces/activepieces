@@ -1,16 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { areSheetIdsValid, Dimension, objectToArray, ValueInputOption } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueInputOption } from '../common/common';
+import { googleSheetsAuth } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import {  isString } from '@activepieces/shared';
-import { commonProps, rowValuesProp } from '../common/props';
+import { sheets as googleSheets } from '@googleapis/sheets';
+import {  isString } from '@activepieces/pieces-framework';
+import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
+import { updateRowActionOutputSchema } from '../output-schemas';
 
 export const updateRowAction = createAction({
   auth: googleSheetsAuth,
   name: 'update_row',
-  description: 'Overwrite values in an existing row',
+  description: 'Update the data in an existing row.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites the cell values of one existing row, identified by its row number, in a selected worksheet. Use when an agent already knows the target row (e.g. from a Find or Get action) and wants to change its contents. Idempotent — re-running with the same row number and values leaves the sheet in the same state; empty values skip (do not clear) those cells.',
+    idempotent: true,
+  },
   displayName: 'Update Row',
   props: {
     ...commonProps,
@@ -19,14 +25,10 @@ export const updateRowAction = createAction({
       description: 'The row number to update',
       required: true,
     }),
-    first_row_headers: Property.Checkbox({
-      displayName: 'Does the first row contain headers?',
-      description: 'If the first row is headers',
-      required: true,
-      defaultValue: false,
-    }),
+    first_row_headers: isFirstRowHeaderProp(),
     values: rowValuesProp(),
   },
+  outputSchema: updateRowActionOutputSchema,
   async run(context) {
     const inputSpreadsheetId = context.propsValue.spreadsheetId;
     const inputSheetId = context.propsValue.sheetId;
@@ -41,10 +43,9 @@ export const updateRowAction = createAction({
     const sheetId = Number(inputSheetId);
 		const spreadsheetId = inputSpreadsheetId as string;
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    const sheets = googleSheets({ version: 'v4', auth: authClient });
 
     const sheetName = await getWorkSheetName(
       context.auth,

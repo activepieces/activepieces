@@ -8,11 +8,17 @@ export const listRobotsAction = createAction({
   auth: browseAiAuth,
   displayName: 'List Robots',
   description: 'Retrieves all robots available in your account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all Browse AI robots in the connected account, returning each robot and its ID. Use to discover the available robots or resolve a robot name to the ID needed by other Browse AI actions. Takes no input; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     try {
       const response = await browseAiApiCall({
-        auth: { apiKey: context.auth as string },
+        auth: { apiKey: context.auth.secret_text },
         method: HttpMethod.GET,
         resourceUri: '/robots',
       });

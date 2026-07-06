@@ -1,6 +1,6 @@
 .angular
 .dockerignore
-.env
+**/.env
 .git
 .gitattributes
 .github
@@ -11,7 +11,9 @@
 .vscode
 builds
 deploy
+dev
 Dockerfile
 dist
+**/dist
 docs
-node_modules
+**/node_modules

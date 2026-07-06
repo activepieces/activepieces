@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../../';
+import { chargekeepAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContact(extended)',
   displayName: 'Add or Update Contact (Extended)',
   description: 'Adds or updates a contact (extended version)',
+  audience: 'both',
+  aiMetadata: { description: 'Imports a contact into the ChargeKeep/Sperse CRM with the full field set (driving license, military/citizenship flags, company details, tracking/UTM data, custom fields, and up to three inline subscriptions), upserting by Contact ID, Contact XREF, or email/name match. Prefer this over the basic Add or Update Contact when you need those extra fields. Can also provision a portal user and send a welcome email when Create User / Send Welcome Email are enabled (that email is a one-time side effect); otherwise repeating with the same identifying input upserts the same contact.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     matchExisting: Property.StaticDropdown({
@@ -1275,9 +1277,9 @@ export const addOrUpdateContactExtended = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportContact`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportContact`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

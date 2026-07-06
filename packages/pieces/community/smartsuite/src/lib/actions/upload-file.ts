@@ -14,12 +14,18 @@ export const uploadFile = createAction({
 	name: 'upload_file',
 	displayName: 'Upload File',
 	description: 'Uploads a file and attaches it to a record.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Uploads a file and attaches it to a file-type field on an existing SmartSuite record. Use when an agent needs to add an attachment or image to a known record; requires the solution, table, record ID, a target field that is a file field, and the file contents. Not idempotent — each call appends another attachment to the field.',
+		idempotent: false,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,
 		tableId: smartsuiteCommon.tableId,
 		recordId: smartsuiteCommon.recordId,
 		field: Property.Dropdown({
+			auth: smartsuiteAuth,
 			displayName: 'Search Field',
 			required: true,
 			refreshers: ['tableId'],
@@ -32,7 +38,7 @@ export const uploadFile = createAction({
 					};
 				}
 
-				const { apiKey, accountId } = auth as PiecePropValueSchema<typeof smartsuiteAuth>;
+				const { apiKey, accountId } = auth.props;
 
 				const response = await smartSuiteApiCall<{
 					structure: TableStucture[];
@@ -75,16 +81,16 @@ export const uploadFile = createAction({
 				body: formData,
 				headers: {
 					...formData.getHeaders(),
-					Authorization: `Token ${auth.apiKey}`,
-					'ACCOUNT-ID': auth.accountId,
+					Authorization: `Token ${auth.props.apiKey}`,
+					'ACCOUNT-ID': auth.props.accountId,
 				},
 			});
 
 			const tableResponse = await smartSuiteApiCall<{
 				structure: TableStucture[];
 			}>({
-				apiKey: auth.apiKey,
-				accountId: auth.accountId,
+				apiKey: auth.props.apiKey,
+				accountId: auth.props.accountId,
 				method: HttpMethod.GET,
 				resourceUri: `/applications/${tableId}`,
 			});

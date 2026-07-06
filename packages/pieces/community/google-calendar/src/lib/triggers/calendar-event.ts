@@ -1,13 +1,14 @@
-import { createTrigger, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { googleCalendarCommon } from '../common';
 import { getEvents } from '../common/helper';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { eventOutputSchema } from '../output-schemas';
 
 const polling: Polling<
-	PiecePropValueSchema<typeof googleCalendarAuth>,
+    AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
 	{ calendarId?: string; expandRecurringEvent: boolean }
 > = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -38,6 +39,9 @@ export const calendarEventChanged = createTrigger({
 	name: 'new_or_updated_event',
 	displayName: 'New or Updated Event',
 	description: 'Triggers when an event is added or updated',
+	aiMetadata: {
+		description: 'Fires when any event in the selected calendar is created or modified, polling by last-updated time. Each fired item is the affected event; can optionally expand recurring events so every occurrence fires separately.',
+	},
 	props: {
 		calendar_id: googleCalendarCommon.calendarDropdown(),
 		expandRecurringEvent: Property.Checkbox({
@@ -93,6 +97,7 @@ export const calendarEventChanged = createTrigger({
 		},
 		eventType: 'default',
 	},
+	outputSchema: eventOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async test({ store, auth, propsValue, files }) {
 		return await pollingHelper.test(polling, {

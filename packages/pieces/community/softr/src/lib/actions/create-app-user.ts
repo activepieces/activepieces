@@ -7,6 +7,8 @@ export const createAppUser = createAction({
   name: 'createAppUser',
   displayName: 'Create App User',
   description: 'Creates a new user inside a Softr app.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates an end-user account in a Softr app, identified by its domain/subdomain, with an email, name, and password; optionally generates a magic login link. Use to provision app users programmatically. Not idempotent — each call attempts to create a new user, so repeating it will conflict on a duplicate email.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -53,7 +55,7 @@ export const createAppUser = createAction({
         method: HttpMethod.POST,
         url: `https://studio-api.softr.io/v1/api/users`,
         headers: {
-          'Softr-Api-Key': auth,
+          'Softr-Api-Key': auth.secret_text,
           'Softr-Domain': domain,
           'Content-Type': 'application/json',
         },

@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertMassAction = createAction({
   name: 'convert_mass',
   displayName: 'Convert Mass',
   description: 'Convert mass measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single mass/weight value between units such as kilograms, grams, milligrams, pounds, ounces, and metric tons. Use only for mass; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {
@@ -48,7 +50,7 @@ export const convertMassAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/mass/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

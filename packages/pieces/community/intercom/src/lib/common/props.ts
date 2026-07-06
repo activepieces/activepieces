@@ -1,15 +1,15 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { intercomClient } from '.';
-import { intercomAuth } from '../../index';
+import { getIntercomRegion, getIntercomToken, intercomClient, IntercomAuthValue } from '.';
 import {
 	DropdownOption,
 	DynamicPropsValue,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
+import { intercomAuth } from '../auth';
 
 export const conversationIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -22,7 +22,7 @@ export const conversationIdProp = (displayName: string, required = true) =>
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 			const client = intercomClient(authValue);
 
 			const response = await client.conversations.list();
@@ -46,6 +46,7 @@ export const conversationIdProp = (displayName: string, required = true) =>
 
 export const tagIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -58,7 +59,7 @@ export const tagIdProp = (displayName: string, required = true) =>
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 			const client = intercomClient(authValue);
 
 			const response = await client.tags.list();
@@ -80,6 +81,7 @@ export const tagIdProp = (displayName: string, required = true) =>
 
 export const companyIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -92,7 +94,7 @@ export const companyIdProp = (displayName: string, required = true) =>
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 			const client = intercomClient(authValue);
 
 			const response = await client.companies.list();
@@ -114,6 +116,7 @@ export const companyIdProp = (displayName: string, required = true) =>
 
 export const contactIdProp = (displayName: string, contactType: string | null, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -126,7 +129,7 @@ export const contactIdProp = (displayName: string, contactType: string | null, r
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 			const client = intercomClient(authValue);
 
 			const response = await client.contacts.list();
@@ -150,6 +153,7 @@ export const contactIdProp = (displayName: string, contactType: string | null, r
 
 export const collectionIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -162,7 +166,7 @@ export const collectionIdProp = (displayName: string, required = true) =>
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 			const client = intercomClient(authValue);
 
 			const response = await client.helpCenters.collections.list();
@@ -184,6 +188,7 @@ export const collectionIdProp = (displayName: string, required = true) =>
 
 export const ticketTypeIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -196,13 +201,13 @@ export const ticketTypeIdProp = (displayName: string, required = true) =>
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 			const response = await httpClient.sendRequest<{ data: Array<{ id: string; name: string }> }>({
 				method: HttpMethod.GET,
-				url: `https://api.${authValue.props?.['region']}.io/ticket_types `,
+				url: `https://api.${getIntercomRegion(authValue)}.io/ticket_types`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.access_token,
+					token: getIntercomToken(authValue),
 				},
 			});
 
@@ -224,6 +229,7 @@ export const ticketTypeIdProp = (displayName: string, required = true) =>
 
 export const ticketStateIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -235,7 +241,7 @@ export const ticketStateIdProp = (displayName: string, required = true) =>
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 
 			const options: DropdownOption<string>[] = [];
 
@@ -243,10 +249,10 @@ export const ticketStateIdProp = (displayName: string, required = true) =>
 				data: Array<{ id: string; internal_label: string }>;
 			}>({
 				method: HttpMethod.GET,
-				url: `https://api.${authValue.props?.['region']}.io/ticket_states`,
+				url: `https://api.${getIntercomRegion(authValue)}.io/ticket_states`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.access_token,
+					token: getIntercomToken(authValue),
 				},
 			});
 
@@ -260,14 +266,15 @@ export const ticketStateIdProp = (displayName: string, required = true) =>
 			}
 
 			return {
-				disabled: true,
-				options: [],
+				disabled: false,
+				options,
 			};
 		},
 	});
 
 export const ticketIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: ['ticketTypeId'],
@@ -280,7 +287,7 @@ export const ticketIdProp = (displayName: string, required = true) =>
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 			const client = intercomClient(authValue);
 
 			const options: DropdownOption<string>[] = [];
@@ -310,6 +317,7 @@ export const ticketIdProp = (displayName: string, required = true) =>
 
 export const ticketPropertiesProp = (displayName: string, required = true) =>
 	Property.DynamicProperties({
+		auth: intercomAuth,
 		displayName,
 		refreshers: ['ticketTypeId'],
 		required,
@@ -319,7 +327,7 @@ export const ticketPropertiesProp = (displayName: string, required = true) =>
 
 			const props: DynamicPropsValue = {};
 
-			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const authValue = auth as IntercomAuthValue;
 
 			const response = await httpClient.sendRequest<{
 				ticket_type_attributes: {
@@ -327,10 +335,10 @@ export const ticketPropertiesProp = (displayName: string, required = true) =>
 				};
 			}>({
 				method: HttpMethod.GET,
-				url: `https://api.${authValue.props?.['region']}.io/ticket_types/${ticketTypeId} `,
+				url: `https://api.${getIntercomRegion(authValue)}.io/ticket_types/${ticketTypeId}`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.access_token,
+					token: getIntercomToken(authValue),
 				},
 			});
 
@@ -368,7 +376,7 @@ export const ticketPropertiesProp = (displayName: string, required = true) =>
 						break;
 					case 'list':
 						{
-							const options = field.input_options.list_options as Array<{
+							const options = field.input_options?.['list_options'] as Array<{
 								label: string;
 								id: string;
 							}>;

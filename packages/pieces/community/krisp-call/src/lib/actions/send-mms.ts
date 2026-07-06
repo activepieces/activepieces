@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
+import { krispcallAuth } from '../auth';
 import { Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
 
 interface Item {
@@ -14,16 +14,30 @@ export const sendMms = createAction({
   displayName: 'Send MMS',
   auth: krispcallAuth,
   description: 'Send mms in krispcall.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send an MMS message carrying one or more media URLs from a connected KrispCall account number to a destination phone number, with optional text content. Use when an agent needs to send media (images/files) rather than a plain SMS; the from number must be provisioned on the account and at least one media URL is required. Not idempotent — each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     from_number: Property.Dropdown({
+      auth: krispcallAuth,
       displayName: 'from number',
       description: 'Select an number',
       required: true,
       refreshers: ['auth'],
       refreshOnSearch: false,
       options: async ({ auth }) => {
-        try {
-          const authVaue = auth as PiecePropValueSchema<typeof krispcallAuth>;
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+          try {
+          const authVaue = auth.props;
           const res = await httpClient.sendRequest<Item[]>({
             method: HttpMethod.GET,
             url: 'https://app.krispcall.com/api/v3/platform/activepiece/get-numbers',
@@ -66,12 +80,11 @@ export const sendMms = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    console.log(auth.apiKey);
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: 'https://app.krispcall.com/api/v3/platform/activepiece/send-mms',
       headers: {
-        'X-API-KEY': auth.apiKey,
+        'X-API-KEY': auth.props.apiKey,
       },
 
       body: {

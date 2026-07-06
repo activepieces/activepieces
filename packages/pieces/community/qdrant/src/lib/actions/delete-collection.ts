@@ -8,13 +8,19 @@ export const deleteCollection = createAction({
   name: 'delete_collection',
   displayName: 'Delete Collection',
   description: 'Delete a collection of your database',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete an entire Qdrant collection, including all of its points, identified by collection name. Use to tear down a vector store. Idempotent: re-running once the collection is gone leaves the same end state.',
+    idempotent: true,
+  },
   props: {
     collectionName,
   },
   run: async ({ auth, propsValue }) => {
     const client = new QdrantClient({
-      apiKey: auth.key,
-      url: auth.serverAddress,
+      apiKey: auth.props.key,
+      url: auth.props.serverAddress,
     });
     const collectionName = propsValue.collectionName as string;
     const response = await client.deleteCollection(collectionName);

@@ -9,7 +9,7 @@ import { addTagToContact } from "./lib/actions/add-tag-to-contact";
 import { removeTagFromContact } from "./lib/actions/remove-tag-from-contact";
 import { createList } from "./lib/actions/create-list";
 import { findContact } from "./lib/actions/find-contact"; 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 
 import { emailBounced } from "./lib/triggers/email-bounced";
@@ -41,7 +41,7 @@ export const emailoctopus = createPiece({
           baseUrl:()=>emailOctopusApiUrl,
           authMapping:async (auth)=>{
             return{
-              Authorization:`Bearer ${auth}`
+              Authorization:`Bearer ${auth.secret_text}`
             }
           }
           

@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
@@ -117,6 +118,9 @@ export const wordpressNewPost = createTrigger({
     },
   },
   description: 'Triggers when a new post is published',
+  aiMetadata: {
+    description: 'Fires when a new post is published on the WordPress site, optionally filtered to specific authors. Each event represents one newly published post and emits that post record. Polls periodically, so there may be a short delay after publishing.',
+  },
   props: {
     authors: wordpressCommon.authors,
   },
@@ -154,12 +158,12 @@ export const wordpressNewPost = createTrigger({
 });
 
 const polling: Polling<
-  PiecePropValueSchema<typeof wordpressAuth>,
+  AppConnectionValueForAuthProperty<typeof wordpressAuth>,
   { authors: string | undefined }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const items = await getPosts(auth, propsValue.authors!, lastFetchEpochMS);
+    const items = await getPosts(auth.props, propsValue.authors!, lastFetchEpochMS);
     return items.map((item) => ({
       epochMilliSeconds: dayjs(item.date).valueOf(),
       data: item,

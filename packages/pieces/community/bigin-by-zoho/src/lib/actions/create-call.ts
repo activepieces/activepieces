@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { contactsDropdown, tagsDropdown, usersDropdown } from '../common/props';
 import { biginApiService } from '../common/request';
 import { formatDateTime, getSafeLabel, handleDropdownError } from '../common/helpers';
@@ -9,6 +9,8 @@ export const createCall = createAction({
   name: 'createCall',
   displayName: 'Create Call',
   description: 'Creates a Call Log Entry Record',
+  audience: 'both',
+  aiMetadata: { description: 'Logs a call in Bigin CRM with a required start time, duration in minutes, and type (Outbound, Inbound, or Missed), plus optional subject, description, agenda, reminder, dialed number, owner, contact, and a related Pipeline or Company record. Use to record a phone interaction. Not idempotent: each call creates a new call log entry.', idempotent: false },
   props: {
     callStartTime: Property.DateTime({
       displayName: 'Call Start Time',
@@ -73,6 +75,7 @@ export const createCall = createAction({
       },
     }),
     relatedTo: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Related To',
       description: 'Select the specific record the call is related to.',
       required: false,
@@ -82,7 +85,8 @@ export const createCall = createAction({
         if (!auth) return handleDropdownError('Please connect first');
         if (!relatedModule) return { options: [] };
 
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const fetchMap: Record<string, () => Promise<any>> = {
           Pipelines: () =>
@@ -109,8 +113,8 @@ export const createCall = createAction({
   },
   async run({ auth, propsValue }) {
     try {
-      const { access_token, api_domain } = auth as any;
-
+      const { access_token, data } = auth;
+      const api_domain = data['api_domain'];
       const payload: any = {
         Call_Start_Time: formatDateTime(propsValue.callStartTime),
         Call_Duration: Number(propsValue.callDuration),

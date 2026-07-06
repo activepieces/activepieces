@@ -7,6 +7,8 @@ export const getTranscriptAction = createAction({
   name: 'get_transcript',
   displayName: 'Get Transcript',
   description: 'Fetches transcript of a YouTube video.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the transcript/captions of a YouTube video from its URL via the Gistly API. Use this to get the spoken text of a video for summarizing, searching, or analysis. Set the Merge Text option to return one continuous text block, or leave it off to get timestamped chunks. Read-only and idempotent — fetching the same URL returns the same transcript.', idempotent: true },
   auth: gistlyAuth,
   props: {
     url: Property.ShortText({
@@ -26,7 +28,7 @@ export const getTranscriptAction = createAction({
       method: HttpMethod.GET,
       url: `${gistlyConfig.baseUrl}/youtube/transcript`,
       headers: {
-        [gistlyConfig.accessTokenHeaderKey]: context.auth,
+        [gistlyConfig.accessTokenHeaderKey]: context.auth.secret_text,
       },
       queryParams: {
         url,

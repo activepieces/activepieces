@@ -14,6 +14,11 @@ export const findDocument = createAction({
   name: 'findDocument',
   displayName: 'Find Document(s)',
   description: 'Finds documents based various filter.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Search and list PandaDoc documents, optionally narrowed by query text, status, template, form, folder, contact, tags, date ranges, or metadata; with no filters it returns all documents (paginated). Use to locate documents or enumerate them before acting on a specific one. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: pandadocAuth,
   props: {
     q: Property.ShortText({
@@ -73,6 +78,7 @@ export const findDocument = createAction({
       },
     }),
     template_id: Property.Dropdown({
+      auth: pandadocAuth,
       displayName: 'Template',
       description: 'Filter by parent template (cannot be used with Form)',
       required: false,
@@ -93,7 +99,7 @@ export const findDocument = createAction({
               name: string;
               date_created: string;
             }>;
-          }>(auth as string, HttpMethod.GET, '/templates?count=100');
+          }>(auth.secret_text, HttpMethod.GET, '/templates?count=100');
 
           const options = response.results.map((template) => ({
             label: `${template.name} - ${template.id.substring(0, 8)}...`,
@@ -234,7 +240,7 @@ export const findDocument = createAction({
     const endpoint = queryString ? `/documents?${queryString}` : '/documents';
 
     return await pandadocClient.makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.GET,
       endpoint
     );

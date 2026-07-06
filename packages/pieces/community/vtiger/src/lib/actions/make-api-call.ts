@@ -18,6 +18,8 @@ export const makeAPICall = createAction({
   auth: vtigerAuth,
   displayName: 'Custom API Call (Deprecated)',
   description: 'Performs an arbitrary authorized API call. (Deprecated)',
+  audience: 'both',
+  aiMetadata: { description: 'Deprecated. Makes an arbitrary authenticated HTTP call to the Vtiger API, routing to either the legacy webservice.php endpoint or the REST base depending on the URL given. Prefer the dedicated record/query actions; reach for this only for endpoints they do not cover. Idempotency depends on the method and operation invoked, so treat write calls as non-idempotent.', idempotent: false },
   props: {
     method: Property.StaticDropdown<HttpMethod>({
       displayName: 'Http Method',
@@ -70,21 +72,21 @@ export const makeAPICall = createAction({
       };
     }
 
-    let finalUrl = `${auth.instance_url}/webservice.php`;
+    let finalUrl = `${auth.props.instance_url}/webservice.php`;
     let useRestAuth = false;
 
     if (url) {
       if (url.startsWith('http://') || url.startsWith('https://')) {
         finalUrl = url;
       } else if (url.startsWith('/')) {
-        finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default${url}`;
+        finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default${url}`;
         useRestAuth = true;
       } else {
-        finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default/${url}`;
+        finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default/${url}`;
         useRestAuth = true;
       }
     } else if (urlPath) {
-      finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default${urlPath}`;
+      finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default${urlPath}`;
       useRestAuth = true;
     }
 
@@ -150,14 +152,14 @@ export const makeAPICall = createAction({
     if (useRestAuth) {
       httpRequest.authentication = {
         type: AuthenticationType.BASIC,
-        username: auth.username,
-        password: auth.password,
+        username: auth.props.username,
+        password: auth.props.password,
       };
     } else {
       const vtigerInstance = await instanceLogin(
-        auth.instance_url,
-        auth.username,
-        auth.password
+        auth.props.instance_url,
+        auth.props.username,
+        auth.props.password
       );
       if (vtigerInstance === null) return;
 

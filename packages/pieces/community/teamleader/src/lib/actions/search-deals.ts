@@ -7,6 +7,8 @@ export const searchDeals = createAction({
     name: 'search_deals',
     displayName: 'Search Deals',
     description: 'List or filter deals',
+    audience: 'both',
+    aiMetadata: { description: 'Look up sales deals in Teamleader, optionally narrowing by a free-text term, customer, phase, status (open/won/lost), responsible user, or closing/updated/created date ranges, with paging and sorting. With no filters it lists all deals; supply filters to find specific matches (e.g. resolve a deal ID before updating). Read-only and idempotent.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         term: Property.ShortText({
@@ -26,6 +28,7 @@ export const searchDeals = createAction({
             }
         }),
         customer_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Customer',
             description: 'Filter deals by specific customer',
             required: false,
@@ -46,7 +49,7 @@ export const searchDeals = createAction({
                 try {
                     if (customer_type === 'company') {
                         const response = await teamleaderCommon.apiCall({
-                            auth: auth as any,
+                            auth,
                             method: HttpMethod.POST,
                             resourceUri: '/companies.list',
                             body: {}
@@ -61,7 +64,7 @@ export const searchDeals = createAction({
                         };
                     } else {
                         const response = await teamleaderCommon.apiCall({
-                            auth: auth as any,
+                            auth,
                             method: HttpMethod.POST,
                             resourceUri: '/contacts.list',
                             body: {}
@@ -85,6 +88,7 @@ export const searchDeals = createAction({
             }
         }),
         phase_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Deal Phase',
             description: 'Filter by deal phase or stage',
             required: false,
@@ -98,7 +102,7 @@ export const searchDeals = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/dealPhases.list',
                         body: {}
@@ -133,6 +137,7 @@ export const searchDeals = createAction({
             }
         }),
         responsible_user_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Responsible User',
             description: 'Filter by user responsible for deals',
             required: false,
@@ -146,7 +151,7 @@ export const searchDeals = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/users.list',
                         body: {

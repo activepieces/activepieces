@@ -7,6 +7,8 @@ export const createDraftPost = createAction({
     name: 'create_draft_post',
     displayName: 'Create Draft/Post',
     description: 'Create a draft message or post in Missive, with option to send',
+    audience: 'both',
+    aiMetadata: { description: 'Compose a message in Missive across a chosen channel (email, SMS, WhatsApp, live chat, custom channel, Messenger, or Instagram), either saving it as a draft or sending it immediately (optionally scheduled for a future timestamp). Use to send or queue an outbound message; sender/recipient fields and any account IDs depend on the selected message type. Not idempotent: each call creates a new draft and, if send is enabled, dispatches a message.', idempotent: false },
     auth: missiveAuth,
     props: {
     message_type: Property.StaticDropdown({
@@ -36,7 +38,7 @@ export const createDraftPost = createAction({
             required: true,
         }),
     message_fields: Property.DynamicProperties({
-      displayName: 'Message Configuration',
+    auth: missiveAuth,      displayName: 'Message Configuration',
       description: 'Configure sender, recipients, and message-specific options',
             required: false,
       refreshers: ['message_type'],
@@ -235,7 +237,7 @@ export const createDraftPost = createAction({
       },
     }),
     conversation_options: Property.DynamicProperties({
-      displayName: 'Conversation Options',
+    auth: missiveAuth,      displayName: 'Conversation Options',
       description: 'Advanced conversation management options',
       required: false,
       refreshers: [],
@@ -341,7 +343,7 @@ export const createDraftPost = createAction({
 
         try {
           const orgsResponse = await missiveCommon.apiCall({
-            auth: auth as unknown as string,
+            auth: auth,
                         method: HttpMethod.GET,
             resourceUri: '/organizations',
           });
@@ -352,7 +354,7 @@ export const createDraftPost = createAction({
             })) || [];
 
           const teamsResponse = await missiveCommon.apiCall({
-            auth: auth as unknown as string,
+            auth: auth,
             method: HttpMethod.GET,
             resourceUri: '/teams',
           });
@@ -363,7 +365,7 @@ export const createDraftPost = createAction({
             })) || [];
 
           const labelsResponse = await missiveCommon.apiCall({
-            auth: auth as unknown as string,
+            auth: auth,
             method: HttpMethod.GET,
             resourceUri: '/shared_labels',
           });

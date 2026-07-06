@@ -17,7 +17,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/api';
 import { updateCustomerProperties } from './lib/actions/update-customer-properties';
 import { tagsUpdated } from './lib/triggers/tags-updated';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const helpScout = createPiece({
   displayName: 'Help Scout',
@@ -40,7 +40,7 @@ export const helpScout = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+          Authorization: `Bearer ${(auth).access_token}`,
         };
       },
     }),

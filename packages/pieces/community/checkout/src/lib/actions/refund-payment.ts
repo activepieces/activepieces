@@ -7,6 +7,8 @@ export const refundPaymentAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Refund a Payment',
   description: 'Issue a refund (full or partial) for a captured payment. Supports split refunds, line items, and bank account destinations.',
+  audience: 'both',
+  aiMetadata: { description: 'Refunds a captured Checkout.com payment, fully (omit amount) or partially (specify amount in minor units), with optional split allocations to sub-entities, line items, and a bank-account destination for methods like giropay/EPS. Requires the payment ID, resolved from an order reference. Choose it to return funds to a payer. Not idempotent: each call issues a separate refund and moves money.', idempotent: false },
   props: {
     reference: Property.ShortText({
       displayName: 'Reference',
@@ -14,12 +16,13 @@ export const refundPaymentAction = createAction({
       required: true,
     }),
     payment_id: Property.Dropdown({
+      auth: checkoutComAuth,
       displayName: 'Payment ID',
       description: 'Select the payment to refund',
       required: true,
       refreshers: ['reference'],
       options: async ({ auth, reference }) => {
-        if (!reference) {
+        if (!reference || !auth) {
           return {
             disabled: true,
             options: [],
@@ -28,7 +31,7 @@ export const refundPaymentAction = createAction({
         }
 
         try {
-          const { baseUrl } = getEnvironmentFromApiKey(auth as string);
+          const { baseUrl } = getEnvironmentFromApiKey(auth.secret_text);
           
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
@@ -38,7 +41,7 @@ export const refundPaymentAction = createAction({
               limit: '100',
             },
             headers: {
-              Authorization: `Bearer ${auth}`,
+              Authorization: `Bearer ${auth.secret_text}`,
               'Content-Type': 'application/json',
             },
           });
@@ -364,7 +367,7 @@ export const refundPaymentAction = createAction({
       metadata,
     } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     const body: Record<string, any> = {};
     
@@ -495,7 +498,7 @@ export const refundPaymentAction = createAction({
         method: HttpMethod.POST,
         url: `${baseUrl}/payments/${payment_id}/refunds`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

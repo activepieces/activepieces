@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { SESClient, CreateTemplateCommand } from '@aws-sdk/client-ses';
-import { amazonSesAuth } from '../../index';
+import { amazonSesAuth } from '../auth';
 import {
   createSESClient,
   validateTemplateName,
@@ -17,6 +17,12 @@ export const createEmailTemplate = createAction({
   name: 'create_email_template',
   displayName: 'Create Email Template',
   description: 'Create a reusable HTML or text email template with variables',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a reusable Amazon SES email template (HTML, plain text, or both) with {{variable}} placeholders that can later be sent via Send Templated Email. Use when setting up a named template for repeated sends rather than dispatching a message now. The template name must be unique; by default the action fails if a template with that name already exists. Not idempotent: it registers a new template and errors on a duplicate name.',
+    idempotent: false,
+  },
   props: {
     templateName: Property.ShortText({
       displayName: 'Template Name',
@@ -75,7 +81,7 @@ export const createEmailTemplate = createAction({
       sampleData,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     validateTemplateName(templateName);
 

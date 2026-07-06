@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import {
 	createTrigger,
 	DropdownOption,
@@ -14,7 +14,7 @@ import {
 } from '../common';
 import { GetField, RequestParams, WebhookCreateResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedriveDealV2 {
@@ -95,9 +95,14 @@ export const updatedDealStageTrigger = createTrigger({
 	name: 'updated-deal-stage',
 	displayName: 'Updated Deal Stage',
 	description: "Triggers when a deal's stage is updated.",
+	aiMetadata: {
+		description:
+			"Fires when an existing deal moves from one pipeline stage to another (its stage_id changes). Represents progress of a deal through the sales pipeline; can optionally be limited to a specific stage. Use to react when deals advance, regress, or reach a particular stage.",
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		stage_id: Property.Dropdown({
+			auth: pipedriveAuth,
 			displayName: 'Stage in Pipeline',
 			required: false,
 			refreshers: [],
@@ -218,7 +223,14 @@ export const updatedDealStageTrigger = createTrigger({
 		const currentDealData = payloadBody.data;
 		const previousDealData = payloadBody.previous;
 
+		// Check if previous data exists and has stage_id
+		if (!previousDealData || isNil(previousDealData.stage_id)) {
+			return [];
+		}
+
+		// Only trigger if stage_id actually changed
 		if (currentDealData.stage_id !== previousDealData.stage_id) {
+			// If stage filter is set, only trigger if new stage matches the filter
 			if (stageId && currentDealData.stage_id !== stageId) {
 				return [];
 			}

@@ -9,6 +9,8 @@ export const getRecord = createAction({
     name: 'get_record',
     displayName: 'Get Record',
     description: 'Get a record by ID from a specified Insightly object',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieves a single record by its ID from a chosen Insightly CRM object (Contact, Lead, Opportunity, etc.). Use to look up the full details of one known entity. Read-only and idempotent. Requires the matching Insightly pod (e.g. "na1") and the record ID.', idempotent: true },
     props: {
         pod: Property.ShortText({
             displayName: 'Pod',
@@ -35,12 +37,13 @@ export const getRecord = createAction({
             }
         }),
         recordId: Property.Dropdown({
+            auth: insightlyAuth,
             displayName: 'Record ID',
             description: 'Select the record to retrieve',
             required: true,
             refreshers: ['objectName', 'pod'],
             options: async ({ auth, objectName, pod }) => {
-                if (!objectName || !pod) {
+                if (!objectName || !pod || !auth) {
                     return {
                         disabled: true,
                         placeholder: 'Please select an object type and pod first',
@@ -49,7 +52,7 @@ export const getRecord = createAction({
                 }
 
                 const response = await makeInsightlyRequest(
-                    auth as string,
+                    auth,
                     `/${objectName}?top=100&brief=true`,
                     pod as string
                 );

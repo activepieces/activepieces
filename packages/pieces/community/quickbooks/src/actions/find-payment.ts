@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../index'; // Correct path relative to actions/find-payment.ts
+import { quickbooksAuth } from '../lib/auth'; // Correct path relative to actions/find-payment.ts
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
 
@@ -52,6 +52,11 @@ export const findPaymentAction = createAction({
 	name: 'find_payment',
 	displayName: 'Find Payment',
 	description: 'Finds an existing payment in QuickBooks.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'List all QuickBooks payments belonging to a given customer, identified by the customer Id (not name). Use to retrieve a customer\'s payment history or to check whether they have any payments on record. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		customerId: Property.ShortText({
 			displayName: 'Customer ID',
@@ -67,7 +72,7 @@ export const findPaymentAction = createAction({
 			throw new Error('Realm ID not found in authentication data. Please reconnect.');
 		}
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId);
+		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const query = `SELECT * FROM Payment WHERE CustomerRef = '${customerId}'`;
 
 		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksPayment>>({

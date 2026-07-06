@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -15,6 +15,7 @@ const SUPPORTED_FILE_TYPES = [
 ];
 
 export const fileUpload = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'file_upload',
   displayName: 'Upload File',
@@ -45,7 +46,7 @@ export const fileUpload = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: formData,
       headers: {

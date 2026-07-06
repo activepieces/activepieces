@@ -5,6 +5,8 @@ export const getAddressBlocksValidated = createAction({
   name: 'get_address_blocks_validated',
   displayName: 'Get Address Blocks Validated',
   description: 'Get list of blocks validated by an address',
+  audience: 'both',
+  aiMetadata: { description: 'List the blocks an address validated or produced (relevant for validator/miner addresses). Choose this to inspect an account’s block-production history rather than its transactions or balances. Read-only lookup on eth.blockscout.com; requires a 0x address hash and returns empty for non-validator addresses.', idempotent: true },
   // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({

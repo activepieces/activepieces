@@ -9,6 +9,8 @@ export const webflowPublishCollectionItem = createAction({
 	name: 'publish_collection_item',
 	description: 'Publish collection item',
 	displayName: 'Publish a Collection Item',
+	audience: 'both',
+	aiMetadata: { description: 'Publishes a Webflow CMS collection item live, identified by collection ID and item ID, so its current content goes to the live site. Use after creating or updating a draft item to make it public. Idempotent: re-publishing the same item again leaves it published.', idempotent: true },
 	props: {
 		site_id: webflowProps.site_id,
 		collection_id: webflowProps.collection_id,

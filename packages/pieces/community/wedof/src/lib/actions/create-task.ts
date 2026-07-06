@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../index';
+import { wedofAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
@@ -9,6 +9,12 @@ export const createTask = createAction({
   name: 'createTask',
   displayName: "Créer une tâche",
   description: "Permet de créer une tâche d'un dossier (Dossier de formation / Dossier de certification)",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Create a task (activity) attached to a Wedof folder — a certification folder, registration folder, or commercial proposal — with title, optional due date, type, Qualiopi indicators, description, owner email, and link. Pick this to add a to-do/reminder against a specific record; each call creates a new task, so it is not idempotent. Requires the folder type (entityClass), the record's externalId, and the owner's email.",
+    idempotent: false,
+  },
   props: {
     entityClass: Property.StaticDropdown({
       displayName: "Choisir le type de dossier",
@@ -78,7 +84,7 @@ export const createTask = createAction({
           body: message,
           headers: {
             'Content-Type': 'application/json',
-            'X-Api-Key': context.auth as string,
+            'X-Api-Key': context.auth.secret_text,
           },
         })
       ).body;

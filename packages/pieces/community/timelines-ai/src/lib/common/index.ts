@@ -64,7 +64,7 @@ export const timelinesAiCommon = {
           timelinesAiCommon.endpoints.sendMessageToExistingChat(
             messageParams.chat_id
           ),
-        headers: timelinesAiCommon.getHeaders(apiKey),
+        headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
         body: messageParams,
       });
     return response.body;
@@ -79,7 +79,7 @@ export const timelinesAiCommon = {
         url:
           timelinesAiCommon.baseUrl +
           timelinesAiCommon.endpoints.sendMessageToPhoneNumber,
-        headers: timelinesAiCommon.getHeaders(apiKey),
+        headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
         body: messageParams,
       });
     return response.body;
@@ -93,7 +93,7 @@ export const timelinesAiCommon = {
       url:
         timelinesAiCommon.baseUrl +
         timelinesAiCommon.endpoints.sendMessageToJid,
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
       body: messageParams,
     });
     return response.body;
@@ -104,7 +104,7 @@ export const timelinesAiCommon = {
       url:
         timelinesAiCommon.baseUrl +
         timelinesAiCommon.endpoints.updateChat(chatParams.chat_id.toString()),
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
       body: chatParams,
     });
     return response.body;
@@ -128,7 +128,7 @@ export const timelinesAiCommon = {
     const response = await httpClient.sendRequest<GetChatsResponse>({
       method: HttpMethod.GET,
       url: timelinesAiCommon.baseUrl + timelinesAiCommon.endpoints.getChats,
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
       queryParams,
     });
     return response.body;
@@ -139,7 +139,7 @@ export const timelinesAiCommon = {
       url:
         timelinesAiCommon.baseUrl +
         timelinesAiCommon.endpoints.getMessage(message_uid),
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
     });
     return response.body;
   },
@@ -149,7 +149,7 @@ export const timelinesAiCommon = {
       url:
         timelinesAiCommon.baseUrl +
         timelinesAiCommon.endpoints.getUploadedFile(file_uid),
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
     });
     return response.body;
   },
@@ -157,7 +157,7 @@ export const timelinesAiCommon = {
     const response = await httpClient.sendRequest<ListUploadedFilesResponse>({
       method: HttpMethod.GET,
       url: timelinesAiCommon.baseUrl + timelinesAiCommon.endpoints.listUploadedFiles,
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
       queryParams: {
         ...(filename ? { filename } : {}),
       },
@@ -170,7 +170,7 @@ export const timelinesAiCommon = {
       url:
         timelinesAiCommon.baseUrl +
         timelinesAiCommon.endpoints.getWhatsappAccounts,
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
     });
     return response.body;
   },
@@ -193,7 +193,7 @@ export const timelinesAiCommon = {
       method: HttpMethod.POST,
       url: timelinesAiCommon.baseUrl + timelinesAiCommon.endpoints.uploadFile,
       headers: {
-        ...timelinesAiCommon.getHeaders(apiKey),
+        ...timelinesAiCommon.getHeaders(apiKey.secret_text),
         'Content-Type': 'multipart/form-data',
       },
       body: formData,
@@ -205,7 +205,7 @@ export const timelinesAiCommon = {
       method: HttpMethod.POST,
       url:
         timelinesAiCommon.baseUrl + timelinesAiCommon.endpoints.createWebhook,
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
       body: webhookParams,
     });
     return response.body;
@@ -216,7 +216,7 @@ export const timelinesAiCommon = {
       url:
         timelinesAiCommon.baseUrl +
         timelinesAiCommon.endpoints.deleteWebhook(webhook_id),
-      headers: timelinesAiCommon.getHeaders(apiKey),
+      headers: timelinesAiCommon.getHeaders(apiKey.secret_text),
     });
     return response.body;
   },

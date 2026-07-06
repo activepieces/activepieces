@@ -1,11 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { linkaAuth } from '../..';
+import { linkaAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',
   displayName: 'Add or Update Contact',
   description: 'Creates a new contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a contact (lead, client, or partner) in the Linka/Sperse CRM. With "Match Existing" enabled it looks up an existing record by email and full name (or by Contact ID) and updates it; otherwise it creates a new contact. Use to add or maintain CRM contacts. At least one of First Name, Last Name, or Company Name must be provided. Idempotent when matching is on and a stable identifier is supplied; with matching off, repeated calls create duplicate contacts.',
+    idempotent: true,
+  },
   auth: linkaAuth,
   props: {
     importType: Property.StaticDropdown({
@@ -357,9 +363,9 @@ export const addOrUpdateContact = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportContact`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportContact`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

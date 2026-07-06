@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { OAuth2GrantType } from '@activepieces/shared';
+import { OAuth2GrantType } from '@activepieces/pieces-framework';
 import * as properties from './properties';
 import * as schemas from './schemas';
 import {
@@ -319,7 +319,7 @@ export const zohoCampaignsCommon = {
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams,
     });
-    return response.body.list_of_details;
+    return response.body.list_of_details || [];
   },
   listCampaigns: async ({
     accessToken,
@@ -342,7 +342,7 @@ export const zohoCampaignsCommon = {
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams,
     });
-    return response.body.recent_campaigns;
+    return response.body.recent_campaigns || [];
   },
   listMailingLists: async ({
     accessToken,
@@ -359,13 +359,14 @@ export const zohoCampaignsCommon = {
       ...(range && { range: strRange }),
       ...otherParams,
     };
+
     const response = await httpClient.sendRequest<ListMailingListsResponse>({
       method: HttpMethod.GET,
       url: `${zohoCampaignsCommon.baseUrl(location)}${zohoCampaignsCommon.endpoints.listMailingLists}`,
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams,
     });
-    return response.body.list_of_details;
+    return response.body.list_of_details || [];
   },
   listTopics: async ({ accessToken, location = 'zoho.com' }: AuthorizationParams & { location?: string }) => {
     const response = await httpClient.sendRequest<ListTopicsResponse>({

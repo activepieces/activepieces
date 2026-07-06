@@ -1,0 +1,603 @@
+import { DropdownOption, DynamicPropsValue, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createMSGraphClient, getHeaders } from './helpers';
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { Drive, DriveItem, Site } from '@microsoft/microsoft-graph-types';
+import { isEmpty } from '@activepieces/pieces-framework';
+import { excelAuth } from '../auth';
+
+const MAX_FOLDER_OPTIONS = 1000;
+
+const createEmptyOptions = (message: string) => {
+	return {
+		placeholder: message,
+		options: [],
+		disabled: true,
+	};
+};
+
+const listDriveItemsRecursively = async ({
+	client,
+	drivePath,
+	collect,
+}: {
+	client: Client;
+	drivePath: string;
+	collect: 'folders' | 'workbooks';
+}) => {
+	const options: DropdownOption<string>[] = [];
+	const queue: { id: string; path: string }[] = [{ id: 'root', path: '' }];
+	let visitedFolders = 0;
+
+	while (queue.length > 0 && options.length < MAX_FOLDER_OPTIONS && visitedFolders < MAX_FOLDER_OPTIONS) {
+		const current = queue.shift();
+		if (!current) {
+			break;
+		}
+		visitedFolders++;
+
+		let response: PageCollection | undefined = await client
+			.api(`${drivePath}/items/${current.id}/children`)
+			.select('id,name,folder,file')
+			.get();
+
+		while (response && options.length < MAX_FOLDER_OPTIONS) {
+			for (const item of (response.value ?? []) as DriveItem[]) {
+				if (!item.id || !item.name) {
+					continue;
+				}
+				const path = current.path ? `${current.path}/${item.name}` : item.name;
+				if (item.folder) {
+					if (collect === 'folders') {
+						options.push({ label: path, value: item.id });
+					}
+					if ((item.folder.childCount ?? 0) > 0) {
+						queue.push({ id: item.id, path });
+					}
+				} else if (collect === 'workbooks' && item.file && item.name.toLowerCase().endsWith('.xlsx')) {
+					options.push({ label: path, value: item.id });
+				}
+			}
+			const nextLink = response['@odata.nextLink'];
+			response = nextLink ? await client.api(nextLink).get() : undefined;
+		}
+	}
+
+	return options;
+};
+
+const createWorkbookDropdown = <R extends boolean>({
+	displayName,
+	description,
+	required,
+	folderRefresherKey,
+}: {
+	displayName: string;
+	description?: string;
+	required: R;
+	folderRefresherKey?: string;
+}) =>
+	Property.Dropdown({
+		displayName,
+		description,
+		refreshers: folderRefresherKey
+			? ['storageSource', 'siteId', 'documentId', folderRefresherKey]
+			: ['storageSource', 'siteId', 'documentId'],
+		required,
+		auth: excelAuth,
+		options: async (ctx) => {
+			const { auth, storageSource, siteId, documentId } = ctx;
+			if (!auth) {
+				return createEmptyOptions('please connect your account first.');
+			}
+			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+				return createEmptyOptions(
+					'please select SharePoint site and document library first.'
+				);
+			}
+
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
+
+			const options: DropdownOption<string>[] = [];
+
+			const drivePath =
+				storageSource === 'onedrive'
+					? '/me/drive'
+					: `/sites/${siteId}/drives/${documentId}`;
+
+			const scopedFolderId = folderRefresherKey ? ctx[folderRefresherKey] : undefined;
+
+			if (scopedFolderId) {
+				// Children listing is index-independent, unlike drive search,
+				// so folder-scoped results include just-created workbooks.
+				let response: PageCollection | undefined = await client
+					.api(`${drivePath}/items/${scopedFolderId}/children`)
+					.select('id,name,file')
+					.get();
+
+				while (response) {
+					for (const item of (response.value ?? []) as DriveItem[]) {
+						if (item.file && item.name?.toLowerCase().endsWith('.xlsx')) {
+							options.push({ label: item.name, value: item.id! });
+						}
+					}
+					const nextLink = response['@odata.nextLink'];
+					response = nextLink ? await client.api(nextLink).get() : undefined;
+				}
+
+				return {
+					disabled: false,
+					options,
+				};
+			}
+
+			// Drive search can return an empty page that still carries
+			// @odata.nextLink (common on OneDrive personal), so keep following
+			// the link instead of stopping at the first empty page.
+			let response: PageCollection | undefined = await client
+				.api(`${drivePath}/root/search(q='.xlsx')`)
+				.select('id,name')
+				.get();
+
+			while (response) {
+				for (const file of (response.value ?? []) as DriveItem[]) {
+					options.push({ label: file.name!, value: file.id! });
+				}
+				const nextLink = response['@odata.nextLink'];
+				response = nextLink ? await client.api(nextLink).get() : undefined;
+			}
+
+			if (options.length === 0) {
+				// The consumer OneDrive search index lags behind recently created
+				// files and can return nothing for a drive that has workbooks, so
+				// fall back to walking the drive via children listings.
+				return {
+					disabled: false,
+					options: await listDriveItemsRecursively({ client, drivePath, collect: 'workbooks' }),
+				};
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
+export const commonProps = {
+	storageSource: Property.StaticDropdown({
+		displayName: 'Excel File Source',
+		required: true,
+		defaultValue: 'onedrive',
+		options: {
+			disabled: false,
+			options: [
+				{ label: 'OneDrive', value: 'onedrive' },
+				{ label: 'SharePoint', value: 'sharepoint' },
+			],
+		},
+	}),
+	isFirstRowHeaders: Property.Checkbox({
+		displayName: 'Does the first row contain headers?',
+		description: 'If the first row is headers',
+		required: true,
+		defaultValue: false,
+	}),
+	siteId: Property.Dropdown({
+		displayName: 'Sharepoint Site',
+		auth: excelAuth,
+		refreshers: ['storageSource'],
+		required: false,
+		options: async ({ auth, storageSource }) => {
+			if (!auth) {
+				return createEmptyOptions('please connect your account first.');
+			}
+			if (storageSource !== 'sharepoint') {
+				return createEmptyOptions('please select sharepoint as file source.');
+			}
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
+
+			const options: DropdownOption<string>[] = [];
+
+			let response: PageCollection = await client
+				.api('/sites?search=*&$select=displayName,id,name')
+				.get();
+
+			while (response.value.length > 0) {
+				for (const site of response.value as Site[]) {
+					options.push({ label: site.displayName!, value: site.id! });
+				}
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
+	documentId: Property.Dropdown({
+		displayName: 'Sharepoint Document Library',
+		auth: excelAuth,
+		refreshers: ['storageSource', 'siteId'],
+		required: false,
+		options: async ({ auth, storageSource, siteId }) => {
+			if (!auth) {
+				return createEmptyOptions('please connect your account first.');
+			}
+
+			if (storageSource !== 'sharepoint') {
+				return createEmptyOptions('please select sharepoint as file source.');
+			}
+
+			if (!siteId) {
+				return createEmptyOptions('please select sharepoint site first.');
+			}
+
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
+
+			const options: DropdownOption<string>[] = [];
+
+			let response: PageCollection = await client
+				.api(`/sites/${siteId}/drives`)
+				.select('id,name')
+				.get();
+
+			while (response.value.length > 0) {
+				for (const drive of response.value as Drive[]) {
+					options.push({ label: drive.name!, value: drive.id! });
+				}
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
+	workbookDropdown: createWorkbookDropdown,
+	folderId: Property.Dropdown({
+		auth: excelAuth,
+		displayName: 'Folder',
+		description:
+			'The folder containing the workbook. Leave empty to search the entire drive (up to 1000 folders are listed).',
+		required: false,
+		refreshers: ['storageSource', 'siteId', 'documentId'],
+		options: async ({ auth, storageSource, siteId, documentId }) => {
+			if (!auth) {
+				return createEmptyOptions('please connect your account first.');
+			}
+			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+				return createEmptyOptions(
+					'please select SharePoint site and document library first.'
+				);
+			}
+
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
+
+			const drivePath =
+				storageSource === 'onedrive'
+					? '/me/drive'
+					: `/sites/${siteId}/drives/${documentId}`;
+
+			return {
+				disabled: false,
+				options: await listDriveItemsRecursively({ client, drivePath, collect: 'folders' }),
+			};
+		},
+	}),
+	workbookId: createWorkbookDropdown({
+		displayName: 'Workbook',
+		required: true,
+	}),
+	destinationWorkbookId: createWorkbookDropdown({
+		displayName: 'Destination Workbook',
+		description: 'The workbook to copy the worksheet into. Leave empty to copy within the source workbook.',
+		required: false,
+	}),
+	worksheetId: Property.Dropdown({
+		auth: excelAuth,
+		displayName: 'Worksheet',
+		required: true,
+		refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId'],
+		options: async ({ auth, storageSource, siteId, documentId, workbookId }) => {
+			if (!auth) {
+				return createEmptyOptions('please connect your account first.');
+			}
+
+			if (!workbookId) {
+				return createEmptyOptions('please select a workbook first.');
+			}
+
+			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+				return createEmptyOptions(
+					'please select SharePoint site and document library first.'
+				);
+			}
+
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
+
+			const drivePath =
+				storageSource === 'onedrive'
+					? '/me/drive'
+					: `/sites/${siteId}/drives/${documentId}`;
+
+			const response: PageCollection = await client
+				.api(`${drivePath}/items/${workbookId}/workbook/worksheets`)
+				.select('id,name')
+				.get();
+
+			return {
+				disabled: false,
+				options: response.value.map((worksheet: { id: string; name: string }) => {
+					return {
+						label: worksheet.name,
+						value: worksheet.name,
+					};
+				}),
+			};
+		},
+	}),
+	worksheetValues: 
+		Property.DynamicProperties({
+			auth: excelAuth,
+			displayName: 'Values',
+			description: 'The values to insert',
+			required: true,
+			refreshers: [
+				'storageSource',
+				'siteId',
+				'documentId',
+				'workbookId',
+				'worksheetId',
+				'isFirstRowHeaders',
+			],
+			props: async ({
+				auth,
+				storageSource,
+				siteId,
+				workbookId,
+				documentId,
+				worksheetId,
+				isFirstRowHeaders,
+			}) => {
+				if (
+					!auth ||
+					(workbookId ?? '').toString().length === 0 ||
+					(worksheetId ?? '').toString().length === 0
+				) {
+					return {};
+				}
+
+				if (storageSource === 'sharepoint' && (!siteId || !documentId)) return {};
+
+				if (!isFirstRowHeaders) {
+					return {
+						values: Property.Array({
+							displayName: 'Values',
+							required: true,
+						}),
+					};
+				}
+
+				const drivePath =
+					storageSource === 'onedrive'
+						? '/me/drive'
+						: `/sites/${siteId}/drives/${documentId}`;
+
+				const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+
+				const firstRow = await getHeaders(
+					auth.access_token,
+					drivePath,
+					workbookId as unknown as string,
+					worksheetId as unknown as string,
+					cloud
+				);
+
+				const columns: {
+					[key: string]: any;
+				} = {};
+				for (const key in firstRow) {
+					columns[key] = Property.ShortText({
+						displayName: firstRow[key].toString(),
+						description: firstRow[key].toString(),
+						required: false,
+						defaultValue: '',
+					});
+				}
+				return columns;
+
+				const fields: DynamicPropsValue = {
+					values: Property.Array({
+						displayName: 'Values',
+						required: true,
+						properties: columns,
+					}),
+				};
+
+				return fields;
+			},
+		}),
+
+	worksheetMultiValues :Property.DynamicProperties({
+			auth: excelAuth,
+			displayName: 'Values',
+			description: 'The values to insert',
+			required: true,
+			refreshers: [
+				'storageSource',
+				'siteId',
+				'documentId',
+				'workbookId',
+				'worksheetId',
+			],
+			props: async ({
+				auth,
+				storageSource,
+				siteId,
+				workbookId,
+				documentId,
+				worksheetId,
+			}) => {
+				if (
+					!auth ||
+					(workbookId ?? '').toString().length === 0 ||
+					(worksheetId ?? '').toString().length === 0
+				) {
+					return {};
+				}
+
+				if (storageSource === 'sharepoint' && (!siteId || !documentId)) return {};
+
+				const drivePath =
+					storageSource === 'onedrive'
+						? '/me/drive'
+						: `/sites/${siteId}/drives/${documentId}`;
+
+				const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+
+				const firstRow = await getHeaders(
+					auth.access_token,
+					drivePath,
+					workbookId as unknown as string,
+					worksheetId as unknown as string,
+					cloud
+				);
+
+				const columns: {
+					[key: string]: any;
+				} = {};
+				for (const key in firstRow) {
+					columns[key] = Property.ShortText({
+						displayName: firstRow[key].toString(),
+						description: firstRow[key].toString(),
+						required: false,
+						defaultValue: '',
+					});
+				}
+
+				const fields: DynamicPropsValue = {
+					values: Property.Array({
+						displayName: 'Values',
+						required: true,
+						properties: columns,
+					}),
+				};
+
+				return fields;
+			},
+		}),
+
+	tableId: Property.Dropdown({
+		displayName: 'Table',
+		auth: excelAuth,
+		required: true,
+		refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+		options: async ({ auth, storageSource, siteId, documentId, workbookId, worksheetId }) => {
+			if (!auth) {
+				return createEmptyOptions('please connect your account first.');
+			}
+			if (!workbookId) {
+				return createEmptyOptions('please select a workbook first.');
+			}
+			if (!worksheetId) {
+				return createEmptyOptions('please select a worksheet first.');
+			}
+
+			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+				return createEmptyOptions(
+					'please select SharePoint site and document library first.'
+				);
+			}
+
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
+			const drivePath =
+				storageSource === 'onedrive'
+					? '/me/drive'
+					: `/sites/${siteId}/drives/${documentId}`;
+
+			const response: PageCollection = await client
+				.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables`)
+				.select('id,name')
+				.get();
+
+			const options: DropdownOption<string>[] = [];
+			for (const t of response.value as DriveItem[]) {
+				options.push({ label: t.name!, value: t.id! });
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
+
+	filterColumn: Property.Dropdown({
+		displayName: 'Filter Column',
+		refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+		auth: excelAuth,
+		required: false,
+		async options({ auth, storageSource, siteId, workbookId, documentId, worksheetId }) {
+			if (!auth) {
+				return createEmptyOptions('please connect your account first.');
+			}
+
+			if (!workbookId) {
+				return createEmptyOptions('please select a workbook first.');
+			}
+			if (!worksheetId) {
+				return createEmptyOptions('please select a worksheet first.');
+			}
+
+			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+				return createEmptyOptions(
+					'please select SharePoint site and document library first.'
+				);
+			}
+
+			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+			const client = createMSGraphClient(auth.access_token, cloud);
+
+			const drivePath =
+				storageSource === 'onedrive'
+					? '/me/drive'
+					: `/sites/${siteId}/drives/${documentId}`;
+
+			const firstRow = await getHeaders(
+				auth.access_token,
+				drivePath,
+				workbookId as unknown as string,
+				worksheetId as unknown as string,
+				cloud
+			);
+
+			const options: DropdownOption<string>[] = [];
+
+			for (const key in firstRow) {
+				if (isEmpty(firstRow[key])) continue;
+				options.push({ value: key, label: firstRow[key].toString() });
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
+};

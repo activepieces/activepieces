@@ -18,7 +18,7 @@ import { newReceivedMessage } from './lib/triggers/new-received-message';
 import { newSentMessage } from './lib/triggers/new-sent-message';
 import { newUploadedFile } from './lib/triggers/new-uploaded-file';
 import { newWhatsappAccount } from './lib/triggers/new-whatsapp-account';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const timelinesAi = createPiece({
   displayName: 'TimelinesAI',
@@ -45,7 +45,7 @@ export const timelinesAi = createPiece({
       baseUrl: () => timelinesAiCommon.baseUrl,
       auth: timelinesAiAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth as string}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

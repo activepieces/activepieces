@@ -3,6 +3,7 @@ import {
 	TriggerStrategy,
 	Property,
 	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { crispAuth } from '../common/auth';
 import { websiteIdProp } from '../common/props';
@@ -16,7 +17,7 @@ import {
 import dayjs from 'dayjs';
 import { crispApiCall } from '../common/client';
 
-const polling: Polling<PiecePropValueSchema<typeof crispAuth>, { websiteId: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof crispAuth>, { websiteId: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS, propsValue }) {
 		const websiteId = propsValue.websiteId;
@@ -60,6 +61,9 @@ export const newContactTrigger = createTrigger({
 	name: 'new_contact',
 	displayName: 'New Contact Created',
 	description: 'Triggers when a new contact is added.',
+	aiMetadata: {
+		description: 'Fires when a new person profile is created in the selected Crisp website. Polls the people-profiles list on a schedule and emits each newly added contact.',
+	},
 	props: {
 		websiteId: websiteIdProp,
 	},

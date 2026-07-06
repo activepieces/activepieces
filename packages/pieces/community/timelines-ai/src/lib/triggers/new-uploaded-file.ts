@@ -5,14 +5,14 @@ import {
 } from '@activepieces/pieces-common';
 import {
     createTrigger,
-    PiecePropValueSchema,
+    AppConnectionValueForAuthProperty,
     TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { timelinesAiAuth, timelinesAiCommon } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof timelinesAiAuth>,
+  AppConnectionValueForAuthProperty<typeof timelinesAiAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -33,6 +33,9 @@ export const newUploadedFile = createTrigger({
   name: 'newUploadedFile',
   displayName: 'New Uploaded File',
   description: 'Fires when a new file is uploaded in a chat.',
+  aiMetadata: {
+    description: 'Fires when a new file is uploaded to TimelinesAI. Polls the uploaded-files list and emits each newly added file as it appears.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
+import { chargekeepAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getContactDetails = createAction({
   name: 'getContactDetails',
   displayName: 'Get Contact Details',
   description: 'Get Contact Details',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up and returns a single contact record from the ChargeKeep/Sperse CRM. Identify the contact by any of Contact ID, Contact Xref, Affiliate Code, User ID, or User Email (all optional, so pass whichever identifier you have). Use to fetch contact details before acting on them; read-only and safe to repeat.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     contactId: Property.Number({
@@ -57,10 +59,10 @@ export const getContactDetails = createAction({
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${
-        context.auth.base_url
+        context.auth.props.base_url
       }/api/services/CRM/Contact/GetContactData?${queryParams.toString()}`,
       headers: {
-        'api-key': context.auth.api_key,
+        'api-key': context.auth.props.api_key,
         'Content-Type': 'application/json',
       },
     });

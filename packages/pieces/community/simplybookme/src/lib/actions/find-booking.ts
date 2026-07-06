@@ -6,6 +6,8 @@ export const findBooking = createAction({
   name: 'find_booking',
   displayName: 'Get Bookings',
   description: 'Returns list of bookings filtered by given parameters',
+  audience: 'both',
+  aiMetadata: { description: 'Lists bookings in SimplyBook.me, optionally narrowed by date/time range, provider, service, client, confirmation status, and booking type (e.g. all, cancelled, approved). Use to look up appointments or retrieve a booking ID for a follow-up action; leaving all filters empty returns the broadest list. Idempotent: read-only with no side effects.', idempotent: true },
   props: {
     dateFrom: Property.ShortText({
       displayName: 'Date From',
@@ -38,6 +40,7 @@ export const findBooking = createAction({
       required: false
     }),
     unitGroupId: Property.Dropdown({
+      auth: simplybookAuth,
       displayName: 'Provider',
       description: 'Get bookings for a specific service provider (optional)',
       required: false,
@@ -45,6 +48,7 @@ export const findBooking = createAction({
       options: providerDropdown.options
     }),
     eventId: Property.Dropdown({
+      auth: simplybookAuth,
       displayName: 'Service',
       description: 'Get bookings for a specific service (optional)',
       required: false,
@@ -63,6 +67,7 @@ export const findBooking = createAction({
       }
     }),
     clientId: Property.Dropdown({
+      auth: simplybookAuth,
       displayName: 'Client',
       description: 'Get bookings for a specific client (optional)',
       required: false,
@@ -99,7 +104,7 @@ export const findBooking = createAction({
     })
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
+    const auth = context.auth.props;
     const {
       dateFrom,
       timeFrom,

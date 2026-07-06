@@ -1,0 +1,40 @@
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
+import { pagerDutyAuth } from '../auth';
+import { pagerDutyApiCall } from '../common/client';
+import { fromEmailProp, incidentIdProp } from '../common/props';
+
+export const acknowledgeIncident = createAction({
+  auth: pagerDutyAuth,
+  name: 'acknowledge_incident',
+  displayName: 'Acknowledge Incident',
+  description: 'Acknowledge an existing PagerDuty incident.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets an existing PagerDuty incident to the acknowledged status, requiring the incident ID and the acting user email (From). Use to mark that someone is working on an incident. Idempotent — re-acknowledging an already-acknowledged incident leaves it in the same state.',
+    idempotent: true,
+  },
+  props: {
+    incidentId: incidentIdProp,
+    fromEmail: fromEmailProp,
+  },
+  async run(context) {
+    const { incidentId, fromEmail } = context.propsValue;
+
+    const response = await pagerDutyApiCall({
+      apiKey: context.auth.secret_text,
+      method: HttpMethod.PUT,
+      path: `/incidents/${encodeURIComponent(incidentId)}`,
+      fromEmail,
+      body: {
+        incident: {
+          type: 'incident',
+          status: 'acknowledged',
+        },
+      },
+    });
+
+    return (response as { incident?: unknown }).incident ?? response;
+  },
+});

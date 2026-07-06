@@ -1,12 +1,12 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
 import {
   DedupeStrategy,
   Polling,
@@ -18,13 +18,14 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { eventOutputSchema } from '../output-schemas';
 
 interface GoogleCalendarEventList {
   items: GoogleCalendarEvent[];
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleCalendarAuth>,
+  AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
   {
     calendar_id: string | undefined;
     specific_event: boolean | undefined;
@@ -68,7 +69,7 @@ const polling: Polling<
         url: `${googleCalendarCommon.baseUrl}/calendars/${calendar_id}/events/${event_id}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
       };
 
@@ -97,7 +98,7 @@ const polling: Polling<
         url: `${googleCalendarCommon.baseUrl}/calendars/${calendar_id}/events`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
         queryParams: {
           singleEvents: 'true',
@@ -133,6 +134,9 @@ export const eventStartTimeBefore = createTrigger({
   displayName: 'Event Start (Time Before)',
   description:
     'Fires at a specified amount of time before an event starts (e.g., a reminder).',
+  aiMetadata: {
+    description: 'Fires a configurable lead time (in minutes, hours, or days) before an event in the selected calendar begins, acting as a pre-event reminder. Each fired item is the upcoming event. Can watch all events or a single specific event.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
@@ -162,6 +166,7 @@ export const eventStartTimeBefore = createTrigger({
       defaultValue: 'minutes',
     }),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {},
 

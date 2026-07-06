@@ -123,6 +123,8 @@ export const optimizeFile = createAction({
   name: 'optimize_file',
   displayName: 'Optimize File',
   description: 'Creates a task to optimize and compress a file',
+  audience: 'both',
+  aiMetadata: { description: 'Compresses and optimizes a PDF or image (PNG/JPG) to reduce file size via CloudConvert, targeting a profile such as web, print, archive, MRC, or max. Choose this to shrink a file without changing its format. Supply the input via one of three import methods — a public URL, an uploaded file, or a previously stored Activepieces file ID. Each call creates a new optimize job, so it is not idempotent.', idempotent: false },
   auth: cloudconvertAuth,
   requireAuth: true,
   props: optimizeFileProps(),

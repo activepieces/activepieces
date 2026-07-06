@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { ServiceNowRecordSchema } from '../common/types';
-import { tableDropdown, createServiceNowClient } from '../common/props';
+import { tableDropdown, createServiceNowClient, servicenowAuth } from '../common/props';
 
 const CreateRecordInputSchema = z.object({
   table: z.string().min(1),
-  fields: z.record(z.any()),
+  fields: z.record(z.string(), z.any()),
   sysparm_display_value: z.enum(['true', 'false', 'all']).optional(),
   sysparm_fields: z.array(z.string()).optional(),
   sysparm_input_display_value: z.boolean().optional(),
@@ -13,9 +13,16 @@ const CreateRecordInputSchema = z.object({
 });
 
 export const createRecordAction = createAction({
+  auth: servicenowAuth,
   name: 'create_record',
   displayName: 'Create Record',
   description: 'Create a new record in a specified table',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Inserts a new row into any ServiceNow table (incident, sc_request, problem, change_request, custom tables, etc.) with the field values you supply. Use when you need to open a new record from an automation; for incidents specifically prefer this only when no more specialized action fits. Not idempotent — each call creates a distinct record, so guard against re-running. Requires the target table name and a field map matching that table\'s columns.',
+    idempotent: false,
+  },
   props: {
     table: tableDropdown,
     fields: Property.Object({

@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { ZOHO_WEBHOOK_TOKEN } from '../common/constants';
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { biginApiService } from '../common/request';
 
 const CACHE_KEY = 'bigin_new_pipeline_record_created_trigger';
@@ -10,13 +10,16 @@ export const newPipelineRecordCreated = createTrigger({
   name: 'newPipelineRecordCreated',
   displayName: 'New Pipeline Record Created',
   description: 'Triggers when a new pipeline record is created',
+  aiMetadata: {
+    description: 'Fires when a new pipeline record (deal) is created in Bigin CRM, via a Pipelines.create webhook. Represents a newly opened sales opportunity.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     try {
       const channel_id = Date.now().toString();
-      const { api_domain } = context.auth as any;
+      const { api_domain } = context.auth.data;
 
       const webhookData = {
         watch: [
@@ -44,7 +47,7 @@ export const newPipelineRecordCreated = createTrigger({
     const channel_id = (await context.store.get(CACHE_KEY)) as string;
     if (!channel_id) return;
 
-    const { api_domain } = context.auth as any;
+    const { api_domain } = context.auth.data;
 
     await biginApiService.deleteWebhook(
       context.auth.access_token,

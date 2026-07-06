@@ -8,14 +8,20 @@ export const getPoints = createAction({
   name: 'get_points',
   displayName: 'Get Points',
   description: 'Get the points of a specific collection',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch points from a Qdrant collection, selecting them either by an explicit list of ids or by a payload filter (must / must_not conditions). Use to look up known points or scroll through points matching metadata, as opposed to vector-similarity search. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     collectionName,
     ...seclectPointsProps,
   },
   run: async ({ auth, propsValue }) => {
     const client = new QdrantClient({
-      apiKey: auth.key,
-      url: auth.serverAddress,
+      apiKey: auth.props.key,
+      url: auth.props.serverAddress,
     });
     const collectionName = propsValue.collectionName as string;
 

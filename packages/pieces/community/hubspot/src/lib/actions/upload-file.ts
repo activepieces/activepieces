@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import {
 	createAction,
 	DropdownOption,
@@ -12,8 +12,11 @@ export const uploadFileAction = createAction({
 	name: 'upload-file',
 	displayName: 'Upload File',
 	description: 'Uploads a file to HubSpot File Manager.',
+	audience: 'both',
+	aiMetadata: { description: 'Upload a file into a chosen folder in the HubSpot File Manager with a given name and access level. Each call uploads a new file rather than replacing an existing one, so it is not idempotent.', idempotent: false },
 	props: {
 		folderId: Property.Dropdown({
+			auth: hubspotAuth,
 			displayName: 'Folder',
 			refreshers: [],
 			required: true,

@@ -9,6 +9,11 @@ export const likePost = createAction({
   name: 'likePost',
   displayName: 'Like Post',
   description: 'Like a post on Bluesky',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds a like from the authenticated account to a specific Bluesky post, identified either by an AT-URI / bsky.app post URL or by selecting from the recent timeline. Use to register approval of a post. Not idempotent — each call creates a separate like record.',
+    idempotent: false,
+  },
   props: {
     selectionMethod: Property.StaticDropdown({
       displayName: 'Select Method',
@@ -24,13 +29,15 @@ export const likePost = createAction({
     }),
     
     postSelection: Property.Dropdown({
+      auth: blueskyAuth,
       displayName: 'Select Post',
       description: 'Choose from your recent timeline posts (only when "From my timeline" is selected above)',
       required: false,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         try {
-          const agent = await createBlueskyAgent(auth as BlueSkyAuthType);
+          if (!auth) return { options: [] };
+            const agent = await createBlueskyAgent(auth.props);
           const timeline = await agent.getTimeline({ limit: 50 });
           
           return {
@@ -69,7 +76,7 @@ export const likePost = createAction({
       }
       
       try {
-        const agent = await createBlueskyAgent(auth);
+        const agent = await createBlueskyAgent(auth.props);
         postUri = await parseBlueskyUrl(postUrl.trim(), agent);
       } catch (error) {
         throw new Error(`Invalid post URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -79,7 +86,7 @@ export const likePost = createAction({
     }
 
     try {
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
       const postsResponse = await agent.getPosts({ uris: [postUri] });
       

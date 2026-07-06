@@ -5,10 +5,12 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { smAuth } from '../..';
 
 export const smCommon = {
   baseUrl: 'https://api.surveymonkey.com/v3',
   survey: Property.Dropdown({
+    auth: smAuth,
     displayName: 'Survey',
     required: true,
     refreshers: [],

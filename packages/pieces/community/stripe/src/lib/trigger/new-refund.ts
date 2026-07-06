@@ -7,7 +7,7 @@ import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 type StripeWebhookPayload = {
   data: {
@@ -22,6 +22,10 @@ export const stripeNewRefund = createTrigger({
   name: 'new_refund',
   displayName: 'New Refund',
   description: 'Fires when a charge is refunded (full or partial).',
+  aiMetadata: {
+    description:
+      'Fires when a refund is created in Stripe (the refund.created event), for a full or partial refund, emitting the refund record. Optional filters narrow firing to a specific charge ID or payment intent ID. Use to react to money returned to a customer, such as updating accounting or notifying them.',
+  },
   props: {
     charge: Property.ShortText({
       displayName: 'Charge ID',
@@ -56,7 +60,7 @@ export const stripeNewRefund = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'refund.created',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>('_new_refund_trigger', {
       webhookId: webhook.id,
@@ -70,20 +74,19 @@ export const stripeNewRefund = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/refunds',
+      url: 'https://api.stripe.com/v1/refunds',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        
         limit: '5',
       },
     });

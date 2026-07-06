@@ -7,6 +7,8 @@ export const getOrderEmailAction = createAction({
   auth: cartloomAuth,
   displayName: 'Get Order by Email',
   description: 'Get a list of orders for an email within a date range',
+  audience: 'both',
+  aiMetadata: { description: "Lists Cartloom orders placed by a specific customer email address within a date range. Use to find a customer's order history; use Get Order by Date to list all orders regardless of customer. Requires the email and a start date; the end date defaults to today. Read-only and idempotent.", idempotent: true },
   props: {
     start: Property.DateTime({
       displayName: 'Start Date',
@@ -25,7 +27,7 @@ export const getOrderEmailAction = createAction({
     }),
   },
   async run(context) {
-    return await getOrdersByDate(context.auth, {
+    return await getOrdersByDate(context.auth.props, {
       search_type: 'email',
       keyword: context.propsValue.email,
       start_date: context.propsValue.start.split('T')[0],

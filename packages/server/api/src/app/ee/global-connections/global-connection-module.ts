@@ -1,31 +1,22 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import {
-    apId,
-    ApId,
-    AppConnectionScope,
-    AppConnectionWithoutSensitiveData,
-    EndpointScope,
-    ListGlobalConnectionsRequestQuery,
-    PrincipalType,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateGlobalConnectionValueRequestBody,
-    UpsertGlobalConnectionRequestBody,
-} from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, apId, SeekPage } from '@activepieces/core-utils'
+import { wideEvent } from '@activepieces/server-utils'
+import { AppConnectionScope, AppConnectionWithoutSensitiveData, ApplicationEventName, ListGlobalConnectionsRequestQuery, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateGlobalConnectionValueRequestBody, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { eventsHooks } from '../../helper/application-events'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { applicationEvents } from '../../helper/application-events'
+import { auditEvents } from '../../helper/audit-events'
 import { securityHelper } from '../../helper/security-helper'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
-export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
+export const globalConnectionModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled))
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(globalConnectionController, { prefix: '/v1/global-connections' })
 }
 
-const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
+const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', UpsertGlobalConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,
@@ -37,8 +28,10 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             pieceName: request.body.pieceName,
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PLATFORM,
+            pieceVersion: request.body.pieceVersion,
+            preSelectForNewProjects: request.body.preSelectForNewProjects,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -58,6 +51,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             request: {
                 displayName: request.body.displayName,
                 projectIds: request.body.projectIds ?? null,
+                preSelectForNewProjects: request.body.preSelectForNewProjects,
             },
         })
     })
@@ -77,10 +71,19 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             externalIds: undefined,
         })
 
-        return {
+        const appConnectionsWithoutSensitiveData = {
             ...appConnections,
             data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
         }
+        wideEvent.audit(auditEvents.globalConnectionListed({
+            actor: auditEvents.actorFromPrincipal(request.principal),
+            target: {
+                type: 'platform',
+                id: request.principal.platform.id,
+                connectionCount: appConnectionsWithoutSensitiveData.data.length,
+            },
+        }))
+        return appConnectionsWithoutSensitiveData
     },
     )
 
@@ -96,7 +99,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,
@@ -110,8 +113,7 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['global-connections'],
@@ -125,13 +127,12 @@ const UpsertGlobalConnectionRequest = {
 
 const UpdateGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['global-connections'],
         body: UpdateGlobalConnectionValueRequestBody,
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         security: [SERVICE_KEY_SECURITY_OPENAPI],
@@ -140,8 +141,7 @@ const UpdateGlobalConnectionRequest = {
 
 const ListGlobalConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['global-connections'],
@@ -155,17 +155,16 @@ const ListGlobalConnectionsRequest = {
 
 const DeleteGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['global-connections'],
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }

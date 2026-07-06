@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { upgradechatAuth } from '../..';
+import { upgradechatAuth } from '../auth';
 import { upgradechatCommon } from '../common/common';
 
 export const newLead = createTrigger({
@@ -7,6 +7,10 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
+  aiMetadata: {
+    description:
+      'Fires when a new lead contact is created in the Sperse/Upgrade.chat CRM, delivering the full lead record (personal, business, tracking, application, and classification details). Use it to react to inbound prospects as they enter the CRM.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -200,8 +204,8 @@ export const newLead = createTrigger({
   async onEnable(context) {
     const webhookId = await upgradechatCommon.subscribeWebhook(
       'LeadCreated',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -216,8 +220,8 @@ export const newLead = createTrigger({
 
     if (response !== null && response !== undefined) {
       await upgradechatCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

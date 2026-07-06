@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
 import { tagIdProp } from '../common/props';
 
@@ -7,6 +7,9 @@ export const tagAddedToLeadTrigger = createTrigger({
 	name: 'tag-added-to-lead',
 	displayName: 'Tag Added to Lead',
 	description: 'Triggers when a tag is added to a lead.',
+	aiMetadata: {
+		description: 'Fires when a tag is applied to a lead contact in Intercom. An optional Tag input limits the trigger to a specific tag; if left empty it fires for any tag added to a lead. Outputs the affected lead contact and the tag that was added.',
+	},
 	props: {
 		tagId: tagIdProp('Tag', false),
 	},

@@ -1,6 +1,6 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../..';
+import { closeAuth } from '../auth';
 import { CloseCRMOpportunityWebhookPayload } from '../common/types';
 import { closeApiCall } from '../common/client';
 import { verifySignature } from './helpers';
@@ -12,11 +12,14 @@ export const newOpportunityAdded = createTrigger({
 	name: 'new_opportunity_added',
 	displayName: 'New Opportunity Added',
 	description: 'Triggers when a new opportunity is created.',
+	aiMetadata: {
+		description: 'Fires when a new opportunity (sales deal) is created in Close CRM, via a registered webhook on the opportunity-created event. Emits the full opportunity record, including its lead ID, value, and status. Use to react whenever a deal is opened.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
 		const response = await closeApiCall<{ id: string; signature_key: string }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/webhook/',
 			body: {
@@ -46,7 +49,7 @@ export const newOpportunityAdded = createTrigger({
 		if (triggerData?.id) {
 			await closeApiCall({
 				method: HttpMethod.DELETE,
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				resourceUri: `/webhook/${triggerData.id}`,
 			});
 		}
@@ -77,7 +80,7 @@ export const newOpportunityAdded = createTrigger({
 		}
 
 		const opportunity = await closeApiCall({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text	,
 			method: HttpMethod.GET,
 			resourceUri: `/opportunity/${payload.event.data.id}/`,
 		});

@@ -8,9 +8,11 @@ icon: turn-down
 ## 📋 What You Need Before Starting
 
 Make sure these are ready:
-- **[Incident.io Setup](../playbooks/setup-incident-io)**: For managing incidents.
-- **ClickStack**: For checking logs and errors.
-- **Checkly Debugging**: For testing and monitoring.
+- **[BetterStack Setup](../playbooks/setup-betterstack)**: For managing incidents and on-call alerts.
+- **[BetterStack Logs](https://telemetry.betterstack.com)**: For checking logs and errors.
+- **[BetterStack Monitors](https://uptime.betterstack.com)**: For e2e test results and uptime monitoring.
+- **[BetterStack Errors](https://errors.betterstack.com)**: For thrown errors.
+
 
 ---
 
@@ -28,7 +30,7 @@ Make sure these are ready:
    - Gather details. What’s not working? When did it start?
 
 3. **Update the Status Page**:
-   - Use [Incident.io](https://incident.io) to update the status page. Set it to *“Investigating”* or *“Partial Outage”*.
+   - Use [BetterStack](https://uptime.betterstack.com) and create an incident to update the status page. Set it to *”Investigating”* or *”Partial Outage”*.
 
 ---
 
@@ -44,24 +46,36 @@ Make sure these are ready:
 
 ## 📜 Check Logs and Errors
 
-1. **Use Clickstack**:
-   - Go to [https://watch.activepieces.com](https://watch.activepieces.com).
+1. **Use BetterStack Logs**:
+   - Go to [https://telemetry.betterstack.com](https://telemetry.betterstack.com).
    - Search for recent errors in the logs.
-   - Credentials are in the [Master Playbook](https://docs.google.com/document/d/15OwWnRwkhlx9l-EN5dXFoysw0OoxC0lVvnjbdbId4BE/edit?pli=1&tab=t.4lk480a2s8yh#heading=h.1qegnmb1w65k).
 
-2. **Check Sentry**:
+2. **Check BetterStack errors**:
+   - Go to [https://errors.betterstack.com](https://errors.betterstack.com).
    - Look for grouped errors (errors that happen a lot).
    - Try to **reproduce the error** and fix it if possible.
 
 ---
 
-## 🛠️ Debugging with Checkly
+## 🛠️ Debugging with Playwright / BetterStack Monitors
 
-1. **Check Checkly Logs**:
-   - Watch the **video recordings** of failed checks to see what went wrong.
+1. **Check BetterStack Monitor Logs**:
+   - Go to [https://uptime.betterstack.com](https://uptime.betterstack.com) and review recent monitor failures.
    - If the issue is a **timeout**, it might mean there’s a bigger performance problem.
-   - If it's an E2E test failure due to UI changes, it's likely not urgent.
-     - Fix the test and the issue will go away.
+
+2. **Check Playwright E2E Results**:
+   - Review the latest Playwright test run in CI for failed checks.
+   - If it’s an E2E test failure due to UI changes, it’s likely not urgent.
+   - Fix the test file packages/tests-e2e/scenarios/betterstack/webhook-should-return-response.flat.spec.js and the issue will go away once pushed to main and Sync Playwright test to BetterStack ci runs.
+
+---
+
+## 🎭 Debugging Incidents via Playwright Artifacts
+
+1. Go to the [BetterStack Incidents list](https://uptime.betterstack.com/team/t142339/incidents?m=4211060).
+2. Choose the relevant incident.
+3. Scroll down and open the **Artifacts** tab.
+4. You’ll find **screenshots** of the failed Playwright tests and **logs** that help pinpoint what went wrong.
 
 ---
 
@@ -75,7 +89,7 @@ Ask for help right away if:
 - You've spent **more than 5 minutes** and still don't know what's wrong.
 
 💡 **How to Ask for Help**:
-- Use **Incident.io** to create a **critical alert**.
+- Use **BetterStack** to create a **critical alert**.
 - Go to the **Slack incident channel** and escalate the issue to the engineering team.
 
 <Warning>

@@ -4,13 +4,19 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const createProductFromProductInfo = createAction({
   name: 'createProductFromProductInfo',
   displayName: 'Create Product from Product Info',
   description: 'Creates a product from product information',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a JoggAI product from supplied details (name, description, target audience, and media items) and/or a product URL. Use when you already hold the product info to pass directly; at least one of a URL or some product info must be provided, otherwise the call is rejected. Not idempotent: each call creates a new product record.',
+    idempotent: false,
+  },
   auth: joggAiAuth,
   props: {
     url: Property.ShortText({
@@ -86,26 +92,16 @@ export const createProductFromProductInfo = createAction({
     }
 
     await propsValidation.validateZod(propsValue, {
-      url: z.string().url('URL must be a valid URL').optional(),
-      name: z.string().min(1, 'Product name cannot be empty').optional(),
-      description: z
-        .string()
-        .min(1, 'Product description cannot be empty')
-        .optional(),
-      target_audience: z
-        .string()
-        .min(1, 'Target audience cannot be empty')
-        .optional(),
-      media: z
-        .array(
-          z.object({
-            type: z.number().min(1).max(2),
-            name: z.string().min(1, 'Media name is required'),
-            url: z.string().url('Media URL must be a valid URL'),
-            description: z.string().optional(),
-          })
-        )
-        .optional(),
+      url: z.optional(z.string().check(z.url('URL must be a valid URL'))),
+      name: z.optional(z.string().check(z.minLength(1, 'Product name cannot be empty'))),
+      description: z.optional(z.string().check(z.minLength(1, 'Product description cannot be empty'))),
+      target_audience: z.optional(z.string().check(z.minLength(1, 'Target audience cannot be empty'))),
+      media: z.optional(z.array(z.object({
+            type: z.number().check(z.minimum(1), z.maximum(2)),
+            name: z.string().check(z.minLength(1, 'Media name is required')),
+            url: z.string().check(z.url('Media URL must be a valid URL')),
+            description: z.optional(z.string()),
+          }))),
     });
 
     const requestBody: {
@@ -146,7 +142,7 @@ export const createProductFromProductInfo = createAction({
       method: HttpMethod.POST,
       url: 'https://api.jogg.ai/v1/product',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,

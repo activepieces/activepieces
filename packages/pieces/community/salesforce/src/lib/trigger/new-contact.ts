@@ -5,6 +5,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+    AppConnectionValueForAuthProperty,
     OAuth2PropertyValue,
     TriggerStrategy,
     createTrigger,
@@ -19,6 +20,9 @@ export const newContact = createTrigger({
     name: 'new_contact',
     displayName: 'New Contact',
     description: 'Fires when a new Contact record is created in Salesforce.',
+    aiMetadata: {
+        description: 'Fires once for each new Contact record created in Salesforce, emitting all fields of the created Contact. Detected by polling for records whose CreatedDate is later than the last poll. Does not fire on updates to existing Contacts.',
+    },
     props: {},
     sampleData: {
         "Id": "0037Q000005x4aXUAQ",
@@ -41,7 +45,7 @@ export const newContact = createTrigger({
     },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
         const isoDate = dayjs(lastFetchEpochMS).toISOString();

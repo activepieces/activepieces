@@ -1,8 +1,8 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
-import { dimoAuth } from '../../../index';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
-import { DimoClient } from '../../common/helpers';
+import { dimoAuth } from '../../auth';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
+import { DimoClient, getNumberExpression } from '../../common/helpers';
 import { CreateWebhookParams, WebhookInfo, WebhookPayload } from '../../common/types';
 import { TriggerField } from '../../common/constants';
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
@@ -14,6 +14,10 @@ export const fuelRelativeTrigger = createTrigger({
 	name: 'fuel-relative-level-trigger',
 	displayName: 'Fuel System Relative Level Trigger',
 	description: 'Triggers when vehicle fuel system relative level meets the specified condition.',
+	aiMetadata: {
+		description:
+			'Fires via DIMO webhook when a monitored vehicle reports a fuel-system relative level reading (percent of tank capacity, 0-100) that satisfies the configured comparison operator against the threshold. Each event represents a single relative fuel-level telemetry signal and includes the vehicle token ID, timestamp, and the fuel percentage. Use to detect a fuel tank dropping below or rising above a percentage threshold.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 
 	props: {
@@ -25,21 +29,15 @@ export const fuelRelativeTrigger = createTrigger({
 		}),
 		operator: operatorStaticDropdown,
 		fuelPercentage: Property.Number({
-			displayName: 'Fuel Percentage (%)',
-			description: 'The fuel level percentage (0-100%) to compare against.',
+			displayName: 'Fuel Level (%)',
+			description: 'The fuel level as a percentage (0-100) to compare against.',
 			required: true,
 		}),
-		triggerFrequency: Property.StaticDropdown({
-			displayName: 'Trigger Frequency',
-			description: 'How often the webhook should fire when condition is met.',
+		coolDownPeriod: Property.Number({
+			displayName: 'Cool Down Period (seconds)',
+			description: 'Minimum number of seconds between successive webhook firings',
 			required: true,
-			defaultValue: 'Realtime',
-			options: {
-				options: [
-					{ label: 'Real-time (continuous)', value: 'Realtime' },
-					{ label: 'Hourly', value: 'Hourly' },
-				],
-			},
+			defaultValue: 30,
 		}),
 		verificationToken: verificationTokenInput,
 	},
@@ -58,9 +56,9 @@ export const fuelRelativeTrigger = createTrigger({
 	},
 
 	async onEnable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
-		const { vehicleTokenIds, operator, fuelPercentage, triggerFrequency, verificationToken } =
+		const { vehicleTokenIds, operator, fuelPercentage, coolDownPeriod, verificationToken } =
 			context.propsValue;
 		if (fuelPercentage < 0 || fuelPercentage > 100) {
 			throw new Error('Fuel percentage must be between 0 and 100');
@@ -76,18 +74,14 @@ export const fuelRelativeTrigger = createTrigger({
 				? vehicleTokenIds.map(String)
 				: [];
 		const webhookPayload: CreateWebhookParams = {
-			service: 'Telemetry',
-			data: TriggerField.PowertrainFuelSystemRelativeLevel,
-			trigger: {
-				field: TriggerField.PowertrainFuelSystemRelativeLevel,
-				operator,
-				value: fuelPercentage,
-			},
-			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			service: 'telemetry.signals',
+			metricName: TriggerField.PowertrainFuelSystemRelativeLevel,
+			condition: getNumberExpression(operator, fuelPercentage),
+			coolDownPeriod,
 			description: `Fuel relative level trigger: ${operator} ${fuelPercentage}%`,
-			target_uri: context.webhookUrl,
-			status: 'Active',
-			verification_token: verificationToken,
+			targetURL: context.webhookUrl,
+			status: 'enabled',
+			verificationToken: verificationToken,
 		};
 		try {
 			const developerJwt = await dimo.getDeveloperJwt();
@@ -98,18 +92,12 @@ export const fuelRelativeTrigger = createTrigger({
 
 			const webhookId = createWebhookResponse.id;
 
-			if (ids.length === 0) {
-				await dimo.subscribeAllVehicles({
-					developerJwt,
-					webhookId,
-				});
-			} else {
-				await Promise.all(
-					ids.map(async (tokenId) => {
-						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
-					}),
-				);
-			}
+			await dimo.subscribeVehiclesToWebhook({
+				developerJwt,
+				webhookId,
+				vehicleTokenIds: ids,
+			});
+
 			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
 				webhookId,
 				verificationToken,
@@ -120,7 +108,7 @@ export const fuelRelativeTrigger = createTrigger({
 		}
 	},
 	async onDisable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const dimo = new DimoClient({
 			clientId,
 			apiKey,

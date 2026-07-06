@@ -3,19 +3,20 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { rabbitmqAuth } from '../../index';
+import { rabbitmqAuth } from '../auth';
 import { rabbitmqConnect } from '../common';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<typeof rabbitmqAuth>, {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof rabbitmqAuth>, {
   queue: string,
   maxMessagesPerPoll: number,
 }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    const connection = await rabbitmqConnect(auth);
+    const connection = await rabbitmqConnect(auth.props);
     const channel = await connection.createChannel();
     const messages = [];
 
@@ -51,6 +52,9 @@ export const messageReceived = createTrigger({
   name: 'messageReceived',
   displayName: 'Message Received',
   description: 'Triggers when a message is received on a RabbitMQ queue',
+  aiMetadata: {
+    description: 'Fires when one or more messages are available on a configured RabbitMQ queue, emitting each consumed message. Polls the queue on a schedule, pulling up to a configurable maximum number of messages per poll and acknowledging (removing) them from the queue as it reads.',
+  },
   props: {
     queue: Property.ShortText({
       displayName: 'Queue',

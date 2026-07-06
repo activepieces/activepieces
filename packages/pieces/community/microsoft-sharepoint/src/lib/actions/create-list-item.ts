@@ -1,5 +1,6 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
 
@@ -8,6 +9,11 @@ export const createListItemAction = createAction({
   name: 'microsoft_sharepoint_create_list_item',
   displayName: 'Create List Item',
   description: 'Creates a new item in a list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds a new item (row) to a SharePoint list on a given site, setting the list column field values you provide. Use to record a new entry in an existing list. Not idempotent: each call appends another item, so repeating it creates duplicates.',
+    idempotent: false,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     listId: microsoftSharePointCommon.listId,
@@ -16,10 +22,12 @@ export const createListItemAction = createAction({
   async run(context) {
     const { siteId, listId, listColumns } = context.propsValue;
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
     const fieldWithArrayValues: Record<string, string> = {};
 

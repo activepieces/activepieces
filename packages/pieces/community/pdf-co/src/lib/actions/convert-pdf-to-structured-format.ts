@@ -1,7 +1,7 @@
 import { Property, DropdownOption, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
 import { PdfCoSuccessResponse, PdfCoErrorResponse } from "../common/types";
-import { pdfCoAuth } from "../../index";
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from "../common/props";
 // Interface for the request body (common params for CSV/JSON/XML conversion)
 interface PdfConvertToStructuredFormatRequestBody {
@@ -22,6 +22,12 @@ export const convertPdfToStructuredFormat = createAction({
     name: 'convert_pdf_to_structured_format',
     displayName: 'Convert PDF to JSON/CSV/XML',
     description: 'Convert PDF content into structured formats (JSON, CSV, or XML).',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Converts a source PDF (referenced by URL) into structured data, with the output format selectable between JSON, CSV, or XML. Optional OCR language handles scanned documents. Use when an agent needs machine-readable data extracted from a PDF. Each call generates a new output file and consumes credits, so it is not idempotent.',
+        idempotent: false,
+    },
     auth: pdfCoAuth,
     props: {
         url: Property.ShortText({
@@ -112,7 +118,7 @@ export const convertPdfToStructuredFormat = createAction({
                 method: HttpMethod.POST,
                 url: endpoint,
                 headers: {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,

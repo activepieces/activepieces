@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { CreateListItem } from './lib/actions/create-list-item';
 import { deleteListItem } from './lib/actions/delete-list-item';
 import { downloadCustomExportInItsOriginalFormat } from './lib/actions/download-custom-export-in-its-original-format';
@@ -54,7 +54,7 @@ export const kizeoForms = createPiece({
       auth: kizeoFormsAuth,
       authMapping: async (auth) => {
         return {
-          Authorization: auth as string,
+          Authorization: auth.secret_text,
         };
       },
     }),

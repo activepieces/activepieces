@@ -1,4 +1,4 @@
-import { straicoAuth } from '../../index';
+import { straicoAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -28,6 +28,7 @@ interface AgentAddRagResponse {
 }
 
 export const agentAddRag = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'agent-add-rag',
   displayName: 'Add RAG to Agent',
@@ -35,6 +36,7 @@ export const agentAddRag = createAction({
   props: {
     agent_id: agentIdDropdown('Agent','The agent to add the RAG to.'),
     rag_id: Property.Dropdown({
+  auth: straicoAuth,
       displayName: 'RAG ID',
       required: true,
       description: 'The ID of the RAG to add to the agent',
@@ -59,7 +61,7 @@ export const agentAddRag = createAction({
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as string,
+              token: auth.secret_text,
             },
           });
           return {
@@ -90,7 +92,7 @@ export const agentAddRag = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: {
         rag: rag_id,

@@ -1,6 +1,8 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { PageCollection, Client } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { MailFolder, Message } from '@microsoft/microsoft-graph-types';
+import { microsoftOutlookAuth } from './auth';
+import { outlookCommon } from './client';
 
 type DropdownParams = {
 	displayName: string;
@@ -10,6 +12,7 @@ type DropdownParams = {
 
 export const messageIdDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: microsoftOutlookAuth,
 		displayName: params.displayName,
 		description: params.description,
 		required: params.required,
@@ -23,15 +26,12 @@ export const messageIdDropdown = (params: DropdownParams) =>
 				};
 			}
 
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
-				},
-			});
+			const authValue = auth as OAuth2PropertyValue;
+			const client = outlookCommon.createClient(authValue);
 
 			try {
 				const response: PageCollection = await client
-					.api('/me/messages?$top=50&$select=id,subject,from,receivedDateTime')
+					.api(`${outlookCommon.mailboxPrefix(authValue)}/messages?$top=50&$select=id,subject,from,receivedDateTime`)
 					.orderby('receivedDateTime desc')
 					.get();
 
@@ -55,6 +55,7 @@ export const messageIdDropdown = (params: DropdownParams) =>
 
 export const draftMessageIdDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: microsoftOutlookAuth,
 		displayName: params.displayName,
 		description: params.description,
 		required: params.required,
@@ -68,15 +69,12 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 				};
 			}
 
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
-				},
-			});
+			const authValue = auth as OAuth2PropertyValue;
+			const client = outlookCommon.createClient(authValue);
 
 			try {
 				const response: PageCollection = await client
-					.api('/me/mailFolders/drafts/messages?$top=50&$select=id,subject,from,receivedDateTime')
+					.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders/drafts/messages?$top=50&$select=id,subject,from,receivedDateTime`)
 					.orderby('receivedDateTime desc')
 					.get();
 
@@ -100,6 +98,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 
 export const mailFolderIdDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: microsoftOutlookAuth,
 		displayName: params.displayName,
 		description: params.description,
 		required: params.required,
@@ -113,14 +112,11 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 				};
 			}
 
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
-				},
-			});
+			const authValue = auth as OAuth2PropertyValue;
+			const client = outlookCommon.createClient(authValue);
 
 			try {
-				const response: PageCollection = await client.api('/me/mailFolders').get();
+				const response: PageCollection = await client.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders`).get();
 
 				const folders = response.value as MailFolder[];
 

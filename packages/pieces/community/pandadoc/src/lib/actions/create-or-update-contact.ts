@@ -16,9 +16,15 @@ export const createOrUpdateContact = createAction({
   name: 'createOrUpdateContact',
   displayName: 'Create or Update Contact',
   description: 'Creates a new or update an existing contact.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create a new PandaDoc contact or update an existing one, depending on whether a contact ID is supplied: with an ID it patches that contact, without one it creates a new contact. Use to maintain recipient/contact records. Not idempotent in create mode — omitting the contact ID creates a duplicate on each call.',
+    idempotent: false,
+  },
   auth: pandadocAuth,
   props: {
     contact_id: Property.Dropdown({
+      auth: pandadocAuth,
       displayName: 'Contact ID (for Update)',
       description: 'Select a contact to update. Leave empty to create a new contact.',
       required: false,
@@ -40,7 +46,7 @@ export const createOrUpdateContact = createAction({
               last_name: string | null;
               email: string | null;
             }>;
-          }>(auth as string, HttpMethod.GET, '/contacts?count=100');
+          }>(auth.secret_text, HttpMethod.GET, '/contacts?count=100');
 
           const options = response.results.map((contact) => {
             const name = [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unnamed';
@@ -165,14 +171,14 @@ export const createOrUpdateContact = createAction({
 
     if (propsValue.contact_id) {
       return await pandadocClient.makeRequest(
-        auth as string,
+      auth.secret_text,
         HttpMethod.PATCH,
         `/contacts/${propsValue.contact_id}`,
         body
       );
     } else {
       return await pandadocClient.makeRequest(
-        auth as string,
+      auth.secret_text,
         HttpMethod.POST,
         '/contacts',
         body

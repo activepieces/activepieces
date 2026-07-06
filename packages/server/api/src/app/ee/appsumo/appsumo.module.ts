@@ -1,13 +1,13 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Static, Type } from '@sinclair/typebox'
 import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { appsumoService } from './appsumo.service'
 
-export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
+export const appSumoModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
 }
 
@@ -15,34 +15,34 @@ const exchangeCredentialUsername = system.get(AppSystemProp.APPSUMO_TOKEN)
 const exchangeCredentialPassword = system.get(AppSystemProp.APPSUMO_TOKEN)
 const token = system.get(AppSystemProp.APPSUMO_TOKEN)
 
-const ActionRequest = Type.Object({
-    action: Type.String(),
-    plan_id: Type.String(),
-    uuid: Type.String(),
-    activation_email: Type.String(),
+const ActionRequest = z.object({
+    action: z.string(),
+    plan_id: z.string(),
+    uuid: z.string(),
+    activation_email: z.string(),
 })
 
-type ActionRequest = Static<typeof ActionRequest>
+type ActionRequest = z.infer<typeof ActionRequest>
 
-const ExchangeTokenRequest = Type.Object({
-    username: Type.String(),
-    password: Type.String(),
+const ExchangeTokenRequest = z.object({
+    username: z.string(),
+    password: z.string(),
 })
-type ExchangeTokenRequest = Static<typeof ExchangeTokenRequest>
+type ExchangeTokenRequest = z.infer<typeof ExchangeTokenRequest>
 
-const AuthorizationHeaders = Type.Object({
-    authorization: Type.String(),
+const AuthorizationHeaders = z.object({
+    authorization: z.string(),
 })
-type AuthorizationHeaders = Static<typeof AuthorizationHeaders>
+type AuthorizationHeaders = z.infer<typeof AuthorizationHeaders>
 
-const appsumoController: FastifyPluginAsyncTypebox = async (
+const appsumoController: FastifyPluginAsyncZod = async (
     fastify: FastifyInstance,
 ) => {
     fastify.post(
         '/token',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
             schema: {
                 body: ExchangeTokenRequest,
@@ -72,7 +72,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
         '/action',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
             schema: {
                 headers: AuthorizationHeaders,

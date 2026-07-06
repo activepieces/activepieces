@@ -3,7 +3,8 @@ import {
   createTrigger, 
   TriggerStrategy, 
   PiecePropValueSchema, 
-  OAuth2PropertyValue 
+  OAuth2PropertyValue, 
+  AppConnectionValueForAuthProperty
 } from '@activepieces/pieces-framework';
 import { 
   DedupeStrategy, 
@@ -15,7 +16,7 @@ import dayjs from 'dayjs';
 import { formStackAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 
-const polling: Polling<PiecePropValueSchema<typeof formStackAuth>, any> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof formStackAuth>, any> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const authentication = auth as OAuth2PropertyValue;
@@ -75,6 +76,9 @@ export const newForm = createTrigger({
   name: 'newForm',
   displayName: 'New Form',
   description: 'Triggers when a new form is created',
+  aiMetadata: {
+    description: 'Fires when a new form is created in the connected Formstack account, emitting the form and its metadata. Polls the account form list and detects forms created since the last check.',
+  },
   props: {},
   sampleData: {
     id: "6244510",

@@ -7,6 +7,10 @@ export const newSubscription = createTrigger({
   name: 'new_subscription',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is created',
+  aiMetadata: {
+    description:
+      'Fires when a subscription is created or updated in Sperse CRM, delivering the contact, plan name, dates, amount, billing frequency, and status of the subscription.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -29,8 +33,8 @@ export const newSubscription = createTrigger({
   async onEnable(context) {
     const webhookId = await sperseCommon.subscribeWebhook(
       'Subscription.CreatedOrUpdated',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -45,8 +49,8 @@ export const newSubscription = createTrigger({
 
     if (response !== null && response !== undefined) {
       await sperseCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

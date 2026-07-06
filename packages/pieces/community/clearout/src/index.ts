@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { instantVerifyAction } from './lib/actions/instant-verify';
 import { clearoutAuth } from './lib/auth';
 
@@ -18,7 +18,7 @@ export const clearout = createPiece({
       baseUrl: () => 'https://api.clearout.io/v2', // Replace with the actual base URL
       auth: clearoutAuth,
       authMapping: async (auth) => ({
-        Authorization: `${(auth as { apiKey: string }).apiKey}`,
+        Authorization: `${auth.props.apiKey}`,
       }),
     }),
   ],

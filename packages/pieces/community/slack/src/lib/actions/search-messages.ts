@@ -1,11 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
+import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
+import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const searchMessages = createAction({
   name: 'searchMessages',
   displayName: 'Search messages',
   description: 'Searches for messages matching a query',
+  audience: 'both',
+  aiMetadata: { description: 'Search across the workspace for messages matching a query string and return all matching messages, paging through every result; read-only and repeatable. Requires a user token (search is not available to bot tokens). Use this to find messages anywhere by content; use Get channel history or Get Message by Timestamp when you already know the channel.', idempotent: true },
   auth: slackAuth,
   props: {
     query: Property.ShortText({
@@ -14,14 +17,7 @@ export const searchMessages = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const userToken = auth.data['authed_user']?.access_token;
-    if (userToken === undefined) {
-      throw new Error(JSON.stringify(
-        {
-          message: 'Missing user token, please re-authenticate'
-        }
-      ));
-    }
+    const userToken = requireUserToken(auth as SlackAuthValue);
     const client = new WebClient(userToken);
     const matches = [];
 

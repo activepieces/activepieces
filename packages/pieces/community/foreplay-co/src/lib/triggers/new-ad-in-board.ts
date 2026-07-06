@@ -1,10 +1,11 @@
-import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
+import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
 import { foreplayCoApiCall } from "../common";
 import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
 import { newAdInBoard as newAdInBoardProperties } from "../properties";
 import { newAdInBoardSchema } from "../schemas";
+import { foreplayCoAuth } from "../..";
 
-const getBoardsDropdown = async (auth: string) => {
+const getBoardsDropdown = async (auth: AppConnectionValueForAuthProperty<typeof foreplayCoAuth>) => {
   try {
     const response = await foreplayCoApiCall({
       apiKey: auth,
@@ -30,7 +31,7 @@ const getBoardsDropdown = async (auth: string) => {
   }
 };
 
-const polling: Polling<string, Record<string, any>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof foreplayCoAuth>, Record<string, any>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { board_id } = propsValue;
@@ -90,7 +91,11 @@ const polling: Polling<string, Record<string, any>> = {
 export const newAdInBoard = createTrigger({
   name: 'newAdInBoard',
   displayName: 'New Ad in Board',
+  auth: foreplayCoAuth,
   description: 'Triggers when a new ad is added to the selected board.',
+  aiMetadata: {
+    description: 'Fires when a new ad is added to the selected Foreplay board, optionally narrowed by filters such as platform, format, niche, market, language, and live-only status. Each event represents one ad newly saved to that board.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: "ad_789",
@@ -118,7 +123,7 @@ export const newAdInBoard = createTrigger({
     }
 
     return await pollingHelper.test(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
@@ -127,7 +132,7 @@ export const newAdInBoard = createTrigger({
 
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
@@ -137,7 +142,7 @@ export const newAdInBoard = createTrigger({
     await pollingHelper.onDisable(polling, {
       store: context.store,
       propsValue: context.propsValue,
-      auth: context.auth as string,
+      auth: context.auth,
     });
   },
 
@@ -149,7 +154,7 @@ export const newAdInBoard = createTrigger({
     }
 
     const result = await pollingHelper.poll(polling, {
-      auth: context.auth as string,
+      auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,

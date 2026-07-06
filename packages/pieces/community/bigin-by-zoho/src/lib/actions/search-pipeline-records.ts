@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { biginApiService } from '../common/request';
 
@@ -7,6 +7,8 @@ export const searchPipelineRecord = createAction({
   name: 'searchPipelineRecord',
   displayName: 'Search Pipeline Record',
   description: 'Searches deals by name via criteria or word',
+  audience: 'both',
+  aiMetadata: { description: 'Searches pipeline records (deals) in Bigin CRM and returns matches. Choose between Criteria mode (matches the Deal Name with equals or starts-with) and Word mode (a free-text word search across the module). Use to find a deal by name before referencing or updating it. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Search Mode',
@@ -26,9 +28,10 @@ export const searchPipelineRecord = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { dealName, mode } = propsValue as any;
+    const { dealName, mode } = propsValue;
 
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
 
     try {
       const response = await biginApiService.searchRecords(

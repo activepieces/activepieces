@@ -4,13 +4,19 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const createAvatarVideo = createAction({
   name: 'createAvatarVideo',
   displayName: 'Create Avatar Video',
   description: 'Creates an avatar video using JoggAI API',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts generation of a talking-avatar video on JoggAI from a chosen avatar and voice, with the speech sourced either from a typed script OR from an audio URL (exactly one is required, never both). Use to turn a script or voiceover into a narrated avatar video; the call kicks off an async job whose output is polled via Get Generated Video or received through the video-generation triggers. Not idempotent: each call queues and is billed for a new video.',
+    idempotent: false,
+  },
   auth: joggAiAuth,
   props: {
     screen_style: Property.StaticDropdown({
@@ -26,6 +32,7 @@ export const createAvatarVideo = createAction({
       },
     }),
     avatar_id: Property.Dropdown({
+      auth: joggAiAuth,
       displayName: 'Avatar',
       description: 'Select an avatar to use',
       required: true,
@@ -49,7 +56,7 @@ export const createAvatarVideo = createAction({
             method: HttpMethod.GET,
             url,
             headers: {
-              'x-api-key': auth as string,
+              'x-api-key': auth.secret_text,
             },
           });
 
@@ -98,6 +105,7 @@ export const createAvatarVideo = createAction({
       },
     }),
     voice_id: Property.Dropdown({
+      auth: joggAiAuth,
       displayName: 'Voice',
       description: 'Select a voice to use',
       required: true,
@@ -118,7 +126,7 @@ export const createAvatarVideo = createAction({
               method: HttpMethod.GET,
               url: 'https://api.jogg.ai/v1/voices/custom',
               headers: {
-                'x-api-key': auth as string,
+                'x-api-key': auth.secret_text,
               },
             });
           } catch {
@@ -126,7 +134,7 @@ export const createAvatarVideo = createAction({
               method: HttpMethod.GET,
               url: 'https://api.jogg.ai/v1/voices',
               headers: {
-                'x-api-key': auth as string,
+                'x-api-key': auth.secret_text,
               },
             });
           }
@@ -215,9 +223,9 @@ export const createAvatarVideo = createAction({
     } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      audio_url: z.string().url('Audio URL must be a valid URL').optional(),
-      script: z.string().min(1, 'Script cannot be empty').optional(),
-      video_name: z.string().min(1, 'Video name cannot be empty').optional(),
+      audio_url: z.optional(z.string().check(z.url('Audio URL must be a valid URL'))),
+      script: z.optional(z.string().check(z.minLength(1, 'Script cannot be empty'))),
+      video_name: z.optional(z.string().check(z.minLength(1, 'Video name cannot be empty'))),
     });
 
     const hasScript = !!script;
@@ -267,7 +275,7 @@ export const createAvatarVideo = createAction({
       method: HttpMethod.POST,
       url: 'https://api.jogg.ai/v1/create_video_from_talking_avatar',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,

@@ -10,6 +10,8 @@ export const voiceChange = createAction({
   name: "voice-changer-convert",
   displayName: "Voice Changer",
   description: "Convert an input audio file to a different voice using Murf Voice Changer.",
+  audience: 'both',
+  aiMetadata: { description: 'Re-renders an existing audio recording in a different Murf voice. Supply the source audio either as a publicly accessible URL or as an uploaded file (provide exactly one, not both) along with the target voiceId. Use it to change the speaker of existing audio rather than synthesizing from text. Each call generates new audio and is not idempotent.', idempotent: false },
   props: {
     language: murfCommon.language,
     voiceId: murfCommon.voiceId,
@@ -24,7 +26,7 @@ export const voiceChange = createAction({
       required: false,
     }),
     format: Property.StaticDropdown({
-      displayName: "Output Format",
+      displayName:  "Output Format",
       description: "Format of the generated audio file",
       required: false,
       options: {
@@ -109,7 +111,7 @@ export const voiceChange = createAction({
 
       // API request
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.POST,
         "/voice-changer/convert",
         formData,

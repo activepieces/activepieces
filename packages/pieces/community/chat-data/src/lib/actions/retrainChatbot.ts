@@ -1,14 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ChatDataClient } from '../common/client';
-import { RetrainOptions } from '../common/types';
+import { chatDataAuth, RetrainOptions } from '../common/types';
 
 export const retrainChatbot = createAction({
+  auth: chatDataAuth,
   name: 'retrain_chatbot',
   displayName: 'Retrain Chatbot',
   description:
     'Retrain an existing chatbot with new data or remove existing data (custom-data-upload model only)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrains a custom-data-upload chatbot (selected by chatbotId) by adding source text, scraped URLs, products, and Q&As, and/or removing existing knowledge sources via the deletes list. Use to refresh or extend a bot\'s knowledge base; only works for the custom-data-upload model. Not idempotent — each call mutates the knowledge base (re-crawls URLs, appends/overwrites entries, deletes sources).',
+    idempotent: false,
+  },
   props: {
     chatbotId: Property.Dropdown({
+      auth: chatDataAuth,
       displayName: 'Chatbot',
       description: 'Select the chatbot to retrain',
       required: true,
@@ -22,7 +30,7 @@ export const retrainChatbot = createAction({
           };
         }
         try {
-          const client = new ChatDataClient(auth as string);
+          const client = new ChatDataClient(auth.secret_text);
           const chatbots = await client.listChatbots();
           return {
             options: chatbots.map((chatbot) => ({
@@ -146,7 +154,7 @@ export const retrainChatbot = createAction({
     }),
   },
   async run(context) {
-    const client = new ChatDataClient(context.auth as string);
+    const client = new ChatDataClient(context.auth.secret_text);
 
     const payload = RetrainOptions.parse({
       chatbotId: context.propsValue.chatbotId,

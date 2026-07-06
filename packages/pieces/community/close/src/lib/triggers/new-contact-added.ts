@@ -1,6 +1,6 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../../';
+import { closeAuth } from '../auth';
 import { CloseCRMContactWebhookPayload } from '../common/types';
 import { closeApiCall } from '../common/client';
 import { verifySignature } from './helpers';
@@ -12,11 +12,14 @@ export const newContactAdded = createTrigger({
 	name: 'new_contact_added',
 	displayName: 'New Contact Added',
 	description: 'Triggers when a new contact is created.',
+	aiMetadata: {
+		description: 'Fires when a new contact (person) is created in Close CRM, via a registered webhook on the contact-created event. Emits the full contact record, including its parent lead ID. Use to react whenever a person is added to the CRM.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
 		const response = await closeApiCall<{ id: string; signature_key: string }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/webhook/',
 			body: {
@@ -46,7 +49,7 @@ export const newContactAdded = createTrigger({
 		if (triggerData?.id) {
 			await closeApiCall({
 				method: HttpMethod.DELETE,
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				resourceUri: `/webhook/${triggerData.id}`,
 			});
 		}
@@ -77,7 +80,7 @@ export const newContactAdded = createTrigger({
 		}
 
 		const contact = await closeApiCall({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/contact/${payload.event.data.id}/`,
 		});

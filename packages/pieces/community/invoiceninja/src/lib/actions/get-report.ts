@@ -7,6 +7,8 @@ export const getReport = createAction({
   name: 'getreport_task',
   displayName: 'Get Report',
   description: 'Gets report data from InvoiceNinja.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches report data from Invoice Ninja for the selected report type (currently invoices) over a fixed last-7-days range, capped by a max-results limit. Use to pull aggregated invoice report data. Read-only and idempotent.', idempotent: true },
 
   props: {
     reportType: Property.StaticDropdown({
@@ -35,7 +37,7 @@ export const getReport = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
 
     const headers = {
       'X-Api-Token': INapiToken,
@@ -54,7 +56,7 @@ export const getReport = createAction({
     ); // otherwise it only returns 20 per page hopefully
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v1/reports/${
       context.propsValue.reportType
     }?${queryParams.toString()}`;

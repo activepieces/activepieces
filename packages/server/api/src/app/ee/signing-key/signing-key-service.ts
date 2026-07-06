@@ -1,12 +1,5 @@
-import { AddSigningKeyResponse, SigningKey, SigningKeyId } from '@activepieces/ee-shared'
-import {
-    ActivepiecesError,
-    apId,
-    ErrorCode,
-    isNil,
-    PlatformId,
-    SeekPage,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, SeekPage } from '@activepieces/core-utils'
+import { AddSigningKeyResponse, SigningKey, SigningKeyId } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { SigningKeyEntity } from './signing-key-entity'
 import { signingKeyGenerator } from './signing-key-generator'

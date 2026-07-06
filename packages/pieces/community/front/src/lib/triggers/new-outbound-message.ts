@@ -2,8 +2,8 @@ import {
   createTrigger,
   TriggerStrategy,
   Property,
-  PiecePropValueSchema,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -22,7 +22,7 @@ const props = {
   }),
 };
 
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof frontAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     // Fetch outbound and out_reply message events
@@ -32,7 +32,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
     }
     const limit = 15;
     const response = await makeRequest(
-      auth as string,
+      auth,
       HttpMethod.GET,
       `/events?${query}&limit=${limit}`
     );
@@ -58,6 +58,10 @@ export const newOutboundMessage = createTrigger({
   name: 'newOutboundMessage',
   displayName: 'New Outbound Message',
   description: 'Fires when a message is sent or replied to in Front.',
+  aiMetadata: {
+    description:
+      'Fires when an outbound message is sent from Front, such as a reply or a new message to a contact, optionally scoped to a specific inbox. Represents a message leaving the team toward an external recipient and emits the outbound event with its message body, recipients, and parent conversation.',
+  },
   props,
   sampleData: {
     _links: {

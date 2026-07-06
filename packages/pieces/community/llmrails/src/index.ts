@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { datastoreSearch } from './lib/actions/datastore-search';
 
 const markdownDescription = `
@@ -43,7 +43,7 @@ export const llmrails = createPiece({
       baseUrl: () => 'https://api.llmrails.com/v1',
       auth: llmrailsAuth,
       authMapping: async (auth) => ({
-        'X-API-KEY': auth as string,
+        'X-API-KEY': auth.secret_text,
       }),
     }),
   ],

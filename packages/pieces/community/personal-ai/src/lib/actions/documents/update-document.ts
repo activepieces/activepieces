@@ -1,12 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { personalAiAuth } from '../../auth';
+import { BASE_URL } from '../../../index';
 
 export const updateDocument = createAction({
   auth:personalAiAuth,
   name: 'update_document',
   displayName: 'Update Document',
   description: 'Update an existing document in AI assistant.',
+  audience: 'both',
+  aiMetadata: { description: 'Overwrite an existing Personal AI document, identified by its document ID, with new text and optional title/tags/source. Use when you need to revise a known document rather than create a new one; the document ID must already exist. Because it replaces the document keyed on a stable ID, repeating the same call yields the same result and is idempotent.', idempotent: true },
   // category: 'Documents',
   props: {
     documentId: Property.ShortText({
@@ -59,7 +62,7 @@ export const updateDocument = createAction({
       url: `${BASE_URL}/update-document`,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       },
       body: {
         DocumentId: documentId,

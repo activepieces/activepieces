@@ -2,9 +2,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { InferenceClient } from '@huggingface/inference';
 import type { ChatCompletionInput } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const chatCompletion = createAction({
+  audience: 'human',
   name: 'chat_completion',
   auth: huggingFaceAuth,
   displayName: 'Chat Completion',
@@ -39,6 +40,7 @@ export const chatCompletion = createAction({
       defaultValue: 'faq',
     }),
     model: Property.Dropdown({
+      auth: huggingFaceAuth,  
       displayName: 'Chat Model',
       description: 'Select the best model for your use case',
       required: true,
@@ -436,7 +438,7 @@ export const chatCompletion = createAction({
         maxTokens = 200;
     }
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
 
     const args: ChatCompletionInput = {
       model: model,

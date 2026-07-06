@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -8,7 +8,7 @@ import {
 import { leadConnectorAuth } from '../..';
 import { getContacts } from '../common';
 
-const polling: Polling<OAuth2PropertyValue, unknown> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAuth>, unknown> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId }) => {
     const currentValues =
@@ -31,6 +31,9 @@ export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Trigger when a new contact is added.',
+  aiMetadata: {
+    description: 'Fires when a new contact is added to the GoHighLevel/LeadConnector location, polling for contacts not seen before. Represents the newly created contact; does not fire on updates to existing contacts.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {},

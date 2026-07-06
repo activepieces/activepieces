@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import {
   ContentfulCreateRecordAction,
   ContentfulGetRecordAction,
@@ -25,7 +25,7 @@ export const contentful = createPiece({
       baseUrl: () => `https://api.contentful.com`,
       auth: ContentfulAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { apiKey: string }).apiKey}`,
+        Authorization: `Bearer ${auth.props.apiKey}`,
       }),
     }),
   ],

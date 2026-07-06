@@ -6,6 +6,11 @@ export const makeCallAction = createAction({
   name: 'make-call',
   displayName: 'Make Call',
   description: 'Initiate an outbound call using Kallabot AI agent.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Place a single outbound phone call where a Kallabot AI voice agent talks to the recipient. Use it for one-off calls (not bulk campaigns); requires an agent ID, a recipient number, and one of your account sender numbers, all in E.164 format. Each call placed is a new side effect, so this is not idempotent.',
+    idempotent: false,
+  },
   auth: kallabotAuth,
 
   props: {
@@ -14,7 +19,8 @@ export const makeCallAction = createAction({
         description: 'Select the AI agent to use for the call.',
         required: true,
         refreshers: ['auth'],
-        options: async ({ auth }: { auth?: string }) => {
+        auth: kallabotAuth,
+        options: async ({ auth }) => {
             if (!auth) {
                 return {
                     disabled: true,
@@ -27,7 +33,7 @@ export const makeCallAction = createAction({
                     method: HttpMethod.GET,
                     url: 'https://api.kallabot.com/agents',
                     headers: {
-                        'Authorization': `Bearer ${auth}`,
+                        'Authorization': `Bearer ${auth.secret_text}`,
                         'Content-Type': 'application/json'
                     }
                 });
@@ -86,7 +92,8 @@ export const makeCallAction = createAction({
       description: 'The phone number to make the call from.',
       required: true,
       refreshers: ['auth'],
-      options: async ({ auth }: { auth?: string }) => {
+      auth: kallabotAuth,
+      options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -100,7 +107,7 @@ export const makeCallAction = createAction({
             method: HttpMethod.GET,
             url: 'https://api.kallabot.com/account-phone-numbers',
             headers: {
-              'Authorization': `Bearer ${auth}`,
+              'Authorization': `Bearer ${auth.secret_text}`,
               'Content-Type': 'application/json'
             }
           });

@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -11,10 +12,10 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 
-const polling: Polling<string, any> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof togglTrackAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const authHeader = `Basic ${Buffer.from(`${auth}:api_token`).toString('base64')}`;
+    const authHeader = `Basic ${Buffer.from(`${auth.secret_text}:api_token`).toString('base64')}`;
     
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -39,6 +40,9 @@ export const newWorkspace = createTrigger({
   name: 'new_workspace',
   displayName: 'New or Updated Workspace',
   description: 'Fires when a workspace is created or updated (Toggl only supports workspace updated events).',
+  aiMetadata: {
+    description: 'Fires when a workspace accessible to the authenticated user is created or modified, delivering the workspace record. Polls Toggl periodically and emits each workspace whose last-modified timestamp is new since the previous poll.',
+  },
   props: {},
   sampleData: {
     id: 20763798,

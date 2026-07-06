@@ -7,9 +7,12 @@ export const updateCompany = createAction({
     name: 'update_company',
     displayName: 'Update Company',
     description: 'Modify company information',
+    audience: 'both',
+    aiMetadata: { description: 'Update fields on an existing Teamleader company identified by company ID. Use when you already know the company and want to change its data. Only provided fields are sent; array fields (emails, phones, addresses, tags) fully replace the existing values rather than appending. Idempotent: re-sending the same values leaves the company in the same state.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         company_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Company',
             description: 'Select the company to update',
             required: true,
@@ -23,7 +26,7 @@ export const updateCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/companies.list',
                         body: {}
@@ -56,6 +59,7 @@ export const updateCompany = createAction({
             required: false,
         }),
         business_type_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Business Type',
             description: 'Legal structure of the company',
             required: false,
@@ -75,7 +79,7 @@ export const updateCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/businessTypes.list',
                         body: {

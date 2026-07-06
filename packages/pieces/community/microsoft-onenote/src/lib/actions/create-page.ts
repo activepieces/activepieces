@@ -1,6 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
-import { oneNoteAuth } from '../../index';
+import { oneNoteAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const createPage = createAction({
@@ -8,12 +9,15 @@ export const createPage = createAction({
 	name: 'create_page',
 	displayName: 'Create Page',
 	description: 'Creates a page in section.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new OneNote page in a chosen notebook section with a title and optional HTML body content. Functionally similar to Create Note in Section; pick either to add a text page. Content accepts basic HTML tags. Not idempotent: each call creates a new page.', idempotent: false },
 	props: {
 		notebook_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook to create the page in.',
 			required: true,
-			refreshers: [],
+			refreshers: [],	
 			options: async ({ auth }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {
@@ -26,6 +30,7 @@ export const createPage = createAction({
 			},
 		}),
 		section_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Section',
 			description: 'The section to create the page in.',
 			required: true,
@@ -64,10 +69,13 @@ export const createPage = createAction({
 		const { auth, propsValue } = context;
 		const { section_id, title, content } = propsValue;
 
+		const authValue = auth as OAuth2PropertyValue;
+		const cloud = authValue.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
-				getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
+				getAccessToken: () => Promise.resolve(authValue.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const htmlContent = `<!DOCTYPE html>

@@ -5,14 +5,16 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import dayjs from 'dayjs';
-import { googleCalendarAuth } from '../../';
+import { getEventsActionOutputSchema } from '../output-schemas';
 
 export const getEvents = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_get_events',
   description: 'Get Events',
+  audience: 'both',
+  aiMetadata: { description: 'Lists events from a Google Calendar, optionally filtered by a date range, search term, and event types, and can expand recurring events into individual instances. Use to look up or browse multiple events when you do not already have a specific event ID; use Get Event by ID for a single known event. Read-only and idempotent.', idempotent: true },
   displayName: 'Get all Events',
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
@@ -61,6 +63,7 @@ export const getEvents = createAction({
 			defaultValue: false,
 		}),
   },
+  outputSchema: getEventsActionOutputSchema,
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/list
     const {
@@ -71,7 +74,7 @@ export const getEvents = createAction({
       event_types,
       singleEvents,
     } = configValue.propsValue;
-    const { access_token: token } = configValue.auth;
+    const token = await getAccessToken(configValue.auth);
     const queryParams: Record<string, string> = { showDeleted: 'false' };
     let url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`;
 

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { cyberarkAuth } from '../../index';
+import { cyberarkAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 
@@ -8,6 +8,11 @@ export const createUser = createAction({
   name: 'create_user',
   displayName: 'Create User',
   description: 'Creates a new user in the CyberArk Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Provisions a new user account in the CyberArk Vault with the given username, user type, authentication method, vault authorizations, and optional profile details. Use to onboard a Vault user. Not idempotent: each call creates another user, and a duplicate username will fail.',
+    idempotent: false,
+  },
   props: {
     username: Property.ShortText({
       displayName: 'Username',
@@ -258,7 +263,7 @@ export const createUser = createAction({
     }),
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     const requestBody: any = {
       username: context.propsValue.username,

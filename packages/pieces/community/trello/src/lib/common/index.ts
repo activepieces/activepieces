@@ -1,5 +1,6 @@
 import { BasicAuthPropertyValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
+import { trelloAuth } from '../..';
 
 export interface WebhookInformation {
 	id: string;
@@ -13,7 +14,9 @@ export interface WebhookInformation {
 
 export const trelloCommon = {
 	baseUrl: 'https://api.trello.com/1/',
-	board_id: Property.Dropdown({
+	board_id:  Property.Dropdown({
+		auth: trelloAuth,
+
 		displayName: 'Boards',
 		description: 'List of boards',
 		required: true,
@@ -43,7 +46,9 @@ export const trelloCommon = {
 			};
 		},
 	}),
-	list_id: Property.Dropdown({
+	list_id:  Property.Dropdown({
+		auth: trelloAuth,
+
 		displayName: 'Lists',
 		description: 'Get lists from a board',
 		required: true,
@@ -72,7 +77,9 @@ export const trelloCommon = {
 			};
 		},
 	}),
-	list_id_opt: Property.Dropdown({
+	list_id_opt:  Property.Dropdown({
+		auth: trelloAuth,
+
 		displayName: 'Lists',
 		description: 'Get lists from a board',
 		required: false,
@@ -100,7 +107,40 @@ export const trelloCommon = {
 			};
 		},
 	}),
+	board_id_opt:  Property.Dropdown({
+		auth: trelloAuth,
+
+		displayName: 'Boards',
+		description: 'List of boards',
+		required: false,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					placeholder: 'connect your account first',
+					options: [],
+				};
+			}
+
+			const basicAuthProperty = auth as BasicAuthPropertyValue;
+			const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
+			const boards = await listBoards(
+				basicAuthProperty.username,
+				basicAuthProperty.password,
+				user['id'],
+			);
+
+			return {
+				options: boards.map((board: { id: string; name: string }) => ({
+					value: board.id,
+					label: board.name,
+				})),
+			};
+		},
+	}),
 	board_labels: Property.MultiSelectDropdown({
+		auth: trelloAuth,
 		displayName: 'Labels',
 		description: 'Assign labels to the card',
 		required: false,

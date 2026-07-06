@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { cyberarkAuth } from '../../index';
+import { cyberarkAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { userIdDropdown } from '../common/user-dropdown';
 import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
@@ -9,6 +9,11 @@ export const deleteUser = createAction({
   name: 'delete_user',
   displayName: 'Delete User',
   description: 'Deletes a specific user in the Vault (requires Add/Update Users authorization)',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently deletes a Vault user identified by user ID; requires Add/Update Users authorization and an explicit confirmation flag before it will proceed. Use to deprovision a user. Effectively idempotent: once the user is gone, repeating the call has no further effect (it targets a stable ID, not a create).',
+    idempotent: true,
+  },
   props: {
     userId: userIdDropdown,
     confirmDeletion: Property.Checkbox({
@@ -19,7 +24,7 @@ export const deleteUser = createAction({
     }),
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     if (!context.propsValue.confirmDeletion) {
       return {

@@ -8,6 +8,8 @@ export const addContactToCampaign = createAction({
     name: 'add_contact_to_campaign',
     displayName: 'Add Contact to Campaign',
     description: 'Add a contact to a campaign.',
+    audience: 'both',
+    aiMetadata: { description: 'Add a Contact to a Campaign by creating a CampaignMember linking the two, with an optional member status. Not idempotent — re-adding the same contact to the same campaign errors on the existing membership.', idempotent: false },
     props: {
         campaign_id: salesforcesCommon.campaign,
         contact_id: salesforcesCommon.contact,

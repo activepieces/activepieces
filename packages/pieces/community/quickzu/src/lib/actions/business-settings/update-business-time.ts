@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
+import { quickzuAuth } from '../../auth';
 import { makeClient } from '../../common';
 import { BusinessTimingInput } from '../../common/types';
 
@@ -8,6 +8,12 @@ export const updateBusinessTimeAction = createAction({
   name: 'quickzu_update_business_time',
   displayName: 'Update Business Time',
   description: 'Updates business hours.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets the weekly operating hours for a Quickzu store, supplying start/end times and an open/closed status per weekday. Use to configure when the store accepts orders. Idempotent: submitting the same schedule repeatedly leaves the store settings in the same state.',
+    idempotent: true,
+  },
   props: {
     items: Property.Array({
       displayName: 'Business Hours',

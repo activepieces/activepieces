@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -7,7 +7,7 @@ import {
     standardObjectPropertiesDropdown,
 } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 
@@ -16,6 +16,8 @@ export const updateLineItemAction = createAction({
     name: 'update-line-item',
     displayName: 'Update Line Item',
     description: 'Updates a line item in Hubspot.',
+    audience: 'both',
+    aiMetadata: { description: 'Update properties (product, quantity, price, etc.) on an existing HubSpot line item identified by Line Item ID; only supplied fields change. Applying the same values repeatedly is idempotent. Use a find action to obtain the line item ID first.', idempotent: true },
     props: {
         lineItemId: Property.ShortText({
             displayName: 'Line Item ID',
@@ -59,6 +61,9 @@ export const updateLineItemAction = createAction({
 
         // Add additional properties to the lineItemProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
+            if ((Array.isArray(value) && value.length === 0)) {
+                return;  
+            }
             // Format values if they are arrays
             lineItemProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });

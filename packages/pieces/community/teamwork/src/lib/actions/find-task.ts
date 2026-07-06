@@ -7,6 +7,8 @@ export const findTask = createAction({
 	name: 'find_task',
 	displayName: 'Find Task',
 	description: 'Search for tasks.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Teamwork tasks by keyword, optionally scoped to a single project. Use to locate a task and obtain its ID before updating, commenting on, or completing it. Requires a search term. Idempotent — a read-only search with no side effects.', idempotent: true },
 	auth: teamworkAuth,
 	props: {
 		searchTerm: Property.ShortText({
@@ -15,6 +17,7 @@ export const findTask = createAction({
 			required: true,
 		}),
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'Limit the search to a specific project.',
 			required: false,
@@ -27,7 +30,7 @@ export const findTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});

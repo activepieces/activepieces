@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listOrgMembersAction = createAction({
   name: 'list_org_members',
   displayName: 'List Organization Members',
   description: 'List all members of your organization',
+  audience: 'both',
+  aiMetadata: { description: 'List members of the authenticated user\'s organization, with optional limit/offset paging. Use this to discover members or look up a user ID when you only know a name or email; for a single known user ID, prefer the get-org-member action. Read-only and has no side effects.', idempotent: true },
   auth: zooAuth,
   // category: 'Organizations',
   props: {
@@ -25,7 +27,7 @@ export const listOrgMembersAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/org/members',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

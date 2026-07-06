@@ -8,6 +8,12 @@ export const stripeCancelSubscription = createAction({
   displayName: 'Cancel Subscription',
   description:
     'Cancel an existing subscription, either immediately or at the end of the current billing period.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Cancels an existing Stripe subscription by its ID, in one of two modes: immediately, or scheduled to end at the close of the current billing period. Use to stop recurring billing for a customer. Effectively idempotent: re-running on an already-canceled subscription leaves it canceled.',
+    idempotent: true,
+  },
   props: {
     subscription: stripeCommon.subscription,
     cancel_at_period_end: Property.Checkbox({
@@ -21,7 +27,7 @@ export const stripeCancelSubscription = createAction({
   async run(context) {
     const { subscription, cancel_at_period_end } = context.propsValue;
 
-    const client = getClient(context.auth);
+    const client = getClient(context.auth.secret_text);
 
     if (cancel_at_period_end) {
       return await client.subscriptions.update(subscription, {

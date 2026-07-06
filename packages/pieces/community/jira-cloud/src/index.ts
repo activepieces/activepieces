@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { JiraAuth, jiraCloudAuth } from './auth';
 import { createIssueAction } from './lib/actions/create-issue';
 import { searchIssues } from './lib/actions/search-issues';
@@ -20,6 +20,11 @@ import { addWatcherToIssueAction } from './lib/actions/add-watcher-to-issue';
 import { linkIssuesAction } from './lib/actions/link-issues';
 import { getIssueAttachmentAction } from './lib/actions/get-issue-attachment';
 import { markdownToJiraFormat } from './lib/actions/markdown-to-jira-format';
+import { getIssueAction } from './lib/actions/get-issue';
+import { transitionIssueAction } from './lib/actions/transition-issue';
+import { newComment } from './lib/triggers/new-comment';
+import { issueAssigned } from './lib/triggers/issue-assigned';
+import { newAttachment } from './lib/triggers/new-attachment';
 
 export const jiraCloud = createPiece({
 	displayName: 'Jira Cloud',
@@ -29,7 +34,7 @@ export const jiraCloud = createPiece({
 	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
 	categories: [PieceCategory.PRODUCTIVITY],
-	authors: ['kishanprmr', 'MoShizzle', 'abuaboud', 'prasanna2000-max'],
+	authors: ['kishanprmr', 'MoShizzle', 'abuaboud', 'prasanna2000-max', 'sanket-a11y'],
 	actions: [
 		createIssueAction,
 		updateIssueAction,
@@ -45,20 +50,22 @@ export const jiraCloud = createPiece({
 		listIssueCommentsAction,
 		deleteIssueCommentAction,
 		markdownToJiraFormat,
+		getIssueAction,
+		transitionIssueAction,
 		createCustomApiCallAction({
 			baseUrl: (auth) => {
-				return `${(auth as JiraAuth).instanceUrl}/rest/api/3`;
+				return auth ? `${(auth).props.instanceUrl}/rest/api/3` : '';
 			},
 			auth: jiraCloudAuth,
 			authMapping: async (auth) => {
 				const typedAuth = auth as JiraAuth;
 				return {
-					Authorization: `Basic ${Buffer.from(`${typedAuth.email}:${typedAuth.apiToken}`).toString(
+					Authorization: `Basic ${Buffer.from(`${typedAuth.props.email}:${typedAuth.props.apiToken}`).toString(
 						'base64',
 					)}`,
 				};
 			},
 		}),
 	],
-	triggers: [newIssue, updatedIssue, updatedIssueStatus],
+	triggers: [newIssue, updatedIssue, updatedIssueStatus, newComment, issueAssigned, newAttachment],
 });

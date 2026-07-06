@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   Property,
   createTrigger,
@@ -14,14 +15,14 @@ import { backBlazeS3Auth } from '../..';
 import { createBackBlazeS3 } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof backBlazeS3Auth>,
+  AppConnectionValueForAuthProperty<typeof backBlazeS3Auth>,
   { folderPath?: string }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId, propsValue }) => {
-    const s3 = createBackBlazeS3(auth);
+    const s3 = createBackBlazeS3(auth.props);
     const params: any = {
-      Bucket: auth.bucket,
+      Bucket: auth.props.bucket,
       MaxKeys: 100,
       StartAfter: lastItemId,
     };
@@ -46,6 +47,9 @@ export const newBackBlazeFileTrigger = createTrigger({
   name: 'new_backblaze_file',
   displayName: 'New File',
   description: 'Trigger when a new file is uploaded.',
+  aiMetadata: {
+    description: 'Fires when a new object appears in the configured Backblaze B2 (S3-compatible) bucket, discovered by polling the bucket listing. An optional folder path restricts watching to objects under that prefix. Each event represents one newly seen object.',
+  },
   props: {
     folderPath: Property.ShortText({
       displayName: 'Folder Path',

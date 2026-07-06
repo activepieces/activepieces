@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { dumplingAuth } from '../../index';
+import { dumplingAuth } from '../auth';
 
 export const extractDocument = createAction({
 	name: 'extract_document',
 	auth: dumplingAuth,
 	displayName: 'Extract Document Data',
 	description: 'Extract structured data from documents using vision-capable AI.',
+	audience: 'both',
+	aiMetadata: { description: 'Extracts data from an uploaded document (file or base64) using vision-capable AI on Dumpling AI, guided by a free-text extraction prompt, optionally returning the result as JSON. Use to pull fields or content out of PDFs, images, or scanned files. Not idempotent: each call is a fresh billed AI extraction whose output may vary.', idempotent: false },
 	props: {
 		file: Property.File({
 			displayName: 'File',
@@ -42,7 +44,7 @@ export const extractDocument = createAction({
 			url: 'https://app.dumplingai.com/api/v1/extract-document',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

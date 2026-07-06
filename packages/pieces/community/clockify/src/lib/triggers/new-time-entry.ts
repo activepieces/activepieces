@@ -1,7 +1,7 @@
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
-import { clockifyAuth } from '../../index';
+import { isNil } from '@activepieces/pieces-framework';
+import { clockifyAuth } from '../auth';
 import { clockifyApiCall } from '../common/client';
 import { projectId, taskId, workspaceId } from '../common/props';
 
@@ -12,6 +12,10 @@ export const newTimeEntryTrigger = createTrigger({
 	name: 'new-time-entry',
 	displayName: 'New Time Entry',
 	description: 'Triggers when a new time entry is created.',
+	aiMetadata: {
+		description:
+			'Fires when a new time entry is created, emitting the entry. Scope is narrowed by the optional project and task: with neither set it watches the whole workspace, with a project it watches that project, and with a task it watches that task.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		workspaceId: workspaceId({
@@ -51,7 +55,7 @@ export const newTimeEntryTrigger = createTrigger({
 		}
 
 		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/webhooks`,
 			body: payload,
@@ -66,7 +70,7 @@ export const newTimeEntryTrigger = createTrigger({
 
 		if (!isNil(webhookId)) {
 			await clockifyApiCall({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});
@@ -75,7 +79,7 @@ export const newTimeEntryTrigger = createTrigger({
 	async test(context) {
 		const { workspaceId, projectId, taskId } = context.propsValue;
 		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/user`,
 		});
@@ -84,11 +88,11 @@ export const newTimeEntryTrigger = createTrigger({
 
 		const qs: QueryParams = { hydrated: 'true', page: '1', 'page-size': '5' };
 
-		if (projectId) qs['project'] = projectId;
-		if (taskId) qs['task'] = taskId;
+		if (projectId) qs['project'] = projectId as string;
+		if (taskId) qs['task'] = taskId as string;
 
 		const response = await clockifyApiCall<{id:string}[]>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
 			query: qs,

@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createPineconeClientFromAuth } from '../common/pinecone-client';
-import { pineconeAuth } from '../../index';
+import { pineconeAuth } from '../auth';
 
 export const updateVector = createAction({
   auth: pineconeAuth,
   name: 'update_vector',
   displayName: 'Update a Vector',
   description: 'Updates a vector in a namespace. Overwrites existing values and metadata.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing vector identified by ID in a Pinecone namespace, overwriting any of its dense values, sparse values, or metadata that are provided. Use to modify a stored vector in place rather than to add new ones (use Upsert Vector for that). Requires the index name and a vector ID (1-512 chars). Idempotent: keyed on the vector ID, so repeating the same call leaves the record in the same state.', idempotent: true },
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',

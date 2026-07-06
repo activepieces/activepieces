@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
 
 export const replyFromUser = createTrigger({
@@ -7,6 +7,9 @@ export const replyFromUser = createTrigger({
 	name: 'replyFromUser',
 	displayName: 'Reply from a user or lead',
 	description: 'Triggers when a reply is received from a user or lead (not an admin)',
+	aiMetadata: {
+		description: 'Fires when a user or lead replies to a conversation in Intercom. Does not fire for replies sent by an admin or teammate. Outputs the conversation object reflecting the contact reply.',
+	},
 	props: {},
 	sampleData: undefined,
 	auth: intercomAuth,

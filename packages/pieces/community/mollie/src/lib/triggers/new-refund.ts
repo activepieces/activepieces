@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
@@ -11,7 +12,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 import dayjs from 'dayjs';
 
 interface MollieRefundResponse {
@@ -42,12 +43,12 @@ interface MollieRefundResponse {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof mollieAuth>,
+  AppConnectionValueForAuthProperty<typeof mollieAuth>,
   { paymentId: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const apiKey = auth as string;
+    const apiKey = auth;
     const { paymentId } = propsValue;
     const isTest = lastFetchEpochMS === 0;
 
@@ -126,11 +127,16 @@ export const mollieNewRefund = createTrigger({
   name: 'new_refund',
   displayName: 'New Refund',
   description: 'Fires when a payment refund is created',
+  aiMetadata: {
+    description:
+      'Fires when a new refund is created on a specific Mollie payment, representing funds returned to the customer. Requires selecting the payment to monitor; polls that payment\'s refunds and emits each new one.',
+  },
 
   type: TriggerStrategy.POLLING,
 
   props: {
     paymentId: Property.Dropdown({
+  auth: mollieAuth,
       displayName: 'Payment ID',
       description: 'The payment to monitor for refunds',
       required: true,
@@ -145,7 +151,7 @@ export const mollieNewRefund = createTrigger({
         }
 
         try {
-          const apiKey = auth as string;
+          const apiKey = auth;
           const response = await mollieCommon.makeRequest(
             apiKey,
             HttpMethod.GET,

@@ -25,6 +25,7 @@ import {
 } from './models/playlist';
 import { User } from './models/user';
 import { Pagination, PaginationRequest } from './models/common';
+import { LibraryModifyItemsRequest } from './models/library';
 
 function emptyValueFilter(
   accessor: (key: string) => any
@@ -225,10 +226,26 @@ export class SpotifyWebApi {
     return items;
   }
 
+  async addSavedItems(request: LibraryModifyItemsRequest) {
+    await this.makeRequest(
+      HttpMethod.PUT,
+      '/me/library',
+      prepareQuery(request)
+    );
+  }
+
+  async removeSavedItems(request: LibraryModifyItemsRequest) {
+    await this.makeRequest(
+      HttpMethod.DELETE,
+      '/me/library',
+      prepareQuery(request)
+    );
+  }
+
   async addItemsToPlaylist(id: string, request: PlaylistAddItemsRequest) {
     await this.makeRequest(
       HttpMethod.POST,
-      '/playlists/' + id + '/tracks',
+      '/playlists/' + id + '/items',
       undefined,
       request
     );
@@ -240,7 +257,7 @@ export class SpotifyWebApi {
   ) {
     await this.makeRequest(
       HttpMethod.DELETE,
-      '/playlists/' + id + '/tracks',
+      '/playlists/' + id + '/items',
       undefined,
       request
     );
@@ -249,7 +266,7 @@ export class SpotifyWebApi {
   async reorderPlaylist(id: string, request: PlaylistReorderItemsRequest) {
     await this.makeRequest(
       HttpMethod.PUT,
-      '/playlists/' + id + '/tracks',
+      '/playlists/' + id + '/items',
       undefined,
       request
     );

@@ -1,13 +1,14 @@
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { chunk } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
@@ -17,7 +18,8 @@ type Props = {
 	propertyName?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
@@ -42,10 +44,10 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		}
 		//fetch updated deals
 		const updatedDeals = [];
-		let after;
+		let after: string | undefined;
 		do {
 			const response = await client.crm.deals.searchApi.doSearch({
-				limit: 100,
+				limit: MAX_SEARCH_PAGE_SIZE,
 				after,
 				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: [
@@ -66,6 +68,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			});
 			after = response.paging?.next?.after;
 			updatedDeals.push(...response.results);
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		if (updatedDeals.length === 0) {
@@ -118,6 +128,10 @@ export const newDealPropertyChangeTrigger = createTrigger({
 	name: 'new-deal-property-change',
 	displayName: 'New Deal Property Change',
 	description: 'Triggers when a specified property is updated on a deal.',
+	aiMetadata: {
+		description:
+			'Fires when the value of a chosen property changes on a HubSpot deal. Polls the CRM deals API for deals modified since the last check, then inspects each deal\'s property history to confirm the selected property was actually updated, emitting the deal record only when that property\'s most recent change is newer than the last poll. Represents a tracked field (e.g. deal stage, amount, close date) being modified on an existing deal.',
+	},
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
 			{

@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
 import { biginApiService } from '../common/request';
@@ -8,6 +8,8 @@ export const createCompany = createAction({
   name: 'createCompany',
   displayName: 'Create Company',
   description: 'Creates a Company Record',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new company (account) record in Bigin CRM with a name plus optional phone, website, billing address, owner, tags, and description. Use to add an organization the business deals with. Not idempotent: each call creates a new company even if one with the same name already exists, so search first if you need to avoid duplicates.', idempotent: false },
   props: {
     accountName: Property.ShortText({
       displayName: 'Account Name',
@@ -72,7 +74,7 @@ export const createCompany = createAction({
         billingState,
         billingCountry,
         billingCode,
-      } = context.propsValue as any;
+      } = context.propsValue;
 
       const record: Record<string, any> = {
         Account_Name: accountName,
@@ -85,7 +87,7 @@ export const createCompany = createAction({
         Billing_Country: billingCountry,
         Billing_Code: billingCode,
         Owner: owner ? { id: owner } : undefined,
-        Tag: Array.isArray(tag) && tag.length > 0 ? tag.map((t: string) => ({ name: t })) : undefined,
+        Tag: Array.isArray(tag) && tag.length > 0 ? tag.map((t) => ({ name: t })) : undefined,
       };
 
       Object.keys(record).forEach((k) => {

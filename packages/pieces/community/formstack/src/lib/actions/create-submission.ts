@@ -14,6 +14,8 @@ export const createSubmission = createAction({
   name: 'createSubmission',
   displayName: 'Create Submission',
   description: 'Submit data to a Formstack form',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a new entry to a specific Formstack form, populating its fields (which are loaded dynamically from the chosen form) plus optional submission metadata like user agent, IP, and payment status. Use to programmatically record form responses. Not idempotent: each call creates a separate submission.', idempotent: false },
   props: {
     form_id: formIdDropdown,
     user_agent: Property.ShortText({
@@ -43,6 +45,7 @@ export const createSubmission = createAction({
       required: false,
     }),
     form_fields: Property.DynamicProperties({
+      auth: formStackAuth,
       displayName: 'Form Fields',
       description: 'Fill out the form fields',
       required: true,
@@ -52,7 +55,7 @@ export const createSubmission = createAction({
           return {};
         }
 
-        const authentication = auth as OAuth2PropertyValue;
+        const authentication = auth;
         const accessToken = authentication['access_token'];
 
         try {

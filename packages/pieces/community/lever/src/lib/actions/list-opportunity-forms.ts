@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..';
+import { LeverAuth, leverAuth } from '../..';
+import { LEVER_BASE_URL } from '../..';
 import {
   AuthenticationType,
   httpClient,
@@ -11,6 +12,12 @@ export const listOpportunityForms = createAction({
   displayName: 'List opportunity forms',
   description:
     'Get all forms for a given opportunity, optionally for a given form template',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Retrieve the completed forms attached to a Lever opportunity, identified by opportunity ID. Returns all of the opportunity's forms by default, or only forms matching a chosen form template when one is supplied (filtered client-side by base template). Read-only and idempotent.",
+    idempotent: true,
+  },
   auth: leverAuth,
   props: {
     opportunityId: Property.ShortText({
@@ -18,6 +25,7 @@ export const listOpportunityForms = createAction({
       required: true,
     }),
     template: Property.Dropdown({
+      auth: leverAuth,
       displayName: 'Form template',
       required: false,
       refreshers: ['auth'],
@@ -34,7 +42,7 @@ export const listOpportunityForms = createAction({
           url: `${LEVER_BASE_URL}/form_templates?include=text`,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: (auth as LeverAuth).apiKey,
+            username: auth.props.apiKey,
             password: '',
           },
         });
@@ -54,7 +62,7 @@ export const listOpportunityForms = createAction({
       url: `${LEVER_BASE_URL}/opportunities/${propsValue.opportunityId}/forms`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.apiKey,
+        username: auth.props.apiKey,
         password: '',
       },
     });

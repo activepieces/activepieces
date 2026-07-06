@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const get_visits = createAction({
@@ -8,6 +8,8 @@ export const get_visits = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Visits',
     description: 'Retrieve all registered visits. Can be filtered by planned visit date.',
+    audience: 'both',
+    aiMetadata: { description: 'List registered visits filtered by planned date. Read-only and idempotent; use to enumerate the visits scheduled for a day. For a single visit by ID use the get-visit or get-visit-detail action instead.', idempotent: true },
     props: {
         planned_date: Property.ShortText({ 
             displayName: 'planned_date', 
@@ -26,7 +28,7 @@ export const get_visits = createAction({
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

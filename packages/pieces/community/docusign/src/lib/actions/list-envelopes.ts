@@ -1,13 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { docusignAuth, DocusignAuthType } from '../..';
+import { docusignAuth } from '../auth';
 import { createApiClient } from '../common';
 import { Envelope, EnvelopesApi, EnvelopesInformation } from 'docusign-esign';
 
 export const listEnvelopes = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'listEnvelopes',
-  displayName: 'List envelopes',
-  description: 'List / search envelopes',
+  displayName: 'Search Signing Requests',
+  description:
+    'Find and list signing requests with optional filters like status, date range, or keyword.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists DocuSign envelopes (signing requests) for an account, auto-paginating through all results. Filters are optional: with no filters it returns all envelopes, otherwise it narrows by status, sender/received date range, or a search keyword. Use to find envelopes by criteria before acting on them; requires the account ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({
@@ -36,7 +43,7 @@ export const listEnvelopes = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const apiClient = await createApiClient(auth as DocusignAuthType);
+    const apiClient = await createApiClient(auth);
     const envelopeApiClient = new EnvelopesApi(apiClient);
 
     const getPage = async (startPosition: number) => {

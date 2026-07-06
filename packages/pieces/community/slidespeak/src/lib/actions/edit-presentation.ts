@@ -1,4 +1,4 @@
-import { slidespeakAuth } from '../../index';
+import { slidespeakAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { BASE_URL } from '../common/constants';
@@ -9,6 +9,8 @@ export const editPresentationAction = createAction({
   name: 'edit-presentation',
   displayName: 'Edit Presentation',
   description: 'Edits an existing presentation.',
+  audience: 'both',
+  aiMetadata: { description: 'Modifies an existing PowerPoint (.pptx) by applying a config of shape replacements (each targeting a named shape and supplying new content). Use to programmatically swap text/placeholder values in a deck you already have. Requires the .pptx file and a replacements config; each call submits a new edit job, so it is not idempotent.', idempotent: false },
   props: {
     pptx_file: Property.File({
       displayName: 'Powepoint File (.pptx)',
@@ -40,7 +42,7 @@ export const editPresentationAction = createAction({
       method: HttpMethod.POST,
       url: BASE_URL + '/presentation/edit',
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
         ...formData.getHeaders()
       },
       body: formData,

@@ -7,6 +7,8 @@ export const anonymizePerson = createAction({
   auth: talkableAuth,
   displayName: 'Anonymize person',
   description: 'Anonymize person by email',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently anonymize a Talkable person\'s personal data, identified by email, for privacy/GDPR-style erasure requests. Use only when a customer\'s identifying information must be scrubbed. Destructive and irreversible; repeating leaves the record anonymized (no further effect). The email is required.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Person email',
@@ -16,7 +18,7 @@ export const anonymizePerson = createAction({
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
+    const { site, api_key } = context.auth.props;
     const personAnonymizeResponse = await httpClient
       .sendRequest<string[]>({
         method: HttpMethod.POST,

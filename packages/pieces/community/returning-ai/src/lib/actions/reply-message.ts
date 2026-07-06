@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getApiEndpoint } from '../common';
-import { returningAiAuth } from '../../index';
+import { returningAiAuth } from '../auth';
 
 /**
  * This action allows you to reply to a specific message as a chosen user in a channel.
@@ -30,6 +30,8 @@ export const replyMessage = createAction({
   name: 'replyMessage',
   displayName: 'Reply Message',
   description: 'Reply to a specific message as a chosen user in a channel.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a threaded reply to an existing Returning.ai message on behalf of a given user (identified by username or email), so the reply appears as if that user sent it. Use to respond in-thread to a known message; requires the target message ID and the reply text. Not idempotent: each call adds a new reply.', idempotent: false },
   props: {
     description: Property.MarkDown({
       value:
@@ -52,7 +54,7 @@ export const replyMessage = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authToken = auth as string;
+    const authToken = auth.secret_text;
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages/reply`,

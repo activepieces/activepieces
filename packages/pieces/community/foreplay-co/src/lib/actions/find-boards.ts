@@ -3,12 +3,16 @@ import { foreplayCoApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { findBoards as findBoardsProperties } from '../properties';
 import { findBoardsSchema } from '../schemas';
+import { foreplayCoAuth } from '../..';
 
 export const findBoards = createAction({
   name: 'findBoards',
   displayName: 'Find Boards',
   description: 'Get all boards for the authenticated user with pagination.',
+  audience: 'both',
+  aiMetadata: { description: 'List the saved ad boards belonging to the authenticated Foreplay account, with offset/limit pagination. Use to discover available board IDs and names, for example before watching a board for new ads. Read-only, so repeating the call is safe.', idempotent: true },
   props: findBoardsProperties(),
+  auth: foreplayCoAuth,
   async run({ auth, propsValue }) {
     // Validate props using Zod schema
     const validation = findBoardsSchema.safeParse(propsValue);
@@ -28,7 +32,7 @@ export const findBoards = createAction({
     }
 
     const response = await foreplayCoApiCall({
-      apiKey: auth as string,
+      apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: '/api/boards',
       queryParams,

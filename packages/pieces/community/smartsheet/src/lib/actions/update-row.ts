@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import { smartsheetCommon, updateRowInSmartsheet } from '../common';
 
 export const updateRow = createAction({
@@ -7,6 +7,8 @@ export const updateRow = createAction({
 	name: 'update_row',
 	displayName: 'Update Row',
 	description: 'Updates an existing row.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates cell values on an existing row in a Smartsheet sheet, matched by sheet ID and row ID. Use to modify fields on a row you can already identify; only the provided cells are changed. Idempotent: re-applying the same cell values to the same row leaves it in the same state.', idempotent: true },
 	props: {
 		sheet_id: smartsheetCommon.sheet_id(),
 		row_id: smartsheetCommon.row_id,
@@ -50,8 +52,8 @@ export const updateRow = createAction({
 		}
 
 		try {
-			const result = await updateRowInSmartsheet(context.auth as string, sheet_id as string, [
-				[rowObj],
+			const result = await updateRowInSmartsheet(context.auth.secret_text, sheet_id as string, [
+				rowObj,
 			]);
 
 			return {

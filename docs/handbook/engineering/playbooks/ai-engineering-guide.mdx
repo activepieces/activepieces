@@ -1,0 +1,224 @@
+---
+title: "AI Engineering Guide"
+icon: 'wand-magic-sparkles'
+---
+
+How to use our Claude Code setup to ship features from a single prompt (hopefully 😄).
+
+<Note>
+This guide is for engineers, not AI. Claude should not read this file.
+</Note>
+
+## What We Built
+
+Our repo has a layered AI assistance system:
+
+| Layer | What | When Loaded | Purpose |
+|---|---|---|---|
+| `CLAUDE.md` (root) | ~55 lines | Every session | Non-obvious architecture rules |
+| `packages/*/CLAUDE.md` | ~30-55 lines each | When working in that package | Package-specific patterns |
+| `.agents/features/*.md` | ~60 lines each | When Claude explores the feature | Entity schemas, services, data flows |
+| `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety) |
+| `.agents/skills/` | 30-65 lines each | When invoked | Step-by-step workflows (`/add-feature`, `/add-entity`, `/add-endpoint`) |
+
+Total context per session: ~150 lines. Claude has ~150 instruction slots — we use them all, nothing wasted.
+
+## The Workflow: Prompt to Feature to Ship
+
+### 1. Write a Clear Brief (5 min)
+
+**Bad:** "add analytics"
+
+**Good:** "Add a project-level analytics dashboard showing flow run count, success rate, and average duration for the last 7/30/90 days. Project-scoped, CE feature, visible to users with READ_RUN permission."
+
+Include:
+
+- What it does (1-2 sentences)
+- Who sees it (role/permission)
+- CE, EE, or both
+- Any constraints (must work embedded, must respect quotas, etc.)
+
+### 2. Explore (Plan Mode) — 15 min
+
+Press `Shift+Tab` twice to enter Plan Mode, then paste your brief.
+
+Claude will:
+
+- Read relevant feature files in `.agents/features/` for the modules you'll touch
+- Explore existing patterns in the codebase
+- Ask you clarifying questions
+- Propose which files to create/modify
+
+You review and refine. This is where 80% of the value comes from — getting the plan right before writing code.
+
+### 3. Implement — 30-90 min
+
+Exit Plan Mode. Claude executes the plan.
+
+For full-stack features, tell Claude: "Use `/add-feature`" — this triggers our custom skill with the full cross-cutting checklist (shared types, entity + migration, service, controller, frontend, tests, verify).
+
+For just a database entity: `/add-entity "my_feature"`
+
+For just an API endpoint: `/add-endpoint "description"`
+
+Claude will:
+
+- Create files following our patterns (references real code, not examples)
+- Register entities in `getEntities()` (rules enforce this)
+- Add migrations to `getMigrations()`
+- Set up `securityAccess` on every endpoint
+- Filter queries by `projectId`/`platformId`
+- Create frontend feature folder with API client + hooks
+
+### 4. Test — 10-30 min
+
+Tell Claude: "Write API tests for this feature and run them."
+
+Claude will:
+
+- Create test file at `test/integration/ce/{feature}.test.ts`
+- Use `setupTestEnvironment()` + `createTestContext(app)`
+- Run `npm run test-api`
+- Fix failures and re-run
+
+### 5. Verify and Ship — 10 min
+
+```bash
+npm run lint-dev    # Claude runs this automatically
+npm run test-api    # Verify all tests pass
+```
+
+Then: "Create a PR for this" — Claude handles branch, commit, and PR creation.
+
+## Parallel Features (2-3 at Once)
+
+Open multiple terminal tabs, each with its own Claude session:
+
+```bash
+Tab 1: claude --worktree    # Feature A (backend-heavy)
+Tab 2: claude --worktree    # Feature B (frontend-heavy)
+Tab 3: claude --worktree    # Feature C (piece/integration)
+```
+
+Each tab gets its own git worktree (isolated branch, no conflicts). While Tab 1 is running tests, switch to Tab 2 and keep building.
+
+Practical limit: 3 parallel sessions. Beyond that, context-switching overhead exceeds gains.
+
+## Session Management
+
+| Situation | Command | Why |
+|---|---|---|
+| Starting unrelated feature | `/clear` | Wipe old context, start clean |
+| Continuing same feature next day | Open Claude in same directory | Auto-loads `CLAUDE.md` |
+| Claude keeps making same mistake | `/clear` + rewrite prompt | Correction loops waste context |
+| Long session (45+ min) | `/compact` | Prevent quality degradation |
+| Context feels bloated | `/compact` | Summarize and continue fresh |
+
+<Tip>
+If you've corrected Claude twice on the same thing, `/clear` and rewrite the prompt with what you learned. Don't accumulate corrections.
+</Tip>
+
+## Code Review Checklist (for AI-Generated Code)
+
+<AccordionGroup>
+<Accordion title="Full checklist">
+- [ ] Logic matches the plan you approved
+- [ ] Queries filter by `projectId` or `platformId`
+- [ ] New entity registered in `getEntities()`
+- [ ] Migration added to `getMigrations()`
+- [ ] Every endpoint has `securityAccess` config
+- [ ] EE code stays in `src/app/ee/` (no cross-imports)
+- [ ] Tests exist and pass
+- [ ] No `as SomeType` casting
+- [ ] No `any` types
+- [ ] Zod error messages use i18n keys
+- [ ] `@activepieces/shared` version bumped (if changed)
+</Accordion>
+</AccordionGroup>
+
+## Weekly Rhythm (5 Features/Week Target)
+
+| Day | Morning | Afternoon |
+|---|---|---|
+| Mon | Plan Feature A (explore + plan) | Implement Feature A |
+| Tue | Finish A, test, PR | Plan + start Feature B |
+| Wed | Finish B | Plan + implement Feature C |
+| Thu | Finish C, test, PR | Feature D (full cycle in 1 day) |
+| Fri | Feature E (or polish D) | Code review, merge, retrospective |
+
+<Info>
+Planning on Day N, implementing on Day N+1 produces better code than doing both in the same session. The overnight break lets you think about edge cases.
+</Info>
+
+## Tips from Top Performers
+
+1. **Front-load the brief.** A clear 3-sentence description saves 30 min of Claude wandering. Include: what, who, CE/EE, constraints.
+
+2. **Let Plan Mode run.** Don't skip it. The 15 minutes of exploration prevents 2 hours of wrong-direction coding.
+
+3. **Use the skills.** `/add-feature` exists for a reason — it encodes every step we've learned from past mistakes.
+
+4. **Read the feature docs yourself.** Before starting a feature in a module, spend 2 minutes reading its `.agents/features/*.md`. You'll ask better questions.
+
+5. **Don't babysit.** Start Claude on a task, switch to another tab, come back when it's done. Check notifications.
+
+6. **Small PRs > big PRs.** Ship each feature as its own PR. Don't bundle.
+
+7. **Test commands in the brief.** Include "success looks like: this test passes, this API returns 200, this page renders" in your prompt.
+
+8. **Trust the rules.** Our `.claude/rules/` enforce entity registration, edition safety, and data isolation. Claude follows these every time.
+
+## Quick Reference
+
+<CodeGroup>
+
+```bash Start working
+claude                        # Opens Claude Code in current directory
+```
+
+```bash Plan before implementing
+# Press Shift+Tab twice for Plan Mode
+```
+
+```bash Custom skills
+/add-feature "description"    # Full-stack feature workflow
+/add-entity "name"            # Database entity + migration
+/add-endpoint "description"   # API endpoint + controller
+```
+
+```bash Session management
+/clear                        # Hard reset (new feature)
+/compact                      # Soft reset (continue, less context)
+```
+
+```bash Verification
+npm run lint-dev              # Lint + auto-fix
+npm run test-api              # Run API tests
+npm run test-unit             # Run unit tests
+```
+
+```bash Ship
+CLAUDE_PUSH=yes git push -u origin HEAD
+```
+
+</CodeGroup>
+
+## Onboarding (First Week)
+
+<Steps>
+  <Step title="Day 1">
+    Read this guide. Install Claude Code. Read root `CLAUDE.md` (~55 lines).
+  </Step>
+  <Step title="Day 2-3">
+    Pick a small feature (5-10 files). Follow the full workflow: brief, Plan Mode, implement, test, PR. Expect 4-6 hours.
+  </Step>
+  <Step title="Day 4">
+    Pick a medium feature (15-25 files). Practice `/clear` when stuck. Use the `/add-feature` skill.
+  </Step>
+  <Step title="Day 5">
+    Try 2 parallel sessions on different features. Practice tab-switching.
+  </Step>
+  <Step title="After Week 1">
+    You should be shipping 1 feature/day comfortably.
+  </Step>
+</Steps>

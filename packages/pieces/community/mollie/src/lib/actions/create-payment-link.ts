@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 
 export const mollieCreatePaymentLink = createAction({
   auth: mollieAuth,
@@ -9,6 +9,12 @@ export const mollieCreatePaymentLink = createAction({
   displayName: 'Create Payment Link',
   description:
     'Generate a new payment link targeting a customer, product, or specific amount',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a shareable Mollie payment link a customer can open to pay. Can carry a fixed amount, an open/minimum amount the customer fills in, and can be one-off or reusable for multiple payments. Choose this for sending a checkout URL (invoice, donation, manual collection) rather than driving a redirect-based checkout in code. Not idempotent: each call creates a new link.',
+    idempotent: false,
+  },
   props: {
     description: Property.ShortText({
       displayName: 'Description',
@@ -323,6 +329,7 @@ export const mollieCreatePaymentLink = createAction({
     }),
 
     allowedMethods: Property.MultiSelectDropdown({
+      auth: mollieAuth,
       displayName: 'Allowed Payment Methods',
       description:
         'Payment methods allowed for this link (empty = all enabled methods)',
@@ -388,7 +395,7 @@ export const mollieCreatePaymentLink = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth;
 
     const paymentLinkData: Record<string, unknown> = {
       description: propsValue.description,

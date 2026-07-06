@@ -1,20 +1,21 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const clearWorksheetAction = createAction({
   auth: excelAuth,
   name: 'clear_worksheet',
   description: 'Clear a worksheet',
+  audience: 'both',
+  aiMetadata: { description: 'Clear cell contents from a worksheet — either a specific A1-notation range (e.g. A2:B2) or, when no range is given, the entire used range. Removes values only (not formatting) and does not delete rows or shift cells. Idempotent — re-running over the same area has no further effect.', idempotent: true },
   displayName: 'Clear Worksheet',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
     range: Property.ShortText({
       displayName: 'Range',
       description:
@@ -23,11 +24,16 @@ export const clearWorksheetAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
+    const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
     const range = propsValue['range'];
+    const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
-    let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
+    let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
 
     // If range is not provided, clear the entire worksheet
     if (!range) {
@@ -36,19 +42,8 @@ export const clearWorksheetAction = createAction({
       url += `range(address = '${range}')/clear`;
     }
 
-    const request = {
-      method: HttpMethod.POST,
-      url: url,
-      body: {
-        applyTo: 'contents',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN as const,
-        token: auth['access_token'],
-      },
-    };
-
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const client = createMSGraphClient(auth['access_token'], cloud);
+    await client.api(url).post({ applyTo: 'contents' });
+    return {};
   },
 });

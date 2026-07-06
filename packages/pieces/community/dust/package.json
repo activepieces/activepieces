@@ -1,7 +1,23 @@
 {
   "name": "@activepieces/piece-dust",
-  "version": "0.1.23",
+  "version": "0.2.5",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@dust-tt/client": "1.0.57"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@dust-tt/client": "1.0.57",
+    "mime-types": "2.1.35",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.1",
+    "tslib": "2.6.2"
   }
 }

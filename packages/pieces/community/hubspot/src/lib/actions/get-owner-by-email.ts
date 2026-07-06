@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import { Client } from '@hubspot/api-client';
 
 export const getOwnerByEmailAction = createAction({
@@ -7,6 +7,12 @@ export const getOwnerByEmailAction = createAction({
 	name: 'get-owner-by-email',
 	displayName: 'Get Owner by Email',
 	description: 'Gets an existing owner by email.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Look up a single HubSpot CRM owner (user) by their email address; use to resolve an email into an owner identity before assigning records to that owner. Read-only and repeatable. Fails if no owner matches the given email.',
+		idempotent: true,
+	},
 	props: {
 		email: Property.ShortText({
 			displayName: 'Owner Email',

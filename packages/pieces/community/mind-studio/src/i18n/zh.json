@@ -1,0 +1,16 @@
+{
+  "Run MindStudio workflows and get AI results.": "Run MindStudio workflows and get AI results.",
+  "Your MindStudio API key (Bearer token).": "Your MindStudio API key (Bearer token).",
+  "Run Workflow": "Run Workflow",
+  "Run a workflow from your MindStudio app and start a thread.": "Run a workflow from your MindStudio app and start a thread.",
+  "App ID": "App ID",
+  "Workflow": "Workflow",
+  "Variables": "Variables",
+  "Callback URL": "Callback URL",
+  "Include Billing Cost": "Include Billing Cost",
+  "MindStudio app ID to run.": "MindStudio app ID to run.",
+  "Workflow name to run (without the .flow extension).": "Workflow name to run (without the .flow extension).",
+  "Key-value variables passed to the app.": "Key-value variables passed to the app.",
+  "URL to receive the execution result asynchronously.": "URL to receive the execution result asynchronously.",
+  "Return the billing cost in the response.": "Return the billing cost in the response."
+}

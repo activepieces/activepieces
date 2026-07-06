@@ -1,0 +1,58 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  UpdateSecretCommand,
+} from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
+import { secretIdDropdown } from '../common/props';
+
+export const updateSecret = createAction({
+  auth: awsSecretsManagerCombinedAuth,
+  name: 'updateSecret',
+  displayName: 'Update Secret',
+  description: 'Updates an existing secret.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites an existing AWS Secrets Manager secret (identified by name or ARN, selectable from a list or passed directly) with a new text value and optional description. Use when rotating or changing a credential that already exists; the secret must already exist. Repeating with the same value converges to the same stored value, so it is idempotent, though each call records a new version.',
+    idempotent: true,
+  },
+  props: {
+    secretId: secretIdDropdown,
+    secretValue: Property.LongText({
+      displayName: 'Secret Value',
+      description: 'The new secret value (text)',
+      required: true,
+    }),
+    description: Property.LongText({
+      displayName: 'Description',
+      description: 'Updated description of the secret (optional)',
+      required: false,
+    }),
+    clientRequestToken: Property.ShortText({
+      displayName: 'Client Request Token',
+      description: 'A unique token to ensure idempotency (optional)',
+      required: false,
+    }),
+  },
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
+
+    try {
+      const command = new UpdateSecretCommand({
+        SecretId: propsValue.secretId,
+        SecretString: propsValue.secretValue,
+        Description: propsValue.description,
+        ClientRequestToken: propsValue.clientRequestToken,
+      });
+
+      const response = await client.send(command);
+
+      return response;
+    } catch (error: any) {
+      throw new Error(
+        `Failed to update secret: ${error.message ?? 'Unknown error'}`
+      );
+    }
+  },
+});

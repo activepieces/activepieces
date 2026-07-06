@@ -1,30 +1,31 @@
 import { DiffState, FlowProjectOperationType, FlowStatus, FlowSyncError } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
+import { Mock, MockedFunction } from 'vitest'
 import { projectStateHelper } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state-helper'
 import { projectStateService } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
 import { system } from '../../../../../../../src/app/helper/system/system'
 import { flowGenerator } from '../../../../../../helpers/flow-generator'
 
 // Mock the project state helper
-jest.mock('../../../../../../../src/app/ee/projects/project-release/project-state/project-state-helper')
+vi.mock('../../../../../../../src/app/ee/projects/project-release/project-state/project-state-helper')
 
-const mockProjectStateHelper = projectStateHelper as jest.MockedFunction<typeof projectStateHelper>
+const mockProjectStateHelper = projectStateHelper as MockedFunction<typeof projectStateHelper>
 const logger = system.globalLogger()
 
 describe('ProjectStateService.apply - Flow Operations', () => {
-    let mockCreateFlowInProject: jest.Mock
-    let mockUpdateFlowInProject: jest.Mock
-    let mockDeleteFlowFromProject: jest.Mock
-    let mockRepublishFlow: jest.Mock
+    let mockCreateFlowInProject: Mock
+    let mockUpdateFlowInProject: Mock
+    let mockDeleteFlowFromProject: Mock
+    let mockRepublishFlow: Mock
 
     beforeEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
 
         // Set up mocks for all helper methods
-        mockCreateFlowInProject = jest.fn()
-        mockUpdateFlowInProject = jest.fn()
-        mockDeleteFlowFromProject = jest.fn()
-        mockRepublishFlow = jest.fn()
+        mockCreateFlowInProject = vi.fn()
+        mockUpdateFlowInProject = vi.fn()
+        mockDeleteFlowFromProject = vi.fn()
+        mockRepublishFlow = vi.fn()
 
         mockProjectStateHelper.mockReturnValue({
             createFlowInProject: mockCreateFlowInProject,
@@ -71,7 +72,7 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             expect(mockRepublishFlow).toHaveBeenCalledWith({
                 flow: createdFlow,
                 projectId,
-                // Note: status should be undefined (default to enabled)
+                status: FlowStatus.ENABLED,
             })
         })
 

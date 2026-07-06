@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -7,7 +7,7 @@ import {
 
 } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 
 export const updateContactAction = createAction({
@@ -15,6 +15,8 @@ export const updateContactAction = createAction({
     name: 'update-contact',
     displayName: 'Update Contact',
     description: 'Updates a contact in Hubspot.',
+    audience: 'both',
+    aiMetadata: { description: 'Update properties on an existing HubSpot contact identified by Contact ID; only the supplied fields are changed. Applying the same values repeatedly is idempotent. Use a find action to resolve the contact ID first, or a create action to add a new contact.', idempotent: true },
     props: {
         contactId: Property.ShortText({
             displayName: 'Contact ID',
@@ -45,6 +47,9 @@ export const updateContactAction = createAction({
 
         // Add additional properties to the contactProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
+            if ((Array.isArray(value) && value.length === 0)) {
+                return;  
+            }
             // Format values if they are arrays
             contactProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });

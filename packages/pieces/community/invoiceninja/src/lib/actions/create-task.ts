@@ -9,6 +9,8 @@ export const createTask = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Creates a task instance in Invoice Ninja for billing purposes.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a billable task in Invoice Ninja, identified by a task/ticket number that must be unique (not previously used). Optionally associates the task with a client and project and applies a custom hourly rate. Not idempotent — each call creates a new task.', idempotent: false },
 
   props: {
     number: Property.LongText({
@@ -40,7 +42,7 @@ export const createTask = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
 
     const headers = {
       'X-Api-Token': INapiToken,
@@ -55,7 +57,7 @@ export const createTask = createAction({
       queryParams.append('rate', context.propsValue.rate?.toString() || '0');
     }
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v1/tasks?${queryParams.toString()}`;
     const httprequestdata = {
       method: HttpMethod.POST,

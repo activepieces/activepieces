@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { closeAuth } from './../../index';
+import { closeAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeApiCall } from '../common/client';
 import { customFields, statusId } from '../common/props';
@@ -9,6 +9,11 @@ export const createLead = createAction({
 	name: 'create_lead',
 	displayName: 'Create Lead',
 	description: 'Creates a new lead.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Creates a new lead (company/account) in Close CRM, optionally with an inline list of contacts, custom fields, and an initial status. Use to add a prospect or account to the CRM. Each call creates a separate lead, so it is not idempotent; repeated calls produce duplicates. Lead name is required.',
+		idempotent: false,
+	},
 	props: {
 		name: Property.ShortText({
 			displayName: 'Lead Name',
@@ -17,7 +22,7 @@ export const createLead = createAction({
 		}),
 		url: Property.ShortText({
 			displayName: 'URL',
-			required: false,
+			required: false,	
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
@@ -148,7 +153,7 @@ export const createLead = createAction({
 		};
 
 		const response = await closeApiCall({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/lead/',
 			body: payload,

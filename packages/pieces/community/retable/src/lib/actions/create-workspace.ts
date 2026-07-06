@@ -9,6 +9,8 @@ export const retableCreateWorkspaceAction = createAction({
   name: 'retable_create_workspace',
   displayName: 'Create a Workspace',
   description: 'Creates a workspace',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new top-level Retable workspace with the given name and optional description. Use when an agent needs a fresh workspace to organize projects under. Not idempotent — each call creates another workspace, even with the same name.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Workspace Name',
@@ -26,7 +28,7 @@ export const retableCreateWorkspaceAction = createAction({
         method: HttpMethod.POST,
         url: `${retableCommon.baseUrl}/workspace`,
         headers: {
-          ApiKey: context.auth as string,
+          ApiKey: context.auth.secret_text,
         },
         body: {
           name: name,

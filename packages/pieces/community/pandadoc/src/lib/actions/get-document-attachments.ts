@@ -7,6 +7,11 @@ export const getDocumentAttachments = createAction({
   name: 'getDocumentAttachments',
   displayName: 'Get Document Attachment',
   description: 'Retrieves details of a specific attachment from a document.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieve details of a single attachment on a PandaDoc document, identified by document ID and attachment ID. Use to inspect a known attachment. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: pandadocAuth,
   props: {
     document_id: documentDropdown,
@@ -14,7 +19,7 @@ export const getDocumentAttachments = createAction({
   },
   async run({ auth, propsValue }) {
     return await pandadocClient.makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.GET,
       `/documents/${propsValue.document_id}/attachments/${propsValue.attachment_id}`
     );

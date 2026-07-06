@@ -1,5 +1,5 @@
 
-import { workableAuth } from '../../index';
+import { workableAuth } from '../auth';
 import { createTrigger, Property, TriggerStrategy, WebhookResponse } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getAccountSubdomain } from '../common/get-subdomain';
@@ -22,6 +22,9 @@ export const newCandidate = createTrigger({
     name: 'newCandidate',
     displayName: 'New Candidate',
     description: 'Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.',
+    aiMetadata: {
+      description: 'Fires when a new candidate is created in Workable (a candidate_created event), representing a newly submitted application. Can be scoped to a single job shortcode and/or a single pipeline stage slug, or left unfiltered to fire for all jobs and stages.',
+    },
     props: {
         shortcode: Property.ShortText({
             displayName: "Shortcode",
@@ -60,7 +63,7 @@ export const newCandidate = createTrigger({
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context){
-        const accessToken = context.auth;
+        const accessToken = context.auth.secret_text;
         const subdomain = await getAccountSubdomain(accessToken);
 
         const shortcode = context.propsValue.shortcode || '';
@@ -82,7 +85,7 @@ export const newCandidate = createTrigger({
     },
     async onDisable(context){
         // implement webhook deletion logic
-        const accessToken = context.auth;
+        const accessToken = context.auth.secret_text;
 
         const webhookInfo = await context.store.get<WebhookInformation>('_new_candidate_created');
 
@@ -92,7 +95,7 @@ export const newCandidate = createTrigger({
         }
     },
     async test(context){
-        const accessToken = context.auth;
+        const accessToken = context.auth.secret_text;
         const subdomain = await getAccountSubdomain(accessToken);
         const shortcode = context.propsValue.shortcode || '';
         const stageSlug = context.propsValue.stage_slug || '';

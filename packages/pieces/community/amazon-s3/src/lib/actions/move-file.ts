@@ -1,28 +1,34 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../..';
-import { createS3 } from '../common';
+import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
+import { resolveS3Client } from '../common';
 
 export const moveFile = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'moveFile',
   displayName: 'Move File',
   description: 'Move a File to Another Folder',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Moves an object within the configured S3 bucket by copying it to a new key under the destination folder (keeping the same filename) and then deleting the original. Use to relocate or archive a file. Not idempotent — the source object is deleted on the first successful run, so a repeat call errors because the source key no longer exists.',
+    idempotent: false,
+  },
   props: {
     fileKey: Property.ShortText({
-      displayName: 'File Key',
-      description: 'The key of the file to move',
+      displayName: 'File Path',
+      description: 'The full path to the file you want to move (e.g. "old-folder/report.csv").',
       required: true,
     }),
     folderKey: Property.ShortText({
-      displayName: 'Folder Key',
-      description: 'The key of the folder to move the file to',
+      displayName: 'Destination Folder',
+      description: 'The folder path to move the file into (e.g. "archive/" or "new-folder"). The file name is kept the same.',
       required: true,
     }),
   },
   async run(context) {
-    const { bucket } = context.auth;
+    const authProps: S3AuthProps = context.auth.props;
+    const { bucket } = authProps;
     const { fileKey, folderKey } = context.propsValue;
-    const s3 = createS3(context.auth);
+    const s3 = await resolveS3Client({ authProps, server: context.server });
 
     const fileName = fileKey.split('/').pop();
 

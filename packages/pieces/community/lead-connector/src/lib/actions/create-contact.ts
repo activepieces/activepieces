@@ -12,7 +12,7 @@ import {
   LeadConnectorContactDto,
 } from '../common';
 import { leadConnectorAuth } from '../..';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const createContact = createAction({
@@ -20,6 +20,8 @@ export const createContact = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Create a new contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact in the GoHighLevel/LeadConnector location with optional name, email, phone, company, address, tags, and source. Use to add a lead or person to the CRM. Not idempotent — each call creates a separate contact, so de-duplicate beforehand if needed.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',
@@ -46,6 +48,7 @@ export const createContact = createAction({
       required: false,
     }),
     tags: Property.MultiSelectDropdown({
+  auth: leadConnectorAuth,
       displayName: 'Tags',
       required: false,
       refreshers: [],
@@ -72,6 +75,7 @@ export const createContact = createAction({
       required: false,
     }),
     country: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Country',
       description:
         'When using a dynamic value, make sure to use the ISO-2 country code, and not the country name.',
@@ -106,6 +110,7 @@ export const createContact = createAction({
       required: false,
     }),
     timezone: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Time Zone',
       required: false,
       refreshers: [],
@@ -131,9 +136,9 @@ export const createContact = createAction({
 
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email().optional(),
-      phone: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      website: z.string().url().optional(),
+      email: z.optional(z.string().check(z.email())),
+      phone: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
+      website: z.optional(z.string().check(z.url())),
     });
 
     const {

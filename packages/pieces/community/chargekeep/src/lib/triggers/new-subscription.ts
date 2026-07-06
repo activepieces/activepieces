@@ -1,12 +1,15 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { chargekeepCommon } from '../common/common';
-import { chargekeepAuth } from '../..';
+import { chargekeepAuth } from '../auth';
 
 export const newSubscription = createTrigger({
   auth: chargekeepAuth,
   name: 'new_subscription',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is created',
+  aiMetadata: {
+    description: 'Fires when a subscription is created or updated in the ChargeKeep/Sperse CRM, emitting the subscription details (plan name, dates, amount, frequency, and status) for the associated contact.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -29,8 +32,8 @@ export const newSubscription = createTrigger({
   async onEnable(context) {
     const webhookId = await chargekeepCommon.subscribeWebhook(
       'Subscription.CreatedOrUpdated',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -46,8 +49,8 @@ export const newSubscription = createTrigger({
 
     if (response !== null && response !== undefined) {
       await chargekeepCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { 
   podioApiCall, 
   getAccessToken, 
@@ -15,8 +15,11 @@ export const createItemAction = createAction({
   name: 'create_item',
   displayName: 'Create Item',
   description: 'Create a new record in a Podio app with specified field values.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new item (record) in a specified Podio app, populating its fields. Field values can be supplied via the structured app-field inputs or, for complex cases, a raw legacy-fields JSON map keyed by field id. Use when adding a record to a Podio app; requires an app id and at least one field value. Not idempotent — each call creates a separate item.', idempotent: false },
   props: {
     orgId: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Organization (Optional)',
       description: 'Select an organization to filter apps by workspace. Leave empty to see all apps.',
       required: false,
@@ -62,6 +65,7 @@ export const createItemAction = createAction({
       },
     }),
     spaceId: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Space (Optional)',
       description: 'Select a workspace to filter apps. Leave empty to see all apps in the organization.',
       required: false,
@@ -124,6 +128,7 @@ export const createItemAction = createAction({
     }),
     
     appFields: Property.DynamicProperties({
+      auth: podioAuth,
       displayName: 'App Fields',
       description: 'Configure values for the fields in the selected app',
       required: true,

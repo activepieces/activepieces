@@ -6,6 +6,12 @@ export const createProduct = createAction({
   name: 'createProduct',
   displayName: 'Create Product',
   description: 'Creates a new product in the CRM',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a product in Sperse CRM of a given type (General, Event, Subscription, or Digital), with pricing, currency, unit, and a subscription/payment-cycle option. Requires a name and a unique SKU (product code); pricing and cycle fields are required for certain product types. Not idempotent: each call submits another product.',
+    idempotent: false,
+  },
   auth: sperseAuth,
   props: {
     productType: Property.StaticDropdown({
@@ -300,9 +306,9 @@ export const createProduct = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportProduct`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportProduct`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

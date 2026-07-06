@@ -1,0 +1,17 @@
+{
+  "Receive triggers for donations, subscriptions, commissions, and shop orders from Ko-fi.": "Recevoir des déclencheurs pour les dons, abonnements, commissions et commandes de boutique de Ko-fi.",
+  "Your Ko-fi webhook verification token. Find it in Ko-fi Dashboard > Settings > API/Webhooks > Advanced Settings > Webhook verification token.": "Votre jeton de vérification Ko-fi. Trouvez-le dans le tableau de bord Ko-fi > Réglages > API/Webhooks > Réglages Avancés > Jeton de vérification du Webhook.",
+  "New Donation": "Nouveau don",
+  "New Subscription": "Nouvel abonnement",
+  "New Commission": "Nouvelle Commission",
+  "New Shop Order": "Nouvelle commande de la boutique",
+  "Triggers when a new one-time donation is received on Ko-fi.": "Déclenche quand un nouveau don unique est reçu sur Ko-fi.",
+  "Triggers when a new subscription is received on Ko-fi.": "Déclenche quand un nouvel abonnement est reçu sur Ko-fi.",
+  "Triggers when a new commission is received on Ko-fi.": "Déclenche quand une nouvelle commission est reçue sur Ko-fi.",
+  "Triggers when a new shop order is received on Ko-fi.": "Déclenche quand une nouvelle commande est reçue sur Ko-fi.",
+  "Markdown": "Markdown",
+  "To receive donation events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Donation\" event type.": "Pour recevoir des événements de dons, configurez un webhook dans votre tableau de bord Ko-fi : allez dans Paramètres > API/Webhooks, collez l'URL {{webhookUrl}}, et sélectionnez le type d'événement \"Donation\".",
+  "To receive subscription events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Subscription\" event type.": "Pour recevoir des événements d'abonnement, configurez un webhook dans votre tableau de bord Ko-fi : allez dans Paramètres > API/Webhooks, collez l'URL {{webhookUrl}}, et sélectionnez le type d'événement \"Abonnement\".",
+  "To receive commission events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Commission\" event type.": "Pour recevoir des événements de commission, configurez un webhook dans votre tableau de bord Ko-fi : allez dans Paramètres > API/Webhooks, collez l'URL {{webhookUrl}}, et sélectionnez le type d'événement \"Commission\".",
+  "To receive shop order events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Shop Order\" event type.": "Pour recevoir les commandes de la boutique, configurez un webhook dans votre tableau de bord Ko-fi : allez dans Paramètres > API/Webhooks, collez l'URL {{webhookUrl}}, et sélectionnez le type d'événement \"Commande de boutique\"."
+}

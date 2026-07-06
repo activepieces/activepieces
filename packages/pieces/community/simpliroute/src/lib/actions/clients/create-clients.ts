@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const create_clients = createAction({
@@ -8,6 +8,8 @@ export const create_clients = createAction({
     auth: simplirouteAuth,
     displayName: 'Create Clients',
     description: 'Create one or multiple new clients in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'Add one or many client (delivery destination) records, each with title, address, coordinates, time windows and contact details, in a single call. Use when registering new clients to later schedule visits against; not idempotent, so each call inserts new records even if a similar client exists.', idempotent: false },
     props: {
         clients: Property.Array({ 
             displayName: 'Clients', 
@@ -43,7 +45,7 @@ export const create_clients = createAction({
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

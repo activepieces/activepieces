@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { podioAuth } from '../../index';
+import { podioAuth } from '../auth';
 import { podioApiCall, getAccessToken, dynamicAppProperty, dynamicItemProperty, limitProperty, offsetProperty, dynamicOrgProperty, dynamicSpaceProperty } from '../common';
 
 export const findItemAction = createAction({
@@ -8,8 +8,11 @@ export const findItemAction = createAction({
   name: 'find_item',
   displayName: 'Find Item',
   description: 'Retrieve a single item by ID or field value.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up Podio items in one of two modes: fetch a single item directly by its item id, or filter items within an app by field criteria (with limit, offset, and sorting). Use to read a known record or search an app for matching records; the filter mode requires an app id. Idempotent — a read that does not modify data.', idempotent: true },
   props: {
     searchType: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Search Method',
       description: 'How to find the item',
       required: true,

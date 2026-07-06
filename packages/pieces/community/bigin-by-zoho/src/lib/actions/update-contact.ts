@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import {
   createAction,
   Property,
@@ -14,18 +14,21 @@ export const updateContact = createAction({
   name: 'updateContact',
   displayName: 'Update Contact',
   description: 'Select and update an existing Contact record.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing contact (person) record in Bigin CRM, identified by selecting the contact; its current fields are prepopulated and any you set are overwritten (owner, associated company, tags, and module-defined fields). Use to modify a person who already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
 
   props: {
     contactId: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Select Contact',
       description: 'Choose a contact to update',
       required: true,
       refreshers: ['auth'],
-      options: async ({ auth }: any) => {
+      options: async ({ auth }) => {
         if (!auth) return handleDropdownError('Please connect first');
         const resp = await biginApiService.fetchContacts(
           auth.access_token,
-          auth.api_domain
+          auth.data['api_domain']
         );
         return {
           options: resp.data.map((c: any) => ({
@@ -37,6 +40,7 @@ export const updateContact = createAction({
     }),
 
     contactDetails: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Contact Fields',
       description: 'Edit any of these fields',
       refreshers: ['contactId', 'auth'],
@@ -46,7 +50,8 @@ export const updateContact = createAction({
       ): Promise<InputPropertyMap> => {
         if (!contactId) return {};
         const contact = JSON.parse(contactId);
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const [fieldsResp, usersResp, companiesResp] = await Promise.all([
           biginApiService.fetchModuleFields(access_token, api_domain, 'Contacts'),
@@ -200,7 +205,7 @@ export const updateContact = createAction({
 
   async run(context) {
    try {
-     const { contactDetails, contactId, accountName, tag } = context.propsValue as any;
+     const { contactDetails, contactId, accountName, tag } = context.propsValue;
 
      const record: Record<string, any> = { id: JSON.parse(contactId).id };
 
@@ -236,7 +241,7 @@ export const updateContact = createAction({
 
      const resp = await biginApiService.updateContact(
        context.auth.access_token,
-       (context.auth as any).api_domain,
+       context.auth.data['api_domain'],
        payload
      );
 

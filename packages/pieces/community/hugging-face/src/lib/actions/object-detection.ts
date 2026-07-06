@@ -5,9 +5,10 @@ import type {
   ObjectDetectionOutput,
 } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const objectDetection = createAction({
+  audience: 'human',
   name: 'object_detection',
   auth: huggingFaceAuth,
   displayName: 'Object Detection',
@@ -46,6 +47,7 @@ export const objectDetection = createAction({
       defaultValue: 'general',
     }),
     model: Property.Dropdown({
+      auth: huggingFaceAuth,
       displayName: 'Detection Model',
       description: 'Select the best model for your detection task',
       required: true,
@@ -283,7 +285,7 @@ export const objectDetection = createAction({
       type: mimeType,
     });
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
 
     // Build detection arguments
     const args: ObjectDetectionInput = {

@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createMember } from './lib/actions/create-member';
 import { createPost } from './lib/actions/create-post';
 import { findMember } from './lib/actions/find-member';
@@ -61,12 +61,12 @@ export const ghostcms = createPiece({
     findMember,
     findUser,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        `${(auth as { baseUrl: string }).baseUrl}/ghost/api/admin`,
+      baseUrl: (auth) =>auth ?
+        `${auth.props.baseUrl}/ghost/api/admin` : '',
       auth: ghostAuth,
       authMapping: async (auth) => ({
         Authorization: `Ghost ${common.jwtFromApiKey(
-          (auth as { apiKey: string }).apiKey
+          auth.props.apiKey
         )}`,
       }),
     }),

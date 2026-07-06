@@ -1,4 +1,4 @@
-import { workableAuth } from '../../index';
+import { workableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccountSubdomain } from '../common/get-subdomain';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -8,6 +8,8 @@ export const moveCandidate = createAction({
   name: 'moveCandidate',
   displayName: 'Move Candidate',
   description: 'Moves candidate to the specified stage.',
+  audience: 'both',
+  aiMetadata: { description: 'Moves a Workable candidate into a target pipeline stage, recording the move on behalf of a given hiring-team member. Use to advance or change a candidate stage in the recruitment pipeline. Requires the candidate ID, the acting member ID, and the target stage slug (resolve valid slugs via Get Stages). Not idempotent — each call posts a stage transition.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: "Candidate's Id",
@@ -31,7 +33,7 @@ export const moveCandidate = createAction({
     const member_id = context.propsValue.member_id;
     const target_stage = context.propsValue.target_stage;
 
-    const accessToken = context.auth;
+    const accessToken = context.auth.secret_text;
     const subdomain = await getAccountSubdomain(accessToken);
 
     const payload: Record<string, any> = {

@@ -1,7 +1,7 @@
-import { slidespeakAuth } from '../../index';
+import { slidespeakAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { BASE_URL } from '../common/constants';
 
 export const newPresentationTrigger = createTrigger({
@@ -9,6 +9,9 @@ export const newPresentationTrigger = createTrigger({
   name: 'new-presentation',
   displayName: 'New Presentation',
   description: 'Triggers when a new presentation is created.',
+  aiMetadata: {
+    description: 'Fires via webhook when SlideSpeak finishes generating a new presentation, delivering the completed deck (e.g. its download URL). Use to react to presentation completion without polling.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
@@ -18,7 +21,7 @@ export const newPresentationTrigger = createTrigger({
       method: HttpMethod.POST,
       url: BASE_URL + '/webhook/subscribe',
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
       },
       body: {
         endpoint: context.webhookUrl,
@@ -36,7 +39,7 @@ export const newPresentationTrigger = createTrigger({
         method: HttpMethod.DELETE,
         url: BASE_URL + '/webhook/unsubscribe',
         headers: {
-          'X-API-key': apiKey,
+          'X-API-key': apiKey.secret_text,
         },
         body: {
           webhook_id: webhookId,

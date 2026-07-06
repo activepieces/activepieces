@@ -3,7 +3,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
+import { quickzuAuth } from '../../auth';
 import { makeClient } from '../../common';
 import {
   DiscountFilterType,
@@ -17,6 +17,12 @@ export const createProductDiscountAction = createAction({
   name: 'quickzu_create_product_discount',
   displayName: 'Create Product Discount',
   description: 'Creates a new discount for category or product level.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new item-level discount in a Quickzu store over a date range. The filter type selects scope: specific categories, specific products, or all products. Use to set up an automatic price reduction (not a coupon code). Not idempotent: each call creates a separate discount.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Promotion / Discount Title',
@@ -47,6 +53,7 @@ export const createProductDiscountAction = createAction({
       },
     }),
     selectedFilterValues: Property.DynamicProperties({
+      auth: quickzuAuth,
       displayName: 'Select Option',
       refreshers: ['filter_type'],
       required: true,
@@ -57,7 +64,7 @@ export const createProductDiscountAction = createAction({
         const fields: DynamicPropsValue = {};
         const discountFilterType = filter_type as unknown as DiscountFilterType;
 
-        const client = makeClient(auth as unknown as string);
+        const client = makeClient(auth);
 
         switch (discountFilterType) {
           case DiscountFilterType.CATEGORIES: {

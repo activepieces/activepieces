@@ -9,6 +9,12 @@ export const unarchiveEmailAction = createAction({
 	name: 'unarchive_email',
 	displayName: 'Unarchive Email',
 	description: 'Unarchives an email.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Restores one previously archived Zoho Mail message back to the active folder view, identified by account ID and message ID. Use to reverse an archive. Idempotent: re-running on a non-archived message has no further effect.',
+		idempotent: true,
+	},
 	props: {
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({ displayName: 'Folder', required: true }),

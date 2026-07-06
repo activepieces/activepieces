@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { dustAuth, DustAuthType } from '../..';
+import { dustAuth } from '../..';
 import { DUST_BASE_URL } from '../common';
 import {
   httpClient,
@@ -14,6 +14,12 @@ export const addFragmentToConversation = createAction({
   displayName: 'Add fragment to conversation',
   description:
     'Create a new content fragment in a conversation. Content fragments are pieces of information that can be inserted in conversations and are passed as context to assistants to when they generate an answer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attach a file as a content fragment to an existing Dust conversation, supplying extra context the assistant can use when answering. Requires the conversation ID and a file. Each call adds another fragment, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: dustAuth,
   props: {
     conversationId: Property.ShortText({
@@ -32,16 +38,16 @@ export const addFragmentToConversation = createAction({
         mime.lookup(propsValue.fragment.filename)
       : mime.lookup(propsValue.fragment.filename);
 
-    const dustAuth = auth as DustAuthType;
+    const dustAuth = auth.props;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${DUST_BASE_URL[dustAuth.region || 'us']}/${
+      url: `${DUST_BASE_URL[dustAuth.region ?? 'us']}/${
         dustAuth.workspaceId
       }/assistant/conversations/${propsValue.conversationId}/content_fragments`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${auth.apiKey}`,
+        Authorization: `Bearer ${auth.props.apiKey}`,
       },
       body: JSON.stringify(
         {

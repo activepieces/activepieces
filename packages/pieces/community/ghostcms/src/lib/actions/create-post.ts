@@ -12,6 +12,8 @@ export const createPost = createAction({
   name: 'create_post',
   displayName: 'Create Post',
   description: 'Create a new post',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new post in a Ghost publication from a title and HTML content, with the status controlling whether it is saved as a draft, published immediately, or scheduled (scheduled requires a future Published At). Supports optional slug, excerpt, author, tags, and a featured flag. Not idempotent: each call creates a separate post.', idempotent: false },
   auth: ghostAuth,
   props: {
     title: Property.ShortText({
@@ -55,10 +57,10 @@ export const createPost = createAction({
 
   async run(context) {
     const response = await httpClient.sendRequest({
-      url: `${context.auth.baseUrl}/ghost/api/admin/posts`,
+      url: `${context.auth.props.baseUrl}/ghost/api/admin/posts`,
       method: HttpMethod.POST,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(context.auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(context.auth.props.apiKey)}`,
       },
       body: {
         posts: [

@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { redditAuth } from '../../index';
+import { redditAuth } from '../auth';
 
 export const getRedditPostDetails = createAction({
   auth: redditAuth,
   name: 'getRedditPostDetails',
   displayName: 'Get Post Details',
   description: 'Fetch detailed information about a specific Reddit post using its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up one specific Reddit post by its ID and returns its full metadata (title, author, body, score, counts, flags). Use it when you already have a post ID and need details for that single post, not to browse a subreddit. Accepts the ID with or without the t3_ prefix. Read-only and idempotent.', idempotent: true },
   props: {
     post_id: Property.ShortText({
       displayName: 'Post ID',

@@ -9,6 +9,12 @@ export const listIssueCommentsAction = createAction({
 	name: 'list_issue_comments',
 	displayName: 'List Issue Comments',
 	description: 'Returns all comments for an issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'List comments on a Jira issue, ordered by creation date (ascending or descending) and capped at a configurable limit, including rendered HTML bodies. Use to read an issue\'s discussion before replying or summarizing. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

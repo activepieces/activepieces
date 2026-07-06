@@ -1,0 +1,26 @@
+import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
+
+export const envelopeDeclined = createEnvelopeEventTrigger({
+  name: 'envelopeDeclined',
+  displayName: 'Signing Refused',
+  description:
+    'Triggers when a recipient refuses to sign, stopping the signing process.',
+  aiMetadata: {
+    description:
+      'Fires when a recipient declines to sign a DocuSign envelope, which halts the signing process for the whole envelope. Represents a terminal failure of the signing request due to refusal.',
+  },
+  docusignEvent: 'envelope-declined',
+  sampleData: {
+    event: 'envelope-declined',
+    apiVersion: 'v2.1',
+    uri: '/restapi/v2.1/accounts/6544471c-xxx-xxx-xxxx-39bb8a61f598/envelopes/b31128f9-xxxx-xxxx-xxx-7835d84310f5',
+    retryCount: 0,
+    configurationId: 22127522,
+    generatedDateTime: '2026-04-17T06:52:37.9980000Z',
+    data: {
+      accountId: '6544471c-xxx-xxx-xxxx-39bb8a61f598',
+      userId: '7063cf65-xxx-xxxx-xxxx-ba5ba6bc213b',
+      envelopeId: 'b31128f9-xxxx-xxx-xx-xxxx',
+    },
+  },
+});

@@ -5,6 +5,11 @@ export default createAction({
   name: 'play',
   displayName: 'Play / Resume',
   description: 'Resumes or starts playback',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Starts or resumes playback on the active (or a specified) Spotify device, optionally for a given context URI (album, artist, playlist) or an explicit list of track URIs, and an optional start position. Use it to begin playing something; requires an active device. Not idempotent: each call re-issues the playback command and can restart or re-seek the player.',
+    idempotent: false,
+  },
   auth: spotifyCommon.authentication,
   props: {
     device_id: spotifyCommon.device_id(false),

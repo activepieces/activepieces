@@ -16,6 +16,8 @@ export const queryRecords = createAction({
   auth: vtigerAuth,
   displayName: 'Query Records',
   description: 'Query records by SQL statement.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a Vtiger VTQL/SQL-style read query (e.g. SELECT ... FROM Contacts) and returns matching records or aggregates such as count(*). Choose this when you need a custom filtered read with full control over columns, conditions, and limit rather than the simpler field-match Search. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.LongText({
       displayName: 'Query',
@@ -26,9 +28,9 @@ export const queryRecords = createAction({
   },
   async run({ propsValue, auth }) {
     const vtigerInstance = await instanceLogin(
-      auth.instance_url,
-      auth.username,
-      auth.password
+      auth.props.instance_url,
+      auth.props.username,
+      auth.props.password
     );
     if (vtigerInstance === null) return;
 
@@ -37,7 +39,7 @@ export const queryRecords = createAction({
       result: Record<string, unknown>[];
     }>(
       prepareHttpRequest(
-        auth.instance_url,
+        auth.props.instance_url,
         vtigerInstance.sessionId ?? vtigerInstance.sessionName,
         'query' as Operation,
         { query: propsValue.query }

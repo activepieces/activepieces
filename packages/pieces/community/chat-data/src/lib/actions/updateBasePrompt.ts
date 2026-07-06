@@ -1,13 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ChatDataClient } from '../common/client';
-import { UpdateChatbotSettingsDto } from '../common/types';
+import { chatDataAuth, UpdateChatbotSettingsDto } from '../common/types';
 
 export const updateBasePrompt = createAction({
+  auth: chatDataAuth,
   name: 'update_chatbot_settings',
   displayName: 'Update Chatbot Settings',
   description: 'Update comprehensive settings for a chatbot including name, prompts, behavior, and appearance',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Updates configuration of an existing chatbot (selected by chatbotId) — name, base prompt, model, temperature, initial/suggested messages, visibility, rate limits, allowed domains, calendar booking, and other behavior/appearance settings. Only the fields you provide are changed. Use to reconfigure a bot without retraining it. Idempotent: re-applying the same settings leaves the chatbot in the same state.",
+    idempotent: true,
+  },
   props: {
     chatbotId: Property.Dropdown({
+      auth: chatDataAuth,
       displayName: 'Chatbot',
       description: 'Select the chatbot to update',
       required: true,
@@ -21,7 +29,7 @@ export const updateBasePrompt = createAction({
           };
         }
         try {
-          const client = new ChatDataClient(auth as string);
+          const client = new ChatDataClient(auth.secret_text);
           const chatbots = await client.listChatbots();
           return {
             options: chatbots.map((chatbot) => ({
@@ -202,7 +210,7 @@ export const updateBasePrompt = createAction({
     }),
   },
   async run(context) {
-    const client = new ChatDataClient(context.auth as string);
+    const client = new ChatDataClient(context.auth.secret_text);
     
     const payload = UpdateChatbotSettingsDto.parse({
       chatbotId: context.propsValue.chatbotId,

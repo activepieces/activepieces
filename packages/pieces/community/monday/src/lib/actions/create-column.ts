@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import { COLUMN_TYPE_OPTIONS } from '../common/constants';
 
@@ -8,6 +8,8 @@ export const createColumnAction = createAction({
   name: 'monday_create_column',
   displayName: 'Create Column',
   description: 'Creates a new column in board.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a new column of a chosen type (text, status, date, number, etc.) to a monday.com board. Use to extend a board\'s structure before writing data into it. Not idempotent: each call creates a separate column even with the same title.', idempotent: false },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
@@ -27,7 +29,7 @@ export const createColumnAction = createAction({
   async run(context) {
     const { board_id, column_title, column_type } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     return await client.createColumn({
       boardId: board_id as string,
       columnTitle: column_title as string,

@@ -3,8 +3,8 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { quickzuAuth } from '../auth';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 const markdown = `
 - Go to the **Settings->API and Webhooks** section.
 - In the webhook settings, paste this URL: 
@@ -224,6 +224,10 @@ export const orderCreatedTrigger = createTrigger({
   displayName: 'Order Created/Updated',
   description:
     'Triggers when a new order is created or a order status is changed in store.',
+  aiMetadata: {
+    description:
+      'Fires when a Quickzu store order is created or its status changes, delivering the order details, the originating shop, and a human-readable overview. Use to react to new orders or order-lifecycle updates in real time.',
+  },
   type: TriggerStrategy.WEBHOOK,
   sampleData: sampleData,
   props: {

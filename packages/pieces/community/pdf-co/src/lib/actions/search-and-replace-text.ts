@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpError } from '@activepieces/pieces-common';
 import { PdfCoSuccessResponse, PdfCoErrorResponse } from '../common/types';
-import { pdfCoAuth } from '../../index';
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from '../common/props';
 
 interface PdfCoSearchAndReplaceRequestBody {
@@ -23,6 +23,12 @@ export const searchAndReplaceText = createAction({
 	name: 'search_and_replace_text',
 	displayName: 'Search and Replace Text in PDF',
 	description: 'Search for specific text or patterns in a PDF and replace it with new text.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Finds occurrences of given text in a source PDF (referenced by URL) and replaces them with new text, with optional case-sensitive matching or regular-expression patterns instead of literal search. Use when an agent needs to edit textual content in an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+		idempotent: false,
+	},
 	auth: pdfCoAuth,
 	props: {
 		url: Property.ShortText({
@@ -94,7 +100,7 @@ export const searchAndReplaceText = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/pdf/edit/replace-text`,
 				headers: {
-					'x-api-key': auth,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: requestBody,

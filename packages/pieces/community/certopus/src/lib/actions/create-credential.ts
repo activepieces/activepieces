@@ -14,15 +14,21 @@ import { Organisation } from '../common/models/oranisation';
 import { Event } from '../common/models/event';
 import { Category } from '../common/models/category';
 import { RecipientField } from '../common/models/recipient-field';
-import { certopusAuth } from '../../';
+import { certopusAuth } from '../auth';
 
 export const createCredential = createAction({
   auth: certopusAuth,
   name: 'create_credential',
   displayName: 'Create Credential',
   description: 'Create a credential',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Issues a Certopus certificate/credential for a single recipient under a given organisation, event, and category, supplying the recipient email plus the category-specific data fields. Use to grant a certificate to one person; the generate and publish flags control whether Certopus immediately produces and publishes it. Not idempotent — each call creates a new credential, so repeating it issues duplicates.',
+    idempotent: false,
+  },
   props: {
-    organisation: Property.Dropdown<string>({
+    organisation: Property.Dropdown({
+      auth: certopusAuth,
       displayName: 'Organisations',
       refreshers: [],
       required: true,
@@ -34,9 +40,8 @@ export const createCredential = createAction({
             placeholder: 'Please enter your API key first.',
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth.secret_text);
         const res = await client.listOrganisations();
-        console.log(res);
 
         return {
           disabled: false,
@@ -47,7 +52,8 @@ export const createCredential = createAction({
         };
       },
     }),
-    event: Property.Dropdown<string>({
+    event: Property.Dropdown({
+      auth: certopusAuth,
       displayName: 'Event',
       refreshers: ['organisation'],
       required: true,
@@ -66,7 +72,7 @@ export const createCredential = createAction({
             placeholder: 'Please select an organisation first.',
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth.secret_text);
         const res = await client.listEvents(organisation as string);
         console.log(res);
 
@@ -79,7 +85,8 @@ export const createCredential = createAction({
         };
       },
     }),
-    category: Property.Dropdown<string>({
+    category: Property.Dropdown({
+      auth: certopusAuth,
       displayName: 'Category',
       refreshers: ['organisation', 'event'],
       required: true,
@@ -105,7 +112,7 @@ export const createCredential = createAction({
             placeholder: 'Please select an event first.',
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth.secret_text);
         const res = await client.listCategories(
           organisation as string,
           event as string
@@ -139,6 +146,7 @@ export const createCredential = createAction({
       required: true,
     }),
     fields: Property.DynamicProperties({
+      auth: certopusAuth,
       displayName: 'Recipient Data',
       required: true,
       refreshers: ['organisation', 'event', 'category'],
@@ -151,7 +159,7 @@ export const createCredential = createAction({
 
         const fields: DynamicPropsValue = {};
         try {
-          const client = makeClient(auth.toString());
+          const client = makeClient(auth.secret_text);
           const recipientFields: RecipientField[] =
             await client.listRecipientFields(
               organisation.toString(),
@@ -197,7 +205,7 @@ export const createCredential = createAction({
         ],
       },
       headers: {
-        'x-api-key': context.auth,
+        'x-api-key': context.auth.secret_text,
       },
       queryParams: {},
     };

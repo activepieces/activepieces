@@ -4,13 +4,18 @@ import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const clickAction = createAction({
 	name: 'click',
 	auth: airtopAuth,
 	displayName: 'Click',
 	description: 'Execute a click interaction in a specific browser window.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Clicks an element in a session window located by a natural-language description, supporting left, double, and right click and optionally waiting for navigation to complete afterward. Use this to drive UI interactions such as pressing buttons or links. Requires session id, window id, and an element description; not idempotent since each click mutates page state and may trigger navigation or submissions.',
+		idempotent: false,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,
@@ -160,12 +165,12 @@ export const clickAction = createAction({
 		} = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			costThresholdCredits: z.number().min(0).optional(),
-			timeThresholdSeconds: z.number().min(0).optional(),
-			navigationTimeoutSeconds: z.number().min(0).optional(),
-			maxScanScrolls: z.number().min(1).optional(),
-			scanScrollDelay: z.number().min(0).optional(),
-			overlapPercentage: z.number().min(0).max(100).optional(),
+			costThresholdCredits: z.optional(z.number().check(z.minimum(0))),
+			timeThresholdSeconds: z.optional(z.number().check(z.minimum(0))),
+			navigationTimeoutSeconds: z.optional(z.number().check(z.minimum(0))),
+			maxScanScrolls: z.optional(z.number().check(z.minimum(1))),
+			scanScrollDelay: z.optional(z.number().check(z.minimum(0))),
+			overlapPercentage: z.optional(z.number().check(z.minimum(0), z.maximum(100))),
 		});
 
 		const config: Record<string, any> = {};
@@ -247,7 +252,7 @@ export const clickAction = createAction({
 		}
 
 		const response = await airtopApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/click`,
 			body,

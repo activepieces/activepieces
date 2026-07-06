@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { pipelineDropdown, statusDropdown, userDropdown, lossReasonDropdown, leadDropdown } from '../common/props';
 
 export const updateLeadAction = createAction({
@@ -9,6 +9,8 @@ export const updateLeadAction = createAction({
   name: 'update_lead',
   displayName: 'Update Lead',
   description: 'Update existing lead info.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Kommo CRM lead (deal) identified by lead ID, changing only the supplied fields (name, price, pipeline/status, responsible user, loss reason) and adding or removing tags. Use to move a lead through its pipeline or amend its details; resolve the lead ID first via Find Lead if unknown. Idempotent — repeating the same update yields the same lead state.', idempotent: true },
   props: {
     leadId: leadDropdown,
     name: Property.ShortText({
@@ -47,7 +49,7 @@ export const updateLeadAction = createAction({
     const tagsToDelete = context.propsValue.tags_to_delete ?? [];
 
 
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
 
     const updatePayload: Record<string, any> = {};
 

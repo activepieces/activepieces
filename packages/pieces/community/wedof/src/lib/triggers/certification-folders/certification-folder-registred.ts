@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -7,6 +7,10 @@ export const certificationFolderRegistred = createTrigger({
   name: 'certificationFolderRegistred',
   displayName: 'Dossier de certification enregistré',
   description: "Se déclenche lorsqu'un dossier de certification est enregistré",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof certification folder (dossier de certification) transitions to the 'registered' (enregistré) state, meaning the candidate has been registered for the certification. Emits the full certification-folder record.",
+  },
   props: {},
   sampleData: {
     attendeeLink: 'https://test.wedof.fr/candidat-1234-123456789',
@@ -212,7 +216,7 @@ export const certificationFolderRegistred = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

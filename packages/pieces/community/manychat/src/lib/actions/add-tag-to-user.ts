@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { manychatAuth } from '../../index';
+import { manychatAuth } from '../auth';
 import { BASE_URL, subscriberId, tagIdDropdown } from '../common/props';
 
 export const addTagToUserAction = createAction({
@@ -8,6 +8,8 @@ export const addTagToUserAction = createAction({
 	name: 'addTagToUser',
 	displayName: 'Add Tag to User',
 	description: 'Adds a tag to a user.',
+	audience: 'both',
+	aiMetadata: { description: 'Assigns an existing tag to a Manychat subscriber, identified by subscriber ID and tag ID, then returns the updated subscriber info. Use to label or segment a known contact (e.g. mark them as a lead). Idempotent: re-adding the same tag leaves the subscriber in the same state.', idempotent: true },
 	props: {
 		subscriberId: subscriberId,
 		tagId: tagIdDropdown,
@@ -20,7 +22,7 @@ export const addTagToUserAction = createAction({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			body: {
 				subscriber_id: subscriberId,
@@ -37,7 +39,7 @@ export const addTagToUserAction = createAction({
 			url: `${BASE_URL}/subscriber/getInfo`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			queryParams: {
 				subscriber_id: `${subscriberId}`,

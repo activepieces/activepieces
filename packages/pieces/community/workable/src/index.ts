@@ -8,22 +8,10 @@ import { moveCandidate } from "./lib/actions/move-candidate";
 import { rateCandidate } from "./lib/actions/rate-candidate";
 import { newCandidate } from "./lib/triggers/new-candidate";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
+import { workableAuth } from './lib/auth';
 
-export const workableAuth = PieceAuth.SecretText({
-    displayName: "API Access Token",
-    description: `
-    1. Click your profile icon in the upper right and navigate to Settings > Integrations > Apps.
-    2. Locate the API Access Tokens section near the top of the page.
-    3. Click the button **+ Generate API token**.
-    4. Select the following scopes:
-      - r_jobs
-      - r_candidates
-      - w_candidates
-    5. Click Generate token to complete the process.
-    `,
-    required: true
-  }) 
+ 
 
 export const workable = createPiece({
   displayName: "Workable",
@@ -43,7 +31,7 @@ export const workable = createPiece({
       baseUrl: () => `https://workable.com/spi/v3/`,
       auth: workableAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         Accept: 'application/json'
       })
     })

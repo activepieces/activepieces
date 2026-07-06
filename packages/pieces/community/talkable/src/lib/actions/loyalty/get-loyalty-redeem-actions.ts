@@ -7,6 +7,8 @@ export const getLoyaltyRedeemActions = createAction({
   auth: talkableAuth,
   displayName: 'Get loyalty actions',
   description: 'Get array of loyalty actions',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the list of loyalty redeem actions available to a Talkable loyalty member, identified by their email. Use to see what rewards a customer can redeem. Read-only; the person\'s email is required.', idempotent: true },
   props: {
     person_email: Property.ShortText({
       displayName: 'Person email',
@@ -16,7 +18,7 @@ export const getLoyaltyRedeemActions = createAction({
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
+    const { site, api_key } = context.auth.props;
     const getLoyaltyRedeemActionsResponse = await httpClient
       .sendRequest<string[]>({
         method: HttpMethod.GET,

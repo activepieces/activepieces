@@ -9,6 +9,9 @@ export const gristNewRecordTrigger = createTrigger({
   name: 'grist-new-record',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to the table.',
+  aiMetadata: {
+    description: 'Fires when a new record is added to the configured Grist document and table, via a Grist webhook on the add event. Each fired event represents a newly created row in that table; an optional readiness column can gate when a row is considered ready.',
+  },
   props: {
     workspace_id: commonProps.workspace_id,
     document_id: commonProps.document_id,
@@ -23,10 +26,10 @@ export const gristNewRecordTrigger = createTrigger({
     const readinessColumn = context.propsValue.readiness_column;
 
     const client = new GristAPIClient({
-      domainUrl: context.auth.domain,
-      apiKey: context.auth.apiKey,
+      domainUrl: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
     });
-
+    
     const response = await client.createDocumentWebhook(documentId, {
       webhooks: [
         {
@@ -52,8 +55,8 @@ export const gristNewRecordTrigger = createTrigger({
 
     if (webhookId != null) {
       const client = new GristAPIClient({
-        domainUrl: context.auth.domain,
-        apiKey: context.auth.apiKey,
+        domainUrl: context.auth.props.domain,
+        apiKey: context.auth.props.apiKey,
       });
       await client.deleteDocumentWebhook(documentId, webhookId);
     }
@@ -67,8 +70,8 @@ export const gristNewRecordTrigger = createTrigger({
     const tableId = context.propsValue.table_id;
 
     const client = new GristAPIClient({
-      domainUrl: context.auth.domain,
-      apiKey: context.auth.apiKey,
+      domainUrl: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
     });
 
     const response = await client.listRecordsFromTable(documentId, tableId, {

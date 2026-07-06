@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
-import { ApitemplateAuthConfig, makeRequest } from '../common/client';
+import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createPdfFromUrl = createAction({
@@ -8,6 +8,8 @@ export const createPdfFromUrl = createAction({
   name: 'createPdfFromUrl',
   displayName: 'Create PDF From URL',
   description: 'Creates a PDF from a webpage URL.',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a new PDF by loading and capturing a live webpage at the given URL, with optional page settings (size, orientation, margins), viewport sizing, full-page capture, and wait-for-selector/timeout controls for dynamic content. Use when the source is a public web page rather than supplied HTML or a saved template. Requires the URL. Not idempotent: each call generates and stores a new PDF.', idempotent: false },
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -134,7 +136,7 @@ export const createPdfFromUrl = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const authConfig = auth as ApitemplateAuthConfig;
+    const authConfig = auth.props;
     const {
       url,
       expiration,
@@ -259,7 +261,7 @@ export const createPdfFromUrl = createAction({
         endpoint,
         requestBody,
         undefined,
-        authConfig.region
+        authConfig.region as ApitemplateRegion
       );
 
       return response;

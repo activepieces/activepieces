@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const add_visit_items = createAction({
@@ -8,6 +8,8 @@ export const add_visit_items = createAction({
     auth: simplirouteAuth,
     displayName: 'Add Visit Items',
     description: 'Add items to an existing visit.',
+    audience: 'both',
+    aiMetadata: { description: 'Append one or more line items (products/cargo) to an existing visit identified by visit_id. Not idempotent: each call adds items, so re-running duplicates them. Use only after the visit exists.', idempotent: false },
     props: {
         visit_id: Property.Number({ displayName: 'visit_id', description: 'ID of the visit to add items to.', required: true }),
         items: Property.Array({ 
@@ -35,7 +37,7 @@ export const add_visit_items = createAction({
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

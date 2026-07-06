@@ -1,4 +1,4 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { Tag } from '../common/constants';
@@ -9,6 +9,8 @@ export const tagSubscriber = createAction({
   name: 'tagSubscriber',
   displayName: 'Tag Subscriber',
   description: 'Adds A Tag to A Subscriber.',
+  audience: 'both',
+  aiMetadata: { description: 'Applies one or more tags to a subscriber in a Zagomail list, creating any tag that does not already exist before attaching it. Use to label or segment a contact; requires the list UID and the subscriber UID. Not idempotent: it mutates the subscriber and may create new tags on each run.', idempotent: false },
   props: {
     tags: Property.Array({
       displayName: 'Tags',
@@ -29,7 +31,7 @@ export const tagSubscriber = createAction({
     if (providedTags.length < 1)
       throw new Error('You must provide atleast one tag');
 
-    const tags = (await zagoMailApiService.getTags(auth)) as Tag[];
+    const tags = (await zagoMailApiService.getTags(auth.secret_text)) as Tag[];
 
     return await Promise.all(
       providedTags.map(async (providedTag) => {
@@ -40,10 +42,10 @@ export const tagSubscriber = createAction({
         if (tagExists) {
           tag = tagExists;
         } else {
-          tag = (await zagoMailApiService.createTag(auth, providedTag)) as Tag;
+          tag = (await zagoMailApiService.createTag(auth.secret_text, providedTag)) as Tag;
         }
 
-        return await zagoMailApiService.addTagToSubscriber(auth, {
+        return await zagoMailApiService.addTagToSubscriber(auth.secret_text, {
           listUid: propsValue.listUId,
           subscriberUid: propsValue.subscriberUid,
           tagId: tag.ztag_id,

@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -9,6 +9,12 @@ export const getPartnership = createAction({
   displayName: "Récupération d'un partenariat",
   description:
     "Récupération d'un partenariat par le certifInfo de la certification et du siret du partenaire",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up a single certification partnership by the certification certifInfo and the partner SIRET number. Read-only and safe to retry; pick this when you already know both identifiers and need the current partnership record. To remove a partnership use the delete action instead.',
+    idempotent: true,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',
@@ -35,7 +41,7 @@ export const getPartnership = createAction({
           context.propsValue.siret,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

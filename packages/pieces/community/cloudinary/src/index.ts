@@ -8,7 +8,7 @@ import { findResourceByPublicId } from "./lib/actions/find-resource-by-public-id
 import { transformResource } from "./lib/actions/transform-resource";
 import { newResourceInFolder } from "./lib/triggers/new-resource";
 import { newTagAddedToAsset } from "./lib/triggers/new-tag-added-to-asset";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const cloudinary = createPiece({
   displayName: "Cloudinary",

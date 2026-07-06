@@ -9,6 +9,12 @@ export const cancelAppointment = createAction({
   displayName: 'Cancel Appointment',
   description:
     'Update the status of a booking (cancel, complete, or mark as no-show)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Cancel an existing Zoho Bookings appointment identified by its booking ID. Use the from/to time range to locate the booking ID first. Not idempotent: it submits a status-change request each call, though re-cancelling an already-cancelled booking has no further effect.',
+    idempotent: false,
+  },
   props: {
     from_time: Property.DateTime({
       displayName: 'From Time',
@@ -26,7 +32,7 @@ export const cancelAppointment = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
 
     // Validate props using Zod schema
     await propsValidation.validateZod(

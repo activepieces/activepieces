@@ -1,5 +1,5 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	DropdownOption,
@@ -8,7 +8,7 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import dayjs from 'dayjs';
@@ -18,7 +18,8 @@ type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const listId = propsValue.listId;
@@ -89,10 +90,15 @@ export const newContactInListTrigger = createTrigger({
 	name: 'new-contact-in-list',
 	displayName: 'New Contact in List',
 	description: 'Triggers when a new contact is added to the specified list.',
+	aiMetadata: {
+		description:
+			'Fires when a contact is added to the selected HubSpot contact list. Each event represents one contact whose membership was added since the last poll, enriched with the contact record properties (name, email, etc.) plus the timestamp it joined the list. Tracked by list-membership date.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		listId: Property.Dropdown({
 			displayName: 'Contact List',
+			auth: hubspotAuth,
 			refreshers: [],
 			required: true,
 			options: async ({ auth }) => {

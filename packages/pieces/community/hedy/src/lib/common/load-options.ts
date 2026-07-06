@@ -1,6 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { HedyApiClient } from './client';
+import { hedyAuth } from '../auth';
+import { createClient } from './client';
 import { PaginatedResponse, Topic } from './types';
 
 function toTopicArray(result: unknown): Topic[] {
@@ -19,6 +20,7 @@ function toTopicArray(result: unknown): Topic[] {
 }
 
 export const topicDropdown = Property.Dropdown({
+  auth: hedyAuth,
   displayName: 'Topic',
   description: 'Optionally filter results by a specific topic.',
   required: false,
@@ -32,7 +34,7 @@ export const topicDropdown = Property.Dropdown({
       };
     }
 
-    const client = new HedyApiClient(auth as string);
+    const client = createClient(auth);
     try {
       const response = await client.request<Topic[]>({
         method: HttpMethod.GET,

@@ -1,11 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { upgradechatAuth } from '../../';
+import { upgradechatAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getContactDetails = createAction({
   name: 'getContactDetails',
   displayName: 'Get Contact Details',
   description: 'Get Contact Details',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up and returns the full detail record for a single contact in the Sperse/Upgrade.chat CRM. Provide at least one identifier to resolve the contact: Contact ID, Contact Xref, Affiliate Code, User ID, or User Email (all optional individually, but a lookup needs one). Choose this to read a contact before deciding to update, invoice, or subscribe them. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: upgradechatAuth,
   props: {
     contactId: Property.Number({
@@ -30,7 +36,7 @@ export const getContactDetails = createAction({
       required: false,
       description: 'Email of the logged in user',
     }),
-  },
+  },  
   async run(context) {
     const contact = {
       contactId: context.propsValue.contactId,
@@ -57,10 +63,10 @@ export const getContactDetails = createAction({
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${
-        context.auth.base_url
+        context.auth.props.base_url
       }/api/services/CRM/Contact/GetContactData?${queryParams.toString()}`,
       headers: {
-        'api-key': context.auth.api_key,
+        'api-key': context.auth.props.api_key,
         'Content-Type': 'application/json',
       },
     });

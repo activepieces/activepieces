@@ -11,6 +11,10 @@ export const contactSubmittedForm = createTrigger({
   name: 'contactSubmittedForm',
   displayName: MODULE_NAME,
   description: 'Triggers each time a contact submits a form (opt-in or order).',
+  aiMetadata: {
+    description:
+      'Fires each time a contact submits a form (such as an opt-in or order form) in the selected ClickFunnels workspace. Delivers the form submission payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),
@@ -24,7 +28,7 @@ export const contactSubmittedForm = createTrigger({
 
     try {
       const response: any = await clickfunnelsApiService.createWebhook(
-        auth,
+        auth.props,
         workspaceId as string,
         {
           webhooks_outgoing_endpoint: {
@@ -52,7 +56,7 @@ export const contactSubmittedForm = createTrigger({
 
     if (cachedData) {
       await clickfunnelsApiService
-        .deleteWebhook(auth, cachedData.webhookId)
+        .deleteWebhook(auth.props, cachedData.webhookId)
         .then(async () => {
           await store.delete(CACHE_KEY);
         });

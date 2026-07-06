@@ -5,6 +5,11 @@ export default createAction({
   name: 'reorder_playlist',
   displayName: 'Reorder playlist',
   description: 'Reorders items in the playlist',
+  audience: 'both',
+  aiMetadata: {
+    description: "Moves a block of items within the playlist identified by its id, taking the given number of items from a starting position and inserting them before a target position. Use it to rearrange playlist order. Not idempotent: positions shift after each move, so repeating the call reorders items differently.",
+    idempotent: false,
+  },
   auth: spotifyCommon.authentication,
   props: {
     playlist_id: spotifyCommon.playlist_id(true),

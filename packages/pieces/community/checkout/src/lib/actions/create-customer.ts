@@ -7,6 +7,8 @@ export const createCustomerAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Create Customer',
   description: 'Store a customer\'s details in a customer object to reuse in future payments. You can link payment instruments and set a default instrument.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Checkout.com customer record from an email (required) plus optional name, phone, metadata, and a default payment instrument, so the customer can be referenced in later payments. Choose it to register a payer before charging them or saving their card. Not idempotent: each call creates a separate customer even with identical input.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -42,7 +44,7 @@ export const createCustomerAction = createAction({
   async run(context) {
     const { email, name, phone_country_code, phone_number, metadata, default: defaultInstrument } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     const body: Record<string, any> = { email };
     
@@ -96,7 +98,7 @@ export const createCustomerAction = createAction({
         method: HttpMethod.POST,
         url: `${baseUrl}/customers`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

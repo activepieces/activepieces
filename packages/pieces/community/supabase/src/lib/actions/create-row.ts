@@ -1,12 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { supabaseAuth } from "../../index";
+import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { createRowActionOutputSchema } from '../output-schemas';
 
 export const createRow = createAction({
     name: 'create_row',
     displayName: 'Create Row',
     description: 'Create a new row in a table',
+    audience: 'both',
+    aiMetadata: { description: 'Inserts a new row into a Postgres table via the Supabase REST API, mapping provided field values to columns. Use to add a record when you do not need to match or replace an existing one (use Upsert Row for insert-or-update). Not idempotent: each call appends another row and will error on unique-constraint, foreign-key, or not-null violations.', idempotent: false },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,
@@ -18,9 +21,10 @@ export const createRow = createAction({
             defaultValue: true,
         }),
     },
+    outputSchema: createRowActionOutputSchema,
     async run(context) {
         const { table_name, row_data, return_row } = context.propsValue;
-        const { url, apiKey } = context.auth;
+        const { url, apiKey } = context.auth.props;
 
         const supabase = createClient(url, apiKey);
         

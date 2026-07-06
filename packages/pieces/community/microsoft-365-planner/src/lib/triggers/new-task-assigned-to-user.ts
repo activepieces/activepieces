@@ -4,6 +4,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
     createTrigger,
     PiecePropValueSchema,
     StaticPropsValue,
@@ -18,7 +19,7 @@ const props = {
 };
 
 const polling: Polling<
-  PiecePropValueSchema<typeof microsoft365PlannerAuth>,
+  AppConnectionValueForAuthProperty<typeof microsoft365PlannerAuth>,
   StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -52,6 +53,9 @@ export const newTaskAssignedToUser = createTrigger({
   displayName: 'New Task Assigned to User',
   description:
     'Triggers when a Task is assigned to the authenticated user in Microsoft 365 Planner.',
+  aiMetadata: {
+    description: 'Fires when a task within a specified Planner plan is assigned to the authenticated (connected) user. Polls periodically and emits each new task in that plan where the current user is among the assignees.',
+  },
   props,
   sampleData: {},
   type: TriggerStrategy.POLLING,

@@ -7,6 +7,10 @@ export const newPayment = createTrigger({
   name: 'new_payment',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is created',
+  aiMetadata: {
+    description:
+      'Fires when a payment is recorded in Sperse CRM, delivering the related contact, invoice, and transaction details for the payment.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -53,8 +57,8 @@ export const newPayment = createTrigger({
   async onEnable(context) {
     const webhookId = await sperseCommon.subscribeWebhook(
       'Payment.Created',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -69,8 +73,8 @@ export const newPayment = createTrigger({
 
     if (response !== null && response !== undefined) {
       await sperseCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

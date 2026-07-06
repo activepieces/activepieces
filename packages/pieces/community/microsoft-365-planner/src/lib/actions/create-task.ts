@@ -12,6 +12,11 @@ export const createTask = createAction({
   displayName: 'Create Task',
   description:
     'Create a new planner task with title, assignments, due date, etc.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new task in a Planner plan, optionally placing it in a bucket and setting assignees, due/start dates, priority, and percent complete. Use to add work items to a plan. Each call creates a separate task, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     planId: PlanDropdown({ required: true }),
     bucketId: BucketDropdown({ required: false }),
@@ -25,8 +30,9 @@ export const createTask = createAction({
       description:
         'Select users to assign the task to. If left empty, the task will be unassigned.',
       required: false,
+      auth: microsoft365PlannerAuth,
       refreshers: ['auth'],
-      options: async ({ auth }: { auth?: OAuth2PropertyValue | null }) => {
+      options: async ({ auth }) => {
         if (!auth) {
           return {
             options: [],

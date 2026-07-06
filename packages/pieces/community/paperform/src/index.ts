@@ -20,7 +20,7 @@ import { findForm } from './lib/actions/find-form';
 import { findSpace } from './lib/actions/find-space';
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { paperformCommon } from "./lib/common/client";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const paperform = createPiece({
   displayName: "Paperform",
@@ -48,7 +48,7 @@ export const paperform = createPiece({
       baseUrl:()=>paperformCommon.baseUrl,
       authMapping:async (auth)=>{
         return{
-          Authorization:`Bearer ${auth}`
+          Authorization:`Bearer ${auth.secret_text}`
         }
       }
     })

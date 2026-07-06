@@ -16,7 +16,7 @@ import { saveToggleAction } from './lib/actions/save-toggle';
 import { saveVideoAction } from './lib/actions/save-video';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newBlogPost } from './lib/triggers/new-blog-post';
 
 export const totalcms = createPiece({
@@ -42,10 +42,15 @@ export const totalcms = createPiece({
     saveToggleAction,
     saveVideoAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { domain: string }).domain,
+        baseUrl: (auth) => {
+          if (!auth) {
+            return '';
+          }
+          return (auth.props).domain;
+        },
       auth: cmsAuth,
       authMapping: async (auth) => ({
-        'total-key': (auth as { license: string }).license,
+        'total-key': (auth.props ).license,
       }),
     }),
   ],

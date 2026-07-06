@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { commonProps, intercomClient } from '../common';
 import { conversationIdProp } from '../common/props';
 
@@ -8,6 +8,8 @@ export const replyToConversation = createAction({
 	name: 'replyToConversation',
 	displayName: 'Reply to conversation',
 	description: 'Reply (as an admin) to a conversation with a contact',
+	audience: 'both',
+	aiMetadata: { description: 'Post an admin reply (a customer-visible comment) to an existing conversation. Each call adds a new reply, so it is not idempotent. Use to respond within an ongoing conversation; for an admin-only internal note use Add note to conversation, and to start a brand-new message use Send Message.', idempotent: false },
 	props: {
 		from: commonProps.admins({ displayName: 'From (Admin)', required: true }),
 		conversationId: conversationIdProp('Conversation ID', true),

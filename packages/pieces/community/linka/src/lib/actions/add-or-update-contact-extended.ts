@@ -1,11 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { linkaAuth } from '../../';
+import { linkaAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContactExtended',
   displayName: 'Add or Update Contact (Extended)',
   description: 'Adds or updates a contact (extended version)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a contact in the Linka/Sperse CRM with the full extended field set (personal, business, addresses, subscriptions, tracking, UTM, and custom fields). With "Match Existing" enabled it finds an existing record by email/full name, Contact ID, or Contact XREF and updates it; otherwise it creates one. Choose this over the basic Add or Update Contact when you need to set company details, embedded subscriptions, or custom/tracking attributes. At least one of First Name, Last Name, or Company Name is required. Idempotent when matching is on with a stable identifier; otherwise repeated calls create duplicates.',
+    idempotent: true,
+  },
   auth: linkaAuth,
   props: {
     matchExisting: Property.StaticDropdown({
@@ -1274,9 +1280,9 @@ export const addOrUpdateContactExtended = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportContact`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportContact`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

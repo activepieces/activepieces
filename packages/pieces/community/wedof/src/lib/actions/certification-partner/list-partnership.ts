@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,12 @@ export const listPartnerships = createAction({
   name: 'listPartnerships',
   displayName: "Lister les partenariats",
   description: "Récupère l'ensemble des partenariats d'une certification",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "List the training-organization partnerships of a Wedof certification, with filters for certifier SIRET, access state, compliance, connection issues, free-text query, plus sorting and pagination. Pick this to discover partners or find a partnership's SIRET for a certification. Read-only and idempotent. Requires the certification's certifInfo.",
+    idempotent: true,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',
@@ -139,7 +145,7 @@ export const listPartnerships = createAction({
         url: wedofCommon.baseUrl +'/certifications/'+ context.propsValue.certifInfo +`/partners?${queryParams.toString()}`,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

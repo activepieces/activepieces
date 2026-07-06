@@ -15,12 +15,12 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import axios from 'axios';
+import { ProxyAgent } from 'undici';
 
 export const httpOauth2RequestAction = createAction({
+  audience: 'human',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
   displayName: 'Send an OAuth2 Request',
@@ -80,6 +80,7 @@ export const httpOauth2RequestAction = createAction({
     }),
     body: Property.DynamicProperties({
       displayName: 'Body',
+      auth: httpOauth2Auth,
       refreshers: ['body_type'],
       required: false,
       props: async ({ body_type }) => {
@@ -122,6 +123,7 @@ export const httpOauth2RequestAction = createAction({
     }),
     proxy_settings: Property.DynamicProperties({
       displayName: 'Proxy Settings',
+      auth: httpOauth2Auth,
       refreshers: ['use_proxy'],
       required: false,
       props: async ({ use_proxy }) => {
@@ -225,13 +227,50 @@ export const httpOauth2RequestAction = createAction({
           proxyUrl = `http://${proxySettings['proxy_host']}:${proxySettings['proxy_port']}`;
         }
 
-        const httpsAgent = new HttpsProxyAgent(proxyUrl);
-        const axiosClient = axios.create({
-          httpsAgent,
-        });
+        const proxyAgent = new ProxyAgent(proxyUrl);
 
-        const proxied_response = await axiosClient.request(request);
-        return handleResponse(proxied_response.data);
+        const proxyUrlWithParams = new URL(request.url);
+        for (const [key, value] of Object.entries(
+          (request.queryParams as Record<string, string>) ?? {}
+        )) {
+          proxyUrlWithParams.searchParams.append(key, value);
+        }
+
+        const proxyHeaders: Record<string, string> = {
+          Authorization: `Bearer ${auth.access_token}`,
+        };
+        for (const [key, value] of Object.entries(request.headers ?? {})) {
+          if (value !== undefined) {
+            proxyHeaders[key] = Array.isArray(value) ? value.join(', ') : value;
+          }
+        }
+
+        let proxyBody: BodyInit | undefined;
+        if (request.body !== undefined && request.body !== null) {
+          if (request.body instanceof FormData) {
+            proxyBody = request.body.getBuffer();
+          } else if (typeof request.body === 'string') {
+            proxyBody = request.body;
+          } else {
+            proxyBody = JSON.stringify(request.body);
+            if (!('Content-Type' in proxyHeaders) && !('content-type' in proxyHeaders)) {
+              proxyHeaders['Content-Type'] = 'application/json';
+            }
+          }
+        }
+
+        const proxiedResponse = await fetch(proxyUrlWithParams.toString(), {
+          method: request.method.toString(),
+          headers: proxyHeaders,
+          body: proxyBody,
+          dispatcher: proxyAgent,
+        } as RequestInit & { dispatcher: ProxyAgent });
+
+        const proxyContentType = proxiedResponse.headers.get('content-type') ?? '';
+        const proxyData = proxyContentType.includes('application/json')
+          ? await proxiedResponse.json()
+          : await proxiedResponse.text();
+        return handleResponse(proxyData);
       }
       const response = await httpClient.sendRequest(request);
       return handleResponse(response);

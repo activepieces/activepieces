@@ -14,7 +14,7 @@ import { documentStateChanged } from './lib/triggers/document-state-changed';
 import { documentUpdated } from './lib/triggers/document-updated';
 
 import { pandadocAuth } from './lib/common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const pandadoc = createPiece({
   displayName: 'PandaDoc',
@@ -35,7 +35,7 @@ export const pandadoc = createPiece({
       baseUrl: () => 'https://api.pandadoc.com/public/v1',
       auth: pandadocAuth,
       authMapping: async (auth) => ({
-        Authorization: `API-Key ${(auth as string)}`,
+          Authorization: `API-Key ${(auth.secret_text)}`,
       }),
     }),
   ],

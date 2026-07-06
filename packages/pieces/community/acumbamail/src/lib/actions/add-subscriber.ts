@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { acumbamailAuth } from '../../';
+import { acumbamailAuth } from '../auth';
 import { acumbamailCommon } from '../common';
 
 export const addUpdateSubscriberAction = createAction({
@@ -14,6 +14,12 @@ export const addUpdateSubscriberAction = createAction({
   displayName: 'Add/Update Subscriber',
   description:
     'Adds a new subscriber to a subscriber list of your choosing.Can be used to update an existing subscriber too.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a contact to an Acumbamail subscriber list, or updates that contact\'s merge fields if it already exists when the update-existing option is enabled. Use to enroll or refresh a single contact in a list; requires the target list id and a merge-fields object that must include the email. Optionally sends a double-opt-in confirmation email. Idempotent: the subscriber is keyed on email within the list, so repeating the same input converges on the same membership.',
+    idempotent: true,
+  },
   props: {
     listId: acumbamailCommon.listId,
     listMergeFields: acumbamailCommon.listMergeFields,
@@ -40,7 +46,7 @@ export const addUpdateSubscriberAction = createAction({
       formData.append(`merge_fields[${key}]`, value.toString());
     });
 
-    formData.append('auth_token', context.auth);
+    formData.append('auth_token', context.auth.secret_text);
     formData.append('list_id', listId.toString());
     formData.append('double_option', double_option ? '1' : '0');
     formData.append('update_subscriber', update_subscriber ? '1' : '0');

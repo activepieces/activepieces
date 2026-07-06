@@ -27,10 +27,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The goal or task description for Skyvern to accomplish.": "Het doel of taakbeschrijving voor Skyvern om te voltooien.",
   "The starting URL for the task.": "De start-URL voor de taak.",
   "URL to send task status updates to after a run is finished.": "URL om status updates te versturen naar nadat een opdracht is uitgevoerd.",
@@ -38,7 +40,7 @@
   "The schema for data to be extracted from the webpage.": "Het schema voor data uitpakken vanaf de webpagina.",
   "The title for this workflow run.": "De titel voor deze workflow wordt uitgevoerd.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "Skyvern 1.0": "Skyvern 1.0",
   "Skyvern 2.0": "Skyvern 2.0",
   "OpenAI CUA": "OpenAI CUA",
@@ -66,5 +68,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }

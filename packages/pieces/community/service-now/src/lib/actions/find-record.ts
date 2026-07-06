@@ -4,6 +4,7 @@ import { ServiceNowRecordSchema } from '../common/types';
 import {
   tableDropdown,
   createServiceNowClient,
+  servicenowAuth,
 } from '../common/props';
 
 const FindRecordInputSchema = z.object({
@@ -18,9 +19,16 @@ const FindRecordInputSchema = z.object({
 });
 
 export const findRecordAction = createAction({
+  auth: servicenowAuth,
   name: 'find_record',
   displayName: 'Find Records',
   description: 'Search for records in a table using a query',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches a ServiceNow table and returns matching records, filtered by a ServiceNow encoded query string (e.g. state=1^priority=1). Use to look up records by criteria rather than a known sys_id, or to retrieve a list to iterate over. Read-only and idempotent. Requires the table and a non-empty encoded query; result count is bounded by the limit.',
+    idempotent: true,
+  },
   props: {
     table: tableDropdown,
     query: Property.LongText({

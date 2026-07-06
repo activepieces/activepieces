@@ -1,17 +1,19 @@
-import { deepseekAuth } from '../../index';
+import { deepseekAuth } from '../auth';
 import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
 import OpenAI from 'openai';
 import { baseUrl } from '../common/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askDeepseek = createAction({
+  audience: 'human',
   auth: deepseekAuth,
   name: 'ask_deepseek',
   displayName: 'Ask Deepseek',
   description: 'Ask Deepseek anything you want!',
   props: {
     model: Property.Dropdown({
+      auth: deepseekAuth,
       displayName: 'Model',
       required: true,
       description: 'The model which will generate the completion.',
@@ -28,7 +30,7 @@ export const askDeepseek = createAction({
         try {
           const openai = new OpenAI({
             baseURL: baseUrl,
-            apiKey: auth as string,
+            apiKey: auth.secret_text,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -126,12 +128,12 @@ export const askDeepseek = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      memoryKey: z.string().max(128).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
     const openai = new OpenAI({
       baseURL: baseUrl,
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const {
       model,

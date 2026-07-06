@@ -59,15 +59,29 @@ export const getCampaignAnalytics = createAction({
   displayName: 'Get Campaign Analytics',
   description:
     'Fetch analytics data for a selected campaign based on a date range.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves performance analytics (sent, opens, clicks, replies, per-step breakdowns, and activity) for one ReachInbox campaign over a date range. Use to report on or evaluate a specific campaign. Requires a campaign id and start/end dates in YYYY-MM-DD format; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description:
         'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((campaign) => ({
@@ -101,7 +115,7 @@ export const getCampaignAnalytics = createAction({
         method: HttpMethod.GET,
         url: url,
         headers: {
-          Authorization: `Bearer ${context.auth as string}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
       });
 

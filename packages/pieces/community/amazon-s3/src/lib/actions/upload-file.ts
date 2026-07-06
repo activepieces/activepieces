@@ -1,55 +1,62 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../..';
-import { createS3 } from '../common';
+import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
+import { resolveS3Client } from '../common';
 import { ObjectCannedACL } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
 
 export const amazons3UploadFile = createAction({
-  auth: amazonS3Auth,
+  auth: amazonS3CombinedAuth,
   name: 'upload-file',
   displayName: 'Upload File',
   description: 'Upload an File to S3',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Uploads a file to the configured S3 bucket, optionally setting a destination filename, content type, and canned ACL (e.g. private vs. public-read). Use to store new content in S3. Not idempotent: when no filename is given a unique timestamp-based key is generated, so each call writes a new object.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'File',
+      description: 'The file to upload to S3.',
       required: true,
     }),
     fileName: Property.ShortText({
-      displayName: 'File Name',
+      displayName: 'File Name (Optional)',
       required: false,
-      description: 'The File Name to use, if not set the API will try to figure out the file name.',
+      description: 'The name to save the file as in S3 (e.g. "report-2024.csv"). If left blank, a unique name is generated automatically.',
     }),
     acl: Property.StaticDropdown({
-      displayName: 'ACL',
+      displayName: 'Access Control (ACL)',
+      description: 'Who can access this file after upload. Use "Private" for internal files, "Public Read" to make the file publicly accessible via URL.',
       required: false,
       options: {
         options: [
           {
-            label: 'private',
+            label: 'Private (only your account)',
             value: 'private',
           },
           {
-            label: 'public-read',
+            label: 'Public Read (anyone can view)',
             value: 'public-read',
           },
           {
-            label: 'public-read-write',
+            label: 'Public Read/Write (anyone can view and upload)',
             value: 'public-read-write',
           },
           {
-            label: 'authenticated-read',
+            label: 'Authenticated AWS Users Read',
             value: 'authenticated-read',
           },
           {
-            label: 'aws-exec-read',
+            label: 'AWS EC2 Read (aws-exec-read)',
             value: 'aws-exec-read',
           },
           {
-            label: 'bucket-owner-read',
+            label: 'Bucket Owner Read',
             value: 'bucket-owner-read',
           },
           {
-            label: 'bucket-owner-full-control',
+            label: 'Bucket Owner Full Control',
             value: 'bucket-owner-full-control',
           },
         ],
@@ -62,10 +69,11 @@ export const amazons3UploadFile = createAction({
     })
   },
   async run(context) {
-    const { bucket } = context.auth;
+    const authProps: S3AuthProps = context.auth.props;
+    const { bucket } = authProps;
     const { file, fileName, acl, type } = context.propsValue;
 
-    const s3 = createS3(context.auth);
+    const s3 = await resolveS3Client({ authProps, server: context.server });
 
     let contentType, extension = null
 

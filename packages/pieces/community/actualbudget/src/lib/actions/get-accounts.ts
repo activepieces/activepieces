@@ -9,9 +9,11 @@ export const getAccounts = createAction({
   name: 'get_accounts',
   displayName: 'Get Accounts',
   description: 'Get your accounts',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all accounts from an Actual Budget server. Use it to discover available accounts and their IDs, typically to resolve the account ID required by the import-transaction actions. Takes no input; read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
-    await initializeAndDownloadBudget(api, context.auth)
+    await initializeAndDownloadBudget(api, context.auth.props)
     const accounts = await api.getAccounts();
     await api.shutdown();
     return accounts;

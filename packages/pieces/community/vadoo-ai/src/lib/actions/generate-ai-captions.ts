@@ -1,18 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { vadooAiAuth } from '../../index';
+import { vadooAiAuth } from '../auth';
 import {
   httpClient,
   HttpMethod,
   propsValidation,
 } from '@activepieces/pieces-common';
 import { generateAiCaptionsSchema } from '../schemas';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const generateAiCaptions = createAction({
   auth: vadooAiAuth,
   name: 'generate_ai_captions',
   displayName: 'Generate AI Captions',
   description: 'Generates AI captions for a video.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds AI-generated captions to an existing video on Vadoo and waits (polls up to ~5 minutes) for processing to finish, returning the completed captioned video URL. Requires the source video URL; optional theme and language control caption styling and language. Each call starts a new captioning job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'Video URL',
@@ -20,6 +26,7 @@ export const generateAiCaptions = createAction({
       required: true,
     }),
     theme: Property.Dropdown({
+  auth: vadooAiAuth,
       displayName: 'Theme',
       description: 'To display captions with style',
       required: false,
@@ -38,7 +45,7 @@ export const generateAiCaptions = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_themes',
             headers: {
-              'X-API-KEY': auth as string,
+              'X-API-KEY': auth.secret_text,
             },
           });
 
@@ -60,6 +67,7 @@ export const generateAiCaptions = createAction({
       },
     }),
     language: Property.Dropdown({
+  auth: vadooAiAuth,
       displayName: 'Language',
       description: 'To generate captions in language you want',
       required: false,
@@ -78,7 +86,7 @@ export const generateAiCaptions = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_languages',
             headers: {
-              'X-API-KEY': auth as string,
+              'X-API-KEY': auth.secret_text,
             },
           });
 
@@ -121,7 +129,7 @@ export const generateAiCaptions = createAction({
       method: HttpMethod.POST,
       url: 'https://viralapi.vadoo.tv/api/add_captions',
       headers: {
-        'X-API-KEY': context.auth,
+        'X-API-KEY': context.auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,
@@ -144,7 +152,7 @@ export const generateAiCaptions = createAction({
         method: HttpMethod.GET,
         url: 'https://viralapi.vadoo.tv/api/get_video_url',
         headers: {
-          'X-API-KEY': context.auth,
+          'X-API-KEY': context.auth.secret_text,
           'Content-Type': 'application/json',
         },
         queryParams: {

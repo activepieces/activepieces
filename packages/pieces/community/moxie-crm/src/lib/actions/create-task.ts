@@ -4,19 +4,25 @@ import {
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { makeClient, reformatDate } from '../common';
-import { moxieCRMAuth } from '../..';
+import { moxieCRMAuth } from '../auth';
 
 export const moxieCreateTaskAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_task',
   displayName: 'Create a Task',
   description: 'Create a task in project.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a task (deliverable) inside an existing project in Moxie CRM, with status, dates, priority, assignees, subtasks, and custom values. Use when adding work items to a project. Requires an exact-match client name and a project name owned by that client. Not idempotent: each call creates a separate task.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
       required: true,
     }),
     clientName: Property.Dropdown({
+      auth: moxieCRMAuth,
       displayName: 'Client Name',
       description: 'Exact match of a client name in your CRM',
       required: true,
@@ -31,7 +37,7 @@ export const moxieCreateTaskAction = createAction({
         }
 
         const client = await makeClient(
-          auth as PiecePropValueSchema<typeof moxieCRMAuth>
+          auth
         );
         const clients = await client.listClients();
         return {
@@ -46,6 +52,7 @@ export const moxieCreateTaskAction = createAction({
       },
     }),
     projectName: Property.Dropdown({
+      auth: moxieCRMAuth,
       displayName: 'Project Name',
       description: 'Exact match of a project that is owned by the client.',
       required: true,
@@ -59,7 +66,7 @@ export const moxieCreateTaskAction = createAction({
           };
         }
         const client = await makeClient(
-          auth as PiecePropValueSchema<typeof moxieCRMAuth>
+          auth
         );
         const projects = await client.searchProjects(clientName as string);
         return {
@@ -74,6 +81,7 @@ export const moxieCreateTaskAction = createAction({
       },
     }),
     status: Property.Dropdown({
+      auth: moxieCRMAuth,
       displayName: 'Status',
       required: true,
       defaultValue: 'Not Started',
@@ -87,7 +95,7 @@ export const moxieCreateTaskAction = createAction({
           };
         }
         const client = await makeClient(
-          auth as PiecePropValueSchema<typeof moxieCRMAuth>
+            auth
         );
         const stages = await client.listProjectTaskStages();
         return {

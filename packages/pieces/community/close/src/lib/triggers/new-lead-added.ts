@@ -1,6 +1,6 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { closeAuth } from '../../';
+import { closeAuth } from '../auth';
 import { CloseCRMLeadWebhookPayload } from '../common/types';
 import { closeApiCall } from '../common/client';
 import { verifySignature } from './helpers';
@@ -12,16 +12,19 @@ export const newLeadAdded = createTrigger({
 	name: 'new_lead_created',
 	displayName: 'New Lead Created',
 	description: 'Triggers when a new lead is created.',
+	aiMetadata: {
+		description: 'Fires when a new lead (company/account) is created in Close CRM, via a registered webhook on the lead-created event. Emits the full lead record. Use to start a flow whenever a prospect or account enters the CRM.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
 		const response = await closeApiCall<{ id: string; signature_key: string }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/webhook/',
 			body: {
 				url: context.webhookUrl,
-				events: [
+				events: [	
 					{
 						object_type: 'lead',
 						action: 'created',
@@ -46,7 +49,7 @@ export const newLeadAdded = createTrigger({
 		if (triggerData?.id) {
 			await closeApiCall({
 				method: HttpMethod.DELETE,
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				resourceUri: `/webhook/${triggerData.id}`,
 			});
 		}
@@ -77,7 +80,7 @@ export const newLeadAdded = createTrigger({
 		}
 
 		const lead = await closeApiCall({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text	,
 			method: HttpMethod.GET,
 			resourceUri: `/lead/${payload.event.data.id}/`,
 		});

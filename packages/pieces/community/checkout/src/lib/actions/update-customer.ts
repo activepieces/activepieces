@@ -7,6 +7,8 @@ export const updateCustomerAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Update Customer',
   description: 'Update existing customer or their metadata.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Checkout.com customer identified by customer ID, changing supplied fields such as email, name, phone, default instrument, or metadata (metadata replaces any existing values rather than merging). Choose it to amend a known customer rather than create one. Idempotent: applying the same field values to the same customer ID yields the same end state.', idempotent: true },
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',
@@ -47,7 +49,7 @@ export const updateCustomerAction = createAction({
   async run(context) {
     const { customerId, email, name, phone_country_code, phone_number, metadata, default: defaultInstrument } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     const body: Record<string, any> = {};
     
@@ -105,7 +107,7 @@ export const updateCustomerAction = createAction({
         method: HttpMethod.PATCH,
         url: `${baseUrl}/customers/${customerId}`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

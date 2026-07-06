@@ -13,6 +13,12 @@ export const stripeRetrievePaymentIntent = createAction({
   displayName: 'Find Payment (by Payment Intent ID)',
   description:
     'Retrieves the details of a payment by its unique Payment Intent ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full details of a single payment by its PaymentIntent ID (e.g., pi_...). Use when you have the exact ID and need the payment\'s current status, amount, or associated charge. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     payment_intent_id: stripeCommon.paymentIntent, 
   },
@@ -24,7 +30,7 @@ export const stripeRetrievePaymentIntent = createAction({
       url: `${stripeCommon.baseUrl}/payment_intents/${payment_intent_id}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
     });
 

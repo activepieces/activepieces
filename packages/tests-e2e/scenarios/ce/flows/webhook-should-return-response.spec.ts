@@ -1,12 +1,12 @@
-import { test, expect } from '../../../fixtures';
+import { test } from '../../../fixtures';
 
 test.describe('Webhooks', () => {
-  test('should handle webhook with return response', async ({ page, flowsPage, builderPage }) => {
+  test('should handle webhook with return response', async ({ page, automationsPage, builderPage }) => {
     test.setTimeout(120000);
 
-    await flowsPage.waitFor();
+    await automationsPage.waitFor();
 
-    await flowsPage.newFlowFromScratch();
+    await automationsPage.newFlowFromScratch();
 
     await builderPage.selectInitialTrigger({
       piece: 'Webhook',
@@ -34,16 +34,17 @@ test.describe('Webhooks', () => {
     );
 
     await page.locator('div.cm-activeLine.cm-line').fill(
-      '{"targetRunVersion": "{{trigger[\'queryParams\'][\'targetRunVersion\']}}"}'
+      '{"targetRunVersion": "{{trigger[\'output\'][\'queryParams\'][\'targetRunVersion\']}}"}'
     );
 
     await page.waitForTimeout(1000);
     await builderPage.publishFlow();
 
-    const response = await page.context().request.get(urlWithParams);
-    const body = await response.json();
-
-    expect(body.targetRunVersion).toBe(runVersion.toString());
+    await builderPage.expectSyncWebhookResponse({
+      url: urlWithParams,
+      key: 'targetRunVersion',
+      expected: runVersion.toString(),
+    });
   });
 
 }); 

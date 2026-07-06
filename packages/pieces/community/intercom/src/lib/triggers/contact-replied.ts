@@ -1,11 +1,14 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { intercomClient, TriggerPayload } from '../common';
 
 export const contactRepliedTrigger = createTrigger({
 	name: 'contactReplied',
 	displayName: 'Contact Replied',
 	description: 'Triggers when a contact replies to a Conversation in Intercom.',
+	aiMetadata: {
+		description: 'Fires when a contact (user or lead) replies to an existing conversation in Intercom. Does not fire for admin or teammate replies. Outputs the conversation object reflecting the new reply from the contact.',
+	},
 	props: {},
 	auth: intercomAuth,
 	type: TriggerStrategy.APP_WEBHOOK,

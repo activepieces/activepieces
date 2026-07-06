@@ -11,6 +11,10 @@ export const contactSuspendedFromCourse = createTrigger({
   name: 'contactSuspendedFromCourse',
   displayName: `${MODULE_NAME} From Course`,
   description: 'Triggers when a contact is suspended from a course.',
+  aiMetadata: {
+    description:
+      'Fires when a contact is suspended from a course in the selected ClickFunnels workspace, representing the enrollment being revoked or paused. Delivers the enrollment payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),
@@ -24,7 +28,7 @@ export const contactSuspendedFromCourse = createTrigger({
 
     try {
       const response: any = await clickfunnelsApiService.createWebhook(
-        auth,
+        auth.props,
         workspaceId as string,
         {
           webhooks_outgoing_endpoint: {
@@ -52,7 +56,7 @@ export const contactSuspendedFromCourse = createTrigger({
 
     if (cachedData) {
       await clickfunnelsApiService
-        .deleteWebhook(auth, cachedData.webhookId)
+        .deleteWebhook(auth.props, cachedData.webhookId)
         .then(async () => {
           await store.delete(CACHE_KEY);
         });

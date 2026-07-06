@@ -8,7 +8,7 @@ import {
     Property,
     createAction,
 } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { _fetch } from '../../common/request';
 
 export const send_iMessage = createAction({
@@ -16,6 +16,8 @@ export const send_iMessage = createAction({
     name: 'send_imessage',
     displayName: 'Send iMessage',
     description: 'Send an iMessage',
+    audience: 'both',
+    aiMetadata: { description: 'Sends an outbound iMessage through Contiguity to a recipient phone number, optionally with attachments (up to 10 HTTPS file URLs) and an SMS/RCS fallback that can trigger when iMessage is unsupported and/or fails. Choose this to message Apple/iMessage recipients; the recipient number must be in E.164 format and the message body is required. Not idempotent: each call dispatches a new message.', idempotent: false },
     props: {
         to: Property.ShortText({
             displayName: 'To',
@@ -39,6 +41,7 @@ export const send_iMessage = createAction({
             defaultValue: false,
         }),
         fallback_when: Property.DynamicProperties({
+            auth: contiguityAuth,
             displayName: "When to fallback",
             description: 'Conditions that trigger SMS/RCS fallback',
             required: true,
@@ -88,20 +91,16 @@ export const send_iMessage = createAction({
     },
     async run(context) {
         await propsValidation.validateZod(context.propsValue, {
-            to: z.string().regex(/^\+\d{1,4}\d+$/, 'Invalid E.164 format'),
-            from: z.string().regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format').optional(),
-            message: z.string().min(1, 'Message cannot be empty'),
-            fallback: z.object({
-                when: z.array(z.enum(['imessage_unsupported', 'imessage_fails'])).min(1, 'Select at least one fallback condition'),
-                from: z.string().regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format').optional(),
-            }).optional(),
-            attachments: z.array(
-                z.object({
-                    url: z.string()
-                        .url('Invalid URL format')
-                        .regex(/^https:\/\/.*\.[a-zA-Z0-9]+$/, 'Must be HTTPS URL with file extension')
-                })
-            ).max(10, 'Maximum 10 attachments').optional(),
+            to: z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Invalid E.164 format')),
+            from: z.optional(z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format'))),
+            message: z.string().check(z.minLength(1, 'Message cannot be empty')),
+            fallback: z.optional(z.object({
+                when: z.array(z.enum(['imessage_unsupported', 'imessage_fails'])).check(z.minLength(1, 'Select at least one fallback condition')),
+                from: z.optional(z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format'))),
+            })),
+            attachments: z.optional(z.array(z.object({
+                    url: z.string().check(z.url('Invalid URL format'), z.regex(/^https:\/\/.*\.[a-zA-Z0-9]+$/, 'Must be HTTPS URL with file extension'))
+                })).check(z.maxLength(10, 'Maximum 10 attachments'))),
         });
 
         const { to, from, message, attachments } = context.propsValue;
@@ -117,7 +116,7 @@ export const send_iMessage = createAction({
             method: HttpMethod.POST,
             endpoint: '/send/imessage',
             body: body,
-            auth: context.auth,
+            auth: context.auth.secret_text,
         });
     },
 });

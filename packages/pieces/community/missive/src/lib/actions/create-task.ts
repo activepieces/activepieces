@@ -7,6 +7,8 @@ export const createTask = createAction({
     name: 'create_task',
     displayName: 'Create Task',
     description: 'Create a task that can be standalone or associated with a conversation',
+    audience: 'both',
+    aiMetadata: { description: 'Create a Missive task in one of two modes: a standalone task assigned to a team or specific users, or a subtask attached to a conversation (selected by ID or found/created via message references). Use to add a to-do item; standalone tasks need a team or assignees, subtasks need a parent conversation. Not idempotent: each call creates a new task.', idempotent: false },
     auth: missiveAuth,
     props: {
         task_type: Property.StaticDropdown({
@@ -49,7 +51,7 @@ export const createTask = createAction({
             required: false,
         }),
         task_configuration: Property.DynamicProperties({
-            displayName: 'Task Configuration',
+    auth: missiveAuth,            displayName: 'Task Configuration',
             description: 'Configure task assignment and organization based on task type',
             required: false,
             refreshers: ['task_type'],
@@ -71,7 +73,7 @@ export const createTask = createAction({
 
                 try {
                     const orgsResponse = await missiveCommon.apiCall({
-                        auth: auth as unknown as string,
+                        auth: auth,
                         method: HttpMethod.GET,
                         resourceUri: '/organizations',
                     });
@@ -83,7 +85,7 @@ export const createTask = createAction({
                     if (organizationOptions.length > 0) {
                         try {
                             const teamsResponse = await missiveCommon.apiCall({
-                                auth: auth as unknown as string,
+                                auth: auth,
                                 method: HttpMethod.GET,
                                 resourceUri: `/teams?organization=${organizationOptions[0].value}`,
                             });
@@ -97,7 +99,7 @@ export const createTask = createAction({
 
                         try {
                             const usersResponse = await missiveCommon.apiCall({
-                                auth: auth as unknown as string,
+                                auth: auth,
                                 method: HttpMethod.GET,
                                 resourceUri: `/users?organization=${organizationOptions[0].value}`,
                             });
@@ -113,7 +115,7 @@ export const createTask = createAction({
                     if (task_type as unknown as string === 'subtask') {
                         try {
                             const convsResponse = await missiveCommon.apiCall({
-                                auth: auth as unknown as string,
+                                auth: auth,
                                 method: HttpMethod.GET,
                                 resourceUri: '/conversations?limit=50',
                             });

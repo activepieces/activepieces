@@ -3,13 +3,8 @@ import { generateVideo } from './lib/actions/generate-video';
 import { generatePodcast } from './lib/actions/generate-podcast';
 import { generateAiImage } from './lib/actions/generate-ai-image';
 import { generateAiCaptions } from './lib/actions/generate-ai-captions';
-import { PieceCategory } from '@activepieces/shared';
-
-export const vadooAiAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: `You can create API key from [Profile Settings](https://ai.vadoo.tv/profile).`,
-});
+import { PieceCategory } from '@activepieces/pieces-framework';
+import { vadooAiAuth } from './lib/auth';
 
 export const vadooAi = createPiece({
   displayName: 'Vadoo AI',

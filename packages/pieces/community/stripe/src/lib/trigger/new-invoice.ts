@@ -6,7 +6,7 @@ import {
 import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 type StripeWebhookPayload = {
@@ -23,6 +23,10 @@ export const stripeNewInvoice = createTrigger({
   displayName: 'New Invoice',
   description:
     'Fires when an invoice is created. Supports filters like status, customer, subscription.',
+  aiMetadata: {
+    description:
+      'Fires when an invoice is created in Stripe (the invoice.created event), emitting the new invoice. Optional filters narrow firing to a specific status, customer ID, or subscription ID. Use to react to newly issued invoices, for example to record or forward them.',
+  },
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status',
@@ -77,7 +81,7 @@ export const stripeNewInvoice = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'invoice.created',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>('_new_invoice_trigger', {
       webhookId: webhook.id,
@@ -91,7 +95,7 @@ export const stripeNewInvoice = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
@@ -100,7 +104,7 @@ export const stripeNewInvoice = createTrigger({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/invoices',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {

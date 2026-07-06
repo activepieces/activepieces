@@ -6,19 +6,22 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
-  OAuth2PropertyValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { googleFormsCommon } from '../common/common';
-import { googleFormsAuth } from '../../';
+import { googleFormsCommon, googleFormsAuth, getAccessToken, GoogleFormsAuthValue } from '../common/common';
 
 export const newResponse = createTrigger({
   auth: googleFormsAuth,
   name: 'new_response',
   displayName: 'New Response',
   description: 'Triggers when there is new response',
+  aiMetadata: {
+    description:
+      'Fires when a respondent submits a new response to the specified Google Form. Each event represents a single form submission, including the response ID, submission timestamps, and the respondent\'s answers keyed by question ID.',
+  },
   props: {
     form_id: googleFormsCommon.form_id,
     include_team_drives: googleFormsCommon.include_team_drives,
@@ -84,7 +87,7 @@ export const newResponse = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, { form_id: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof googleFormsAuth>, { form_id: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const items = await getResponse(
@@ -107,7 +110,7 @@ const polling: Polling<OAuth2PropertyValue, { form_id: string }> = {
 };
 
 const getResponse = async (
-  authentication: OAuth2PropertyValue,
+  authentication: GoogleFormsAuthValue,
   form_id: string,
   startDate: string | null
 ) => {
@@ -117,13 +120,14 @@ const getResponse = async (
       filter: 'timestamp > ' + startDate,
     };
   }
+  const accessToken = await getAccessToken(authentication);
   const response = await httpClient.sendRequest<{
     responses: { lastSubmittedTime: string }[];
   }>({
     url: `https://forms.googleapis.com/v1/forms/${form_id}/responses`,
     method: HttpMethod.GET,
     headers: {
-      Authorization: `Bearer ${authentication.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     queryParams: filter,
   });

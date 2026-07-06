@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { bitlyAuth } from './lib/common/auth';
 import { newBitlinkCreatedTrigger } from './lib/triggers/new-bitlink-created';
 import { archiveBitlinkAction } from './lib/actions/archive-bitlink';
@@ -27,7 +27,7 @@ export const bitly = createPiece({
       auth: bitlyAuth,
       baseUrl: () => 'https://api-ssl.bitly.com/v4',
       authMapping: async (auth) => {
-        const { accessToken } = auth as { accessToken: string };
+        const { accessToken } = auth.props;
         return {
           Authorization: `Bearer ${accessToken}`,
         };

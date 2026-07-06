@@ -1,13 +1,14 @@
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { chunk } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
@@ -17,7 +18,8 @@ type Props = {
 	propertyName?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
@@ -43,10 +45,10 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		}
 		//fetch updated contacts
 		const updatedContacts = [];
-		let after;
+		let after: string | undefined;
 		do {
 			const response = await client.crm.contacts.searchApi.doSearch({
-				limit: 100,
+				limit: MAX_SEARCH_PAGE_SIZE,
 				after,
 				sorts: ['-lastmodifieddate'],
 				filterGroups: [
@@ -67,6 +69,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			});
 			after = response.paging?.next?.after;
 			updatedContacts.push(...response.results);
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		if (updatedContacts.length === 0) {
@@ -119,6 +129,10 @@ export const newContactPropertyChangeTrigger = createTrigger({
 	name: 'new-contact-property-change',
 	displayName: 'New Contact Property Change',
 	description: 'Triggers when a specified property is updated on a contact.',
+	aiMetadata: {
+		description:
+			'Fires when the chosen property changes on any HubSpot contact. Each event represents one contact whose selected property was modified since the last poll, returning the full contact record. Use to react to specific field updates (e.g. lifecycle stage, lead status) rather than every contact change.',
+	},
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
 			{

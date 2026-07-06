@@ -9,6 +9,9 @@ export const gristUpdatedRecordTrigger = createTrigger({
   name: 'grist-updated-record',
   displayName: 'Updated Record',
   description: 'Triggers when a record is updated in the table.',
+  aiMetadata: {
+    description: 'Fires when an existing record is updated in the configured Grist document and table, via a Grist webhook on the update event. Each fired event represents a row whose values changed; an optional readiness column can gate when a row is considered ready.',
+  },
   props: {
     workspace_id: commonProps.workspace_id,
     document_id: commonProps.document_id,
@@ -23,8 +26,8 @@ export const gristUpdatedRecordTrigger = createTrigger({
     const readinessColumn = context.propsValue.readiness_column;
 
     const client = new GristAPIClient({
-      domainUrl: context.auth.domain,
-      apiKey: context.auth.apiKey,
+      domainUrl: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
     });
 
     const response = await client.createDocumentWebhook(documentId, {
@@ -52,8 +55,8 @@ export const gristUpdatedRecordTrigger = createTrigger({
 
     if (webhookId != null) {
       const client = new GristAPIClient({
-        domainUrl: context.auth.domain,
-        apiKey: context.auth.apiKey,
+        domainUrl: context.auth.props.domain,
+        apiKey: context.auth.props.apiKey,
       });
       await client.deleteDocumentWebhook(documentId, webhookId);
     }
@@ -67,8 +70,8 @@ export const gristUpdatedRecordTrigger = createTrigger({
     const tableId = context.propsValue.table_id;
 
     const client = new GristAPIClient({
-      domainUrl: context.auth.domain,
-      apiKey: context.auth.apiKey,
+      domainUrl: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
     });
 
     const response = await client.listRecordsFromTable(documentId, tableId, {

@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { calendlyCommon, CalendlyWebhookInformation } from '../common';
-import { calendlyAuth } from '../../';
+import { calendlyAuth } from '../auth';
 
 const triggerNameInStore = 'calendly_invitee_canceled_trigger';
 
@@ -15,6 +15,10 @@ export const calendlyInviteeCanceled = createTrigger({
   name: 'invitee_canceled',
   displayName: 'Event Canceled',
   description: 'Triggers when a new Calendly event is canceled',
+  aiMetadata: {
+    description:
+      'Fires when an invitee cancels a scheduled Calendly event. Emits the canceled event including the invitee details, the cancellation reason and who canceled it (host or invitee), and the event status set to "canceled".',
+  },
   props: {
     scope: calendlyCommon.scope,
   },
@@ -61,7 +65,7 @@ export const calendlyInviteeCanceled = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const calendlyUser = await calendlyCommon.getUser(context.auth);
+    const calendlyUser = await calendlyCommon.getUser(context.auth.secret_text);
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${calendlyCommon.baseUrl}/webhook_subscriptions`,
@@ -73,7 +77,7 @@ export const calendlyInviteeCanceled = createTrigger({
         events: ['invitee.canceled'],
       },
       authentication: {
-        token: context.auth,
+        token: context.auth.secret_text,
         type: AuthenticationType.BEARER_TOKEN,
       },
       queryParams: {},
@@ -94,7 +98,7 @@ export const calendlyInviteeCanceled = createTrigger({
         method: HttpMethod.DELETE,
         url: `${calendlyCommon.baseUrl}/webhook_subscriptions/${response.webhookId}`,
         authentication: {
-          token: context.auth,
+          token: context.auth.secret_text,
           type: AuthenticationType.BEARER_TOKEN,
         },
       };

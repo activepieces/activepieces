@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient } from '../../common/client';
+import { createClient } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { PaginatedResponse, Topic } from '../../common/types';
 import { assertLimit } from '../../common/validation';
@@ -26,12 +26,17 @@ export const listTopics = createAction({
   name: 'list-topics',
   displayName: 'List Topics',
   description: 'Retrieve all topics from your Hedy workspace.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List all topics in the Hedy workspace. Use to discover topics or find a topic ID before filtering sessions/highlights or updating a topic. Set Return All to fetch everything, otherwise results are capped by the limit. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     returnAll: commonProps.returnAll,
     limit: commonProps.limit,
   },
   async run(context) {
-    const client = new HedyApiClient(context.auth as string);
+    const client = createClient(context.auth);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;

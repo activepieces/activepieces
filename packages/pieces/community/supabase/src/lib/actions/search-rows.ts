@@ -1,7 +1,8 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { supabaseAuth } from "../../index";
+import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { searchRowsActionOutputSchema } from '../output-schemas';
 
 type FilterOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'is' | 'in' | 'contains' | 'containedBy';
 
@@ -15,6 +16,8 @@ export const searchRows = createAction({
     name: 'search_rows',
     displayName: 'Search Rows',
     description: 'Search for rows in a table with filters and pagination',
+    audience: 'both',
+    aiMetadata: { description: 'Queries rows from a Supabase table, applying an optional list of column filters (equality, comparison, LIKE, in-list, JSON containment) with column selection and page-based pagination. Use to look up or list records before acting on them, or to fetch a specific subset. Read-only and idempotent.', idempotent: true },
     auth: supabaseAuth,
     props: {
         table_name: supabaseCommon.table_name,
@@ -86,9 +89,10 @@ export const searchRows = createAction({
             }
         }),
     },
+    outputSchema: searchRowsActionOutputSchema,
     async run(context) {
         const { table_name, columns, filters, page, pageSize, countOption } = context.propsValue;
-        const { url, apiKey } = context.auth;
+        const { url, apiKey } = context.auth.props;
 
         const currentPage = Math.max(1, page || 1);
         const currentPageSize = Math.min(1000, Math.max(1, pageSize || 20));

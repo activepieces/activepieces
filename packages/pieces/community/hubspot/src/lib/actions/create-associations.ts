@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	fromObjectTypeAssociationDropdown,
@@ -8,13 +8,15 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { AssociationSpecAssociationCategoryEnum } from '../common/types';
-import { chunk } from '@activepieces/shared';
+import { chunk } from '@activepieces/pieces-framework';
 
 export const createAssociationsAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-associations',
 	displayName: 'Create Associations',
 	description: 'Creates associations between objects',
+	audience: 'both',
+	aiMetadata: { description: 'Link one source HubSpot object (e.g. a company) to one or more target objects using a specific association type, batching the targets. Re-running with the same inputs re-applies the same association without creating duplicates. Use Remove Associations to undo a link.', idempotent: true },
 	props: {
 		fromObjectId: Property.ShortText({
 			displayName: 'From Object ID',

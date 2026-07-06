@@ -1,11 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { linkaAuth } from '../..';
+import { linkaAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateSubscription = createAction({
   name: 'addOrUpdateSubscription',
   displayName: 'Add or Update Subscription',
   description: 'Creates a new subscription.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates or updates a product subscription for a contact in the Linka/Sperse CRM. The contact is resolved by Contact ID or external Contact XREF, and the product by its unique Product Code, with a payment period (Monthly, Annual, or LifeTime) and optional recurring billing. Use to enroll a contact in a product/plan or change their subscription. Idempotent: re-sending the same contact and product code updates the existing subscription rather than adding another.',
+    idempotent: true,
+  },
   auth: linkaAuth,
   props: {
     contactId: Property.Number({
@@ -92,9 +98,9 @@ export const addOrUpdateSubscription = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: `${context.auth.base_url}/api/services/CRM/OrderSubscription/Update`,
+      url: `${context.auth.props.base_url}/api/services/CRM/OrderSubscription/Update`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

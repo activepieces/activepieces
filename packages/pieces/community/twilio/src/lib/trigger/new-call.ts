@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { twilioAuth } from '../..';
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 
@@ -24,7 +24,7 @@ interface CallsResponse {
 
 
 const polling: Polling<
-  PiecePropValueSchema<typeof twilioAuth>,
+  AppConnectionValueForAuthProperty<typeof twilioAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -88,6 +88,9 @@ export const twilioNewCall = createTrigger({
     name: 'new_call',
     displayName: 'New Call',
     description: 'Triggers when a call completes (incoming or outgoing).',
+    aiMetadata: {
+      description: 'Fires when a voice call reaches completed status on the Twilio account, for both inbound and outbound calls. Each event represents one finished call with its direction, participants, duration, and status.',
+    },
     props: {},
     sampleData:{
       "account_sid": "ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

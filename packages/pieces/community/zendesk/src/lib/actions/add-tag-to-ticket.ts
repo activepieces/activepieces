@@ -18,6 +18,8 @@ export const addTagToTicketAction = createAction({
   name: 'add-tag-to-ticket',
   displayName: 'Add Tag to Ticket',
   description: 'Apply one or more tags to a ticket.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds one or more tags to a ticket identified by ticket ID, merging with the ticket\'s existing tags rather than replacing them (unlike Update Ticket, which overwrites the tag set). Use to label or categorize a ticket without disturbing tags already present. At least one tag is required. Effectively idempotent for tags already present (Zendesk de-duplicates), so re-running with the same tags leaves the set unchanged.', idempotent: true },
   props: {
     ticket_id: ticketIdDropdown,
     tags: Property.Array({
@@ -37,7 +39,7 @@ export const addTagToTicketAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const { ticket_id, tags, safe_update, updated_stamp } = propsValue;
 
     if (!Array.isArray(tags) || tags.length === 0) {
@@ -63,15 +65,15 @@ export const addTagToTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/tags.json`,
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/tags.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
         body,
       });

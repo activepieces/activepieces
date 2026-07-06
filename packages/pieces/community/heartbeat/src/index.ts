@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { heartBeatCreateUser } from './lib/actions/create-user';
 
 const markdownPropertyDescription = `
@@ -34,7 +34,7 @@ export const Heartbeat = createPiece({
       baseUrl: () => 'https://api.heartbeat.chat/v0',
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

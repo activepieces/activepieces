@@ -9,9 +9,12 @@ export const listVoices = createAction({
   name: "list-voices",
   displayName: "List Voices",
   description: "Get the list of available voices for text-to-speech",
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the catalog of Murf text-to-speech voices, optionally narrowing the result to a given locale and/or voice style; leave both filters empty to fetch every available voice. Use this to discover a valid voiceId (and its supported locales/styles) before calling Text to Speech or Voice Changer. Read-only and idempotent.', idempotent: true },
   props: {
     locale: murfCommon.language,
     style: Property.Dropdown({
+  auth: murfAuth,
       displayName: "Style",
       description: "Filter by style (optional)",
       required: false,
@@ -25,7 +28,7 @@ export const listVoices = createAction({
           };
         }
 
-        const response = await makeRequest(auth as string , HttpMethod.GET, "/speech/voices");
+        const response = await makeRequest(auth.secret_text , HttpMethod.GET, "/speech/voices");
         const voices = Array.isArray(response) ? response : [];
 
        
@@ -57,7 +60,7 @@ export const listVoices = createAction({
   async run(context) {
     const { locale, style } = context.propsValue;
 
-    const response = await makeRequest(context.auth, HttpMethod.GET, "/speech/voices");
+    const response = await makeRequest(context.auth.secret_text, HttpMethod.GET, "/speech/voices");
     const voices = Array.isArray(response) ? response : [];
 
     let filtered = voices;

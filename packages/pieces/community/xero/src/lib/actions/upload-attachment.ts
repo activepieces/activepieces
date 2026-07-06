@@ -26,6 +26,12 @@ export const xeroUploadAttachment = createAction({
   name: 'xero_upload_attachment',
   displayName: 'Upload Attachment',
   description: 'Uploads an attachment to a specific Xero resource.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attach a file (max 10MB) to an existing Xero record such as an invoice, bill, credit note, purchase order, quote, contact, or bank transaction, selected by resource type and ID. Pick this to add supporting documents (receipts, PDFs) to an already-created record, not to create the record itself. Not idempotent: it appends a new attachment per call; IncludeOnline only applies to ACCREC invoices and credit notes.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     resource_type: Property.StaticDropdown({
@@ -49,6 +55,7 @@ export const xeroUploadAttachment = createAction({
       },
     }),
     resource_id: Property.Dropdown({
+      auth: xeroAuth,
       displayName: 'Resource',
       description: 'Select the specific resource to attach the file to.',
       required: true,

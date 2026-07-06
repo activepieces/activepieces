@@ -224,12 +224,16 @@ describe('Table Diff Service', () => {
     })
 
     it('should not detect table as changed when only id field differs', async () => {
-        const tableOne = tableGenerator.simpleTable({})
-        const tableTwo = tableGenerator.simpleTable({ externalId: tableOne.externalId })
+        const rawTableOne = tableGenerator.simpleTable({})
+        const rawTableTwo = tableGenerator.simpleTable({ externalId: rawTableOne.externalId })
 
         // Ensure all fields are identical
-        tableTwo.name = tableOne.name
-        tableTwo.fields = tableOne.fields
+        rawTableTwo.name = rawTableOne.name
+        rawTableTwo.fields = rawTableOne.fields
+
+        // Convert to proper TableState to strip extra PopulatedTable properties
+        const tableOne = projectStateService(system.globalLogger()).getTableState(rawTableOne)
+        const tableTwo = projectStateService(system.globalLogger()).getTableState(rawTableTwo)
 
         const diff = await projectDiffService.diff({
             currentState: {
@@ -246,30 +250,34 @@ describe('Table Diff Service', () => {
     })
 
     it('should not detect table as changed when properties are in different order', async () => {
-        const tableOne = tableGenerator.simpleTable({})
-        
+        const rawTable = tableGenerator.simpleTable({})
+        const tableOne = projectStateService(system.globalLogger()).getTableState(rawTable)
+
         // Create table with same content but different property ordering
         // This tests that deepEqual correctly handles property order independence
         const tableTwo = {
             fields: tableOne.fields, // fields first
-            externalId: tableOne.externalId, // externalId second  
+            externalId: tableOne.externalId, // externalId second
             name: tableOne.name, // name third
             id: tableOne.id, // id last
         }
 
         // Also test with fields in different order but same content
+        // Must include all field properties (including data) to match getTableState output
         const tableThree = {
             ...tableOne,
             fields: [
                 {
                     externalId: tableOne.fields[0].externalId, // externalId first
                     type: tableOne.fields[0].type, // type second
-                    name: tableOne.fields[0].name, // name last
+                    name: tableOne.fields[0].name, // name third
+                    data: tableOne.fields[0].data, // data last
                 },
                 {
                     type: tableOne.fields[1].type, // type first
                     name: tableOne.fields[1].name, // name second
-                    externalId: tableOne.fields[1].externalId, // externalId last
+                    externalId: tableOne.fields[1].externalId, // externalId third
+                    data: tableOne.fields[1].data, // data last
                 },
             ],
         }

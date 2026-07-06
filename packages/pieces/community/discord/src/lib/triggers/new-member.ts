@@ -7,12 +7,13 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { discordAuth } from '../..';
+import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 
 interface Member {
@@ -25,7 +26,7 @@ interface Member {
   joined_at: string;
 }
 
-const polling: Polling<string, { guildId: string | undefined; limit: number }> =
+const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { guildId: string | undefined; limit: number }> =
   {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue: { guildId, limit } }) => {
@@ -35,7 +36,7 @@ const polling: Polling<string, { guildId: string | undefined; limit: number }> =
         method: HttpMethod.GET,
         url: `https://discord.com/api/v9/guilds/${guildId}/members?limit=${limit}`,
         headers: {
-          Authorization: 'Bot ' + auth,
+           Authorization: 'Bot ' + auth.secret_text,
         },
       };
 
@@ -54,6 +55,9 @@ export const newMember = createTrigger({
   name: 'new_member',
   displayName: 'New Member',
   description: 'Triggers when a new member joins a guild',
+  aiMetadata: {
+    description: 'Fires when a new member joins the specified Discord guild (server), emitting one event per joining member with their user details. Polls the guild member list periodically, so detection is near-real-time rather than instant.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     limit: Property.Number({

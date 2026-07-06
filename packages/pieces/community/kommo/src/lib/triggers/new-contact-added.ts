@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -8,10 +8,13 @@ export const newContactAddedTrigger = createTrigger({
   name: 'new_contact_added',
   displayName: 'New Contact Added',
   description: 'Triggers when a new contact is added.',
+  aiMetadata: {
+    description: 'Fires when a new contact is created in the Kommo CRM account, emitting the full new contact record. Represents a person being added to the CRM, regardless of source.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const webhook = await makeRequest(
       { subdomain, apiToken },
@@ -27,7 +30,7 @@ export const newContactAddedTrigger = createTrigger({
   },
 
   async onDisable(context) {
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
     const webhookId = await context.store.get('webhookId');
 
     if (webhookId) {
@@ -41,7 +44,7 @@ export const newContactAddedTrigger = createTrigger({
   },
 
   async run(context) {
-      const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+      const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const payload = context.payload.body as { contacts: { add: { id: string }[] } }
     const contactId = payload.contacts.add[0].id;
@@ -52,7 +55,7 @@ export const newContactAddedTrigger = createTrigger({
     return [response]
   },
   async test(context) {
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
 
     const response = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/contacts?limit=5&order[updated_at]=desc');
 

@@ -1,12 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { personalAiAuth } from '../../auth';
+import { BASE_URL } from '../../../index';
 
 export const getDocument = createAction({
   auth:personalAiAuth,
   name: 'get_document',
   displayName: 'Get Document',
   description: 'Retrieve a document from AI assistant.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single Personal AI document by its document ID, optionally including the full content. Use when you need to read back a previously uploaded document. The document ID is required; this is a read-only lookup and is idempotent.', idempotent: true },
   // category: 'Documents',
   props: {
     documentId: Property.ShortText({
@@ -34,7 +37,7 @@ export const getDocument = createAction({
       url: `${BASE_URL}/get-document`,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       },
       queryParams: {
         DocumentId: documentId,

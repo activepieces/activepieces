@@ -1,0 +1,201 @@
+---
+title: "Piece Auth"
+description: "Learn about piece authentication"
+icon: 'key'
+---
+
+Piece authentication is used to gather user credentials and securely store them for future use in different flows.
+The authentication must be defined as the `auth` parameter in the `createPiece`, `createTrigger`, and `createAction` functions. 
+
+This requirement ensures that the type of authentication can be inferred correctly in triggers and actions.
+
+<Warning>
+The auth parameter for `createPiece`, `createTrigger`, and `createAction` functions can take an array, but you cannot have more than one auth property of the same type, i.e two OAUTH2 properties.
+</Warning>
+
+### Secret Text
+
+This authentication collects sensitive information, such as passwords or API keys. It is displayed as a masked input field.
+
+**Example:**
+
+```typescript
+PieceAuth.SecretText({
+    displayName: 'API Key',
+    description: 'Enter your API key',
+    required: true,
+    // Optional Validation
+    validate: async ({auth}) => {
+        if(auth.startsWith('sk_')){
+            return {
+                valid: true,
+            }
+        }
+        return {
+            valid: false,
+            error: 'Invalid Api Key'
+        }
+    }
+})
+```
+
+### Username and Password
+
+This authentication collects a username and password as separate fields.
+
+**Example:**
+
+```typescript
+PieceAuth.BasicAuth({
+    displayName: 'Credentials',
+    description: 'Enter your username and password',
+    required: true,
+    username: {
+        displayName: 'Username',
+        description: 'Enter your username',
+    },
+    password: {
+        displayName: 'Password',
+        description: 'Enter your password',
+    },
+    // Optional Validation
+    validate: async ({auth}) => {
+        if(auth){
+            return {
+                valid: true,
+            }
+        }
+        return {
+            valid: false,
+            error: 'Invalid Api Key'
+        }
+    }
+})
+```
+
+### Custom
+
+This authentication allows for custom authentication by collecting specific properties, such as a base URL and access token.
+
+**Example:**
+
+```typescript
+PieceAuth.CustomAuth({
+    displayName: 'Custom Authentication',
+    description: 'Enter custom authentication details',
+    props: {
+        base_url: Property.ShortText({
+            displayName: 'Base URL',
+            description: 'Enter the base URL',
+            required: true,
+        }),
+        access_token: PieceAuth.SecretText({
+            displayName: 'Access Token',
+            description: 'Enter the access token',
+            required: true
+        })
+    },
+    // Optional Validation
+    validate: async ({auth}) => {
+        if(auth){
+            return {
+                valid: true,
+            }
+        }
+        return {
+            valid: false,
+            error: 'Invalid Api Key'
+        }
+    },
+    required: true
+})
+```
+
+#### Token Refresh (Server-Side Caching)
+
+Some APIs require a login call to exchange credentials for a short-lived token. Without caching, this login happens before every action and can trigger **429 rate limit errors** from the third-party API.
+
+Add an optional `refresh` callback to have Activepieces fetch the token once, cache it server-side, and inject it into every action/trigger as `context.auth.access_token`. The token is automatically renewed up to 15 minutes before it expires (clamped to half the token lifetime for short-lived tokens).
+
+**Example:**
+
+```typescript
+PieceAuth.CustomAuth({
+    displayName: 'Self-hosted Connection',
+    props: {
+        baseUrl: Property.ShortText({
+            displayName: 'Instance URL',
+            required: true,
+        }),
+        username: Property.ShortText({
+            displayName: 'Username',
+            required: true,
+        }),
+        password: PieceAuth.SecretText({
+            displayName: 'Password',
+            required: true,
+        }),
+    },
+    validate: async ({ auth }) => {
+        // validate credentials here and return { valid: true } or { valid: false, error: '...' }
+        return { valid: true }
+    },
+    // Optional: cache the token server-side to avoid a login call per action
+    refresh: {
+        generate: async ({ auth }) => {
+            const response = await httpClient.sendRequest<{ token: string }>({
+                method: HttpMethod.POST,
+                url: `${auth.baseUrl}/api/auth/login`,
+                body: { username: auth.username, password: auth.password },
+            });
+            return {
+                access_token: response.body.token,
+                // expires_in: 3600, // optional, in seconds
+            };
+        },
+        // Used when the API doesn't return expires_in. Defaults to 3300 (55 min).
+        defaultExpiresIn: 3300,
+    },
+    required: true,
+})
+```
+
+Inside actions and triggers, read the cached token from `context.auth.access_token`:
+
+```typescript
+async run(context) {
+    const token = context.auth.access_token; // injected by the server after refresh
+    const baseUrl = context.auth.props.baseUrl;
+
+    await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${baseUrl}/api/websites`,
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+```
+
+<Note>
+`refresh` is opt-in. Pieces that don't define it are unaffected. The `generate` callback receives the same flat `auth` object as `validate` (i.e. `auth.baseUrl`, `auth.username`), not the connection value wrapper.
+</Note>
+
+### OAuth2
+
+This authentication collects OAuth2 authentication details, including the authentication URL, token URL, and scope.
+
+**Example:**
+
+```typescript
+PieceAuth.OAuth2({
+    displayName: 'OAuth2 Authentication',
+    grantType: OAuth2GrantType.AUTHORIZATION_CODE,
+    required: true,
+    authUrl: 'https://example.com/auth',
+    tokenUrl: 'https://example.com/token',
+    scope: ['read', 'write']
+})
+```
+
+<Tip>
+Please note `OAuth2GrantType.CLIENT_CREDENTIALS` is also supported for service-based authentication.
+</Tip>

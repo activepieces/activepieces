@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const create_visits = createAction({
@@ -8,6 +8,8 @@ export const create_visits = createAction({
     auth: simplirouteAuth,
     displayName: 'Create Visits',
     description: 'Create visits. Multiple visits can be created in a single request.',
+    audience: 'both',
+    aiMetadata: { description: 'Create one or more delivery visits (stops) in a single batch request, each requiring a title, address, planned date, and load. Not idempotent: re-running creates duplicate visits, so do not retry blindly. To change an existing visit use the update actions instead.', idempotent: false },
     props: {
         visits: Property.Array({
             displayName: 'visits',
@@ -50,7 +52,7 @@ export const create_visits = createAction({
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

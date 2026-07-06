@@ -14,8 +14,15 @@ export const removeEmail = createAction({
   name: 'removeEmail',
   displayName: 'Remove Email',
   description: 'Remove an email account from the system.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes a connected email account from ReachInbox, identified by its account id. Use to permanently disconnect a mailbox. Idempotent on the id: once removed, repeating the call leaves the account absent.',
+    idempotent: true,
+  },
   props: {
     accountId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Email Account to Remove',
       description: 'Choose an email account to remove.',
       required: true,
@@ -59,7 +66,7 @@ export const removeEmail = createAction({
         method: HttpMethod.DELETE,
         url: `${reachinboxCommon.baseUrl}account/delete/${accountId}`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
       });
 

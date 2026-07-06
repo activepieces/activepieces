@@ -22,7 +22,7 @@ export const ashby = createPiece({
       baseUrl: () => `https://api.ashbyhq.com/`,
       auth: ashbyAuth,
       authMapping: async (auth) => {
-        const { apiKey } = auth as { apiKey: string };
+        const { apiKey } = auth.props;
         return {
           Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString(
             'base64'

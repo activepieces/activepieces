@@ -8,6 +8,12 @@ export const cloneTask = createAction({
   name: 'clone_task',
   displayName: 'Clone Task',
   description: 'Clones a task',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Duplicate an existing Onfleet task by its ID, producing a new task that copies the original. Not idempotent: every call creates an additional clone. Use to replicate a task setup rather than re-enter all details with Create Task.',
+    idempotent: false,
+  },
   props: {
     task: Property.ShortText({
       displayName: 'Task ID',
@@ -16,7 +22,7 @@ export const cloneTask = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.tasks.clone(context.propsValue.task);
   },

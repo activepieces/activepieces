@@ -1,4 +1,4 @@
-import { perplexityAiAuth } from '../../';
+import { perplexityAiAuth } from '../auth';
 import {
   createAction,
   Property,
@@ -10,10 +10,11 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const createChatCompletionAction = createAction({
+  audience: 'human',
   auth: perplexityAiAuth,
   name: 'ask-ai',
   displayName: 'Ask AI',
@@ -96,7 +97,7 @@ export const createChatCompletionAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
     });
 
     const rolesArray = context.propsValue.roles
@@ -123,7 +124,7 @@ export const createChatCompletionAction = createAction({
       url: 'https://api.perplexity.ai/chat/completions',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'Content-Type': 'application/json',

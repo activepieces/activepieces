@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { SoftrAuth } from '../common/auth';
@@ -11,7 +11,7 @@ type Props = {
 	tableId: string;
 };
 
-const polling: Polling<string, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof SoftrAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const { databaseId, tableId } = propsValue;
@@ -70,6 +70,9 @@ export const newDatabaseRecord = createTrigger({
 	name: 'newDatabaseRecord',
 	displayName: 'New Database Record',
 	description: 'Triggers when a new record is added.',
+	aiMetadata: {
+		description: 'Fires when a new record is added to the selected table of a Softr database. Polls on a schedule and emits each newly created record, deduplicated by creation time.',
+	},
 	props: {
 		databaseId: databaseIdDropdown,
 		tableId: tableIdDropdown,

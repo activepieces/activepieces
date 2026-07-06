@@ -12,6 +12,12 @@ export const createTaskAction = createAction({
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Create a new Task in Capsule CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new task in Capsule CRM with a description and due date, optionally linked to exactly one entity chosen via the Link To selector (a party/contact, an opportunity, or a project). Use to schedule a to-do or follow-up. Not idempotent: each call creates a separate task, so repeating it produces duplicates.',
+    idempotent: false,
+  },
   props: {
     description: Property.ShortText({
       displayName: 'Description',
@@ -51,6 +57,7 @@ export const createTaskAction = createAction({
       displayName: 'Linked Entity',
       required: false,
       refreshers: ['linkTo'],
+      auth: capsuleCrmAuth,
       props: async ({ auth, linkTo }) => {
         const fields: DynamicPropsValue = {};
         const linkToType = linkTo as unknown as string;
@@ -58,7 +65,7 @@ export const createTaskAction = createAction({
 
         if (linkToType === 'party') {
           const contacts = await capsuleCrmClient.searchContacts(
-            auth as CapsuleCrmAuthType,
+            auth,
             ''
           );
           const contactOptions = contacts.map((contact) => ({
@@ -77,7 +84,7 @@ export const createTaskAction = createAction({
           });
         } else if (linkToType === 'opportunity') {
           const opportunities = await capsuleCrmClient.searchOpportunities(
-            auth as CapsuleCrmAuthType
+            auth
           );
           const opportunityOptions = opportunities.map((opportunity) => ({
             label: opportunity.name,
@@ -92,7 +99,7 @@ export const createTaskAction = createAction({
           });
         } else if (linkToType === 'project') {
           const projects = await capsuleCrmClient.searchProjects(
-            auth as CapsuleCrmAuthType
+            auth
           );
           const projectOptions = projects.map((project) => ({
             label: project.name,
@@ -114,6 +121,7 @@ export const createTaskAction = createAction({
       description: 'The category of this task.',
       required: false,
       refreshers: [],
+      auth: capsuleCrmAuth,
       options: async ({ auth }) => {
         if (!auth)
           return {
@@ -122,7 +130,7 @@ export const createTaskAction = createAction({
             placeholder: 'Please connect your Capsule CRM account first',
           };
         const categories = await capsuleCrmClient.listCategories(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: categories.map((category) => ({
@@ -137,6 +145,7 @@ export const createTaskAction = createAction({
       description: 'The user this task is assigned to.',
       required: false,
       refreshers: [],
+      auth: capsuleCrmAuth,
       options: async ({ auth }) => {
         if (!auth)
           return {
@@ -145,7 +154,7 @@ export const createTaskAction = createAction({
             placeholder: 'Please connect your Capsule CRM account first',
           };
         const users = await capsuleCrmClient.listUsers(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: users.map((user) => ({

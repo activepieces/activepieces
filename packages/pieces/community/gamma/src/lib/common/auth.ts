@@ -29,7 +29,7 @@ export const gammaAuth = PieceAuth.CustomAuth({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: 'https://public-api.gamma.app/v0.2/generations/1', 
+        url: 'https://public-api.gamma.app/v1.0/generations/1', 
         headers: {
           'X-API-KEY': apiKey, 
         },

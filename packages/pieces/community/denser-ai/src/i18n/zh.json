@@ -1,0 +1,22 @@
+{
+  "Chatbot ID": "Chatbot ID",
+  "API key": "API key",
+  "The Chatbot ID is available on the [main dashboard of Denser Chatbot](https://denser.ai/u/chatbots). Simply choose the ID of the chatbot you want": "The Chatbot ID is available on the [main dashboard of Denser Chatbot](https://denser.ai/u/chatbots). Simply choose the ID of the chatbot you want",
+  "Process input text": "Process input text",
+  "Input text processed by the chatbot": "Input text processed by the chatbot",
+  "Question": "Question",
+  "Prompt": "Prompt",
+  "Model": "Model",
+  "Citations": "Citations",
+  "The question to be processed by the chatbot": "The question to be processed by the chatbot",
+  "The prompt to be used by the chatbot e.g., \"Please provide your answer in the following format: ...\"": "The prompt to be used by the chatbot e.g., \"Please provide your answer in the following format: ...\"",
+  "The model to be used by the chatbot (e.g., gpt-3.5, gpt-4)": "The model to be used by the chatbot (e.g., gpt-3.5, gpt-4)",
+  "Whether to include citations in the response": "Whether to include citations in the response",
+  "gpt-3.5": "gpt-3.5",
+  "gpt-4o-mini": "gpt-4o-mini",
+  "gpt-4": "gpt-4",
+  "gpt-4o": "gpt-4o",
+  "claude-3-5-sonnet": "claude-3-5-sonnet",
+  "claude-3-5-haiku": "claude-3-5-haiku",
+  "claude-3-7-sonnet": "claude-3-7-sonnet"
+}

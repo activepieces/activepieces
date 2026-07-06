@@ -10,6 +10,8 @@ export const reviewResume = createAction({
     name: 'review_resume',
     displayName: 'Review Resume',
     description: 'Analyze parsed resume using predefined criteria.',
+    audience: 'both',
+    aiMetadata: { description: 'Analyzes a publicly accessible resume file (PDF/DOC/DOCX) at a given URL against predefined review criteria, returning an assessment with a score. Use to evaluate resume quality without a specific job description. Either supply the resume URL to start a job, or pass the Request ID from a prior timed-out run to retrieve that result; the call polls until the review completes. Idempotent: re-running with the same URL re-evaluates the same resume.', idempotent: true },
     props: {
         url: Property.ShortText({
             displayName: 'Resume URL',

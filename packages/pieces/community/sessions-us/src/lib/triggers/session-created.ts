@@ -7,6 +7,9 @@ export const sessionCreated = createSessionsUsWebhookTrigger({
   name: 'session_created',
   displayName: 'Session Created',
   description: 'Triggered when a new session is created.',
+  aiMetadata: {
+    description: 'Fires when a new session (a private video meeting) is created on Sessions.us. The payload includes the session details and its participants.',
+  },
   trigger: SessionsUsWebhookTrigger.SESSION_CREATED,
   storeKey: 'sessions_session_created_trigger',
   sampleData: {

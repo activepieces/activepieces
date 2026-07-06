@@ -1,5 +1,5 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 
@@ -8,6 +8,9 @@ export const pagePerformedTrigger = createTrigger({
   name: 'tarvent_page_performed',
   displayName: 'Landing Page CTA Performed',
   description: 'Triggers when a known or unknown contact performs a Call-To-Action within a landing page.',
+  aiMetadata: {
+    description: 'Fires when a known or unknown contact performs a call-to-action on a Tarvent landing page. Represents a landing-page CTA interaction.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

@@ -1,13 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { socialkitAuth } from '../auth';
 
 const socialkitApiUrl = 'https://api.socialkit.dev';
 
 export const getYoutubeComments = createAction({
+  auth: socialkitAuth,
   name: 'get_youtube_comments',
   displayName: 'Get YouTube Comments',
   description:
     'Fetch comments from  YouTube video with options to sort and limit results.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches comments for a YouTube video given its watch URL, optionally capped by a limit (default 10, max 100) and ordered newest-first or by top engagement. Use to read audience reactions or feed comment text into analysis. Read-only and idempotent, though results may shift as new comments are posted.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',
@@ -40,7 +44,7 @@ export const getYoutubeComments = createAction({
     const accessKey = context.auth;
 
     const queryParams: Record<string, string> = {
-      access_key: accessKey as string,
+      access_key: accessKey.secret_text,
       url: url,
     };
 

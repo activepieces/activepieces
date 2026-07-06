@@ -1,12 +1,15 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 import { pandadocAuth } from '../common';
 
 export const documentStateChanged = createTrigger({
   name: 'documentStateChanged',
   displayName: 'Document State Changed',
   description: 'Triggers when a document status changes.',
+  aiMetadata: {
+    description: 'Fires whenever a PandaDoc document changes status (e.g. draft, sent, viewed, completed, paid, voided, declined), optionally filtered to specific target statuses. Represents a transition in a document lifecycle.',
+  },
   auth: pandadocAuth,
   props: {
     filter_status: Property.StaticMultiSelectDropdown({
@@ -58,7 +61,7 @@ export const documentStateChanged = createTrigger({
       method: HttpMethod.POST,
       url: 'https://api.pandadoc.com/public/v1/webhook-subscriptions',
       headers: {
-        Authorization: `API-Key ${(context.auth as string)}`,
+        Authorization: `API-Key ${(context.auth.secret_text)}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -80,7 +83,7 @@ export const documentStateChanged = createTrigger({
           method: HttpMethod.DELETE,
           url: `https://api.pandadoc.com/public/v1/webhook-subscriptions/${webhookId}`,
           headers: {
-            Authorization: `API-Key ${(context.auth as string)}`,
+            Authorization: `API-Key ${(context.auth.secret_text)}`,
           },
         });
       } catch (error) {

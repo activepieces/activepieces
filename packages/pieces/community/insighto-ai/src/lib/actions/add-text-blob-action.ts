@@ -1,13 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { DataSourceItemSchema, DataSourceItem } from '../schemas';
+import { insightoAuth } from '../..';
 
 export const addTextBlobAction = createAction({
   name: 'add_text_blob',
   displayName: 'Add Text Blob Into Data Source',
   description: 'Inserts a large text blob into an existing data source',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Appends a block of raw text content to an existing Insighto.ai data source, identified by its data source ID. Use this to feed knowledge-base material into a data source an assistant can draw from. Not idempotent: each call adds a new text blob entry, so repeating it duplicates the content.',
+    idempotent: false,
+  },
+  auth: insightoAuth,
   props: {
     datasource_id: Property.Dropdown({
+      auth: insightoAuth,
       displayName: 'Data Source',
       description: 'Select the data source to add the text blob to',
       required: true,
@@ -22,7 +30,7 @@ export const addTextBlobAction = createAction({
         }
 
         try {
-          const apiKey = auth as string;
+          const apiKey = auth.secret_text;
           const url = `https://api.insighto.ai/api/v1/datasource`;
 
           const queryParams: Record<string, string> = {
@@ -107,7 +115,7 @@ export const addTextBlobAction = createAction({
       const org_id = context.propsValue['org_id'];
       const text_content = context.propsValue['text_content'];
 
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
 
       let datasource_id: string;
       let ds_type: string;

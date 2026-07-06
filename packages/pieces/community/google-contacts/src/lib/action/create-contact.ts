@@ -6,12 +6,14 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { googleContactsCommon } from '../common';
-import { googleContactsAuth } from '../../';
+import { googleContactsAuth } from '../auth';
 
 export const googleContactsAddContactAction = createAction({
   auth: googleContactsAuth,
   name: 'add_contact',
   description: 'Add a contact to a Google Contacts account',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new person in the authenticated Google Contacts account from name, email, phone, company, and job title fields. Use when an agent needs to add someone to address book contacts; first and last name are required. Not idempotent — each call creates a separate contact even with identical input, so guard against duplicates.', idempotent: false },
   displayName: 'Add Contact',
   props: {
     firstName: Property.ShortText({

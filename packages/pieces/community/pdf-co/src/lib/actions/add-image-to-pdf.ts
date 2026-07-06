@@ -6,13 +6,19 @@ import {
 	PdfCoImageAnnotation,
 	PdfCoAddImagesRequestBody,
 } from '../common/types';
-import { pdfCoAuth } from '../../index';
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from '../common/props';
 
 export const addImageToPdf = createAction({
 	name: 'add_image_to_pdf',
 	displayName: 'Add Image to PDF',
 	description: 'Add image to a PDF document.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Overlays an image (referenced by URL) onto a source PDF (referenced by URL) at the given x/y coordinates, optionally on specific pages. Use when an agent needs to stamp a logo, signature, or other graphic onto an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+		idempotent: false,
+	},
 	auth: pdfCoAuth,
 	props: {
 		url: Property.ShortText({
@@ -97,7 +103,7 @@ export const addImageToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/pdf/edit/add`,
 				headers: {
-					'x-api-key': auth as string,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: requestBody,

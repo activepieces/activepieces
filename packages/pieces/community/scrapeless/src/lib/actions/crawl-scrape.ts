@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { scrapelessApiAuth } from '../../index';
+import { scrapelessApiAuth } from '../auth';
 import { createScrapelessClient } from '../services/scrapeless-api-client';
 
 export const crawlScrapeApi = createAction({
@@ -7,6 +7,8 @@ export const crawlScrapeApi = createAction({
   name: 'crawl_scrape',
   displayName: 'Scrape Webpage Data',
   description: 'Extracts data from a single webpage.',
+  audience: 'both',
+  aiMetadata: { description: 'Scrapes a single webpage at the given URL via Scrapeless and returns its extracted content. Choose this when you need the data from one specific page; for following links across a whole site use the crawl action instead. Requires a target URL; read-only and idempotent (no side effects, though live page content may change between calls).', idempotent: true },
 
 
   props: {
@@ -18,7 +20,7 @@ export const crawlScrapeApi = createAction({
   },
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth);
+      const client = createScrapelessClient(auth.secret_text);
 
       const url = propsValue.url;
       const browserOptions = {

@@ -4,16 +4,22 @@ import { airtopAuth } from '../common/auth';
 import { airtopApiCall, extractApiData, AirtopSession } from '../common/client';
 import { fileId } from '../common/props';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const uploadFileToSessionAction = createAction({
 	auth: airtopAuth,
 	name: 'upload-file-to-session',
 	displayName: 'Upload File to Sessions',
 	description: 'Push an existing file to one or more sessions, making it available for use in file inputs or downloads.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Pushes an already-uploaded Airtop file (by file id) to specific sessions, or to all active sessions when no session ids are given, making it available for file inputs or downloads in those sessions. Use this after a file exists in Airtop and you need it accessible inside a browsing session. Requires the file id; not idempotent since it performs a push to session state on each call.',
+		idempotent: false,
+	},
 	props: {
 		fileId: fileId,
 		sessionIds: Property.MultiSelectDropdown({
+			auth: airtopAuth,
 			displayName: 'Session IDs',
 			description: 'Select one or more sessions to make the file available on. Leave empty to make available to all sessions.',
 			required: false,
@@ -29,7 +35,7 @@ export const uploadFileToSessionAction = createAction({
 
 				try {
 					const response = await airtopApiCall<any>({
-						apiKey: auth as string,
+						apiKey: auth.secret_text,
 						method: HttpMethod.GET,
 						resourceUri: '/sessions',
 					});
@@ -75,7 +81,7 @@ export const uploadFileToSessionAction = createAction({
 
 		if (sessionIds && sessionIds.length > 0) {
 			await propsValidation.validateZod({ sessionIds }, {
-				sessionIds: z.array(z.string().min(1, 'Session ID cannot be empty')).min(1, 'At least one session ID is required when providing session IDs'),
+				sessionIds: z.array(z.string().check(z.minLength(1, 'Session ID cannot be empty'))).check(z.minLength(1, 'At least one session ID is required when providing session IDs')),
 			});
 		}
 
@@ -86,7 +92,7 @@ export const uploadFileToSessionAction = createAction({
 		}
 
 		const result = await airtopApiCall({
-			apiKey: auth,
+			apiKey: auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/files/${fileId}/push`,
 			body,

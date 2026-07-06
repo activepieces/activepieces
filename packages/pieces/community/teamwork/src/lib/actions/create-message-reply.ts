@@ -7,9 +7,12 @@ export const createMessageReply = createAction({
 	name: 'create_message_reply',
 	displayName: 'Create Message Reply',
 	description: 'Post a reply in a message thread.',
+	audience: 'both',
+	aiMetadata: { description: 'Posts a reply to an existing Teamwork message thread, optionally notifying all project users. Use to respond within a message/discussion. Requires the message ID and reply body. Not idempotent — each call adds another reply.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		messageId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Message',
 			description: 'The message to reply to.',
 			required: true,
@@ -22,7 +25,7 @@ export const createMessageReply = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/posts.json',
 				});

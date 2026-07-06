@@ -7,6 +7,8 @@ export default createAction({
   name: 'find_and_update_documents',
   displayName: 'Find and Update Documents',
   description: 'Find documents and update them, returning the updated documents',
+  audience: 'both',
+  aiMetadata: { description: 'Applies MongoDB update operators to all documents matching a filter via updateMany, then optionally re-reads and returns the matched documents in their post-update state. Choose this over plain Update Documents when the agent needs to see the resulting documents, not just counts. Filter and update are required; supports upsert. Not idempotent: it mutates state and operators like $inc compound on each call.', idempotent: false },
   props: {
     database: mongodbCommon.database,
     collection: mongodbCommon.collection(),
@@ -49,7 +51,7 @@ export default createAction({
         throw new Error('Update is required');
       }
 
-      const databaseName = context.propsValue.database || context.auth.database;
+      const databaseName = context.propsValue.database || context.auth.props.database;
       if (!databaseName) {
         throw new Error('Database is required. Please specify it in the connection settings or in this action.');
       }

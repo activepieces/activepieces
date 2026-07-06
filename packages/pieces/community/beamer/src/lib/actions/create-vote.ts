@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { beamerAuth } from '../../index';
+import { beamerAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { beamerCommon } from '../common';
 
@@ -8,6 +8,11 @@ export const createVote = createAction({
   name: 'create_vote',
   displayName: 'Create a new vote ',
   description: 'Create a new vote on a feature request',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Casts a vote on an existing Beamer feature request, identified by its numeric feature request ID, optionally attributed to a voter by first name and email. Use to register user support for a feedback item. Records a vote on each call (not idempotent).',
+    idempotent: false,
+  },
   props: {
     featureRequestId: Property.Number({
       displayName: 'Feature ID',
@@ -26,7 +31,7 @@ export const createVote = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,

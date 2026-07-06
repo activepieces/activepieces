@@ -7,7 +7,7 @@ import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 type StripeWebhookPayload = {
   data: {
@@ -22,6 +22,10 @@ export const stripeUpdatedSubscription = createTrigger({
   name: 'updated_subscription',
   displayName: 'Updated Subscription',
   description: 'Fires when an existing subscription is changed.',
+  aiMetadata: {
+    description:
+      'Fires when an existing subscription is updated in Stripe (the customer.subscription.updated event), emitting the changed subscription. Optional filters narrow firing to a target new status or a specific customer ID. Use to react to plan changes, status transitions, or quantity updates.',
+  },
   props: {
     status: Property.StaticDropdown({
       displayName: 'New Status',
@@ -91,7 +95,7 @@ export const stripeUpdatedSubscription = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'customer.subscription.updated',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>(
       '_updated_subscription_trigger',
@@ -108,20 +112,20 @@ export const stripeUpdatedSubscription = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/charges',
+      url: 'https://api.stripe.com/v1/subscriptions',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        status: 'failed',
+        status: 'incomplete',
         limit: '5',
       },
     });

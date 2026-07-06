@@ -2,26 +2,27 @@ import { trelloAuth } from '../..';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { getCardDetail, getCardsInList, trelloCommon } from '../common';
 import { TrelloCardMoved } from '../common/props/card';
-import { isNil, WebhookHandshakeStrategy } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 export const cardMovedTrigger = createTrigger({
 	auth: trelloAuth,
 	name: 'card_moved_to_list',
 	displayName: 'Card Moved to list',
 	description: 'Trigger when a card is moved to the list specified',
+	aiMetadata: {
+		description: 'Fires when a card is moved into the specified list on a board (from a different list). Represents a card transitioning to a new stage; emits the moved card with its full details.',
+	},
 	props: {
 		board_id: trelloCommon.board_id,
 		list_id: trelloCommon.list_id,
 	},
 	type: TriggerStrategy.WEBHOOK,
-	handshakeConfiguration:{
-		strategy:WebhookHandshakeStrategy.NONE
+	handshakeConfiguration: {
+		strategy: WebhookHandshakeStrategy.HEAD_REQUEST,
 	},
-	async onHandshake(context)
-	{
-		return{
-			status:200
-		}
+	async onHandshake() {
+		return { status: 200 }
 	},
 	async onEnable(context) {
 		const element_id = context.propsValue.list_id;

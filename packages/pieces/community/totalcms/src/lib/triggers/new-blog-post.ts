@@ -3,6 +3,7 @@ import {
   createTrigger,
   Property,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -13,7 +14,7 @@ import { TotalCMSAuthType, cmsAuth } from '../auth';
 import { getContent } from '../api';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof cmsAuth>,
+  AppConnectionValueForAuthProperty<typeof cmsAuth>,
   { slug: string }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -32,6 +33,9 @@ export const newBlogPost = createTrigger({
   name: 'new_blog_post',
   displayName: 'New Blog Post',
   description: 'Triggers when a new blog post is published',
+  aiMetadata: {
+    description: 'Fires when a new blog post appears in the specified Total CMS blog (identified by its CMS ID). Polls the blog and emits one event per newly published post, deduplicated by permalink.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     slug: Property.ShortText({

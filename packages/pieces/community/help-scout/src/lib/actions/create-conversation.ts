@@ -9,6 +9,12 @@ export const createConversation = createAction({
   name: 'create_conversation',
   displayName: 'Create Conversation',
   description: 'Start a new conversation.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new conversation in a Help Scout mailbox with an initial thread, addressed to a customer email. Use to open a support thread (chat, phone, reply, or customer-initiated, set via thread type) rather than replying to an existing one. Requires a mailbox, subject, customer email, status, and body; not idempotent — each call creates a separate conversation.',
+    idempotent: false,
+  },
   props: {
     mailboxId: mailboxIdDropdown(true),
     subject: Property.ShortText({
@@ -108,9 +114,13 @@ export const createConversation = createAction({
         },
       ],
       tags: propsValue.tags,
-      ...(propsValue.assignTo && { assignTo: Number(propsValue.assignTo) }),
-      ...(propsValue.fromUser && { user: Number(propsValue.fromUser) }),
     };
+    if(propsValue.fromUser) {
+      payload['user'] = Number(propsValue.fromUser);
+    }
+    if(propsValue.assignTo) {
+      payload['assignTo'] = Number(propsValue.assignTo);
+    }
 
     Object.keys(payload).forEach((key) => {
       if (payload[key] === undefined || payload[key] === null) {

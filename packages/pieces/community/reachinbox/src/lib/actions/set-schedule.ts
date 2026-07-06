@@ -8,15 +8,29 @@ export const setSchedule = createAction({
   name: 'setSchedule',
   displayName: 'Set Schedule',
   description: 'Update the schedule for a specific Campaign',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets the sending schedule for a ReachInbox campaign: active date range, daily start/end times, timezone, and which weekdays are enabled. Use to control when a campaign sends. Requires a campaign id; idempotent since it replaces the schedule with the supplied values.',
+    idempotent: true,
+  },
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description:
         'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((campaign) => ({
@@ -145,7 +159,7 @@ export const setSchedule = createAction({
         method: HttpMethod.PUT,
         url: url,
         headers: {
-          Authorization: `Bearer ${context.auth as string}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body: {

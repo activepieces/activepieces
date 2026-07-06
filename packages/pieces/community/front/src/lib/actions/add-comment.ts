@@ -9,6 +9,12 @@ export const addComment = createAction({
   name: 'addComment',
   displayName: 'Add Comment',
   description: 'Add a comment (internal note) to a conversation in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Post an internal comment (private note) on a Front conversation, visible only to teammates and never sent to the customer. Use for team collaboration or context; to send a customer-facing message use "Send Reply" instead. Not idempotent: each call adds another comment.',
+    idempotent: false,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     author_id: teammateIdDropdown,
@@ -23,6 +29,6 @@ export const addComment = createAction({
     const path = `/conversations/${conversation_id}/comments`;
     const requestBody: Record<string, unknown> = { body };
     if (author_id) requestBody['author_id'] = author_id;
-    return await makeRequest(auth as string, HttpMethod.POST, path, requestBody);
+    return await makeRequest(auth, HttpMethod.POST, path, requestBody);
   },
 });

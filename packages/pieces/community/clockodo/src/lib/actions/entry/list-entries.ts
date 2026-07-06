@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient, reformatDateTime } from '../../common';
 import { BillableType, EntryListFilter } from '../../common/models/entry';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 function calculateBillable(
   billable?: boolean,
@@ -23,6 +23,12 @@ export default createAction({
   name: 'list_entries',
   displayName: 'Get Entries',
   description: 'Fetches entries from clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches clockodo time-record entries within a required start/end date range, optionally narrowed by user, customer, project, service, and billable/billed status. Use to find or report on entries by time period; supports two modes: leave page empty to retrieve all matching entries across pages, or set a page number to read just that single page. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     time_since: Property.DateTime({
       displayName: 'Start Date',
@@ -74,7 +80,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const filter: EntryListFilter = {
       users_id: propsValue.user_id_filter,
       customers_id: propsValue.customer_id_filter,

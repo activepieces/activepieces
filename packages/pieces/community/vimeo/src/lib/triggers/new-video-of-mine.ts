@@ -1,10 +1,10 @@
-import { PiecePropValueSchema, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { vimeoAuth } from '../auth';
 import { apiRequest } from '../common';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<typeof vimeoAuth>, object> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof vimeoAuth>, object> = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
     const response = await apiRequest({
@@ -48,6 +48,9 @@ export const newVideoOfMine = createTrigger({
   name: 'new_video_of_mine',
   displayName: 'New Video of Mine',
   description: 'Triggers when you add/upload a new video',
+  aiMetadata: {
+    description: 'Fires when the authenticated user uploads or adds a new video to their own Vimeo account. Polls the user\'s videos sorted by date and emits each newly added one.',
+  },
   auth: vimeoAuth,
   props: {
   },

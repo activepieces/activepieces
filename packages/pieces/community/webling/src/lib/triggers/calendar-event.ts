@@ -2,19 +2,20 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { weblingAuth } from '../../index';
+import { weblingAuth } from '../auth';
 import { weblingCommon } from '../common';
 import { WeblingCalendarEvent } from '../common/types';
 import { getUpdatedOrNewEvents } from '../common/helpers';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof weblingAuth>,
+  AppConnectionValueForAuthProperty<typeof weblingAuth>,
   { calendarId?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -34,6 +35,10 @@ export const onEventChanged = createTrigger({
   name: 'onEventChanged',
   displayName: 'New or Updated Event',
   description: 'Triggers when an event is added or updated.',
+  aiMetadata: {
+    description:
+      'Fires when a calendar event in Webling is created or updated since the last poll, optionally scoped to a specific calendar. Represents a new or modified event you may want to act on.',
+  },
   props: {
     calendarId: weblingCommon.calendarDropdown(),
   },

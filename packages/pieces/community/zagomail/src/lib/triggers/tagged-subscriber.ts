@@ -1,4 +1,4 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import {
   createTrigger,
   Property,
@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { StoredWebhookId, Tag, WebhookResponse } from '../common/constants';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const CACHE_KEY = 'zagomail_tagged_subscriber_trigger';
 
@@ -15,6 +15,9 @@ export const taggedSubscriber = createTrigger({
   name: 'taggedSubscriber',
   displayName: 'Tagged Subscriber',
   description: 'Trigers when subscriber is tagged with a tag.',
+  aiMetadata: {
+    description: 'Fires when a subscriber is tagged in Zagomail with the specific tag configured on this trigger, representing that contact being labeled or segmented. The event payload includes the subscriber UID, list UID, tag ID, email, and status.',
+  },
   props: {
     tagName: Property.ShortText({
       displayName: 'Tag Name',
@@ -35,7 +38,7 @@ export const taggedSubscriber = createTrigger({
   async onEnable(context) {
     const tagName = context.propsValue.tagName;
 
-    const tags = (await zagoMailApiService.getTags(context.auth)) as Tag[];
+    const tags = (await zagoMailApiService.getTags(context.auth.secret_text)) as Tag[];
 
     const tagExists = tags.find((t) => t.ztag_name === tagName);
 
@@ -44,12 +47,12 @@ export const taggedSubscriber = createTrigger({
     if (tagExists) {
       tag = tagExists;
     } else {
-      tag = (await zagoMailApiService.createTag(context.auth, tagName)) as Tag;
+      tag = (await zagoMailApiService.createTag(context.auth.secret_text, tagName)) as Tag;
     }
 
     try {
       const response = (await zagoMailApiService.createWebhook(
-        context.auth,
+        context.auth.secret_text,
         context.webhookUrl,
         'tag-added',
         {
@@ -67,7 +70,7 @@ export const taggedSubscriber = createTrigger({
   async onDisable(context) {
     const webhook = await context.store.get<StoredWebhookId>(CACHE_KEY);
     if (!isNil(webhook) && !isNil(webhook.webhookId)) {
-      await zagoMailApiService.deleteWebhook(context.auth, webhook.webhookId);
+      await zagoMailApiService.deleteWebhook(context.auth.secret_text, webhook.webhookId);
     }
   },
   async run(context) {

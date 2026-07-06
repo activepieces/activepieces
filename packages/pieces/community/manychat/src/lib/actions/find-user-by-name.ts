@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { BASE_URL } from '../common/props';
-import { manychatAuth } from '../../index';
+import { manychatAuth } from '../auth';
 
 export const findUserByNameAction = createAction({
 	auth: manychatAuth,
 	name: 'findUserByName',
 	displayName: 'Find User by Name',
 	description: 'Finds a user by name.',
+	audience: 'both',
+	aiMetadata: { description: "Searches Manychat subscribers by full name, returning whether any matched and the list of matches. Use to resolve a contact to their subscriber record when you only know their name. Read-only and idempotent.", idempotent: true },
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',
@@ -29,7 +31,7 @@ export const findUserByNameAction = createAction({
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 		});
 

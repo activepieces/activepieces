@@ -1,4 +1,4 @@
-import { zagomailAuth } from '../../';
+import { zagomailAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { listUId } from '../common/props';
@@ -8,6 +8,8 @@ export const searchSubscriberByEmail = createAction({
   name: 'searchSubscriberByEmail',
   displayName: 'Search Subscriber',
   description: 'Finds a subscriber by their email address.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a subscriber in a specific Zagomail list by exact email address, returning whether a match was found along with the record. Use to check membership or resolve a subscriber UID before tagging or updating. Read-only and idempotent; requires the list UID and email.', idempotent: true },
   props: {
     listUId: listUId,
     email: Property.ShortText({
@@ -20,7 +22,7 @@ export const searchSubscriberByEmail = createAction({
     const email = propsValue.email;
 
     const response = await zagoMailApiService.searchSubscriberByEmail(
-      auth,
+      auth.secret_text,
       listUId,
       {
         email,

@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { dumplingAuth } from '../../index';
+import { dumplingAuth } from '../auth';
 
 export const scrapeWebsite = createAction({
 	name: 'scrape_website',
 	auth: dumplingAuth,
 	displayName: 'Scrape Website',
 	description: 'Scrapes data from a specified URL and format the result.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches the content of a single given URL via Dumpling AI and returns it as markdown, HTML, or a screenshot, with optional content cleaning and JavaScript rendering. Use to read one specific page; use Crawl Website instead to follow links across many pages. Not idempotent: each call is a fresh billed fetch reflecting the live page.', idempotent: false },
 	props: {
 		url: Property.ShortText({
 			displayName: 'URL',
@@ -55,7 +57,7 @@ export const scrapeWebsite = createAction({
 			url: 'https://app.dumplingai.com/api/v1/scrape',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

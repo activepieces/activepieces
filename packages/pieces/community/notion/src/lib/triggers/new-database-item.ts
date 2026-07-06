@@ -6,22 +6,28 @@ import {
 import {
   createTrigger,
   TriggerStrategy,
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { notionCommon } from '../common';
+import { getNotionToken, NotionAuthValue, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
-import { isNil } from '@activepieces/shared';
+import { notionAuth } from '../auth';
+import { isNil } from '@activepieces/pieces-framework';
+import { newDatabaseItemTriggerOutputSchema } from '../output-schemas';
 
 export const newDatabaseItem = createTrigger({
   auth: notionAuth,
   name: 'new_database_item',
   displayName: 'New Database Item',
   description: 'Triggers when an item is added to a database.',
+  aiMetadata: {
+    description:
+      'Fires when a new item (row) is created in the selected Notion database, emitting the new page. Use to start a workflow whenever a record is added to a specific database.',
+  },
   props: {
     database_id: notionCommon.database_id,
   },
+  outputSchema: newDatabaseItemTriggerOutputSchema,
   sampleData: {
     id: 'd23872cd-c106-4afa-b33d-d3fd66064ccb',
     url: 'https://www.notion.so/Take-Fig-on-a-walk-d23872cdc1064afab33dd3fd66064ccb',
@@ -120,7 +126,7 @@ export const newDatabaseItem = createTrigger({
 });
 
 const polling: Polling<
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty<typeof notionAuth>,
   { database_id: string | undefined }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -151,12 +157,12 @@ const polling: Polling<
 };
 
 const getResponse = async (
-  authentication: OAuth2PropertyValue,
+  authentication: NotionAuthValue,
   database_id: string,
   startDate: string | null
 ) => {
   const notion = new Client({
-    auth: authentication.access_token,
+    auth: getNotionToken(authentication),
     notionVersion: '2022-02-22',
   });
   let cursor;

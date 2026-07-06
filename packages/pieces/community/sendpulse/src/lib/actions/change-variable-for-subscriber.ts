@@ -10,6 +10,7 @@ type SendpulseVariable = {
 };
 
 const variableDropdown = Property.Dropdown({
+  auth: sendpulseAuth,
   displayName: 'Variable Name',
   description: 'Select variable to update',
   required: true,
@@ -62,6 +63,8 @@ export const changeVariableForSubscriberAction = createAction({
   name: 'change-variable-for-subscriber',
   displayName: 'Change Variable for Subscriber',
   description: 'Update subscriber variable',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a single named variable (custom field) to a given value for one subscriber, identified by email, within a specific SendPulse mailing list. Use to overwrite a single field value; the variable must already exist on the list and its type (number/date) is validated against the value. Idempotent — repeating with the same value leaves the field unchanged.', idempotent: true },
   props: {
     mailingListId: mailingListDropdown,
     email: Property.ShortText({
@@ -88,7 +91,7 @@ export const changeVariableForSubscriberAction = createAction({
     let variableType: string | null = null;
     try {
       const variables = await sendpulseApiCall<SendpulseVariable[]>({
-        auth: context.auth,
+        auth: context.auth.props,
         method: HttpMethod.GET,
         resourceUri: `/addressbooks/${mailingListId}/variables`,
       });
@@ -127,7 +130,7 @@ export const changeVariableForSubscriberAction = createAction({
     try {
       const result = await sendpulseApiCall<{ result: boolean }>({
         method: HttpMethod.POST,
-        auth: context.auth,
+        auth: context.auth.props,
         resourceUri: `/addressbooks/${mailingListId}/emails/variable`,
         body,
       });

@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { sendMessage } from './lib/actions/send-message';
 
 export const matrixAuth = PieceAuth.CustomAuth({
@@ -43,11 +43,11 @@ export const matrix = createPiece({
   actions: [
     sendMessage,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      baseUrl: (auth) => auth?(auth ).props .base_url: '',
       auth: matrixAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${
-          (auth as { access_token: string }).access_token
+          (auth ).props .access_token
         }`,
       }),
     }),

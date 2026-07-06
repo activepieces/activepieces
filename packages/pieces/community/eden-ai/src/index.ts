@@ -14,11 +14,11 @@
     import { imageGenerationAction } from './lib/actions/image-generation';
     import { textToSpeechAction } from './lib/actions/text-to-speech';
     import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
     export const edenAiAuth = PieceAuth.SecretText({
       displayName: 'Eden AI API Key',
-      description: `You can obtain your API key from your [Eden AI dashboard](https://app.edenai.run/admin/account/developer).`,
+      description: `You can obtain your API key from your [Eden AI dashboard](https://app.edenai.run/admin/api-settings/features-preferences).`,
       required: true,
       validate: async ({ auth }) => {
         if (!auth || typeof auth !== 'string' || auth.length < 10) {
@@ -26,14 +26,12 @@ import { PieceCategory } from "@activepieces/shared";
         }
         try {
           const response = await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: 'https://api.edenai.run/v2/translation/language_detection',
+            method: HttpMethod.GET,
+            url: 'https://api.edenai.run/v2/video/explicit_content_detection_async',
             headers: {
               'Authorization': `Bearer ${auth}`,
               'Content-Type': 'application/json',
             },
-            body: { providers: 'google', text: 'hello' },
-            timeout: 10000,
           });
           if (response.status >= 200 && response.status < 300) {
             return { valid: true };

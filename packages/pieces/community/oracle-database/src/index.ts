@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { oracleDbAuth } from './lib/common/auth';
 import { insertRowAction } from './lib/actions/insert-row';
 import { insertRowsAction } from './lib/actions/insert-rows';
@@ -16,7 +16,7 @@ export const oracleDatabase = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/oracle-database.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['Prabhukiran161', 'onyedikachi-david'],
+  authors: ['Prabhukiran161', 'onyedikachi-david', 'sanket-a11y'],
   actions: [
     insertRowAction,
     insertRowsAction,

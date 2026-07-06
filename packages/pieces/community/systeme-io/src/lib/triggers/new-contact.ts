@@ -8,6 +8,9 @@ export const newContact = createTrigger({
     name: 'newContact',
     displayName: 'New Contact',
     description: 'Fires when a new contact is created',
+    aiMetadata: {
+      description: 'Fires when a new contact is created in the Systeme.io account, delivering the new contact record (email, fields, tags). Use to react to newly captured leads or subscribers.',
+    },
     props: {},
     sampleData: {
         contact: {
@@ -54,7 +57,7 @@ export const newContact = createTrigger({
         const response = await systemeIoCommon.createWebhook({
             eventType: 'CONTACT_CREATED',
             webhookUrl: context.webhookUrl,
-            auth: context.auth,
+            auth: context.auth.secret_text,
             secret: secret,
         });
         
@@ -66,7 +69,7 @@ export const newContact = createTrigger({
         if (webhookId) {
             await systemeIoCommon.deleteWebhook({
                 webhookId,
-                auth: context.auth,
+                auth: context.auth.secret_text,
             });
             await context.store.put('new_contact_webhook_id', null);
             await context.store.put('new_contact_webhook_secret', null);

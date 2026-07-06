@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../../index';
+import { sendfoxAuth } from '../auth';
 import { callsendfoxApi, sendfoxCommon } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -8,6 +8,8 @@ export const createContact = createAction({
   auth: sendfoxAuth,
   displayName: 'Create Contact',
   description: 'Create a new contact',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a new contact (subscriber) to SendFox by email, optionally setting first/last name and assigning the contact to a list. Use to add or onboard a subscriber. Not idempotent: each call posts the contact, so repeating may create or re-add the entry.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -25,7 +27,7 @@ export const createContact = createAction({
   },
   async run(context) {
     const authentication = context.auth;
-    const accessToken = authentication;
+    const accessToken = authentication.secret_text;
     const email = context.propsValue.email;
     const firstname = context.propsValue.firstname;
     const lastname = context.propsValue.lastname;
@@ -40,7 +42,7 @@ export const createContact = createAction({
       await callsendfoxApi(
         HttpMethod.POST,
         'contacts',
-        accessToken,
+        accessToken,  
         request_body
       )
     ).body;

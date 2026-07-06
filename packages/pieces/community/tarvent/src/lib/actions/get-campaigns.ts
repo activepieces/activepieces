@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient } from '../common';
 
 export const getCampaigns = createAction({
@@ -7,6 +7,8 @@ export const getCampaigns = createAction({
   name: 'tarvent_get_campaigns',
   displayName: 'Find Campaign',
   description: 'Finds a campaign by name, status or tags.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Tarvent campaigns, optionally filtered by name, comma-separated tags, and/or status (sent, draft, scheduled, paused, etc.); leaving the filters empty returns all campaigns. Use to look up a campaign or its ID, e.g. before sending it. Idempotent read-only lookup.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Campaign name',

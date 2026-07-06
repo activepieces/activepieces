@@ -7,9 +7,13 @@ export const newExpense = createTrigger({
 	name: 'new_expense',
 	displayName: 'New Expense',
 	description: 'Fires when a new expense entry is added.',
+	aiMetadata: {
+		description: 'Fires when an expense entry is added in Teamwork (EXPENSE.CREATED webhook), optionally filtered to a single project. Each event represents one newly logged expense.',
+	},
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'The project to watch for new expenses. If not specified, all projects will be watched.',
 			required: false,
@@ -22,7 +26,7 @@ export const newExpense = createTrigger({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});
@@ -39,7 +43,7 @@ export const newExpense = createTrigger({
 	},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const res = await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
+		const res = await teamworkRequest(context.auth, {
 			method: HttpMethod.POST,
 			path: '/webhooks.json',
 			body: {
@@ -55,7 +59,7 @@ export const newExpense = createTrigger({
 	async onDisable(context) {
 		const webhookId = await context.store.get('webhookId');
 		if (webhookId) {
-			await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
+			await teamworkRequest(context.auth, {
 				method: HttpMethod.DELETE,
 				path: `/webhooks/${webhookId}.json`,
 			});

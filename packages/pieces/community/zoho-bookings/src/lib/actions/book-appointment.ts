@@ -8,8 +8,15 @@ export const bookAppointment = createAction({
   name: 'bookAppointment',
   displayName: 'Book Appointment',
   description: 'Book an appointment for a customer for a desired service',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new appointment in a Zoho Bookings workspace for a given service, customer (name/email/phone), and start time. Assign the booking to exactly one of staff, resource, or group (the call fails if none is supplied). Not idempotent: each call books a separate appointment.',
+    idempotent: false,
+  },
   props: {
     workspace_id: Property.Dropdown({
+      auth: zohoBookingsAuth,
       displayName: 'Workspace',
       description: 'Select the workspace for the appointment',
       required: true,
@@ -46,6 +53,7 @@ export const bookAppointment = createAction({
       },
     }),
     service_id: Property.Dropdown({
+      auth: zohoBookingsAuth,
       displayName: 'Service',
       description: 'Select the service for which the appointment is booked',
       required: true,
@@ -83,6 +91,7 @@ export const bookAppointment = createAction({
       },
     }),
     staff_id: Property.Dropdown({
+      auth: zohoBookingsAuth,
       displayName: 'Staff',
       description:
         'Select the staff member (use this OR resource_id OR group_id)',
@@ -121,6 +130,7 @@ export const bookAppointment = createAction({
       },
     }),
     resource_id: Property.Dropdown({
+      auth: zohoBookingsAuth,
       displayName: 'Resource',
       description: 'Select the resource (use this OR staff_id OR group_id)',
       required: false,
@@ -135,9 +145,9 @@ export const bookAppointment = createAction({
         }
 
         try {
-          const location = (auth as any).props?.['location'] || 'zoho.com';
+          const location = auth.props?.['location'] as string || 'zoho.com';
           const resources = await zohoBookingsCommon.fetchResources(
-            (auth as any).access_token,
+            auth.access_token,
             location,
             service_id as string
           );
@@ -213,7 +223,7 @@ export const bookAppointment = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
 
     // Validate props using Zod schema
     await propsValidation.validateZod(

@@ -1,10 +1,14 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { getCalendars, getColors, getEventsForDropdown } from './helper';
+import { googleCalendarAuth, GoogleCalendarAuthValue, getAccessToken } from '../auth';
+
+export { googleCalendarAuth, GoogleCalendarAuthValue, getAccessToken, createGoogleClient, googleCalendarScopes } from '../auth';
 
 export const googleCalendarCommon = {
   baseUrl: 'https://www.googleapis.com/calendar/v3',
   calendarDropdown: (minAccessRole?: 'writer') => {
-    return Property.Dropdown<string>({
+    return Property.Dropdown<string,true,typeof googleCalendarAuth>({
+      auth: googleCalendarAuth,
       displayName: 'Calendar',
       refreshers: [],
       required: true,
@@ -16,8 +20,8 @@ export const googleCalendarCommon = {
             options: [],
           };
         }
-        const authProp = auth as OAuth2PropertyValue;
-        const calendars = await getCalendars(authProp, minAccessRole);
+        const authValue = auth as GoogleCalendarAuthValue;
+        const calendars = await getCalendars(authValue, minAccessRole);
         return {
           disabled: false,
           options: calendars.map((calendar) => {
@@ -31,10 +35,11 @@ export const googleCalendarCommon = {
     });
   },
   eventDropdown: (required = false) => {
-    return Property.Dropdown<string>({
+    return Property.Dropdown<string,boolean,typeof googleCalendarAuth>({
       displayName: 'Event',
       refreshers: ['calendar_id'],
       required: required,
+      auth: googleCalendarAuth,
       options: async ({ auth, calendar_id }) => {
         if (!auth) {
           return {
@@ -50,9 +55,9 @@ export const googleCalendarCommon = {
             options: [],
           };
         }
-        const authProp = auth as OAuth2PropertyValue;
+        const authValue = auth as GoogleCalendarAuthValue;
         const events = await getEventsForDropdown(
-          authProp,
+          authValue,
           calendar_id as string
         );
         return {
@@ -63,6 +68,7 @@ export const googleCalendarCommon = {
     });
   },
   colorId: Property.Dropdown({
+    auth: googleCalendarAuth,
     displayName: 'Color',
     refreshers: [],
     required: false,
@@ -74,8 +80,7 @@ export const googleCalendarCommon = {
           options: [],
         };
       }
-      const authProp = auth as OAuth2PropertyValue;
-      const response = await getColors(authProp);
+      const response = await getColors(auth as GoogleCalendarAuthValue);
       return {
         disabled: false,
         options: Object.entries(response.event).map(([key, value]) => {

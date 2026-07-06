@@ -10,6 +10,9 @@ export const videoGenerationCompletedTrigger = createTrigger({
 	name: 'video_generation_completed',
 	displayName: 'New Avatar Video Event (Success)',
 	description: 'Triggers when a video is generated successfully.',
+	aiMetadata: {
+		description: 'Fires when an avatar video finishes generating successfully (HeyGen avatar_video.success webhook event), signaling the rendered output is ready with its video ID and download URLs.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	sampleData: {
@@ -25,7 +28,7 @@ export const videoGenerationCompletedTrigger = createTrigger({
 
 	async onEnable(context) {
 		const webhook = (await heygenApiCall({
-			apiKey: context.auth as string,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/webhook/endpoint.add',
 			apiVersion: 'v1',
@@ -43,7 +46,7 @@ export const videoGenerationCompletedTrigger = createTrigger({
 
 		if (webhookId) {
 			await heygenApiCall({
-				apiKey: context.auth as string,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: '/webhook/endpoint.delete',
 				apiVersion: 'v1',

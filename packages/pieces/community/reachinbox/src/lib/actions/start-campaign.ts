@@ -8,15 +8,29 @@ export const startCampaign = createAction({
   name: 'startCampaign',
   displayName: 'Start Campaign',
   description: 'Starts a Campaign',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts (launches or resumes) a ReachInbox campaign, identified by its campaign id, so it begins sending. Use to activate outreach for a campaign. Idempotent: starting an already-running campaign leaves it running.',
+    idempotent: true,
+  },
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description:
         'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((campaign) => ({
@@ -42,7 +56,7 @@ export const startCampaign = createAction({
         method: HttpMethod.POST,
         url: url,
         headers: {
-          Authorization: `Bearer ${context.auth as string}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body: {

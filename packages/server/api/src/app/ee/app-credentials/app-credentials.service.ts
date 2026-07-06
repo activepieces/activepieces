@@ -1,9 +1,5 @@
-import {
-    AppCredential,
-    AppCredentialId,
-    UpsertAppCredentialRequest,
-} from '@activepieces/ee-shared'
-import { apId, Cursor, ProjectId, SeekPage } from '@activepieces/shared'
+import { apId, Cursor, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { AppCredential, AppCredentialId, UpsertAppCredentialRequest } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -51,8 +47,8 @@ export const appCredentialService = {
         await appCredentialRepo().upsert(
             {
                 id: newId,
-                projectId,
                 ...request,
+                projectId,
             },
             ['id'],
         )

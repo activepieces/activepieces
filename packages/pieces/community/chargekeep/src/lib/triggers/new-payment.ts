@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
+import { chargekeepAuth } from '../auth';
 import { chargekeepCommon } from '../common/common';
 
 export const newPayment = createTrigger({
@@ -7,6 +7,9 @@ export const newPayment = createTrigger({
   name: 'new_payment',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is created',
+  aiMetadata: {
+    description: 'Fires when a new payment is recorded in the ChargeKeep/Sperse CRM, emitting the payment transaction along with its related contact and invoice.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -53,8 +56,8 @@ export const newPayment = createTrigger({
   async onEnable(context) {
     const webhookId = await chargekeepCommon.subscribeWebhook(
       'Payment.Created',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -70,8 +73,8 @@ export const newPayment = createTrigger({
 
     if (response !== null && response !== undefined) {
       await chargekeepCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

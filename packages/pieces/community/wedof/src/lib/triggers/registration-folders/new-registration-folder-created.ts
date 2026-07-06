@@ -1,4 +1,4 @@
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,10 @@ export const newRegistrationFolderNotProcessed = createTrigger({
   displayName: 'Nouveau dossier de formation',
   description:
     "Se déclenche lorsqu'un nouveau dossier de formation est créé (non traité)",
+  aiMetadata: {
+    description:
+      "Fires when a new Wedof training registration folder (dossier de formation) is created and is still in the unprocessed (non traité) state. Represents a newly received enrollment awaiting handling, and emits the full folder record.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {
@@ -220,7 +224,7 @@ export const newRegistrationFolderNotProcessed = createTrigger({
     if (id !== null && id !== undefined) {
       await wedofCommon.unsubscribeWebhook(
         id as string,
-        context.auth as string
+        context.auth.secret_text
       );
       await context.store.delete('_webhookId');
     }

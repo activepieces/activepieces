@@ -9,15 +9,22 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { bannerbearAuth } from '../../';
+import { bannerbearAuth } from '../auth';
 
 export const bannerbearCreateImageAction = createAction({
   auth: bannerbearAuth,
   name: 'bannerbear_create_image', // Must be a unique across the piece, this shouldn't be changed.
   displayName: 'Create Image',
   description: 'Create image from Bannerbear template',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Renders a new image (or PDF) from a Bannerbear template by applying layer modifications (text, image URLs, ratings, charts, bar codes, colors). Choose this to programmatically generate branded graphics; requires a valid template UID and modifications matching that template\'s available layers. Not idempotent — each call submits a new render and produces a new image.',
+    idempotent: false,
+  },
   props: {
     template: Property.Dropdown({
+      auth: bannerbearAuth,
       displayName: 'Template',
       description: 'The template to use in image creation.',
       required: true,
@@ -36,7 +43,7 @@ export const bannerbearCreateImageAction = createAction({
           url: `https://api.bannerbear.com/v2/templates`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
         });
 
@@ -65,6 +72,7 @@ export const bannerbearCreateImageAction = createAction({
       required: false,
     }),
     modifications: Property.DynamicProperties({
+      auth: bannerbearAuth,
       displayName: 'Template modifications',
       description: 'A list of modifications you want to make on the template.',
       required: true,
@@ -151,7 +159,7 @@ export const bannerbearCreateImageAction = createAction({
       body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth,
+        token: auth.secret_text,
       },
     };
 

@@ -7,11 +7,14 @@ export const newPerson = createTrigger({
 	name: 'new_person',
 	displayName: 'New Person',
 	description: 'Fires when a new person (user/contact) is added.',
+	aiMetadata: {
+		description: 'Fires when a new person — a user, collaborator, or contact — is added in Teamwork (USER.CREATED webhook). Each event represents one newly created person across the account.',
+	},
 	auth: teamworkAuth,
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const res = await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
+		const res = await teamworkRequest(context.auth, {
 			method: HttpMethod.POST,
 			path: '/webhooks.json',
 			body: {
@@ -27,7 +30,7 @@ export const newPerson = createTrigger({
 	async onDisable(context) {
 		const webhookId = await context.store.get('webhookId');
 		if (webhookId) {
-			await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
+			await teamworkRequest(context.auth, {
 				method: HttpMethod.DELETE,
 				path: `/webhooks/${webhookId}.json`,
 			});

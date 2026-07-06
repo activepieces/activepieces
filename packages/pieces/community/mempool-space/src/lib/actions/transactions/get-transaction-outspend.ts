@@ -1,11 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getTransactionOutspend = createAction({
+ auth:PieceAuth.None(),
   name: 'get_transaction_outspend',
   displayName: 'Get Transaction Output Spend Status',
   description: 'Get the spending status of a specific transaction output',
+  audience: 'both',
+  aiMetadata: { description: 'Check whether one specific output (by transaction ID plus 0-based output index/vout) has been spent. Pick this when you care about a single output; use Get All Transaction Output Spend Statuses to check every output of a transaction at once. Read-only.', idempotent: true },
   // category: 'Transactions',
   props: {
     txid: Property.ShortText({

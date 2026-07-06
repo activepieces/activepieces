@@ -7,9 +7,12 @@ export const createTaskComment = createAction({
 	name: 'create_task_comment',
 	displayName: 'Create Task Comment',
 	description: 'Leave a comment in a task.',
+	audience: 'both',
+	aiMetadata: { description: 'Posts a comment on an existing Teamwork task, optionally private and with notification (nobody, followers, or all project users) and an optional file attachment uploaded via presigned URL. Use to add a note or reply on a task. Requires the task ID and comment body. Not idempotent — each call adds another comment.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		taskId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Task',
 			description: 'The task to add a comment to.',
 			required: true,
@@ -22,7 +25,7 @@ export const createTaskComment = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/tasks.json',
 				});

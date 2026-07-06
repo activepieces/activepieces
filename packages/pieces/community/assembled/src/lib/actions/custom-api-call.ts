@@ -8,7 +8,7 @@ export const customApiCall = createCustomApiCallAction({
   description: 'Make custom API calls to Assembled endpoints',
   baseUrl: () => 'https://api.assembledhq.com/v0',
   authMapping: async (auth) => ({
-    'Authorization': `Basic ${Buffer.from(auth + ':').toString('base64')}`,
+    'Authorization': `Basic ${Buffer.from(auth.secret_text + ':').toString('base64')}`,
     'Content-Type': 'application/json',
   }),
 });

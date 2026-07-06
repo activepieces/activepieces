@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const get_observations = createAction({
@@ -8,6 +8,8 @@ export const get_observations = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Observations',
     description: 'Retrieve the list of observations available in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'List the route observation types defined in the account, returning their ids and labels. Use to resolve a valid observation reference before applying it to a route or visit. Read-only and idempotent; takes no inputs.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/routes/observations/`;
@@ -16,7 +18,7 @@ export const get_observations = createAction({
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

@@ -9,6 +9,12 @@ export const createOrUpdateSubscriber = createAction({
 	name: 'add_or_update_subscriber',
 	displayName: 'Add or Update subscriber',
 	description: 'Create a new subscriber or updates an existing one if the email already exists.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Upsert a MailerLite subscriber by email: creates the contact if the email is new, otherwise updates the existing record (status, custom fields, group membership, opt-in metadata). Use this to add or sync a contact when you only have their email. Idempotent — keyed on email, so repeating with the same input converges on the same subscriber state.',
+		idempotent: true,
+	},
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',
@@ -66,7 +72,7 @@ export const createOrUpdateSubscriber = createAction({
 		}),
 	},
 	async run(context) {
-		const client = new MailerLite({ api_key: context.auth });
+		const client = new MailerLite({ api_key: context.auth.secret_text });
 		const response = await client.subscribers.createOrUpdate({
 			email: context.propsValue.email,
 			fields: context.propsValue.subscriberFields,

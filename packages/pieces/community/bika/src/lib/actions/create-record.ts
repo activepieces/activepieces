@@ -1,16 +1,17 @@
 import {
   DynamicPropsValue,
-  PiecePropValueSchema,
   createAction,
 } from '@activepieces/pieces-framework';
 import { BikaCommon, createNewFields, makeClient } from '../common';
-import { BikaAuth } from '../../index';
+import { BikaAuth } from '../auth';
 
 export const createRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_create_record',
   displayName: 'Create Record',
   description: 'Creates a new record in database.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new record in a Bika.ai database table, populating its fields. Requires a space and database (table) to target; field values must match the database schema (read-only field types like formulas and autonumber are ignored). Not idempotent: each call appends a new record.', idempotent: false },
   props: {
     space_id: BikaCommon.space_id,
     database_id: BikaCommon.database_id,
@@ -33,14 +34,14 @@ export const createRecordAction = createAction({
     }
 
     const newFields: Record<string, unknown> = await createNewFields(
-      auth as PiecePropValueSchema<typeof BikaAuth>,
+      auth,
       spaceId,
       databaseId,
       fields
     );
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof BikaAuth>
+      context.auth.props,
     );
     const response: any = await client.createRecord(spaceId, databaseId , {
       records: [

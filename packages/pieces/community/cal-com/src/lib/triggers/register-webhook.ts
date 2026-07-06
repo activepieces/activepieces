@@ -16,31 +16,35 @@ export const registerWebhooks = ({
   description,
   displayName,
   sampleData,
+  aiMetadata,
 }: {
   name: string;
   description: string;
   displayName: string;
   sampleData: Record<string, unknown>;
-}): Trigger =>
+  aiMetadata?: { description: string };
+}) =>
   createTrigger({
     auth: calcomAuth,
     name,
     description,
     displayName,
+    aiMetadata,
     props: {},
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
       const request: HttpRequest = {
         method: HttpMethod.POST,
-        url: `https://api.cal.com/v1/webhooks`,
+        url: `https://api.cal.com/v2/webhooks`,
         body: {
-          eventTriggers: [name],
+          triggers: [name],
           subscriberUrl: context.webhookUrl,
           active: true,
         },
-        queryParams: {
-          apiKey: context.auth,
+        headers: {
+          Authorization: `Bearer ${context.auth.secret_text}`,
+          'cal-api-version': '2024-06-14',
         },
       };
 
@@ -48,11 +52,11 @@ export const registerWebhooks = ({
         request
       );
 
-      if (response.status === 200) {
-        console.debug('trigger.onEnable', response.body.webhook, context);
+      if (response.status === 200 || response.status === 201) {
+        console.debug('trigger.onEnable', response.body.data, context);
         await context.store?.put(
           `cal_com_trigger_${name}`,
-          response.body.webhook
+          response.body.data
         );
       }
     },
@@ -63,14 +67,23 @@ export const registerWebhooks = ({
       if (data != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
-          url: `https://api.cal.com/v1/webhooks/${data.id}`,
-          queryParams: {
-            apiKey: context.auth,
+          url: `https://api.cal.com/v2/webhooks/${data.id}`,
+          headers: {
+            Authorization: `Bearer ${context.auth.secret_text}`,
+            'cal-api-version': '2024-06-14',
           },
         };
 
-        const response = await httpClient.sendRequest(request);
-        console.debug('trigger.onDisable', response);
+        try {
+          const response = await httpClient.sendRequest(request);
+          console.debug('trigger.onDisable', response);
+        } catch (e: any) {
+          // 404 means the webhook was registered under the old v1 API and no
+          // longer exists in v2 — safe to ignore, re-enabling will create a
+          // fresh v2 webhook.
+          if (e?.response?.status !== 404) throw e;
+          console.debug('trigger.onDisable: webhook not found in v2 (was v1), ignoring');
+        }
       } else {
         console.debug(`trigger 'cal_com_trigger_${name}' not found`);
       }
@@ -86,12 +99,12 @@ interface WebhookInformation {
   userId: number;
   eventTypeId?: null | string;
   payloadTemplate?: null | string;
-  eventTriggers: any[];
+  triggers: string[];
   appId?: null | string;
   subscriberUrl: string;
 }
 
 interface WebhookResponseBody {
-  webhook: WebhookInformation;
-  message: string;
+  data: WebhookInformation;
+  status: string;
 }

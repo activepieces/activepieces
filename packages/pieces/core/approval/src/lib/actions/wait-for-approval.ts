@@ -1,0 +1,40 @@
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ExecutionType, MarkdownVariant } from '@activepieces/pieces-framework';
+
+export const waitForApprovalLink = createAction({
+  audience: 'human',
+  auth: PieceAuth.None(),
+  name: 'wait_for_approval',
+  displayName: 'Wait for Approval',
+  description: 'Pauses the flow and wait for the approval from the user',
+  props: {
+    markdown: Property.MarkDown({
+      variant: MarkdownVariant.WARNING,
+      value: 'Please use Manual Task feature instead from 0.48.0 and above',
+    }),
+  },
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
+  async run(ctx) {
+    if (ctx.executionType === ExecutionType.BEGIN) {
+      const waitpoint = await ctx.run.createWaitpoint({
+        type: 'WEBHOOK',
+      });
+      ctx.run.waitForWaitpoint(waitpoint.id);
+
+      return {
+        approved: true,
+      };
+    } else {
+      return {
+        approved: ctx.resumePayload.queryParams['action'] === 'approve',
+      };
+    }
+  },
+});

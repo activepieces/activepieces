@@ -1,11 +1,11 @@
-import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../../';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
     standardObjectPropertiesDropdown,
 } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 
@@ -14,6 +14,8 @@ export const findCompanyAction = createAction({
     name: 'find-company',
     displayName: 'Find Company',
     description: 'Finds a company by searching.',
+    audience: 'both',
+    aiMetadata: { description: 'Searches companies via the HubSpot CRM search API, matching on one or two property name/value pairs (exact match, combined as AND), and returns matching companies. Use to locate a company by domain, name, or another property before reading or updating it; prefer Get Company when you already have the company ID. Read-only and idempotent.', idempotent: true },
     props: {
         firstSearchPropertyName: standardObjectPropertiesDropdown(
             {
@@ -85,7 +87,7 @@ export const findCompanyAction = createAction({
         const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY);
 
         const response = await client.crm.companies.searchApi.doSearch({
-            limit: 100,
+            limit: MAX_SEARCH_PAGE_SIZE,
             properties: [...defaultCompanyProperties, ...additionalPropertiesToRetrieve],
             filterGroups: [{ filters }],
         });

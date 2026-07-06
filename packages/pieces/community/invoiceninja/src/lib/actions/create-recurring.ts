@@ -2,7 +2,7 @@ import {
     createAction,
     Property,
   } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 import { invoiceninjaAuth } from '../..';
@@ -12,7 +12,9 @@ export const createRecurringInvoice = createAction({
     name: 'create_recurring_invoice',
     displayName: 'Create Recurring Invoice',
     description: 'Creates a recurring invoice in Invoice Ninja for billing purposes.',
-    
+    audience: 'both',
+    aiMetadata: { description: 'Creates a recurring invoice for a client in Invoice Ninja from a JSON array of line items (each referencing an existing product_key), set to bill on a chosen frequency for a given number of cycles starting from a next-send date. The frequency can be picked from the preset list or overridden with a numeric frequency id. Requires a valid client id, at least one line item with a known product key, and a next-send date. Not idempotent — each call creates a new recurring invoice.', idempotent: false },
+
     props: {
       client_id: Property.LongText({
         displayName: 'Client ID (alphanumeric)',
@@ -149,13 +151,13 @@ export const createRecurringInvoice = createAction({
   
     async run(context) {
       await propsValidation.validateZod(context.propsValue, {
-        nocycles: z.number().min(0).max(999).optional(),
-        auto_frequency: z.number().min(1).max(12).optional(),
-        due_date: z.string().datetime(),
-        last_date: z.string().datetime().optional(),
+        nocycles: z.optional(z.number().check(z.minimum(0), z.maximum(999))),
+        auto_frequency: z.optional(z.number().check(z.minimum(1), z.maximum(12))),
+        due_date: z.string().check(z.iso.datetime()),
+        last_date: z.optional(z.string().check(z.iso.datetime())),
       });
 
-      const INapiToken = context.auth.access_token;
+      const INapiToken = context.auth.props.access_token;
       const headers = {
         'X-Api-Token': INapiToken,
         'Content-Type': 'application/json',
@@ -182,7 +184,7 @@ export const createRecurringInvoice = createAction({
         throw new Error('Each item in the line_items array must be an object with "quantity" (number), "product_key" (string), and "discount" (string).');
       }
   
-      const baseUrl = context.auth.base_url.replace(/\/$/, '');
+      const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
       let errorMessages = '';
   
       try {

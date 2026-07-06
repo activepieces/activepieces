@@ -1,13 +1,16 @@
 import { Readable } from 'stream'
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { apId, FileType, isNil, ProjectId } from '@activepieces/shared'
-import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
+import { FileType } from '@activepieces/shared'
+import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { NodeHttpHandler } from '@smithy/node-http-handler'
+import contentDisposition from 'content-disposition'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { fileRepo } from './file.service'
-
 
 export const s3Helper = (log: FastifyBaseLogger) => ({
     async constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): Promise<string> {
@@ -26,6 +29,9 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         }
     },
     async uploadFile(s3Key: string, data: Buffer): Promise<string> {
+        if (!Buffer.isBuffer(data)) {
+            throw new Error(`Expected Buffer for S3 upload, received ${typeof data}`)
+        }
         log.info({
             s3Key,
         }, 'uploading file to s3')
@@ -51,6 +57,20 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         return s3Key
     },
 
+    async objectExists(s3Key: string): Promise<boolean> {
+        const { error } = await tryCatch(() => getS3Client().send(new HeadObjectCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+        })))
+        // A genuine miss (404) is the common case; anything else (403, expired creds, network)
+        // means S3 is misconfigured — surface it so operators get a signal instead of a silent
+        // npm fallback that never caches.
+        const isMissing = error instanceof Error && (error.name === 'NotFound' || error.name === 'NoSuchKey')
+        if (!isNil(error) && !isMissing) {
+            log.warn({ s3Key, error: String(error) }, 'objectExists check failed unexpectedly, treating object as missing')
+        }
+        return isNil(error)
+    },
     async getFile(s3Key: string): Promise<Buffer> {
         const response = await getS3Client().getObject({
             Bucket: getS3BucketName(),
@@ -60,21 +80,23 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
     },
     async getS3SignedUrl(s3Key: string, fileName: string): Promise<string> {
         const client = getS3Client()
+        const disposition = contentDisposition(fileName, { type: 'attachment' })
         const command = new GetObjectCommand({
             Bucket: getS3BucketName(),
             Key: s3Key,
-            ResponseContentDisposition: `attachment; filename="${fileName}"`,
+            ResponseContentDisposition: disposition,
         })
         return getSignedUrl(client, command, {
             expiresIn: dayjs.duration(7, 'days').asSeconds(),
         })
     },
-    async putS3SignedUrl(s3Key: string, contentLength?: number | undefined): Promise<string> {
+    async putS3SignedUrl({ s3Key, contentLength, contentEncoding }: PutS3SignedUrlParams): Promise<string> {
         const client = getS3Client()
         const command = new PutObjectCommand({
             Bucket: getS3BucketName(),
             Key: s3Key,
             ContentLength: contentLength,
+            ContentEncoding: contentEncoding,
         })
         return getSignedUrl(client, command, {
             expiresIn: dayjs.duration(7, 'days').asSeconds(),
@@ -112,33 +134,34 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         const bucketName = getS3BucketName()
         const testKey = `activepieces-${apId()}-validation-test-key`
 
-        try {
-            await client.putObject({
-                Bucket: bucketName,
-                Key: testKey,
-                Body: 'activepieces-test',
-            })
+        await client.putObject({
+            Bucket: bucketName,
+            Key: testKey,
+            Body: 'activepieces-test',
+        })
 
-            await client.headObject({
-                Bucket: bucketName,
-                Key: testKey,
-            })
+        await client.headObject({
+            Bucket: bucketName,
+            Key: testKey,
+        })
 
-            await client.deleteObject({
-                Bucket: bucketName,
-                Key: testKey,
-            })
-        }
-        catch (error: unknown) {
-            throw new Error(`S3 validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        }
+        await client.deleteObject({
+            Bucket: bucketName,
+            Key: testKey,
+        })
+
     },
 })
 
 
 const chunkArray = (array: string[], chunkSize: number) => Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => array.slice(i * chunkSize, (i + 1) * chunkSize))
 
-const getS3Client = () => {
+let cachedS3Client: S3 | null = null
+
+const getS3Client = (): S3 => {
+    if (cachedS3Client) {
+        return cachedS3Client
+    }
     const useIRSA = system.getBoolean(AppSystemProp.S3_USE_IRSA)
     const region = system.get<string>(AppSystemProp.S3_REGION)
     const endpoint = system.get<string>(AppSystemProp.S3_ENDPOINT)
@@ -146,6 +169,11 @@ const getS3Client = () => {
         region,
         forcePathStyle: endpoint ? true : undefined,
         endpoint,
+        requestHandler: new NodeHttpHandler({
+            connectionTimeout: 5_000,
+            requestTimeout: 120_000,
+        }),
+        maxAttempts: 3,
     }
     if (!useIRSA) {
         const accessKeyId = system.getOrThrow<string>(AppSystemProp.S3_ACCESS_KEY_ID)
@@ -155,9 +183,16 @@ const getS3Client = () => {
             secretAccessKey,
         }
     }
-    return new S3(options)
+    cachedS3Client = new S3(options)
+    return cachedS3Client
 }
 
 const getS3BucketName = () => {
     return system.getOrThrow<string>(AppSystemProp.S3_BUCKET)
+}
+
+type PutS3SignedUrlParams = {
+    s3Key: string
+    contentLength?: number
+    contentEncoding?: string
 }

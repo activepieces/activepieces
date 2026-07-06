@@ -5,31 +5,8 @@ import { deleteContacts } from './lib/actions/delete-contacts';
 import { sendSms } from './lib/actions/send-sms';
 import { sendMms } from './lib/actions/send-mms';
 import { triggers } from './lib/triggers';
-import { PieceCategory } from '@activepieces/shared';
-
-export const krispcallAuth = PieceAuth.CustomAuth({
-  props: {
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API key',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest<string[]>({
-        method: HttpMethod.GET,
-        url: 'https://app.krispcall.com/api/v3/platform/activepiece/me',
-        headers: {
-          'X-API-KEY': auth.apiKey,
-        },
-      });
-      return { valid: true };
-    } catch (error: any) {
-      return { valid: false, error: error.message };
-    }
-  },
-  required: true,
-});
+import { PieceCategory } from '@activepieces/pieces-framework';
+import { krispcallAuth } from './lib/auth';
 
 export type krispcallAuth = {
   apiKey: string;

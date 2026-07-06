@@ -4,7 +4,8 @@ import {
   addLeadsToCampaign,
   reachinboxCommon,
 } from '../common/index';
-import { reachinbox, ReachinboxAuth } from '../..';
+import { ReachinboxAuth } from '../..';
+import { reachinbox } from '../..';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 // Define the structure for custom variables
@@ -19,14 +20,28 @@ export const addLeads = createAction({
   displayName: 'Add Leads',
   description:
     'Add leads to campaigns dynamically by selecting a campaign, entering lead details, and including custom variables.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a single lead (email plus name and optional custom variables) to a specific ReachInbox campaign. Use to enroll a new contact into an outreach sequence. Requires a campaign id; not idempotent since repeated calls append the lead again.',
+    idempotent: false,
+  },
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description: 'Choose a campaign from the list.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((campaign) => ({
@@ -100,7 +115,7 @@ export const addLeads = createAction({
         method: HttpMethod.POST,
         url: `${reachinboxCommon.baseUrl}leads/add`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

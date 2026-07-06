@@ -12,11 +12,13 @@ export const deleteClient = createAction({
   name: 'delete_client',
   displayName: 'Delete Client',
   description: 'Delete an existing client',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a client record in SimplyBook.me, identified by its client ID. Use to remove a client an agent no longer needs; this is destructive and cannot be undone. Not idempotent: a repeat call on the same ID has no client left to delete and may error.', idempotent: false },
   props: {
     clientId: clientDropdown
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
+    const auth = context.auth.props;
     const accessToken = await getAccessToken(auth);
 
     const { clientId } = context.propsValue;

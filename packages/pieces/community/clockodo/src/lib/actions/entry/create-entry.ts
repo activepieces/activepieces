@@ -1,13 +1,19 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { clockodoCommon, makeClient, reformatDateTime } from '../../common';
 import { TimeRecordEntry } from '../../common/models/entry';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,
   name: 'create_entry',
   displayName: 'Create Entry',
   description: 'Creates an entry in clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Logs a new time-record entry in clockodo for a customer and service over a start/end time window, optionally tagged to a project, user, hourly rate, and description. Use to record tracked work after the fact; requires customer_id, service_id, and both start and end times. Not idempotent: each call creates a separate entry, so guard against duplicates.',
+    idempotent: false,
+  },
   props: {
     customer_id: clockodoCommon.customer_id(),
     project_id: clockodoCommon.project_id(false),
@@ -31,7 +37,7 @@ export default createAction({
     user_id: clockodoCommon.user_id(false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.createEntry({
       customers_id: propsValue.customer_id,
       projects_id: propsValue.project_id,

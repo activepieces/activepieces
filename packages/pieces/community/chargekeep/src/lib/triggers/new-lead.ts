@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
+import { chargekeepAuth } from '../auth';
 import { chargekeepCommon } from '../common/common';
 
 export const newLead = createTrigger({
@@ -7,6 +7,9 @@ export const newLead = createTrigger({
   name: 'new_lead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
+  aiMetadata: {
+    description: 'Fires when a new lead is created in the ChargeKeep/Sperse CRM, emitting the lead\'s full contact record (personal, business, tracking, application, and classification info).',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -200,8 +203,8 @@ export const newLead = createTrigger({
   async onEnable(context) {
     const webhookId = await chargekeepCommon.subscribeWebhook(
       'LeadCreated',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -217,8 +220,8 @@ export const newLead = createTrigger({
 
     if (response !== null && response !== undefined) {
       await chargekeepCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

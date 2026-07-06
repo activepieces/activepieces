@@ -8,6 +8,8 @@ export const backBlazes3UploadFileAction = createAction({
   name: 'upload-backblaze-file',
   displayName: 'Upload File',
   description: 'Upload an File to bucket.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file to the configured Backblaze B2 (S3-compatible) bucket, returning the stored key and a public URL. Use to persist binary or text content to object storage. Requires the file content and a MIME type; an optional file name may include a full path for sub-directories, and when omitted a timestamped name is generated. Not idempotent: it writes an object on every call, and an omitted name produces a new object each time.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',
@@ -104,10 +106,10 @@ export const backBlazes3UploadFileAction = createAction({
     }),
   },
   async run(context) {
-    const { bucket } = context.auth;
+    const { bucket } = context.auth.props;
     const { file, fileName, acl, type } = context.propsValue;
 
-    const s3 = createBackBlazeS3(context.auth);
+    const s3 = createBackBlazeS3(context.auth.props);
 
     const contentType = type;
     const [_, ext] = contentType.split('/');
@@ -125,7 +127,7 @@ export const backBlazes3UploadFileAction = createAction({
       Body: file.data,
     });
 
-    const endpoint = context.auth.endpoint ? context.auth.endpoint :"";
+    const endpoint = context.auth.props.endpoint ? context.auth.props.endpoint :"";
     const cleanEndpoint = endpoint.replace("https://","")
     const url = `https://${bucket}.${cleanEndpoint}/${finalFileName}`
     return {

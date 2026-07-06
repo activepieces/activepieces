@@ -3,12 +3,16 @@ import { foreplayCoApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { getAdById as getAdByIdProperties } from '../properties';
 import { getAdByIdSchema } from '../schemas';
+import { foreplayCoAuth } from '../..';
 
 export const getAdById = createAction({
   name: 'getAdById',
   displayName: 'Get Ad by ID',
   description: 'Get detailed information about a specific ad by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the full details of one Foreplay ad by its ad ID. Use when you already have a specific ad ID (e.g. from a search or a trigger) and need its complete metadata. Requires the exact ad ID; read-only, so repeating the call is safe.', idempotent: true },
   props: getAdByIdProperties(),
+  auth: foreplayCoAuth,
   async run({ auth, propsValue }) {
     // Validate props using Zod schema
     const validation = getAdByIdSchema.safeParse(propsValue);
@@ -19,7 +23,7 @@ export const getAdById = createAction({
     const adId = propsValue.ad_id;
 
     const response = await foreplayCoApiCall({
-      apiKey: auth as string,
+      apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: `/api/ad/${adId}`,
     });

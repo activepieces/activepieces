@@ -1,10 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { insightoAuth } from '../..';
 
 export const upsertContactAction = createAction({
   name: 'upsert_contact',
   displayName: 'Upsert Contact',
   description: 'Create or update a contact using email or phone number',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates or updates an Insighto.ai contact, matching on the supplied email or phone number. Use when you need a contact to exist before referencing it elsewhere without checking first. At least one of email or phone number is required. Idempotent: the contact is keyed on email/phone, so repeating with the same input converges to the same record rather than creating duplicates.',
+    idempotent: true,
+  },
+  auth: insightoAuth,
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',
@@ -36,7 +43,7 @@ export const upsertContactAction = createAction({
         throw new Error('Either email or phone number must be provided');
       }
 
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
       const url = `https://api.insighto.ai/api/v1/contact/upsert`;
 
       const queryParams: Record<string, string> = {

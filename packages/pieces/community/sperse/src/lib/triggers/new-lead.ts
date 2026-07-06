@@ -7,6 +7,10 @@ export const newLead = createTrigger({
   name: 'new_lead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
+  aiMetadata: {
+    description:
+      'Fires when a new lead is created in Sperse CRM, delivering the full contact record (personal, business, address, tracking, application, and classification details).',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -199,8 +203,8 @@ export const newLead = createTrigger({
   async onEnable(context) {
     const webhookId = await sperseCommon.subscribeWebhook(
       'LeadCreated',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -215,8 +219,8 @@ export const newLead = createTrigger({
 
     if (response !== null && response !== undefined) {
       await sperseCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

@@ -9,6 +9,10 @@ export const newDocumentProcessed = createTrigger({
   displayName: 'New Document Processed',
   description:
     'Fires when a new document is successfully processed and parsed by Parseur.',
+  aiMetadata: {
+    description:
+      'Fires when a document in the selected Parseur mailbox is successfully parsed, emitting the document with its extracted/structured fields. Use to react to newly available parsed data.',
+  },
   props: {
     mailboxId: parserDropdown({ required: true }),
   },
@@ -16,13 +20,13 @@ export const newDocumentProcessed = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhookCreateResponse = await parseurCommon.createWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       event: 'document.processed',
       target: context.webhookUrl,
       category: 'CUSTOM',
     });
     await parseurCommon.enableWebhook({
-      apiKey: context.auth as string,
+      apiKey: context.auth.secret_text,
       webhookId: webhookCreateResponse.id,
       mailboxId: context.propsValue.mailboxId as number,
     });
@@ -38,7 +42,7 @@ export const newDocumentProcessed = createTrigger({
       return;
     }
     await parseurCommon.deleteWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newDocumentProcessed');

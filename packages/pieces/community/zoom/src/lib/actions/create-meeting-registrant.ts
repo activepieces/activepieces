@@ -14,6 +14,8 @@ export const zoomCreateMeetingRegistrant = createAction({
   name: 'zoom_create_meeting_registrant',
   displayName: 'Create Zoom Meeting Registrant',
   description: "Create and submit a user's registration to a meeting.",
+  audience: 'both',
+  aiMetadata: { description: 'Registers an attendee for an existing Zoom meeting identified by its meeting ID, capturing their name, email, and optional profile/custom-question fields. Use to add a participant to a meeting that has registration enabled. Each call submits a new registration, so it is not idempotent.', idempotent: false },
   props: getRegistarantProps(),
   async run(context) {
     const body: Record<string, unknown> = {

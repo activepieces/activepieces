@@ -1,10 +1,10 @@
-import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../../';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown
 
  } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 
@@ -13,6 +13,8 @@ export const findProductAction = createAction({
 	name: 'find-product',
 	displayName: 'Find Product',
 	description: 'Finds a product by searching.',
+	audience: 'both',
+	aiMetadata: { description: 'Search the HubSpot product library by one or two property/value pairs (matched with equality) and return the matching products. Read-only and repeatable. Use Get Product instead when you already have the product ID.', idempotent: true },
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{
@@ -84,7 +86,7 @@ export const findProductAction = createAction({
 		const defaultProductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.PRODUCT);
 
 		const response = await client.crm.products.searchApi.doSearch({
-			limit: 100,
+			limit: MAX_SEARCH_PAGE_SIZE,
 			properties: [...defaultProductProperties, ...additionalPropertiesToRetrieve],
 			filterGroups: [{ filters }],
 		});

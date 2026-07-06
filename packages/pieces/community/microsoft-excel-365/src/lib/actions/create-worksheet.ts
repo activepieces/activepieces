@@ -1,11 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { excelAuth } from '../../index';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelCommon } from '../common/common';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType
-} from '@activepieces/pieces-common';
 
 // Define the response type for creating a worksheet for better type-safety
 interface CreateWorksheetResponse {
@@ -21,8 +18,13 @@ export const createWorksheetAction = createAction({
   displayName: 'Create Worksheet',
   description:
     'Add a new worksheet (tab) to an existing workbook with optional default headers.',
+  audience: 'both',
+  aiMetadata: { description: 'Add a new worksheet (tab) to an existing workbook, optionally writing a header row and creating an Excel table from it. Use to provision a sheet for new data; to add data to an existing sheet use the append/update actions. Not idempotent — re-running creates another worksheet (Excel auto-assigns a default name like Sheet1 when none is given).', idempotent: false },
   props: {
-    workbook_id: excelCommon.workbook_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
     name: Property.ShortText({
       displayName: 'Worksheet Name',
       description:
@@ -37,25 +39,23 @@ export const createWorksheetAction = createAction({
     })
   },
   async run(context) {
-    const { workbook_id, name, headers } = context.propsValue;
+    const { storageSource, siteId, documentId, workbookId, name, headers } = context.propsValue;
     const { access_token } = context.auth;
+    const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
+    const client = createMSGraphClient(access_token, cloud);
 
     // Step 1: Create the new worksheet
-    const createWorksheetResponse =
-      await httpClient.sendRequest<CreateWorksheetResponse>({
-        method: HttpMethod.POST,
-        url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/add`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: access_token
-        },
-        body: {
-          // Conditionally add the name property to the request body if it exists
-          ...(name ? { name } : {})
-        }
-      });
+    const createWorksheetResponse: CreateWorksheetResponse = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/add`)
+      .post({ ...(name ? { name } : {}) });
 
-    const newWorksheetName = createWorksheetResponse.body.name;
+    const newWorksheetName = createWorksheetResponse.name;
 
     // Step 2: If headers are provided, add them and create a table from them
     if (headers && Array.isArray(headers) && headers.length > 0) {
@@ -66,37 +66,20 @@ export const createWorksheetAction = createAction({
       const address = `A1:${endColumn}1`;
 
       // Add the header values to the first row of the new worksheet
-      await httpClient.sendRequest({
-        method: HttpMethod.PATCH,
-        url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${newWorksheetName}/range(address='${address}')`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: access_token
-        },
-        body: {
-          values: [headersArray] // Values must be a 2D array
-        }
-      });
+      await client
+        .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${newWorksheetName}/range(address='${address}')`)
+        .patch({ values: [headersArray] });
 
       // Create a table from the newly added header range
-      const createTableResponse = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${newWorksheetName}/tables/add`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: access_token
-        },
-        body: {
-          address: address,
-          hasHeaders: true
-        }
-      });
+      const createTableResponse = await client
+        .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${newWorksheetName}/tables/add`)
+        .post({ address: address, hasHeaders: true });
 
       // Return the result of the table creation
-      return createTableResponse.body;
+      return createTableResponse;
     }
 
     // If no headers were provided, return the result of the worksheet creation
-    return createWorksheetResponse.body;
+    return createWorksheetResponse;
   }
 });

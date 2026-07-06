@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
+import { edenAiAuth } from '../..';
 
 const SUMMARIZE_PROVIDERS = [
   { label: 'OpenAI GPT-4', value: 'openai' },
@@ -65,10 +66,18 @@ function normalizeSummarizeResponse(provider: string, response: any) {
 
 export const summarizeTextAction = createAction({
   name: 'summarize_text',
+  auth: edenAiAuth,
   displayName: 'Summarize Text',
   description: 'Extract key sentences and create summaries from long text passages using various AI providers.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Summarize a block of text into a configurable number of sentences via Eden AI, routed to a chosen provider. Use it to condense articles, documents, or other long-form text. Requires a provider and the text; language defaults to auto-detection. Read-only analysis that produces no persistent resource, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for text summarization.',
       required: true,
@@ -87,6 +96,7 @@ export const summarizeTextAction = createAction({
       defaultValue: 3,
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Text Language',
       description: 'The language of the input text. Choose "Auto Detection" if unsure.',
       required: false,
@@ -100,6 +110,7 @@ export const summarizeTextAction = createAction({
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -115,13 +126,13 @@ export const summarizeTextAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      text: z.string().min(1, 'Text to summarize is required'),
-      output_sentences: z.number().min(1).max(20).nullish(),
-      language: z.string().nullish(),
-      model: z.string().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      text: z.string().check(z.minLength(1, 'Text to summarize is required')),
+      output_sentences: z.nullish(z.number().check(z.minimum(1), z.maximum(20))),
+      language: z.nullish(z.string()),
+      model: z.nullish(z.string()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 
@@ -153,7 +164,7 @@ export const summarizeTextAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/text/summarize',
         body,

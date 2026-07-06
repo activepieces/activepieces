@@ -1,7 +1,5 @@
 # pieces-contentful
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-contentful` to build the library.
+Run `turbo run build --filter=@activepieces/piece-contentful` to build the library.

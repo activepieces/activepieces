@@ -7,6 +7,8 @@ export const createPerson = createAction({
 	name: 'create_person',
 	displayName: 'Create Person',
 	description: 'Create a new user/contact (name, email, invite options).',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new person in Teamwork as a standard user, collaborator, or contact (chosen via user type). Use to add a team member or external contact, optionally tied to a company and optionally sent an invite email. Requires first name, last name, email, and user type. Not idempotent — each call creates a new person.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		'first-name': Property.ShortText({
@@ -37,6 +39,7 @@ export const createPerson = createAction({
 			},
 		}),
 		'company-id': Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Company',
 			description: 'The company to associate the user with.',
 			required: false,
@@ -49,7 +52,7 @@ export const createPerson = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/companies.json',
 				});

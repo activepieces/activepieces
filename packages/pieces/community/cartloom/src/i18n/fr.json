@@ -45,10 +45,12 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The invoice ID for the order you want to retrieve": "L'ID de la facture pour la commande que vous souhaitez récupérer",
   "Enter the title of the discount": "Entrez le titre de la réduction",
   "Is this discount enabled?": "Cette réduction est-elle activée ?",
@@ -72,7 +74,7 @@
   "Select a date to end the search. Defaults to today.": "Sélectionnez une date pour terminer la recherche. Par défaut, aujourd'hui.",
   "Email address to search for.": "Adresse e-mail à rechercher.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Fixed Amount": "Montant fixe",
   "Percentage": "Pourcentage",
   "Selected Products": "Produits sélectionnés",
@@ -83,5 +85,9 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "TÊTE",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut"
 }

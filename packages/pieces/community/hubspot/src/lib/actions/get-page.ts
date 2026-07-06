@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../index';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { pageType } from '../common/props';
@@ -8,6 +8,12 @@ export const getPageAction = createAction({
 	name: 'get-page',
 	displayName: 'Get Page',
 	description: 'Gets landing/site page Details.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Fetch the details of a single HubSpot CMS page by its ID. Use when you already have a page ID and need its current data; the page type input selects whether to read a site page or a landing page. Read-only and repeatable.',
+		idempotent: true,
+	},
 	props: {
 		pageType: pageType,
 		pageId: Property.ShortText({

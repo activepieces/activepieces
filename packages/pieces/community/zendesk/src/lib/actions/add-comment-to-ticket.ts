@@ -18,6 +18,8 @@ export const addCommentToTicketAction = createAction({
   name: 'add-comment-to-ticket',
   displayName: 'Add Comment to Ticket',
   description: 'Append a public/private comment to a ticket.',
+  audience: 'both',
+  aiMetadata: { description: 'Appends a comment to an existing ticket identified by ticket ID, as either plain text or HTML, defaulting to public (visible to the requester) unless marked private. Use to reply on a ticket, post an internal note, or attach files via upload tokens. The author is the authenticated user unless an author email is supplied (resolved to a user ID). Not idempotent: each call adds a new comment.', idempotent: false },
   props: {
     ticket_id: ticketIdDropdown,
     comment_body: Property.LongText({
@@ -52,7 +54,7 @@ export const addCommentToTicketAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       ticket_id,
       comment_body,
@@ -71,15 +73,15 @@ export const addCommentToTicketAction = createAction({
       try {
         const response = await httpClient.sendRequest({
           url: `https://${
-            authentication.subdomain
+            authentication.props.subdomain
           }.zendesk.com/api/v2/users/search.json?query=email:${encodeURIComponent(
             email
           )}`,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: authentication.email + '/token',
-            password: authentication.token,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
           },
         });
 
@@ -129,15 +131,15 @@ export const addCommentToTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}.json`,
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
         body: {
           ticket,

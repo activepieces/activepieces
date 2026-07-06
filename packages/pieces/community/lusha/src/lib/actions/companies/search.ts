@@ -1,9 +1,13 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
+import { lushaAuth } from "../../..";
 
 export const searchCompanies = createAction({
   name: 'search_companies',
+  auth: lushaAuth,
   displayName: 'Search Companies',
   description: 'Search for companies with filters and pagination',
+  audience: 'both',
+  aiMetadata: { description: 'Search the Lusha prospecting database for companies matching a JSON filter (industry, size, location, contact countries, etc.), auto-paginating up to a result cap (max 10000). Use to discover company candidates before enriching them; the returned requestId and company IDs feed the Enrich Companies action. Read-only and idempotent for the same filter.', idempotent: true },
   props: {
     resultLimit: Property.Number({
       displayName: 'Maximum Results',
@@ -66,7 +70,7 @@ export const searchCompanies = createAction({
         method: 'POST',
         headers: {
           'x-app': 'activepieces',
-          'x-api-key': context.auth as string,
+          'x-api-key': context.auth.secret_text,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },

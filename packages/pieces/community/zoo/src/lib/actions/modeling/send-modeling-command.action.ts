@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const sendModelingCommandAction = createAction({
   name: 'send_modeling_command',
   displayName: 'Send Modeling Command',
   description: 'Send a command to the modeling WebSocket endpoint',
+  audience: 'both',
+  aiMetadata: { description: 'Resolve the Zoo modeling WebSocket endpoint and pair it with a modeling command for a client to dispatch over that connection. Use when you need the live WebSocket URL to drive geometry/CAD modeling commands; this only fetches the endpoint URL and echoes the command back, so it does not itself execute the command and is safe to call repeatedly.', idempotent: true },
   auth: zooAuth,
   // category: 'Modeling',
   props: {
@@ -21,7 +23,7 @@ export const sendModelingCommandAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/ws/modeling/commands',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
 

@@ -13,6 +13,12 @@ export const stripeCreateSubscription = createAction({
   displayName: 'Create Subscription',
   description:
     'Start a subscription for a customer with specified items/prices.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a recurring subscription for an existing customer against one or more price IDs, with optional collection method, trial period, and default payment method. Use to enroll a customer in recurring billing. Requires a customer ID and at least one price; not idempotent, as each call creates a separate subscription.',
+    idempotent: false,
+  },
   props: {
     customer: stripeCommon.customer,
     items: Property.Array({
@@ -110,7 +116,7 @@ export const stripeCreateSubscription = createAction({
       url: `${stripeCommon.baseUrl}/subscriptions`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

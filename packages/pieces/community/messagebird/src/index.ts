@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { sendSMSAction } from './lib/actions/send-sms.action';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { listMessages } from './lib/actions/list-messages';
 import { birdAuth, BirdAuthValue } from './lib/auth';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
@@ -18,12 +18,12 @@ export const messagebird = createPiece({
     listMessages,
     createCustomApiCallAction({
       baseUrl: (auth)=> {
-        return 'https://api.bird.com/workspaces/' + (auth as BirdAuthValue).workspaceId;
+        return auth ? 'https://api.bird.com/workspaces/' + (auth.props as BirdAuthValue).workspaceId : '';
       },
       auth: birdAuth,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${(auth as BirdAuthValue).apiKey}`,
+          Authorization: `Bearer ${(auth.props as BirdAuthValue).apiKey}`,
         };
       }
     }),

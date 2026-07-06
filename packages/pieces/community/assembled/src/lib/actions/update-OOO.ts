@@ -1,11 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { assembledAuth } from '../common/auth';
 
 export const updateOOO = createAction({
+  auth: assembledAuth,
   name: 'update_OOO',
   displayName: 'Update OOO Request',
   description: 'Updates an existing OOO request.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing time-off request identified by its OOO ID. Because Assembled has no update endpoint, this cancels the original request and creates a fresh one with the new details, so user ID and activity type ID are required. This mutates state and creates a new request each call, so it is not safe to repeat.', idempotent: false },
   props: {
     OOO_id: Property.ShortText({
       displayName: 'OOO ID',
@@ -54,7 +58,7 @@ export const updateOOO = createAction({
       // cancel the existing time off request
       console.log(`Canceling existing time off request: ${OOO_id}`);
       await assembledCommon.makeRequest(
-        context.auth as string,
+        context.auth.secret_text,
         HttpMethod.POST,
         `/time_off/${OOO_id}/cancel`
       );
@@ -72,7 +76,7 @@ export const updateOOO = createAction({
       if (reason) newRequestData['description'] = reason;
       
       const response = await assembledCommon.makeRequest(
-        context.auth as string,
+        context.auth.secret_text,
         HttpMethod.POST,
         '/time_off',
         newRequestData

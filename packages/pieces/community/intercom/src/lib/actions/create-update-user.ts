@@ -1,4 +1,4 @@
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
 import dayjs from 'dayjs';
@@ -8,6 +8,8 @@ export const createOrUpdateUserAction = createAction({
 	name: 'create-or-update-user',
 	displayName: 'Create/Update User',
 	description: 'Update a user within intercom given an email address.',
+	audience: 'both',
+	aiMetadata: { description: 'Upsert a user-role contact keyed by email: updates the existing user if one matches that email, otherwise creates a new one. Repeating with the same email and fields converges on the same record, so it is effectively idempotent. Use for users (signed-up contacts); for prospects use Create or Update Lead.', idempotent: true },
 	props: {
 		email: Property.ShortText({
 			displayName: 'Lookup Email',

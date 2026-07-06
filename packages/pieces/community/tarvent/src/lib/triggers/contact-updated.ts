@@ -1,5 +1,5 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 
@@ -8,6 +8,9 @@ export const contactUpdatedTrigger = createTrigger({
   name: 'tarvent_contact_updated',
   displayName: 'Contact Profile Updated',
   description: 'Triggers when a contact\'s profile is updated.',
+  aiMetadata: {
+    description: 'Fires when a contact\'s profile fields are updated in Tarvent. Represents a change to an existing contact\'s details.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

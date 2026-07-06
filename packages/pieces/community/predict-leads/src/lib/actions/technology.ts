@@ -4,7 +4,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { firstSeenAtFromField, firstSeenAtUntilField, lastSeenAtFromField, lastSeenAtUntilField, limitField, makeClient, pageField } from '../common';
-import { PredictLeadsAuth } from '../../index';
+import { PredictLeadsAuth } from '../auth';
 import { prepareQuery } from '../common/client';
 
 export const findTechnologiesByCompanyAction = createAction({
@@ -12,6 +12,8 @@ export const findTechnologiesByCompanyAction = createAction({
   name: 'predict-leads_find_technologies_by_domain',
   displayName: 'List Technologies by domain',
   description: 'Retrieve technologies used by specific company',
+  audience: 'both',
+  aiMetadata: { description: "Lists the technologies (technology detections) that a specific company uses, keyed by its domain in PredictLeads. Optional first/last-seen date filters scope detections to a time window. Use for technographic profiling of a known company; requires the company domain. Read-only and idempotent; supports pagination.", idempotent: true },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
@@ -35,7 +37,7 @@ export const findTechnologiesByCompanyAction = createAction({
     const limit = context.propsValue.limit ?? 1000;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {
@@ -62,6 +64,8 @@ export const findCompaniesByTechnologyIdAction = createAction({
   name: 'predict-leads_find_companies_by_technology_id',
   displayName: 'Retrieve companies by technology ID',
   description: 'Retrieves company using specific technology ID',
+  audience: 'both',
+  aiMetadata: { description: 'Discovers companies that use a given technology, keyed by that technology\'s ID in PredictLeads. Optional first/last-seen date filters scope results to a time window. Use to build a target list of companies on a specific tool/stack; requires the technology ID (not a name). Read-only and idempotent; supports pagination.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'ID',
@@ -85,7 +89,7 @@ export const findCompaniesByTechnologyIdAction = createAction({
     const limit = context.propsValue.limit ?? 1000;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {

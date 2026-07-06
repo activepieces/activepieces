@@ -1,13 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fetchContacts, fetchHouseholds, WEALTHBOX_API_BASE, handleApiError } from '../common';
+import { wealthboxAuth } from '../..';
 
 export const addHouseholdMember = createAction({
   name: 'add_household_member',
   displayName: 'Add Member to Household',
   description: 'Adds a member to an existing household. Link multiple contacts under one family unit.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds an existing contact as a member of an existing Wealthbox household, assigning a household role/title (Head, Spouse, Child, etc.). Use to attach a person to a household after both records exist; requires the household id, the contact id, and a title. Not idempotent: it appends the membership on each call.', idempotent: false },
+  auth: wealthboxAuth,
   props: {
     household_id: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Household',
       description: 'Select the household that will receive the new member',
       required: true,
@@ -16,7 +21,7 @@ export const addHouseholdMember = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const households = await fetchHouseholds(auth as unknown as string);
+          const households = await fetchHouseholds(auth.secret_text);
           return {
             options: households.map((household: any) => ({
               label: household.first_name || `Household ${household.id}`,
@@ -32,6 +37,7 @@ export const addHouseholdMember = createAction({
       }
     }),
     contact_id: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Contact',
       description: 'Select the contact to add to the household',
       required: true,
@@ -40,7 +46,7 @@ export const addHouseholdMember = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const contacts = await fetchContacts(auth as unknown as string, { active: true, order: 'recent' });
+          const contacts = await fetchContacts(auth.secret_text, { active: true, order: 'recent' });
           return {
             options: contacts.map((contact: any) => ({
               label: contact.name || `${contact.first_name} ${contact.last_name}`.trim() || `Contact ${contact.id}`,
@@ -93,7 +99,7 @@ export const addHouseholdMember = createAction({
         method: HttpMethod.POST,
         url: `${WEALTHBOX_API_BASE}/households/${propsValue.household_id}/members`,
         headers: {
-          'ACCESS_TOKEN': auth as unknown as string,
+          'ACCESS_TOKEN': auth.secret_text,
           'Content-Type': 'application/json'
         },
         body: requestBody

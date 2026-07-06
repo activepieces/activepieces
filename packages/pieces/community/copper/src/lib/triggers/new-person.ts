@@ -9,6 +9,10 @@ export const newPerson = createTrigger({
   name: 'newPerson',
   displayName: 'New Person',
   description: 'Triggers when a new person/contact is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new person (contact) is created in Copper CRM, via a Copper webhook. Emits the newly created person record.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

@@ -1,8 +1,7 @@
 import {
 	createTrigger,
 	TriggerStrategy,
-	Property,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { crispAuth } from '../common/auth';
 import { websiteIdProp } from '../common/props';
@@ -16,7 +15,7 @@ import {
 import dayjs from 'dayjs';
 import { crispApiCall } from '../common/client';
 
-const polling: Polling<PiecePropValueSchema<typeof crispAuth>, { websiteId: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof crispAuth>, { websiteId: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS, propsValue }) {
 		const websiteId = propsValue.websiteId;
@@ -60,6 +59,9 @@ export const newConversationTrigger = createTrigger({
 	name: 'new_conversation',
 	displayName: 'New Conversation Created',
 	description: 'Triggers when a new conversation is started.',
+	aiMetadata: {
+		description: 'Fires when a new conversation is started in the selected Crisp website inbox. Polls the conversations list on a schedule and emits each newly created conversation.',
+	},
 	props: {
 		websiteId: websiteIdProp,
 	},

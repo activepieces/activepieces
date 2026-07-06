@@ -1,0 +1,17 @@
+{
+  "Parse documents and extract data from PDFs, DOCX files, images, and webpages using Parser Expert's powerful API.": "Analizar documentos y extraer datos de PDFs, archivos DOCX, imágenes y páginas web usando la potente API de Anser Expert.",
+  "Your Parser Expert API key. You can find this in your dashboard under Integration -> New API Key.": "Su clave API de Anser Expert. Puede encontrar esto en su panel de control bajo Integración -> Nueva clave API.",
+  "Upload Document": "Subir Documento",
+  "Get Extracted Data": "Obtener datos extraídos",
+  "Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).": "Subir un documento o proporcionar una URL de página web para analizar. Formatos soportados: PDF, DOCX, Imagen, Archivo Txt (máximo 10 páginas por documento).",
+  "Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.": "Recuperar los datos extraídos usando el ID de analizador e ID de cubeta. El ID de analizador se devuelve cuando subes un documento.",
+  "Bucket ID": "ID de cubo",
+  "File": "Archivo",
+  "Webpage URL": "URL de página web",
+  "Parser ID": "Parser ID",
+  "The ID of the bucket where the data will be stored. You can find this in your dashboard under Manage Bucket.": "El ID del cubo donde se almacenarán los datos. Puede encontrarlo en su panel de control bajo Administrar cubeta.",
+  "The file to upload. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document). This will be ignored if webpage URL is provided.": "El archivo a subir. Formatos soportados: PDF, DOCX, Imagen, Archivo Txt (máximo 10 páginas por documento). Esto se ignorará si se proporciona la URL de la página web.",
+  "The URL of the webpage to extract content from. This will be ignored if file is provided.": "La URL de la página web desde la que extraer contenido. Esto se ignorará si se proporciona el archivo.",
+  "The ID of the parser. This is returned when content is uploaded.": "El ID del analizador. Esto se devuelve cuando se carga el contenido.",
+  "The ID of the bucket where the data is stored.": "El ID del cubo donde se almacenan los datos."
+}

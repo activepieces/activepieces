@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { upgradechatAuth } from '../..';
+import { upgradechatAuth } from '../auth';
 import { upgradechatCommon } from '../common/common';
 
 export const newPayment = createTrigger({
@@ -7,6 +7,10 @@ export const newPayment = createTrigger({
   name: 'newPayment',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is created',
+  aiMetadata: {
+    description:
+      'Fires when a payment is recorded in the Sperse/Upgrade.chat CRM (Payment.Created event), delivering the related contact, invoice, and transaction details. Use it to react to incoming payments, such as fulfilling orders or sending receipts.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -53,8 +57,8 @@ export const newPayment = createTrigger({
   async onEnable(context) {
     const webhookId = await upgradechatCommon.subscribeWebhook(
       'Payment.Created',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -69,8 +73,8 @@ export const newPayment = createTrigger({
 
     if (response !== null && response !== undefined) {
       await upgradechatCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

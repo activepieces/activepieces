@@ -8,6 +8,12 @@ export const addVideo = createAction({
   displayName: 'Add Video',
   description:
     'Adds a YouTube video URL as knowledge to the Aidbase knowledge base.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Registers a YouTube video as a new knowledge source in Aidbase so its content can later be trained on and answered from. Use when ingesting video content into the knowledge base; requires a YouTube video URL. Not idempotent: each call creates a new knowledge source even for the same URL.',
+    idempotent: false,
+  },
 
   props: {
     video_url: Property.ShortText({
@@ -21,6 +27,6 @@ export const addVideo = createAction({
     const { auth: apiKey, propsValue } = context;
     const { video_url } = propsValue;
 
-    return await aidbaseClient.addVideo(apiKey, video_url);
+    return await aidbaseClient.addVideo(apiKey.secret_text, video_url);
   },
 });

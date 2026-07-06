@@ -20,6 +20,8 @@ export const ContentfulCreateRecordAction = createAction({
   auth: ContentfulAuth,
   displayName: 'Create Record',
   description: 'Creates a new Contentful record for a given Content Model',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Contentful entry under a given content type, mapping field values to the specified locale, and optionally publishes it immediately after creation. Use to add a new record; not idempotent, since each call creates a distinct entry. Requires the content model (content type) ID and field values matching that model.', idempotent: false },
   props: {
     [PropertyKeys.LOCALE]: ContentfulProperty.Locale,
     [PropertyKeys.CONTENT_MODEL]: ContentfulProperty.ContentModel,

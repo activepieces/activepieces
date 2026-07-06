@@ -8,6 +8,8 @@ export const deleteRowAction = createAction({
   name: 'delete_row',
   displayName: 'Delete Row',
   description: 'Delete rows from an Oracle table',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes rows from an Oracle Database table that match the filter (WHERE) conditions. Use to remove specific records. The filter cannot be empty (use Run Custom SQL to delete all rows); not idempotent in effect — the first matching call removes rows, later calls find nothing to delete.', idempotent: false },
   props: {
     tableName: oracleDbProps.tableName(),
     filter: Property.Object({
@@ -35,7 +37,7 @@ export const deleteRowAction = createAction({
     }
 
     try {
-      const client = new OracleDbClient(context.auth);
+      const client = new OracleDbClient(context.auth.props);
       return await client.deleteRow(tableName, filter as Record<string, unknown>);
     } catch (error) {
       throw new Error(

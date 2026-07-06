@@ -5,6 +5,7 @@ import {
   tableDropdown,
   recordDropdown,
   createServiceNowClient,
+  servicenowAuth,
 } from '../common/props';
 
 const FindFileInputSchema = z
@@ -35,7 +36,14 @@ const FindFileInputSchema = z
 export const findFileAction = createAction({
   name: 'find_file',
   displayName: 'Find File',
+  auth: servicenowAuth,
   description: 'List or download file attachments from a record',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reads file attachments, operating in one of two modes set by Action Type: list the attachments on a record (by table and record sys_id, optionally filtered by filename) or download a single attachment\'s content by its attachment sys_id. Use list mode to discover attachment sys_ids, then download mode to fetch the bytes. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     action_type: Property.StaticDropdown({
       displayName: 'Action Type',

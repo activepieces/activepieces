@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -8,10 +8,13 @@ export const newTaskCreatedTrigger = createTrigger({
   name: 'new_task_created',
   displayName: 'New Task Created',
   description: 'Triggered when a new task is created.',
+  aiMetadata: {
+    description: 'Fires when a new task is created in the Kommo CRM account, emitting the full new task record (including its linked entity and due date). Represents a follow-up or to-do being scheduled against a lead, contact, or company.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const webhook = await makeRequest(
       { subdomain, apiToken },
@@ -27,7 +30,7 @@ export const newTaskCreatedTrigger = createTrigger({
   },
 
   async onDisable(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
     const webhookId = await context.store.get('webhookId');
 
     if (webhookId) {
@@ -41,7 +44,7 @@ export const newTaskCreatedTrigger = createTrigger({
   },
 
   async run(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const payload = context.payload.body as { task: { add: { id: number }[] } }
     const taskId = payload.task.add[0].id;

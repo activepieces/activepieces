@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -8,6 +8,12 @@ export const cancelRegistrationFolder = createAction({
   name: 'cancelRegistrationFolder',
   displayName: 'Annuler le dossier de formation',
   description: 'Annuler le dossier de formation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Cancels a training registration folder, recording a required cancellation reason code and an optional explanatory note. Not idempotent: it advances the folder's lifecycle to a canceled state and should be called once. Distinct from refusing a folder, which uses a separate action and reason set.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -16,6 +22,7 @@ export const cancelRegistrationFolder = createAction({
       required: true,
     }),
     code: Property.Dropdown({
+      auth: wedofAuth,
       displayName: "Raison de l'annulation du dossier de formation",
       description: "Sélectionner la raison de l'annulation",
       required: true,
@@ -35,7 +42,7 @@ export const cancelRegistrationFolder = createAction({
               wedofCommon.baseUrl + '/registrationFoldersReasons?type=canceled',
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': auth as string,
+              'X-Api-Key': auth.secret_text,
             },
           })
         ).body;
@@ -73,7 +80,7 @@ export const cancelRegistrationFolder = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

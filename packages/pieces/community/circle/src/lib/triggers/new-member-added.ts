@@ -1,4 +1,5 @@
 import {
+	AppConnectionValueForAuthProperty,
 	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
@@ -16,7 +17,7 @@ import { circleAuth } from '../common/auth';
 import dayjs from 'dayjs';
 import { ListCommunityMembersResponse } from '../common/types';
 
-const polling: Polling<PiecePropValueSchema<typeof circleAuth>, Record<string, any>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof circleAuth>, Record<string, any>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
 		let page = 1;
@@ -35,7 +36,7 @@ const polling: Polling<PiecePropValueSchema<typeof circleAuth>, Record<string, a
 					status: 'all',
 				},
 				headers: {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 					'Content-Type': 'application/json',
 				},
 			});
@@ -73,6 +74,9 @@ export const newMemberAdded = createTrigger({
 	name: 'new_member_added',
 	displayName: 'New Member Added',
 	description: 'Triggers when a new member is added to the community.',
+	aiMetadata: {
+		description: 'Fires when a new member joins the Circle community. Each event represents one newly added community member, across all spaces.',
+	},
 	props: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {

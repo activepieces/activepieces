@@ -8,8 +8,11 @@ export const countAction = createAction({
   auth: sendyAuth,
   displayName: 'Count Active Subscribers',
   description: 'Get the active subscriber count for a list',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the number of currently active (confirmed, non-unsubscribed) subscribers in a single Sendy list. Use to report list size or check growth; requires the target list. Read-only and idempotent.', idempotent: true },
   props: {
-    list: Property.Dropdown({
+    list: Property.Dropdown({ 
+      auth: sendyAuth,
       displayName: 'List',
       description: 'Select the list to get the status from',
       required: true,

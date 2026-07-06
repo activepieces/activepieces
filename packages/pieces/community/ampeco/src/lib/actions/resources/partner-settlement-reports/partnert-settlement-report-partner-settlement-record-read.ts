@@ -1,0 +1,55 @@
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParameters } from '../../../common/utils';
+import { PartnertSettlementReportPartnerSettlementRecordReadResponse } from '../../../models/responses';
+
+/**
+ * Generated from API version: 3.96.4
+ */
+
+// Endpoint: GET /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}/records/{PartnerSettlementRecord}
+
+export const partnertSettlementReportPartnerSettlementRecordReadAction = createAction({
+  auth: ampecoAuth,
+  name: 'partnertSettlementReportPartnerSettlementRecordRead',
+  displayName: 'Resources - Partner Settlement Reports - Read Partner Settlement Record',
+  description: 'Read Partner Settlement Record.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single settlement record from a partner settlement report, identified by the report id plus the record id. Read-only and idempotent. Use when you know both ids; to enumerate records use Listing Partner Settlement Records.', idempotent: true },
+  props: {
+        
+  partnerSettlementReport: Property.Number({
+    displayName: 'Partner Settlement Report',
+    description: '',
+    required: true,
+  }),
+
+  PartnerSettlementRecord: Property.Number({
+    displayName: 'Partner Settlement Record',
+    description: '',
+    required: true,
+  }),
+  },
+  async run(context): Promise<PartnertSettlementReportPartnerSettlementRecordReadResponse> {
+    try {
+      const url = processPathParameters('/public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}/records/{PartnerSettlementRecord}', context.propsValue);
+      
+      const queryParams = prepareQueryParams(context.propsValue, []);
+      
+      const body = undefined;
+
+      
+      return await makeAmpecoApiCall(
+        context.auth,
+        url,
+        HttpMethod.GET,
+        body,
+        queryParams
+      ) as PartnertSettlementReportPartnerSettlementRecordReadResponse;
+
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+});

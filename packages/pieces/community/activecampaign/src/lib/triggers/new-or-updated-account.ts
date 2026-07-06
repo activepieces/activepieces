@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../..';
+import { activeCampaignAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
@@ -9,10 +9,13 @@ export const newOrUpdatedAccountTrigger = createTrigger({
 	name: 'activecampaign_new_or_updated_account',
 	displayName: 'New or Updated Account',
 	description: 'Triggers when a new account is added or an existing account’s details are updated',
+	aiMetadata: {
+		description: 'Fires when an account (CRM organization/company) is created or when an existing account is updated, covering both add and update events. The payload identifies the event and, for updates, the changed fields.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		const res = await client.subscribeWebhook({
 			name: `Activepieces New Account Hook`,
 			url: context.webhookUrl,
@@ -29,7 +32,7 @@ export const newOrUpdatedAccountTrigger = createTrigger({
 			'activecampaign_new_or_updated_account',
 		);
 		if (webhook != null) {
-			const client = makeClient(context.auth);
+			const client = makeClient(context.auth.props);
 			await client.unsubscribeWebhook(webhook.webhook.id);
 		}
 	},

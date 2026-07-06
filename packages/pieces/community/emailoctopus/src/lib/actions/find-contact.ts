@@ -11,6 +11,8 @@ export const findContact = createAction({
     name: 'find_contact',
     displayName: 'Find Contact',
     description: 'Finds a contact by email address within a given list.',
+    audience: 'both',
+    aiMetadata: { description: 'Looks up a single contact by email address within a specific EmailOctopus list and reports whether it was found. Use to check existence or retrieve a contact before acting on it; a missing contact returns a found:false result rather than erroring. Requires the list id and the email. Read-only and idempotent.', idempotent: true },
     props: {
         list_id: emailOctopusProps.listId(),
         email_address: Property.ShortText({
@@ -22,7 +24,7 @@ export const findContact = createAction({
 
     async run(context) {
         const { list_id, email_address } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth);
+        const client = new EmailOctopusClient(context.auth.secret_text);
 
         const contactId = createHash('md5')
             .update(email_address.toLowerCase())

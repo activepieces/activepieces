@@ -6,12 +6,18 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooFindProduct = createAction({
   name: 'Find Product',
   displayName: 'Find Product',
   description: 'Find a Product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single product from a WooCommerce store by its numeric product ID. Use when an agent already has a product ID and needs the full product record (price, stock, status, etc.). Read-only and idempotent. Requires the exact product ID.',
+    idempotent: true,
+  },
   auth: wooAuth,
   props: {
     id: Property.ShortText({
@@ -21,7 +27,7 @@ export const wooFindProduct = createAction({
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
     const productId = configValue.propsValue['id'];
 
     const request: HttpRequest = {
@@ -29,8 +35,8 @@ export const wooFindProduct = createAction({
       url: `${trimmedBaseUrl}/wp-json/wc/v3/products/${productId}`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: configValue.auth.consumerKey,
-        password: configValue.auth.consumerSecret,
+        username: configValue.auth.props.consumerKey,
+        password: configValue.auth.props.consumerSecret,
       },
     };
 

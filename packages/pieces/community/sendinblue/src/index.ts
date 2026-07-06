@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createOrUpdateContact } from './lib/actions/create-or-update-contact';
 
 export const sendinblueAuth = PieceAuth.SecretText({
@@ -24,7 +24,7 @@ export const sendinblue = createPiece({
       baseUrl: () => 'https://api.sendinblue.com/v3',
       auth: sendinblueAuth,
       authMapping: async (auth) => ({
-        'api-key': auth as string,
+        'api-key': auth.secret_text,
       }),
     }),
   ],

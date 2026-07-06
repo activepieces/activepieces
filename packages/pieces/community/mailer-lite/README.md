@@ -1,7 +1,5 @@
 # pieces-mailer-lite
 
-This library was generated with [Nx](https://nx.dev).
+## Building
 
-## Running lint
-
-Run `nx lint pieces-mailer-lite` to execute the lint via [ESLint](https://eslint.org/).
+Run `turbo run build --filter=@activepieces/piece-mailer-lite` to build the library.

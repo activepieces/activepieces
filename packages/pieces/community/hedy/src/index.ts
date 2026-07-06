@@ -1,20 +1,31 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { hedyAuth } from './lib/auth';
 import {
   getSession,
   listSessions,
   getHighlight,
   listHighlights,
+  listSessionHighlights,
+  getTodo,
   listTodos,
   listSessionTodos,
   getTopic,
   listTopics,
   listTopicSessions,
+  createTopic,
+  updateTopic,
+  deleteTopic,
+  createContext,
+  getContext,
+  listContexts,
+  updateContext,
+  deleteContext,
 } from './lib/actions';
 import {
   sessionCreated,
   sessionEnded,
+  sessionExported,
   highlightCreated,
   todoExported,
 } from './lib/triggers';
@@ -32,11 +43,21 @@ export const hedy = createPiece({
     listSessions,
     getHighlight,
     listHighlights,
+    listSessionHighlights,
+    getTodo,
     listTodos,
     listSessionTodos,
     getTopic,
     listTopics,
     listTopicSessions,
+    createTopic,
+    updateTopic,
+    deleteTopic,
+    createContext,
+    getContext,
+    listContexts,
+    updateContext,
+    deleteContext,
   ],
-  triggers: [sessionCreated, sessionEnded, highlightCreated, todoExported],
+  triggers: [sessionCreated, sessionEnded, sessionExported, highlightCreated, todoExported],
 });

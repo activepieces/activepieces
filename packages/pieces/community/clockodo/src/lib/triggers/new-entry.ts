@@ -1,4 +1,4 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
@@ -6,23 +6,17 @@ import {
 } from '@activepieces/pieces-common';
 import { currentYear } from '../common';
 import { ClockodoClient } from '../common/client';
-import { clockodoAuth } from '../../';
+import { clockodoAuth } from '../auth';
 
-interface AuthData {
-  email: string;
-  token: string;
-  company_name: string;
-  company_email: string;
-}
-
-const polling: Polling<AuthData, unknown> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof clockodoAuth>, unknown> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth }) => {
+    const { email, token, company_name, company_email } = auth.props;
     const client = new ClockodoClient(
-      auth.email,
-      auth.token,
-      auth.company_name,
-      auth.company_email
+      email,
+      token,
+      company_name,
+      company_email
     );
     const time_since = currentYear() - 1 + '-01-01T00:00:00Z';
     const time_until = currentYear() + 1 + '-12-31T23:59:59Z';
@@ -48,6 +42,9 @@ export default createTrigger({
   name: 'new_entry',
   displayName: 'New Entry',
   description: 'Triggers when a new time entry is created',
+  aiMetadata: {
+    description: 'Fires when a new time entry is created in Clockodo, such as logged work time, a lump-sum service, or a recorded expense. Emits the newly created entry record, including details like the associated customer, project, service, duration, and billing information.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {},

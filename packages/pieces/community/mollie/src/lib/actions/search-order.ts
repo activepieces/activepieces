@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 
 export const mollieSearchOrder = createAction({
   auth: mollieAuth,
@@ -9,6 +9,12 @@ export const mollieSearchOrder = createAction({
   displayName: 'Search Order',
   description:
     '⚠️ We no longer recommend using the Orders API. Please refer to the Payments API instead.\n\nSearches for orders in Mollie',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists orders from the legacy Mollie Orders API, paginated with an optional cursor (from order ID), limit, sort direction, and profile filter. Use only when working with the deprecated Orders API; prefer Search Payment for current payment flows. Idempotent: read-only listing with no side effects.',
+    idempotent: true,
+  },
   props: {
     from: Property.ShortText({
       displayName: 'From Order ID',
@@ -50,7 +56,7 @@ export const mollieSearchOrder = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth;
 
     const queryParams: Record<string, string> = {};
 

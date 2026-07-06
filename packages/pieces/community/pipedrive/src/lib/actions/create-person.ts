@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { personCommonProps } from '../common/props';
 import {
@@ -9,13 +9,19 @@ import {
 } from '../common';
 import { GetField, GetPersonResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const createPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-person',
 	displayName: 'Create Person',
 	description: 'Creates a new person.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a new person (contact) with a name, optional emails/phones, owner, organization, and custom fields. Provide either a single Name or First/Last Name, not both. Use to add a contact (use Update Person to edit an existing one, or Find Person to check for one first). Not idempotent: each call creates a separate person, so guard against duplicates.',
+		idempotent: false,
+	},
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

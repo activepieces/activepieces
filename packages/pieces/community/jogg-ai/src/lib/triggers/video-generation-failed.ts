@@ -10,6 +10,10 @@ export const videoGenerationFailed = createTrigger({
   name: 'videoGenerationFailed',
   displayName: 'Video Generation Failed',
   description: 'Fires when video generation fails',
+  aiMetadata: {
+    description:
+      'Fires when a JoggAI video generation job fails, delivering the affected project_id and an error message. Use to detect and handle failed avatar or template video generations.',
+  },
   auth: joggAiAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},
@@ -32,7 +36,7 @@ export const videoGenerationFailed = createTrigger({
         method: HttpMethod.POST,
         url: 'https://api.jogg.ai/v1/webhook/endpoint',
         headers: {
-          'x-api-key': context.auth,
+          'x-api-key': context.auth.secret_text,
           'Content-Type': 'application/json',
         },
         body: {
@@ -89,7 +93,7 @@ export const videoGenerationFailed = createTrigger({
           method: HttpMethod.DELETE,
           url: `https://api.jogg.ai/v1/webhook/endpoint/${webhookInfo.endpoint_id}`,
           headers: {
-            'x-api-key': context.auth,
+            'x-api-key': context.auth.secret_text,
           },
         });
       }

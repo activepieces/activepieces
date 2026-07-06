@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { dumplingAuth } from '../../index';
+import { dumplingAuth } from '../auth';
 
 export const searchNews = createAction({
 	name: 'search_news',
 	auth: dumplingAuth,
 	displayName: 'Search News',
 	description: 'Search for news articles using Google News.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Google News via Dumpling AI for a query, with optional country/location/language and date-range filtering plus pagination. Choose this over the general web search when the agent needs news articles specifically. Not idempotent: each call is a fresh billed search reflecting live news at request time.', idempotent: false },
 	props: {
 		query: Property.ShortText({
 			displayName: 'Search Query',
@@ -68,7 +70,7 @@ export const searchNews = createAction({
 			url: 'https://app.dumplingai.com/api/v1/search-news',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { redditAuth } from '../../index';
+import { redditAuth } from '../auth';
 
 export const editRedditComment = createAction({
   auth: redditAuth,
   name: 'editRedditComment',
   displayName: 'Edit Comment',
   description: 'Edits the content of an existing Reddit comment.',
+  audience: 'both',
+  aiMetadata: { description: 'Replaces the text of an existing comment owned by the authenticated account, identified by comment ID. Use it to update a comment you previously posted. Requires the comment ID (with or without the t1_ prefix) and the new content. Idempotent — repeating with the same content leaves the comment in the same state.', idempotent: true },
   props: {
     comment_id: Property.ShortText({
       displayName: 'Comment ID',

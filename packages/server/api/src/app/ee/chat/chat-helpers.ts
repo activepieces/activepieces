@@ -1,0 +1,96 @@
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetProviderConfigResponse, Project, ProjectType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { aiProviderService } from '../../ai/ai-provider-service'
+import { repoFactory } from '../../core/db/repo-factory'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { ChatConversationEntity } from './chat-conversation-entity'
+
+const STREAMING_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
+const FAST_TIER_ID = 'fast'
+
+// Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
+// eval endpoints and the regular chat path can tell them apart from real user conversations.
+export const EVAL_CONVERSATION_ID_PREFIX = 'evalconv'
+
+export function isEvalConversationId(id: string): boolean {
+    return id.startsWith(EVAL_CONVERSATION_ID_PREFIX)
+}
+
+const conversationRepo = repoFactory(ChatConversationEntity)
+
+async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }) {
+    const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
+    if (isNil(conversation)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: id, entityType: 'ChatConversation' },
+        })
+    }
+    if (conversation.status === ChatConversationStatus.STREAMING) {
+        const msSinceUpdate = Date.now() - new Date(conversation.updated).getTime()
+        if (msSinceUpdate > STREAMING_STALENESS_TIMEOUT_MS) {
+            await conversationRepo().update(id, { status: ChatConversationStatus.IDLE })
+            conversation.status = ChatConversationStatus.IDLE
+            log?.warn({ conversation: { id }, stuckForMs: msSinceUpdate }, '[chatHelpers] Recovered stale STREAMING conversation to IDLE')
+        }
+    }
+    return conversation
+}
+
+async function getUserProjects({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<Project[]> {
+    const users = userService(log)
+    const user = await users.getOneOrFail({ id: userId })
+    const allProjects = await projectService(log).getAllForUser({
+        platformId,
+        userId,
+        isPrivileged: users.isUserPrivileged(user),
+    })
+    return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
+}
+
+async function resolveChatProvider({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
+    if (isNil(chatProvider)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: platformId, entityType: 'ChatAiProvider' },
+        })
+    }
+    return chatProvider
+}
+
+function resolveTier({ tierId }: { tierId: string | null }) {
+    if (tierId) {
+        const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
+        if (tier) return tier
+    }
+    const defaultTier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === DEFAULT_CHAT_TIER_ID)
+    return defaultTier ?? ACTIVEPIECES_CHAT_TIERS[0]
+}
+
+function resolveModelIdForProvider({ tier, provider }: { tier: { modelId: string }, provider: AIProviderName }): string {
+    const openrouterModelId = tier.modelId
+    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
+        return openrouterModelId
+    }
+    return openrouterModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
+}
+
+// Round one of the chat turn runs on the fastest tier so its first token streams in ~400ms
+// (the opener + first discovery) — fast enough to replace the bare "Thinking…" gap —
+// regardless of which tier the user picked for the main turn.
+function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
+    return resolveModelIdForProvider({ tier: resolveTier({ tierId: FAST_TIER_ID }), provider })
+}
+
+export const chatHelpers = {
+    getConversationOrThrow,
+    getUserProjects,
+    resolveChatProvider,
+    resolveTier,
+    resolveModelIdForProvider,
+    resolveFastModelId,
+    conversationRepo,
+}

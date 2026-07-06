@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
+import { wedofAuth } from '../../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
@@ -9,6 +9,12 @@ export const updateCompletionRate = createAction({
   displayName: "Mettre à jour l'assiduité d'un apprenant",
   description:
     "Mettre à jour le taux d'avancement en % d'assiduité d'un apprenant pour un Dossier de formation donné.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Sets a learner's attendance/progress completion rate (an integer 0-100 percent) on a single training registration folder. Idempotent: it overwrites the stored rate, so repeating with the same value is safe. Only valid while the folder is in the 'in training' or 'terminated' state. Use this when only the completion rate needs changing; use the general update-folder action for multiple fields.",
+    idempotent: true,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -36,7 +42,7 @@ export const updateCompletionRate = createAction({
           context.propsValue.externalId,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

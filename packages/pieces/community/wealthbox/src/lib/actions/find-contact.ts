@@ -1,11 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fetchContacts, fetchTags, WEALTHBOX_API_BASE, handleApiError } from '../common';
+import { wealthboxAuth } from '../..';
 
 export const findContact = createAction({
   name: 'find_contact',
+  auth: wealthboxAuth,
   displayName: 'Find Contact',
   description: 'Locate a contact by name, email, phone, or advanced filters. Comprehensive contact search with dynamic filtering options.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Wealthbox contacts by name, email, phone, external id, or filters (type, tags, active status, update date). Supplying a Contact ID alone fetches that single record directly; otherwise it runs a filtered list query and can return all matches or just the first. Use to look up an existing contact or resolve its id before another call; at least one criterion is required. Idempotent: read-only, no data is modified.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -87,6 +91,7 @@ export const findContact = createAction({
     }),
 
     tags_filter: Property.MultiSelectDropdown({
+      auth: wealthboxAuth,
       displayName: 'Tags Filter',
       description: 'Filter contacts by tags',
       required: false,
@@ -101,7 +106,7 @@ export const findContact = createAction({
         }
 
         try {
-          const availableTags = await fetchTags(auth as unknown as string, 'Contact');
+          const availableTags = await fetchTags(auth.secret_text, 'Contact');
           const tagOptions = availableTags.map((tag: any) => ({
             label: tag.name,
             value: tag.name
@@ -221,7 +226,7 @@ export const findContact = createAction({
           method: HttpMethod.GET,
           url: `${WEALTHBOX_API_BASE}/contacts/${propsValue.contact_id}`,
           headers: {
-            'ACCESS_TOKEN': auth as unknown as string,
+            'ACCESS_TOKEN': auth.secret_text,
             'Accept': 'application/json'
           }
         });
@@ -292,7 +297,7 @@ export const findContact = createAction({
         method: HttpMethod.GET,
         url: url,
         headers: {
-          'ACCESS_TOKEN': auth as unknown as string,
+          'ACCESS_TOKEN': auth.secret_text,
           'Accept': 'application/json'
         }
       });

@@ -1,4 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from './lib/common/microsoft-cloud';
 import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { createContact } from './lib/actions/create-contact';
 import { createContactFolder } from './lib/actions/create-contact-folder';
@@ -27,7 +28,10 @@ export const microsoft365People = createPiece({
     // Custom API call
     createCustomApiCallAction({
 			auth: microsoft365PeopleAuth,
-			baseUrl: () => 'https://graph.microsoft.com/v1.0/',
+			baseUrl: (auth) => {
+				const cloud = getMicrosoftCloudFromAuth(auth as OAuth2PropertyValue);
+				return getGraphBaseUrl(cloud) + '/v1.0/';
+			},
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),

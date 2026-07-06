@@ -1,5 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
+  AiMetadata,
   createTrigger,
   Property,
   Trigger,
@@ -126,12 +127,13 @@ export enum SessionsUsWebhookTrigger {
 
 export function createSessionsUsWebhookTrigger(
   data: CreateWebhookTriggerDto
-): Trigger {
+) {
   return createTrigger({
     auth: sessionAuth,
     name: data.name,
     displayName: data.displayName,
     description: data.description,
+    aiMetadata: data.aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     sampleData: data.sampleData ?? {},
     props: {
@@ -140,7 +142,7 @@ export function createSessionsUsWebhookTrigger(
     async onEnable({ auth, store, webhookUrl, propsValue }) {
       const webhookId = await createWebhook(
         data.trigger,
-        auth,
+        auth.secret_text,
         webhookUrl,
         propsValue.permission
       );
@@ -154,7 +156,7 @@ export function createSessionsUsWebhookTrigger(
         webhookId: string;
       } | null = await store.get(data.storeKey);
       if (webhookId) {
-        await deleteWebhook(webhookId.webhookId, auth);
+        await deleteWebhook(webhookId.webhookId, auth.secret_text);
       }
     },
     async run({ payload }) {
@@ -168,6 +170,7 @@ export interface CreateWebhookTriggerDto {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: AiMetadata;
   sampleData?: unknown;
   trigger: SessionsUsWebhookTrigger;
   storeKey: string;

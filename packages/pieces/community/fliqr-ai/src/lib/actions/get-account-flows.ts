@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { fliqrConfig } from '../common/models';
-import { fliqrAuth } from '../../index';
+import { fliqrAuth } from '../auth';
 
 export const getFliqrAccountFlows = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -9,13 +9,15 @@ export const getFliqrAccountFlows = createAction({
   auth: fliqrAuth,
   displayName: 'Get Account Flows',
   description: 'Get all flows from the account',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all chatbot flows configured on the authenticated Fliqr AI account. Use to discover the available flows (e.g. to find a flow id or confirm what automations exist) before referencing or triggering one. Read-only; repeating the call is safe.', idempotent: true },
   props: {},
   async run(context) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
       url: `${fliqrConfig.baseUrl}/accounts/flows`,
       headers: {
-        [fliqrConfig.accessTokenHeaderKey]: context.auth,
+        [fliqrConfig.accessTokenHeaderKey]: context.auth.secret_text,
       }
     });
     return res.body;

@@ -4,6 +4,7 @@ import { famulorCommon } from '../common';
 
 const inboundAssistantDropdown = () =>
   Property.Dropdown({
+    auth: famulorAuth,
     displayName: 'Inbound Assistant',
     description: 'Select an inbound assistant to receive webhook notifications for',
     required: true,
@@ -20,7 +21,7 @@ const inboundAssistantDropdown = () =>
       try {
         // Filter for inbound assistants only
         const assistants = await famulorCommon.listAllAssistants({ 
-          auth: auth as string, 
+          auth: auth.secret_text, 
           type: 'inbound',
           per_page: 100
         });
@@ -53,7 +54,10 @@ export const inboundCall = createTrigger({
     auth: famulorAuth,
     name: 'inboundCall',
     displayName: 'Inbound Call Received',
-    description: 'Triggers when an inbound call is received by your AI assistant. Webhook must be enabled for the selected assistant.',
+    description: 'Triggers when an inbound call is received by your AI assistant.',
+    aiMetadata: {
+        description: 'Fires at the moment an inbound phone call reaches the selected Famulor inbound assistant, delivering an early webhook notification before the call completes. The payload includes the assistant ID, the customer (caller) and assistant phone numbers, a call ID, a timestamp, the call status (e.g. incoming), and any known caller variables. Use to react to an incoming call as it starts, such as looking up the caller or logging the contact.',
+    },
     props: {
         assistant_id: inboundAssistantDropdown(),
     },
@@ -72,14 +76,14 @@ export const inboundCall = createTrigger({
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         await famulorCommon.enableInboundWebhook({
-            auth: context.auth as string,
+            auth: context.auth.secret_text,
             assistant_id: context.propsValue.assistant_id as number,
             webhook_url: context.webhookUrl,
         });
     },
     async onDisable(context) {
         await famulorCommon.disableInboundWebhook({
-            auth: context.auth as string,
+            auth: context.auth.secret_text,
             assistant_id: context.propsValue.assistant_id as number,
         });
     },

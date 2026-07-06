@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
-import { acumbamailAuth } from '../../';
+import { acumbamailAuth } from '../auth';
 import { acumbamailCommon } from '../common';
 
 export const createSubscriberListAction = createAction({
@@ -13,6 +13,12 @@ export const createSubscriberListAction = createAction({
   name: 'acumbamail_create_subscriber_list',
   displayName: 'Create Subscriber List',
   description: 'Creates a new subscriber list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Acumbamail subscriber list, requiring a list name and the sender email shown to subscribers when campaigns go out (company name, address, and phone are optional). Use when a contact list does not yet exist and must be provisioned before adding subscribers or sending campaigns. Not idempotent: each call creates a separate list even with the same name.',
+    idempotent: false,
+  },
   props: {
     listname: Property.ShortText({
       displayName: 'List Name',
@@ -42,7 +48,7 @@ export const createSubscriberListAction = createAction({
       context.propsValue;
 
     const form = new FormData();
-    form.append('auth_token', context.auth);
+    form.append('auth_token', context.auth.secret_text);
     form.append('name', listname);
     form.append('sender_email', sender_email);
     form.append('company', company ?? '');

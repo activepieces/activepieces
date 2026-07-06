@@ -3,8 +3,9 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { userId } from '../common/props';
+import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 
 export const newMentionInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
@@ -12,8 +13,12 @@ export const newMentionInDirectMessageTrigger = createTrigger({
   displayName: 'New Mention in Direct Message',
   description:
     'Triggers when a username is mentioned in a direct message channel.',
+  aiMetadata: {
+    description:
+      'Fires when the configured user is @-mentioned in a direct message (im channel). Only messages in DM channels that contain the mention token for the selected user fire; bot messages and the user\'s own messages can be optionally ignored. The event payload is the Slack message event including its text, channel, and sender.',
+  },
   props: {
-    user: userId,
+    user: userId(true),
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages ?',
       required: true,
@@ -29,8 +34,8 @@ export const newMentionInDirectMessageTrigger = createTrigger({
   sampleData: undefined,
   onEnable: async (context) => {
     // Older OAuth2 has team_id, newer has team.id
-    const teamId =
-      context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+  		const teamId = await getTeamId(context.auth as SlackAuthValue);
+
     context.app.createListeners({
       events: ['message'],
       identifierValue: teamId,
@@ -42,7 +47,7 @@ export const newMentionInDirectMessageTrigger = createTrigger({
 
   async run(context) {
     const payloadBody = context.payload.body as PayloadBody;
-    const userId = context.auth.data['authed_user']?.id;
+    const userId = await getUserId(context.auth as SlackAuthValue)
 
     if (payloadBody.event.channel_type !== 'im') {
       return [];

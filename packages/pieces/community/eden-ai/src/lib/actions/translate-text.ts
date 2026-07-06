@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
+import { edenAiAuth } from '../..';
 
 const TRANSLATION_PROVIDERS = [
   { label: 'Amazon', value: 'amazon' },
@@ -186,10 +187,18 @@ function normalizeTranslationResponse(provider: string, response: any) {
 
 export const translateTextAction = createAction({
   name: 'translate_text',
+  auth: edenAiAuth,
   displayName: 'Translate Text',
   description: 'Translate text into different languages using Eden AI. Supports multiple providers, languages, and models.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Translate a text into a target language via Eden AI, routed to a chosen provider. Use it to convert text between languages; the source language can be set explicitly or left on auto-detection. Requires a provider, the text, and a target language. Read-only transform with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for text translation.',
       required: true,
@@ -202,6 +211,7 @@ export const translateTextAction = createAction({
       required: true,
     }),
     source_language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Source Language',
       description: 'The language of the input text. Choose "Auto Detection" to automatically detect the language.',
       required: false,
@@ -210,6 +220,7 @@ export const translateTextAction = createAction({
       defaultValue: 'auto-detect',
     }),
     target_language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Target Language',
       description: 'The language to translate the text into.',
       required: true,
@@ -222,6 +233,7 @@ export const translateTextAction = createAction({
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -237,13 +249,13 @@ export const translateTextAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      text: z.string().min(1, 'Text is required'),
-      source_language: z.string().nullish(),
-      target_language: z.string().min(1, 'Target language is required'),
-      model: z.string().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      text: z.string().check(z.minLength(1, 'Text is required')),
+      source_language: z.nullish(z.string()),
+      target_language: z.string().check(z.minLength(1, 'Target language is required')),
+      model: z.nullish(z.string()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 
@@ -277,7 +289,7 @@ export const translateTextAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/translation/automatic_translation',
         body,

@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { beamerAuth } from '../../index';
+import { beamerAuth } from '../auth';
 import { beamerCommon } from '../common';
 import {
   HttpMethod,
@@ -12,6 +12,11 @@ export const createComment = createAction({
   name: 'create_new_comment',
   displayName: 'Create a new comment',
   description: 'Create a new comment for a Feature request',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts a comment on an existing Beamer feature request, identified by its numeric feature request ID. Optionally attributes the comment to a user via user ID or email. Use to add discussion or replies to a feedback item. Appends a new comment on each call (not idempotent).',
+    idempotent: false,
+  },
   props: {
     featureRequestId: Property.Number({
       displayName: 'ID',
@@ -35,7 +40,7 @@ export const createComment = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,

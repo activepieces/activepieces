@@ -1,5 +1,5 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 
@@ -8,6 +8,9 @@ export const formSubmittedTrigger = createTrigger({
   name: 'tarvent_form_submitted',
   displayName: 'Form Submission Received',
   description: 'Triggers when a known or unknown contact submits a sign up, profile update, or other form.',
+  aiMetadata: {
+    description: 'Fires when a known or unknown contact submits a Tarvent form (sign-up, profile update, or other). Represents a form submission and its captured data.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

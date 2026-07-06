@@ -6,9 +6,12 @@ export const sendCards = createAction({
   name: 'send_handwritten_cards',
   displayName: 'Send Cards',
   description: 'Automatically send handwritten cards.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a physical handwritten card via Thankster, using one of the account\'s saved card templates, to a recipient mailing address. Choose this to mail a real card (thank-you, greeting, marketing) from an automation. Requires a valid template ID plus sender and recipient name/address; the optional text and image-URL fields override the template\'s corresponding text/image boxes, otherwise the template\'s own content is used. Not idempotent — each call places a new card order.', idempotent: false },
   auth: thanksterAuth,
   props: {
     templateID: Property.Dropdown({
+      auth: thanksterAuth,
       displayName: 'Select a Thankster Template',
       description: 'If you are passing text or images from prior steps in this step into the Thankster template chosen above, be sure to select a template that has corresponding text or images boxes to pass it into. Either way, the font and style of your cards will be taken from the template you select.',
       required: true,
@@ -27,7 +30,7 @@ export const sendCards = createAction({
           url: 'https://app.thankster.com/api/v1/api_projects/listUserProjects',
           headers: {
             partner: 'partner_active_pieces',
-            userApiKey: auth as string
+            userApiKey: auth.secret_text
           },
         });
 
@@ -197,7 +200,7 @@ export const sendCards = createAction({
       url: 'https://app.thankster.com/api/v1/api_projects/createQuickProject',
       headers: {
         partner: 'partner_active_pieces',
-        userApiKey: context.auth as string
+        userApiKey: context.auth.secret_text
       },
       body: {
         templateID: context.propsValue.templateID,

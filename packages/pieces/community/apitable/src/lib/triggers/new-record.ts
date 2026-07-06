@@ -1,6 +1,6 @@
-import { APITableAuth } from '../../index';
+import { APITableAuth } from '../auth';
 import {
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -13,13 +13,13 @@ import { APITableCommon, makeClient } from '../common';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof APITableAuth>,
+   AppConnectionValueForAuthProperty<typeof APITableAuth>,
   { datasheet_id: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue: { datasheet_id }, lastFetchEpochMS }) => {
     const client = makeClient(
-      auth as PiecePropValueSchema<typeof APITableAuth>
+      auth.props
     );
     const records = await client.listRecords(datasheet_id as string, {
       filterByFormula: `CREATED_TIME() > ${
@@ -43,6 +43,10 @@ export const newRecordTrigger = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to a datasheet.',
+  aiMetadata: {
+    description:
+      'Fires when a new record is created in the selected AITable datasheet. Polls by creation time, so each newly added row in the chosen space and datasheet surfaces as one event.',
+  },
   props: {
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,

@@ -1,11 +1,14 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { instantlyAiAuth } from '../../index';
+import { instantlyAiAuth } from '../auth';
 
 export const campaignStatusChangedTrigger = createTrigger({
   auth: instantlyAiAuth,
   name: 'campaign_status_changed',
   displayName: 'Campaign Status Changed',
   description: 'Triggers when a campaign status changes (completed, paused, etc.).',
+  aiMetadata: {
+    description: 'Fires when an Instantly campaign changes status (for example completed or paused), delivering the campaign event details. Requires a webhook to be configured manually in Instantly settings pointing at the provided webhook URL.',
+  },
   props: {
     md: Property.MarkDown({
       value: `

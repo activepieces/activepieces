@@ -2,8 +2,8 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
-import { zagomailAuth } from '../../index';
+import { isNil } from '@activepieces/pieces-framework';
+import { zagomailAuth } from '../auth';
 import { zagoMailApiService, } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';
 
@@ -14,6 +14,9 @@ export const addedSubscriber = createTrigger({
   name: 'addedSubscriber',
   displayName: 'Subscriber Added',
   description: 'Triggers when subscriber is signed up or confirmed.',
+  aiMetadata: {
+    description: 'Fires when a subscriber is activated in Zagomail (signed up and confirmed), representing a new confirmed contact joining a list. The event payload includes the subscriber UID, list UID, email, status, and custom fields.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -30,7 +33,7 @@ export const addedSubscriber = createTrigger({
   },
   async onEnable(context) {
     const response = (await zagoMailApiService.createWebhook(
-      context.auth,
+      context.auth.secret_text,
       context.webhookUrl,
       'subscriber-activate'
     )) as WebhookResponse;
@@ -42,7 +45,7 @@ export const addedSubscriber = createTrigger({
   async onDisable(context) {
     const webhook = await context.store.get<StoredWebhookId>(CACHE_KEY);
     if (!isNil(webhook) && !isNil(webhook.webhookId)) {
-      await zagoMailApiService.deleteWebhook(context.auth, webhook.webhookId);
+      await zagoMailApiService.deleteWebhook(context.auth.secret_text, webhook.webhookId);
     }
   },
   async run(context) {

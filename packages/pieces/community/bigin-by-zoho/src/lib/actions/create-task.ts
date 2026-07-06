@@ -1,4 +1,4 @@
-import { biginAuth } from '../../index';
+import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
 import { API_ENDPOINTS } from '../common/constants';
@@ -10,6 +10,8 @@ export const createTask = createAction({
   name: 'createTask',
   displayName: 'Create Task',
   description: 'Creates a new Task',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new task in Bigin CRM with a subject plus optional due date, owner, priority, status, description, and tags. Supports optional recurrence (daily/weekly/monthly/yearly RRULE) and reminders, and can be linked to a related Contact, Pipeline, or Company record. Use to schedule follow-up work. Not idempotent: each call creates a new task.', idempotent: false },
   props: {
     subject: Property.ShortText({
       displayName: 'Subject',
@@ -28,6 +30,7 @@ export const createTask = createAction({
       required: false,
     }),
     recurringInfo: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Recurring Info',
       description:
         'Please note: Due Date must be set above for recurring tasks',
@@ -118,6 +121,7 @@ export const createTask = createAction({
     }),
     reminderInfo: Property.DynamicProperties({
       displayName: 'Reminder Information',
+      auth: biginAuth,
       refreshers: ['enableReminder'],
       required: false,
       props: (propsValue, ctx): any => {
@@ -192,6 +196,7 @@ export const createTask = createAction({
       },
     }),
     relatedTo: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Related To',
       description: 'Select the specific record the task is related to.',
       required: false,
@@ -201,7 +206,8 @@ export const createTask = createAction({
         if (!auth) return handleDropdownError('Please connect first');
         if (!relatedModule) return { options: [] };
 
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const fetchMap: Record<string, () => Promise<any>> = {
           Contacts: () =>
@@ -263,7 +269,8 @@ export const createTask = createAction({
     tag: tagsDropdown('Tasks'),
   },
   async run({ auth, propsValue }) {
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
 
     const taskData: any = {
       Subject: propsValue.subject,

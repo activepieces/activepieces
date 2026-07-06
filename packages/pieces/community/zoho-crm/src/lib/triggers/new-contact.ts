@@ -7,12 +7,13 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   OAuth2PropertyValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { zohoCrmAuth } from '../..';
+import { zohoCrmAuth } from '../auth';
 
 export const newContact = createTrigger({
   auth: zohoCrmAuth,
@@ -20,6 +21,9 @@ export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact record is created in the connected Zoho CRM account, emitting that contact. Polls the Contacts module ordered by creation time, so it represents newly added contacts.',
+  },
   sampleData: {
     Owner: {
       name: 'Activepieces Apps',
@@ -122,7 +126,7 @@ export const newContact = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, unknown> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof zohoCrmAuth>, unknown> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
     const response = await httpClient.sendRequest<{

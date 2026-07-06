@@ -4,20 +4,27 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
-import { areSheetIdsValid } from '../common/common';
+import { areSheetIdsValid, getAccessToken } from '../common/common';
+import { exportSheetActionOutputSchema } from '../output-schemas';
 
 export const exportSheetAction = createAction({
   name: 'export_sheet',
-  displayName: 'Export Sheet',
-  description: 'Export a Google Sheets tab to CSV or TSV format.',
+  displayName: 'Export Worksheet',
+  description: 'Download a worksheet as a CSV or TSV file.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Exports a worksheet as a CSV or TSV file, returned either as a file reference or as raw text. Use when an agent needs the sheet contents in a flat delimited format for downstream processing or attachment. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: googleSheetsAuth,
   props: {
     ...commonProps,
     format: Property.StaticDropdown({
       displayName: 'Export Format',
-      description: 'The format to export the sheet to.',
+      description: 'Select the file type to export the sheet as.',
       required: true,
       defaultValue: 'csv',
       options: {
@@ -35,6 +42,7 @@ export const exportSheetAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: exportSheetActionOutputSchema,
   async run({ propsValue, auth, files }) {
     const { spreadsheetId, sheetId, format, returnAsText } = propsValue;
 
@@ -53,9 +61,10 @@ export const exportSheetAction = createAction({
         url: exportUrl,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
         responseType: 'arraybuffer',
+        followRedirects: true,
       });
 
       if (returnAsText) {

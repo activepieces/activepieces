@@ -1,18 +1,9 @@
-import { 
-    ActivepiecesError, 
-    ErrorCode, 
-    FileCompression, 
-    FileType, 
-    FlowVersion, 
-    isNil,
-    spreadIfDefined,
-} from '@activepieces/shared'
+import { spreadIfDefined } from '@activepieces/core-utils'
+import { FileCompression, FileType, FlowVersion } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../file/file.service'
-import { system } from '../../helper/system/system'
 
-const log = system.globalLogger()
-
-export const flowVersionBackupService = {
+export const flowVersionBackupService = (log: FastifyBaseLogger) => ({
     async store(flowVersion: FlowVersion): Promise<string> {
         const data = Buffer.from(JSON.stringify(flowVersion))
         const file = await fileService(log).save({
@@ -27,26 +18,18 @@ export const flowVersionBackupService = {
         })
 
         log.info({
-            flowVersionId: flowVersion.id,
+            flowVersion: { id: flowVersion.id },
             schemaVersion: flowVersion.schemaVersion,
         }, 'Stored backup version for flow version')
 
         return file.id
     },
     
-    async get(params: GetBackupVersionParams): Promise<FlowVersion> {
+    async get(params: GetBackupVersionParams): Promise<FlowVersion | null> {
         const { flowVersion, schemaVersion } = params
         const backupFileId = flowVersion.backupFiles?.[schemaVersion]
-        
-        if (isNil(backupFileId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityId: `${flowVersion.id}:${schemaVersion}`,
-                    entityType: 'flow_version',
-                    message: `No backup found for schema version ${schemaVersion}`,
-                },
-            })
+        if (!backupFileId) {
+            return null
         }
         
         const fileData = await fileService(log).getDataOrThrow({
@@ -57,12 +40,12 @@ export const flowVersionBackupService = {
         const backupFlowVersion: FlowVersion = JSON.parse(fileData.data.toString('utf-8'))
 
         log.info({
-            flowVersionId: flowVersion.id,
+            flowVersion: { id: flowVersion.id },
             schemaVersion,
         }, 'Backup version retrieved for flow version')
         return backupFlowVersion
     },
-}
+})
 
 type GetBackupVersionParams = {
     flowVersion: FlowVersion

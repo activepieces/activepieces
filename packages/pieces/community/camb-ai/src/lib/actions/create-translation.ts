@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { cambaiAuth } from '../../index';
+import { cambaiAuth } from '../auth';
 import { API_BASE_URL, listSourceLanguagesDropdown, listTargetLanguagesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS} from '../common';
 
 export const createTranslation = createAction({
@@ -8,6 +8,8 @@ export const createTranslation = createAction({
     name: 'create_translation',
     displayName: 'Create Translation',
     description: 'Translate text from a source language to a target language.',
+    audience: 'both',
+    aiMetadata: { description: 'Translates text from a source language to a target language via Camb.AI, polling until the translation task completes. Each input line is treated as a separate segment to translate, and both languages are chosen from Camb.AI dropdowns; optionally tune formality, gender, and target audience age. Use for text translation only (not audio — use Create Transcription for speech-to-text). Not idempotent: each call starts a new translation task.', idempotent: false },
     props: {
         texts: Property.LongText({
             displayName: 'Text to Translate',
@@ -68,7 +70,7 @@ export const createTranslation = createAction({
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/translate`,
-            headers: { 'x-api-key': auth, 'Content-Type': 'application/json' },
+            headers: { 'x-api-key': auth.secret_text, 'Content-Type': 'application/json' },
             body: payload,
         });
         const taskId = initialResponse.body.task_id;
@@ -79,7 +81,7 @@ export const createTranslation = createAction({
             const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/translate/${taskId}`,
-                headers: { 'x-api-key': auth },
+                headers: { 'x-api-key': auth.secret_text },
             });
           
             if (statusResponse.body.status === 'SUCCESS') {
@@ -103,7 +105,7 @@ export const createTranslation = createAction({
         const resultResponse = await httpClient.sendRequest<{ translations: string[] }>({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/translation-result/${run_id}`,
-            headers: { 'x-api-key': auth },
+            headers: { 'x-api-key': auth.secret_text },
         }); 
 
         return resultResponse.body;

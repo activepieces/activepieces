@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { dripCommon } from '../common';
-import { dripAuth } from '../../';
+import { dripAuth } from '../auth';
 
 const triggerNameInStore = 'drip_tag_applied_to_subscriber_trigger';
 export const dripTagAppliedEvent = createTrigger({
@@ -13,6 +13,9 @@ export const dripTagAppliedEvent = createTrigger({
   name: 'tag_applied_to_subscribers',
   displayName: 'Tag Applied',
   description: 'Triggers when a tag is applied.',
+  aiMetadata: {
+    description: 'Fires when a tag is applied to a subscriber in the selected Drip account, emitting the subscriber.applied_tag event. Represents a contact being labeled or segmented; the payload includes the applied tag.',
+  },
   props: {
     account_id: dripCommon.account_id,
   },

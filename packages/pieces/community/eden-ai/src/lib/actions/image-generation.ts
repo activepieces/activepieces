@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
+import { edenAiAuth } from '../..';
 
 const IMAGE_GENERATION_PROVIDERS = [
   { label: 'OpenAI', value: 'openai' },
@@ -66,11 +67,19 @@ function normalizeImageGenerationResponse(provider: string, response: any) {
 }
 
 export const imageGenerationAction = createAction({
+  auth: edenAiAuth,
   name: 'image_generation',
   displayName: 'Image Generation',
   description: 'Create images from text prompts using Eden AI. Supports multiple providers, models, and resolutions.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate one or more images from a text prompt via Eden AI, routed to a chosen provider (OpenAI/DALL-E, StabilityAI, Replicate, Amazon, Leonardo, and others) at a selected resolution. Use it for text-to-image creation when you want provider/model choice behind a single call. Requires a provider, prompt, and resolution; image count defaults to 1. Generative and non-deterministic, but stateless — repeating the call creates no extra side effect.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for image generation.',
       required: true,
@@ -83,6 +92,7 @@ export const imageGenerationAction = createAction({
       required: true,
     }),
     resolution: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Resolution',
       description: 'The image resolution (e.g., 512x512, 1024x1024).',
       required: true,
@@ -97,6 +107,7 @@ export const imageGenerationAction = createAction({
       defaultValue: 1,
     }),
     model: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Specific Model',
       description: 'Specific model to use for image generation. Leave empty for provider default.',
       required: false,
@@ -104,6 +115,7 @@ export const imageGenerationAction = createAction({
       options: createStaticDropdown(IMAGE_GENERATION_MODELS),
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -119,13 +131,13 @@ export const imageGenerationAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      text: z.string().min(1, 'Prompt text is required'),
-      resolution: z.string().min(1, 'Resolution is required'),
-      num_images: z.number().int().min(1).max(10).nullish(),
-      model: z.string().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      text: z.string().check(z.minLength(1, 'Prompt text is required')),
+      resolution: z.string().check(z.minLength(1, 'Resolution is required')),
+      num_images: z.nullish(z.number().check(z.int(), z.minimum(1), z.maximum(10))),
+      model: z.nullish(z.string()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 
@@ -157,7 +169,7 @@ export const imageGenerationAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/image/generation/',
         body,

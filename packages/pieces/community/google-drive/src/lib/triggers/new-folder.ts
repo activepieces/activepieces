@@ -1,5 +1,5 @@
 import {
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -10,11 +10,12 @@ import {
 } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../auth';
 import { common } from '../common';
+import { newFolderTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleDriveAuth>,
+  AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
   { parentFolder?: any,include_team_drives?:boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -38,10 +39,14 @@ export const newFolder = createTrigger({
   name: 'new_folder',
   displayName: 'New Folder',
   description: 'Trigger when a new folder is created or uploaded.',
+  aiMetadata: {
+    description: 'Fires when a new folder is created in Google Drive, optionally scoped to a specific parent folder. Each event represents one newly created folder and its metadata.',
+  },
   props: {
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: newFolderTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {

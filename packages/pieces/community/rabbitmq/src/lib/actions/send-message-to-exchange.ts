@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { rabbitmqAuth } from '../..';
+import { rabbitmqAuth } from '../auth';
 import { rabbitmqConnect } from '../common';
 
 export const sendMessageToExchange = createAction({
@@ -7,6 +7,8 @@ export const sendMessageToExchange = createAction({
   name: 'sendMessageToExchange',
   displayName: 'sendMessageToExchange',
   description: 'Send a message on a RabbitMQ exchange',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a JSON message to a named RabbitMQ exchange, optionally with a routing key that the exchange uses to route the message to bound queues. Choose this to emit an event into a pub/sub or topic-style topology where one exchange fans out to multiple consumers; use the send-to-queue action instead to push directly onto a specific queue. The target exchange must already exist (the call verifies it first). Not idempotent: each call publishes a new message.', idempotent: false },
   props: {
     exchange: Property.ShortText({
       displayName: 'Exchange',
@@ -37,7 +39,7 @@ export const sendMessageToExchange = createAction({
       const exchange = context.propsValue.exchange;
       const routingKey = context.propsValue.routingKey || '';
 
-      connection = await rabbitmqConnect(context.auth);
+      connection = await rabbitmqConnect(context.auth.props);
       channel = await connection.createChannel();
 
       await channel.checkExchange(exchange);

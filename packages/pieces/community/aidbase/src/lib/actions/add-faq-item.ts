@@ -9,6 +9,12 @@ export const addFaqItem = createAction({
   displayName: 'Add FAQ Item',
   description:
     'Adds a new question/answer item to an existing FAQ; supports categories.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Appends a question/answer entry to an existing FAQ knowledge base in Aidbase, optionally tagging it with category names (new categories are created on the fly). Use to populate an FAQ already created via Create FAQ; requires the target FAQ id plus question and answer text. Not idempotent: each call appends a new item even if the question/answer is identical.',
+    idempotent: false,
+  },
 
   props: {
     faq_id: faqDropdown, 
@@ -37,7 +43,7 @@ export const addFaqItem = createAction({
     const { auth: apiKey, propsValue } = context;
     const { faq_id, question, answer, source_url, categories } = propsValue;
 
-    return await aidbaseClient.addFaqItem(apiKey, faq_id, {
+    return await aidbaseClient.addFaqItem(apiKey.secret_text, faq_id, {
       question,
       answer,
       source_url,

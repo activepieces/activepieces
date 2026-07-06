@@ -1,7 +1,5 @@
 # pieces-ninox
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-ninox` to build the library.
+Run `turbo run build --filter=@activepieces/piece-ninox` to build the library.

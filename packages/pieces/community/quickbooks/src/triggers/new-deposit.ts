@@ -1,24 +1,25 @@
 import {
+  AppConnectionValueForAuthProperty,
     PiecePropValueSchema,
     TriggerStrategy,
     createTrigger,
 } from "@activepieces/pieces-framework";
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import { DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from "@activepieces/pieces-common";
 import { quickbooksCommon, QuickbooksEntityResponse } from "../lib/common";
 import { QuickbooksCustomer } from '../lib/types';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof quickbooksAuth>,
+ AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
     const { access_token } = auth;
-    const companyId = auth.props?.['companyId'];
+    const companyId = auth.props?.['companyId'] as string;
 
-    const apiUrl = quickbooksCommon.getApiUrl(companyId);
+    const apiUrl = quickbooksCommon.getApiUrl(companyId!);
 
     const query =
       lastFetchEpochMS === 0
@@ -53,6 +54,9 @@ export const newDeposit = createTrigger({
     name: 'new_deposit',
     displayName: 'New Deposit',
     description: 'Triggers when a Deposit is created.',
+    aiMetadata: {
+      description: 'Fires when a new deposit is created in the connected QuickBooks company, emitting the newly created deposit record. Use to react to funds being deposited into an account.',
+    },
     props: {},
     type: TriggerStrategy.POLLING,
   async onEnable(context) {

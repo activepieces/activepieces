@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { linkaAuth } from '../..';
+import { linkaAuth } from '../auth';
 import { linkaCommon } from '../common/common';
 
 export const newSubscription = createTrigger({
@@ -7,6 +7,10 @@ export const newSubscription = createTrigger({
   name: 'newSubscription',
   displayName: 'New Subscription',
   description: 'triggers when a new subscription is created',
+  aiMetadata: {
+    description:
+      'Fires when a subscription is created or updated in the Linka/Sperse CRM (via the Subscription.CreatedOrUpdated webhook), delivering the contact, plan name, dates, amount, frequency, and status. Use to start a flow on subscription sign-ups or changes.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -29,8 +33,8 @@ export const newSubscription = createTrigger({
   async onEnable(context) {
     const webhookId = await linkaCommon.subscribeWebhook(
       'Subscription.CreatedOrUpdated',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -45,8 +49,8 @@ export const newSubscription = createTrigger({
 
     if (response !== null && response !== undefined) {
       await linkaCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

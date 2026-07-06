@@ -3,9 +3,12 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getHistoricalPrice = createAction({
+ auth:PieceAuth.None(),
     name: 'get_historical_price',
     displayName: 'Get Historical Price',
     description: 'Returns bitcoin historical price in main currencies',
+    audience: 'both',
+    aiMetadata: { description: 'Look up the Bitcoin price for a single chosen currency at a specific past date/timestamp. Pick this for "what was BTC worth on date X" questions; use Get Price instead for the current spot price. Requires a currency and a lookup date, and is read-only.', idempotent: true },
     // category: 'General',
     props: {
         currency: Property.StaticDropdown({

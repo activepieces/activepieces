@@ -1,10 +1,12 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import {
   createAction,
+  OAuth2PropertyValue,
   Property,
   DropdownOption,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
@@ -14,10 +16,16 @@ export const getFolderContentsAction = createAction({
   name: 'microsoft_sharepoint_get_folder_contents',
   displayName: 'Get Folder Contents',
   description: 'List all files and subfolders in a specified folder, optionally with detailed metadata.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists the immediate files and subfolders of a folder in a SharePoint document library (drive) on a given site, with optional paging, field selection, sorting, and inclusion of custom SharePoint column metadata. Use to enumerate or browse a folder one level deep. Read-only and idempotent; returns one page (default 200 items) with an @odata.nextLink for further pages.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,
     folderId: Property.Dropdown({
+      auth: microsoftSharePointAuth,
       displayName: 'Folder',
       description: 'The folder whose contents you want to list. Select "Root Folder" for the top-level folder.',
       required: true,
@@ -33,10 +41,12 @@ export const getFolderContentsAction = createAction({
         const authValue = auth as PiecePropValueSchema<
           typeof microsoftSharePointAuth
         >;
+        const cloud = (authValue as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
         const client = Client.initWithMiddleware({
           authProvider: {
             getAccessToken: () => Promise.resolve(authValue.access_token),
           },
+          baseUrl: getGraphBaseUrl(cloud),
         });
         const options: DropdownOption<string>[] = [
           { label: 'Root Folder', value: 'root' },
@@ -84,10 +94,12 @@ export const getFolderContentsAction = createAction({
   async run(context) {
     const { siteId, driveId, folderId, includeCustomFields, top, select, orderby } = context.propsValue;
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     const baseUrl = folderId === 'root'

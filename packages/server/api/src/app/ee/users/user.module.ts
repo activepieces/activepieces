@@ -1,7 +1,7 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { usersController } from './users-controller'
 
-export const userModule: FastifyPluginAsyncTypebox = async (app) => {
+export const userModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(usersController, { prefix: '/v1/users' })
 }
 

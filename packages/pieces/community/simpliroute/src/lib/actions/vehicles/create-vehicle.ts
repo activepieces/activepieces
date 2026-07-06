@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../../index';
+import { simplirouteAuth } from '../../auth';
 import { API_BASE_URL, commonHeaders } from '../../common/constants';
 
 export const create_vehicle = createAction({
@@ -8,6 +8,8 @@ export const create_vehicle = createAction({
     auth: simplirouteAuth,
     displayName: 'Create Vehicle',
     description: 'Register a new vehicle in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'Register a new vehicle, requiring name, capacity, and start/end location coordinates. Not idempotent: each call creates another vehicle, so avoid retrying. Use the get-vehicles action first if you need to check whether a vehicle already exists.', idempotent: false },
     props: {
         name: Property.ShortText({ displayName: 'name', description: 'The name of the vehicle.', required: true }),
         capacity: Property.Number({ displayName: 'capacity', description: 'The maximum capacity of the vehicle.', required: true }),
@@ -44,7 +46,7 @@ export const create_vehicle = createAction({
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

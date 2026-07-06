@@ -4,6 +4,7 @@ import {
   PiecePropValueSchema,
   Property,
   OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -18,7 +19,7 @@ import { pinterestAuth } from '../common/auth';
 import { adAccountIdDropdown, boardIdDropdown } from '../common/props';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof pinterestAuth>,
+  AppConnectionValueForAuthProperty<typeof pinterestAuth>,
   Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -115,6 +116,10 @@ export const newPinOnBoard = createTrigger({
   name: 'newPinOnBoard',
   displayName: 'New Pin on Board',
   description: 'Fires when a new Pin is added to a specific board.',
+  aiMetadata: {
+    description:
+      'Fires when a new Pin is added to a specific board (selected by board_id), emitting the Pin record. Polls that board for Pins created since the last check, optionally filtered by creative type (regular, video, shopping, carousel, idea).',
+  },
   props: {
     board_id: boardIdDropdown,
     ad_account_id: adAccountIdDropdown,
@@ -206,29 +211,17 @@ export const newPinOnBoard = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test<
-      PiecePropValueSchema<typeof pinterestAuth>,
-      Record<string, any>
-    >(polling, context as any);
+    return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
     const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable<
-      PiecePropValueSchema<typeof pinterestAuth>,
-      Record<string, any>
-    >(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
   async onDisable(context) {
     const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable<
-      PiecePropValueSchema<typeof pinterestAuth>,
-      Record<string, any>
-    >(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
   },
   async run(context) {
-    return await pollingHelper.poll<
-      PiecePropValueSchema<typeof pinterestAuth>,
-      Record<string, any>
-    >(polling, context as any);
+    return await pollingHelper.poll(polling, context);
   },
 });
