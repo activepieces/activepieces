@@ -2,6 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
+import { upsertRowActionOutputSchema } from '../output-schemas';
 
 export const upsertRow = createAction({
     name: 'upsert_row',
@@ -129,6 +130,7 @@ export const upsertRow = createAction({
             defaultValue: false,
         })
     },
+    outputSchema: upsertRowActionOutputSchema,
     async run(context) {
         const { 
             table_name, 

@@ -17,7 +17,12 @@ import {
   ApEnvironment,
   TelemetryEventName,
 } from '@activepieces/shared';
-import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQueries,
+  useQuery,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -74,6 +79,7 @@ type UsePiecesProps = {
   includeHidden?: boolean;
   includeTags?: boolean;
   isTableQuery?: boolean;
+  skipProjectFilter?: boolean;
 };
 type UsePiecesSearchProps = {
   searchQuery: string;
@@ -86,7 +92,7 @@ export const piecesHooks = {
   usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version],
+      queryKey: ['piece', name, version, i18n.language],
       queryFn: () =>
         piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
       staleTime: Infinity,
@@ -124,7 +130,7 @@ export const piecesHooks = {
     const { i18n } = useTranslation();
     return useQueries({
       queries: names.map((name) => ({
-        queryKey: ['piece', name, undefined],
+        queryKey: ['piece', name, undefined, i18n.language],
         queryFn: () =>
           piecesApi.get({
             name,
@@ -159,17 +165,24 @@ export const piecesHooks = {
     includeHidden = false,
     includeTags = false,
     isTableQuery = false,
+    skipProjectFilter = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
+    const projectId = skipProjectFilter
+      ? undefined
+      : authenticationSession.getProjectId()!;
     const query = useQuery<PieceMetadataModelSummary[], Error>({
       queryKey: [
         isTableQuery ? 'pieces-table' : 'pieces',
         searchQuery,
         includeHidden,
+        skipProjectFilter,
+        projectId,
+        i18n.language,
       ],
       queryFn: () =>
         piecesApi.list({
-          projectId: authenticationSession.getProjectId()!,
+          projectId,
           searchQuery,
           includeHidden,
           includeTags,
@@ -534,3 +547,19 @@ const getExploreTabContent = (
 
   return [popularCategory, hightlightedPiecesCategory];
 };
+
+function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
+  const pieceDerivedQueryKeys = [
+    ['pieces'],
+    ['pieces-table'],
+    ['pieces-metadata'],
+    ['piece'],
+  ];
+  return Promise.all(
+    pieceDerivedQueryKeys.map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey }),
+    ),
+  );
+}
+
+export const pieceCacheUtils = { invalidatePieceCaches };

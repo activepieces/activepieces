@@ -466,7 +466,9 @@ describe('Event Destination Trigger', () => {
         })
         await db.save('event_destination', [workerDestination, userDestination])
 
-        applicationEvents(app.log).sendWorkerEvent(ctx.project.id, {
+        applicationEvents(app.log).sendWorkerEvent({
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {
                 flowRun: {

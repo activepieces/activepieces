@@ -113,7 +113,7 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
         executionType: ExecutionType.RESUME,
         resumeReason: ResumeReason.WAITPOINT,
     }, log)
-    await flowRunSideEffects(log).onResume(flowRun)
+    await flowRunSideEffects(log).onResume({ flowRun, platformId })
 }
 
 type SyncResumePayload = {

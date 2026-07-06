@@ -1,10 +1,22 @@
 import {
     EngineOperationType,
+    isNil,
     JobData,
     RunEnvironment,
     StreamStepProgress,
+    WorkerGroupScope,
 } from '@activepieces/shared'
 import { z } from 'zod'
+
+export const parseWorkerGroupValue = ({ value, projectWorker }: { value: string | undefined, projectWorker: boolean }): WorkerGroupAssignment | null => {
+    if (isNil(value) || value.length === 0) {
+        return null
+    }
+    return {
+        scope: projectWorker ? WorkerGroupScope.PROJECT : WorkerGroupScope.PLATFORM,
+        id: value,
+    }
+}
 
 export * from './runs-metadata-queue-factory'
 
@@ -18,9 +30,13 @@ export enum QueueName {
     RUNS_METADATA = 'runsMetadata',
 }
 
-export const getWorkerGroupQueueName = (workerGroupId: string): string => {
+export const getPlatformGroupQueueName = (workerGroupId: string): string => {
     // TODO Rename this to workerGroups-workerGroupId-jobs in the future and migrate existings jobs there.
     return `platform-${workerGroupId}-jobs`
+}
+
+export const getProjectGroupQueueName = (workerGroupId: string): string => {
+    return `project-${workerGroupId}-jobs`
 }
 
 export const ApQueueJob = z.object({
@@ -65,6 +81,7 @@ export type SubmitPayloadsRequest = z.infer<typeof SubmitPayloadsRequest>
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
     switch (operationType) {
         case EngineOperationType.EXECUTE_FLOW:
+        case EngineOperationType.EXECUTE_ACTION:
             return flowTimeoutSandbox
         case EngineOperationType.EXECUTE_PROPERTY:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:
@@ -73,4 +90,9 @@ export function getEngineTimeout(operationType: EngineOperationType, flowTimeout
         case EngineOperationType.EXECUTE_TRIGGER_HOOK:
             return triggerTimeoutSandbox
     }
+}
+
+export type WorkerGroupAssignment = {
+    scope: WorkerGroupScope
+    id: string
 }

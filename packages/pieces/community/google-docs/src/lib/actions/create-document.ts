@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { docsCommon } from '../common';
 import { googleDocsAuth, getAccessToken } from '../auth';
+import { createDocumentActionOutputSchema } from '../output-schemas';
 
 export const createDocument = createAction({
   auth: googleDocsAuth,
@@ -17,6 +18,7 @@ export const createDocument = createAction({
     title: docsCommon.title,
     body: docsCommon.body,
   },
+  outputSchema: createDocumentActionOutputSchema,
   async run(context) {
     const accessToken = await getAccessToken(context.auth);
     const document = await docsCommon.createDocument(
