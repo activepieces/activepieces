@@ -2,6 +2,8 @@ import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import { ApEdition, ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, FlowVersionState, PrewarmDataResponse, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { workerGroupService } from 'src/app/ee/platform/platform-plan/worker-group.service'
+import { projectWorkerGroupService } from 'src/app/project/project-worker-group.service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { websocketService } from '../../core/websockets.service'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
@@ -165,37 +167,54 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             })
         },
 
-        async getPrewarmData() {
+        async getPrewarmData(input) {
             const empty: PrewarmDataResponse = { flows: [], platformId: '', engineToken: '' }
-            // Cloud serves many platforms from a shared worker pool — there is no single
-            // platform to prewarm, and warming all of them would be unbounded.
+            let projectIds: string[] | undefined = undefined
+            let platformId: string | undefined = undefined
+
+            // for cloud we only try to get flows for dedicated workers (with a worker group id). we can't do it for shared workers because they handle all users flows
             if (system.getEdition() === ApEdition.CLOUD) {
-                return empty
+                if (isNil(input.workerGroupId)) { // shared cloud worker
+                    return empty
+                }
+                if (input.projectWorker) { // get projects with given worker group id
+                    projectIds = await projectWorkerGroupService(log).getWorkerGroupProjects({ workerGroupId: input.workerGroupId })
+                    if (isNil(projectIds) || projectIds.length === 0) {
+                        return empty
+                    }
+                    platformId = await projectService(log).getPlatformId(projectIds[0])
+                }
+                else {  // get platform with given worker group id
+                    platformId = await workerGroupService(log).getWorkerGroupPlatformId({ workerGroupId: input.workerGroupId }) ?? undefined
+                    if (isNil(platformId)) {
+                        return empty
+                    }
+                }
             }
-            const platform = await platformService(log).getOldestPlatform()
-            if (isNil(platform)) {
-                return empty
+            else {
+                const platform = await platformService(log).getOldestPlatform()
+                if (isNil(platform)) {
+                    return empty
+                }
+                platformId = platform.id
             }
-            const projectIds = await projectService(log).getProjectIdsByPlatform(platform.id)
-            const firstProjectId = projectIds[0]
-            if (isNil(firstProjectId)) {
-                return empty
-            }
-            // Active flows only, mapped to their published (running) version — that is what a real run
-            // executes. The worker resolves each flow's pieces + code from this, so we return only refs.
-            const activeFlows = await flowService(log).list({
-                platformId: platform.id,
+
+            const baseListParams = {
                 status: [FlowStatus.ENABLED],
                 versionState: FlowVersionState.LOCKED,
                 limit: Paginator.NO_LIMIT,
                 includeTriggerSource: false,
-            })
+            }
+
+            const activeFlows = await flowService(log).list(
+                !isNil(projectIds) ? { ...baseListParams, projectIds } : { ...baseListParams, platformId },
+            )
             const flows = activeFlows.data.map((flow) => ({ id: flow.id, versionId: flow.version.id, projectId: flow.projectId }))
             const engineToken = await accessTokenManager(log).generateEngineToken({
-                projectId: firstProjectId,
-                platformId: platform.id,
+                projectId: projectIds?.[0] ?? (await projectService(log).getProjectIdsByPlatform(platformId))[0],
+                platformId,
             })
-            return { flows, platformId: platform.id, engineToken }
+            return { flows, platformId, engineToken }
         },
 
         async extendLock(input) {

@@ -104,7 +104,10 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 return
             }
             const { error } = await tryCatch(async () => {
-                const { flows, platformId, engineToken } = await apiClient.getPrewarmData()
+                const { flows, platformId, engineToken } = await apiClient.getPrewarmData({
+                    workerGroupId: getSettings().WORKER_GROUP_ID,
+                    projectWorker: getSettings().PROJECT_WORKER,
+                })
                 const resolver = createResolver({ apiClient, basePath, getSettings, log })
                 const pieces: PiecePackage[] = []
                 const codeSteps: CodeArtifact[] = []

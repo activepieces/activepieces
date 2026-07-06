@@ -67,7 +67,7 @@ export type WorkerToApiContract = {
     savePayloads(input: SavePayloadRequest): Promise<void>
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
-    getPrewarmData(): Promise<PrewarmDataResponse>
+    getPrewarmData(input: PrewarmDataRequest): Promise<PrewarmDataResponse>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
@@ -210,8 +210,14 @@ export type DisableFlowRequest = {
     projectId: string
 }
 
+export type PrewarmDataRequest = {
+    workerGroupId: string | undefined
+    projectWorker: boolean | undefined
+}
+
 export type PrewarmDataResponse = {
     flows: { id: string, versionId: string, projectId: string }[]
     platformId: string
     engineToken: string
 }
+
