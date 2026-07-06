@@ -1811,6 +1811,7 @@
   "Cannot delete the old connection because some flows still use it": "Cannot delete the old connection because some flows still use it",
   "Cannot replace a connection with itself": "Cannot replace a connection with itself",
   "Platform connections must be deleted from the platform admin connections page": "Platform connections must be deleted from the platform admin connections page",
+  "Some published flows still use the old connection but have unpublished draft changes — publish those flows first": "Some published flows still use the old connection but have unpublished draft changes — publish those flows first",
   "Connection has been updated.": "Connection has been updated.",
   "OAuth2 Credentials Deleted": "OAuth2 Credentials Deleted",
   "OAuth2 Credentials Updated": "OAuth2 Credentials Updated",

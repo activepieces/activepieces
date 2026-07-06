@@ -45,7 +45,7 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - **externalId**: The stable identifier for a connection within a project; referenced in flow step settings (survives rename).
 - **preSelectForNewProjects**: Boolean flag on platform-scope connections; when true, auto-added to `projectIds` for every new project.
 - **Global connection**: A `PLATFORM`-scope connection managed from the platform admin UI, shared across all (or selected) projects.
-- **Replace**: Project-scoped operation that rewrites matching flow references from one connection's externalId to another's, paginating through all matching flows. Draft versions are always updated; published versions are updated only when requested. Platform/global connections can be selected as the source, but requesting deletion of a platform source is rejected with `403` (mirrors the project-route delete guard). Deleting a project source is rejected with `409` while any published version the replace does not update still references it.
+- **Replace**: Project-scoped operation that rewrites matching flow references from one connection's externalId to another's, paginating through all matching flows. Draft versions are always updated; published versions are updated only when requested. Platform/global connections can be selected as the source, but requesting deletion of a platform source is rejected with `403` (mirrors the project-route delete guard). Deleting a project source is rejected with `409` while any published version the replace does not update still references it, and a draft-and-published replace is rejected with `409` while a published version it cannot see (flow's newer draft dropped the connection) still references the source.
 
 ## Entity
 

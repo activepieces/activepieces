@@ -229,19 +229,23 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        // Reject up-front (before mutating any flow) when the source connection
-        // can't be deleted because published versions this replace won't touch
-        // still use it. When applyToPublishedVersions is set, that is only the
-        // published versions invisible to the replace (their flow's latest
-        // version no longer references the connection).
-        const publishedFlowsUsingConnection = deleteSourceConnection
+        // Reject up-front (before mutating any flow) when published versions this
+        // replace won't touch still use the source connection. When
+        // applyToPublishedVersions is set, that is only the published versions
+        // invisible to the replace (their flow's latest version no longer
+        // references the connection); updating those in place would overwrite
+        // the newer draft, so the user has to publish or repoint them first.
+        // Without it, a delete would orphan every published reference.
+        const publishedFlowsUsingConnection = deleteSourceConnection || applyToPublishedVersions
             ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions })
             : 0
         if (publishedFlowsUsingConnection > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Cannot delete the old connection because it is still used by published flows that were not updated',
+                    message: deleteSourceConnection
+                        ? 'Cannot delete the old connection because it is still used by published flows that were not updated'
+                        : 'Some published flows still use the old connection but have unpublished draft changes — publish those flows first',
                 },
             })
         }

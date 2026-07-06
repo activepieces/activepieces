@@ -252,6 +252,105 @@ describe('POST /v1/app-connections/replace', () => {
         expect(stillThere?.id).toBe(source.id)
     })
 
+    it('blocks a draft-and-published replace when a published version it cannot see still references the source', async () => {
+        const ctx = await createTestContext(app!)
+
+        const source = createMockConnection({
+            platformId: ctx.platform.id,
+            projectIds: [ctx.project.id],
+            pieceName: PIECE_NAME,
+        }, ctx.user.id)
+        const target = createMockConnection({
+            platformId: ctx.platform.id,
+            projectIds: [ctx.project.id],
+            pieceName: PIECE_NAME,
+        }, ctx.user.id)
+        await db.save('app_connection', [source, target])
+
+        // Published version still uses the source but the newer draft dropped it:
+        // the replace cannot update that published version without overwriting
+        // the draft, so a draft-and-published replace must refuse instead of
+        // reporting success while the published flow stays on the old connection.
+        const flow = createMockFlow({
+            projectId: ctx.project.id,
+            status: FlowStatus.DISABLED,
+        })
+        await db.save('flow', flow)
+        const publishedVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-01-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+        })
+        const newerDraftVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.DRAFT,
+            created: '2020-06-01T00:00:00.000Z',
+            connectionIds: [],
+        })
+        await db.save('flow_version', [publishedVersion, newerDraftVersion])
+        flow.publishedVersionId = publishedVersion.id
+        await db.save('flow', flow)
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+            applyToPublishedVersions: true,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
+        expect(stillThere?.id).toBe(source.id)
+    })
+
+    it('allows a draft-only replace even when a published version still references the source', async () => {
+        const ctx = await createTestContext(app!)
+
+        const source = createMockConnection({
+            platformId: ctx.platform.id,
+            projectIds: [ctx.project.id],
+            pieceName: PIECE_NAME,
+        }, ctx.user.id)
+        const target = createMockConnection({
+            platformId: ctx.platform.id,
+            projectIds: [ctx.project.id],
+            pieceName: PIECE_NAME,
+        }, ctx.user.id)
+        await db.save('app_connection', [source, target])
+
+        const flow = createMockFlow({
+            projectId: ctx.project.id,
+            status: FlowStatus.DISABLED,
+        })
+        await db.save('flow', flow)
+        const publishedVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-01-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+        })
+        const newerDraftVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.DRAFT,
+            created: '2020-06-01T00:00:00.000Z',
+            connectionIds: [],
+        })
+        await db.save('flow_version', [publishedVersion, newerDraftVersion])
+        flow.publishedVersionId = publishedVersion.id
+        await db.save('flow', flow)
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
+        expect(stillThere?.id).toBe(source.id)
+    })
+
     it('blocks deleting the source when a published version the replace cannot see still references it', async () => {
         const ctx = await createTestContext(app!)
 
