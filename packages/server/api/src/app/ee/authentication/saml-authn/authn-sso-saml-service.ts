@@ -201,8 +201,7 @@ async function resolveRelayState(token: string | undefined): Promise<RelayStateV
     if (isNil(token)) {
         return null
     }
-    const stored = await distributedStore.get<RelayStateValue>(relayStateKey(token))
-    await distributedStore.delete(relayStateKey(token))
+    const stored = await distributedStore.getAndDelete<RelayStateValue>(relayStateKey(token))
     if (isNil(stored) || (!isNil(stored.from) && !isSafeRelativePath(stored.from))) {
         return null
     }

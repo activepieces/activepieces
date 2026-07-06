@@ -28,6 +28,14 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         return result === 'OK'
     },
 
+    async getAndDelete<T>(key: string): Promise<T | null> {
+        const redisClient = await getRedisClient()
+        const value = await redisClient.getdel(key)
+        if (!value) return null
+
+        return JSON.parse(value) as T
+    },
+
     async delete(keys: string | string[]): Promise<void> {
         const keysArray = Array.isArray(keys) ? keys : [keys]
         if (keysArray.length === 0) return
