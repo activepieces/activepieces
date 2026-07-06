@@ -58,6 +58,7 @@ protect connections and tokens, and telemetry.
 | Variable | Description | Default |
 |---|---|---|
 | ❗ `AP_FRONTEND_URL` | The public URL used to build redirect URLs and webhook URLs. It must be reachable by third parties for webhooks and app triggers to work. | `None` |
+| `AP_MCP_URL` | Optional URL used to build the MCP server URL returned to MCP clients (Claude Desktop, Cursor, etc.), for routing MCP traffic through a different hostname than `AP_FRONTEND_URL`. Falls back to `AP_FRONTEND_URL` when unset. | `None` |
 | ❗ `AP_ENCRYPTION_KEY` | 32-character (16-byte) hexadecimal key used to encrypt connections. Generate one with `openssl rand -hex 16`. | `None` |
 | ❗ `AP_JWT_SECRET` | 32-character hexadecimal key used to sign JWT tokens. Generate one with `openssl rand -hex 32`. | `None` |
 | `AP_CONFIG_PATH` | Path where the PGLite database and local settings are stored. | `~/.activepieces` |
