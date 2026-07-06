@@ -16,7 +16,7 @@ export default function PlatformMcpPage() {
     platformMcpHooks.usePlatformMcpServer();
   const { mutate: updateTools, isPending: isToolsUpdating } =
     platformMcpHooks.useUpdatePlatformMcpTools();
-  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
+  const { data: mcpUrl } = flagsHooks.useFlag<string>(ApFlagId.MCP_URL);
 
   if (isLoading) {
     return (
@@ -33,7 +33,7 @@ export default function PlatformMcpPage() {
     );
   }
 
-  const serverUrl = `${(publicUrl ?? '').replace(/\/$/, '')}/mcp/platform`;
+  const serverUrl = `${(mcpUrl ?? '').replace(/\/$/, '')}/mcp/platform`;
 
   const jsonConfiguration = {
     mcpServers: {

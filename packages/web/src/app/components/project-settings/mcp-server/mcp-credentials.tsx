@@ -6,8 +6,8 @@ import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 export function McpCredentials() {
-  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-  const serverUrl = `${(publicUrl ?? '').replace(/\/$/, '')}/mcp`;
+  const { data: mcpUrl } = flagsHooks.useFlag<string>(ApFlagId.MCP_URL);
+  const serverUrl = `${(mcpUrl ?? '').replace(/\/$/, '')}/mcp`;
 
   const jsonConfiguration = {
     mcpServers: {
