@@ -90,36 +90,16 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
     }
 }
 
-export async function trackCreditsWithAppSumo({ log, creditEvents, appSumo }: {
+export async function trackCreditsWithAppSumo({ log, credits, appSumo }: {
     log: FastifyBaseLogger
-    creditEvents: TrackCreditsParams[]
+    credits: TrackCreditsParams
     appSumo?: TrackAppSumoAiUsageParams
 }): Promise<void> {
     const provider = billingProvider.get(log)
-    for (const creditEvent of creditEvents) {
-        await provider.trackCredits(creditEvent)
-    }
+    await provider.trackCredits(credits)
     if (!isNil(appSumo)) {
         await provider.trackAppSumoAiUsage(appSumo)
     }
-}
-
-export function buildCreditEvents({ platformId, source, baseIdempotencyKey, properties, events }: {
-    platformId: string
-    source: CreditUsageSource
-    baseIdempotencyKey: string
-    properties: CreditEventProperties
-    events: { event: CreditUsageEvent, value: number, key: string }[]
-}): TrackCreditsParams[] {
-    return events
-        .filter(({ value }) => value > 0)
-        .map(({ event, value, key }) => ({
-            platformId,
-            value,
-            source,
-            idempotencyKey: `${baseIdempotencyKey}:${key}`,
-            properties: { ...properties, event },
-        }))
 }
 
 export enum CreditUsageSource {
@@ -128,41 +108,63 @@ export enum CreditUsageSource {
     CHAT = 'chat',
 }
 
-export enum CreditUsageEvent {
-    FLOW_RUN = 'flow_run',
-    AI_STEP_MESSAGE = 'ai_step_message',
-    AI_STEP_TOOL_CALL = 'ai_step_tool_call',
-    CHAT_MESSAGE = 'chat_message',
-    CHAT_TOOL_CALL = 'chat_tool_call',
+export type CreditEventBreakdownEntry = {
+    provider: string
+    model: string
+    messages: number
+    toolCalls: number
 }
 
-export type CreditEventProperties = {
+type CreditPropertiesBase = {
     platformId: string
     projectId: string
-    flowId?: string
-    flowRunId?: string
-    environment?: string
-    userId?: string
-    conversationId?: string
-    turnIndex?: number
-    provider?: string | null
-    model?: string | null
-    tier?: string
 }
 
-export type TrackCreditsParams = {
+export type FlowRunCreditProperties = CreditPropertiesBase & {
+    flowId: string
+    flowRunId: string
+    environment: string
+}
+
+export type AiCreditProperties = FlowRunCreditProperties & {
+    messages: number
+    toolCalls: number
+    breakdown: CreditEventBreakdownEntry[]
+}
+
+export type ChatCreditProperties = CreditPropertiesBase & {
+    userId: string
+    conversationId: string
+    turnIndex: number
+    messages: number
+    toolCalls: number
+    provider: string | null
+    model: string | null
+    tier: string
+}
+
+export type ChatAppSumoProperties = CreditPropertiesBase & {
+    conversationId: string
+    turnIndex: number
+    tier: string
+}
+
+type TrackCreditsParamsBase = {
     platformId: string
     value: number
-    source: CreditUsageSource
     idempotencyKey: string
-    properties?: CreditEventProperties & { event?: CreditUsageEvent }
 }
+
+export type TrackCreditsParams =
+    | (TrackCreditsParamsBase & { source: CreditUsageSource.FLOW_RUN, properties: FlowRunCreditProperties })
+    | (TrackCreditsParamsBase & { source: CreditUsageSource.AI, properties: AiCreditProperties })
+    | (TrackCreditsParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditProperties })
 
 export type TrackAppSumoAiUsageParams = {
     platformId: string
     value: number
     idempotencyKey: string
-    properties?: Record<string, unknown>
+    properties: FlowRunCreditProperties | ChatAppSumoProperties
 }
 
 export type CreditUsageByProjectParams = {

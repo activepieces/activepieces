@@ -2,7 +2,7 @@ import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { ChatConversation, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PlanName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
-import { buildCreditEvents, CreditUsageEvent, CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
+import { CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatHelpers } from './chat-helpers'
 import { chatToolBilling } from './chat-tool-billing'
@@ -27,32 +27,32 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
 
         await trackCreditsWithAppSumo({
             log,
-            creditEvents: buildCreditEvents({
+            credits: {
                 platformId: conversation.platformId,
+                value: creditValue,
                 source: CreditUsageSource.CHAT,
-                baseIdempotencyKey: `${conversation.id}:chat:${turnIndex}`,
+                idempotencyKey: `${conversation.id}:chat:${turnIndex}`,
                 properties: {
                     platformId: conversation.platformId,
-                    projectId: conversation.projectId ?? 'chat-analytics',
+                    projectId: conversation.projectId ?? 'chat',
                     userId: conversation.userId,
                     conversationId: conversation.id,
                     turnIndex,
+                    messages: 1,
+                    toolCalls: billableToolCalls,
                     provider,
                     model,
                     tier: tier.id,
                 },
-                events: [
-                    { event: CreditUsageEvent.CHAT_MESSAGE, value: creditWeight, key: 'message' },
-                    { event: CreditUsageEvent.CHAT_TOOL_CALL, value: billableToolCalls * creditWeight, key: 'tool_call' },
-                ],
-            }),
+            },
             appSumo: isManagedProvider && isAppSumoPlan ? {
                 platformId: conversation.platformId,
                 value: creditValue,
+
                 idempotencyKey: `${conversation.id}:appSumoAi:${turnIndex}`,
                 properties: {
                     platformId: conversation.platformId,
-                    projectId: conversation.projectId,
+                    projectId: conversation.projectId?? 'chat',
                     conversationId: conversation.id,
                     turnIndex,
                     tier: tier.id,
