@@ -29,8 +29,8 @@ const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 // autocommit mode. Every step is guarded (IF NOT EXISTS DDL, NOT EXISTS backfill inserts,
 // pieceSetId IS NULL project updates), so a mid-run failure leaves a partial state that is
 // safe to resolve by simply re-running the migration.
-export class CreatePieceSetTable1806000000000 implements Migration {
-    name = 'CreatePieceSetTable1806000000000'
+export class CreatePieceSetTable1807000000000 implements Migration {
+    name = 'CreatePieceSetTable1807000000000'
     breaking = false
     release = '0.103.0'
     transaction = false
@@ -115,7 +115,7 @@ export class CreatePieceSetTable1806000000000 implements Migration {
             return
         }
 
-        log.info('[CreatePieceSetTable1806000000000#up] Starting piece-set backfill')
+        log.info('[CreatePieceSetTable1807000000000#up] Starting piece-set backfill')
 
         let platformOffset = 0
         let platformCount = 0
@@ -136,7 +136,7 @@ export class CreatePieceSetTable1806000000000 implements Migration {
             if (platforms.length < PLATFORM_BATCH) break
         }
 
-        log.info({ platformCount }, '[CreatePieceSetTable1806000000000#up] Backfill complete')
+        log.info({ platformCount }, '[CreatePieceSetTable1807000000000#up] Backfill complete')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -159,7 +159,7 @@ async function migratePlatform(queryRunner: QueryRunner, platformId: string): Pr
     await migrateAllowedProjects(queryRunner, platformId)
     await assignRemainingProjectsToDefault(queryRunner, platformId, defaultSetId)
 
-    log.info({ platform: { id: platformId } }, '[CreatePieceSetTable1806000000000] Platform migrated')
+    log.info({ platform: { id: platformId } }, '[CreatePieceSetTable1807000000000] Platform migrated')
 }
 
 async function ensureDefaultSet(queryRunner: QueryRunner, platformId: string): Promise<string> {
