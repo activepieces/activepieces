@@ -22,6 +22,9 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 - **Cloud**: Available; ACTIVEPIECES provider auto-provisioned when `OPENROUTER_PROVISION_KEY` env var is set and `aiCreditsEnabled` is true.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **AIProvider**: A platform-scoped entity linking an LLM vendor's credentials to the platform.
 - **AIProviderName**: Enum of supported vendors (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `cloudflare-gateway`, `custom`, `activepieces`).
 - **EncryptedObject**: The `auth` field is AES-256-encrypted at rest; decrypted only for engine access.

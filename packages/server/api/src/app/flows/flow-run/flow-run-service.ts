@@ -148,7 +148,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 })
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
-                await flowRunSideEffects(log).onRetry(updatedFlowRun)
+                await flowRunSideEffects(log).onRetry({ flowRun: updatedFlowRun, platformId })
                 if (triggerFailed) {
                     return addToQueue({
                         flowRun: updatedFlowRun,
@@ -302,7 +302,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             streamStepProgress,
         }, log)
 
-        await flowRunSideEffects(log).onStart(newFlowRun)
+        await flowRunSideEffects(log).onStart({ flowRun: newFlowRun, platformId })
         log.info({ flowRun: { id: newFlowRun.id }, flow: { id: flowId }, project: { id: projectId }, executionType }, 'Flow run started')
         return newFlowRun
     },
@@ -441,6 +441,8 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
     await jobQueue(log).removeOneTimeJob({
         jobId: flowRun.id,
         platformId,
+        projectId: flowRun.projectId,
+        jobType: WorkerJobType.EXECUTE_FLOW,
     })
     await runsMetadataQueue(log).add({
         id: flowRun.id,

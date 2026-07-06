@@ -7,7 +7,6 @@ import {
   OutputSchema,
 } from '@/components/custom/smart-output-viewer/types';
 import { pathUtils } from '@/lib/path-utils';
-import { stringUtils } from '@/lib/string-utils';
 
 import { pathHelpers } from './path-helpers';
 import {
@@ -364,7 +363,7 @@ function buildSampleValueNode({
     const children = Object.entries(value).map(([key, childValue]) =>
       buildSampleValueNode({
         value: childValue,
-        displayName: stringUtils.titleCase(key),
+        displayName: key,
         path: `${path}['${pathHelpers.escapeMentionKey(key)}']`,
       }),
     );

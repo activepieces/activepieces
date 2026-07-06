@@ -8,6 +8,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/server/api/src/app/mcp/mcp-server-controller.ts` — HTTP endpoints (get, update, rotate, issue embed token, protocol handler, agent validator)
 - `packages/server/api/src/app/mcp/mcp-entity.ts` — McpServer entity
 - `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports
+- `packages/server/api/src/app/mcp/tools/piece-expertise.ts` — curated, piece-specific guidance (expert notes, example inputs) surfaced through MCP property discovery
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
 - `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
 - `packages/core/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
@@ -31,6 +32,9 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - Cloud: available
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **McpServer** — the per-project MCP server record (token, disabledTools)
 - **Locked tools** — tools that are always active when the MCP server is enabled; cannot be disabled
 - **Controllable tools** — tools that platform or project owners can enable/disable individually
@@ -52,8 +56,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
 - `ap_validate_flow`, `ap_validate_step_config` — validation helpers
-- `ap_research_pieces` — piece discovery
-- `ap_get_piece_props` — action/trigger input schema, AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
+- `ap_research_pieces` — piece discovery with intent-based recommended-action ranking
+- `ap_get_piece_props` — action/trigger input schema with required-input summaries and example input, action cardinality, curated expert notes (via `piece-expertise.ts`), AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
 - `ap_resolve_property_options`, `ap_resolve_property_chain` — dropdown/property resolution
 - `ap_list_connections` — list app connections
 - `ap_list_ai_models` — list AI providers and models

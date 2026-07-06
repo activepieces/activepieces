@@ -7,9 +7,23 @@ on:
         description: 'Release tag (e.g., 0.79.2, 0.79.2-hotfix.1)'
         required: true
         type: string
+      skip_smoke_test:
+        description: 'Skip preflight smoke test'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
+  # Preflight: build the image and run functional smoke tests + the perf-regression
+  # gate (throughput / worker CPU / worker memory). Blocks the release on any
+  # regression so we never tag-and-push a build that pegs CPU or tanks throughput.
+  preflight:
+    if: ${{ !inputs.skip_smoke_test }}
+    uses: ./.github/workflows/smoke-test.yml
+
   release:
+    needs: preflight
+    if: ${{ always() && !cancelled() && !failure() }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5

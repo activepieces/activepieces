@@ -44,6 +44,8 @@ function createTestProcessMaker() {
             ;(child as ChildProcess).pid = 12345
             ;(child as ChildProcess).exitCode = null
             ;(child as ChildProcess).kill = vi.fn()
+            ;(child as unknown as { stdout: EventEmitter }).stdout = new EventEmitter()
+            ;(child as unknown as { stderr: EventEmitter }).stderr = new EventEmitter()
 
             client = ioClient(`http://127.0.0.1:${port}`, {
                 path: '/worker/ws',
@@ -317,6 +319,35 @@ describe('createSandbox', () => {
             expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
         })
 
+        it('does NOT crash the process when a fixed ws port is already bound — fails just that sandbox', async () => {
+            // Isolate mode pins a fixed ws port per box. Two boxes contending the same port must not
+            // let the EADDRINUSE 'error' event become an uncaught exception that kills the whole worker.
+            const log = createMockLogger()
+            const fixedPort = 53777
+            const pmA = createTestProcessMaker()
+            const pmB = createTestProcessMaker()
+            const sandboxA = createSandbox(log, 'sb-port-a', { ...defaultOptions, wsRpcPort: fixedPort }, pmA.maker)
+            const sandboxB = createSandbox(log, 'sb-port-b', { ...defaultOptions, wsRpcPort: fixedPort }, pmB.maker)
+
+            await sandboxA.start(startOptions)
+
+            let code: ErrorCode | undefined
+            try {
+                await sandboxB.start(startOptions)
+            }
+            catch (err) {
+                code = (err as ActivepiecesError).error.code
+            }
+            // A catchable error, NOT an uncaught crash (the test process is still running).
+            expect(code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+            // A keeps working on its port.
+            expect(pmA.getClient().connected).toBe(true)
+
+            await sandboxA.shutdown()
+            const clientB = pmB.getClient()
+            if (clientB?.connected) clientB.disconnect()
+        }, 20_000)
+
         it('is idempotent when already connected', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
@@ -530,7 +561,7 @@ describe('createSandbox', () => {
 
             // Don't respond to RPC — let it timeout
             treeKillMock.mockImplementation((_pid: number, _signal: string, cb: (err?: Error) => void) => {
-                child.emit('exit', null, 'SIGKILL')
+                child.emit('close', null, 'SIGKILL')
                 cb()
             })
 
@@ -555,7 +586,7 @@ describe('createSandbox', () => {
             const child = testPM.getChild()
 
             client.on('rpc', () => {
-                child.emit('exit', 134, null)
+                child.emit('close', 134, null)
             })
 
             const executePromise = sandbox.execute(
@@ -581,7 +612,7 @@ describe('createSandbox', () => {
             client.on('rpc', () => {
                 client.emit('rpc-notify', { method: 'stderr', payload: { message: 'Flow run data size exceeded the maximum allowed size' } })
                 setTimeout(() => {
-                    child.emit('exit', 1, null)
+                    child.emit('close', 1, null)
                 }, 50)
             })
 
@@ -606,7 +637,7 @@ describe('createSandbox', () => {
             const child = testPM.getChild()
 
             client.on('rpc', () => {
-                child.emit('exit', 1, null)
+                child.emit('close', 1, null)
             })
 
             const executePromise = sandbox.execute(
@@ -621,6 +652,59 @@ describe('createSandbox', () => {
             }
             catch (err) {
                 expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+            }
+        })
+
+        it('captures native process stderr into the error when the engine crashes without socket output', async () => {
+            const { sandbox } = await startSandbox()
+            const client = testPM.getClient()
+            const child = testPM.getChild()
+            const nativeStack = 'Error: Boom inside engine trigger hook: cannot read properties of undefined\n    at run (google-sheets)\n'
+
+            client.on('rpc', () => {
+                ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from(nativeStack))
+                setTimeout(() => child.emit('close', 1, null), 20)
+            })
+
+            const executePromise = sandbox.execute(
+                'EXECUTE_TRIGGER_HOOK' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+
+            await expect(executePromise).rejects.toThrow()
+            try {
+                await executePromise
+            }
+            catch (err) {
+                const activepiecesError = err as ActivepiecesError
+                expect(activepiecesError.error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+                expect((activepiecesError.error.params as { standardError: string }).standardError).toContain('Boom inside engine trigger hook')
+            }
+        })
+
+        it('classifies a native heap-OOM crash (exit code 1 / null) as SANDBOX_MEMORY_ISSUE', async () => {
+            const { sandbox } = await startSandbox()
+            const client = testPM.getClient()
+            const child = testPM.getChild()
+
+            client.on('rpc', () => {
+                ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from('FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\n'))
+                setTimeout(() => child.emit('close', 1, null), 20)
+            })
+
+            const executePromise = sandbox.execute(
+                'EXECUTE_TRIGGER_HOOK' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+
+            await expect(executePromise).rejects.toThrow()
+            try {
+                await executePromise
+            }
+            catch (err) {
+                expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_MEMORY_ISSUE)
             }
         })
 
@@ -642,7 +726,7 @@ describe('createSandbox', () => {
                 { timeoutInSeconds: 10 },
             )
 
-            expect(removeAllListenersSpy).toHaveBeenCalledWith('exit')
+            expect(removeAllListenersSpy).toHaveBeenCalledWith('close')
             expect(removeAllListenersSpy).toHaveBeenCalledWith('error')
         })
     })

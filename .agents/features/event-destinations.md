@@ -24,6 +24,9 @@ Event Destinations streams platform and project activity events to webhook URLs 
 - **Cloud**: Available on plans with `auditLogEnabled`. UI wrapped in `LockedFeatureGuard` keyed to `eventStreamingEnabled`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **EventDestination**: A persisted webhook subscription — one URL receiving a chosen set of events for a platform or project scope.
 - **ApplicationEventName**: The 27-value enum that names every auditable action in the system.
 - **Scope**: PLATFORM (all platform-level events) or PROJECT (currently only `FLOW_RUN_FINISHED`).
