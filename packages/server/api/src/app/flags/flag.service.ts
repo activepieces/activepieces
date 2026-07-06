@@ -97,12 +97,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                id: ApFlagId.SHOW_BADGES,
-                value: true,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.CAN_BUY_ACTIVE_FLOWS,
                 value: system.getEdition() === ApEdition.CLOUD,
                 created,

@@ -85,7 +85,6 @@ export const newMessageInTopic = createTrigger({
     }
   },
   async run(context) {
-    console.debug('payload received', context.payload.body);
     const payloadBody = context.payload.body as PayloadBody;
     const { data } = payloadBody.message;
     const object = data
