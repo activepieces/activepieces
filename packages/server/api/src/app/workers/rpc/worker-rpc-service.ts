@@ -25,6 +25,7 @@ import { triggerSourceService } from '../../trigger/trigger-source/trigger-sourc
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
+import { PieceRef, prewarmPieceCache } from './prewarm-piece-cache'
 
 const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
     if (isNil(assignment)) {
@@ -181,12 +182,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             if (isNil(firstProjectId)) {
                 return empty
             }
-            const flows = await flowService(log).list({ platformId: platform.id, limit: Paginator.NO_LIMIT })
-            const pieces = [...new Map(
-                flows.data
-                    .flatMap((flow) => extractPieceRefs(flow.version.trigger))
-                    .map((ref) => [`${ref.pieceName}@${ref.pieceVersion}`, ref]),
-            ).values()]
+            const pieces = await getUsedPieces(log, platform.id)
             const engineToken = await accessTokenManager(log).generateEngineToken({
                 projectId: firstProjectId,
                 platformId: platform.id,
@@ -338,7 +334,18 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
     }
 }
 
-function extractPieceRefs(trigger: FlowTrigger): { pieceName: string, pieceVersion: string }[] {
+async function getUsedPieces(log: FastifyBaseLogger, platformId: string): Promise<PieceRef[]> {
+    const cached = await prewarmPieceCache.get(platformId)
+    if (cached.length > 0) {
+        return cached
+    }
+    const flows = await flowService(log).list({ platformId, limit: Paginator.NO_LIMIT })
+    const pieces = flows.data.flatMap((flow) => extractPieceRefs(flow.version.trigger))
+    await prewarmPieceCache.append(platformId, pieces)
+    return prewarmPieceCache.get(platformId)
+}
+
+function extractPieceRefs(trigger: FlowTrigger): PieceRef[] {
     return flowStructureUtil.getAllSteps(trigger).flatMap((step) => {
         if (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) {
             return [{ pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion }]

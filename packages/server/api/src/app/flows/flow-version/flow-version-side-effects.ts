@@ -1,8 +1,11 @@
 import { isNil, ProjectId } from '@activepieces/core-utils'
-import { FileType, FlowOperationRequest, FlowOperationType, flowStructureUtil, FlowVersion } from '@activepieces/shared'
+import { ApEdition, FileType, FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, FlowTriggerType, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { exceptionHandler } from '../../helper/exception-handler'
+import { system } from '../../helper/system/system'
+import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { prewarmPieceCache, PieceRef } from '../../workers/rpc/prewarm-piece-cache'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 
@@ -23,6 +26,7 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
             await handleSampleDataDeletion(projectId, flowVersion, operation, log)
             await handleUpdateTriggerWebhookSimulation(projectId, flowVersion, operation, log)
             await handleUpdateFlowLastModified(projectId, flowVersion, log)
+            await handlePrewarmCacheUpdate(projectId, operation, log)
         }
         catch (e) {
             // Ignore error and continue the operation peacefully
@@ -112,4 +116,35 @@ async function handleUpdateTriggerWebhookSimulation(projectId: ProjectId, flowVe
 
 async function handleUpdateFlowLastModified(projectId: ProjectId, flowVersion: FlowVersion, log: FastifyBaseLogger): Promise<void> {
     await flowService(log).updateLastModified(flowVersion.flowId, projectId)
+}
+
+// The boot-time piece prewarm keeps an append-only list of the pieces a platform's flows use. When an
+// operation introduces a piece, add it so the next worker (re)connect installs it. Cloud never prewarms.
+async function handlePrewarmCacheUpdate(projectId: ProjectId, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
+    if (system.getEdition() === ApEdition.CLOUD) {
+        return
+    }
+    const pieces = extractOperationPieceRefs(operation)
+    if (pieces.length === 0) {
+        return
+    }
+    const platformId = await projectService(log).getPlatformId(projectId)
+    await prewarmPieceCache.append(platformId, pieces)
+}
+
+function extractOperationPieceRefs(operation: FlowOperationRequest): PieceRef[] {
+    switch (operation.type) {
+        case FlowOperationType.ADD_ACTION ||  FlowOperationType.UPDATE_ACTION || FlowOperationType.UPDATE_TRIGGER:
+            return operation.request.action.type === FlowActionType.PIECE
+                ? [{ pieceName: operation.request.action.settings.pieceName, pieceVersion: operation.request.action.settings.pieceVersion }]
+                : []
+        case FlowOperationType.IMPORT_FLOW:
+            return flowStructureUtil.getAllSteps(operation.request.trigger).flatMap((step) =>
+                step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE
+                    ? [{ pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion }]
+                    : [],
+            )
+        default:
+            return []
+    }
 }
