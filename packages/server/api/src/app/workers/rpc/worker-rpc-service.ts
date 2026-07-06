@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ApEdition, ExecutionType, FileCompression, FileLocation, FileType, FlowActionType, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, PrewarmDataResponse, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, FlowVersionState, PrewarmDataResponse, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { websocketService } from '../../core/websockets.service'
@@ -25,7 +25,6 @@ import { triggerSourceService } from '../../trigger/trigger-source/trigger-sourc
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
-import { PieceRef, prewarmPieceCache } from './prewarm-piece-cache'
 
 const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
     if (isNil(assignment)) {
@@ -167,7 +166,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async getPrewarmData() {
-            const empty: PrewarmDataResponse = { pieces: [], platformId: '', engineToken: '' }
+            const empty: PrewarmDataResponse = { flows: [], platformId: '', engineToken: '' }
             // Cloud serves many platforms from a shared worker pool — there is no single
             // platform to prewarm, and warming all of them would be unbounded.
             if (system.getEdition() === ApEdition.CLOUD) {
@@ -182,12 +181,21 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             if (isNil(firstProjectId)) {
                 return empty
             }
-            const pieces = await getUsedPieces(log, platform.id)
+            // Active flows only, mapped to their published (running) version — that is what a real run
+            // executes. The worker resolves each flow's pieces + code from this, so we return only refs.
+            const activeFlows = await flowService(log).list({
+                platformId: platform.id,
+                status: [FlowStatus.ENABLED],
+                versionState: FlowVersionState.LOCKED,
+                limit: Paginator.NO_LIMIT,
+                includeTriggerSource: false,
+            })
+            const flows = activeFlows.data.map((flow) => ({ id: flow.id, versionId: flow.version.id, projectId: flow.projectId }))
             const engineToken = await accessTokenManager(log).generateEngineToken({
                 projectId: firstProjectId,
                 platformId: platform.id,
             })
-            return { pieces, platformId: platform.id, engineToken }
+            return { flows, platformId: platform.id, engineToken }
         },
 
         async extendLock(input) {
@@ -332,26 +340,6 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return chatRpcHandlers(chatRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendChatEmail(input)
         },
     }
-}
-
-async function getUsedPieces(log: FastifyBaseLogger, platformId: string): Promise<PieceRef[]> {
-    const cached = await prewarmPieceCache.get(platformId)
-    if (cached.length > 0) {
-        return cached
-    }
-    const flows = await flowService(log).list({ platformId, limit: Paginator.NO_LIMIT })
-    const pieces = flows.data.flatMap((flow) => extractPieceRefs(flow.version.trigger))
-    await prewarmPieceCache.append(platformId, pieces)
-    return prewarmPieceCache.get(platformId)
-}
-
-function extractPieceRefs(trigger: FlowTrigger): PieceRef[] {
-    return flowStructureUtil.getAllSteps(trigger).flatMap((step) => {
-        if (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) {
-            return [{ pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion }]
-        }
-        return []
-    })
 }
 
 // Binds conversation/run/platform/user to the per-call logger so every chat RPC

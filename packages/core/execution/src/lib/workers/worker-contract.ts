@@ -211,7 +211,7 @@ export type DisableFlowRequest = {
 }
 
 export type PrewarmDataResponse = {
-    pieces: { pieceName: string, pieceVersion: string }[]
+    flows: { id: string, versionId: string, projectId: string }[]
     platformId: string
     engineToken: string
 }

@@ -1,10 +1,11 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
+import { PiecePackage } from '@activepieces/shared'
 import { localExecutionCache } from './cache/local-execution-cache'
-import { pieceCache } from './cache/pieces/piece-cache'
-import { pieceInstaller } from './cache/pieces/piece-installer'
+import { createResolver } from './resolver'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
 import {
+    CodeArtifact,
     ExecuteParams,
     PreWarmSandboxParams,
     Runtime,
@@ -103,24 +104,24 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 return
             }
             const { error } = await tryCatch(async () => {
-                const { pieces, platformId, engineToken } = await apiClient.getPrewarmData()
-                if (pieces.length === 0) {
-                    return
+                const { flows, platformId, engineToken } = await apiClient.getPrewarmData()
+                const resolver = createResolver({ apiClient, basePath, getSettings, log })
+                const pieces: PiecePackage[] = []
+                const codeSteps: CodeArtifact[] = []
+                for (const flow of flows) {
+                    const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, publicApiUrl, engineToken }))
+                    if (flowError) {
+                        log.warn({ error: String(flowError), flow: { id: flow.id } }, 'Failed to resolve flow for prewarm')
+                        continue
+                    }
+                    if (resolved.kind !== 'ready') {
+                        continue
+                    }
+                    pieces.push(...resolved.provision.pieces)
+                    codeSteps.push(...resolved.provision.codes)
                 }
-                const packages = await Promise.all(pieces.map((ref) =>
-                    pieceCache(log, apiClient, basePath, getSettings).getPiece({
-                        pieceName: ref.pieceName,
-                        pieceVersion: ref.pieceVersion,
-                        platformId,
-                    }),
-                ))
-                await pieceInstaller(log, basePath, getSettings).install({
-                    pieces: packages,
-                    includeFilters: true,
-                    publicApiUrl,
-                    engineToken,
-                })
-                log.info({ pieceCount: packages.length }, 'Prewarmed piece cache')
+                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken })
+                log.info({ flowCount: flows.length, pieceCount: pieces.length }, 'Prewarmed sandbox cache')
             })
             if (error) {
                 log.warn({ error: String(error) }, 'Cache prewarm failed')
