@@ -3,6 +3,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
 import mime from 'mime-types';
+import { generateContentWithFilesearchActionOutputSchema } from '../output-schemas';
 
 export const generateContentWithFileSearchAction = createAction({
   audience: 'human',
@@ -34,6 +35,7 @@ export const generateContentWithFileSearchAction = createAction({
       required: true,
     }),
   },
+  outputSchema: generateContentWithFilesearchActionOutputSchema,
   async run({ auth, propsValue }) {
     const { file, fileStoreName, model, prompt } = propsValue;
 

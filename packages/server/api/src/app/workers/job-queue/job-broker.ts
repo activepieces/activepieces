@@ -9,6 +9,7 @@ import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { zombiePollingInterceptor } from './interceptors/zombie-polling-interceptor'
+import { jobAssignmentTracker } from './job-assignment-tracker'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 import { isUserInteractionJobData } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
@@ -72,7 +73,6 @@ function ensureDispatcher(queueName: string, worker: BullMQWorker, log: FastifyB
         queueName,
         worker,
         dequeue: tryDequeue,
-        onOrphanedJob: returnJobToQueue,
         log,
     })
     dispatchers.set(queueName, dispatcher)
@@ -211,10 +211,28 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         log.info('[jobBroker] Job broker initialized')
     },
 
-    async poll(queueName: string = QueueName.WORKER_JOBS): Promise<ConsumeJobRequest | null> {
+    async poll(queueName: string = QueueName.WORKER_JOBS, connectionId?: string): Promise<ConsumeJobRequest | null> {
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
-        return dispatcher.poll()
+        const job = await dispatcher.poll()
+        if (!isNil(job) && !isNil(connectionId)) {
+            jobAssignmentTracker.record({ connectionId, jobId: job.jobId, token: job.token, queueName: job.queueName })
+        }
+        return job
+    },
+
+    async releaseConnectionJobs(connectionId: string): Promise<void> {
+        const jobs = jobAssignmentTracker.takeByConnection(connectionId)
+        if (jobs.length === 0) {
+            return
+        }
+        log.info({ connection: { id: connectionId }, jobCount: jobs.length }, '[jobBroker] Worker connection closed with in-flight jobs — returning them to the queue')
+        for (const { jobId, token, queueName } of jobs) {
+            const { error } = await tryCatch(() => returnJobToQueue(jobId, token, queueName, log))
+            if (error) {
+                log.error({ connection: { id: connectionId }, job: { id: jobId }, error: String(error) }, '[jobBroker] Failed to return in-flight job on disconnect — leaving for stalled-scan recovery')
+            }
+        }
     },
 
     async completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void> {
@@ -228,15 +246,22 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const { error } = await tryCatch(async () => {
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {
-                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
                 if (userJobData) {
+                    // User-interaction jobs (piece-metadata extraction, validation, property/auth, trigger
+                    // hooks) are synchronous request/response — the caller awaits the result with a timeout.
+                    // Return the error to that caller and COMPLETE the job instead of moving it to failed: the
+                    // exponential-backoff retry only fires long after the caller has timed out, so it serves no
+                    // one and just piles up dead jobs in the failed queue.
                     await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                         status: EngineResponseStatus.INTERNAL_ERROR,
                         response: undefined,
                         error: input.errorMessage ?? 'Internal error',
                         logs: input.logs,
                     })
+                    await job.moveToCompleted({ response: undefined }, input.token, false)
+                    return
                 }
+                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
                 return
             }
 
@@ -260,6 +285,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                 })
             }
         }
+
+        jobAssignmentTracker.clear({ jobId: input.jobId, queueName: input.queueName })
 
         const failed = input.status === EngineResponseStatus.INTERNAL_ERROR || !isNil(error)
         for (const interceptor of interceptors) {

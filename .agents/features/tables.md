@@ -45,6 +45,9 @@ A built-in relational database feature that lets users store structured data dir
 - Cloud: available
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Table** — a named collection of typed columns (fields) and rows (records), scoped to a project
 - **Field** — a typed column definition; types: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`
 - **Record** — a single row in a table; stored as a row entity with associated cells

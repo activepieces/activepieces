@@ -76,7 +76,6 @@ export const application_ext_idDropdown = Property.Dropdown({
         HttpMethod.GET,
         `/account/apps/app?apps_id=${collection_id}`
       );
-      console.debug("dsdsdsdsdsdsdssdss",response);
       const apps = response.apps_app;
       return {
         disabled:false,

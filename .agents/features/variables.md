@@ -32,6 +32,9 @@ No plan flag — the feature ships in every edition.
 - The reveal endpoint additionally restricts the principal to `USER` (no SERVICE keys) and emits `VARIABLE_VALUE_REVEALED` on every hit so admins can audit who pulled which secret and when.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Variable**: an encrypted project-scoped secret keyed by a project-unique `name`.
 - **name**: stable identifier (alphanumeric + underscore, regex `^[a-zA-Z0-9_]+$`); used both as the display label and the mention key. Immutable after create.
 - **value**: opaque secret. Stored as `EncryptedObject` (`{ iv, data }`) wrapping `{ secret_text }`.

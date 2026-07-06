@@ -29,8 +29,12 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Community (CE)**: Single-user projects only. No project members, no roles, no releases, no git sync.
 - **Enterprise (EE, self-hosted)**: Full feature set behind `projectRolesEnabled` and `environmentsEnabled` plan flags.
 - **Cloud**: Members and invitations available on paid plans. Custom roles behind `customRolesEnabled`. Git sync and releases behind `environmentsEnabled`.
+- **`workerGroupId` assignment / per-project worker routing**: Enterprise feature gated behind `platform_plan.isolatedWorkersEnabled`. Both setting a project's `workerGroupId` (via the project update endpoint) and listing project worker groups (`GET /v1/projects/worker-groups`) require the flag.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ProjectMember**: A user's membership in a project, carrying a role assignment.
 - **ProjectRole**: Named permission set (ADMIN/EDITOR/VIEWER built-in, or custom). Scoped to a platform.
 - **Permission**: One of 26 granular capabilities (e.g. `READ_FLOW`, `WRITE_CONNECTION`).
@@ -39,6 +43,8 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Git Sync**: Configuration of an SSH-backed git repo + branch used as a release source or push target.
 - **RBAC**: Role-Based Access Control — enforced per-request via `rbacService.assertPrincipalAccessToProject()`.
 - **Release Type**: GIT_BRANCH (from git), MANUAL (from another project), ROLLBACK (revert to a previous release).
+- **Piece Set assignment**: a project references a piece set via the nullable `project.pieceSetId` column (FK `SET NULL`). When `managePiecesEnabled`, new EE projects are assigned the platform Default set on creation (`ee-project-hooks.ts`), and an unassigned project resolves to Default at filter time. This supersedes the legacy project-plan piece allow/block list. See [piece-sets.md](./piece-sets.md).
+- **workerGroupId**: Optional pool label on a project (bare, e.g. `1cpu_machine`). When set (and `isolatedWorkersEnabled` is on for the platform), the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs are routed to `project-<label>-jobs`; other job types are unaffected. The matching worker advertises `AP_WORKER_GROUP_ID=<label>` with `AP_PROJECT_WORKER=true` (scope comes from the flag, not a prefix). Set via `POST /v1/projects/:id`. See the Workers feature doc for the unified worker-group mechanics.
 
 ## Project Members
 
@@ -77,7 +83,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 **Entity**: id, projectId, name, description, importedBy (FK user), fileId (FK), type (GIT_BRANCH/MANUAL/ROLLBACK).
 
 **Release workflow**:
-1. `releasePlan()` — compute diff (what flows/tables/connections would change)
+1. `releasePlan()` — compute diff (what flows/tables/connections would change), including exact piece version changes such as patch updates in flow steps
 2. `create()` — apply diffs, serialize project state to File, record release
 3. Uses memory lock to prevent concurrent releases
 
@@ -103,3 +109,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - Platform admins: see all projects
 - Operators: see all projects except others' personal
 - Regular users: see own personal + team projects where member
+
+**Endpoints** (`platform-project-controller.ts`):
+- `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` accepts `workerGroupId` (validated against `^[a-z0-9_-]+$`, applied in `platformProjectService.update()` only when `platform_plan.isolatedWorkersEnabled` is on).
+- `GET /v1/projects/worker-groups` — platform-admin only; returns `{ groups: [{ label, slots }], sharedSlots }` from online project-scope workers (those started with `AP_PROJECT_WORKER=true`) via `machineService.listProjectWorkerGroups()` for the assignment UI; returns 402 `FEATURE_DISABLED` when `isolatedWorkersEnabled` is off.
