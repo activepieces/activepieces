@@ -3,6 +3,7 @@ import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, Flow
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { recordTriggerRun } from '../utils/trigger-run-recorder'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
 
 function getAppWebhookDetails(flowVersion: FlowVersion, publicApiUrl: string, appWebhookSecretsJson: string): { appWebhookUrl?: string, webhookSecret?: string | Record<string, string> } {
@@ -114,6 +115,9 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         })
 
         if (error) {
+            if (data.execute) {
+                await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
+            }
             if (isSandboxTimeout(error)) {
                 ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
@@ -140,6 +144,8 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 })
             }
         }
+
+        await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: execResult.status })
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }
     },

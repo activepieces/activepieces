@@ -195,6 +195,7 @@ describe('worker integration', () => {
                     getPiece: vi.fn(),
                     getPieceArchive: vi.fn(),
                     extendLock: vi.fn(),
+                    recordTriggerRun: vi.fn(),
                     disableFlow: vi.fn(),
                 }
                 createRpcServer<WorkerToApiContract>(serverSocket, handlers)
