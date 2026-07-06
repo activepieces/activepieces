@@ -2,6 +2,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
+import { getSpacesOutputSchema } from '../../output-schemas';
 
 export const getClickupSpaces = createAction({
   auth: clickupAuth,
@@ -13,6 +14,7 @@ export const getClickupSpaces = createAction({
   props: {
     team_id: clickupCommon.workspace_id(),
   },
+  outputSchema: getSpacesOutputSchema,
   async run(configValue) {
     const { team_id } = configValue.propsValue;
     const response = await callClickUpApi(

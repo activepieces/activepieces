@@ -49,7 +49,6 @@ beforeEach(async () => {
         sendTrialReminder: vi.fn(),
         sendReminderJobHandler: vi.fn(),
         sendExceedFailureThresholdAlert: vi.fn(),
-        sendBadgeAwardedEmail: vi.fn(),
         sendProjectMemberAdded: vi.fn(),
     }))
 

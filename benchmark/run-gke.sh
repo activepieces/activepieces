@@ -49,8 +49,8 @@ echo "=== Forcing fresh worker rollout (re-pull image) ==="
 kubectl rollout restart deployment/worker
 
 echo "=== Waiting for app + worker rollouts ==="
-kubectl rollout status deployment/app --timeout=300s
-kubectl rollout status deployment/worker --timeout=300s
+kubectl rollout status deployment/app --timeout=600s
+kubectl rollout status deployment/worker --timeout=600s
 
 echo "=== Waiting for app LoadBalancer IP ==="
 LB_IP=""
@@ -65,7 +65,7 @@ BASE_URL="http://$LB_IP/api/v1"
 for _ in $(seq 1 60); do curl -sf "$BASE_URL/flags" >/dev/null 2>&1 && break; sleep 5; done
 
 echo "=== Cluster snapshot ==="
-kubectl get pods -o wide | awk 'NR==1 || /app|worker|minio|postgres|redis/' | head -30
+kubectl get pods -o wide | awk 'NR==1 || (/app|worker|minio|postgres|redis/ && ++c<=29)'
 WORKERS_READY=$(kubectl get deployment worker -o jsonpath='{.status.readyReplicas}')
 echo "Workers ready: ${WORKERS_READY:-0}"
 
