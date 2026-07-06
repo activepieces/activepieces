@@ -34,8 +34,6 @@ const polling: Polling<DrupalAuthType, { name: string }> = {
         'Accept': 'application/vnd.api+json',
       },
     });
-    console.debug('Poll response', response);
-    console.debug('Poll response', JSON.stringify(response.body));
     return response.body.reverse().map((item) => ({
       id: item.id,
       data: item.data,

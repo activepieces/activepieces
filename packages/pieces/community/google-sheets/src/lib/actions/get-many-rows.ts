@@ -1,6 +1,7 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { areSheetIdsValid, googleSheetsAuth, googleSheetsCommon, mapRowsToHeaderNames } from "../common/common";
 import { commonProps, isFirstRowHeaderProp } from "../common/props";
+import { getManyRowsActionOutputSchema } from '../output-schemas';
 
 export const getManyRowsAction = createAction({
     name: 'get-many-rows',
@@ -17,6 +18,7 @@ export const getManyRowsAction = createAction({
         ...commonProps,
         first_row_headers: isFirstRowHeaderProp()
     },
+    outputSchema: getManyRowsActionOutputSchema,
     async run(context) { 
         const {first_row_headers,sheetId,spreadsheetId} = context.propsValue;
 

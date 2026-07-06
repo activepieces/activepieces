@@ -43,7 +43,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             stepNameToUpdate: action.name,
         })
 
-        if (isNil(constants.runEnvironment)) {
+        if (!constants.adhocMode && isNil(constants.runEnvironment)) {
             throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
         }
 

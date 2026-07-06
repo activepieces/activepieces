@@ -6,7 +6,6 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
-import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
@@ -30,6 +29,7 @@ export type ProjectDashboardLayoutHeaderTab = {
   hasPermission: boolean;
   show: boolean;
   beta?: boolean;
+  additionalActivePaths?: string[];
 };
 
 const ProjectChangedRedirector = ({
@@ -71,13 +71,6 @@ export function ProjectDashboardLayout({
       label: t('Impact'),
       show: !isEmbedded,
       icon: ChartLineIcon,
-      hasPermission: true,
-    },
-    {
-      to: '/leaderboard',
-      label: t('Leaderboard'),
-      show: !isEmbedded,
-      icon: TrophyIcon,
       hasPermission: true,
     },
     {
@@ -123,7 +116,7 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider hoverMode={!searchOpen}>
+    <SidebarProvider defaultOpen={false} hoverMode={!searchOpen}>
       {!isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
         <div

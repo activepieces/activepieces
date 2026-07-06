@@ -11,6 +11,7 @@ import {
 import dayjs from 'dayjs';
 import { getPages, NotionAuthValue } from '../common';
 import { notionAuth } from '../auth';
+import { updatedPageTriggerOutputSchema } from '../output-schemas';
 
 export const updatedPage = createTrigger({
   auth: notionAuth,
@@ -23,6 +24,7 @@ export const updatedPage = createTrigger({
       'Fires whenever any page shared with the integration in the Notion workspace is modified, emitting the updated page. Use to track content changes workspace-wide rather than within a single database or page.',
   },
   props: {},
+  outputSchema: updatedPageTriggerOutputSchema,
   sampleData: {
     object: 'page',
     id: '1d4805e9-774b-8056-820b-c1083bff77e3',

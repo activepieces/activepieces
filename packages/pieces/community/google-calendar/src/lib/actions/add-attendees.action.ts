@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { calendar as googleCalendar, calendar_v3 } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
+import { eventOutputSchema } from '../output-schemas';
 
 export const addAttendeesToEventAction = createAction({
   auth: googleCalendarAuth,
@@ -21,6 +22,7 @@ export const addAttendeesToEventAction = createAction({
       required: true,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run(context) {
     const { calendar_id, eventId } = context.propsValue;
     const attendeesInput = context.propsValue.attendees as string[];

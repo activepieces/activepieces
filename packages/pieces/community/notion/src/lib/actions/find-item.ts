@@ -2,6 +2,7 @@ import { notionAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { getNotionToken, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
+import { notionFindDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const findDatabaseItem = createAction({
   auth: notionAuth,
@@ -18,6 +19,7 @@ export const findDatabaseItem = createAction({
     database_id: notionCommon.database_id,
     filterDatabaseFields: notionCommon.filterDatabaseFields,
   },
+  outputSchema: notionFindDatabaseItemActionOutputSchema,
   async run(context) {
     const databaseId = context.propsValue.database_id;
     const filterFields = context.propsValue.filterDatabaseFields;

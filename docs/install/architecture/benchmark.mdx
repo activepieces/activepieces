@@ -1,50 +1,109 @@
 ---
 title: "Benchmark"
-icon: "chart-line"
+description: "Warm webhook throughput of the worker-is-the-sandbox model on GKE as the fleet scales at the recommended 1:10 app-to-worker ratio"
+icon: "gauge-high"
 ---
 
-## What's Measured
+This benchmark answers one question for the recommended production shape: **at the 1:10 app-to-worker ratio, how does throughput scale as you grow the fleet from 40 to 160 workers?** It runs the [worker-is-the-sandbox](/install/architecture/workers) model on a real GKE cluster, against a same-region object store with signed URLs and official piece tarballs served from the CDN.
 
-The benchmark tests end-to-end webhook flow execution: an HTTP request hits a **Catch Webhook** trigger, runs a **Code** action, and returns a response via **Return Response**. This measures the full request lifecycle including routing, execution, and response delivery.
+<img src="/resources/diagrams/activepieces-architecture.png" alt="Activepieces production architecture: client, app, Redis job queue, Postgres, S3, and one-flow-per-worker execution tier" />
+
+_The shape under test: app tier, Redis job queue, Postgres, S3, and a one-flow-per-worker execution tier._
+
+## What's measured
+
+A 4-node **synchronous** webhook flow that holds the HTTP connection open until the flow returns:
+
+<Steps>
+  <Step title="Webhook trigger">
+    Catches the request on a `/sync` URL and holds the connection until the flow finishes.
+  </Step>
+  <Step title="Math Helper">
+    Adds `2 + 3`.
+  </Step>
+  <Step title="Code step">
+    Runs `return inputs.sum + 1` inside an `isolated-vm` context.
+  </Step>
+  <Step title="Webhook response">
+    Returns the result, closing the held connection.
+  </Step>
+</Steps>
+
+The compute is sub-millisecond by design — everything measured below is orchestration (queueing, callbacks, sandbox boot), which is what actually shapes production latency.
+
+Each fleet size is held at the recommended **1:10** ratio (1 app per 10 workers) and run **warm** (`AP_REUSE_SANDBOX=true`) — the engine process is reused between jobs.
 
 ## Results
 
-| Configuration | Throughput (req/s) | Mean Latency | P50 | P99 |
-|---|---|---|---|---|
-| 1 App, 2 Workers | 95.1 | 20.8 ms | 15.4 ms | 62.7 ms |
-| 2 Apps, 4 Workers | 167.6 | 23.4 ms | 20.0 ms | 65.1 ms |
-| 3 Apps, 6 Workers | 231.8 | 24.8 ms | 21.2 ms | 71.5 ms |
-| 1 App, 4 Workers | 174.5 | 22.4 ms | 19.0 ms | 56.7 ms |
-| 2 Apps, 8 Workers | 286.5 | 26.0 ms | 22.3 ms | 89.5 ms |
-| 3 Apps, 12 Workers | 336.6 | 35.1 ms | 34.8 ms | 51.5 ms |
+<CardGroup cols={2}>
+  <Card title="686 req/s" icon="gauge-high">
+    Peak warm throughput — 16 apps, 160 workers.
+  </Card>
+  <Card title="~4.5 req/s" icon="arrow-trend-up">
+    Per worker, held flat from 40 to 160 workers — throughput scales linearly with the fleet.
+  </Card>
+</CardGroup>
 
-## Test Environment
+Each worker is one sandbox at concurrency 1, hard-capped at 0.5 vCPU / 1 GB. Apps are 1 vCPU / 1 GB. Load concurrency is matched to the worker count so requests don't queue behind the concurrency-1 workers.
 
-- **Runner**: `depot-ubuntu-24.04-16` (16 cores)
-- **App container**: 2 CPU / 4 GB memory
-- **Worker container**: 0.5 CPU / 1 GB memory
-- **Execution mode**: `SANDBOX_CODE_ONLY`
-- **Rate limiter**: Disabled (`AP_PROJECT_RATE_LIMITER_ENABLED=false`)
-- **Total requests**: 500 per configuration
+| Apps · Workers | Ratio | Warm req/s | Warm req/s **per worker** |
+|---|---|---|---|
+| 4 app · 40 workers | 1:10 | 185.3 | 4.6 |
+| 8 app · 80 workers | 1:10 | 409.5 | 5.1 |
+| 12 app · 120 workers | 1:10 | 553.0 | 4.6 |
+| 16 app · 160 workers | 1:10 | 686.3 | 4.3 |
 
-## How to Reproduce
+### What each tier ran — and what it was actually doing
 
-### Via GitHub Actions UI
+Only the **app** and **worker** counts scale (1:10). **Postgres and Redis are a single fixed-size pod each — the same for every row below.** CPU is the average across three warm load tests; the singletons' figures are the whole pod, app/worker are per pod.
 
-1. Go to the **Actions** tab in the repository
-2. Select the **Benchmark** workflow
-3. Click **Run workflow**
-4. Optionally adjust `total_requests` (default: 500)
-5. All 6 configurations (1:2 and 1:4 ratios at 1x/2x/3x scale) run in parallel automatically
+| Apps · Workers | Warm req/s | Postgres `used / cap` | Redis `used / cap` | App `used / cap` (per pod) | Worker `used / cap` (per pod) |
+|---|---|---|---|---|---|
+| 4 · 40   | 185 | 522m / 3000m | 134m / 2000m | 782m / 1000m | 102m / 500m |
+| 8 · 80   | 410 | 640m / 3000m | 150m / 2000m | 518m / 1000m | 72m / 500m |
+| 12 · 120 | 553 | 546m / 3000m | 132m / 2000m | 311m / 1000m | 50m / 500m |
+| 16 · 160 | 686 | 396m / 3000m | 169m / 2000m | 205m / 1000m | 37m / 500m |
 
-### Via CLI
+Postgres never crosses ~0.65 of a core and Redis never crosses ~0.17, both far below their caps and **flat as the fleet quadruples** — they are not absorbing a growing share of anything. Workers sit at ≤0.1 of their 0.5-core cap. No tier approaches saturation, which is exactly why each added worker keeps adding throughput. (The singletons are sized this large on purpose — see [Test environment](#test-environment) — so they provably stay off the critical path; the default Postgres `max_connections=100` *would* cap the fleet at ~10 apps, which is the artifact behind the earlier "120 cliff".)
+
+## How throughput scales
+
+- **Warm scales linearly with the fleet.** Per-worker throughput stays flat at ~4.5 req/s from 40 to 160 workers, so total throughput tracks the worker count (185 → 410 → 553 → 686; 3.7× for 4× the fleet). The shared Postgres and Redis singletons are **not** the wall — they sit near-idle at every fleet size (Postgres under 0.6 of a core, Redis under 0.2, both far below their caps), and raising their resources several-fold does not move the curve. The ceiling is the **concurrency-1 worker model**: each worker is busy for the *whole* per-flow time — engine run plus the end-of-run run-log persistence it finishes before taking the next job — so fleet throughput is `workers ÷ per-flow-time`, which is linear in the fleet. (The synchronous response reaches the client sooner than that — it is sent at the response step, before the worker wraps up the log write — so client-perceived latency is lower than the worker-busy time that sets throughput.) Per-flow time carries run-to-run variance (the object-store log-write tail), which is why a single run's curve looks bumpy; the invariant that the per-worker rate holds constant is what shows the scaling is linear.
+<Note>
+**Why Production Setup recommends 1:10.** Apps at 1 vCPU are cheap relative to the worker fleet, and 1:10 is the warm-headroom margin that keeps the app tier from becoming the wall during bursts. See [Production Setup](/install/configure-operate/production-setup).
+</Note>
+
+## Latency anatomy
+
+Where the worker's milliseconds go — warm at peak (16 app · 160 w):
+
+| Layer | Warm |
+|---|---|
+| Provision (flow bundle + piece + engine, mostly disk-cache hits) | ~10 ms |
+| Sandbox boot (engine process reused) | ~5 ms |
+| Flow run (4 steps: engine→app callbacks + end-of-run log persist) | ~203 ms |
+| **Worker-busy avg per job** | **~218 ms** |
+
+This is the time the **worker** is occupied per job — and at concurrency 1 it is what sets throughput (`workers ÷ worker-busy-time`). The synchronous client sees less: the response is published at the flow's response step, before the worker finishes persisting the run log, so client-perceived latency runs below the worker-busy figure.
+
+## Test environment
+
+- **Cluster**: GKE `n2-standard-16` × 10 nodes, `europe-west1-b`
+- **Worker**: 0.5 vCPU / 1 GB, concurrency 1, `SANDBOX_CODE_ONLY` (Node fork + `isolated-vm`)
+- **App**: 1 vCPU / 1 GB
+- **Object store**: same-region GCS bucket (`europe-west1`) over the S3-interop endpoint, path-style SigV4 presigned URLs (`AP_S3_USE_SIGNED_URLS=true`)
+- **Piece bundles**: official tarballs served from the Activepieces CDN (`AP_USE_CDN_FOR_BUNDLES=true`)
+- **Postgres + Redis**: in-cluster singletons, deliberately over-provisioned so they stay off the critical path — Postgres at 3 vCPU / 3 GB with `max_connections=2000` (the default 100 would starve the app pools past ~10 apps), durability off, and its data dir on tmpfs; Redis at 2 vCPU / 2 GB with `io-threads`. Under load both stay near-idle (Postgres <0.6 core, Redis <0.2), confirming the worker tier, not the singletons, is the ceiling.
+- **Load**: `hey`, concurrency matched to worker count (40/80/120/160) so requests don't queue behind the concurrency-1 workers — latency reflects real service time, not backlog
+
+## How to reproduce
 
 ```bash
-gh workflow run benchmark.yml
+benchmark/run-gke.sh [total_requests] [concurrency]
 ```
 
-After the workflow completes, check the **summary** job for a combined comparison table.
+The script mints a worker token, deploys `benchmark/k8s-sandbox.yaml` to the cluster, runs the load test against the app LoadBalancer, and reports warm throughput and the per-run breakdown from worker-pod logs. Set `APP_REPLICAS` and `WORKER_REPLICAS` (keeping the 1:10 ratio) to reproduce any row in the results table.
 
 <Tip>
-  These benchmarks run in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/sandboxing).
+This benchmark runs in `SANDBOX_CODE_ONLY` mode. It does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism for multi-tenancy. See [Sandboxing](/install/architecture/sandboxing).
 </Tip>

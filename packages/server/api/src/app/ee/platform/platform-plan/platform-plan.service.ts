@@ -177,7 +177,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
 
 async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | undefined> {
     const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
-    if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING) {
+    if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING || environment === ApEnvironment.DEVELOPMENT) {
         return undefined
     }
     const stripeCustomerId = await stripeHelper(log).createCustomer(

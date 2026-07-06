@@ -2,7 +2,7 @@ import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PiecePackage } from '@activepieces/core-piece-types'
+import { ChatAgentEvent } from './chat-agent-events'
 import { ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
@@ -72,15 +72,16 @@ export type WorkerToApiContract = {
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
-    getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
-    markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendChatEvent(input: SendChatEventRequest): Promise<void>
     getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse>
     saveChatMessages(input: SaveChatMessagesRequest): Promise<void>
+    saveChatFile(input: SaveChatFileRequest): Promise<SaveChatFileResponse>
     updateChatProgress(input: UpdateChatProgressRequest): Promise<void>
+    heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
+    sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse>
 }
 
 export type SendChatEventRequest = {
@@ -89,61 +90,6 @@ export type SendChatEventRequest = {
     runId?: string
     event: ChatAgentEvent
 }
-
-export enum ChatAgentEventType {
-    CHUNK = 'CHUNK',
-    FINISHED = 'FINISHED',
-    ERROR = 'ERROR',
-    TITLE_UPDATE = 'TITLE_UPDATE',
-    TOOL_PROGRESS = 'TOOL_PROGRESS',
-    ACTION_PREVIEW = 'ACTION_PREVIEW',
-    ACTION_RECEIPT = 'ACTION_RECEIPT',
-}
-
-export type ToolProgressEvent = {
-    toolCallId: string
-    data: {
-        label: string
-        total: number
-        completed: number
-        succeeded: number
-        failed: number
-        done: boolean
-        results: { index: number, success: boolean, output?: unknown, error?: string }[]
-    }
-}
-
-export type ActionPreviewEvent = {
-    toolCallId: string
-    pieceName: string
-    actionName: string
-    actionDisplayName: string
-    connectionLabel?: string
-    input: Record<string, unknown>
-    isBatch: boolean
-    batchCount?: number
-    batchSamples?: Record<string, unknown>[]
-}
-
-export type ActionReceiptEvent = {
-    toolCallId: string
-    actionDisplayName: string
-    pieceName: string
-    connectionLabel?: string
-    status: 'success' | 'failed'
-    output: unknown
-    errorMessage?: string
-    timestamp: string
-}
-
-export type ChatAgentEvent =
-    | { type: ChatAgentEventType.CHUNK, data: unknown }
-    | { type: ChatAgentEventType.FINISHED, data: { conversationId: string } }
-    | { type: ChatAgentEventType.ERROR, data: { message: string, code?: string } }
-    | { type: ChatAgentEventType.TITLE_UPDATE, data: { title: string } }
-    | { type: ChatAgentEventType.TOOL_PROGRESS, data: ToolProgressEvent }
-    | { type: ChatAgentEventType.ACTION_PREVIEW, data: ActionPreviewEvent }
-    | { type: ChatAgentEventType.ACTION_RECEIPT, data: ActionReceiptEvent }
 
 export type GetChatConfigRequest = {
     conversationId: string
@@ -157,11 +103,24 @@ export type GetChatConfigRequest = {
     dryRun?: boolean
 }
 
+export type ResolvedAiToolConfig = {
+    provider: string
+    apiKey: string
+    config?: Record<string, unknown>
+}
+
+export type ChatAiToolsConfig = {
+    webSearch?: ResolvedAiToolConfig
+    webScraping?: ResolvedAiToolConfig
+    imageGeneration?: ResolvedAiToolConfig
+}
+
 export type ChatConfigResponse = {
     provider: string
     auth: Record<string, unknown>
     providerConfig: Record<string, unknown>
     modelId: string
+    fastModelId: string
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
@@ -170,23 +129,49 @@ export type ChatConfigResponse = {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
     guides: Record<string, string>
+    aiTools: ChatAiToolsConfig
+    emailEnabled: boolean
+    userEmail: string
 }
 
 export type SaveChatMessagesRequest = {
     conversationId: string
+    runId?: string
     messages: unknown[]
     uiMessages: unknown[]
     title?: string
     modelName?: string
 }
 
+export type SaveChatFileRequest = {
+    platformId: string
+    projectId?: string
+    conversationId: string
+    data: Buffer
+    mediaType: string
+    fileName?: string
+}
+
+export type SaveChatFileResponse = {
+    fileId: string
+    url: string
+}
+
 export type UpdateChatProgressRequest = {
     conversationId: string
+    runId?: string
     uiMessages: unknown[]
+    messages?: unknown[]
+}
+
+export type HeartbeatChatConversationRequest = {
+    conversationId: string
+    runId?: string
 }
 
 export type UpdateProjectContextRequest = {
     conversationId: string
+    runId?: string
     projectId: string | null
 }
 
@@ -200,6 +185,23 @@ export type ExecuteChatToolRequest = {
 
 export type ExecuteChatToolResponse = {
     result: unknown
+}
+
+export type SendChatEmailRequest = {
+    conversationId: string
+    runId?: string
+    platformId: string
+    userId: string
+    to: string[]
+    subject: string
+    body: string
+    gateId?: string
+}
+
+export type SendChatEmailResponse = {
+    sent: boolean
+    message: string
+    blockedRecipients?: string[]
 }
 
 export type DisableFlowRequest = {

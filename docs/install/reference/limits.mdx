@@ -1,0 +1,124 @@
+---
+title: "Limits"
+icon: "ban"
+description: "Limits enforced on Activepieces Cloud, with self-hosted overrides"
+---
+
+<Note>
+The numbers in the **Cloud** column are the limits enforced on
+[cloud.activepieces.com](https://cloud.activepieces.com). On **self-hosted**
+installations every limit is configurable through the environment variable
+shown in the table — the **Self-hosted default** column lists the value applied
+when the variable is unset.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Execution" icon="bolt" href="#execution">
+    Run timeout, worker memory, retention.
+  </Card>
+  <Card title="Files & flow run logs" icon="file" href="#files-&-flow-run-logs">
+    File sizes, log size, slicing thresholds.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="#webhooks">
+    Response timeout, payload size, inline threshold.
+  </Card>
+  <Card title="Key / value storage" icon="database" href="#key-/-value-storage">
+    Store piece key length and value size.
+  </Card>
+</CardGroup>
+
+---
+
+### Execution
+
+Limits on how long a flow runs, how much memory and concurrency a worker gets,
+and how long run data is kept. The run timeout counts only active execution
+time — flows paused by **Wait for Approval** or **Delay** don't count against
+it.
+
+| Limit | Cloud | Env var | Self-hosted default |
+|---|---|---|---|
+| Flow run timeout | 10 min | `AP_FLOW_TIMEOUT_SECONDS` | `600` |
+| Worker process memory | 1 GB | the worker container's memory cap | `1 GB` |
+| Paused flow lifetime | 30 days | `AP_PAUSED_FLOW_TIMEOUT_DAYS` | `30` |
+| Execution data retention | 30 days | `AP_EXECUTION_DATA_RETENTION_DAYS` | `30` |
+| Worker concurrency (per worker) | 1 | `AP_WORKER_CONCURRENCY` | `5` (set to `1` — see [Production Setup](/install/configure-operate/production-setup)) |
+
+<Tip>
+Run logs, step files, and execution events are deleted after the retention
+window. `AP_PAUSED_FLOW_TIMEOUT_DAYS` **cannot exceed**
+`AP_EXECUTION_DATA_RETENTION_DAYS` — a paused flow can't outlive the data it
+needs to resume.
+</Tip>
+
+<Tip>
+At the recommended concurrency of 1, the worker container's memory cap (1 GB) is
+the memory limit for the flow. If a flow exhausts it, that one worker is
+OOM-killed and the job is requeued (about 300 MB of the budget is overhead for a
+warm process with pieces loaded). To handle larger or longer processes, split
+them into multiple flows — e.g. one flow calls another via webhook, or each flow
+processes a smaller batch of items.
+</Tip>
+
+---
+
+### Files & flow run logs
+
+Files emitted by actions or triggers are persisted to the database or S3 so a
+flow can retry from a later step. The log-size limit covers the combined inputs
+and outputs of every step in a single run.
+
+| Limit | Cloud | Env var | Self-hosted default |
+|---|---|---|---|
+| Step file size | 10 MB | `AP_MAX_FILE_SIZE_MB` | `25` |
+| Flow run log size (combined inputs + outputs, includes sliced payloads) | 25 MB | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | `50` |
+| Step output slice threshold | 32 KB | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | `32` |
+| Step input truncate threshold | 2 KB | `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | `2` |
+
+**How it works**
+
+- **Input** — values above `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` are
+  replaced with a placeholder in the log; the step still receives the full
+  value at runtime.
+- **Output** — outputs above `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` are offloaded
+  to object storage and replaced with a reference in the log; the payload is
+  re-hydrated on demand.
+- **Total** — the cumulative size of inputs and outputs (counting the
+  **original** size of offloaded outputs) is capped by
+  `AP_MAX_FLOW_RUN_LOG_SIZE_MB`. Runs that exceed it end with status
+  `LOG_SIZE_EXCEEDED` — regardless of how many outputs were offloaded to object
+  storage. Lowering `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` will **not** buy more
+  log headroom; only raising `AP_MAX_FLOW_RUN_LOG_SIZE_MB` does.
+
+---
+
+### Webhooks
+
+Limits on how long a synchronous webhook waits for a response and how large an
+incoming payload can be.
+
+| Limit | Cloud | Env var | Self-hosted default |
+|---|---|---|---|
+| Sync webhook response timeout | 30 s | `AP_WEBHOOK_TIMEOUT_SECONDS` | `30` |
+| Max webhook payload size | 5 MB | `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` | `25` |
+| Webhook payload inline threshold | 1024 KB | `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | `512` |
+
+<Tip>
+For synchronous webhook requests (URLs ending in `/sync`), Activepieces will
+wait up to the response timeout before returning HTTP 408. Payloads above the
+inline threshold are offloaded from Redis to file storage to protect Redis
+memory; smaller payloads stay inline for the fastest path.
+</Tip>
+
+---
+
+### Key / value storage
+
+Used by the built-in **Store** piece and any piece that calls `context.store`.
+
+| Limit | Value |
+|---|---|
+| Maximum key length | 128 characters |
+| Maximum value size | 512 KB |
+
+These limits are not configurable.

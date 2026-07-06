@@ -1,3 +1,4 @@
+import { FastifyBaseLogger } from 'fastify'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
@@ -8,7 +9,6 @@ const CONNECTION_STORE_TTL_SECONDS = 24 * 60 * 60
 const KEY_PREFIX = 'tool-approval-decision:'
 const CHANNEL_PREFIX = 'tool-approval:'
 const CANCEL_KEY_PREFIX = 'chat-cancel:'
-const ACTIVE_RUN_PREFIX = 'chat-active-run:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
 const PENDING_GATE_PREFIX = 'chat-pending-gate:'
@@ -21,22 +21,30 @@ function channelName(gateId: string): string {
     return `${CHANNEL_PREFIX}${gateId}`
 }
 
-async function resolveGate({ gateId, approved, payload }: { gateId: string, approved: boolean, payload?: Record<string, unknown> }): Promise<void> {
-    const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload }, GATE_TTL_SECONDS)
+async function resolveGate({ gateId, approved, payload, log }: { gateId: string, approved: boolean, payload?: Record<string, unknown>, log?: FastifyBaseLogger }): Promise<void> {
+    // Bind the decision to the exact inputs the user saw in the preview, so a consumer can verify
+    // the action it's about to run matches what was approved (not a different payload reusing the id).
+    const conversationId = await distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
+    const pendingGate = conversationId ? await distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`) : null
+    const approvedInput = pendingGate?.gateId === gateId ? pendingGate.toolInput : undefined
+    const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload, approvedInput }, GATE_TTL_SECONDS)
     if (wasSet) {
         await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
-        const conversationId = await distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
         if (conversationId) {
             await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
             await distributedStore.delete(`${PENDING_GATE_PREFIX}gate:${gateId}`)
         }
+        log?.info({ gate: { id: gateId }, decision: approved ? 'approved' : 'denied' }, '[chatApprovalGate] Gate decided')
+    }
+    else {
+        log?.info({ gate: { id: gateId } }, '[chatApprovalGate] Gate decision ignored (already decided)')
     }
 }
 
 async function checkDecision({ gateId }: { gateId: string }): Promise<GateDecision | 'pending'> {
     const raw = await distributedStore.get<GateDecision>(decisionKey(gateId))
     if (!raw) return 'pending'
-    return { approved: raw.approved === true, payload: raw.payload }
+    return { approved: raw.approved === true, payload: raw.payload, approvedInput: raw.approvedInput }
 }
 
 async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutMs: number }): Promise<GateDecision | 'pending'> {
@@ -95,14 +103,6 @@ async function clearCancel({ conversationId }: { conversationId: string }): Prom
     await distributedStore.delete(`${CANCEL_KEY_PREFIX}${conversationId}`)
 }
 
-async function storeActiveRunId({ conversationId, runId }: { conversationId: string, runId: string }): Promise<void> {
-    await distributedStore.put(`${ACTIVE_RUN_PREFIX}${conversationId}`, runId, CANCEL_TTL_SECONDS)
-}
-
-async function getActiveRunId({ conversationId }: { conversationId: string }): Promise<string | null> {
-    return distributedStore.get<string>(`${ACTIVE_RUN_PREFIX}${conversationId}`)
-}
-
 async function storeAvailableConnections({ conversationId, pieceName, connections }: {
     conversationId: string
     pieceName: string
@@ -155,12 +155,11 @@ async function clearPendingGate({ conversationId }: { conversationId: string }):
 
 export const chatApprovalGate = {
     resolveGate,
+    checkDecision,
     waitForDecision,
     requestCancel,
     isCancelled,
     clearCancel,
-    storeActiveRunId,
-    getActiveRunId,
     storeAvailableConnections,
     getAvailableConnections,
     storeSelectedConnection,
@@ -173,6 +172,7 @@ export const chatApprovalGate = {
 type GateDecision = {
     approved: boolean
     payload?: Record<string, unknown>
+    approvedInput?: Record<string, unknown>
 }
 
 type StoredConnection = {
@@ -191,4 +191,5 @@ type PendingGate = {
     toolName: string
     displayName: string
     toolInput: Record<string, unknown>
+    runId?: string
 }
