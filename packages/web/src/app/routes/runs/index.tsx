@@ -1,7 +1,13 @@
 import { RunsTable } from '@/features/flow-runs';
 
+import { RunsLayout } from './runs-layout';
+
 const RunsPage = () => {
-  return <RunsTable />;
+  return (
+    <RunsLayout>
+      <RunsTable />
+    </RunsLayout>
+  );
 };
 
 export { RunsPage };

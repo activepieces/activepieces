@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
+import { taskOutputSchema } from '../../output-schemas';
 
 export const getClickupTaskByName = createAction({
   auth: clickupAuth,
@@ -20,6 +21,7 @@ export const getClickupTaskByName = createAction({
       required: true,
     }),
   },
+  outputSchema: taskOutputSchema,
   async run(configValue) {
     const { list_id, task_name } = configValue.propsValue;
     const accessToken = getAccessTokenOrThrow(configValue.auth);

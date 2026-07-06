@@ -62,13 +62,6 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     failedStepMessage: string
 }>
 
-type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
-    badgeTitle: string
-    badgeDescription: string
-    badgeImageUrl: string
-    firstName: string
-}>
-
 type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
     loginLink: string
 }>
@@ -86,7 +79,6 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | BadgeAwardedTemplateData
   | ScimUserWelcomeTemplateData
   | ChatNotificationTemplateData
 

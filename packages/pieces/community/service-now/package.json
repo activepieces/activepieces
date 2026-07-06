@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-service-now",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -8,7 +8,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "dayjs": "1.11.9",
-    "form-data": "^4.0.0",
+    "form-data": "^4.0.6",
     "zod": "^3.22.4",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"

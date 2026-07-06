@@ -5,6 +5,7 @@ import { getEvents } from '../common/helper';
 import { GoogleCalendarEvent } from '../common/types';
 import { googleCalendarAuth } from '../common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { eventOutputSchema } from '../output-schemas';
 
 const polling: Polling<
     AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
@@ -96,6 +97,7 @@ export const calendarEventChanged = createTrigger({
 		},
 		eventType: 'default',
 	},
+	outputSchema: eventOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async test({ store, auth, propsValue, files }) {
 		return await pollingHelper.test(polling, {

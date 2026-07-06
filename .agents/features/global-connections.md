@@ -12,6 +12,9 @@ Global Connections are app connections scoped to a platform rather than an indiv
 Enterprise and Cloud. Gated by `platform.plan.globalConnectionsEnabled`. Module hook: `platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled)`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Global Connection**: An `AppConnection` with `scope = PLATFORM`, owned by the platform rather than a project.
 - **projectIds**: Array of project IDs that can use this connection. If empty or null, the connection is not yet distributed to any project.
 - **preSelectForNewProjects**: Boolean flag that auto-assigns the connection to newly created projects.

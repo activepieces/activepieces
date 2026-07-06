@@ -44,7 +44,6 @@ export const dropboxCreateNewFolder = createAction({
     };
 
     const result = await httpClient.sendRequest(request);
-    console.debug('Folder creation response', result);
 
     if (result.status == 200) {
       return result.body;
