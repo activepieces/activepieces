@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Archive, Boxes, CheckIcon, User } from 'lucide-react';
+import { Archive, Boxes, CheckIcon, Info, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -28,6 +28,7 @@ import { projectMembersHooks } from '@/features/members/hooks/project-members-ho
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { AdhocRunDetailSheet } from './adhoc-run-detail-sheet';
 import { adhocRunsColumns, formatSource } from './adhoc-runs-columns';
@@ -272,6 +273,19 @@ export const AdhocRunsTable = () => {
 
   return (
     <>
+      <div
+        className={cn(
+          'flex items-center gap-2 pt-3 text-sm text-muted-foreground',
+          DASHBOARD_CONTENT_PADDING_X,
+        )}
+      >
+        <Info className="size-4 shrink-0" />
+        <span>
+          {t(
+            'These are individual piece actions run outside of a flow by your chat agents, MCP servers, or the API.',
+          )}
+        </span>
+      </div>
       <DataTable
         emptyStateTextTitle={t('No action runs yet')}
         emptyStateTextDescription={t(

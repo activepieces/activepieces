@@ -878,6 +878,7 @@
   "Flow run started": "Flow run started",
   "Flow runs": "Flow runs",
   "Action runs": "Action runs",
+  "These are individual piece actions run outside of a flow by your chat agents, MCP servers, or the API.": "These are individual piece actions run outside of a flow by your chat agents, MCP servers, or the API.",
   "Flow run finished": "Flow run finished",
   "Fires for every finished run — successful and failed.": "Fires for every finished run — successful and failed.",
   "Flow run resumed": "Flow run resumed",
