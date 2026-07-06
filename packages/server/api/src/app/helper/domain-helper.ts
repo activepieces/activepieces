@@ -13,6 +13,11 @@ export const domainHelper = {
         const baseWithPrefix = networkUtils.combineUrl(requestBase, getConfiguredBasePath())
         return cleanTrailingSlash(networkUtils.combineUrl(baseWithPrefix, path ?? ''))
     },
+    getMcpUrlFromRequest({ req, path }: PublicUrlFromRequestParams): string {
+        const requestBase = networkUtils.getRequestBaseUrl(req)
+        const baseWithPrefix = networkUtils.combineUrl(requestBase, getConfiguredMcpBasePath())
+        return cleanTrailingSlash(networkUtils.combineUrl(baseWithPrefix, path ?? ''))
+    },
     async getPublicApiUrl({ path }: PublicUrlParams): Promise<string> {
         return domainHelper.getPublicUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}` })
     },
@@ -51,9 +56,18 @@ function cleanTrailingSlash(url: string) {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
+function getBasePathFromUrl(url: string): string {
+    const { data: parsed } = tryCatchSync(() => new URL(url))
+    return parsed && parsed.pathname !== '/' ? parsed.pathname : ''
+}
+
 function getConfiguredBasePath(): string {
-    const { data: url } = tryCatchSync(() => new URL(system.getOrThrow(AppSystemProp.FRONTEND_URL)))
-    return url && url.pathname !== '/' ? url.pathname : ''
+    return getBasePathFromUrl(system.getOrThrow(AppSystemProp.FRONTEND_URL))
+}
+
+function getConfiguredMcpBasePath(): string {
+    const mcpUrl = system.get(AppSystemProp.MCP_URL)
+    return mcpUrl ? getBasePathFromUrl(mcpUrl) : getConfiguredBasePath()
 }
 
 type PublicUrlParams = {

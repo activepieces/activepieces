@@ -48,7 +48,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
             audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
         })
 
-        const authorizePageUrl = new URL(domainHelper.getPublicUrlFromRequest({ req, path: '/mcp-authorize' }))
+        const authorizePageUrl = new URL(domainHelper.getMcpUrlFromRequest({ req, path: '/mcp-authorize' }))
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
 
         return reply.redirect(authorizePageUrl.toString())

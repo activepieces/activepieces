@@ -5,7 +5,7 @@ import { domainHelper } from '../../../helper/domain-helper'
 export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/.well-known/oauth-authorization-server', PublicMetadataRequest, async (req, reply) => {
-        const issuer = domainHelper.getPublicUrlFromRequest({ req })
+        const issuer = domainHelper.getMcpUrlFromRequest({ req })
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             issuer,
             authorization_endpoint: `${issuer}/authorize`,
@@ -21,7 +21,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
     })
 
     app.get('/.well-known/oauth-protected-resource/mcp', PublicMetadataRequest, async (req, reply) => {
-        const issuer = domainHelper.getPublicUrlFromRequest({ req })
+        const issuer = domainHelper.getMcpUrlFromRequest({ req })
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             resource: `${issuer}/mcp`,
             authorization_servers: [issuer],
@@ -29,7 +29,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
     })
 
     app.get('/.well-known/oauth-protected-resource/mcp/platform', PublicMetadataRequest, async (req, reply) => {
-        const issuer = domainHelper.getPublicUrlFromRequest({ req })
+        const issuer = domainHelper.getMcpUrlFromRequest({ req })
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             resource: `${issuer}/mcp/platform`,
             authorization_servers: [issuer],

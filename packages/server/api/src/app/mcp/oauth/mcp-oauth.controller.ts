@@ -97,7 +97,7 @@ function unauthorized({ req, reply, scope, message, invalidToken }: {
     invalidToken?: boolean
 }): FastifyReply {
     const resourcePath = scope === McpServerType.PLATFORM ? 'mcp/platform' : 'mcp'
-    const resourceMetadataUrl = domainHelper.getPublicUrlFromRequest({
+    const resourceMetadataUrl = domainHelper.getMcpUrlFromRequest({
         req,
         path: `/.well-known/oauth-protected-resource/${resourcePath}`,
     })
