@@ -7,7 +7,7 @@ import { Migration } from '../../migration'
 export class AddConnectionIdsGinIndexToFlowVersion1805000000000 implements Migration {
     name = 'AddConnectionIdsGinIndexToFlowVersion1805000000000'
     breaking = false
-    release = '0.86.1'
+    release = '0.86.2'
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
