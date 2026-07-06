@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { Image, linkedinCommon, santizeText } from '../common';
 import { linkedinAuth } from '../..';
+import { createCompanyUpdateActionOutputSchema } from '../output-schemas';
 
 export const createCompanyUpdate = createAction({
   auth: linkedinAuth,
@@ -27,6 +28,7 @@ export const createCompanyUpdate = createAction({
     linkTitle: linkedinCommon.linkTitle,
     linkDescription: linkedinCommon.linkDescription,
   },
+  outputSchema: createCompanyUpdateActionOutputSchema,
 
   run: async (context) => {
     const imageUrl = context.propsValue.imageUrl;

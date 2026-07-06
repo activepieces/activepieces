@@ -5,6 +5,7 @@ import { GenerateContentParameters, GoogleGenAI } from '@google/genai';
 import { isEmpty } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
+import { generateContentActionOutputSchema } from '../output-schemas';
 
 export const generateContentAction = createAction({
   audience: 'human',
@@ -104,6 +105,7 @@ export const generateContentAction = createAction({
 			},
 		}),
 	},
+	outputSchema: generateContentActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { model, prompt, toolType } = propsValue;
 		const toolProperties = propsValue.toolProperties ?? {};

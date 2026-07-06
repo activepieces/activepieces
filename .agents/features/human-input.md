@@ -22,6 +22,9 @@ The Human Input feature exposes public-facing endpoints that allow external user
 - **Cloud**: Fully available.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Forms piece** (`@activepieces/piece-forms`): The Activepieces piece that provides three triggers: `form_submission`, `file_submission`, and `chat_submission`.
 - **form_submission trigger**: Accepts structured text/toggle/textarea fields defined by the flow author. `waitForResponse` controls whether the flow pauses to return a value to the form submitter.
 - **file_submission trigger**: Simplified single-file upload form. The field schema is hardcoded server-side (one required FILE input with `waitForResponse: true`).

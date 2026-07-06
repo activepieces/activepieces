@@ -36,3 +36,14 @@ Files split into two groups:
 <Tip>
 **Friendly Tip #1**: If the S3 bucket supports signed URLs but needs to be accessible over a public network, you can set `AP_S3_USE_SIGNED_URLS` to `true` to route traffic directly to S3 and reduce heavy traffic on your API server.
 </Tip>
+
+## Google Cloud Storage (S3 Interoperability)
+
+Google Cloud Storage works through its [S3-interoperability endpoint](https://cloud.google.com/storage/docs/interoperability): set `AP_S3_ENDPOINT` to `https://storage.googleapis.com` and use [HMAC keys](https://cloud.google.com/storage/docs/authentication/hmackeys) as the access key ID and secret.
+
+The AWS SDK (>= 3.729) defaults to CRC32 checksums and `aws-chunked` payloads on `PutObject`, which GCS's S3-interop endpoint rejects with `SignatureDoesNotMatch`. Set these two environment variables on the app and worker containers to restore the old behavior:
+
+```bash
+AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
+AWS_RESPONSE_CHECKSUM_VALIDATION=WHEN_REQUIRED
+```
