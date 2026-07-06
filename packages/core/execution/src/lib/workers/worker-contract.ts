@@ -67,6 +67,7 @@ export type WorkerToApiContract = {
     savePayloads(input: SavePayloadRequest): Promise<void>
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
+    getPrewarmData(): Promise<PrewarmDataResponse>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
@@ -207,4 +208,10 @@ export type SendChatEmailResponse = {
 export type DisableFlowRequest = {
     flowId: string
     projectId: string
+}
+
+export type PrewarmDataResponse = {
+    pieces: { pieceName: string, pieceVersion: string }[]
+    platformId: string
+    engineToken: string
 }

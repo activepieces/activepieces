@@ -164,6 +164,13 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         getSettings: () => sandboxConfig.getSandboxSettings(),
     })
 
+    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
+    void runtime.prewarm({
+        log: logger, 
+        apiClient,
+        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+    })
+
     logger.info({ concurrency }, 'Starting poll loops')
 
     const activeRuntime = runtime

@@ -1,7 +1,8 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ExecutionType, FileCompression, FileLocation, FileType, FlowActionType, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, PrewarmDataResponse, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { websocketService } from '../../core/websockets.service'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
@@ -11,10 +12,12 @@ import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import Paginator from '../../helper/pagination/paginator'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -162,6 +165,35 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             })
         },
 
+        async getPrewarmData() {
+            const empty: PrewarmDataResponse = { pieces: [], platformId: '', engineToken: '' }
+            // Cloud serves many platforms from a shared worker pool — there is no single
+            // platform to prewarm, and warming all of them would be unbounded.
+            if (system.getEdition() === ApEdition.CLOUD) {
+                return empty
+            }
+            const platform = await platformService(log).getOldestPlatform()
+            if (isNil(platform)) {
+                return empty
+            }
+            const projectIds = await projectService(log).getProjectIdsByPlatform(platform.id)
+            const firstProjectId = projectIds[0]
+            if (isNil(firstProjectId)) {
+                return empty
+            }
+            const flows = await flowService(log).list({ platformId: platform.id, limit: Paginator.NO_LIMIT })
+            const pieces = [...new Map(
+                flows.data
+                    .flatMap((flow) => extractPieceRefs(flow.version.trigger))
+                    .map((ref) => [`${ref.pieceName}@${ref.pieceVersion}`, ref]),
+            ).values()]
+            const engineToken = await accessTokenManager(log).generateEngineToken({
+                projectId: firstProjectId,
+                platformId: platform.id,
+            })
+            return { pieces, platformId: platform.id, engineToken }
+        },
+
         async extendLock(input) {
             await jobBroker(log).extendLock(input)
         },
@@ -304,6 +336,15 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return chatRpcHandlers(chatRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendChatEmail(input)
         },
     }
+}
+
+function extractPieceRefs(trigger: FlowTrigger): { pieceName: string, pieceVersion: string }[] {
+    return flowStructureUtil.getAllSteps(trigger).flatMap((step) => {
+        if (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) {
+            return [{ pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion }]
+        }
+        return []
+    })
 }
 
 // Binds conversation/run/platform/user to the per-call logger so every chat RPC

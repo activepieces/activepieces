@@ -1,9 +1,12 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { localExecutionCache } from './cache/local-execution-cache'
+import { pieceCache } from './cache/pieces/piece-cache'
+import { pieceInstaller } from './cache/pieces/piece-installer'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
 import {
     ExecuteParams,
+    PreWarmSandboxParams,
     Runtime,
     RuntimeExecutionResult,
     RuntimeExecutorInfo,
@@ -95,6 +98,34 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     busy: info.busy,
                 }))
         },
+        async prewarm({ log, apiClient, publicApiUrl }: PreWarmSandboxParams): Promise<void> {
+            if (isNil(apiClient) || isNil(publicApiUrl)) {
+                return
+            }
+            const { error } = await tryCatch(async () => {
+                const { pieces, platformId, engineToken } = await apiClient.getPrewarmData()
+                if (pieces.length === 0) {
+                    return
+                }
+                const packages = await Promise.all(pieces.map((ref) =>
+                    pieceCache(log, apiClient, basePath, getSettings).getPiece({
+                        pieceName: ref.pieceName,
+                        pieceVersion: ref.pieceVersion,
+                        platformId,
+                    }),
+                ))
+                await pieceInstaller(log, basePath, getSettings).install({
+                    pieces: packages,
+                    includeFilters: true,
+                    publicApiUrl,
+                    engineToken,
+                })
+                log.info({ pieceCount: packages.length }, 'Prewarmed piece cache')
+            })
+            if (error) {
+                log.warn({ error: String(error) }, 'Cache prewarm failed')
+            }
+        },
         async shutdown(shutdownLog: ApLogger): Promise<void> {
             await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))
         },
@@ -105,4 +136,5 @@ type CreateSandboxRuntimeParams = {
     concurrency?: number
     basePath: string
     getSettings: () => SandboxSettings
+
 }

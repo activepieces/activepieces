@@ -1,5 +1,5 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { EngineOperation, EngineOperationType, EngineResponse, FlowVersion, FlowVersionState, NetworkMode, PiecePackage, SourceCode } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, EngineResponse, FlowVersion, FlowVersionState, NetworkMode, PiecePackage, SourceCode, WorkerToApiContract } from '@activepieces/shared'
 
 // Two roles:
 //   - Resolver (worker-side, owns the only apiClient): turns a job into a fully-materialized
@@ -31,6 +31,7 @@ export type Runtime = {
     // ActivepiecesError codes (timeout / memory / log-size) that handlers already catch.
     execute(params: ExecuteParams): Promise<RuntimeExecutionResult>
     getActiveExecutors(): RuntimeExecutorInfo[]
+    prewarm(params: PreWarmSandboxParams): Promise<void>
     shutdown(log: ApLogger): Promise<void>
 }
 
@@ -41,6 +42,12 @@ export type ExecuteParams = {
     operation: EngineOperation
     timeoutInSeconds: number
     provision: ProvisionInput
+}
+
+export type PreWarmSandboxParams = {
+    log: ApLogger
+    apiClient?: WorkerToApiContract
+    publicApiUrl?: string
 }
 
 // The Resolver's output and the pool's input. The pool installs each piece straight from a link: it
