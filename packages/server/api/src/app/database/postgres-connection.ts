@@ -396,6 +396,7 @@ import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migr
 import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
 import { AddAdhocRunTable1805000000000 } from './migration/postgres/1805000000000-AddAdhocRunTable'
 import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
+import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -807,6 +808,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropBadges1804000000000,
         AddAdhocRunTable1805000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,
+        CreatePieceSetTable1807000000000,
     ]
     return migrations
 }
