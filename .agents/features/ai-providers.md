@@ -31,6 +31,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 - **AI Credits**: Platform-level usage budget (1000 credits = $1 USD) metered through OpenRouter; drives the ACTIVEPIECES auto-provision flow.
 - **aiCreditsEnabled**: Platform plan flag that triggers auto-provisioning of the ACTIVEPIECES provider.
 - **Model cache**: In-memory cache of models per provider, cleared daily at midnight via cron.
+- **CloudflareGatewayModelDiscoveryConfig**: Optional config block on CloudflareGatewayProviderConfig enabling automatic model list retrieval from one or more Cloudflare-proxied providers; results are merged with any manually configured models.
 
 ## Entity
 
@@ -45,7 +46,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 | GOOGLE | apiKey | Gemini models |
 | AZURE | apiKey, deploymentName, instanceName | Azure OpenAI |
 | OPENROUTER | apiKey | 200+ models |
-| CLOUDFLARE | apiKey, accountId, gatewayId | Proxied via Cloudflare Workers AI |
+| CLOUDFLARE | apiKey, accountId, gatewayId | Proxied via Cloudflare Workers AI; supports opt-in model discovery from configured providers (openai, anthropic, google-vertex-ai, etc.) |
 | CUSTOM | apiKey, baseUrl | OpenAI-compatible (LM Studio, Ollama) |
 | ACTIVEPIECES | apiKey, apiKeyHash (auto-provisioned) | Uses OpenRouter, managed by platform |
 

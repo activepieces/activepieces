@@ -67,7 +67,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return modelsCache.get(cacheKey)!
         }
 
-        const data = await aiProviders[provider].listModels(auth, config)
+        const data = await aiProviders[provider].listModels(auth, config, log)
 
         modelsCache.set(cacheKey, data.map(model => ({
             id: model.id,

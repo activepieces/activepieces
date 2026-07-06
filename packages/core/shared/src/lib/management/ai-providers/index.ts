@@ -67,13 +67,21 @@ export const OpenAICompatibleProviderConfig = z.object({
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
+export const CloudflareGatewayModelDiscoveryConfig = z.object({
+    enabled: z.boolean().optional(),
+    providers: z.array(z.string()).optional(),
+    filter: z.string().optional(),
+    vertexPublishers: z.array(z.string()).optional(),
+})
+export type CloudflareGatewayModelDiscoveryConfig = z.infer<typeof CloudflareGatewayModelDiscoveryConfig>
 
 export const CloudflareGatewayProviderConfig = z.object({
     accountId: z.string(),
     gatewayId: z.string(),
-    models: z.array(ProviderModelConfig),
+    models: z.array(ProviderModelConfig).optional(),
     vertexProject: z.string().optional(),
     vertexRegion: z.string().optional(),
+    modelDiscovery: CloudflareGatewayModelDiscoveryConfig.optional(),
 })
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 

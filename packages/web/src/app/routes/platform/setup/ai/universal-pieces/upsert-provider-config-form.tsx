@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -243,6 +244,113 @@ export const UpsertProviderConfigForm = ({
                   />
                 </FormControl>
 
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="config.modelDiscovery.enabled"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-1">
+                  <FormLabel htmlFor="cloudflareModelDiscovery">
+                    {t('Discover models from gateway')}
+                  </FormLabel>
+                  <FormDescription>
+                    {t(
+                      'Optional. Manual models remain available and are merged with discovered models.',
+                    )}
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    id="cloudflareModelDiscovery"
+                    checked={field.value === true}
+                    onCheckedChange={field.onChange}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="config.modelDiscovery.providers"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="cloudflareModelDiscoveryProviders">
+                  {t('Gateway Model Providers')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    id="cloudflareModelDiscoveryProviders"
+                    value={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                    onChange={(event) =>
+                      field.onChange(splitCommaSeparatedValues(event.target.value))
+                    }
+                    placeholder={'openai, anthropic, google-vertex-ai'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Comma-separated provider IDs to query when discovery is enabled.',
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="config.modelDiscovery.filter"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="cloudflareModelDiscoveryFilter">
+                  {t('Model Filter')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    id="cloudflareModelDiscoveryFilter"
+                    placeholder={'gpt-4, gemini, zdr'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Optional comma-separated terms matched against model ID or name.',
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="config.modelDiscovery.vertexPublishers"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="cloudflareVertexPublishers">
+                  {t('Google Vertex Publishers')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    id="cloudflareVertexPublishers"
+                    value={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                    onChange={(event) =>
+                      field.onChange(splitCommaSeparatedValues(event.target.value))
+                    }
+                    placeholder={'google, anthropic'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Optional. Used only when google-vertex-ai discovery is enabled.',
+                  )}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -463,6 +571,12 @@ export const UpsertProviderConfigForm = ({
     </div>
   );
 };
+
+const splitCommaSeparatedValues = (value: string) =>
+  value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
 
 type ProviderConfigModelItemProps = {
   model: ProviderModelConfig;

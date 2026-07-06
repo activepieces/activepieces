@@ -117,11 +117,16 @@ export const UpsertAIProviderDialogContent = ({
         options: ResolverOptions<CreateAIProviderRequest>,
       ) => Promise<ResolverResult<CreateAIProviderRequest>>;
       if (values.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
-        if (
-          values.config.models.some((m) =>
-            m.modelId.includes('google-vertex-ai'),
-          )
-        ) {
+        const hasGoogleVertexModels = values.config.models?.some((m) =>
+          m.modelId.includes('google-vertex-ai'),
+        );
+        const discoversGoogleVertexModels =
+          values.config.modelDiscovery?.enabled === true &&
+          values.config.modelDiscovery.providers?.includes(
+            'google-vertex-ai',
+          );
+
+        if (hasGoogleVertexModels || discoversGoogleVertexModels) {
           const errors: FieldErrors<CreateAIProviderRequest> = {};
           if (
             isNil(values.config.vertexProject) ||
