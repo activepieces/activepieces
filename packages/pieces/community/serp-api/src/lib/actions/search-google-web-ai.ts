@@ -74,8 +74,8 @@ export const searchGoogleWebAi = createAction({
         gl: propsValue.gl || undefined,
         num: propsValue.num_results,
         start: propsValue.start,
-        safe: propsValue.safe as 'active' | 'off',
-        device: propsValue.device as 'desktop' | 'mobile' | 'tablet',
+        safe: propsValue.safe ? (propsValue.safe as 'active' | 'off') : undefined,
+        device: propsValue.device ? (propsValue.device as 'desktop' | 'mobile' | 'tablet') : undefined,
       };
 
       if (propsValue.location) {

@@ -69,11 +69,13 @@ export const searchGoogleTrendsAi = createAction({
         engine: SerpApiEngine.GOOGLE_TRENDS,
         q: propsValue.query,
         hl: propsValue.hl || undefined,
-        data_type: propsValue.data_type as
-          | 'TIMESERIES'
-          | 'GEO_MAP'
-          | 'RELATED_TOPICS'
-          | 'RELATED_QUERIES',
+        data_type: propsValue.data_type
+          ? (propsValue.data_type as
+              | 'TIMESERIES'
+              | 'GEO_MAP'
+              | 'RELATED_TOPICS'
+              | 'RELATED_QUERIES')
+          : undefined,
         geo: propsValue.geo || undefined,
         date: propsValue.date || undefined,
         cat: propsValue.category || undefined,
