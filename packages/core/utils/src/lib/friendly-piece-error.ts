@@ -157,7 +157,12 @@ const extractResponseHttpDetails = (error: Record<string, unknown>): HttpDetails
     if (!isObjectRecord(response)) {
         return null
     }
-    const status = toHttpStatus(response['status'])
+    // A nested `response` object already establishes HTTP context, so any numeric status is
+    // trusted here — including non-standard codes some services emit (e.g. LinkedIn's 999).
+    // The 100–599 range guard is only needed by the broad top-level fallback below, where a
+    // numeric `status` is the sole HTTP signal.
+    const statusValue = response['status']
+    const status = typeof statusValue === 'number' ? statusValue : undefined
     const responseBody = response['body']
     const headersValue = response['headers']
     const headers = isObjectRecord(headersValue) ? headersValue : undefined

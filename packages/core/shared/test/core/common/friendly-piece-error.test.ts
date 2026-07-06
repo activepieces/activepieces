@@ -101,6 +101,7 @@ describe('formatPieceError', () => {
         expect(result.status).toBe(400)
         expect(result.apiMessage).toBe('`temperature` is deprecated for this model.')
         expect(result.message).toBe('`temperature` is deprecated for this model.')
+        expect(result.responseHeaders).toEqual({ 'request-id': 'req_011CbeGhWkQBXpy99GUmspz1' })
     })
 
     it('extracts status and apiMessage from an OpenAI SDK-style error (top-level status/error)', () => {
@@ -126,6 +127,41 @@ describe('formatPieceError', () => {
         expect(result.message).toBe('The requested resource was not found')
         expect(result.responseBody).toEqual({ message: 'The requested resource was not found' })
         expect(result.responseHeaders).toEqual({ 'x-request-id': 'req_abc123' })
+    })
+
+    it('does not treat a top-level status outside the HTTP range as an SDK error', () => {
+        const error = new TestSdkError(700, { message: 'not a real HTTP status' })
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBeUndefined()
+        expect(result.apiMessage).toBeUndefined()
+        expect(result.message).toBe('700 {"message":"not a real HTTP status"}')
+    })
+
+    it('prefers the nested response shape over a top-level client shape when both are present', () => {
+        const error = {
+            response: { status: 401, body: { message: 'from response' } },
+            status: 500,
+            error: { message: 'from client' },
+        }
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(401)
+        expect(result.apiMessage).toBe('from response')
+    })
+
+    it('preserves a non-standard response status (e.g. LinkedIn 999)', () => {
+        const error = new TestHttpError(
+            { status: 999, body: { message: 'Request blocked' } },
+            { body: {} },
+        )
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(999)
+        expect(result.apiMessage).toBe('Request blocked')
     })
 
     it('handles a 5xx with a string body', () => {
