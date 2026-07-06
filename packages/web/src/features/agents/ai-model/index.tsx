@@ -119,6 +119,7 @@ export function AIModelSelector({
   React.useEffect(() => {
     if (
       selectedModel &&
+      selectedModel !== defaultModel &&
       models.length > 0 &&
       !models.some((m) => m.id === selectedModel)
     ) {
@@ -126,7 +127,7 @@ export function AIModelSelector({
       setSelectedModel(fallback);
       onChange({ provider: selectedProvider, model: fallback });
     }
-  }, [models, selectedModel, selectedProvider, onChange]);
+  }, [models, selectedModel, selectedProvider, onChange, defaultModel]);
 
   const handleProviderChange = (provider: AIProviderName) => {
     setSelectedProvider(provider);

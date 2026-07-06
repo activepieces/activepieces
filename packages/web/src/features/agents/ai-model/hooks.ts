@@ -36,7 +36,16 @@ function getAllowedModelsForProvider(
       const aIndex = allowedIds.indexOf(a.id);
       const bIndex = allowedIds.indexOf(b.id);
       return aIndex - bIndex;
-    });
+    })
+    .map((model) =>
+      provider === AIProviderName.ACTIVEPIECES
+        ? { ...model, name: managedTierLabel(model.id) ?? model.name }
+        : model,
+    );
+}
+
+function managedTierLabel(modelId: string): string | undefined {
+  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)?.label;
 }
 
 export const aiModelHooks = {

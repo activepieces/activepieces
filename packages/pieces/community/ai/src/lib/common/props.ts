@@ -1,3 +1,4 @@
+import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/core-utils';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
@@ -5,12 +6,9 @@ import { AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from 
 
 type AIModelType = 'text' | 'image';
 
-// ponytail: mirrors ACTIVEPIECES_CHAT_TIERS modelIds — pieces can't import @activepieces/shared; keep in sync
-const ACTIVEPIECES_MANAGED_MODEL_IDS = [
-  'anthropic/claude-haiku-4.5',
-  'anthropic/claude-sonnet-4.6',
-  'anthropic/claude-opus-4.8',
-];
+function managedModelLabel(modelId: string): string | undefined {
+  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)?.label;
+}
 
 type AIPropsParams<T extends AIModelType> = {
   modelType: T;
@@ -83,9 +81,9 @@ export const aiProps = <T extends AIModelType>({
         disabled: false,
         options: allModels
           .filter(model => model.type === modelType)
-          .filter(model => provider !== AIProviderName.ACTIVEPIECES || ACTIVEPIECES_MANAGED_MODEL_IDS.includes(model.id))
+          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedModelLabel(model.id) !== undefined)
           .map(model => ({
-            label: model.name,
+            label: provider === AIProviderName.ACTIVEPIECES ? (managedModelLabel(model.id) ?? model.name) : model.name,
             value: model.id,
           })),
       };
