@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 
-import { formatKey, truncateValue, ValueRow } from './shared-value-rendering';
+import { truncateValue, ValueRow } from './shared-value-rendering';
 
 function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
   const [expanded, setExpanded] = useState(false);
@@ -59,12 +59,7 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
       {expanded && (
         <div className="pb-1">
           {entries.map(([key, value]) => (
-            <ValueRow
-              key={key}
-              label={formatKey(key)}
-              value={value}
-              depth={0}
-            />
+            <ValueRow key={key} label={key} value={value} depth={0} />
           ))}
         </div>
       )}

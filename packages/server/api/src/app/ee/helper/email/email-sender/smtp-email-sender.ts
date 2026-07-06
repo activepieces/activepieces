@@ -128,7 +128,6 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': `You have been invited to "${vars.projectName}" project ✉️`,
         'project-member-added': `Welcome to ${vars.projectName} 🎉`,
-        'badge-awarded': 'Congratulations, you earned a new badge! 🎉',
         'verify-email': 'Verify your email address ✅',
         'reset-password': 'Reset your password 🔑',
         'issue-created': `[${vars.projectName}] Flow has an issue "${vars.flowName}" ⚠️`,

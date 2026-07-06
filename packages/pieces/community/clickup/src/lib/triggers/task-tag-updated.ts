@@ -80,7 +80,6 @@ export const triggerTaskTagUpdated = createTrigger({
     }
 
     const response = await httpClient.sendRequest<WebhookInformation>(request);
-    console.debug(`clickup.${ClickupEventType.TASK_TAG_UPDATED}.onEnable`, response)
 
     await context.store.put<WebhookInformation>(`clickup_task_tag_updated_trigger`, response.body);
   },
@@ -95,8 +94,7 @@ export const triggerTaskTagUpdated = createTrigger({
           token: context.auth['access_token'],
         },
       };
-      const response = await httpClient.sendRequest(request);
-      console.debug(`clickup.${ClickupEventType.TASK_TAG_UPDATED}.onDisable`, response)
+      await httpClient.sendRequest(request);
     }
   },
   async run(context) {

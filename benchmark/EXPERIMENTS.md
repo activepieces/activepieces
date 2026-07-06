@@ -125,3 +125,83 @@ from the same-region S3 bucket via a signed link (fast in-region fetch, not a sl
 > Measurement caveat: layer numbers are from `hey` + engine timing logs. Per-step splits weren't
 > captured (the engine logged flow-run as one aggregate), so the within-step attribution is
 > structural, not timed.
+
+---
+
+## Experiment 2 — Autoscaling: how fast does new worker capacity arrive, and is scale-down safe?
+
+**Question.** When the worker deployment scales up, how long until a new worker actually takes
+jobs — (a) on a node with spare capacity, (b) when the cluster autoscaler must add a node? And
+does deleting a worker pod under load lose runs?
+
+Raw measurement logs: [`data/autoscaling-2026-07-02/`](data/autoscaling-2026-07-02/).
+Written up for users in `docs/install/architecture/autoscaling.mdx`.
+
+### Rig
+
+| Component | Configuration |
+|---|---|
+| Cluster | GKE standard, `e2-standard-4`, `--enable-autoscaling --min-nodes 2 --max-nodes 5`, `europe-west1-b` |
+| Worker | 0.5 vCPU / 1 GB, concurrency 1, `SANDBOX_CODE_ONLY`, `AP_REUSE_SANDBOX=true`, v0.85.4 |
+| Images | worker 126 MiB compressed (13 layers), app 551 MiB (24 layers); worker registry cross-region (us-central1 → europe-west1), so pull times are an upper bound |
+| Method | `kubectl scale` timestamped, then pod events (`Scheduled`/`Pulling`/`Pulled`/`Started`) + the worker's `"Worker started, polling for jobs..."` log line (needs `AP_LOG_LEVEL=info`; the benchmark manifest defaults to `error`) |
+
+Workers have **no readiness probe** — pod `Ready` only means the container started. The honest
+"capacity available" marker is the polling log line, which is what all numbers below use.
+
+### Scale-up, warm node (capacity free, image cached) — 7 samples
+
+`kubectl scale` → polling: **4.57 / 4.69 / 4.76 / 4.77 / 4.80 / 4.90 / 4.96 s** (median ~4.8 s).
+Stages: scheduled ~0 s → cached-image digest check +1 s → container started ~+2 s → Node boot +
+settings fetch + Socket.IO connect → polling ~+5 s.
+
+### Scale-up, new node (cluster autoscaler) — full path 87 s
+
+Forced by scaling past the fleet's free CPU (worker requests are `requests==limits`):
+
+| Stage | Cumulative |
+|---|---|
+| Scale command (pod unschedulable, `TriggeredScaleUp`) | 0 s |
+| Node created / Ready | +59 s / +60 s |
+| Worker image pulled (uncached, cross-region, ~21–24 s) | +83.8 s |
+| Container started / pod Ready | +83.8 s / +84.8 s |
+| **Worker polling for jobs** | **+87.0 s** |
+
+Unschedulable → node Ready was ~60 s in both observed scale-up events (61 s, 60 s). A node that
+already exists but lacks the image costs only the pull: +17.4 s to polling (14 s pull). Uncached
+pulls observed: 10.2–17.1 s (n=5).
+
+### First job on a fresh worker
+
+First `job.execute`: 3.30 s = provision 1223 ms (pieces install 1153 ms) + sandbox boot 1103 ms +
+run 786 ms. Second job on the same worker: 247 ms. One-time cold start per new worker, as
+documented in `docs/install/architecture/latency.mdx`.
+
+Under a shallow queue (hey `-c 8` vs 4→6 workers) the new workers' first *completed* job logged
+~22 s after the scale command — pickup contention with already-warm workers, not boot time. Don't
+use time-to-first-job under light load as a boot metric.
+
+### Scale-down drain (pod deleted under load)
+
+Victim had executed 252 runs and had one in flight. `kubectl delete pod` →
+
+| Event | Delta |
+|---|---|
+| In-flight `job.execute` completed | +0.42 s |
+| `Worker stopped` (after `drainInFlightJobs()`) | +0.49 s |
+| Pod fully gone | +1.7 s |
+
+Client + server verification: the concurrent `hey` run returned **747/747 HTTP 200**; the
+flow-runs API showed **0** `FAILED` / `INTERNAL_ERROR` / `TIMEOUT` runs afterwards. (A separate
+150 s run that spanned a 14→4→6 rescale saw 8/2144 responses come back 408 — the sync-reply path
+giving up during churn; the runs themselves all succeeded.)
+
+### Takeaways
+
+- Warm-node scale-up is ~5 s; the new-node path is ~85–90 s and is dominated by node provisioning
+  (~60 s) + image pull. The worker's own boot is ~3–5 s either way.
+- The 126 MiB worker image is what keeps the pull segment at 10–24 s; keep it in a same-region
+  registry.
+- Scale-down is lossless and sub-second — aggressive scale-down policies are safe.
+- For sync webhooks (30 s budget) the new-node path cannot arrive in time: keep min replicas at
+  the sync peak, autoscale the burst headroom above it (matches `production-setup.mdx`).
