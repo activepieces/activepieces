@@ -13,6 +13,9 @@ import {
 } from '../common';
 import { getCalendars } from '../common/helper';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 
 interface FreeBusyResponse {
   kind: 'calendar#freeBusy';
@@ -78,8 +81,8 @@ function clipToWorkingHours(
 ): Interval[] {
   const clipped: Interval[] = [];
   for (const interval of free) {
-    let dayCursor = dayjs(interval.start).startOf('day');
-    const intervalEnd = dayjs(interval.end);
+    let dayCursor = dayjs.utc(interval.start).startOf('day');
+    const intervalEnd = dayjs.utc(interval.end);
     while (dayCursor.valueOf() < interval.end) {
       const workStart = dayCursor.add(startHour, 'hour');
       const workEnd = dayCursor.add(endHour, 'hour');
