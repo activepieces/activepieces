@@ -32,7 +32,6 @@ describe('System Health API', () => {
                 database: expect.any(Boolean),
                 release: {
                     current: expect.any(String),
-                    readOk: expect.any(Boolean),
                     workers: {
                         total: expect.any(Number),
                         versionMismatched: expect.any(Number),

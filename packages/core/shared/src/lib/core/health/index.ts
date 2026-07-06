@@ -4,7 +4,6 @@ export * from './health-metrics-request'
 
 export const ReleaseHealth = z.object({
     current: z.string(),
-    readOk: z.boolean(),
     workers: z.object({
         total: z.number(),
         versionMismatched: z.number(),

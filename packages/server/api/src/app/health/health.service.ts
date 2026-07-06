@@ -1,4 +1,4 @@
-import { apVersionUtil, systemUsage } from '@activepieces/server-utils'
+import { apVersionUtil, systemUsage, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import { GetSystemHealthChecksResponse, ReleaseHealth, unique } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
@@ -56,20 +56,19 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
 
 // Surfaces the exact "workers connected but idle" state behind version-skew: workers whose
 // release does not match the app's are silently withheld jobs by the dispatch gate
-// (worker-rpc-service.ts). readOk === false means the app itself failed to read its release
-// ('0.0.0'), which fail-closes the gate for every worker.
+// (worker-rpc-service.ts). A `current` of UNKNOWN_VERSION ('0.0.0') means the app itself failed
+// to read its release, which fail-closes the gate for every worker.
 function buildReleaseHealth(log: FastifyBaseLogger, workerVersions: Array<string | undefined>): ReleaseHealth {
-    const { version: current, readOk } = apVersionUtil.getReleaseInfo()
+    const current = apVersionUtil.getCurrentRelease()
     const mismatched = workerVersions
         .filter(workerVersion => !apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: current }))
         .map(workerVersion => workerVersion ?? UNKNOWN_WORKER_VERSION)
     const mismatchedVersions = unique(mismatched)
-    if (!readOk || mismatched.length > 0) {
-        log.warn({ release: { version: current }, worker: { readOk, mismatchedVersions } }, '[health] Release integrity check failed — worker dispatch is gated for skewed or unreadable versions')
+    if (current === UNKNOWN_VERSION || mismatched.length > 0) {
+        log.warn({ release: { version: current }, worker: { mismatchedVersions } }, '[health] Release integrity check failed — worker dispatch is gated for skewed or unreadable versions')
     }
     return {
         current,
-        readOk,
         workers: {
             total: workerVersions.length,
             versionMismatched: mismatched.length,

@@ -1,6 +1,6 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { apVersionUtil, onCallService, wideEvent } from '@activepieces/server-utils'
+import { apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
@@ -425,8 +425,8 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
 // NOT self-heal on deploy completion, so page immediately and log at error (see the "Release
 // Version Detection" section in packages/server/CLAUDE.md).
 function assertReleaseReadable(log: FastifyBaseLogger): void {
-    const { version, readOk } = apVersionUtil.getReleaseInfo()
-    if (readOk) {
+    const version = apVersionUtil.getCurrentRelease()
+    if (version !== UNKNOWN_VERSION) {
         log.info({ release: { version } }, '[appPostBoot] Release version detected from package.json')
         return
     }

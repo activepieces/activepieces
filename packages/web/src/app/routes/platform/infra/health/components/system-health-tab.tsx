@@ -16,6 +16,10 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { CheckItem } from './check-item';
 import { DailyHealthStrip } from './daily-health-strip';
 
+// Matches UNKNOWN_VERSION in @activepieces/server-utils: the sentinel the backend reports when
+// it could not read its release from package.json. Not importable here (server-only package).
+const UNREADABLE_RELEASE_VERSION = '0.0.0';
+
 type SystemHealthTabProps = {
   onSeeRuns: () => void;
 };
@@ -36,12 +40,14 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
 
   const release = systemHealth?.release;
   const releaseIntegrityOk =
-    !!release?.readOk && release?.workers.versionMismatched === 0;
+    !!release &&
+    release.current !== UNREADABLE_RELEASE_VERSION &&
+    release.workers.versionMismatched === 0;
   const releaseIntegrityMessage = (() => {
     if (!release) {
       return null;
     }
-    if (!release.readOk) {
+    if (release.current === UNREADABLE_RELEASE_VERSION) {
       return (
         <span>
           {t(
