@@ -4,7 +4,7 @@ import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionVal
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
-import { ArrayContains, Brackets } from 'typeorm'
+import { ArrayContains } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -38,47 +38,27 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     // connectionIds. A flow whose published version still uses the connection but whose
     // newer draft dropped it would be missing from that list, so deleting the source
     // would silently orphan the published version.
-    async countPublishedFlowsReferencingConnection({ projectId, externalId }: CountPublishedFlowsParams): Promise<number> {
-        return flowVersionRepo()
+    // When applyToPublishedVersions is set, the replace republishes the published
+    // versions of the flows it can see (those whose latest version references the
+    // connection), so only published versions whose flow's latest version dropped the
+    // connection stay untouched and count as blocking.
+    async countPublishedFlowsReferencingConnection({ projectId, externalId, applyToPublishedVersions }: CountPublishedFlowsParams): Promise<number> {
+        const query = flowVersionRepo()
             .createQueryBuilder('flow_version')
             .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
             .where('flow."projectId" = :projectId', { projectId })
             .andWhere('flow_version.id = flow."publishedVersionId"')
             .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
-            .getCount()
-    },
-
-    // Replace only repoints flows in the source project, so a platform connection
-    // can still be referenced by flows in other projects. Deleting it would orphan
-    // those references, so callers must check this before deleting a platform source.
-    // Only the connection's own projects are considered: a flow in some other project
-    // referencing the same externalId resolves to that project's own connection (a
-    // different credential), so deleting this one would not orphan it. Within the
-    // connection's projects the externalId is unique, so it unambiguously refers here.
-    // Both the latest draft and the published version are checked, since a published
-    // flow can still use the connection even after a newer draft dropped it.
-    async hasOtherProjectFlowsReferencingConnection({ projectId, externalId, connectionProjectIds }: HasOtherProjectFlowsParams): Promise<boolean> {
-        const otherProjectIds = connectionProjectIds.filter((id) => id !== projectId)
-        if (otherProjectIds.length === 0) {
-            return false
+        if (applyToPublishedVersions) {
+            const latestVersionConnectionIds = flowVersionRepo()
+                .createQueryBuilder('fv_latest')
+                .select('fv_latest."connectionIds"')
+                .where('fv_latest."flowId" = flow.id')
+                .orderBy('fv_latest.created', 'DESC')
+                .limit(1)
+            query.andWhere(`NOT ((${latestVersionConnectionIds.getQuery()}) && :externalIds)`)
         }
-        const latestVersionSubquery = flowVersionRepo()
-            .createQueryBuilder('fv_latest')
-            .select('fv_latest.id')
-            .where('fv_latest."flowId" = flow.id')
-            .orderBy('fv_latest.created', 'DESC')
-            .limit(1)
-        const count = await flowVersionRepo()
-            .createQueryBuilder('flow_version')
-            .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
-            .where('flow."projectId" IN (:...otherProjectIds)', { otherProjectIds })
-            .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
-            .andWhere(new Brackets((qb) => {
-                qb.where(`flow_version.id = (${latestVersionSubquery.getQuery()})`)
-                    .orWhere('flow_version.id = flow."publishedVersionId"')
-            }))
-            .getCount()
-        return count > 0
+        return query.getCount()
     },
 
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
@@ -384,10 +364,5 @@ type UpdateFlowsWithAppConnectionParams = {
 type CountPublishedFlowsParams = {
     projectId: ProjectId
     externalId: string
-}
-
-type HasOtherProjectFlowsParams = {
-    projectId: ProjectId
-    externalId: string
-    connectionProjectIds: ProjectId[]
+    applyToPublishedVersions: boolean
 }

@@ -25,13 +25,11 @@ export class AddConnectionIdsGinIndexToFlowVersion1805000000000 implements Migra
         }
     }
 
+    // No CONCURRENTLY here: TypeORM's revert path always wraps down() in a
+    // transaction (the per-migration transaction flag only applies to up()),
+    // and concurrent index drops are illegal inside a transaction.
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (isPGlite()) {
-            await queryRunner.query('DROP INDEX IF EXISTS "idx_flow_version_connection_ids_gin"')
-        }
-        else {
-            await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "idx_flow_version_connection_ids_gin"')
-        }
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_flow_version_connection_ids_gin"')
     }
 }
 

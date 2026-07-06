@@ -268,9 +268,14 @@ export const appConnectionsMutations = {
       onError: (error) => {
         if (api.isError(error)) {
           const apError = error.response?.data as ApErrorParams;
-          if (apError?.code === ErrorCode.VALIDATION) {
+          if (
+            apError?.code === ErrorCode.VALIDATION ||
+            apError?.code === ErrorCode.AUTHORIZATION
+          ) {
             toast.error(t('Error'), {
-              description: t(apError.params.message),
+              description: t(
+                apError.params.message ?? 'Failed to replace connections',
+              ),
             });
             return;
           }
