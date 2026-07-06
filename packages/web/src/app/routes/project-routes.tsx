@@ -21,10 +21,6 @@ const FlowBuilderPage = lazyWithRetry(
   'flow-builder',
 );
 const AnalyticsPage = lazyWithRetry(() => import('./impact'), 'analytics');
-const LeaderboardPage = lazyWithRetry(
-  () => import('./leaderboard'),
-  'leaderboard',
-);
 const ProjectReleasesPage = lazyWithRetry(
   () =>
     import('./project-release').then((m) => ({
@@ -39,6 +35,10 @@ const ViewRelease = lazyWithRetry(
 const RunsPage = lazyWithRetry(
   () => import('./runs').then((m) => ({ default: m.RunsPage })),
   'runs',
+);
+const PieceRunsPage = lazyWithRetry(
+  () => import('./piece-runs').then((m) => ({ default: m.PieceRunsPage })),
+  'piece-runs',
 );
 const FlowRunPage = lazyWithRetry(
   () => import('./runs/id').then((m) => ({ default: m.FlowRunPage })),
@@ -152,6 +152,20 @@ export const projectRoutes = [
     ),
   }),
   ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.pieceRuns,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
+          <PageTitle title="Action Runs">
+            <SuspenseWrapper>
+              <PieceRunsPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRelease,
     element: (
       <ProjectDashboardLayout>
@@ -242,18 +256,6 @@ export const projectRoutes = [
         <PageTitle title="Impact">
           <SuspenseWrapper>
             <AnalyticsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
-  {
-    path: '/leaderboard',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Leaderboard">
-          <SuspenseWrapper>
-            <LeaderboardPage />
           </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>

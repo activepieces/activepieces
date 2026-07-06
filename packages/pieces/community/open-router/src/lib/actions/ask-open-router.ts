@@ -12,6 +12,7 @@ import {
 } from '@activepieces/pieces-common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { askLmmActionOutputSchema } from '../output-schemas';
 
 export const askOpenRouterAction = createAction({
   audience: 'human',
@@ -92,6 +93,7 @@ export const askOpenRouterAction = createAction({
         'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
     }),
   },
+  outputSchema: askLmmActionOutputSchema,
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),

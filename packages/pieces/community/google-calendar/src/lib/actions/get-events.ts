@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import dayjs from 'dayjs';
+import { getEventsActionOutputSchema } from '../output-schemas';
 
 export const getEvents = createAction({
   auth: googleCalendarAuth,
@@ -62,6 +63,7 @@ export const getEvents = createAction({
 			defaultValue: false,
 		}),
   },
+  outputSchema: getEventsActionOutputSchema,
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/list
     const {
