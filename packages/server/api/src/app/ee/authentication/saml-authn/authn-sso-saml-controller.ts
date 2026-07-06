@@ -98,7 +98,7 @@ const LoginRequest = {
     schema: {
         querystring: z.object({
             platformId: z.string().optional(),
-            from: z.string().max(512).optional(),
+            from: z.string().max(4096).optional(),
         }),
     },
 }
