@@ -49,11 +49,13 @@ export const driveSetPublicAccess = createAction({
     const res = await drive.permissions.create({
       fileId: fileId,
       requestBody: permission,
+      supportsAllDrives: true,
     });
 
     const file = await drive.files.get({
       fileId: fileId,
       fields: 'name,mimeType,webContentLink,webViewLink',
+      supportsAllDrives: true,
     });
 
     if (file.data.mimeType === 'application/vnd.google-apps.folder') {
