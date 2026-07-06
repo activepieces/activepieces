@@ -55,8 +55,7 @@ export const updateChangelogPost = createAction({
       body['description'] = propsValue.description;
     if (propsValue.date !== undefined) body['date'] = propsValue.date;
     if (propsValue.active !== undefined) body['active'] = propsValue.active;
-    if (Array.isArray(propsValue.tag_names) && propsValue.tag_names.length > 0)
-      body['tagNames'] = propsValue.tag_names;
+    if (Array.isArray(propsValue.tag_names)) body['tagNames'] = propsValue.tag_names;
     const response = await produktlyApiCall<{
       id: number;
       title: string;
