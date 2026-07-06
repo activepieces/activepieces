@@ -30,13 +30,16 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 log,
             }))
             const piecesWithTags = await enrichTags(params.platformId, translatedPieces, params.includeTags)
+            const filterContext = await enterpriseFilteringUtils(log).loadFilterContext({ platformId: params.platformId, projectId: params.projectId })
             const filteredPieces = await pieceListUtils(log).filterPieces({
                 ...params,
                 pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
+                filterContext,
             })
 
-            return toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType, params.audience)
+            const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType, params.audience)
+            return enterpriseFilteringUtils(log).filterComponents({ platformId: params.platformId, projectId: params.projectId, summaries, filterContext })
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const registry = filterRegistry(await loadRegistry(log), {
@@ -454,7 +457,7 @@ async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchP
     return foundPiece ?? null
 }
 
-async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
+export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
     const allKeys = await pieceRepos()
         .createQueryBuilder('pm')
         .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])

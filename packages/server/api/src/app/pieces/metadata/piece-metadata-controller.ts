@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -77,7 +78,15 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
-            return filterModelActionsByAudience(piece, req.query.audience ?? PieceAudienceFilter.HUMAN)
+            const audienceFilteredPiece = filterModelActionsByAudience(
+                piece,
+                req.query.audience ?? PieceAudienceFilter.HUMAN,
+            )
+            return enterpriseFilteringUtils(req.log).filterPieceComponents({
+                piece: audienceFilteredPiece,
+                platformId,
+                projectId: req.query.projectId,
+            })
         },
     )
 
@@ -95,7 +104,15 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
-            return filterModelActionsByAudience(piece, req.query.audience ?? PieceAudienceFilter.HUMAN)
+            const audienceFilteredPiece = filterModelActionsByAudience(
+                piece,
+                req.query.audience ?? PieceAudienceFilter.HUMAN,
+            )
+            return enterpriseFilteringUtils(req.log).filterPieceComponents({
+                piece: audienceFilteredPiece,
+                platformId,
+                projectId: req.query.projectId,
+            })
         },
     )
 

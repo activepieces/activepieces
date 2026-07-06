@@ -7,7 +7,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/server/api/src/app/mcp/mcp-service.ts` — server build logic, tool registration, token auth
 - `packages/server/api/src/app/mcp/mcp-server-controller.ts` — HTTP endpoints (get, update, rotate, issue embed token, protocol handler, agent validator)
 - `packages/server/api/src/app/mcp/mcp-entity.ts` — McpServer entity
-- `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports
+- `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports; user-attributing tools (`ap_create_flow`, `ap_build_flow`, `ap_duplicate_flow`, `ap_run_action`) receive `McpToolContext` (`{ mcp, userId? }`) instead of the bare `ProjectScopedMcpServer`
 - `packages/server/api/src/app/mcp/tools/piece-expertise.ts` — curated, piece-specific guidance (expert notes, example inputs) surfaced through MCP property discovery
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
 - `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
@@ -32,6 +32,9 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - Cloud: available
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **McpServer** — the per-project MCP server record (token, disabledTools)
 - **Locked tools** — tools that are always active when the MCP server is enabled; cannot be disabled
 - **Controllable tools** — tools that platform or project owners can enable/disable individually
@@ -39,7 +42,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - **StreamableHTTP** — streaming variant of the MCP protocol used for the primary `/http` endpoint
 - **MCP trigger piece** — `@activepieces/piece-mcp`; a flow with this trigger is exposed as a callable tool via MCP
 - **disabledTools** — JSONB array of controllable tool names currently disabled; `null` or `[]` means all controllable tools are enabled
-- **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. `ProjectScopedMcpServer` carries `userId?` so the tools can attribute ownership.
+- **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. These tools (plus `ap_run_action`) take `McpToolContext` (`{ mcp: ProjectScopedMcpServer, userId? }`) so they can attribute ownership; `ap_run_action` stamps the same `userId` onto the `adhoc_run` row it creates.
 - **Embedded MCP OAuth** — in-embed consent flow where a managed-auth (embedded) user approves an MCP OAuth request inside the host app via the SDK's `authorizeMcp()`, instead of being redirected to a standalone Activepieces login they don't have. Backed by the `/embed/mcp-authorize` route and the existing `POST /v1/mcp-oauth/approve` (which accepts the embed USER session). `mcpSettings()` similarly renders the MCP settings page inside the embed.
 
 ## Entity
@@ -73,7 +76,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_create_table`, `ap_delete_table` — table management
 - `ap_manage_fields`, `ap_insert_records`, `ap_update_record`, `ap_delete_records` — record operations
 - `ap_test_flow`, `ap_test_step` — flow/step testing
-- `ap_retry_run`, `ap_run_action` — run management
+- `ap_retry_run` — run management
+- `ap_run_action` — executes a single piece action as a first-class **ad-hoc run** (`executeAdhocAction` → `adhocRunService.run()`, synchronous `EXECUTE_ACTION` job — no temporary flow, no polling). Persists an `adhoc_run` row with `source: MCP`, attributed to the OAuth user via `McpToolContext.userId`. See `.agents/features/adhoc-run.md`
 
 **Dynamic flow tools**: Each enabled flow with MCP trigger piece is registered as a callable tool. Name format: `{toolName}_{flowId.substring(0, 4)}`. Execution: submits webhook to flow (sync if `returnsResponse`, async otherwise).
 

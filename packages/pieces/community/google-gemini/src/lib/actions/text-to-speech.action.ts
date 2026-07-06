@@ -4,6 +4,7 @@ import { getGeminiTtsModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
 import wav from 'wav';
 import { Writable } from 'stream';
+import { textToSpeechActionOutputSchema } from '../output-schemas';
 
 export const textToSpeechAction = createAction({
   audience: 'human',
@@ -63,6 +64,7 @@ export const textToSpeechAction = createAction({
       },
     }),
   },
+  outputSchema: textToSpeechActionOutputSchema,
   async run(context) {
     const { text, model, voice } = context.propsValue;
 
