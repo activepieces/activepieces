@@ -7,6 +7,8 @@ export const sendMessageToExistingChat = createAction({
   name: 'sendMessageToExistingChat',
   displayName: 'Send Message to Existing Chat',
   description: 'Sends a text message in a chat identified by chat_id',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a text message into an existing TimelinesAI WhatsApp chat identified by its numeric chat_id, optionally attaching an uploaded file and a label. Use to reply within a conversation you already have the chat_id for; use Send Message to New Chat instead when starting a conversation by phone or JID. Not idempotent: each call posts a new message.', idempotent: false },
   props: {
     chat_id: chatDropdown({ required: true }),
     text: Property.LongText({

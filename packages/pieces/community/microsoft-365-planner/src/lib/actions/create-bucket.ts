@@ -7,6 +7,11 @@ export const createBucket = createAction({
   name: 'createBucket',
   displayName: 'Create Bucket',
   description: 'Create a bucket (category) under a plan.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new bucket (a column/category for grouping tasks) under an existing Planner plan, identified by plan ID. Use to organize tasks within a plan. Each call adds another bucket, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     planId: PlanDropdown({ required: true }),
     name: Property.ShortText({

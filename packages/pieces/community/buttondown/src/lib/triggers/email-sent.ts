@@ -7,6 +7,10 @@ export const buttondownEmailSent = createButtondownWebhookTrigger({
   name: 'buttondown_email_sent',
   displayName: 'Email Sent',
   description: 'Triggers when an email is sent from Buttondown.',
+  aiMetadata: {
+    description:
+      'Fires when an email is dispatched to subscribers from Buttondown. Represents a sent newsletter/email; the payload is enriched with the full email details.',
+  },
   eventType: 'email.sent',
   sampleData: {
     event_type: 'email.sent',

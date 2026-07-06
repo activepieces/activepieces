@@ -4,11 +4,12 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { StopResponse } from '@activepieces/shared';
+import { StopResponse } from '@activepieces/pieces-framework';
 import { StatusCodes } from 'http-status-codes';
 
 
 export const replyToMcpClient = createAction({
+  audience: 'human',
   name: 'reply_to_mcp_client',
   displayName: 'Reply to MCP Client',
   description: 'Return a response to the MCP client that called the tool.',

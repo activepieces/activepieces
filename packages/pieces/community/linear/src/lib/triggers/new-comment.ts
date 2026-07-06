@@ -8,6 +8,9 @@ export const linearNewComment = createTrigger({
   name: 'new_comment',
   displayName: 'New Comment',
   description: 'Triggers when a new comment is created on a Linear issue',
+  aiMetadata: {
+    description: 'Fires when a new comment is posted on a Linear issue, optionally filtered to specific teams or comment authors. Represents the created comment and its parent issue.',
+  },
   props: {
     team_ids: props.team_ids(false),
     author_ids: props.author_ids(false),

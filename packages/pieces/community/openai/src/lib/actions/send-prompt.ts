@@ -8,13 +8,14 @@ import { openaiAuth } from '../auth';
 import {
   calculateMessagesTokenSize,
   exceedsHistoryLimit,
-  notLLMs,
+  isLLM,
   reduceContextSize,
 } from '../common/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askOpenAI = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'ask_chatgpt',
   displayName: 'Ask ChatGPT',
@@ -41,10 +42,7 @@ export const askOpenAI = createAction({
             apiKey: auth.secret_text,
           });
           const response = await openai.models.list();
-          // We need to get only LLM models
-          const models = response.data.filter(
-            (model) => !notLLMs.includes(model.id)
-          );
+          const models = response.data.filter((model) => isLLM(model.id));
           return {
             disabled: false,
             options: models.map((model) => {
@@ -118,8 +116,8 @@ export const askOpenAI = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(1).optional(),
-      memoryKey: z.string().max(128).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
     const openai = new OpenAI({
       apiKey: auth.secret_text,

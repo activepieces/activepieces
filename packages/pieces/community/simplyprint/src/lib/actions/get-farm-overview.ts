@@ -10,6 +10,12 @@ export const getFarmOverviewAction = createAction({
   displayName: 'Get Farm Overview',
   description:
     'One-shot fleet summary: total printer count plus per-bucket lists (online/offline, printing/paused, awaiting bed clear, in maintenance, requires-attention, AI failure detections, …). Use this instead of paginating "List Printers" when you just need counts and the printers in each state.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns a single fleet-wide snapshot: total printer count plus per-state buckets (online/offline, printing/paused, awaiting bed clear, in maintenance, requires-attention, AI failure detections, etc.) each listing the printers in it. Prefer this over paginating "List Printers" when you only need counts or which printers are in a given state. Takes no input; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const res = await simplyprintClient.simplyprintCall({

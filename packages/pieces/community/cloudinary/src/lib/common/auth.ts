@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export const cloudinaryAuth = PieceAuth.CustomAuth({
     required: true,

@@ -8,6 +8,8 @@ export const getSite = createAction({
   name: 'get_site',
   displayName: 'Get Site',
   description: 'Get details of a site including tracker script configuration',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the configuration details of a single Plausible site, including its tracker script settings. Use to inspect one site identified by its domain; for enumerating sites use List Sites instead. Read-only and safe to repeat.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
   },

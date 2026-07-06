@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getTrends } from './lib/actions/get-trends';
 import { getTweet } from './lib/actions/get-tweet';
 import { getUserTweets } from './lib/actions/get-user-tweets';

@@ -8,6 +8,8 @@ export const asanaCreateTaskAction = createAction({
   auth: asanaAuth,
   name: 'create_task',
   description: 'Create a new task',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new task in an Asana project, setting its name, description (notes), optional due date, assignee, and tags. Use when an agent needs to add a work item to Asana. Requires a workspace and project; not idempotent — each call creates a separate task even with identical input.', idempotent: false },
   displayName: 'Create Task',
   props: {
     workspace: asanaCommon.workspace,

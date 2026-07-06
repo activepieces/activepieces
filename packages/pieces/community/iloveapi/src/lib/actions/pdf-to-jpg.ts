@@ -9,6 +9,12 @@ export const pdfToJpgAction = createAction({
   displayName: 'PDF to JPG',
   description:
     'Convert PDF pages to JPG images, or extract images embedded in the PDF.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Turn a PDF into JPG images. Choose the "pages" mode to render each page as a full JPG, or the "extract" mode to pull out only the raster images already embedded inside the PDF. Each run produces a new converted output, so re-running creates a fresh result rather than reusing a prior one.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

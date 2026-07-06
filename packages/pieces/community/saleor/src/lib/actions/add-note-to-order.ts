@@ -7,6 +7,8 @@ export const addOrderNote = createAction({
   name: 'addOrderNote',
   displayName: 'Add Order Note',
   description: 'Add a note to a Saleor order',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a note to a Saleor order identified by its order ID, appending the given message to that order. Use it to record a comment or annotation on a known order. Requires the order ID and message; not idempotent, since each call appends another note.', idempotent: false },
   auth: saleorAuth,
   props: {
     orderId: Property.ShortText({

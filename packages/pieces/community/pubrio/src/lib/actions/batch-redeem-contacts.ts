@@ -9,6 +9,12 @@ export const batchRedeemContacts = createAction({
   displayName: 'Batch Redeem Contacts',
   description:
     'Reveal email or phone numbers for multiple people at once (uses credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reveal contact details (work/personal email or phone) for a batch of people identified by their search IDs. Not idempotent: each call consumes account credits per reveal, so avoid retrying the same IDs unnecessarily.',
+    idempotent: false,
+  },
   props: {
     peoples: Property.Array({
       displayName: 'People Search IDs',

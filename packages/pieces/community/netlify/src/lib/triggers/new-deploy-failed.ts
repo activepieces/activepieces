@@ -6,7 +6,10 @@ export const newDeployFailed = createTrigger({
   name: "new_deploy_failed",
   displayName: "New Deploy Failed",
   description: "Fires when a site deploy fails.",
-  auth: netlifyAuth, 
+  aiMetadata: {
+    description: 'Fires when a deploy on the selected Netlify site fails to build or publish (the deploy_failed event); the payload includes the error message. Use it to alert on or remediate broken deploys.',
+  },
+  auth: netlifyAuth,
   props: {
     siteId: Property.Dropdown({
       auth: netlifyAuth,      displayName: "Site",

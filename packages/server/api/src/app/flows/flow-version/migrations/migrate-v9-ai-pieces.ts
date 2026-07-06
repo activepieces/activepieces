@@ -1,13 +1,5 @@
-import {
-    AIProviderName,
-    ApEdition,
-    FlowAction,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-    isNil,
-    PieceAction,
-} from '@activepieces/shared'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { ApEdition, FlowAction, FlowActionType, flowStructureUtil, FlowVersion, PieceAction } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { Migration } from '.'
 

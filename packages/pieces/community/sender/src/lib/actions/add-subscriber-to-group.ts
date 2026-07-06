@@ -12,6 +12,8 @@ export const addSubscriberToGroupAction = createAction({
   name: 'add_subscriber_to_group',
   displayName: 'Add Subscriber to Group',
   description: 'Add an existing or new subscriber into one or more groups',
+  audience: 'both',
+  aiMetadata: { description: 'Assigns a single subscriber to one or more groups/lists in a Sender account, identified by their subscriber ID. Use to segment a contact for targeted campaigns. Idempotent: adding a contact already in a group leaves membership unchanged.', idempotent: true },
   props: {
     subscriber: subscriberDropdownSingle,
     groups: groupIdsDropdown,

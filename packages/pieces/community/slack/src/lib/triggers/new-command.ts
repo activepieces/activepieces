@@ -14,6 +14,10 @@ export const newCommand = createTrigger({
   displayName: 'New Command in Channel',
   description:
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2)',
+  aiMetadata: {
+    description:
+      'Fires when a channel or group message addressed to the bot contains one of the configured commands (e.g., "@bot help" or "@bot ocr"). Can be optionally filtered to specific channels, and bot messages can be ignored. The event payload includes the original message plus a parsed_command object with the recognized command and its arguments.',
+  },
   props: {
     info: multiSelectChannelInfo,
     user: userId(true),

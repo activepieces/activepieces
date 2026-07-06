@@ -9,6 +9,12 @@ export const watermarkPdfAction = createAction({
   name: 'watermark_pdf',
   displayName: 'Watermark PDF',
   description: 'Stamp a text or image watermark across pages of a PDF.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overlay a watermark onto chosen pages of a PDF. Pick "text" mode to stamp a string (with font, color, rotation, transparency, mosaic, and layer controls) or "image" mode to stamp a supplied JPG/PNG; the matching text or image input is required for the selected mode. Each run writes a new watermarked file rather than reusing a previous result.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

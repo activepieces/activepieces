@@ -8,6 +8,8 @@ export const findContact = createAction({
   name: 'findContact',
   displayName: 'Find Contact',
   description: 'Look up a contact by handle (email, phone, etc.) or other identifying field.',
+  audience: 'both',
+  aiMetadata: { description: 'Search Front contacts by email, phone, or a custom Front query string to find a matching contact before referencing it. Read-only and repeatable; supports pagination via limit and page token. Use this to resolve a contact rather than to create or modify one.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

@@ -9,6 +9,8 @@ export const deleteAdmin = createAction({
   name: 'delete_admin',
   displayName: 'Delete Administrator',
   description: 'Delete an existing administrator',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently removes an Onfleet administrator by admin ID. Destructive and not reversible; re-deleting an already-removed admin will error rather than be a no-op. Requires a known admin ID (use get-admins to find it).', idempotent: false },
   props: {
     admin: common.admin,
   },

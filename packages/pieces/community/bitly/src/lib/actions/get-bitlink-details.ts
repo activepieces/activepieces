@@ -9,6 +9,8 @@ export const getBitlinkDetailsAction = createAction({
     name: 'get_bitlink_details',
     displayName: 'Get Bitlink Details',
     description: 'Retrieve metadata for a Bitlink.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieves metadata for a single Bitlink (title, long URL, tags, archive status, timestamps) identified by its Bitlink ID. Use to look up the current state of a known short link. Idempotent read-only lookup.', idempotent: true },
     props: {
         group_guid: groupGuid,
         bitlink: bitlinkDropdown,

@@ -152,6 +152,9 @@ export const newLeadSubmitted = createTrigger({
     name: 'newLeadSubmitted',
     displayName: 'New Lead Submitted',
     description: 'Fires when a lead submits via form, popup, or mobile campaign',
+    aiMetadata: {
+      description: 'Fires when a new lead is submitted through a Smoove form or landing page, with submission and contact details; the Monitoring Mode prop selects between watching all forms or a single specified landing page.',
+    },
     props: {
         monitoringMode: Property.StaticDropdown({
             displayName: 'Monitoring Mode',

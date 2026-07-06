@@ -8,6 +8,8 @@ export const getInvoice = createAction({
   name: 'get_invoice',
   displayName: 'Get Invoice',
   description: 'Gets detailed information about a specific invoice',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves full details of a single JustInvoice invoice by its ID or invoice number. Use to look up an invoice before acting on it or to read its current status. Read-only and idempotent.', idempotent: true },
   props: {
     invoiceId: Property.ShortText({
       displayName: 'Invoice ID',

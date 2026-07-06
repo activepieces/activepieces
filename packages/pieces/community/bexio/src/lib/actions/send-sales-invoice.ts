@@ -7,6 +7,8 @@ export const sendSalesInvoiceAction = createAction({
   name: 'send_sales_invoice',
   displayName: 'Send Sales Invoice',
   description: 'Send a sales invoice to an email address',
+  audience: 'both',
+  aiMetadata: { description: 'Emails an existing Bexio sales invoice to a recipient, with subject and message body, optionally marking the invoice as open and attaching the PDF. Use to deliver an invoice to a customer; pick Export Invoice to PDF if you only need the file. Requires the invoice id and a recipient email, and the message must contain a "[Network Link]" placeholder. Not idempotent: each call sends another email.', idempotent: false },
   props: {
     invoice_id: Property.Dropdown({
       auth: bexioAuth,

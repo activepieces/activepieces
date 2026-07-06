@@ -11,6 +11,8 @@ export const deleteTaskAction = createAction({
   name: 'flowlu_delete_task',
   displayName: 'Delete Task',
   description: 'Deletes an existing task.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a task in Flowlu by its task id. Use to permanently remove a task. Effectively idempotent in end state once removed, but it mutates data and a repeat call targets an already-deleted record.', idempotent: false },
   props: {
     task_id: flowluCommon.task_id(true),
   },

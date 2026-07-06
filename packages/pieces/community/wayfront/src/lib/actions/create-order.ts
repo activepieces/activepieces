@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { wayfrontAuth } from '../auth';
 import {
   clientsDropdown,
@@ -14,6 +14,12 @@ export const createOrderAction = createAction({
   name: 'create_order',
   displayName: 'Create Order',
   description: 'Creates a new order for a client in Wayfront.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new order for a specific Wayfront client. Identify the service either by a free-text service title or by an existing service ID (supply one of the two); optionally set status, order number, due/start/completion/created dates, assigned employees, tags, linked orders, and metadata. Requires the client user ID. Not idempotent: each call creates a separate order.',
+    idempotent: false,
+  },
   props: {
     user_id: clientsDropdown,
     service: Property.ShortText({

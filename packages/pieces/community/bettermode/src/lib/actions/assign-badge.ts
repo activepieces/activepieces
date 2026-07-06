@@ -8,6 +8,8 @@ export const assignBadgeAction = createAction({
   auth: bettermodeAuth,
   displayName: 'Assign Badge to Member',
   description: 'Assign an existing badge to a member by email',
+  audience: 'both',
+  aiMetadata: { description: 'Grants an existing Bettermode badge (by badge ID) to the member resolved from the given email address. The badge must already exist and the email must match a network member, or the call fails. Idempotent: the member ends up holding the badge regardless of how many times it is called.', idempotent: true },
   props: {
     badgeId: Property.Dropdown({
       auth: bettermodeAuth,

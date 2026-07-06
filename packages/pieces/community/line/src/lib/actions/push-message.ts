@@ -11,6 +11,11 @@ export const pushMessage = createAction({
   auth: lineAuth2,
   displayName: 'Push Message',
   description: 'Push message to the line account',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a text message from the LINE bot directly to a single recipient identified by their LINE user ID. Use this to proactively message a user (not as a reply within a webhook session); the user ID is typically captured from an incoming message webhook payload. Not idempotent — each call delivers a new message.',
+    idempotent: false,
+  },
   props: {
     userId: Property.ShortText({
       displayName: 'User Id',

@@ -9,6 +9,8 @@ export const fountainListStages = createAction({
   auth: fountainAuth,
   displayName: 'List All Stages',
   description: 'Retrieves an Opening\'s stages',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all hiring-pipeline stages for a given opening (Fountain funnel), identified by its funnel ID. Use to discover the stages of an opening, e.g. before moving or filtering applicants. Read-only and idempotent.', idempotent: true },
   props: {
     funnel_id: Property.Dropdown({
       displayName: 'Opening',

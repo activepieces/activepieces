@@ -1,9 +1,10 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { CreateRecordsRequest } from '@activepieces/shared';
+import { CreateRecordsRequest } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 
 export const createRecords = createAction({
+  audience: 'human',
   name: 'tables-create-records',
   displayName: 'Create Record(s)',
   description: 'Insert one or more new records to a table.',

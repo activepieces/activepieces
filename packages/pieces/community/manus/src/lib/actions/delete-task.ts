@@ -33,6 +33,8 @@ export const deleteTask = createAction({
   auth: manusAuth,
   displayName: 'Delete Task',
   description: 'Permanently delete a task by its ID. This action cannot be undone.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a Manus task by its ID; this cannot be undone. Use to remove a task entirely. Not idempotent: a repeat call targets an already-deleted task and will fail.', idempotent: false },
   props: {
     taskId: Property.Dropdown({
       auth: manusAuth,

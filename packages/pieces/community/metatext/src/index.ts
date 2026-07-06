@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { extractText } from './lib/actions/extract-text';
 import { classifyText } from './lib/actions/classify-text';
 import { finetuneModel } from './lib/actions/finetune-model';

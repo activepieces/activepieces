@@ -8,6 +8,12 @@ export const makeACallToLead = createAction({
   name: 'makeACallToLead',
   displayName: 'Make a Call to Lead',
   description: 'Make a leadcall from user to e164 number',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Places an outbound lead call to a destination number (E.164 or extension) and plays a text-to-speech message; all three inputs (caller ID, destination, TTS text) are required. Choose this for automated outreach calls that announce a spoken message rather than connecting two people. Not idempotent: each call initiates a new phone call.",
+    idempotent: false,
+  },
   props: {
     caller_id: Property.ShortText({
       displayName: 'Caller ID',

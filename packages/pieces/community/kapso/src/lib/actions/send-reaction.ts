@@ -8,6 +8,11 @@ export const sendReaction = createAction({
   name: 'send_reaction',
   displayName: 'Send Reaction',
   description: 'React to a WhatsApp message with an emoji.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds an emoji reaction to a specific WhatsApp message identified by its message ID; passing an empty emoji removes the existing reaction. Use to acknowledge or respond to a message without sending a full reply. Requires the target message ID. Mutates the message reaction state on each call, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,

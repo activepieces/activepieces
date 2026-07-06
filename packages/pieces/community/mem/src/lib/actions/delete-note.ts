@@ -8,6 +8,11 @@ export const deleteNoteAction = createAction({
   name: 'delete_note',
   displayName: 'Delete Note',
   description: 'Delete a note in Mem by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently deletes a single note in Mem identified by its note ID. Use to remove a note you can address by ID. Destructive and not idempotent: the first call removes the note and a repeat with the same ID will fail because the note no longer exists.',
+    idempotent: false,
+  },
   props: {
     note_id: Property.ShortText({
       displayName: 'Note ID',

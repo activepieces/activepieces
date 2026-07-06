@@ -10,6 +10,9 @@ export const newContact = createTrigger({
   name: 'newContact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created.',
+  aiMetadata: {
+    description: 'Fires when a new contact is created in Aircall (the contact.created webhook event), emitting the newly created contact with its name, company, phone numbers, and emails.',
+  },
   props: {},
   sampleData:  {
       id: 456,

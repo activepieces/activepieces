@@ -8,6 +8,12 @@ export const mollieCreateCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Creates a new customer in Mollie',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a customer record in Mollie (optional name, email, locale, and metadata) to associate with payments and mandates for recurring billing. Use before setting up recurring or first-sequence payments that need a customer ID. Not idempotent: each call creates a new customer, with no deduplication on email.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

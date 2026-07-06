@@ -1,6 +1,7 @@
 import path from 'path'
+import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
@@ -42,7 +43,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             stepNameToUpdate: action.name,
         })
 
-        if (isNil(constants.runEnvironment)) {
+        if (!constants.adhocMode && isNil(constants.runEnvironment)) {
             throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
         }
 

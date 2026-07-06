@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { createClient } from '../common';
 import { dustAuth } from '../..';
-import { DustAuthType } from '../..';
 import mimeTypes from 'mime-types';
 import { FileUploadUrlRequestType } from '@dust-tt/client';
 
@@ -10,6 +9,12 @@ export const uploadFile = createAction({
   name: 'uploadFile',
   displayName: 'Upload file',
   description: 'Upload file to be used in conversation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upload a file to Dust so it can later be referenced (by the returned file ID) when creating a conversation or content fragment. Use this first when you need to feed a file into a conversation. Each call uploads a new file instance, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: dustAuth,
   props: {
     file: Property.File({

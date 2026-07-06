@@ -9,6 +9,11 @@ export const addNoteToChange = createAction({
   name: 'add_note_to_change',
   displayName: 'Add Note to Change',
   description: 'Adds a private or public note to an existing change request.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Appends a note to an existing Freshservice change request identified by change id. The note can be private (agent-only, the default) or public. Use to record commentary or an update on a change. Not idempotent — each call appends another note.',
+    idempotent: false,
+  },
   props: {
     change_id: freshserviceCommon.change(true),
     body: Property.LongText({

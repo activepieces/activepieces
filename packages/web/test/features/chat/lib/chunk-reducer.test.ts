@@ -1,7 +1,10 @@
 import { UIMessageChunk } from 'ai';
 import { describe, expect, it } from 'vitest';
 
-import { chunkReducer, StreamingState } from '@/features/chat/lib/chunk-reducer';
+import {
+  chunkReducer,
+  StreamingState,
+} from '@/features/chat/lib/chunk-reducer';
 
 function makeChunk(override: UIMessageChunk): UIMessageChunk {
   return override;
@@ -289,9 +292,7 @@ describe('chunkReducer', () => {
 
       chunkReducer.applyChunks({
         state,
-        chunks: [
-          makeChunk({ type: 'text-delta', id: 't1', delta: ' more' }),
-        ],
+        chunks: [makeChunk({ type: 'text-delta', id: 't1', delta: ' more' })],
       });
 
       const textPart = state.message.parts[0] as { type: string; text: string };

@@ -15,6 +15,8 @@ export const createFlexibilityAssetAction = createAction({
   name: 'createFlexibilityAsset',
   displayName: 'Resources - Flexibility Assets - Create',
   description: 'Create new flexibility asset.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new flexibility asset bound to exactly one source - a DLM circuit, a charge point, or an EVSE (only one of these IDs may be set). Not idempotent: each call creates a separate asset, so re-running produces duplicates. Use List/Get first to check whether a suitable asset already exists, and use Update to change an existing one.', idempotent: false },
   props: {
         
   dlmCircuitId: Property.Number({

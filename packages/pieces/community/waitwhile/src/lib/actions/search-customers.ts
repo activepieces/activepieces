@@ -8,6 +8,12 @@ export const searchCustomers = createAction({
   name: 'searchCustomers',
   displayName: 'Search customers',
   description: 'Search for customers by name, phone, email, or identifier',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches Waitwhile customers by a prefix-match query (name, phone, email, or customer identifier) and optional filters for location, visit state, tag, and a date range, with limit/page pagination. Use to look up an existing customer or filter a customer list before acting; with no query or filters it returns the broader set. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     q: Property.ShortText({
       displayName: 'Search Query',

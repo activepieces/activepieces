@@ -11,7 +11,7 @@ import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Channel } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 type Props = {
 	teamId: string;
@@ -22,6 +22,9 @@ export const newChannelTrigger = createTrigger({
 	name: 'new-channel',
 	displayName: 'New Channel',
 	description: 'Triggers when a new channel is created in a team.',
+	aiMetadata: {
+		description: 'Fires when a new channel is created within the selected Microsoft Teams team. Each event represents the newly created channel and its metadata. Polls periodically by creation time, so events appear with a short delay rather than instantly.',
+	},
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 	},

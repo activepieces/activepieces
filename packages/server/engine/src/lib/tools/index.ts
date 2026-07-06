@@ -1,11 +1,11 @@
+import { isNil, isObject, isString } from '@activepieces/core-utils'
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
+import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
 import dayjs from 'dayjs'
 import { z } from 'zod'
+import { adhocStepRunner } from '../handler/adhoc-step-runner'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { flowExecutor } from '../handler/flow-executor'
 import { pieceHelper } from '../helper/piece-helper'
 import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
@@ -51,7 +51,7 @@ async function resolveProperties(
     model: LanguageModel,
     operation: ExecuteToolOperation,
 ): Promise<Record<string, unknown>> {
-    const auth = operation.predefinedInput?.auth
+    const auth = normalizeAgentToolAuth(operation.predefinedInput?.auth)
     const predefinedInputsFields = operation.predefinedInput?.fields || {}
 
     let result: Record<string, unknown> = {}
@@ -80,6 +80,7 @@ async function resolveProperties(
                 PropertyType.BASIC_AUTH,
                 PropertyType.OAUTH2,
                 PropertyType.CUSTOM_AUTH,
+                PropertyType.OIDC,
                 PropertyType.CUSTOM,
                 PropertyType.MARKDOWN,
             ]
@@ -170,12 +171,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             },
             valid: true,
         }
-        const output = await flowExecutor.getExecutorForAction(step.type).handle({
-            action: step,
-            executionState: FlowExecutorContext.empty(),
-            constants: EngineConstants.fromExecuteActionInput(operation),
-        })
-        const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
+        const { output: stepOutput, errorMessage, status } = await adhocStepRunner.run({ step, operation })
         
         return {
             status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
@@ -299,6 +295,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
         case PropertyType.OAUTH2:
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
+        case PropertyType.OIDC:
         case PropertyType.SECRET_TEXT:
             throw new Error(`Unsupported property type: ${property.type}`)
     }
@@ -405,6 +402,22 @@ function buildPropertyDetailsSection(propertyDetails: PropertyDetail[]): string 
 **PROPERTY DETAILS**:
 ${sections}
 `
+}
+
+// An agent tool's auth is always meant to be a connection reference string
+// (e.g. "{{connections['id']}}"), but the agent sometimes wraps it in a
+// single-key object like { accessToken: "{{connections['id']}}" }. Unwrap that
+// back to the string so the piece's auth resolves; the props resolver handles
+// the rest. Anything else is passed through untouched.
+export function normalizeAgentToolAuth(auth: unknown): unknown {
+    if (!isObject(auth)) {
+        return auth
+    }
+    const values = Object.values(auth)
+    if (values.length === 1 && isString(values[0])) {
+        return values[0]
+    }
+    return auth
 }
 
 type ConstructToolParams = {

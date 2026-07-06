@@ -2,12 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { editMessageTextActionOutputSchema } from '../output-schemas';
 
 export const telegramEditMessageTextAction = createAction({
   auth: telegramBotAuth,
   name: 'edit_message_text',
   displayName: 'Edit Message Text',
   description: 'Edit the text of a previously sent message or an inline message',
+  audience: 'both',
+  aiMetadata: { description: 'Replaces the text of a message the bot already sent, identified either by chat_id + message_id or by inline_message_id (the two targeting modes are mutually exclusive). Use to update a status or correct a message in place rather than sending a new one. Not idempotent: Telegram rejects an edit whose text matches the current content.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: Property.ShortText({
@@ -41,6 +44,7 @@ export const telegramEditMessageTextAction = createAction({
     }),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: editMessageTextActionOutputSchema,
   async run(ctx) {
     const hasChatTarget = Boolean(ctx.propsValue.chat_id && ctx.propsValue.message_id);
     const hasInlineTarget = Boolean(ctx.propsValue.inline_message_id);

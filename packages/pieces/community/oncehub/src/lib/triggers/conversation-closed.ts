@@ -8,6 +8,10 @@ export const conversationClosed = createTrigger({
   displayName: 'Conversation Closed',
   description:
     'Triggered when: Website visitor reaches the end of the conversation flow and when Website visitor starts a new conversation with a different chatbot',
+  aiMetadata: {
+    description:
+      'Fires when a OnceHub chatbot conversation closes, either when the visitor reaches the end of the conversation flow or starts a new conversation with a different chatbot. The event carries the conversation with its contact and owner details.',
+  },
   props: {},
   sampleData: {
     id: 'EVNT-KN56U3YL7C',

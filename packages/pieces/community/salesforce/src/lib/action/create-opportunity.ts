@@ -8,6 +8,8 @@ export const createOpportunity = createAction({
     name: 'create_opportunity',
     displayName: 'Create Opportunity',
     description: 'Creates a new opportunity.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new sales Opportunity; Name, Close Date (YYYY-MM-DD), and Stage are required, with an optional Account link and Amount. Not idempotent — each call creates another Opportunity.', idempotent: false },
     props: {
         Name: Property.ShortText({
             displayName: 'Name',

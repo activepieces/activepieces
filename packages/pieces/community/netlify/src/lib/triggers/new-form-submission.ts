@@ -6,7 +6,10 @@ export const newFormSubmission = createTrigger({
   name: "new_form_submission",
   displayName: "New Form Submission",
   description: "Fires when a Netlify form submission is received.",
-  auth: netlifyAuth, 
+  aiMetadata: {
+    description: 'Fires when a new form submission is received on the selected Netlify site (the submission_created event); the payload includes the submitted field data and submitter metadata. Use it to process or route contact/lead form entries.',
+  },
+  auth: netlifyAuth,
   props: {
     siteId: Property.Dropdown({
       auth: netlifyAuth,      displayName: "Site",

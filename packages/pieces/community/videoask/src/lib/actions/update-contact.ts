@@ -9,6 +9,8 @@ export const updateContact = createAction({
   name: 'updateContact',
   displayName: 'Update contact',
   description: 'Update an existing respondent (contact) in VideoAsk',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing VideoAsk respondent (contact), identified by respondent ID, within an organization; only the name, email, and phone fields you supply are changed and empty values are skipped. Use to correct or enrich a known contact. Idempotent: repeating with the same values yields the same record.', idempotent: true },
   props: {
     organizationId: organizationIdDropdown,
     respondentId: Property.ShortText({

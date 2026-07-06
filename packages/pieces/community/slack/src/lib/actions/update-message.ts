@@ -10,6 +10,12 @@ export const updateMessage = createAction({
   name: 'updateMessage',
   displayName: 'Update message',
   description: 'Update an existing message',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Edit an already-posted Slack message in place, replacing its text and blocks, identified by channel and message timestamp (ts). Pick this to revise content the flow previously sent rather than posting a new one; use Delete Message to remove it instead. Idempotent: re-running with the same inputs leaves the message in the same final state.',
+    idempotent: true,
+  },
   auth: slackAuth,
   props: {
     info: singleSelectChannelInfo,

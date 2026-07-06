@@ -8,6 +8,9 @@ export const memberAdded = createTrigger({
   name: 'member_added',
   displayName: 'Member Added',
   description: 'Triggers when a new member is added',
+  aiMetadata: {
+    description: 'Fires when a new member is created in the Ghost publication (member.added), e.g. a new signup or subscriber. Payload carries the new member record.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

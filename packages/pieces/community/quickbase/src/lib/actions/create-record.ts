@@ -9,6 +9,11 @@ export const createRecord = createAction({
   name: 'create_record',
   displayName: 'Create Record',
   description: 'Create a new record in a Quickbase table',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Insert a single new record into a Quickbase table, setting the given field values. Use when adding one new row; for many rows or to upsert against an existing key use Create / Update Records From Array, and to avoid duplicates use Find or Create Record. Requires the app and table; each call inserts a fresh record, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: quickbaseAuth,
   props: {
     appId: appIdProp,

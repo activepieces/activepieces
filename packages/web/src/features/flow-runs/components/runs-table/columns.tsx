@@ -1,4 +1,5 @@
-import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
+import { isNil, SeekPage } from '@activepieces/core-utils';
+import { FlowRun, FlowRunStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -27,10 +28,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  TimelineBar,
+  isTimelineEmpty,
+} from '@/features/flow-runs/components/timeline-bar';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -283,18 +293,31 @@ export const runsTableColumns = ({
             new Date(row.original.created).getTime()
           : undefined;
 
+      const durationValue = (
+        <div className="text-left flex items-center gap-2">
+          {row.original.finishTime && (
+            <>
+              <Hourglass className="h-4 w-4 text-muted-foreground" />
+              {formatUtils.formatDuration(duration)}
+            </>
+          )}
+        </div>
+      );
+
+      if (!isTimelineEmpty(row.original.timeline)) {
+        return (
+          <HoverCard openDelay={200} closeDelay={100}>
+            <HoverCardTrigger asChild>{durationValue}</HoverCardTrigger>
+            <HoverCardContent className="w-[28rem] p-3">
+              <TimelineBar timeline={row.original.timeline} />
+            </HoverCardContent>
+          </HoverCard>
+        );
+      }
+
       return (
         <Tooltip>
-          <TooltipTrigger>
-            <div className="text-left flex items-center gap-2">
-              {row.original.finishTime && (
-                <>
-                  <Hourglass className="h-4 w-4 text-muted-foreground" />
-                  {formatUtils.formatDuration(duration)}
-                </>
-              )}
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger>{durationValue}</TooltipTrigger>
           <TooltipContent side="bottom">
             {t(
               `Time waited before first execution attempt: ${formatUtils.formatDuration(

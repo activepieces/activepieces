@@ -10,6 +10,8 @@ export const getCompanyData = createAction({
     name: 'get_company_data',
     displayName: 'Get Company Data',
     description: 'Given a company name, LinkedIn username, or website, fetch comprehensive company info.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetches comprehensive public company data from any one of three identifiers: a company name (e.g. "Microsoft"), its LinkedIn username slug (e.g. "microsoft"), or its website URL. Use to enrich a company record when you have any of those handles. At least one identifier is required; alternatively pass the Request ID from a prior timed-out run to retrieve that result. The call polls until data is ready. Idempotent: it is a read-only lookup returning the same company for the same identifier.', idempotent: true },
     props: {
         company_name: Property.ShortText({
             displayName: 'Company Name',

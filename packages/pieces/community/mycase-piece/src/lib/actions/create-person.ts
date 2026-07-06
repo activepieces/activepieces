@@ -7,6 +7,8 @@ export const createPerson = createAction({
   name: 'create_person',
   displayName: 'Create Person (Client)',
   description: 'Creates a new individual client (person) in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always inserts a new individual client (person) with first and last name plus optional contact, address, people-group, and case associations. Not idempotent: calling twice creates two clients, so use Find or Create Person to avoid duplicates, or Update Person to edit an existing one.', idempotent: false },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

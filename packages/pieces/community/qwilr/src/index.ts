@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { qwilrAuth } from "./lib/common/auth";
 import { createPageAction } from "./lib/actions/create-page";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";

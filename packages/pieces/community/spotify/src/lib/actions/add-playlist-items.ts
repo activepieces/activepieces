@@ -6,6 +6,11 @@ export default createAction({
   auth: spotifyCommon.authentication,
   displayName: 'Add items to playlist',
   description: 'Adds tracks or episodes to the playlist',
+  audience: 'both',
+  aiMetadata: {
+    description: "Adds tracks or episodes (by their Spotify URIs) to the playlist identified by its id, optionally at a given position. Use it to append items to an existing playlist. Not idempotent: repeating the call adds the items again, creating duplicates.",
+    idempotent: false,
+  },
   props: {
     playlist_id: spotifyCommon.playlist_id(true),
     items: Property.Array({

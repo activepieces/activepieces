@@ -12,6 +12,11 @@ export const findRecords = createAction({
 	name: 'find_records',
 	displayName: 'Find Records',
 	description: 'Searches for records in the specified table based on criteria.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Searches a SmartSuite table for records where a chosen field exactly matches a given value, paging through all results. Use when an agent needs to look up records by a field value (for example to find a record before updating or deleting it); requires the solution, table, the field to match on, and the value to match. Idempotent — it only reads data.',
+		idempotent: true,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,

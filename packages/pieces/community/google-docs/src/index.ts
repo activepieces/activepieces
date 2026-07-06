@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createDocument } from './lib/actions/create-document';
 import { createDocumentBasedOnTemplate } from './lib/actions/create-document-based-on-template.action';
 import { readDocument } from './lib/actions/read-document.action';

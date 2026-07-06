@@ -99,6 +99,9 @@ export const issuesEventTrigger = createTrigger({
   displayName: 'New Project Issue Event',
   description:
     'Triggers on project issue events when an issue is created or when an existing issue is updated, closed, or reopened.',
+  aiMetadata: {
+    description: 'Fires when an issue event occurs in the configured GitLab project via webhook. The Issue Event prop scopes which actions fire: All, or only Opened, Closed, or Updated. Represents the issue and its change set at the moment of the event.',
+  },
   props: {
     projectId: gitlabCommon.projectId(),
     actiontype: Property.StaticDropdown({

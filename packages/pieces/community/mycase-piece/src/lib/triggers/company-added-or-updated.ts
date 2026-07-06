@@ -15,6 +15,10 @@ export const companyAddedOrUpdated = createTrigger({
   name: 'company_added_or_updated',
   displayName: 'Company Added or Updated',
   description: 'Triggers when a company has been added or updated',
+  aiMetadata: {
+    description:
+      'Fires whenever a company (business) record is created or modified in MyCase, delivering the full company payload including name, contact details, address, associated cases and clients, custom fields, and timestamps. Use to keep external systems in sync as company records change.',
+  },
   props: {},
   sampleData: {
     id: 12345,

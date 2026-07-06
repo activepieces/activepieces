@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const countUniques = createAction({
+  audience: 'human',
   name: 'countUniques',
   displayName: 'Count Uniques',
   description: 'Counts the number of unique values for multiple fields',

@@ -11,6 +11,10 @@ export const shipmentCreated = createTrigger({
   name: 'shipmentCreated',
   displayName: 'Shipment Created',
   description: 'Triggers when a new shipment is created',
+  aiMetadata: {
+    description:
+      'Fires when a new shipment is created for an order in the BigCommerce store (items are shipped/fulfilled). The event identifies the new shipment.',
+  },
   props: {},
   sampleData:{
     producer: 'stores/xqcaklwsso',

@@ -20,6 +20,8 @@ export const listEmails = createAction({
   auth: resendAuth,
   displayName: 'List Sent Emails',
   description: 'Retrieve a list of emails sent from your Resend account',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the list of emails sent from the connected Resend account, including their IDs, recipients, subjects, and latest delivery event. Use this to discover email IDs (e.g. to feed Get Email Status, Cancel Scheduled Email, or Reschedule Email) or to audit recent sends. Read-only and idempotent.', idempotent: true },
   props: {},
   async run({ auth }) {
     const response = await httpClient.sendRequest<{ data: EmailRecord[] }>({

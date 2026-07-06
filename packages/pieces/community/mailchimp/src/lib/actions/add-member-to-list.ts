@@ -11,6 +11,8 @@ export const addMemberToList = createAction({
   name: 'add_member_to_list',
   displayName: 'Add or Update Subscriber',
   description: 'Add a new subscriber to an audience or update existing subscriber',
+  audience: 'both',
+  aiMetadata: { description: 'Upserts a member into a Mailchimp audience (list) keyed on the email address: creates the subscriber if absent (using the "status if new" value) or updates the existing record otherwise. Use to ensure a contact exists with given status, name, language, or VIP flag without checking first. Requires the target list and email; repeating with the same input is safe and converges to the same member state.', idempotent: true },
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email_address: Property.ShortText({

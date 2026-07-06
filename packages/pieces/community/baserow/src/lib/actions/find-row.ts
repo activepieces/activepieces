@@ -12,6 +12,12 @@ export const findRowAction = createAction({
   displayName: 'Find Row',
   description:
     'Finds a row by matching a field value. Returns the first match.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up the first row in a Baserow table whose chosen field exactly equals a given value. Use to resolve a row from a known field value (e.g. an email or external key) when you do not have its row ID; for ID lookups use Get Row, and for multi-condition or partial-text queries use List Rows. The match field must be a filterable type (link, multi-select, file, formula/lookup, and date-type fields are excluded). Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),

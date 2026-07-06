@@ -7,6 +7,12 @@ export default createAction({
   name: 'update_entry',
   displayName: 'Update Entry',
   description: 'Updates an entry in clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Modifies an existing clockodo time-record entry identified by entry_id, changing any of its customer, project, service, user, time window, or description. Use to correct or amend an already-logged entry rather than creating a new one (use Create Entry for new records). Idempotent: applying the same field values to the same entry_id converges to the same state.',
+    idempotent: true,
+  },
   props: {
     entry_id: Property.Number({
       displayName: 'Entry ID',

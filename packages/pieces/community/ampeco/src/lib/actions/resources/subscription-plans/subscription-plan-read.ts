@@ -14,6 +14,8 @@ export const subscriptionPlanReadAction = createAction({
   name: 'subscriptionPlanRead',
   displayName: 'Resources - Subscription Plans - Read',
   description: 'Get a single subscription plan.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the full details of one AMPECO subscription plan by its numeric ID. Read-only and idempotent. Pick this when you already have a plan ID; to find plans by name or browse all of them, use the subscription plans listing action.', idempotent: true },
   props: {
         
   subscriptionPlan: Property.Number({

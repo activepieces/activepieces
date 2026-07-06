@@ -8,6 +8,12 @@ export const listCampaignsAction = createAction({
   name: 'list_campaigns',
   displayName: 'List Campaigns',
   description: 'Retrieve a list of email campaigns.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List email campaigns from Omnisend with limit/offset pagination. Leave Status empty to return campaigns of all statuses, or set it to filter to a single state (draft, scheduled, sending, or sent). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

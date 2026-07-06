@@ -1,8 +1,6 @@
 import {
   AnalyticsTimePeriod,
   PlatformAnalyticsReport,
-  ProjectLeaderboardItem,
-  UserLeaderboardItem,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -16,20 +14,5 @@ export const analyticsApi = {
   },
   markAsOutdated(): Promise<void> {
     return api.post<void>('/v1/analytics/mark-outdated');
-  },
-  getProjectLeaderboard(
-    timePeriod: AnalyticsTimePeriod,
-  ): Promise<ProjectLeaderboardItem[]> {
-    return api.get<ProjectLeaderboardItem[]>(
-      '/v1/analytics/project-leaderboard',
-      { timePeriod },
-    );
-  },
-  getUserLeaderboard(
-    timePeriod: AnalyticsTimePeriod,
-  ): Promise<UserLeaderboardItem[]> {
-    return api.get<UserLeaderboardItem[]>('/v1/analytics/user-leaderboard', {
-      timePeriod,
-    });
   },
 };

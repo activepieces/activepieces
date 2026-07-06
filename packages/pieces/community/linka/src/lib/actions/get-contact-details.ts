@@ -6,6 +6,12 @@ export const getContactDetails = createAction({
   name: 'getContactDetails',
   displayName: 'Get Contact Details',
   description: 'Get Contact Details',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single contact record from the Linka/Sperse CRM, looked up by any one of Contact ID, Contact XREF, affiliate code, user ID, or user email. Use to read a contact\'s full details before acting on them. Read-only and idempotent. Provide at least one identifier; the lookup is by the supplied field(s) only.',
+    idempotent: true,
+  },
   auth: linkaAuth,
   props: {
     contactId: Property.Number({

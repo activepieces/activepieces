@@ -13,6 +13,12 @@ export const sendEmailAction = createAction({
   displayName: 'Send Email',
   description:
     'Send an email through your ServiceNow instance using the Email API. Requires the email outbound capability to be configured.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends an email through the ServiceNow instance to one or more recipients, with subject, body (HTML supported), and optional from/cc/bcc. Use to notify people via the instance mail server. Not idempotent — each call dispatches another email. Requires at least one valid recipient address, a subject, and a body; the instance must have outbound email configured.',
+    idempotent: false,
+  },
   props: {
     to: Property.Array({
       displayName: 'To',

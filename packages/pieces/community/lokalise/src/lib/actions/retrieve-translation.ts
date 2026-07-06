@@ -9,6 +9,8 @@ export const retrieveTranslation = createAction({
   name: 'retrieveTranslation',
   displayName: 'Retrieve Translation',
   description: 'Retrieve a specific translation from your Lokalise project',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single translation by its translation ID from a Lokalise project. Use to read the current value, status, and metadata of one translation. Read-only and idempotent.', idempotent: true },
   props: {
     projectId: projectDropdown,
     translationId: Property.ShortText({

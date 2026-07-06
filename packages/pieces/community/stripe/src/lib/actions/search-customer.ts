@@ -8,6 +8,12 @@ export const stripeSearchCustomer = createAction({
   auth: stripeAuth,
   displayName: 'Search Customer',
   description: 'Search for a customer in stripe by email',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up Stripe customers matching a given email address. Use to find an existing customer record before creating, updating, or charging one, to avoid duplicates. Read-only and idempotent; matches on the exact email.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

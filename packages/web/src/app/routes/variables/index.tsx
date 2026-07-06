@@ -1,4 +1,5 @@
-import { Permission, VariableWithoutSensitiveData } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import { VariableWithoutSensitiveData } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {

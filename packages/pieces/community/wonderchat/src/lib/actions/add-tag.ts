@@ -6,6 +6,12 @@ export const addTag = createAction({
   name: 'addTag',
   displayName: 'Add Tag',
   description: 'Add custom tags to a specific chatlog.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds one or more custom tags to a specific Wonderchat chatlog (chat session identified by chatlogId). Use to label or categorize a conversation. Idempotent: tags are applied as a set, so re-adding the same tags leaves the chatlog’s tag set unchanged.',
+    idempotent: true,
+  },
   auth: wonderchatAuth,
   props: {
     chatlogId: Property.ShortText({

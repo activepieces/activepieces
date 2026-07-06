@@ -9,6 +9,8 @@ export const updateLeadFromCampaign = createAction({
   displayName: 'Update Lead From Campaign',
   description:
     'Updates a lead in a specific campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing lead\'s details (name, company, phone, LinkedIn, icebreaker, job title, etc.) within a specific Lemlist campaign, identified by the campaign and the lead\'s email. Use to edit profile fields on a lead already enrolled in a campaign. Idempotent: re-applying the same field values yields the same result.', idempotent: true },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({

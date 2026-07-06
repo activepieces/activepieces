@@ -9,6 +9,12 @@ export const sportsNewsSearch = createAction({
   displayName: 'Sports News',
   description:
     'Real-time news, updates, and personalized content from top sports sources like Sportsnaut, Forever Blueshirts, Minnesota Sports Fan, LAFB Network, Bounding Into Sports, and Ringside Intel.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches Dappier sports-news sources for articles matching a natural-language query or URL. Choose this for sports-specific content rather than the general web search action. Optionally tune result count, restrict to a preferred domain, and pick the search algorithm (semantic, most recent, most recent + semantic, or trending) to control whether matching is contextual or recency-driven. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

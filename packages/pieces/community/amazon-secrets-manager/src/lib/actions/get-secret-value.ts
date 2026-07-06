@@ -1,16 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  SecretsManagerClient,
   GetSecretValueCommand,
 } from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
 import { secretIdDropdown } from '../common/props';
 
 export const getSecretValue = createAction({
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   name: 'getSecretValue',
   displayName: 'Get Secret Value',
   description: 'Retrieves a secret value.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the stored value of a secret in AWS Secrets Manager, identified by name or ARN (selectable from a list or passed directly). Use when a flow needs the current credential/config held in a secret. Optionally targets a specific version ID or staging label, defaulting to the current (AWSCURRENT) version. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     secretId: secretIdDropdown,
     versionId: Property.ShortText({
@@ -24,14 +30,8 @@ export const getSecretValue = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
-    });
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 
     try {
       const command = new GetSecretValueCommand({

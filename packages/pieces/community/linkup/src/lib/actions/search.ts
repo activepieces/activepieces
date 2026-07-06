@@ -8,6 +8,8 @@ export const search = createAction({
   name: 'search',
   displayName: 'Search the Web',
   description: 'Search the web for relevant content based on a natural language query. Perfect for grounding LLM responses with factual data.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a web search through Linkup for a natural-language query and returns grounding data from the live internet. Choose it to retrieve up-to-date facts, sources, or answers to enrich an LLM response. The Output Type selects what comes back: searchResults (raw matches), sourcedAnswer (a synthesized answer with citations), or structured (custom JSON shaped by the schema you supply, which is required in that mode); narrow scope with depth, date range, and include/exclude domain filters. Read-only and idempotent.', idempotent: true },
   props: {
     q: Property.ShortText({
       displayName: 'Query',

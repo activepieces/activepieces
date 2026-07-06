@@ -7,6 +7,8 @@ export const createDocumentMerge = createAction({
   name: 'create_document_merge',
   displayName: 'Create Document Merge',
   description: 'Send data to your Merge URL',
+  audience: 'both',
+  aiMetadata: { description: 'Submit field data to a configured DocuMerge document, identified by its document key, to merge that data into the template and generate the populated document. Use to fill a single predefined template. Requires the document key; each submission starts a new merge run (not idempotent).', idempotent: false },
   props: {
     documentKey: Property.ShortText({
       displayName: 'Document Key',

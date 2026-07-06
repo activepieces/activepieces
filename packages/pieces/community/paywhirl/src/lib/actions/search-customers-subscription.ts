@@ -9,6 +9,12 @@ export const searchCustomersSubscription = createAction({
   displayName: 'Get Customer Subscriptions',
   description:
     'Get a list of subscriptions associated with a given customer. Useful for determining which services a customer is currently expecting.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Lists a specific customer's subscriptions, filterable by status (active only by default, canceled only, or all). Requires the customer ID. Use to inspect which plans a customer is enrolled in. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     customer_id: Property.Number({
       displayName: 'Customer ID',

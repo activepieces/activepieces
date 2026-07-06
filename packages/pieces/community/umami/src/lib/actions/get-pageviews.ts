@@ -9,6 +9,12 @@ export const getPageviews = createAction({
   displayName: 'Get Pageviews',
   description:
     'Returns pageview and session counts over time, broken down by hour, day, week, month, or year.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a time series of pageview and session counts for one Umami-tracked website across a date range, bucketed by a configurable unit (hour, day, week, month, or year). Use for trend or charting questions rather than a single aggregate total. Requires a website ID and a start/end date; the grouping unit and timezone are optional. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     websiteId: umamiCommon.websiteDropdown,
     startDate: umamiCommon.dateRange.startDate,

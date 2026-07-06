@@ -8,6 +8,8 @@ export const getWorkspaceDetails = createAction({
     name: 'get_workspace_details',
     displayName: 'Get Workspace Details',
     description: 'Retrieves all information about your Deftform workspace. Useful as a connection test.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetch the Deftform workspace details (plan, limits, account-level settings). Use it to confirm the connection works or to read workspace-level context before working with forms. Read-only and idempotent; takes no input.', idempotent: true },
     props: {},
     async run(context) {
         const response = await deftformApiCall<Record<string, unknown>>({

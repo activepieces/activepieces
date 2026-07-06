@@ -7,6 +7,8 @@ export const deleteTaskAction = createAction({
     name: 'delete_task',
     displayName: 'Delete Task',
     description: 'Deletes an existing task.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently delete a specific Microsoft To Do task identified by its task list id and task id. Use to remove a task; resolve the task id first via list/find actions. Idempotent on the end state (the task ends up gone), but destructive and irreversible — a repeat call on an already-deleted task will error.', idempotent: true },
     props: {
         task_list_id: Property.Dropdown({
    auth: microsoftToDoAuth,

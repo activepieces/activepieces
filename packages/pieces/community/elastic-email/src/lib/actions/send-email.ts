@@ -13,6 +13,12 @@ export const sendEmailAction = createAction({
   name: 'send_email',
   displayName: 'Send Email',
   description: 'Send an email to one or more recipients via Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a transactional email to one or more recipients via Elastic Email, with either inline body content or a saved template, plus optional merge fields, tracking, and a scheduled time offset. Use for direct one-off sends; use Create Campaign for bulk list/segment marketing. Each call dispatches a new email, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: elasticEmailAuth,
   props: {
     recipients: Property.Array({

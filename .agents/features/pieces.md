@@ -22,13 +22,16 @@ The pieces feature manages the metadata catalog of automation integrations (call
 All editions. Piece filtering by allowed/blocked list and EE-specific filtering are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Piece** — a named integration (e.g. `@activepieces/piece-gmail`) providing actions and triggers
 - **PieceType** — `OFFICIAL` (bundled) or `CUSTOM` (platform-installed)
 - **PackageType** — `REGISTRY` (NPM) or `ARCHIVE` (uploaded tarball)
 - **pieceCache** — an in-memory map of piece metadata keyed by name+version+platformId, rebuilt from DB
 - **PieceCategory** — enum grouping pieces (AI, CORE, COMMUNICATION, etc.)
 - **SuggestionType** — AGENT or ACTION; changes ordering in piece selector
-- **OutputSchema** — optional, per-action / per-trigger structured description of how the step's output should be rendered. Shape: `{ fields: OutputSchemaField[] }`. Each `OutputSchemaField` carries `key`, optional `label` / `value` (path override) / `description`, an optional `format` (`email` / `url` / `date` / `datetime` / `number` / `boolean` / `image` / `html` / `currency` / `filesize` / `duration`), optional `currency` ISO code, optional `dynamicKey: true` for map-shaped values, and optional recursive `children` / `listItems` for nested objects and array-of-record shapes. Set by the piece author as the `outputSchema` of `createAction` / `createTrigger`. Consumed by the builder's `SmartOutputViewer` and the data selector — see [flows.md](./flows.md). Opt-in and non-breaking: pieces without an output schema render exactly as before.
+- **OutputSchema** — optional, per-action / per-trigger structured description of how the step's output should be rendered. Shape: `{ fields: OutputSchemaField[], itemLabel?: string }`. Each `OutputSchemaField` carries `key`, optional `label` / `value` (path override) / `description`, an optional `format` (`email` / `url` / `date` / `datetime` / `number` / `boolean` / `image` / `html` / `currency` / `filesize` / `duration`), optional `currency` ISO code, optional `dynamicKey: true` for map-shaped values, optional `labelKey` (property within each map entry / list item to use as its display label — falls back to the raw key / `Item N`), and optional recursive `children` / `listItems` for nested objects and array-of-record shapes. `itemLabel` is a `{dotPath}` template (e.g. `{key}: {fields.summary}`) used when the step returns a top-level array; it labels each element in both the Smart Output Viewer and the Data Selector. Set by the piece author as the `outputSchema` of `createAction` / `createTrigger`. Consumed by the builder's `SmartOutputViewer` and the data selector — see [flows.md](./flows.md). Opt-in and non-breaking: pieces without an output schema render exactly as before.
 
 ## Entity
 
@@ -71,6 +74,7 @@ Unique index on `(name, version, platformId)`.
 | POST | `/v1/pieces/sync` | publicPlatform (USER) | Trigger registry re-sync |
 | POST | `/v1/pieces/options` | project (USER, BODY) | Evaluate dynamic piece property options (dropdown values) |
 | POST | `/v1/pieces` | platformAdminOnly (USER, SERVICE) | Install a custom piece onto the platform |
+| DELETE | `/v1/pieces/:id` | platformAdminOnly (USER, SERVICE) | Delete all versions of a custom piece from the platform |
 
 ## Service Methods
 
@@ -79,10 +83,11 @@ Unique index on `(name, version, platformId)`.
 - `getOrThrow({ platformId, name, version, locale? })` — returns full `PieceMetadataModel` for exact piece; prefers platform-specific over official; applies i18n translation
 - `listVersions({ name, platformId, projectId })` — returns all available semver versions from registry cache
 - `create({ pieceMetadata, packageType, platformId, pieceType, archiveId? })` — inserts metadata record and invalidates cache
+- `delete({ id, platformId })` — looks up the piece by id, asserts it belongs to the caller's platform and is `CUSTOM` type, deletes all versions sharing the same name on that platform, then invalidates cache
 - `registry({ release? })` — returns lightweight name+version list for all pieces
 
 ### `pieceInstallService`
-- `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`
+- `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`. When tool-search is enabled (`isToolSearchEnabled()`), also enqueues a platform-scoped tool-search reindex (`{ type: 'platform', platformId }`) fire-and-forget so the new piece's actions/triggers become searchable; no-op when the flag is off.
 
 ### `pieceSyncService`
-- `sync({ publishCacheRefresh })` — reads bundled piece registry file, upserts official piece metadata records, optionally publishes cache refresh event
+- `sync({ publishCacheRefresh })` — reads bundled piece registry file, upserts official piece metadata records, optionally publishes cache refresh event. When pieces were added or deleted and tool-search is enabled (`isToolSearchEnabled()`), also enqueues a global tool-search reindex (`{ type: 'all' }`) fire-and-forget; no-op when the flag is off.

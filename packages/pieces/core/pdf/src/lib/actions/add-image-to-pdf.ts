@@ -4,6 +4,7 @@ import { getTargetPages, mapVisualToIntrinsic } from '../common';
 import mime from 'mime-types';
 
 export const addImageToPdf = createAction({
+  audience: 'human',
   name: 'addImageToPdf',
   displayName: 'Add Image to PDF',
   description: 'Stamps one or more images (PNG or JPG) at exact pixel distances from the top-left corner.',

@@ -8,6 +8,8 @@ export const getTestimonialAction = createAction({
   name: 'get_testimonial',
   displayName: 'Get Testimonial',
   description: 'Retrieve a specific testimonial by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single Senja testimonial by its unique ID. Use when you already have a testimonial ID (e.g. from List Testimonials or a trigger) and need its full details. Requires the testimonial ID; read-only and idempotent.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Testimonial ID',

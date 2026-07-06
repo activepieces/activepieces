@@ -7,6 +7,8 @@ export const listGuides = createAction({
   name: 'list_guides',
   displayName: 'List Guides',
   description: 'Retrieve all guides from your Pendo account.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all in-app guides configured in the authenticated Pendo account. Use to enumerate guides or to discover a guide ID for use in other steps. Takes no input. Read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

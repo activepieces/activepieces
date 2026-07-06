@@ -5,6 +5,8 @@ export const getAddressInternalTransactions = createAction({
   name: 'get_address_internal_transactions',
   displayName: 'Get Address Internal Transactions',
   description: 'Get list of internal transactions for an address',
+  audience: 'both',
+  aiMetadata: { description: 'List the internal (contract-to-contract) transactions touching an Ethereum address. Choose this for value movements triggered within smart-contract calls rather than the top-level transactions an account submitted (use Get Address Transactions for those). Read-only lookup on eth.blockscout.com; requires a 0x address hash.', idempotent: true },
   // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({

@@ -7,6 +7,8 @@ export default createAction({
   name: 'execute_query',
   displayName: 'Execute Query',
   description: 'Executes a query on the mysql database and returns the results',
+  audience: 'both',
+  aiMetadata: { description: 'Runs an arbitrary SQL statement against the MySQL database and returns its results. Use as the escape hatch when the dedicated find/insert/update/delete actions cannot express the operation (joins, DDL, multi-table writes, aggregates). Pass dynamic values through the args array as ? placeholders to avoid SQL injection. Not idempotent in general: the effect and repeat-safety depend entirely on the SQL you supply (a SELECT is safe to repeat, an INSERT or UPDATE may not be).', idempotent: false },
   props: {
     markdown: warningMarkdown,
     timezone: mysqlCommon.timezone,

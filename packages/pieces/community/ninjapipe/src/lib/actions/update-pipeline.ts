@@ -8,6 +8,8 @@ export const updatePipeline = createAction({
   name: 'update_pipeline',
   displayName: 'Update Pipeline',
   description: 'Updates a pipeline by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing pipeline identified by ID, changing only the fields you supply (name, pipeline type, description, or status); omitted fields are left unchanged. Use to edit a known pipeline rather than create one. Idempotent — applying the same field values repeatedly yields the same result.', idempotent: true },
   props: {
     pipelineId: ninjapipeCommon.pipelineDropdownRequired,
     name: Property.ShortText({ displayName: 'Name', required: false }),

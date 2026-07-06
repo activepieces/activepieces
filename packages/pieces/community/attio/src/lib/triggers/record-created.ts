@@ -4,7 +4,7 @@ import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { objectTypeIdDropdown } from '../common/props';
 import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'new-record-trigger';
 
@@ -13,6 +13,9 @@ export const recordCreatedTrigger = createTrigger({
 	name: 'record_created',
 	displayName: 'Record Created',
 	description: 'Triggers when a new record such as person,company or deal is created.',
+	aiMetadata: {
+		description: 'Fires when a new record is created in the selected Attio object type (e.g. a new person, company, deal, or custom object). Represents the creation of a CRM entity; scoped to one object type chosen per trigger.',
+	},
 	props: {
 		objectTypeId: objectTypeIdDropdown({
 			displayName: 'Object',

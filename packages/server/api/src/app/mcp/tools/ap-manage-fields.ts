@@ -1,9 +1,10 @@
-import { FieldType, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FieldType, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { mcpUtils } from './mcp-utils'
-import { fieldTypeSchema, formatFieldInfo } from './table-utils'
+import { fieldTypeSchema, formatFieldInfo, resolveInternalTableId, tableNotFoundError } from './table-utils'
 
 const manageFieldsInput = z.object({
     tableId: z.string().describe('The table ID'),
@@ -25,6 +26,11 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
             try {
                 const { tableId, operation, fieldId, name, type, options } = manageFieldsInput.parse(args)
 
+                const resolvedTableId = await resolveInternalTableId({ projectId: mcp.projectId, tableId })
+                if (isNil(resolvedTableId)) {
+                    return tableNotFoundError(tableId)
+                }
+
                 switch (operation) {
                     case 'ADD': {
                         if (isNil(name)) {
@@ -38,8 +44,8 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         }
 
                         const request = type === FieldType.STATIC_DROPDOWN
-                            ? { name, type, tableId, data: { options: (options ?? []).map(v => ({ value: v })) } }
-                            : { name, type, tableId }
+                            ? { name, type, tableId: resolvedTableId, data: { options: (options ?? []).map(v => ({ value: v })) } }
+                            : { name, type, tableId: resolvedTableId }
 
                         const field = await fieldService.create({
                             projectId: mcp.projectId,
@@ -55,8 +61,8 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             return { content: [{ type: 'text', text: '❌ name is required for UPDATE operation' }] }
                         }
                         const existing = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
-                        if (existing.tableId !== tableId) {
-                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
+                        if (existing.tableId !== resolvedTableId) {
+                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${resolvedTableId})` }] }
                         }
                         const field = await fieldService.update({
                             id: fieldId,
@@ -70,8 +76,8 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             return { content: [{ type: 'text', text: '❌ fieldId is required for DELETE operation' }] }
                         }
                         const toDelete = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
-                        if (toDelete.tableId !== tableId) {
-                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
+                        if (toDelete.tableId !== resolvedTableId) {
+                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${resolvedTableId})` }] }
                         }
                         await fieldService.delete({
                             id: fieldId,
@@ -82,7 +88,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_manage_fields failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_manage_fields failed')
                 return mcpUtils.mcpToolError('Field operation failed', err)
             }
         },

@@ -9,6 +9,9 @@ export const newPullRequest = createTrigger({
   name: 'new_pull_request',
   displayName: 'New Pull Request',
   description: 'Triggers when a new pull request is created.',
+  aiMetadata: {
+    description: 'Fires when a pull request is opened in the selected Gitea repository. Each event represents a newly created pull request (only the opened action passes through).',
+  },
   props: {
     repository: giteaCommon.repositoryDropdown,
   },

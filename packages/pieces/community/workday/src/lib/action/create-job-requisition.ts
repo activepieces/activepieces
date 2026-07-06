@@ -11,6 +11,12 @@ export const createJobRequisition = createAction({
 	name: 'create_job_requisition',
 	displayName: 'Create Job Requisition',
 	description: 'Creates a new job requisition in Workday.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates and auto-completes a job requisition under a supervisory organization (by WID) with a creation-reason WID, posting title, and number of openings, optionally setting job profile, location, recruiting-start, and target-hire dates. Use to open a new req before recruiting/hiring. Not idempotent: each call creates a separate requisition.',
+		idempotent: false,
+	},
 	props: {
 		supervisoryOrganizationId: Property.ShortText({
 			displayName: 'Supervisory Organization ID',

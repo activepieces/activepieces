@@ -8,6 +8,9 @@ export const contactUnsubscribedTrigger = createTrigger({
   name: 'tarvent_contact_unsubscribed',
   displayName: 'Contact Unsubscribed',
   description: 'Triggers when a contact unsubscribes from an audience.',
+  aiMetadata: {
+    description: 'Fires when a contact unsubscribes (opts out) from an audience. Represents a withdrawal of consent.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

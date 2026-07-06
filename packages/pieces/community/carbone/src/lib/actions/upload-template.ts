@@ -10,6 +10,11 @@ export const uploadTemplateAction = createAction({
   name: 'carbone_upload_template',
   displayName: 'Upload Template',
   description: 'Upload a template file to Carbone and get a template ID for rendering.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Uploads a template file (DOCX, XLSX, ODS, ODT, PPTX, CSV, or HTML) to Carbone and returns a template ID used later by the render action. Operates in two modes: by default it creates a new versioned template, or when an existing template ID is supplied it adds the file as a new version of that template. Use before rendering when the target template is not yet stored in Carbone. Not idempotent: each call uploads a new template or template version.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'Template File',

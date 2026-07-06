@@ -77,6 +77,9 @@ export const emailBounced = createTrigger({
   auth: resendAuth,
   displayName: 'Email Event',
   description: 'Triggers when a selected email or contact event occurs in Resend',
+  aiMetadata: {
+    description: 'Fires when one of the subscribed Resend events occurs, such as an email being sent, delivered, bounced, opened, clicked, complained about, or failing, as well as domain and contact lifecycle events. The payload carries the event type and the affected email, domain, or contact. Subscribe to the specific event types you care about.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     events: Property.StaticMultiSelectDropdown({

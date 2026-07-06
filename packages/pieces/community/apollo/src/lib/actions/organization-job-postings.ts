@@ -11,6 +11,11 @@ export const organizationJobPostings = createAction({
   name: 'organizationJobPostings',
   displayName: 'Organization Job Postings',
   description: 'Retrieve current job postings for a company to identify growing headcount areas',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieve the current job postings for a single company in the Apollo database, useful for spotting hiring activity and growth areas. Requires the Apollo organization ID (obtained from Organization Search). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     organization_id: Property.ShortText({
       displayName: 'Organization ID',

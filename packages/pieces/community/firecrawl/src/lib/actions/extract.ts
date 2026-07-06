@@ -8,6 +8,8 @@ export const extract = createAction({
   name: 'extract',
   displayName: 'Extract Structured Data',
   description: 'Extract structured data from multiple URLs using AI.',
+  audience: 'both',
+  aiMetadata: { description: 'Pulls structured data from one or more known URLs by running an AI extraction against a natural-language prompt and a field schema (simple field list or advanced JSON Schema). Choose this when you need specific typed values from pages you already have URLs for; use Scrape to read raw page content or Map to discover URLs first. Runs as a polled job bounded by the timeout; read-only against the sites, so repeating the same request is safe.', idempotent: true },
   props: {
     urls: Property.Array({
       displayName: 'URLs',

@@ -15,6 +15,8 @@ export const receiptReadAction = createAction({
   name: 'receiptRead',
   displayName: 'Resources - Receipts - Receipt Read',
   description: 'Get a single receipt.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch one receipt by its numeric ID. Read-only and safe to repeat. To find receipts when you do not know the ID (e.g. by user, tax ID, payment status, or period) use receipts-listing instead.', idempotent: true },
   props: {
         
   receipt: Property.Number({

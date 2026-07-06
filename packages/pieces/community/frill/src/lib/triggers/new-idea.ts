@@ -69,6 +69,9 @@ export const newIdeaTrigger = createTrigger({
   name: 'new_idea',
   displayName: 'New Idea',
   description: 'Triggers when a new idea or feedback entry is created in Frill.',
+  aiMetadata: {
+    description: 'Fires when a new idea or feedback entry is created in Frill (polled). Represents fresh user-submitted feedback or feature requests entering the board.',
+  },
   props: {},
   sampleData: {
     idx: 'idea_abc123',

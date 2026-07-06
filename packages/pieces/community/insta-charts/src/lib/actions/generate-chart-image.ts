@@ -10,6 +10,8 @@ export const instaChartsGenerateChartImageAction = createAction({
   name: 'generate_chart_image',
   displayName: 'Generate Chart Image',
   description: 'Generates a temporary chart image using customizable templates and data parameters',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a chart as a PNG image via the InstaCharts API and returns it as a file, given a template plus X/Y (and optional breakdown or series) data arrays. Use to turn tabular numbers into a downloadable chart for embedding in messages, reports, or documents; pick the chart shape via the chartType option (bar, stackedBar, line, scatter, area, pie, radar, and grouped variants). Requires a valid templateId from the account; each call produces a fresh temporary image, so it is not idempotent.', idempotent: false },
   props: {
     templateId: Property.Dropdown({
       displayName: 'Template',

@@ -13,6 +13,10 @@ export const rowDeletedTrigger = createTrigger({
   auth: baserowAuth,
   displayName: 'Deleted Row',
   description: 'Triggers when a row is deleted from a Baserow table.',
+  aiMetadata: {
+    description:
+      'Fires when a row is removed from the selected Baserow table, emitting one event per deleted row carrying its ID. Use to react to individual deletions; for the batch form use Deleted Rows (Batch).',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),

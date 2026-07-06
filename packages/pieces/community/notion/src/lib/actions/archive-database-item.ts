@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
+import { archiveDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const archiveDatabaseItem = createAction({
   auth: notionAuth,
@@ -9,10 +10,17 @@ export const archiveDatabaseItem = createAction({
   displayName: 'Archive Database Item',
   description:
     'Archive (soft-delete) a database item without permanently removing it. Archived items can be restored later if needed.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Soft-deletes a Notion database item by setting its archived flag, keeping it recoverable via Restore. Use when an agent must remove a record from active views without permanent deletion; requires the database_id and item id. Idempotent: archiving an already-archived item leaves it archived.',
+    idempotent: true,
+  },
   props: {
     database_id: notionCommon.database_id,
     database_item_id: notionCommon.database_item_id,
   },
+  outputSchema: archiveDatabaseItemActionOutputSchema,
   async run(context) {
     const { database_id, database_item_id } = context.propsValue;
 

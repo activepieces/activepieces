@@ -9,6 +9,12 @@ export const addLeadsToCampaignAction = createAction({
   displayName: 'Add Leads to Campaign',
   description:
     'Add one or more leads to a campaign with validation and deduplication. Maximum 400 leads per request.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds leads to an existing SmartLead campaign by campaign ID, passing a JSON array where each lead requires an email field. Optional flags let you bypass the global block list, unsubscribe list, cross-campaign duplicate check, and community bounce list. Use to populate or grow a campaign recipient list; capped at 400 leads per call. Not idempotent: it appends leads on each call (though SmartLead deduplicates by email within the campaign).',
+    idempotent: false,
+  },
   props: {
     campaign_id: Property.Number({
       displayName: 'Campaign ID',

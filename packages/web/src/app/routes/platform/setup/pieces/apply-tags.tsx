@@ -1,6 +1,6 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
-import { Trash2 } from 'lucide-react';
+import { Tag, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -85,6 +85,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
           size="sm"
           disabled={selectedPieces.length === 0}
         >
+          <Tag className="mr-1 size-4" />
           {t('Apply Tags')}
         </Button>
       </PopoverTrigger>
@@ -127,7 +128,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
                           className="mr-2"
                         ></Checkbox>
 
-                        <span className="flex-grow">{option.label}</span>
+                        <span className="grow">{option.label}</span>
                         <ConfirmationDeleteDialog
                           title={t('Delete Tag')}
                           message={t(

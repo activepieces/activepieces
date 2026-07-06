@@ -8,6 +8,8 @@ export const getAJournalEntry = createAction({
   name: 'getAJournalEntry',
   displayName: 'Get a journal entry',
   description: 'Retrieve a specific journal entry by its ID',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single journal entry from a Bokio company by its UUID. Use when you already have the journal entry ID and need its full bookkeeping details. Idempotent read-only lookup.', idempotent: true },
   props: {
     journalEntryId: Property.ShortText({
       displayName: 'Journal Entry ID',

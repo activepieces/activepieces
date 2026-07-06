@@ -10,6 +10,12 @@ export const deleteQueueGroupAction = createAction({
   displayName: 'Delete Queue Group',
   description:
     'Delete a queue group. Items in the group are moved to "Move to" group, or to the first remaining group if not specified, or set to ungrouped if it was the last group.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes a queue group by its numeric ID and re-homes its items: to an optional "move to" target group if given, otherwise the first remaining group, or ungrouped if it was the last group. Use to remove a grouping while keeping its queue items. Idempotent in effect: the end state is the same once the group no longer exists.',
+    idempotent: true,
+  },
   props: {
     groupId: Property.Number({
       displayName: 'Group ID',

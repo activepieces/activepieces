@@ -21,12 +21,17 @@ import {
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { areSheetIdsValid,  } from '../common/common';
+import { googlesheetsNewRowAddedTriggerOutputSchema } from '../output-schemas';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'googlesheets_new_row_added',
 	displayName: 'New Row Added',
 	description: 'Triggers when a new row is added to bottom of a spreadsheet.',
+	aiMetadata: {
+		description:
+			'Fires when one or more rows are appended to the bottom of the selected worksheet, emitting one event per newly added row with its column values. Use to react to fresh entries only; edits to existing rows do not fire this. Delivery may lag up to a few minutes due to Google notification delays.',
+	},
 	props: {
 		info: Property.MarkDown({
 			value:
@@ -34,6 +39,7 @@ export const newRowAddedTrigger = createTrigger({
 		}),
 		...commonProps,
 	},
+	outputSchema: googlesheetsNewRowAddedTriggerOutputSchema,
 	renewConfiguration: {
 		strategy: WebhookRenewStrategy.CRON,
 		cronExpression: '0 */12 * * *',

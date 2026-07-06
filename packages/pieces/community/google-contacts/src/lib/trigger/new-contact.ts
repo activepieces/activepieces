@@ -10,8 +10,8 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { googleContactsAuth } from '../auth';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { people as googlePeople } from '@googleapis/people';
+import { OAuth2Client } from 'google-auth-library';
 import dayjs from 'dayjs';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAuth>, Record<string, never>> = {
@@ -20,7 +20,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAu
     const authClient = new OAuth2Client();
     authClient.setCredentials(auth);
 
-    const contactsClient = google.people({ version: 'v1', auth: authClient });
+    const contactsClient = googlePeople({ version: 'v1', auth: authClient });
 
     let nextPageToken;
     const contactItems: Array<{ data: any; epochMilliSeconds: number }> = [];
@@ -87,6 +87,9 @@ export const googleContactNewOrUpdatedContact = createTrigger({
   name: 'new_or_updated_contact',
   displayName: 'New Or Updated Contact',
   description: 'Triggers when there is a new or updated contact',
+  aiMetadata: {
+    description: 'Fires when a contact in the authenticated Google Contacts account is newly created or has been modified since the last poll. Each event represents one person record with its current fields; deleted contacts are excluded.',
+  },
   props: {},
   sampleData: {
     resourceName: 'people/c4278485694217203807',

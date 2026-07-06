@@ -1,8 +1,7 @@
+import { isNil, apId } from '@activepieces/core-utils';
 import {
-  isNil,
   PopulatedFlow,
   FlowVersionState,
-  apId,
   FlowStatus,
   FlowOperationStatus,
   TemplateType,

@@ -1,8 +1,5 @@
-import {
-  FlowRun,
-  isFlowRunStateTerminal,
-  SeekPage,
-} from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { FlowRun, isFlowRunStateTerminal } from '@activepieces/shared';
 import { InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useMemo } from 'react';

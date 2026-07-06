@@ -1,4 +1,4 @@
-import { isObject } from '@activepieces/shared';
+import { isObject } from '@activepieces/core-utils';
 
 const COMMON_WRAPPERS = [
   'properties',

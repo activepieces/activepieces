@@ -1,23 +1,24 @@
 {
   "name": "@activepieces/piece-http",
-  "version": "0.11.9",
+  "version": "0.11.10",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
-    "axios": "1.15.2",
-    "form-data": "4.0.4",
-    "https-proxy-agent": "7.0.4",
-    "tslib": "2.6.2"
+    "form-data": "4.0.6",
+    "undici": "7.28.0",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.2.6",
+    "tslib": "2.6.2"
   }
 }

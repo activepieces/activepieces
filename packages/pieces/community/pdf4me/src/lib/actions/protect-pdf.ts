@@ -7,6 +7,11 @@ export const protectPdfAction = createAction({
   name: 'protect_pdf',
   displayName: 'Protect PDF with Password',
   description: 'Adds password protection to a PDF file so only authorised users can open it.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Encrypts a PDF with an open password via the PDF4me Protect API, optionally restricting permissions (copy, annotate, fill forms, print, etc.). Use when an agent needs to password-protect a PDF before sharing; the PDF file and password are required. A pure transformation that is idempotent — the same input, password, and permission setting always produce an equivalently protected PDF with no stored side effect.',
+    idempotent: true,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

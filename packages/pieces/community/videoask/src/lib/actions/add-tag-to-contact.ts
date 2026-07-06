@@ -9,6 +9,8 @@ export const addTagToContact = createAction({
   name: 'addTagToContact',
   displayName: 'Add tag to contact',
   description: 'Add a tag to a contact (respondent) in VideoAsk',
+  audience: 'both',
+  aiMetadata: { description: 'Attach an existing tag to a VideoAsk contact (respondent), identified by its contact ID and the tag ID, within a given organization. Use to label or segment a respondent for downstream filtering. Idempotent: re-adding the same tag leaves the contact in the same state.', idempotent: true },
   props: {
     organizationId: organizationIdDropdown,
     contactId: Property.ShortText({

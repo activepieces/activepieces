@@ -11,6 +11,8 @@ export const dropboxCreateNewFolder = createAction({
   auth: dropboxAuth,
   name: 'create_new_dropbox_folder',
   description: 'Create a new empty folder',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new empty folder at the given Dropbox path; optionally autorenames on conflict. Use to set up a destination directory before placing files. Not idempotent: a repeat call for an existing path errors (or, with autorename, creates a differently named folder).', idempotent: false },
   displayName: 'Create New Folder',
   props: {
     path: Property.ShortText({
@@ -42,7 +44,6 @@ export const dropboxCreateNewFolder = createAction({
     };
 
     const result = await httpClient.sendRequest(request);
-    console.debug('Folder creation response', result);
 
     if (result.status == 200) {
       return result.body;

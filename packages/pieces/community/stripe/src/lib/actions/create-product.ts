@@ -12,6 +12,12 @@ export const stripeCreateProduct = createAction({
   auth: stripeAuth,
   displayName: 'Create Product',
   description: 'Create a new product object in Stripe.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new product object in Stripe (the catalog item that prices attach to), with optional description, images, URL, and metadata. Use before creating a price or when adding a sellable item. Not idempotent: each call creates a distinct product.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',

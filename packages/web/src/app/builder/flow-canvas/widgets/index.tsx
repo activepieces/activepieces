@@ -59,9 +59,14 @@ const BelowFlowWidget = React.memo(() => {
 });
 
 const WidgetWrapper = ({ children }: { children: React.ReactNode }) => {
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
   return (
     <div
-      style={{ width: flowCanvasConsts.AP_NODE_SIZE.STEP.width + 'px' }}
+      style={{
+        width: flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width + 'px',
+      }}
       className="flex items-center justify-center"
     >
       {children}

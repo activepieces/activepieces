@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addSubtractDateAction } from './lib/actions/add-subtract-date';
 import { dateDifferenceAction } from './lib/actions/date-difference';
 import { extractDateParts } from './lib/actions/extract-date-parts';

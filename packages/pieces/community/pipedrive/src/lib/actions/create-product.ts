@@ -9,13 +9,15 @@ import {
 } from '../common';
 import { GetField, GetProductResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const createProductAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-product',
 	displayName: 'Create Product',
 	description: 'Creates a new product.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new product in the catalog with name, code, pricing (price/cost/overhead/currency/tax), unit, owner, visibility, and custom fields. Pick this to add a product; each call creates a separate record, so repeating it produces duplicates. Not idempotent.', idempotent: false },
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

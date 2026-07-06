@@ -14,6 +14,8 @@ export const taxIdentificationNumberDeleteAction = createAction({
   name: 'taxIdentificationNumberDelete',
   displayName: 'Resources - Tax Identification Numbers - Delete',
   description: 'Delete a Tax Identification Number.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a tax identification number by its numeric ID. Use when removing a TIN record; this is destructive and cannot be undone, so confirm the ID first. Re-running after the record is gone will error.', idempotent: false },
   props: {
         
   taxIdentificationNumber: Property.Number({

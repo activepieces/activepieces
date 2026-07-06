@@ -1,5 +1,6 @@
+import { ensureTrailingSlash, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -29,6 +30,7 @@ type EngineConstantsParams = {
     timeoutInSeconds: number
     platformId: PlatformId
     stepNames: string[]
+    adhocMode?: boolean
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -67,6 +69,7 @@ export class EngineConstants {
     public readonly stepNameToTest?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
+    public readonly adhocMode: boolean
     private project: Project | null = null
 
     public get isRunningApTests(): boolean {
@@ -113,6 +116,7 @@ export class EngineConstants {
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
+        this.adhocMode = params.adhocMode ?? false
     }
   
     public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
@@ -140,7 +144,7 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
+    public static fromExecuteActionInput(input: BaseEngineOperation): EngineConstants {
         return new EngineConstants({
             flowId: DEFAULT_MCP_DATA.flowId,
             flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
@@ -148,7 +152,7 @@ export class EngineConstants {
             triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_MCP_DATA.flowRunId,
             publicApiUrl: input.publicApiUrl,
-            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
@@ -161,6 +165,7 @@ export class EngineConstants {
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
             stepNames: [],
+            adhocMode: true,
         })
     }
 
@@ -172,7 +177,7 @@ export class EngineConstants {
             triggerPieceName: input.flowVersion?.trigger?.settings.pieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_EXECUTE_PROPERTY,
             publicApiUrl: input.publicApiUrl,
-            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
@@ -196,7 +201,7 @@ export class EngineConstants {
             triggerPieceName: input.flowVersion.trigger.settings.pieceName,
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
             publicApiUrl: input.publicApiUrl,
-            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
@@ -241,11 +246,6 @@ export class EngineConstants {
         const project = await this.getProject()
         return project.externalId ?? undefined
     }
-}
-
-
-const addTrailingSlashIfMissing = (url: string): string => {
-    return url.endsWith('/') ? url : url + '/'
 }
 
 export type ResolvedBeginExecuteFlowOperation = Omit<BeginExecuteFlowOperation, 'triggerPayload'> & {

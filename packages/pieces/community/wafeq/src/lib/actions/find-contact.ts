@@ -10,6 +10,12 @@ export const findContact = createAction({
   displayName: 'Find Contact',
   description:
     'Search your Wafeq contacts by name, email, phone, or tax number. Useful for checking if a customer already exists before creating a new one.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches your Wafeq contacts by name, email, phone, or tax number. Choose this to look up a contact ID before creating an invoice/bill, or to check whether a customer already exists. Leaving the search keyword blank lists all contacts (a fetch-all mode); supply a keyword, relationship filter, or external_id to narrow results. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     keyword: Property.ShortText({
       displayName: 'Search For',

@@ -1,12 +1,13 @@
-import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { resolveFieldNamesForTable } from './table-utils'
+import { resolveFieldNamesForTable, resolveInternalTableId, tableNotFoundError } from './table-utils'
 
 const insertRecordsInput = z.object({
-    tableId: z.string().describe('The table ID'),
+    tableId: z.string().describe('The table ID (the "id" from ap_list_tables; the externalId is also accepted)'),
     records: z.array(z.record(z.string(), z.string())).min(1).max(50).describe('Array of records (1–50). Each record maps field names to values. Example: [{"Name": "Alice", "Age": "30"}]'),
 })
 
@@ -21,8 +22,13 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
             try {
                 const { tableId, records } = insertRecordsInput.parse(args)
 
+                const resolvedTableId = await resolveInternalTableId({ projectId: mcp.projectId, tableId })
+                if (isNil(resolvedTableId)) {
+                    return tableNotFoundError(tableId)
+                }
+
                 const allFieldNames = [...new Set(records.flatMap(r => Object.keys(r)))]
-                const { fields, fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, tableId, allFieldNames)
+                const { fields, fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, resolvedTableId, allFieldNames)
                 if (errors.length > 0) {
                     return { content: [{ type: 'text', text: `❌ Field resolution error:\n${errors.join('\n')}` }] }
                 }
@@ -35,7 +41,7 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 )
 
                 const result = await recordService.create({
-                    request: { tableId, records: convertedRecords },
+                    request: { tableId: resolvedTableId, records: convertedRecords },
                     projectId: mcp.projectId,
                     logger: log,
                     fields,
@@ -49,7 +55,7 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_insert_records failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_insert_records failed')
                 return mcpUtils.mcpToolError('Failed to insert records', err)
             }
         },

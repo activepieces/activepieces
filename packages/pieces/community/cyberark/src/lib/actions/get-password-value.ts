@@ -20,6 +20,11 @@ export const getPasswordValue = createAction({
   displayName: 'Get Password Value',
   description:
     'Retrieves the password or SSH key of an existing account identified by its Account ID',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the secret (password or SSH key) of a stored CyberArk account by its account ID, optionally for a specific version and with an audit reason/ticket reference. Use to fetch a credential for downstream use; the retrieval itself does not change the stored secret, so repeating it returns the same value (it is logged for audit each time).',
+    idempotent: true,
+  },
   props: {
     accountId: accountIdDropdown,
     reason: Property.ShortText({

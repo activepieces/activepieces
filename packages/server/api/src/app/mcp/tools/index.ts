@@ -1,5 +1,6 @@
 import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { isToolSearchEnabled } from '../../tool-search/tool-search-flag'
 import { apAddBranchTool } from './ap-add-branch'
 import { apAddStepTool } from './ap-add-step'
 import { apBuildFlowTool } from './ap-build-flow'
@@ -28,9 +29,12 @@ import { apManageNotesTool } from './ap-manage-notes'
 import { apReadStepCodeTool } from './ap-read-step-code'
 import { apRenameFlowTool } from './ap-rename-flow'
 import { apResearchPiecesTool } from './ap-research-pieces'
+import { apResolvePropertyChainTool } from './ap-resolve-property-chain'
 import { apResolvePropertyOptionsTool } from './ap-resolve-property-options'
 import { apRetryRunTool } from './ap-retry-run'
 import { apRunActionTool } from './ap-run-action'
+import { apSearchActionsTool } from './ap-search-actions'
+import { apSearchTriggersTool } from './ap-search-triggers'
 import { apSetupGuideTool } from './ap-setup-guide'
 import { apTestFlowTool } from './ap-test-flow'
 import { apTestStepTool } from './ap-test-step'
@@ -41,6 +45,12 @@ import { apUpdateTriggerTool } from './ap-update-trigger'
 import { apValidateFlowTool } from './ap-validate-flow'
 import { apValidateStepConfigTool } from './ap-validate-step-config'
 
+// Rollout flag (default off, imported from the tool-search engine): the tool-search tools
+// (ap_search_actions / ap_search_triggers) only register when AP_TOOL_SEARCH_ENABLED=true. They are
+// deliberately NOT in LOCKED_TOOL_NAMES — a locked tool is force-on and can't be turned off, which is
+// exactly what must not happen while the engine is behind a Cloud rollout. The flag is the master
+// switch; once on, the tools behave like the other read-only discovery tools (platform-level, on by
+// default).
 export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_flows',
     'ap_flow_structure',
@@ -49,6 +59,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_research_pieces',
     'ap_get_piece_props',
     'ap_resolve_property_options',
+    'ap_resolve_property_chain',
     'ap_validate_step_config',
     'ap_list_connections',
     'ap_list_ai_models',
@@ -61,6 +72,8 @@ export const LOCKED_TOOL_NAMES: string[] = [
 
 export const PLATFORM_LEVEL_TOOL_NAMES: string[] = [
     'ap_research_pieces',
+    'ap_search_actions',
+    'ap_search_triggers',
     'ap_list_ai_models',
     'ap_get_piece_props',
 ]
@@ -106,8 +119,11 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apReadStepCodeTool(mcp, log),
     apValidateFlowTool(mcp, log),
     apResearchPiecesTool(mcp, log),
+    // Tool-search engine — gated behind the AP_TOOL_SEARCH_ENABLED rollout flag (default off).
+    ...(isToolSearchEnabled() ? [apSearchActionsTool(mcp, log), apSearchTriggersTool(mcp, log)] : []),
     apGetPiecePropsTool(mcp, log),
     apResolvePropertyOptionsTool(mcp, log),
+    apResolvePropertyChainTool(mcp, log),
     apValidateStepConfigTool(mcp, log),
     apListConnectionsTool(mcp, log),
     apUpdateTriggerTool(mcp, log),
@@ -135,6 +151,6 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apTestFlowTool(mcp, log),
     apTestStepTool(mcp, log),
     apRetryRunTool(mcp, log),
-    apRunActionTool(mcp, log),
+    apRunActionTool({ mcp, userId }, log),
     apSetupGuideTool(mcp, log),
 ]

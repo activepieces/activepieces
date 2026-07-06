@@ -7,6 +7,8 @@ export const createSalesQuoteAction = createAction({
   name: 'create_sales_quote',
   displayName: 'Create Sales Quote',
   description: 'Create a new product-based sales quote',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new Bexio sales quote (kb_offer) with required user, language, currency, payment type, bank account, tax handling, validity dates, and at least one line-item position (custom, article, text, subtotal, discount, or page-break). Not idempotent: each call creates a separate quote, so guard against duplicates. Requires resolved IDs for contact, currency, taxes, units, and accounts; look these up first if not known.', idempotent: false },
   props: {
     document_nr: Property.ShortText({
       displayName: 'Document Number',

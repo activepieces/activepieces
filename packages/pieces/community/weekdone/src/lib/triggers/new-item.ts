@@ -96,6 +96,9 @@ export const newItemTrigger = createTrigger({
   name: 'new_item',
   displayName: 'New Item',
   description: 'Triggers when a new item is added to a Weekdone report.',
+  aiMetadata: {
+    description: 'Fires when a new report item (a plan, progress note, problem, or plan-on-hold entry) is added to a Weekdone weekly report, optionally limited to a specific user or team. Represents a newly logged status update entry.',
+  },
   props,
   sampleData: {
     id: 690,

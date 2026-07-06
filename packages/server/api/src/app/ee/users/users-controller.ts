@@ -1,15 +1,5 @@
-import {
-    AP_MAXIMUM_PROFILE_PICTURE_SIZE,
-    ApId,
-    ApMultipartFile,
-    FileType,
-    isNil,
-    PrincipalType,
-    PROFILE_PICTURE_ALLOWED_TYPES,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateMeResponse,
-    UserWithBadges,
-} from '@activepieces/shared'
+import { ApId, ApMultipartFile, isNil } from '@activepieces/core-utils'
+import { AP_MAXIMUM_PROFILE_PICTURE_SIZE, FileType, PrincipalType, PROFILE_PICTURE_ALLOWED_TYPES, SERVICE_KEY_SECURITY_OPENAPI, UpdateMeResponse, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -19,7 +9,7 @@ import { fileService } from '../../file/file.service'
 import { userService } from '../../user/user-service'
 
 export const usersController: FastifyPluginAsyncZod = async (app) => {
-    app.get('/:id', GetUserByIdRequest, async (req): Promise<UserWithBadges> => {
+    app.get('/:id', GetUserByIdRequest, async (req): Promise<UserWithMetaInformation> => {
         const userId = req.params.id
         const platformId = req.principal.platform.id
         return userService(req.log).getOneByIdAndPlatformIdOrThrow({ id: userId, platformId })
@@ -68,7 +58,7 @@ const GetUserByIdRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: UserWithBadges,
+            [StatusCodes.OK]: UserWithMetaInformation,
         },
     },
     config: {
@@ -83,7 +73,7 @@ const UpdateMeRequest = {
     schema: {
         consumes: ['multipart/form-data'],
         body: z.object({
-            profilePicture: ApMultipartFile.optional(),
+            profilePicture: z.optional(ApMultipartFile),
         }),
         response: {
             [StatusCodes.OK]: UpdateMeResponse,

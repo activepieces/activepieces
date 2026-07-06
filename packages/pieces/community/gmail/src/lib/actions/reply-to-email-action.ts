@@ -3,14 +3,21 @@ import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailProps } from '../common/props';
+import { replyToEmailActionOutputSchema } from '../output-schemas';
 
 export const gmailReplyToEmailAction = createAction({
   auth: gmailAuth,
   name: 'reply_to_email',
   displayName: 'Reply to Email',
   description: 'Reply to an existing email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a reply to an existing email, preserving the thread and subject and addressing the original sender (reply) or all participants (reply all). Use this to respond within a known conversation; requires the Gmail message ID of the email being answered. Not idempotent: each call sends a new reply message into the thread.',
+    idempotent: false,
+  },
   props: {
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
@@ -72,10 +79,11 @@ export const gmailReplyToEmailAction = createAction({
       required: false,
     }),
   },
+  outputSchema: replyToEmailActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const originalMessage = await gmail.users.messages.get({
       userId: 'me',

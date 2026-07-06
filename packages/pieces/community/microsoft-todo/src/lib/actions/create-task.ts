@@ -8,6 +8,8 @@ export const createTask = createAction({
 	name: 'create_task',
 	displayName: 'Create Task',
 	description: 'Creates a new task.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new to-do task inside a specific Microsoft To Do task list, optionally setting title, body/notes, importance, status, due/reminder/start dates, and categories. Use to add an item to a user\'s list; requires a target task list id (resolve via the list-tasks/find actions if you only have a name). Not idempotent — each call appends a new task even with identical input.', idempotent: false },
 	props: {
 		task_list_id: Property.Dropdown({
 			auth: microsoftToDoAuth,

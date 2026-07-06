@@ -9,6 +9,12 @@ export const getEvents = createAction({
   displayName: 'Get Events',
   description:
     'Retrieve email events from your Mailgun domain (deliveries, failures, opens, clicks, etc.). Useful for monitoring and alerting.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a domain\'s email event log filtered by a single event type (delivered, failed, opened, clicked, etc.), with optional severity, time range, and result cap; pagination is handled automatically. For "failed" events the severity filter can narrow to permanent (hard) or temporary (soft) bounces. Use to inspect or monitor recent email activity. Idempotent: a read-only query.',
+    idempotent: true,
+  },
   props: {
     domain: mailgunCommon.domainDropdown,
     event: Property.StaticDropdown({

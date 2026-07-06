@@ -11,6 +11,8 @@ export const dripUpsertSubscriberAction = createAction({
   auth: dripAuth,
   name: 'upsert_subscriber',
   description: 'Create or Update Subscriber',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a subscriber in a Drip account, or updates the existing one matched by email address, setting tags, custom fields, and contact details (name, address, phone, location). Use to add a new contact or keep an existing contact in sync. Idempotent: matched on the stable email, so repeating with the same input converges to the same record.', idempotent: true },
   displayName: 'Create or Update Subscriber',
   props: {
     account_id: dripCommon.account_id,

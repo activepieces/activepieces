@@ -6,10 +6,11 @@ import {
 } from '@activepieces/pieces-framework';
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { calculateMessagesTokenSize, exceedsHistoryLimit, reduceContextSize } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askGpt = createAction({
+  audience: 'human',
     auth: azureOpenaiAuth,
     name: 'ask_gpt',
     displayName: 'Ask GPT',
@@ -80,9 +81,9 @@ export const askGpt = createAction({
         const auth = context.auth.props;
 
         await propsValidation.validateZod(propsValue, {
-            temperature: z.number().min(0).max(1.0).optional(),
-            frequencyPenalty: z.number().min(-2.0).max(2.0).optional(),
-            presencePenalty: z.number().min(-2.0).max(2.0).optional(),
+            temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
+            frequencyPenalty: z.optional(z.number().check(z.minimum(-2.0), z.maximum(2.0))),
+            presencePenalty: z.optional(z.number().check(z.minimum(-2.0), z.maximum(2.0))),
         });
 
         const openai = new OpenAIClient(

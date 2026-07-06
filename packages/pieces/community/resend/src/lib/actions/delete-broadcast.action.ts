@@ -8,6 +8,8 @@ export const deleteBroadcast = createAction({
   auth: resendAuth,
   displayName: 'Delete Broadcast',
   description: 'Permanently delete a broadcast from your Resend account',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a broadcast from the Resend account, identified by broadcast ID. Use this to remove a draft or unwanted campaign; only broadcasts that have not been sent can be deleted. Effectively idempotent — once deleted, repeating the call has no further effect.', idempotent: true },
   props: {
     broadcast_id: resendProps.broadcastId,
   },

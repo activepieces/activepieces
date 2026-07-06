@@ -58,6 +58,10 @@ export const newItemTrigger = createTrigger({
   name: 'new_item',
   displayName: 'New Item',
   description: 'Fires when a new item (task) is created in Teamhood.',
+  aiMetadata: {
+    description:
+      'Fires when a new item (task) is created in Teamhood, optionally scoped to a specific workspace and board. Each event represents one newly created item.',
+  },
   props,
   type: TriggerStrategy.POLLING,
   sampleData: {

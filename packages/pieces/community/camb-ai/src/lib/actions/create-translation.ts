@@ -8,6 +8,8 @@ export const createTranslation = createAction({
     name: 'create_translation',
     displayName: 'Create Translation',
     description: 'Translate text from a source language to a target language.',
+    audience: 'both',
+    aiMetadata: { description: 'Translates text from a source language to a target language via Camb.AI, polling until the translation task completes. Each input line is treated as a separate segment to translate, and both languages are chosen from Camb.AI dropdowns; optionally tune formality, gender, and target audience age. Use for text translation only (not audio — use Create Transcription for speech-to-text). Not idempotent: each call starts a new translation task.', idempotent: false },
     props: {
         texts: Property.LongText({
             displayName: 'Text to Translate',

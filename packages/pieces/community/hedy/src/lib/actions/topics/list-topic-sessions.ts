@@ -46,6 +46,11 @@ export const listTopicSessions = createAction({
   name: 'list-topic-sessions',
   displayName: 'List Topic Sessions',
   description: 'Retrieve sessions associated with a specific topic.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List the sessions assigned to one specific Hedy topic, identified by a topic ID (must be prefixed with "topic_"). Use when you want sessions scoped to a known topic; use List Sessions for an unscoped or cross-topic view. Set Return All to page through everything, otherwise results are capped by the limit. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     topicId: commonProps.topicId,
     returnAll: commonProps.returnAll,

@@ -7,6 +7,10 @@ export const newResponse = createTrigger({
   name: 'new_response',
   displayName: 'New Response',
   description: 'Triggers when a new response is submitted',
+  aiMetadata: {
+    description:
+      'Fires when a respondent submits a new response to the selected SurveyMonkey survey. Emits the full submitted response, including the survey identifier, response ID, and the respondent answers, fetched from the SurveyMonkey API.',
+  },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {},
   props: {

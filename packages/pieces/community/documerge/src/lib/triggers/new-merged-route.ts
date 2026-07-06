@@ -10,6 +10,9 @@ export const newMergedRoute = createTrigger({
   name: 'new_merged_route',
   displayName: 'New Merged Route',
   description: 'Triggers when a merged/populated route is created',
+  aiMetadata: {
+    description: 'Fires when DocuMerge completes a data route merge, delivered via a webhook the user configures on a route in their DocuMerge dashboard. The event represents a finished route merge and can carry the merged field data and a temporary download URL.',
+  },
   props: {
     webhookInstructions: Property.MarkDown({
       value: `

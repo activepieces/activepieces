@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddMcpPieceSqlite1744822233873 implements MigrationInterface {

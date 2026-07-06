@@ -10,6 +10,8 @@ export const sendSmsAction = createAction({
     name: 'send-sms',
     displayName: 'Send SMS',
     description: 'Send an SMS message through ConnectUC',
+    audience: 'both',
+    aiMetadata: { description: 'Sends an SMS/MMS text message from a ConnectUC sender number to one or more recipient phone numbers, optionally with media attachment URLs. Use when an agent needs to text a person or group. Not idempotent: each call sends a new message (a fresh reference ID is generated per call), so repeating it delivers duplicate texts.', idempotent: false },
     props: {
         recipients: Property.Array({
             displayName: 'SMS Destinations',
@@ -31,6 +33,14 @@ export const sendSmsAction = createAction({
     async run(context) {
         const { recipients, content, sender, attachment_urls } = context.propsValue;
 
+        const recipientList = (recipients ?? [])
+            .map((recipient) => String(recipient).trim())
+            .filter((recipient) => recipient.length > 0);
+
+        if (recipientList.length === 0) {
+            throw new Error('At least one SMS destination is required');
+        }
+
         const media = attachment_urls && attachment_urls.length > 0 ? attachment_urls.map((url) => {
             const urlStr = String(url);
             return {
@@ -43,7 +53,7 @@ export const sendSmsAction = createAction({
             application: 'connectuc',
             content: content,
             media: media,
-            recipients: recipients,
+            recipients: recipientList,
             referenceId: randomUUID(),
             sender: sender,
         };

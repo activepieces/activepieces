@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { umamiAuth, UmamiAuthValue, getAuthHeaders, getBaseUrl } from './lib/auth';
 import { getWebsiteStats } from './lib/actions/get-website-stats';
 import { getWebsiteMetrics } from './lib/actions/get-website-metrics';
@@ -14,7 +14,7 @@ import { newSession } from './lib/triggers/new-session';
 export const umami = createPiece({
   displayName: 'Umami',
   description: 'Privacy-focused, open-source web analytics.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/umami.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: umamiAuth,

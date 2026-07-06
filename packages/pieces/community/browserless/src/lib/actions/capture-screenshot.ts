@@ -7,6 +7,8 @@ export const captureScreenshot = createAction({
     name: 'capture_screenshot',
     displayName: 'Capture Screenshot',
     description: 'Take a screenshot of a web page',
+    audience: 'both',
+    aiMetadata: { description: 'Renders a web page in a headless browser and returns a PNG or JPEG screenshot of it. Use to capture the visual state of a public URL; the page URL is required, and options like full-page capture, viewport size, clipping region, and waiting for a CSS selector control what is rendered. Read-only: re-running with the same input re-renders the page and produces an equivalent image without side effects.', idempotent: true },
     auth: browserlessAuth,
     props: {
         url: Property.ShortText({

@@ -8,6 +8,8 @@ export const verifyDomain = createAction({
   auth: resendAuth,
   displayName: 'Verify Domain',
   description: 'Trigger a DNS verification check for a domain',
+  audience: 'both',
+  aiMetadata: { description: 'Triggers Resend to re-check the DNS records of a domain and update its verification status, identified by domain ID. Use this after adding the required DNS records (from Create Domain) to confirm the domain is ready to send. Safe to call repeatedly — it only re-runs the check.', idempotent: true },
   props: {
     domain_id: resendProps.domainId,
   },

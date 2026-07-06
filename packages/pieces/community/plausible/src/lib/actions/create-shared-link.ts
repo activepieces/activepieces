@@ -8,6 +8,8 @@ export const createSharedLink = createAction({
   name: 'create_shared_link',
   displayName: 'Create Shared Link',
   description: 'Find or create a shared link for a site',
+  audience: 'both',
+  aiMetadata: { description: 'Returns a public shared dashboard link for a site, creating one with the given name if it does not already exist (find-or-create). Use to obtain a shareable analytics URL for a specific site and link name. Idempotent, as repeating with the same site and name returns the existing link rather than duplicating it.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
     name: Property.ShortText({

@@ -13,6 +13,12 @@ export const sendReply = createAction({
   name: 'sendReply',
   displayName: 'Send Reply',
   description: 'Send a reply to a conversation in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send a customer-facing reply within an existing Front conversation identified by conversation ID. Pick this to respond in an ongoing thread; use "Send Message" to start a new conversation and "Add Comment" for an internal note. Not idempotent: each call sends another reply.',
+    idempotent: false,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     body: Property.LongText({

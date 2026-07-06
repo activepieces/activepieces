@@ -1,5 +1,4 @@
 import {
-  PiecePropValueSchema,
   Property,
   Store,
   StoreScope,
@@ -12,12 +11,13 @@ import {
   googleSheetsCommon,
   mapRowsToHeaderNames,
 } from '../common/common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { getWorkSheetGridSize } from '../triggers/helpers';
 import { commonProps } from '../common/props';
+import { getNextRowsActionOutputSchema } from '../output-schemas';
 
 async function getRows(
   store: Store,
@@ -106,6 +106,12 @@ export const getRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'get_next_rows',
   description: 'Get next group of rows from a specifiec workheet',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Reads the next batch of rows from a worksheet, advancing a cursor stored under a memory key so successive calls walk through the sheet without reprocessing rows. Use to iterate a sheet in chunks across runs. Not idempotent — each non-test call moves the stored cursor forward and returns a different batch.',
+    idempotent: false,
+  },
   displayName: 'Get next row(s)',
   props: {
     ...commonProps,
@@ -143,6 +149,7 @@ export const getRowsAction = createAction({
       defaultValue: 1,
     }),
   },
+  outputSchema: getNextRowsActionOutputSchema,
   async run({ store, auth, propsValue }) {
     const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId, useHeaderNames} = propsValue;
 
@@ -151,8 +158,8 @@ export const getRowsAction = createAction({
 		}
 
     await propsValidation.validateZod(propsValue, {
-      startRow: z.number().min(1),
-      groupSize: z.number().min(1),
+      startRow: z.number().check(z.minimum(1)),
+      groupSize: z.number().check(z.minimum(1)),
     });
 
     try {

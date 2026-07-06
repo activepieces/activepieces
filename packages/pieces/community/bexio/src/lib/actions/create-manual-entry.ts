@@ -9,6 +9,8 @@ export const createManualEntryAction = createAction({
   name: 'create_manual_entry',
   displayName: 'Create Manual Entry',
   description: 'Create a manual accounting entry (single, compound, or group)',
+  audience: 'both',
+  aiMetadata: { description: 'Books a manual accounting entry in Bexio in one of three modes: a single debit/credit line, a compound entry distributing a total across several accounts, or a group of multiple complete bookings sharing one reference. Use to post journal entries directly to the ledger; requires a booking date and the entry lines for the chosen mode (account ids resolvable via Find Account). Not idempotent: each call posts new ledger bookings.', idempotent: false },
   props: {
     type: Property.StaticDropdown({
       displayName: 'Entry Type',

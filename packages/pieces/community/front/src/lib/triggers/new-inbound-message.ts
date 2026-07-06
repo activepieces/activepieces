@@ -57,6 +57,10 @@ export const newInboundMessage = createTrigger({
   name: 'newInboundMessage',
   displayName: 'New Inbound Message',
   description: 'Fires when a new message is received in a shared inbox.',
+  aiMetadata: {
+    description:
+      'Fires when a new inbound message is received in Front, such as an incoming email or chat from a contact, optionally scoped to a specific inbox. Represents a message arriving from an external sender and emits the inbound event with its message body, sender, and parent conversation, letting an agent act on newly received customer communications.',
+  },
   props,
   sampleData: {
     _links: {

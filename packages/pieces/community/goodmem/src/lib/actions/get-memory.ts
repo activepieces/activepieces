@@ -8,6 +8,8 @@ export const getMemory = createAction({
   name: 'get_memory',
   displayName: 'Get Memory',
   description: 'Fetch a specific memory record by its ID, including metadata, processing status, and optionally the original content.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single GoodMem memory by its ID and returns its metadata and processing status, optionally including the original document content. Use it when you already have a memory ID (e.g. from Create Memory or a retrieval result) and need its full details. Read-only and idempotent.', idempotent: true },
   props: {
     memoryId: Property.ShortText({
       displayName: 'Memory ID',

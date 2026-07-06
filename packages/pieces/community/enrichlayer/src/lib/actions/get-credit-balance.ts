@@ -9,6 +9,12 @@ export const getCreditBalance = createAction({
   displayName: 'Get Credit Balance',
   description:
     'View your Enrich Layer API credit balance (0 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read the remaining credit balance on the connected Enrich Layer API account. Pick this to check available quota before running billed enrichment or search actions; takes no input, costs no credits, and is read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     return await enrichlayerApiCall(

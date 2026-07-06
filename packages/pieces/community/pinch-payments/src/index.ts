@@ -22,7 +22,7 @@ import { scheduledProcessTrigger } from "./lib/triggers/scheduled-process";
 import { transferTrigger } from "./lib/triggers/transfer";
 import { disputeCreatedTrigger } from "./lib/triggers/dispute-created";
 import { disputeUpdatedTrigger } from "./lib/triggers/dispute-updated";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const pinchPayments = createPiece({
   displayName: "Pinch Payments",

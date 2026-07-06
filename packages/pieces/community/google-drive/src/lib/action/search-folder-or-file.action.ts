@@ -1,13 +1,16 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
 import { common } from '../common';
+import { searchFolderActionOutputSchema } from '../output-schemas';
 
 export const googleDriveSearchFolder = createAction({
   auth: googleDriveAuth,
   name: 'search-folder',
   displayName: 'Search',
   description: 'Search a Google Drive folder for files/sub-folders',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Google Drive for files or folders matching a name, full-text, or MIME-type query, optionally scoped to a parent folder and filtered to files or folders only. Use to resolve a file/folder ID from a human-readable name before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     queryTerm: Property.StaticDropdown({
       displayName: 'Query Term',
@@ -55,10 +58,11 @@ export const googleDriveSearchFolder = createAction({
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: searchFolderActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
     const operator = context.propsValue.operator ?? 'contains';
     const queryTerm = context.propsValue.queryTerm ?? 'name';
     let finalQuery = `${queryTerm} ${operator} '${context.propsValue.query}'`;

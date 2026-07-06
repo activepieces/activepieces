@@ -4,7 +4,7 @@ import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { listIdDropdown } from '../common/props';
 import { ListWebhookPayload, WebhookResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'new-list-entry-trigger';
 
@@ -12,6 +12,9 @@ export const listEntryCreatedTrigger = createTrigger({
 	name: 'list_entry_created',
 	displayName: 'List Entry Created',
 	description: 'Triggers when a new entry is added.',
+	aiMetadata: {
+		description: 'Fires when a new entry is added to the selected Attio list (i.e. a record is added to that list). Represents a record entering a list; scoped to one list chosen per trigger.',
+	},
 	auth: attioAuth,
 	props: {
 		listId: listIdDropdown({

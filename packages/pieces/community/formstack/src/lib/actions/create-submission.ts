@@ -14,6 +14,8 @@ export const createSubmission = createAction({
   name: 'createSubmission',
   displayName: 'Create Submission',
   description: 'Submit data to a Formstack form',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a new entry to a specific Formstack form, populating its fields (which are loaded dynamically from the chosen form) plus optional submission metadata like user agent, IP, and payment status. Use to programmatically record form responses. Not idempotent: each call creates a separate submission.', idempotent: false },
   props: {
     form_id: formIdDropdown,
     user_agent: Property.ShortText({

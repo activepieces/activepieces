@@ -11,6 +11,12 @@ export const assignFilamentAction = createAction({
   displayName: 'Assign Filament to Printer',
   description:
     'Assign a filament spool to a printer at a specific nozzle + extruder slot. Defaults to nozzle 0 / extruder 0 (single-nozzle single-extruder printers); set the indices for multi-nozzle (e.g. IDEX, toolchanger) or multi-material (MMS, MMU) printers.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Load a filament spool (by numeric ID or 4-char short ID) onto a printer at a given nozzle/extruder slot, defaulting to nozzle 0 / extruder 0. Pick this to record which spool is mounted before a print; set the nozzle/extruder indices for multi-nozzle or multi-material printers. Assigning the same spool to the same slot again is effectively idempotent (it sets the slot to that spool); the backend rejects out-of-range nozzle/extruder indices.',
+    idempotent: true,
+  },
   props: {
     printerId: Property.Number({
       displayName: 'Printer ID',

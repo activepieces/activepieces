@@ -10,6 +10,12 @@ export const runRobotAction = createAction({
   displayName: 'Run a Robot',
   description:
     'Runs a robot on-demand with custom input parameters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a new on-demand run of a Browse AI robot, creating a fresh scraping task with the robot-specific input parameters (the required inputs vary per robot and are pulled from its definition). Use to trigger a scrape/extraction; results arrive asynchronously, so poll Get Task Details or use a task-finished trigger for the outcome. Not idempotent: each call queues another task run.',
+    idempotent: false,
+  },
   props: {
     robotId: robotIdDropdown,
     recordVideo: Property.Checkbox({

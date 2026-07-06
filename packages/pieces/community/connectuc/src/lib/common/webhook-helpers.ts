@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { BaseContext, InputPropertyMap, PieceAuthProperty } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const CONNECTUC_BASE_URL = 'https://api.connectuc.io/activepieces';
 export const CONNECTUC_WEBHOOK_TRIGGER_KEY = 'connectuc_webhook';

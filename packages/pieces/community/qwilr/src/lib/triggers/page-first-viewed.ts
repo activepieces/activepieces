@@ -33,6 +33,9 @@ export const pageFirstViewedTrigger = createTrigger({
   name: 'page_first_viewed',
   displayName: 'Page First Viewed',
   description: 'Triggers when a Qwilr page is viewed for the first time',
+  aiMetadata: {
+    description: 'Fires only on the first time a Qwilr page is opened by a viewer, marking initial engagement with a sent proposal. Use to react once to a recipient first opening the document; for all subsequent opens use the Page Viewed trigger.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

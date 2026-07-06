@@ -1,20 +1,8 @@
 import { inspect } from 'util'
-import {
-    EngineOperation,
-    EngineOperationType,
-    EngineResponse,
-    EngineResponseStatus,
-    ExecuteExtractPieceMetadataOperation,
-    ExecuteFlowOperation,
-    ExecutePropsOptions,
-    ExecuteTriggerOperation,
-    ExecuteValidateAuthOperation,
-    ExecutionError,
-    ExecutionErrorType,
-    formatPieceError,
-    TriggerHookType,
-    tryCatch,
-} from '@activepieces/shared'
+import { formatPieceError, tryCatch } from '@activepieces/core-utils'
+import { EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, ExecuteActionOperation, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, ExecutionError, ExecutionErrorType, TriggerHookType } from '@activepieces/shared'
+import { actionOperation } from './action.operation'
+import { authRefreshOperation } from './auth-refresh.operation'
 import { authValidationOperation } from './auth-validation.operation'
 import { flowOperation } from './flow.operation'
 import { pieceMetadataOperation } from './piece-metadata.operation'
@@ -31,6 +19,9 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             case EngineOperationType.EXECUTE_FLOW: {
                 return flowOperation.execute(operation as ExecuteFlowOperation)
             }
+            case EngineOperationType.EXECUTE_ACTION: {
+                return actionOperation.execute(operation as ExecuteActionOperation)
+            }
             case EngineOperationType.EXECUTE_PROPERTY: {
                 return propertyOperation.execute(operation as ExecutePropsOptions)
             }
@@ -39,6 +30,9 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             }
             case EngineOperationType.EXECUTE_VALIDATE_AUTH: {
                 return authValidationOperation.execute(operation as ExecuteValidateAuthOperation)
+            }
+            case EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH: {
+                return authRefreshOperation.execute(operation as ExecuteRefreshTokenAuthOperation)
             }
             default: {
                 throw new ExecutionError('Unsupported operation type', `Unsupported operation type: ${operationType}`, ExecutionErrorType.ENGINE)

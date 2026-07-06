@@ -5,6 +5,8 @@ export const getAddressTokenBalances = createAction({
   name: 'get_address_token_balances',
   displayName: 'Get Address Token Balances',
   description: 'Get list of token balances for an address',
+  audience: 'both',
+  aiMetadata: { description: 'Get the full current token holdings of an address as a flat list of balances. Choose this for a snapshot of what tokens an account holds and how much; use Get Address Token Transfers for movement history or Get Address Tokens for the paginated/filterable variant. Read-only lookup on eth.blockscout.com; requires a 0x address hash.', idempotent: true },
   // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({

@@ -1,16 +1,7 @@
 import os from 'os'
 import path from 'path'
-import {
-    ActivepiecesError,
-    ApEdition,
-    DefaultProjectRole,
-    ErrorCode,
-    ExecutionMode,
-    FileLocation,
-    isNil,
-    NetworkMode,
-    PieceSyncMode,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ApEdition, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../../database/database-type'
 import { RedisType } from '../../database/redis/types'
@@ -35,6 +26,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
+    [AppSystemProp.USE_CDN_FOR_BUNDLES]: 'false',
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
@@ -67,6 +59,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
     [AppSystemProp.NETWORK_MODE]: NetworkMode.UNRESTRICTED,
+    [AppSystemProp.LOG_SAMPLE_RATE_INFO]: '100',
+    [AppSystemProp.LOG_KEEP_SLOW_MS]: '2000',
 }
 
 let globalLogger: FastifyBaseLogger

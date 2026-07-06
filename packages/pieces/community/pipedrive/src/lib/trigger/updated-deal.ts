@@ -15,7 +15,7 @@ import {
 import { pipedriveAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { FieldsResponse, GetField, RequestParams } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedriveDealV2 {
@@ -96,6 +96,10 @@ export const updatedDeal = createTrigger({
 	name: 'updated_deal',
 	displayName: 'Updated Deal',
 	description: 'Triggers when a deal is updated.',
+	aiMetadata: {
+		description:
+			'Fires when any field of an existing deal changes in Pipedrive, such as its value, status, owner, stage, or custom fields. Can optionally be scoped to changes on a specific deal, pipeline, or stage. Use to react to edits on sales opportunities in the CRM.',
+	},
 	props: {
 		filter_by: Property.StaticDropdown({
 			displayName: 'Filter by',

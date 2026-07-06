@@ -1,15 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  SecretsManagerClient,
   ListSecretsCommand,
 } from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
 
 export const findSecret = createAction({
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   name: 'findSecret',
   displayName: 'Find Secret',
   description: 'Finds an existing secret using filters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists/searches secrets in AWS Secrets Manager, filtering by a chosen field (name, description, tag key, tag value, primary region, owning service, or "all") against a search value, with optional max results and sort. Use to discover secrets or resolve a name/ARN before another action. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     filterKey: Property.StaticDropdown({
       displayName: 'Filter Key',
@@ -62,14 +68,8 @@ export const findSecret = createAction({
       },
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
-    });
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 
     try {
       const command = new ListSecretsCommand({

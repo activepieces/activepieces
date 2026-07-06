@@ -6,7 +6,6 @@ import { useFormContext } from 'react-hook-form';
 
 import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
-import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   Sortable,
@@ -61,28 +60,19 @@ const ArrayInput = React.memo(
       );
     };
 
+    // `fields` is the single source of truth: it owns both the stable row id and
+    // the value. Mutations derive a new `fields` array from it (preserving ids)
+    // and project the values onto the form. Rebuilding from `form.getValues()`
+    // here would resurrect any holes a prior reorder left in the form value and
+    // would churn every row id, so it is deliberately avoided. See issue #13897.
     const append = () => {
-      const formValues = form.getValues(inputName) || [];
-      const newFields = [
-        ...formValues.map((value: string) => ({
-          id: nanoid(),
-          value,
-        })),
-        { id: nanoid(), value: '' },
-      ];
-
+      const newFields = [...fields, { id: nanoid(), value: '' }];
       setFields(newFields);
       updateFormValue(newFields);
     };
 
     const remove = (index: number) => {
-      const currentFields: ArrayField[] = form
-        .getValues(inputName)
-        .map((value: string) => ({
-          id: nanoid(),
-          value,
-        }));
-      const newFields = currentFields.filter((_, i) => i !== index);
+      const newFields = fields.filter((_, i) => i !== index);
       setFields(newFields);
       updateFormValue(newFields);
     };
@@ -125,33 +115,25 @@ const ArrayInput = React.memo(
                     <GripVertical className="size-4" aria-hidden="true" />
                   </SortableDragHandle>
 
-                  <FormField
-                    control={form.control}
-                    name={`${inputName}.${index}`}
-                    render={() => (
-                      <FormItem className="grow">
-                        <FormControl>
-                          {customInputNode ? (
-                            customInputNode(
-                              (value) => updateFieldValue(index, value),
-                              field.value as string,
-                              disabled,
-                            )
-                          ) : (
-                            <Input
-                              thin={thinInputs}
-                              value={field.value as string}
-                              onChange={(e) =>
-                                updateFieldValue(index, e.target.value)
-                              }
-                              disabled={disabled}
-                              className="grow"
-                            />
-                          )}
-                        </FormControl>
-                      </FormItem>
+                  <div className="grow">
+                    {customInputNode ? (
+                      customInputNode(
+                        (value) => updateFieldValue(index, value),
+                        field.value,
+                        disabled,
+                      )
+                    ) : (
+                      <Input
+                        thin={thinInputs}
+                        value={field.value}
+                        onChange={(e) =>
+                          updateFieldValue(index, e.target.value)
+                        }
+                        disabled={disabled}
+                        className="grow"
+                      />
                     )}
-                  />
+                  </div>
 
                   {showRemoveButton && (
                     <Button

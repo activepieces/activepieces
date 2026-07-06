@@ -9,6 +9,12 @@ export const getEmployeeOrganizationalChart = createAction({
   displayName: 'Get Employee Organizational Chart',
   description:
     'Retrieves employee organizational relationships including the complete management chain, direct reports, and peers',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Builds the organizational context for one OmniHR employee identified by their numeric system ID: the full management chain up to the top (walked by following each manager's snapshot), direct reports, peers, and career journey. Use when you need where someone sits in the org hierarchy rather than just their profile. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     system_id: Property.Number({
       displayName: 'System ID',

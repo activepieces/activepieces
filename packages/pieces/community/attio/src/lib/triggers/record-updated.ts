@@ -4,7 +4,7 @@ import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { objectAttributeDropdown, objectTypeIdDropdown } from '../common/props';
 import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'updated-record-trigger';
 
@@ -13,6 +13,9 @@ export const recordUpdatedTrigger = createTrigger({
 	displayName: 'Record Updated',
 	description:
 		'Triggers when an existing record is updated (people, companies, deals, etc.).',
+	aiMetadata: {
+		description: 'Fires when an existing record in the selected Attio object type is updated. Can optionally be narrowed to updates involving a specific attribute, and further to when that attribute equals a given value. Represents a change to a CRM entity.',
+	},
 	auth: attioAuth,
 	props: {
 		objectTypeId: objectTypeIdDropdown({

@@ -8,6 +8,12 @@ export const getList = createAction({
   displayName: 'Get a list',
   description:
     'Get a list with all its items. Returns the list metadata plus paginated items. For people lists, items are sorted by connection strength (warmth score).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a single list by ID along with its items, paginated via an opaque cursor. Read-only and idempotent. Use this to read members of one known list (and to obtain item IDs for removal); use List all lists to discover list IDs first.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'List ID',

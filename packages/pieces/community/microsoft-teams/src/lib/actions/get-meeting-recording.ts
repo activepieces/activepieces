@@ -9,6 +9,11 @@ export const getMeetingRecordingAction = createAction({
 	displayName: 'Get Meeting Recording',
 	description:
 		'Retrieves recordings for a Teams meeting. Provide a Recording to fetch its metadata; omit it to list all available recordings.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Retrieves recordings for a Microsoft Teams online meeting belonging to the authenticated user, resolved from a meeting identifier (join URL or ID). Operates in two modes: with a recording ID it fetches that recording\'s metadata; without one it lists all available recordings for the meeting. Idempotent read-only operation.',
+		idempotent: true,
+	},
 	props: {
 		meetingIdentifierType: microsoftTeamsCommon.meetingIdentifierType,
 		meetingIdentifierValue: microsoftTeamsCommon.meetingIdentifierValue,

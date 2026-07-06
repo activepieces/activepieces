@@ -10,6 +10,10 @@ export const newDocument = createTrigger({
   name: 'newDocument',
   displayName: 'New Document',
   description: 'Triggers when a new document is uploaded to DocumentPro',
+  aiMetadata: {
+    description:
+      'Fires when a DocumentPro workflow finishes processing a document and emits a status-change webhook (e.g. parsing completed), delivering the document metadata and extracted result data. Requires the webhook URL to be configured in the DocumentPro workflow dashboard.',
+  },
   props: {
     webhook_info: Property.MarkDown({
       value: `

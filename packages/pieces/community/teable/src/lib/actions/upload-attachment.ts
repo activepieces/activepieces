@@ -7,6 +7,11 @@ export const uploadAttachmentAction = createAction({
   name: 'teable_upload_attachment',
   displayName: 'Upload Attachment',
   description: 'Uploads a file as an attachment to a field in a Teable record.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Attaches a file to an attachment-type field of an existing Teable record, accepting either a public URL or binary file data. Use to add a document or image to a known record; requires the table ID, record ID, and the attachment field. Not idempotent — each call adds another attachment to the field.',
+    idempotent: false,
+  },
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,

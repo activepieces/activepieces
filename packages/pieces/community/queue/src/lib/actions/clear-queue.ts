@@ -11,6 +11,7 @@ const notes = `**Note:**
 - The testing step work in isolation and doesn't affect the actual queue after publishing.
 `
 export const clearQueue = createAction({
+  audience: 'human',
     name: 'clear-queue',
     description: 'Clears all items inside a queue',
     displayName: 'Clear queue',

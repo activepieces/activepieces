@@ -104,6 +104,9 @@ export const newSummaryPaymentsTrigger = createTrigger({
   name: 'new_summary_payments',
   displayName: 'New Summary Payments',
   description: 'Triggers when there is new daily sales and payments data.',
+  aiMetadata: {
+    description: 'Fires when Tenzo records new or updated daily sales-and-payments data, optionally scoped to a location and/or area and optionally including deleted records. Each event represents one day-of-business summary with paid sales (with and without tax), promos, comps, included service charges, transaction count, guest count, and last-modified and deletion timestamps. Use it to react to freshly posted or revised daily payment totals.',
+  },
   props: {
     location_id: tenzoCommon.location_id(false),
     area_id: tenzoCommon.area_id(false),

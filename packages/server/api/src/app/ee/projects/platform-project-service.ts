@@ -1,24 +1,6 @@
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    apId,
-    AppConnectionScope,
-    Cursor,
-    ErrorCode,
-    isNil,
-    Metadata,
-    PiecesFilterType,
-    PlatformId,
-    PrincipalType,
-    Project,
-    ProjectId,
-    ProjectType,
-    ProjectWithLimits,
-    SeekPage,
-    spreadIfDefined,
-    TeamProjectsLimit,
-    UpdateProjectPlatformRequest,
-    UserId } from '@activepieces/shared'
+import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, TeamProjectsLimit, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
@@ -145,7 +127,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-        const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
+        const { globalConnectionExternalIds, maxConcurrentJobs, workerGroupId, ...rest } = request
         let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
             resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
@@ -154,6 +136,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 ...rest,
                 ...(resolvedPoolId !== undefined ? { poolId: resolvedPoolId } : {}),
                 ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
+                ...(platformPlan.workerGroupsEnabled && workerGroupId !== undefined ? { workerGroupId } : {}),
             }, entityManager)
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({

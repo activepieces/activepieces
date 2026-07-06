@@ -9,6 +9,8 @@ export const createIssueAction = createAction({
   name: 'create_issue',
   displayName: 'Create Issue',
   description: 'Creates a new issue in a YouTrack project.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new issue in a YouTrack project, requiring the target project ID and a summary; optionally set a description and custom fields (priority, assignee, etc.) via a JSON array. Use to file a bug, task, or request. Not idempotent: each call creates a distinct issue.', idempotent: false },
   props: {
     project: projectDropdown,
     summary: Property.ShortText({

@@ -10,6 +10,12 @@ export const getNextQueueItemsAction = createAction({
   displayName: 'Get Next Queue Items',
   description:
     'Resolve the next-up queue items for one or more printers using the company\'s match criteria (with deduplication so the same item is never assigned twice). Returns the matched queue object with item references per printer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Resolve which queue items should print next on the given printer IDs using the account\'s match criteria, with built-in deduplication so the same item is not handed to two printers. Pick this to drive automatic dispatch of pending work to free printers; optionally exclude busy printer IDs from matching. It is a lookup (no items are started), but match results can shift between calls as the queue changes.',
+    idempotent: true,
+  },
   props: {
     printerIds: Property.Array({
       displayName: 'Printer IDs',

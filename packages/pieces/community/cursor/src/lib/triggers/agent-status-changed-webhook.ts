@@ -50,6 +50,9 @@ export const agentStatusChangedWebhookTrigger = createTrigger({
   name: 'agent_status_changed_webhook',
   displayName: 'Agent Status Changed (Webhook)',
   description: 'Triggers when an agent status changes (ERROR or FINISHED). Configure this webhook URL when launching an agent.',
+  aiMetadata: {
+    description: 'Fires via a Cursor webhook when an agent reaches a terminal status of ERROR or FINISHED. Requires registering this webhook URL (and optional signing secret) when launching the agent.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookSecret: Property.ShortText({

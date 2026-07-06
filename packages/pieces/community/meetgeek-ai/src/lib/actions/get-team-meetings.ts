@@ -9,6 +9,11 @@ export const getTeamMeetings = createAction({
   name: 'getTeamMeetings',
   displayName: 'Get Team Meetings',
   description: 'Retrieves paginated past meetings of a team',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List the past meetings belonging to a given MeetGeek team, identified by team ID. Use to discover meeting IDs to feed into the per-meeting lookup actions. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     teamId: teamIdDropdown,
   },

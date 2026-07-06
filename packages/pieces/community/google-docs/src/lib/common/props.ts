@@ -1,6 +1,6 @@
 import { googleDocsAuth, createGoogleClient, GoogleDocsAuthValue } from '../auth';
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import { google, drive_v3 } from 'googleapis';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 
 export const folderIdProp = Property.Dropdown({
 	displayName: 'Folder',
@@ -19,7 +19,7 @@ export const folderIdProp = Property.Dropdown({
 
 		const authClient = await createGoogleClient(authValue);
 
-		const drive = google.drive({ version: 'v3', auth: authClient });
+		const drive = googleDrive({ version: 'v3', auth: authClient });
 
 		const options: DropdownOption<string>[] = [];
 

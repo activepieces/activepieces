@@ -7,6 +7,12 @@ export const exportPresentation = createAction({
   name: 'exportPresentation',
   displayName: 'Export Presentation',
   description: 'Export a presentation in the specified formats.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Export an existing Alai presentation into one or more formats (link, PDF, and/or PPTX) by its presentation ID. Use this to render a deck for download or sharing. By default it returns immediately with a generation_id (poll Get Generation for status); set Wait for Completion to block until the export finishes (up to Max Wait Time). Not idempotent: each call kicks off a new export job. Requires the presentation ID and at least one export format.',
+    idempotent: false,
+  },
   props: {
     presentationId: Property.ShortText({
       displayName: 'Presentation ID',

@@ -8,6 +8,8 @@ export const findContact = createAction({
     name: 'find_contact',
     displayName: 'Find Contact',
     description: 'Search for contacts by text, email, name, or any contact information',
+    audience: 'both',
+    aiMetadata: { description: 'Search a Missive contact book for contacts matching a free-text term across name, email, phone, organization, and other fields; leave the search term empty to list all contacts in the book. Use to look up or enumerate contacts before acting on them. A contact book is required; supports paging, sort order, and a count/summary/full result format. Read-only and idempotent.', idempotent: true },
     auth: missiveAuth,
     props: {
         contact_book: contactBookDropdown,

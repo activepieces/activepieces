@@ -9,6 +9,10 @@ export const watchSpecificChannelMessagesTrigger = createTrigger({
   name: 'watch_specific_channel_messages',
   displayName: 'Watch Specific Channel Messages',
   description: 'Triggers when a new message is posted to a specific WhatsApp Channel.',
+  aiMetadata: {
+    description:
+      'Fires when a new message is posted to one chosen WhatsApp Channel (selected by channel ID) on the connected session. Each event represents a single channel post and includes the channel ID, message body, and media details. Use to monitor a specific channel rather than every channel the session follows.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     session: whatsscaleProps.session,

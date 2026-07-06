@@ -8,6 +8,12 @@ export const pageNumbersPdfAction = createAction({
   name: 'page_numbers_pdf',
   displayName: 'Add Page Numbers to PDF',
   description: 'Stamp page numbers onto a PDF, with control over position and styling.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Print page numbers onto a PDF, with control over which pages, the starting number, the {n}/{p} number format, facing-page (book) layout, cover-skip, and font styling. Each run produces a new numbered file, so re-running re-stamps rather than reusing an earlier output.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'PDF File',

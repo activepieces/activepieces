@@ -16,12 +16,14 @@ export const frameRegisterTrigger = ({
   displayName,
   eventType,
   description,
+  aiMetadata,
   sampleData,
 }: {
   name: string;
   displayName: string;
   eventType: string;
   description: string;
+  aiMetadata?: { description: string };
   sampleData: unknown;
 }) =>
   createTrigger({
@@ -29,6 +31,9 @@ export const frameRegisterTrigger = ({
     name: `frame_trigger_${name}`,
     displayName,
     description,
+    aiMetadata: aiMetadata ?? {
+      description: `Fires via a Frame.io webhook whenever the "${eventType}" event occurs on the selected team. Each event delivers the matching Frame.io resource (project, asset, comment, etc.) so an agent can react to changes in a Frame.io account in real time.`,
+    },
     props: {
       account_id: Property.Dropdown({
         displayName: 'Account',

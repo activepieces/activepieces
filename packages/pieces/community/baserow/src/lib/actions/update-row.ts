@@ -12,6 +12,12 @@ export const updateRowAction = createAction({
   displayName: 'Update Row',
   description:
     'Updates fields in an existing row. Empty values are skipped. To clear a field, use Clean Row.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates field values on one existing Baserow row identified by its numeric row ID. Only the fields you supply are changed and empty values are skipped, so it cannot clear a field — use Clean Row for that. Requires a known row ID (resolve one first with Find Row or List Rows if needed). Optionally auto-creates missing single/multi-select options. Idempotent: applying the same values to the same row leaves it in the same state.',
+    idempotent: true,
+  },
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),

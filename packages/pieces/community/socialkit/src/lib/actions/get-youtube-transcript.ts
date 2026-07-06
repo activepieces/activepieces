@@ -9,6 +9,8 @@ export const getYoutubeTranscript = createAction({
   displayName: 'Get YouTube Transcript',
   description:
     'Extract the full transcript with timestamps from any YouTube video that has captions or subtitles available.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full timestamped transcript of a YouTube video from its watch URL. Use when you need the spoken text/captions for downstream summarization, search, or analysis. Read-only and idempotent; only works for videos that have captions or subtitles available.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',

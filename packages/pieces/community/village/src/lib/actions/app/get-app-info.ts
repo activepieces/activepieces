@@ -8,6 +8,12 @@ export const getAppInfo = createAction({
   displayName: 'Get App Information',
   description:
     'Get information about the partner application associated with your token — title, description, domain, logo URL, public key, and active flag. Useful for verifying your app configuration.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch metadata about the partner application tied to the current API token (title, domain, public key, active flag). Read-only and idempotent. Use to verify which app a token belongs to and confirm its configuration, not for user or team data.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

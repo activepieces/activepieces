@@ -8,12 +8,19 @@ import {
 import { Image, linkedinCommon, santizeText } from '../common';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { linkedinAuth } from '../..';
+import { createShareUpdateActionOutputSchema } from '../output-schemas';
 
 export const createShareUpdate = createAction({
   auth: linkedinAuth,
   name: 'create_share_update',
   displayName: 'Create Share Update',
   description: 'Create a share update on LinkedIn',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Publishes a new post to the authenticated user's personal LinkedIn profile, with optional image, link preview, and visibility setting. Use this to share content as an individual member (not a company page — use Create Company Update for that). Not idempotent: each call creates a separate post, so calling it again with the same text produces a duplicate.",
+    idempotent: false,
+  },
   props: {
     text: linkedinCommon.text,
     visibility: linkedinCommon.visibility,
@@ -22,6 +29,7 @@ export const createShareUpdate = createAction({
     linkTitle: linkedinCommon.linkTitle,
     linkDescription: linkedinCommon.linkDescription,
   },
+  outputSchema: createShareUpdateActionOutputSchema,
 
   run: async (context) => {
     

@@ -11,6 +11,12 @@ export const airtableUpdateRecordAction = createAction({
   name: 'airtable_update_record',
   displayName: 'Update Airtable Record',
   description: 'Update a record in airtable',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing record identified by its record ID, writing only the supplied non-empty field values and leaving other fields untouched (PATCH semantics). Use when you already know the record ID and want to change specific fields. Idempotent: repeating with the same input yields the same final state.',
+    idempotent: true,
+  },
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,

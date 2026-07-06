@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { findPageActionOutputSchema } from '../output-schemas';
 
 export const findPage = createAction({
   auth: notionAuth,
@@ -9,6 +10,12 @@ export const findPage = createAction({
   displayName: 'Find Page',
   description:
     'Search for Notion pages by title with flexible matching options. Perfect for finding specific pages, building page references, or creating automated workflows based on page discovery.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches the workspace for pages whose title matches a query, supporting exact or partial matching. Use when an agent needs to locate a page id by name before reading or modifying it; requires a title query and only searches pages shared with the integration. Idempotent read-only search.',
+    idempotent: true,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Page Title',
@@ -30,6 +37,7 @@ export const findPage = createAction({
       defaultValue: 10,
     }),
   },
+  outputSchema: findPageActionOutputSchema,
   async run(context) {
     const { title, exact_match, limit } = context.propsValue;
 

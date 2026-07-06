@@ -11,12 +11,15 @@ import {
 import FormData from 'form-data';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendAudioActionOutputSchema } from '../output-schemas';
 
 export const telegramSendAudioAction = createAction({
   auth: telegramBotAuth,
   name: 'send_audio',
   displayName: 'Send Audio',
   description: 'Send an audio file to a Telegram chat (.MP3/.M4A — shown in the music player)',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an audio file (.MP3/.M4A) to a Telegram chat where it appears in the music player, supplied as a file or a previously uploaded file_id, with optional performer and track title. Use for music or audio tracks; for raw file attachments use Send Document. Not idempotent: each call sends a new message.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
@@ -58,6 +61,7 @@ export const telegramSendAudioAction = createAction({
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: sendAudioActionOutputSchema,
   async run(ctx) {
     const file = ctx.propsValue.audio as ApFile | undefined;
     const audioId = ctx.propsValue.audio_id;

@@ -1,16 +1,24 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { docsCommon } from '../common';
 import { googleDocsAuth, getAccessToken } from '../auth';
+import { createDocumentActionOutputSchema } from '../output-schemas';
 
 export const createDocument = createAction({
   auth: googleDocsAuth,
   name: 'create_document',
   description: 'Create a document on Google Docs',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a brand-new Google Docs document with the given title and writes the provided text into it. Use when an agent needs to generate a fresh document from content it has produced; to add to an existing document use Append Text instead. Not idempotent: every call creates a separate new document.',
+    idempotent: false,
+  },
   displayName: 'Create Document',
   props: {
     title: docsCommon.title,
     body: docsCommon.body,
   },
+  outputSchema: createDocumentActionOutputSchema,
   async run(context) {
     const accessToken = await getAccessToken(context.auth);
     const document = await docsCommon.createDocument(

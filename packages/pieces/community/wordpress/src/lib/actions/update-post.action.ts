@@ -12,6 +12,8 @@ export const updateWordPressPost = createAction({
   auth: wordpressAuth,
   name: 'update_post',
   description: 'Update an existing post on WordPress.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing WordPress post identified by its post ID, changing only the fields you supply (title, content, status, categories, tags, excerpt, featured image, or ACF fields). Choose this to edit or republish a known post rather than create a new one. Requires the target post ID; idempotent — repeating with the same input leaves the post in the same final state.', idempotent: true },
   displayName: 'Update Post',
   props: {
     post: wordpressCommon.post,

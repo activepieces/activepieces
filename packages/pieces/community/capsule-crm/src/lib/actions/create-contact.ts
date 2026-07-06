@@ -13,6 +13,12 @@ export const createContactAction = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Create a new Person or Organisation in Capsule CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new contact record in Capsule CRM. Set the contact type to either a person (requires first and last name, optional linked organisation) or an organisation (requires organisation name); the type selection switches which name fields apply. Use to add a fresh contact you have confirmed does not already exist. Not idempotent: each call creates a separate record, so repeating it produces duplicate contacts.',
+    idempotent: false,
+  },
   props: {
     type: Property.StaticDropdown({
       displayName: 'Contact Type',

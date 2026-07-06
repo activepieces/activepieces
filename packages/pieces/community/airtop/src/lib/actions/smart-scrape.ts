@@ -4,13 +4,18 @@ import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const smartScrapeAction = createAction({
 	name: 'smart-scrape',
 	auth: airtopAuth,
 	displayName: 'Smart Scrape',
 	description: 'Scrape a page and return the data as Markdown.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Scrapes the current page in a session window and returns its content as Markdown. Use this when you want the whole page text rather than answering a specific question (use Page Query for targeted extraction). Requires session id and window id; read-only and idempotent since it does not modify the page.',
+		idempotent: true,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,
@@ -40,8 +45,8 @@ export const smartScrapeAction = createAction({
 		} = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			costThresholdCredits: z.number().min(0).optional(),
-			timeThresholdSeconds: z.number().min(0).optional(),
+			costThresholdCredits: z.optional(z.number().check(z.minimum(0))),
+			timeThresholdSeconds: z.optional(z.number().check(z.minimum(0))),
 		});
 
 		const body: Record<string, any> = {};

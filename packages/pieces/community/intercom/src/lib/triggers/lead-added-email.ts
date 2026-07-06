@@ -7,6 +7,9 @@ export const leadAddedEmailTrigger = createTrigger({
 	name: 'lead-added-email',
 	displayName: 'Lead Added Email',
 	description: 'Triggers when a lead enters an email address.',
+	aiMetadata: {
+		description: 'Fires when a lead provides an email address in Intercom for the first time, capturing the moment an anonymous or partially identified lead becomes contactable by email. Outputs the lead contact object including the newly added email.',
+	},
 	props: {},
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {

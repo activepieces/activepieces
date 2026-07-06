@@ -1,4 +1,5 @@
-import { AgentTool, isNil, mcpToolNameUtils } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { AgentTool, mcpToolNameUtils } from '@activepieces/shared';
 import Fuse from 'fuse.js';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';

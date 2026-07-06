@@ -14,6 +14,8 @@ export const idTagCreateAction = createAction({
   name: 'idTagCreate',
   displayName: 'Resources - Id Tags - Create',
   description: 'Create new Id Tag.',
+  audience: 'both',
+  aiMetadata: { description: 'Register a new ID tag (RFID card or MAC address) in AMPECO that authorizes charging sessions, optionally linking it to a user, payment method, and partner. Not idempotent: each call creates a separate tag, so calling twice yields duplicates. Use idTagUpdate to modify an existing tag instead.', idempotent: false },
   props: {
         
   idTagUid: Property.ShortText({

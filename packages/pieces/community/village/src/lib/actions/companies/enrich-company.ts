@@ -8,6 +8,12 @@ export const enrichCompany = createAction({
   displayName: 'Enrich Company',
   description:
     'Get detailed information about a company by domain, LinkedIn URL, or any URL. Returns name, website, LinkedIn URL, logo, employee count, industry, founded year, and description.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only firmographic lookup for one company you can already identify by domain, LinkedIn URL, or generic url (supply exactly one). Use when you have the identifier; for multiple companies use Enrich Company (Bulk), and to find companies by criteria use Search Companies. Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',

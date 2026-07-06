@@ -1,14 +1,16 @@
 import { ApFile, createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookCommon } from '../common/client';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 
 export const replyEmailAction = createAction({
   auth: microsoftOutlookAuth,
   name: 'reply-email',
   displayName: 'Reply to Email',
   description: 'Reply to an outlook email.',
+  audience: 'both',
+  aiMetadata: { description: 'Replies to an existing Outlook message (identified by message ID), supporting added CC/BCC recipients and attachments. Set the Create Draft flag to stage the reply without sending; otherwise it is sent immediately. Not idempotent when sending: each call creates and dispatches a new reply.', idempotent: false },
   props: {
     messageId: Property.Dropdown({
       auth: microsoftOutlookAuth,
@@ -24,17 +26,11 @@ export const replyEmailAction = createAction({
           };
         }
 
-        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
-        const client = Client.initWithMiddleware({
-          authProvider: {
-            getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
-          },
-          baseUrl: getGraphBaseUrl(cloud),
-        });
+        const client = outlookCommon.createClient(auth as OAuth2PropertyValue);
 
         try {
           const response: PageCollection = await client
-            .api('/me/messages?$top=50&$select=id,subject,from,receivedDateTime')
+            .api(`${outlookCommon.mailboxPrefix(auth as OAuth2PropertyValue)}/messages?$top=50&$select=id,subject,from,receivedDateTime`)
             .orderby('receivedDateTime desc')
             .get();
 
@@ -130,22 +126,16 @@ export const replyEmailAction = createAction({
         contentBytes: attachment.file.base64,
       })),
     };
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
-    const client = Client.initWithMiddleware({
-      authProvider: {
-        getAccessToken: () => Promise.resolve(context.auth.access_token),
-      },
-      baseUrl: getGraphBaseUrl(cloud),
-    });
+    const client = outlookCommon.createClient(context.auth);
     try {
       const response: Message = await client
-        .api(`/me/messages/${messageId}/createReply`)
+        .api(`${outlookCommon.mailboxPrefix(context.auth)}/messages/${messageId}/createReply`)
         .post({
           message: mailPayload,
         });
       const draftId = response.id;
       if (!draft) {
-        await client.api(`/me/messages/${draftId}/send`).post({});
+        await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/messages/${draftId}/send`).post({});
         return {
           success: true,
           message: 'Reply sent successfully.',

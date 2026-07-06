@@ -121,6 +121,9 @@ export const newPost = createTrigger({
   name: 'newPost',
   displayName: 'New Post (with Search Options)',
   description: 'Triggers when posts match your search criteria',
+  aiMetadata: {
+    description: 'Fires when a new public Bluesky post matches a configured search query (keywords, hashtags, or mentions), with optional language and media filters; each event represents one newly indexed matching post.',
+  },
   props: {
     searchQuery: Property.ShortText({
       displayName: 'Search Query',

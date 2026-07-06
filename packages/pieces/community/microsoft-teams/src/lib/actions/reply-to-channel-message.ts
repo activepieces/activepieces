@@ -8,6 +8,11 @@ export const replyToChannelMessageAction = createAction({
 	name: 'microsoft_teams_reply_to_channel_message',
 	displayName: 'Reply to Channel Message',
 	description: 'Post a reply to an existing channel message.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Posts a reply under an existing channel message thread in Microsoft Teams, identified by team ID, channel ID, and the parent message ID. Use to respond within a thread rather than start a new top-level message. Not idempotent — each call adds another reply.',
+		idempotent: false,
+	},
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 		channelId: microsoftTeamsCommon.channelId,

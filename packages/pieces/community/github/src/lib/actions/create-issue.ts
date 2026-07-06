@@ -8,6 +8,12 @@ export const githubCreateIssueAction = createAction({
   name: 'github_create_issue',
   displayName: 'Create Issue',
   description: 'Create Issue in GitHub Repository',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Opens a new issue in a GitHub repository with a title and optional body, labels, and assignees. Use to file a bug, task, or request in a specified repo. Not idempotent: each call creates a separate issue even with identical input.',
+    idempotent: false,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     title: Property.ShortText({

@@ -7,6 +7,8 @@ export const getBlocksBulk = createAction({
     name: 'get_blocks_bulk',
     displayName: 'Get Blocks (Bulk)',
     description: 'Returns details on the range of blocks between minHeight and maxHeight, inclusive, up to 10 blocks',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve details for a contiguous range of blocks by height (minimum required, maximum optional and defaulting to the current tip), capped at 10 blocks per call. Pick this for surveying several consecutive blocks at once rather than fetching them one by one. Read-only.', idempotent: true },
     // category: 'Blocks',
     props: {
         minHeight: Property.Number({

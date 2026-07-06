@@ -9,6 +9,12 @@ export const getCompanySearch = createAction({
   displayName: 'Search Companies',
   description:
     'Search for companies matching a set of criteria across an exhaustive dataset (3 credits per company URL returned)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Discover companies matching filters such as industry, location, size, founding year, or funding across the full dataset, returning matching company URLs. Read-only and safe to retry. Use when you do not know a specific company and need to find candidates by attributes; to resolve one known company use Look Up Company instead. Enriching profiles inline costs extra credits per result.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Company Name',

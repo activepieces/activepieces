@@ -8,6 +8,12 @@ export const createCustomerAddress = createAction({
   name: 'createCustomerAddress',
   displayName: 'Create Customer Address',
   description: "Creates a customer's address",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a new address to an existing BigCommerce customer, identified by customer_id (selected from a dropdown of store customers). Requires name, address line 1, city, state/province, postal code, and an ISO 3166-1 alpha-2 country code. Use to attach a shipping or billing address to a customer. Not idempotent: each call appends a new address even if an identical one exists, so use Find or Create Customer’s Address to avoid duplicates.',
+    idempotent: false,
+  },
   props: {
     customer_id: customerDropdown({
       required: true

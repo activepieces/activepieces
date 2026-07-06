@@ -11,6 +11,12 @@ export const changeJob = createAction({
 	name: 'change_job',
 	displayName: 'Change Job',
 	description: 'Changes the job for a worker in Workday.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			"Initiates and auto-completes a Change Job business process for an existing worker (by worker WID), effective on a given date with a reason WID, optionally moving them to a new job profile, supervisory organization, and/or position. Use to record a worker's transfer, promotion, or reorganization. Not idempotent: each call submits a new job-change event.",
+		idempotent: false,
+	},
 	props: {
 		workerId: Property.ShortText({
 			displayName: 'Worker ID',

@@ -8,7 +8,9 @@ export const updateDeal = createAction({
     auth: zendeskSellAuth,
     name: 'update_deal',
     displayName: 'Update Deal',
-    description: 'Update fields of an existing deal.', 
+    description: 'Update fields of an existing deal.',
+    audience: 'both',
+    aiMetadata: { description: 'Updates fields on an existing Zendesk Sell deal identified by deal ID; only the fields you supply are changed, and at least one field must be provided. Use to move a deal between stages or pipelines, change its value, owner, or other attributes. Idempotent — re-sending the same field values leaves the deal in the same state.', idempotent: true },
     props: {
         deal_id: zendeskSellCommon.deal(true), 
         

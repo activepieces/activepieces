@@ -1,5 +1,8 @@
-import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, McpToolResult, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
+import { formatPieceError, isNil, isObject, tryCatch, tryCatchSync, tryParseFriendlyPieceError } from '@activepieces/core-utils'
+import { AdhocRunSource, CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { adhocRunService } from '../../adhoc-run/adhoc-run.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
@@ -8,8 +11,18 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
+const ADHOC_STEP_NAME = 'step_1'
+
 const POLL_INTERVAL_MS = 2000
 const MAX_WAIT_MS = 120_000
+// The actionable part of an API error (which field, what format, allowed values) often lands past
+// 300 chars, so the agent never saw it. Keep the head but allow enough to carry the real guidance.
+const ERROR_SUMMARY_MAX_LENGTH = 900
+
+type AdhocActionResult = {
+    text: string
+    errorSummary?: string
+}
 
 export async function executeFlowTest({ flowId, projectId, stepName, triggerTestData, log }: {
     flowId: string
@@ -27,6 +40,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         return { content: [{ type: 'text', text: '❌ Flow trigger is not configured. Use ap_update_trigger to set up the trigger before testing.' }] }
     }
 
+    const usedMockTriggerData = !isNil(triggerTestData)
     let warning = ''
     if (stepName) {
         const step = flowStructureUtil.getStep(stepName, flow.version.trigger)
@@ -64,6 +78,8 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
             },
         })
         flow = updatedFlow
+        warning += '⚠️ This test ran on mock trigger data you supplied, not a real trigger event. A passing test here does NOT prove the live flow works: if the real trigger payload uses different field names or casing than your mock, downstream steps will read empty values in production. Verify your mock keys match a real sample (e.g. trigger the flow once for real, or check the trigger sample shape). When reporting this to the user, describe it as "tested with sample data" — NEVER claim it was "verified with real runs".\n\n'
+        warning += buildTriggerShapeHint(flow.version.trigger)
     }
 
     const flowRun = await flowRunService(log).test({
@@ -92,27 +108,38 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         }
     }
 
-    return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }] }
+    return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }], structuredContent: { usedMockTriggerData } }
 }
 
 export async function executeAdhocAction({
     projectId,
+    userId,
     pieceName,
     pieceVersion,
     actionName,
     input,
     connectionExternalId,
+    conversationId,
+    offload,
+    source,
     log,
 }: {
     projectId: string
+    userId?: string
     pieceName: string
     pieceVersion?: string
     actionName: string
     input?: Record<string, unknown>
     connectionExternalId?: string
+    conversationId?: string
+    offload?: AdhocOffload
+    source?: AdhocRunSource
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
-    const authError = mcpUtils.validateAuth(connectionExternalId)
+    const { auth: inlineAuth, ...inputWithoutAuth } = input ?? {}
+    const effectiveExternalId = connectionExternalId ?? (typeof inlineAuth === 'string' ? inlineAuth : undefined)
+
+    const authError = mcpUtils.validateAuth(effectiveExternalId)
     if (authError) {
         return authError
     }
@@ -135,8 +162,8 @@ export async function executeAdhocAction({
     const { piece, component: action, pieceName: resolvedPieceName } = lookup
 
     const resolvedInput: Record<string, unknown> = {
-        ...(input ?? {}),
-        ...(connectionExternalId !== undefined && { auth: `{{connections['${connectionExternalId}']}}` }),
+        ...inputWithoutAuth,
+        ...(effectiveExternalId !== undefined && { auth: `{{connections['${effectiveExternalId}']}}` }),
     }
 
     // createCustomApiCallAction wraps url in DynamicProperties, expecting { url: string } not a flat string
@@ -144,14 +171,21 @@ export async function executeAdhocAction({
         resolvedInput.url = { url: resolvedInput.url }
     }
 
+    // Empty-able container props (OBJECT/ARRAY) like custom_api_call's required headers/queryParams
+    // mean "none" when omitted — fill them so a first-shot call isn't bounced for an empty bag.
+    const coercedInput = mcpUtils.coerceEmptyContainerInputs({ props: action.props, input: resolvedInput })
+
     const diagnosis = mcpUtils.diagnosePieceProps({
         props: action.props,
-        input: resolvedInput,
+        input: coercedInput,
         pieceAuth: piece.auth,
         requireAuth: action.requireAuth,
         componentType: 'action',
     })
-    if (diagnosis.missing.length > 0) {
+    if (diagnosis.unknownKeys.length > 0) {
+        return { content: [{ type: 'text', text: `❌ ${diagnosis.parts.join(' ')}` }] }
+    }
+    if (diagnosis.missing.length > 0 || diagnosis.invalidEnums.length > 0) {
         return { content: [{ type: 'text', text: `❌ Cannot run action: ${diagnosis.parts.join(' ')}` }] }
     }
 
@@ -164,112 +198,186 @@ export async function executeAdhocAction({
 
     const resolvedPieceVersion = pieceVersion ?? piece.version
 
-    const { data: flow, error: flowError } = await tryCatch(
-        () => flowService(log).create({
-            projectId,
-            request: { displayName: `__adhoc_${apId()}__`, projectId },
-        }),
+    const pieceSettings: Record<string, unknown> = {
+        pieceName: resolvedPieceName,
+        pieceVersion: resolvedPieceVersion,
+        actionName: action.name,
+        input: coercedInput,
+        propertySettings: {},
+        errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({}),
+    }
+    await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
+
+    const parsedAction = UpdateActionRequest.safeParse({
+        type: FlowActionType.PIECE,
+        name: ADHOC_STEP_NAME,
+        displayName: action.displayName,
+        valid: true,
+        settings: pieceSettings,
+    })
+    if (!parsedAction.success || parsedAction.data.type !== FlowActionType.PIECE) {
+        const message = parsedAction.success
+            ? 'expected a piece action'
+            : parsedAction.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
+        return { content: [{ type: 'text', text: `❌ Invalid action configuration: ${message}` }] }
+    }
+    const step: PieceAction = { ...parsedAction.data, lastUpdatedDate: dayjs().toISOString() }
+
+    const { data: adhocRun, error: runError } = await tryCatch(() => adhocRunService(log).run({
+        projectId,
+        platformId: project.platformId,
+        userId,
+        source: source ?? AdhocRunSource.MCP,
+        step,
+        connectionExternalId: effectiveExternalId,
+        conversationId,
+    }))
+    if (runError) {
+        log.error({ error: runError, project: { id: projectId } }, 'executeAdhocAction failed')
+        return mcpUtils.mcpToolError('Failed to run action', runError)
+    }
+
+    if (adhocRun.status === FlowRunStatus.TIMEOUT) {
+        return {
+            content: [{
+                type: 'text',
+                text: `⏳ ${action.displayName} timed out before it finished. Run ID: ${adhocRun.id}.`,
+            }],
+            structuredContent: { errorSummary: 'The action timed out before it finished.' },
+        }
+    }
+
+    if (adhocRun.status === FlowRunStatus.INTERNAL_ERROR) {
+        return {
+            content: [{
+                type: 'text',
+                text: `❌ ${action.displayName} failed with INTERNAL_ERROR — the engine crashed while loading or executing the piece. Run ID: ${adhocRun.id}.`,
+            }],
+            structuredContent: { errorSummary: 'The step couldn’t start — something went wrong loading it.' },
+        }
+    }
+
+    const outcome: AdhocOutcome = {
+        succeeded: adhocRun.status === FlowRunStatus.SUCCEEDED,
+        output: adhocRun.output,
+        errorMessage: adhocRun.errorMessage,
+    }
+
+    if (offload !== undefined) {
+        const offloaded = await maybeOffloadLargeResult({ outcome, actionName: action.name, displayName: action.displayName, offload })
+        if (offloaded !== null) {
+            return offloaded
+        }
+    }
+
+    const formatted = formatAdhocActionResult({ outcome, runId: adhocRun.id, displayName: action.displayName, actionName: action.name })
+    return {
+        content: [{ type: 'text', text: formatted.text }],
+        ...(formatted.errorSummary !== undefined ? { structuredContent: { errorSummary: formatted.errorSummary } } : {}),
+    }
+}
+
+export async function executeAdhocCode({
+    projectId,
+    userId,
+    code,
+    packageJson,
+    input,
+    conversationId,
+    source,
+    log,
+}: {
+    projectId: string
+    userId?: string
+    code: string
+    packageJson?: string
+    input?: Record<string, unknown>
+    conversationId?: string
+    source?: AdhocRunSource
+    log: FastifyBaseLogger
+}): Promise<AdhocCodeResult> {
+    const { data: project, error: projectError } = await tryCatch(
+        () => projectService(log).getOneOrThrow(projectId),
     )
-    if (flowError) {
-        return mcpUtils.mcpToolError('Failed to create adhoc flow', flowError)
+    if (projectError) {
+        return { status: 'internal_error', errorMessage: 'Failed to load project.' }
     }
 
-    try {
-        const triggerName = flow.version.trigger.name
-
-        const flowWithTrigger = await flowService(log).update({
-            id: flow.id,
-            projectId,
-            userId: null,
-            platformId: project.platformId,
-            operation: {
-                type: FlowOperationType.UPDATE_TRIGGER,
-                request: {
-                    name: triggerName,
-                    displayName: 'Manual',
-                    valid: true,
-                    type: FlowTriggerType.EMPTY,
-                    settings: {},
-                },
-            },
-        })
-
-        const stepName = flowStructureUtil.findUnusedName(flowWithTrigger.version.trigger)
-
-        const pieceSettings: Record<string, unknown> = {
-            pieceName: resolvedPieceName,
-            pieceVersion: resolvedPieceVersion,
-            actionName: action.name,
-            input: resolvedInput,
-            propertySettings: {},
+    const parsedAction = UpdateActionRequest.safeParse({
+        type: FlowActionType.CODE,
+        name: ADHOC_STEP_NAME,
+        displayName: 'Run code',
+        valid: true,
+        settings: {
+            sourceCode: { code, packageJson: packageJson ?? '{}' },
+            input: input ?? {},
             errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({}),
-        }
-        await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
-
-        const parsedAction = UpdateActionRequest.safeParse({
-            type: FlowActionType.PIECE,
-            name: stepName,
-            displayName: action.displayName,
-            valid: true,
-            settings: pieceSettings,
-        })
-        if (!parsedAction.success) {
-            const message = parsedAction.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
-            return { content: [{ type: 'text', text: `❌ Invalid action configuration: ${message}` }] }
-        }
-
-        const flowWithStep = await flowService(log).update({
-            id: flow.id,
-            projectId,
-            userId: null,
-            platformId: project.platformId,
-            operation: {
-                type: FlowOperationType.ADD_ACTION,
-                request: {
-                    parentStep: triggerName,
-                    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                    action: parsedAction.data,
-                },
-            },
-        })
-
-        const flowRun = await flowRunService(log).test({
-            projectId,
-            flowVersionId: flowWithStep.version.id,
-            stepNameToTest: stepName,
-        })
-
-        const completedRun = await pollForRunCompletion(log, flowRun.id, projectId)
-
-        if (!isFlowRunStateTerminal({ status: completedRun.status, ignoreInternalError: false })) {
-            return {
-                content: [{
-                    type: 'text',
-                    text: `⏳ Action still running after 120s. Run ID: ${completedRun.id} (status: ${completedRun.status}). Use ap_get_run to check results later.`,
-                }],
-            }
-        }
-
-        if (completedRun.status === FlowRunStatus.INTERNAL_ERROR && isNil(completedRun.steps)) {
-            return {
-                content: [{
-                    type: 'text',
-                    text: `❌ ${action.displayName} failed with INTERNAL_ERROR (no step data) — the engine crashed while loading or executing the piece. Run ID: ${completedRun.id}.`,
-                }],
-            }
-        }
-
-        return { content: [{ type: 'text', text: formatAdhocActionResult(completedRun, stepName, action.displayName) }] }
+        },
+    })
+    if (!parsedAction.success || parsedAction.data.type !== FlowActionType.CODE) {
+        const message = parsedAction.success
+            ? 'expected a code action'
+            : parsedAction.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
+        return { status: 'internal_error', errorMessage: `Invalid code configuration: ${message}` }
     }
-    catch (err) {
-        log.error({ err, projectId, flowId: flow.id }, 'executeAdhocAction failed')
-        return mcpUtils.mcpToolError('Failed to run action', err)
+    const step: CodeAction = { ...parsedAction.data, lastUpdatedDate: dayjs().toISOString() }
+
+    const { data: adhocRun, error: runError } = await tryCatch(() => adhocRunService(log).run({
+        projectId,
+        platformId: project.platformId,
+        userId,
+        source: source ?? AdhocRunSource.MCP,
+        step,
+        conversationId,
+    }))
+    if (runError) {
+        log.error({ error: runError, project: { id: projectId } }, 'executeAdhocCode failed')
+        return { status: 'internal_error', errorMessage: 'Failed to run code.' }
     }
-    finally {
-        flowService(log).delete({ id: flow.id, projectId }).catch(err => {
-            log.warn({ err, flowId: flow.id }, 'adhoc flow cleanup failed')
-        })
+
+    return mapCodeResult(adhocRun)
+}
+
+function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknown, errorMessage?: string | null }): AdhocCodeResult {
+    switch (run.status) {
+        case FlowRunStatus.SUCCEEDED:
+            return { status: 'succeeded', runId: run.id, output: run.output }
+        case FlowRunStatus.TIMEOUT:
+            return { status: 'timeout', runId: run.id, errorMessage: 'Code is still running after the time limit.' }
+        case FlowRunStatus.FAILED:
+            return { status: 'failed', runId: run.id, errorMessage: isNil(run.errorMessage) ? 'Code failed without an error message.' : summarizeActionError(run.errorMessage) }
+        default:
+            return { status: 'internal_error', runId: run.id, errorMessage: isNil(run.errorMessage) ? 'The code finished without returning anything.' : run.errorMessage }
     }
+}
+
+const FORMS_PIECE_NAME = '@activepieces/piece-forms'
+
+function buildTriggerShapeHint(trigger: Step): string {
+    if (trigger.type !== FlowTriggerType.PIECE || trigger.settings.pieceName !== FORMS_PIECE_NAME) {
+        return ''
+    }
+    const note = 'Note: the Human Input / Web Form trigger camelCases each field label to build its output key (e.g. "Full Name" → "fullName"). Reference fields as {{trigger[\'output\'].<camelCaseKey>}}, never by the original label.'
+    const input = trigger.settings.input
+    const formInputs = isObject(input) && Array.isArray(input.inputs) ? input.inputs : []
+    const keyLines = formInputs
+        .filter((field): field is { displayName: string } => isObject(field) && typeof field.displayName === 'string')
+        .map((field) => `  - ${createKeyForFormInput(field.displayName)} (from "${field.displayName}")`)
+    if (keyLines.length === 0) {
+        return `${note}\n\n`
+    }
+    return `${note}\nExpected trigger output keys:\n${keyLines.join('\n')}\n\n`
+}
+
+// An empty result is the classic thrash trigger: the old note ("try broader parameters") pushed the
+// agent to re-run the SAME action with looser filters. When the action was a find-one, the real fix
+// is usually a different INSTRUMENT — switch to the app's list_*/search_* action — so redirect there.
+function emptyResultNote(actionName?: string): string {
+    const cardinality = isNil(actionName) ? 'other' : mcpUtils.classifyActionCardinality(actionName)
+    if (cardinality === 'single') {
+        return `Note: empty result. "${actionName}" returns a SINGLE match — if you meant to enumerate records, switch to this app's list/search action (e.g. list_records) rather than retrying this one. Otherwise confirm a connection (auth) is set and any required object/list id is resolved before treating this as "no data".`
+    }
+    return 'Note: empty result. Before concluding there\'s no data: confirm a connection (auth) is set and any required object/list id is resolved; if you intended to enumerate, use a list/search action. Retrying the same call with looser filters rarely helps.'
 }
 
 function looksEmpty(output: unknown): boolean {
@@ -288,33 +396,87 @@ function looksEmpty(output: unknown): boolean {
     return false
 }
 
-function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string): string {
-    const steps = run.steps
-    if (isNil(steps) || typeof steps !== 'object') {
-        return `❌ ${displayName} — run ${run.id} completed with no step output (status: ${run.status}).`
+function summarizeActionError(errorMessage: unknown): string {
+    const friendly = tryParseFriendlyPieceError(errorMessage) ?? formatPieceError(errorMessage)
+    const base = friendly.apiMessage ?? friendly.message
+    const withStatus = isNil(friendly.status) ? base : `${base} (${friendly.status})`
+    return withStatus.length > ERROR_SUMMARY_MAX_LENGTH
+        ? `${withStatus.slice(0, ERROR_SUMMARY_MAX_LENGTH)}…`
+        : withStatus
+}
+
+function isHttpEnvelope(output: unknown): output is { status: number, headers?: unknown, body: unknown } {
+    return isObject(output) && typeof output['status'] === 'number' && 'body' in output
+}
+
+// custom_api_call returns the full HTTP envelope { status, headers, body }. The headers
+// (cloudflare/CORS/rate-limit noise) and the wrapping balloon the result and bury the data.
+// Keep just the body as the payload and surface the status compactly in the summary line.
+function slimCustomApiCallOutput(output: unknown): { payload: unknown, statusNote: string } {
+    if (!isHttpEnvelope(output)) {
+        return { payload: output, statusNote: '' }
     }
-    const step = (steps as Record<string, unknown>)[stepName]
-    if (isNil(step) || typeof step !== 'object') {
-        return `❌ ${displayName} — run ${run.id} completed with no step output (status: ${run.status}).`
+    const ok = output.status >= 200 && output.status < 300
+    return { payload: output.body, statusNote: ok ? '' : ` (HTTP ${output.status})` }
+}
+
+// A large successful result (e.g. a 1.4MB Attio query) is offloaded to a file via the caller's
+// handler, which returns a compact preview + fileId in place of the blob. Returns null to fall
+// through to normal formatting (result small, empty, failed, or persistence declined/failed).
+async function maybeOffloadLargeResult({ outcome, actionName, displayName, offload }: {
+    outcome: AdhocOutcome
+    actionName: string
+    displayName: string
+    offload: AdhocOffload
+}): Promise<McpToolResult | null> {
+    if (!outcome.succeeded) {
+        return null
     }
-    const stepRecord = step as Record<string, unknown>
-    const status = stepRecord.status
-    const output = stepRecord.output
-    const errorMessage = stepRecord.errorMessage
-    if (status === StepOutputStatus.SUCCEEDED) {
-        const outStr = output === undefined
+    const { payload, statusNote } = actionName === 'custom_api_call'
+        ? slimCustomApiCallOutput(outcome.output)
+        : { payload: outcome.output, statusNote: '' }
+    if (payload === undefined || looksEmpty(payload)) {
+        return null
+    }
+    const { data: serialized } = tryCatchSync(() => JSON.stringify(payload))
+    if (isNil(serialized)) {
+        return null
+    }
+    const byteSize = Buffer.byteLength(serialized, 'utf8')
+    if (byteSize <= offload.thresholdBytes) {
+        return null
+    }
+    const { data: text, error } = await tryCatch(() => offload.handle({ payload, byteSize, label: displayName, statusNote }))
+    if (error || isNil(text)) {
+        return null
+    }
+    return { content: [{ type: 'text', text }] }
+}
+
+function formatAdhocActionResult({ outcome, runId, displayName, actionName }: {
+    outcome: AdhocOutcome
+    runId: string
+    displayName: string
+    actionName?: string
+}): AdhocActionResult {
+    if (outcome.succeeded) {
+        const { payload, statusNote } = actionName === 'custom_api_call'
+            ? slimCustomApiCallOutput(outcome.output)
+            : { payload: outcome.output, statusNote: '' }
+        const outStr = payload === undefined
             ? '(no output)'
-            : typeof output === 'string' ? output : JSON.stringify(output)
-        const base = `✅ ${displayName} completed (run ${run.id}).\n\n${outStr}`
-        if (looksEmpty(output)) {
-            return `${base}\n\nNote: No results matched. If the user expected data, try broader parameters (e.g., wider date range, fewer filters).`
+            : typeof payload === 'string' ? payload : JSON.stringify(payload)
+        const base = `✅ ${displayName} completed (run ${runId})${statusNote}.\n\n${outStr}`
+        if (looksEmpty(payload)) {
+            return { text: `${base}\n\n${emptyResultNote(actionName)}` }
         }
-        return base
+        return { text: base }
     }
-    const errStr = errorMessage === undefined
-        ? `status: ${String(status)}`
-        : typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-    return `❌ ${displayName} failed (run ${run.id}): ${errStr}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`
+    const summary = isNil(outcome.errorMessage) ? 'The step failed without an error message.' : summarizeActionError(outcome.errorMessage)
+    return {
+        text: `❌ ${displayName} failed (run ${runId}): ${summary}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`,
+        errorSummary: summary,
+    }
 }
 
 export async function pollForRunCompletion(log: FastifyBaseLogger, runId: string, projectId: string): Promise<FlowRun> {
@@ -392,8 +554,7 @@ function formatStepOutput(name: string, step: unknown): string {
     const parts = [`  - ${icon} ${name}${dur}`]
 
     if (status === StepOutputStatus.FAILED && errorMessage !== undefined) {
-        const errStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-        parts.push(`    Error: ${errStr}`)
+        parts.push(`    Error: ${summarizeActionError(errorMessage)}`)
     }
     else if (output !== undefined) {
         const outStr = typeof output === 'string' ? output : JSON.stringify(output)
@@ -420,5 +581,23 @@ function isStepDataExpired(run: FlowRun): boolean {
     }
     const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
     return isOutsideRetentionWindow(run.created, retentionDays)
+}
+
+type AdhocOutcome = {
+    succeeded: boolean
+    output: unknown
+    errorMessage?: string | null
+}
+
+export type AdhocCodeResult = {
+    status: 'succeeded' | 'failed' | 'timeout' | 'internal_error'
+    output?: unknown
+    errorMessage?: string
+    runId?: string
+}
+
+export type AdhocOffload = {
+    thresholdBytes: number
+    handle: (args: { payload: unknown, byteSize: number, label: string, statusNote: string }) => Promise<string | null>
 }
 

@@ -8,6 +8,12 @@ export const refuseRegistrationFolder = createAction({
   name: 'refuseRegistrationFolder',
   displayName: 'Refuser le dossier de formation',
   description: 'Refuser le dossier de formation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Refuses a training registration folder, recording a required refusal reason code and an optional explanatory note. Not idempotent: it advances the folder's lifecycle to a refused state and should be called once. Distinct from canceling a folder, which uses a separate action and reason set.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',

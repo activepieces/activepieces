@@ -8,6 +8,12 @@ export const peopleRefresh = createAction({
   displayName: 'Refresh People',
   description:
     'Refresh or import people data from LinkedIn URLs. In realtime mode, returns enriched person data immediately (or times out after 25 seconds and converts to async). In async mode, returns job IDs for later status checking.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Trigger a re-fetch or first-time import of people into your network from LinkedIn URLs; this kicks off backend processing, so treat it as a non-idempotent write rather than a plain read. Set realtime=true to wait up to ~25s for enriched data inline, or false to get job IDs to poll later. To read already-imported profiles without re-fetching, use Enrich Person instead.',
+    idempotent: false,
+  },
   props: {
     linkedin_urls: Property.Array({
       displayName: 'LinkedIn URLs',

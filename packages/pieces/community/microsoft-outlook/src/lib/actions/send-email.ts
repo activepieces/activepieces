@@ -1,15 +1,16 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookCommon } from '../common/client';
 
 export const sendEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'send-email',
 	displayName: 'Send Email',
 	description: 'Sends an email using Microsoft Outlook.',
+	audience: 'both',
+	aiMetadata: { description: 'Composes and sends a new email from the authenticated Outlook mailbox to the given recipients, with optional CC/BCC and file attachments. Use this to send a fresh message (not a reply or forward). Not idempotent: each call dispatches a new email and saves a copy to Sent Items.', idempotent: false },
 	props: {
 		recipients: Property.Array({
 			displayName: 'To Email(s)',
@@ -97,15 +98,9 @@ export const sendEmailAction = createAction({
 			})),
 		};
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = outlookCommon.createClient(context.auth);
 
-		const response = await client.api('/me/sendMail').post({
+		const response = await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/sendMail`).post({
 			message: mailPayload,
 			saveToSentItems: 'true',
 		});

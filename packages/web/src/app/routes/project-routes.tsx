@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
 import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { ApTableStateProvider } from '@/features/tables';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
 import { BuilderLayout } from '../components/builder-layout';
@@ -15,31 +16,46 @@ import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
 import { AutomationsPage } from './automations';
-const FlowBuilderPage = React.lazy(() =>
-  import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
+const FlowBuilderPage = lazyWithRetry(
+  () => import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
+  'flow-builder',
 );
-const AnalyticsPage = React.lazy(() => import('./impact'));
-const LeaderboardPage = React.lazy(() => import('./leaderboard'));
-const ProjectReleasesPage = React.lazy(() =>
-  import('./project-release').then((m) => ({
-    default: m.ProjectReleasesPage,
-  })),
+const AnalyticsPage = lazyWithRetry(() => import('./impact'), 'analytics');
+const ProjectReleasesPage = lazyWithRetry(
+  () =>
+    import('./project-release').then((m) => ({
+      default: m.ProjectReleasesPage,
+    })),
+  'project-releases',
 );
-const ViewRelease = React.lazy(() => import('./project-release/view-release'));
-const RunsPage = React.lazy(() =>
-  import('./runs').then((m) => ({ default: m.RunsPage })),
+const ViewRelease = lazyWithRetry(
+  () => import('./project-release/view-release'),
+  'view-release',
 );
-const FlowRunPage = React.lazy(() =>
-  import('./runs/id').then((m) => ({ default: m.FlowRunPage })),
+const RunsPage = lazyWithRetry(
+  () => import('./runs').then((m) => ({ default: m.RunsPage })),
+  'runs',
 );
-const AppConnectionsPage = React.lazy(() =>
-  import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
+const PieceRunsPage = lazyWithRetry(
+  () => import('./piece-runs').then((m) => ({ default: m.PieceRunsPage })),
+  'piece-runs',
 );
-const VariablesPage = React.lazy(() =>
-  import('./variables').then((m) => ({ default: m.VariablesPage })),
+const FlowRunPage = lazyWithRetry(
+  () => import('./runs/id').then((m) => ({ default: m.FlowRunPage })),
+  'flow-run',
 );
-const ApTableEditorPage = React.lazy(() =>
-  import('./tables/id').then((m) => ({ default: m.ApTableEditorPage })),
+const AppConnectionsPage = lazyWithRetry(
+  () =>
+    import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
+  'connections',
+);
+const VariablesPage = lazyWithRetry(
+  () => import('./variables').then((m) => ({ default: m.VariablesPage })),
+  'variables',
+);
+const ApTableEditorPage = lazyWithRetry(
+  () => import('./tables/id').then((m) => ({ default: m.ApTableEditorPage })),
+  'table-editor',
 );
 
 const SettingsRerouter = () => {
@@ -129,6 +145,20 @@ export const projectRoutes = [
           <PageTitle title="Runs">
             <SuspenseWrapper>
               <RunsPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.pieceRuns,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
+          <PageTitle title="Action Runs">
+            <SuspenseWrapper>
+              <PieceRunsPage />
             </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
@@ -226,18 +256,6 @@ export const projectRoutes = [
         <PageTitle title="Impact">
           <SuspenseWrapper>
             <AnalyticsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
-  {
-    path: '/leaderboard',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Leaderboard">
-          <SuspenseWrapper>
-            <LeaderboardPage />
           </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>

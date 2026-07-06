@@ -18,6 +18,8 @@ export const updatePageAction = createAction({
 	name: 'update-page',
 	displayName: 'Update Page',
 	description: 'Updates the title, body, or status of an existing page.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing Confluence page identified by page ID, changing its title, body, and/or status; blank title or body fields keep the current values. Reads the current version first and bumps the version number on save. Use to edit a known page. Not strictly idempotent: each call increments the page version even when content is unchanged.', idempotent: false },
 	props: {
 		spaceId: spaceIdProp,
 		pageId: pageIdProp,

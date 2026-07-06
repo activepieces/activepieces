@@ -2,7 +2,7 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { saveBlogImage } from '../api';
 import { cmsAuth } from '../auth';
@@ -12,6 +12,8 @@ export const saveBlogImageAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Blog Post Image',
   description: 'Save image to Total CMS blog post',
+  audience: 'both',
+  aiMetadata: { description: "Sets the featured/main image of a specific blog post in Total CMS, identified by the blog CMS ID (slug) and post permalink, with alt text and thumbnail sizing/crop options. Use to attach or replace a post's primary image. Idempotent: the post holds one such image, so repeating with the same input replaces it rather than accumulating.", idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',
@@ -101,9 +103,9 @@ export const saveBlogImageAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      quality: z.number().min(1).max(100),
-      scaleTh: z.number().min(1),
-      scaleSq: z.number().min(1),
+      quality: z.number().check(z.minimum(1), z.maximum(100)),
+      scaleTh: z.number().check(z.minimum(1)),
+      scaleSq: z.number().check(z.minimum(1)),
     });
 
     const slug = context.propsValue.slug;

@@ -5,6 +5,8 @@ import { robollyAuth } from "../..";
 
 export  const generateImage = createAction({
     description: 'Generate an image using Robolly',
+    audience: 'both',
+    aiMetadata: { description: 'Renders a personalized asset (JPG, PNG, or PDF, set via the format input) from a Robolly template by filling its template fields with the supplied values, plus any extra modifications. Use when an agent needs to produce a finished image/PDF from a design template; requires a template ID and the values for that template\'s accepted fields. Each call produces a new render and consumes a generation, so it is not idempotent.', idempotent: false },
     displayName: 'Generate Image',
     name: 'generate_image',
     auth: robollyAuth,

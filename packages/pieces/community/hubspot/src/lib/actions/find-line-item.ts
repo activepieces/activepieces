@@ -1,4 +1,4 @@
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { hubspotAuth } from '../auth';
@@ -11,6 +11,8 @@ export const findLineItemAction = createAction({
     name: 'find-line-item',
     displayName: 'Find Line Item',
     description: 'Finds a line item by searching.',
+    audience: 'both',
+    aiMetadata: { description: 'Search HubSpot line items by one or two property/value pairs (matched with equality) and return the matches. Read-only and repeatable. Use this to locate an existing line item before updating it.', idempotent: true },
     props: {
         firstSearchPropertyName: standardObjectPropertiesDropdown(
             {

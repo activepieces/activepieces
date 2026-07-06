@@ -7,6 +7,8 @@ export const createNotebookComment = createAction({
 	name: 'create_notebook_comment',
 	displayName: 'Create Notebook Comment',
 	description: 'Add a comment on a notebook (collaborative document) with optional attachments.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds a comment to a Teamwork notebook (collaborative document), optionally attaching a file and notifying followers or all project users. Use to post a note on a known notebook; requires the notebook ID and comment body. Not idempotent: each call posts a new comment.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		notebookId: Property.Dropdown({

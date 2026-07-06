@@ -54,6 +54,9 @@ export const newDeposit = createTrigger({
     name: 'new_deposit',
     displayName: 'New Deposit',
     description: 'Triggers when a Deposit is created.',
+    aiMetadata: {
+      description: 'Fires when a new deposit is created in the connected QuickBooks company, emitting the newly created deposit record. Use to react to funds being deposited into an account.',
+    },
     props: {},
     type: TriggerStrategy.POLLING,
   async onEnable(context) {

@@ -14,6 +14,12 @@ export const createDraftAction = createAction({
 	displayName: 'Create Draft Simple',
 	description:
 		'Create cross-platform, single-post drafts with text and optional media URLs. For threads (multiple posts) or advanced control, use "Create Draft Advanced" instead.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a single-post draft in Typefully with the same text fanned out to one or more selected platforms (X, LinkedIn, Threads, Bluesky, Mastodon). Choose this for simple one-post content; use Create Draft Advanced for multi-post threads or per-platform content. Optionally schedule it via Publish At, otherwise it is saved as an unpublished draft. Each call creates a new draft, so it is not idempotent.',
+		idempotent: false,
+	},
 	props: {
 		social_set_id: socialSetDropdown,
 		text: Property.LongText({

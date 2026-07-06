@@ -20,6 +20,8 @@ export const bookingsListingAction = createAction({
   name: 'bookingsListing',
   displayName: 'Resources - Bookings - Listing',
   description: 'Get all bookings.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO charger/EVSE bookings, optionally filtered by status (accepted, reserved, completed, cancelled, no-show, failed), user, location, or start/end time window. Read-only and idempotent. Enable pagination to fetch all matches across pages. Use this to find booking IDs before reading a single booking.', idempotent: true },
   props: {
     filter__status: Property.StaticDropdown({
       displayName: 'Filter - Status',

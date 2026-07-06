@@ -8,6 +8,8 @@ export const updateCustomer = createAction({
   name: 'update_customer',
   displayName: 'Update Customer',
   description: 'Updates an existing customer record in Quizell.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Quizell customer (quiz lead), identified by customer_id. Use when correcting or enriching a known customer record; requires customer_id, quiz_id, and email. Idempotent — re-sending the same fields leaves the record in the same state.', idempotent: true },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

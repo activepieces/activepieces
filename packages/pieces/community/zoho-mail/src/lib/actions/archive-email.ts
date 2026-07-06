@@ -9,6 +9,12 @@ export const archiveEmailAction = createAction({
 	name: 'archive_email',
 	displayName: 'Archive Email',
 	description: 'Archives an email.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Archives one Zoho Mail message identified by account ID and message ID, removing it from the active folder view. Use to clear a message out of the inbox without deleting it. Idempotent: re-archiving an already-archived message has no further effect.',
+		idempotent: true,
+	},
 	props: {
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({ displayName: 'Folder', required: true }),

@@ -11,6 +11,10 @@ export const contactSuspendedFromCourse = createTrigger({
   name: 'contactSuspendedFromCourse',
   displayName: `${MODULE_NAME} From Course`,
   description: 'Triggers when a contact is suspended from a course.',
+  aiMetadata: {
+    description:
+      'Fires when a contact is suspended from a course in the selected ClickFunnels workspace, representing the enrollment being revoked or paused. Delivers the enrollment payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

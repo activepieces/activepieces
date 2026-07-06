@@ -15,6 +15,8 @@ export const upsertByExternalIdBulk = createAction({
   name: 'upsert_by_external_id_bulk',
   displayName: 'Bulk Upsert (Advanced)',
   description: 'Bulk upsert a record by external id',
+  audience: 'both',
+  aiMetadata: { description: 'Insert-or-update many records at once via the Bulk API, matching on a stable external-ID field and accepting CSV input. Idempotent on the external ID — rerunning with the same data does not create duplicates. Pick this for large batches; use Batch Upsert for small JSON payloads.', idempotent: true },
   props: {
     object: salesforcesCommon.object,
     external_field: Property.ShortText({

@@ -69,6 +69,9 @@ export const newSwipefileAd = createTrigger({
   name: 'newSwipefileAd',
   displayName: 'New Swipefile Ad',
   description: 'Triggers when a new ad is added to your swipefile collection.',
+  aiMetadata: {
+    description: 'Fires when a new ad is saved to the authenticated account\'s swipefile collection, optionally narrowed by filters such as date range, platform, format, niche, market, language, and live-only status. Each event represents one ad newly added to the swipefile.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: "ad_123456789",

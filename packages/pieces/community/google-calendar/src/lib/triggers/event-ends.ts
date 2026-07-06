@@ -17,6 +17,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { eventOutputSchema } from '../output-schemas';
 
 interface GoogleCalendarEventList {
   items: GoogleCalendarEvent[];
@@ -124,6 +125,9 @@ export const eventEnds = createTrigger({
   name: 'event_ends',
   displayName: 'Event Ends',
   description: 'Fires when an event ends.',
+  aiMetadata: {
+    description: 'Fires once an event in the selected calendar reaches its end time, detected by polling. Each fired item is the event that just ended. Can watch all events in the calendar or be scoped to a single specific event.',
+  },
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
@@ -135,6 +139,7 @@ export const eventEnds = createTrigger({
     }),
     event_id: googleCalendarCommon.eventDropdown(false),
   },
+  outputSchema: eventOutputSchema,
   type: TriggerStrategy.POLLING,
   sampleData: {
     kind: 'calendar#event',

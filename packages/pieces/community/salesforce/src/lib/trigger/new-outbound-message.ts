@@ -10,6 +10,9 @@ export const newOutboundMessage = createTrigger({
     name: 'new_outbound_message',
     displayName: 'New Outbound Message',
     description: 'Fires when a new outbound message is received from Salesforce.',
+    aiMetadata: {
+        description: 'Fires when Salesforce pushes an Outbound Message notification to this webhook, typically configured via a Workflow Rule or Flow action in Salesforce. The incoming SOAP XML payload is parsed and the event represents one or more notification objects, each carrying the affected sObject and its fields. Requires the Salesforce Outbound Message endpoint to point at this trigger\'s webhook URL.',
+    },
     props: {},
     // See https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_om_outboundmessaging_notification.htm
     sampleData: {

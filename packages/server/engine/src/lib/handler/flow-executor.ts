@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'

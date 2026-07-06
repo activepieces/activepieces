@@ -13,6 +13,12 @@ export const xeroCreateBankTransfer = createAction({
   name: 'xero_create_bank_transfer',
   displayName: 'Create Bank Transfer',
   description: 'Transfers money between two bank accounts in Xero.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Record a transfer of money between two of the organization\'s own Xero bank accounts (the two account currencies must match). Pick this for internal account-to-account movements, not for paying invoices (use Create Payment). Not idempotent: each call records another transfer, so re-running duplicates it.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     from_bank_account_id: props.bank_account_id(true),

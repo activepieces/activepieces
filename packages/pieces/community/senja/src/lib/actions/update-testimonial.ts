@@ -8,6 +8,8 @@ export const updateTestimonialAction = createAction({
   name: 'update_testimonial',
   displayName: 'Update Testimonial',
   description: 'Approve, unapprove, or update tags on an existing testimonial.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Senja testimonial identified by ID, changing its approval status and/or adding or removing tags. Use to publish/unpublish a testimonial or manage its tags. Requires the testimonial ID and at least one of approval status, tags to add, or tags to remove, or the call fails. Idempotent — applying the same change yields the same final state.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Testimonial ID',

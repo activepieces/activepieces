@@ -8,6 +8,11 @@ export const unsubscribeContactAction = createAction({
   name: 'vbout_unsubscribe_contact',
   displayName: 'Unsubscribe Contact',
   description: 'Unsubscribes an existing contact in a given email list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sets an existing VBOUT contact to unsubscribed status within a given email list, looking the contact up by email first. Use to opt a contact out of a list. Requires the contact email and list ID; idempotent, since re-running leaves the contact in the same unsubscribed state.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Contact Email',

@@ -41,6 +41,12 @@ export const createSalesOrder = createAction({
   name: 'create_sales_order',
   displayName: 'Create Sales Order',
   description: 'Creates a new sales order in Katana.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a sales order (or quote, when status is PENDING) in the Katana manufacturing ERP for an existing customer. Use when placing an order; it requires an order number, a customer ID, and at least one line item (the primary product variant plus quantity), with extra line items optionally passed as a JSON array. Not idempotent — each call creates a new order, so a repeated call yields a duplicate unless the order number is rejected as already used.',
+    idempotent: false,
+  },
   props: {
     order_no: Property.ShortText({
       displayName: 'Order Number',

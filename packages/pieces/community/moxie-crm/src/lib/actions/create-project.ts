@@ -11,6 +11,11 @@ export const moxieCreateProjectAction = createAction({
   name: 'moxie_create_project',
   description: 'Creates a new project in moxie CRM.',
   displayName: 'Create a Project',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new project in Moxie CRM under an existing client, including its fee schedule (hourly, fixed price, retainer, or per item), portal access level, and dates. Use when starting a new engagement for a known client. The Client must already exist and is matched by exact client name. Not idempotent: each call creates a separate project.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Project Name',

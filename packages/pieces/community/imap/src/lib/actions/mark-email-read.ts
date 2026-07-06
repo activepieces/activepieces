@@ -25,6 +25,8 @@ export const markEmailAsRead = createAction({
   name: 'mark_email_read',
   displayName: 'Mark Email as Read/Unread',
   description: 'Sets the read status of an email',
+  audience: 'both',
+  aiMetadata: { description: 'Sets the read/unread (\\Seen) flag on a specific email in an IMAP mailbox, identified by its message UID. Use to mark a message as read after processing it or to flag one as unread. Requires the exact mailbox folder and UID; this is idempotent since it sets the flag to the chosen target state.', idempotent: true },
   props,
   async run({ auth, propsValue }) {
     const { uid, markAsRead, mailbox } = propsValue;

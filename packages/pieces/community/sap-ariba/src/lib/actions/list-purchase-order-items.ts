@@ -8,6 +8,8 @@ export const listPurchaseOrderItems = createAction({
     name: 'list_purchase_order_items',
     displayName: 'List Purchase Order Line Items',
     description: 'Retrieves line item information from purchase orders for a specified buyer.',
+    audience: 'both',
+    aiMetadata: { description: 'List purchase-order line items from SAP Ariba Network for a buyer (required buyer ANID). Use when you need item-level detail rather than PO headers; optional filters (document number, order/routing status, date range capped at 31 days) narrow results, and leaving them empty returns all line items paginated. Read-only and idempotent.', idempotent: true },
     props: {
         buyerANID: Property.ShortText({
             displayName: 'Buyer ANID',
