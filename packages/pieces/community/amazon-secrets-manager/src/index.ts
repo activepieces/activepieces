@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { awsSecretsManagerAuth } from './lib/common/auth';
+import { awsSecretsManagerCombinedAuth } from './lib/common/auth';
 import { getSecretValue } from './lib/actions/get-secret-value';
 import { updateSecret } from './lib/actions/update-secret';
 import { createSecret } from './lib/actions/create-secret';
@@ -10,7 +10,7 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const amazonSecretsManager = createPiece({
   displayName: 'AWS Secrets Manager',
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-secrets-manager.png',
   authors: ['sanket-a11y'],

@@ -4,6 +4,7 @@ import { Property, createAction } from "@activepieces/pieces-framework";
 import querystring from 'querystring';
 import { common } from '../common';
 import { downloadFileFromDrive } from '../common/get-file-content';
+import { listFilesActionOutputSchema } from '../output-schemas';
 
 interface ListFilesResult {
   type: string;
@@ -141,6 +142,7 @@ export const googleDriveListFiles = createAction({
       defaultValue: false
     }),
   },
+  outputSchema: listFilesActionOutputSchema,
   async run(context) {
     const result: ListFilesResult = {
       type: 'drive#fileList',

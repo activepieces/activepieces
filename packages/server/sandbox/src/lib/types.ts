@@ -18,6 +18,7 @@ export type ResolveInput = {
     engineToken: string
     flow?: { id: string, versionId: string, projectId: string }
     pieces?: PiecePackage[]
+    codes?: CodeArtifact[]
 }
 
 export type ResolveResult =
@@ -59,6 +60,13 @@ export type ProvisionInput = {
 
 export type RuntimeExecutionResult = EngineResponse<unknown> & {
     logs: string | undefined
+    timings: RuntimePhaseTimings
+}
+
+export type RuntimePhaseTimings = {
+    provisionMs: number
+    bootMs: number
+    runMs: number
 }
 
 export type RuntimeExecutorInfo = {

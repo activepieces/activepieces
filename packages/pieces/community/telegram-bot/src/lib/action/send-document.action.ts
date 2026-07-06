@@ -11,6 +11,7 @@ import {
 import FormData from 'form-data';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendDocumentActionOutputSchema } from '../output-schemas';
 
 export const telegramSendDocumentAction = createAction({
   auth: telegramBotAuth,
@@ -46,6 +47,7 @@ export const telegramSendDocumentAction = createAction({
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: sendDocumentActionOutputSchema,
   async run(ctx) {
     const file = ctx.propsValue.document as ApFile | undefined;
     const documentId = ctx.propsValue.document_id;

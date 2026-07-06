@@ -21,6 +21,7 @@ import {
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { areSheetIdsValid,  } from '../common/common';
+import { googlesheetsNewRowAddedTriggerOutputSchema } from '../output-schemas';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -38,6 +39,7 @@ export const newRowAddedTrigger = createTrigger({
 		}),
 		...commonProps,
 	},
+	outputSchema: googlesheetsNewRowAddedTriggerOutputSchema,
 	renewConfiguration: {
 		strategy: WebhookRenewStrategy.CRON,
 		cronExpression: '0 */12 * * *',

@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
+import { duplicateFileActionOutputSchema } from '../output-schemas';
 
 export const duplicateFileAction = createAction({
   displayName: 'Duplicate File',
@@ -45,6 +46,7 @@ export const duplicateFileAction = createAction({
     }),
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: duplicateFileActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 

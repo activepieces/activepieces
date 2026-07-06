@@ -3,6 +3,7 @@ import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
+import { messageOutputSchema } from '../../output-schemas';
 
 export const createClickupMessageReply = createAction({
   auth: clickupAuth,
@@ -37,6 +38,7 @@ export const createClickupMessageReply = createAction({
     }),
   },
 
+  outputSchema: messageOutputSchema,
   async run(configValue) {
     const { workspace_id, message_id, content, type } = configValue.propsValue;
     const response = await callClickUpApi3(
