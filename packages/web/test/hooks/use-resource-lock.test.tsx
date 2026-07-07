@@ -14,7 +14,10 @@
  * @testing-library/react (which is not a dependency of this package).
  */
 /* eslint-disable testing-library/no-unnecessary-act */
-import { WebsocketServerEvent } from '@activepieces/shared';
+import {
+  WebsocketClientEvent,
+  WebsocketServerEvent,
+} from '@activepieces/shared';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -39,10 +42,18 @@ const socketState = vi.hoisted(() => {
     payload: { resourceId: string; force?: boolean };
     ack?: (response: LockResponse) => void;
   };
+  type ClientHandler = (payload: unknown) => void;
   const emitCalls: EmitCall[] = [];
+  const handlers: Record<string, ClientHandler[]> = {};
   const fakeSocket = {
-    on: (_event: string, _handler: (...args: unknown[]) => void) => fakeSocket,
-    off: (_event: string, _handler: (...args: unknown[]) => void) => fakeSocket,
+    on: (event: string, handler: ClientHandler) => {
+      (handlers[event] ??= []).push(handler);
+      return fakeSocket;
+    },
+    off: (event: string, handler: ClientHandler) => {
+      handlers[event] = (handlers[event] ?? []).filter((h) => h !== handler);
+      return fakeSocket;
+    },
     emit: (
       event: string,
       payload: { resourceId: string; force?: boolean },
@@ -52,7 +63,16 @@ const socketState = vi.hoisted(() => {
       return fakeSocket;
     },
   };
-  return { emitCalls, fakeSocket };
+  const dispatch = (event: string, payload: unknown) => {
+    (handlers[event] ?? []).forEach((handler) => handler(payload));
+  };
+  const reset = () => {
+    emitCalls.length = 0;
+    for (const key of Object.keys(handlers)) {
+      delete handlers[key];
+    }
+  };
+  return { emitCalls, fakeSocket, dispatch, reset };
 });
 
 vi.mock('@/components/providers/socket-provider', () => ({
@@ -91,7 +111,7 @@ describe('useResourceLock takeOver', () => {
   const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
 
   beforeEach(() => {
-    socketState.emitCalls.length = 0;
+    socketState.reset();
     latestHookResult = null;
     reloadSpy.mockClear();
     Object.defineProperty(window, 'location', {
@@ -146,28 +166,37 @@ describe('useResourceLock takeOver', () => {
     expect(onTakeOver).toHaveBeenCalledTimes(1);
     expect(latestHookResult?.lockedBy).toBeNull();
 
-    const reacquire = socketState.emitCalls
-      .slice(emitCountBeforeAck)
-      .find(
-        (call) =>
-          call.event === WebsocketServerEvent.LOCK_RESOURCE &&
-          !call.payload.force,
-      );
-    expect(reacquire).toBeDefined();
-    expect(reacquire?.payload).toEqual({ resourceId: RESOURCE_ID });
+    const windowAfterForceAck = socketState.emitCalls.slice(emitCountBeforeAck);
+    const reacquireIndex = windowAfterForceAck.findIndex(
+      (call) =>
+        call.event === WebsocketServerEvent.LOCK_RESOURCE &&
+        !call.payload.force,
+    );
+    expect(reacquireIndex).toBeGreaterThanOrEqual(0);
+    // takeOver clears isOwner before bumping the session, so the acquire
+    // effect's cleanup must NOT emit a stray UNLOCK before the re-acquire —
+    // that would briefly release the lock we just force-acquired
+    expect(
+      windowAfterForceAck
+        .slice(0, reacquireIndex)
+        .some((call) => call.event === WebsocketServerEvent.UNLOCK_RESOURCE),
+    ).toBe(false);
+
+    const reacquire = windowAfterForceAck[reacquireIndex];
+    expect(reacquire.payload).toEqual({ resourceId: RESOURCE_ID });
 
     await act(async () => {
-      reacquire?.ack?.({ acquired: true, lock: null });
+      reacquire.ack?.({ acquired: true, lock: null });
     });
 
     await act(async () => {
       root.unmount();
     });
-    const unlock = socketState.emitCalls.find(
+    const unlocks = socketState.emitCalls.filter(
       (call) => call.event === WebsocketServerEvent.UNLOCK_RESOURCE,
     );
-    expect(unlock).toBeDefined();
-    expect(unlock?.payload).toEqual({ resourceId: RESOURCE_ID });
+    expect(unlocks).toHaveLength(1);
+    expect(unlocks[0].payload).toEqual({ resourceId: RESOURCE_ID });
     expect(reloadSpy).not.toHaveBeenCalled();
   });
 
@@ -192,6 +221,97 @@ describe('useResourceLock takeOver', () => {
 
     expect(onTakeOver).not.toHaveBeenCalled();
     expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it('tracks the locker from broadcasts and ignores its own and unrelated locks', async () => {
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} />);
+    });
+
+    await act(async () => {
+      socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
+        resourceId: RESOURCE_ID,
+        userId: 'current-user',
+        userDisplayName: 'Me',
+      });
+    });
+    expect(latestHookResult?.lockedBy).toBeNull();
+
+    await act(async () => {
+      socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
+        resourceId: 'another-resource',
+        ...OTHER_USER,
+      });
+    });
+    expect(latestHookResult?.lockedBy).toBeNull();
+
+    await act(async () => {
+      socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
+        resourceId: RESOURCE_ID,
+        ...OTHER_USER,
+      });
+    });
+    expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+
+    await act(async () => {
+      socketState.dispatch(WebsocketClientEvent.RESOURCE_UNLOCKED, {
+        resourceId: RESOURCE_ID,
+      });
+    });
+    expect(latestHookResult?.lockedBy).toBeNull();
+  });
+
+  it('does not release the lock during re-acquire when a stale owner takes over', async () => {
+    const onTakeOver = vi.fn();
+    await act(async () => {
+      root.render(<Probe onTakeOver={onTakeOver} />);
+    });
+
+    // we acquire the lock first, so isOwner becomes true on this client
+    const initialAcquire = lockEmits()[0];
+    await act(async () => {
+      initialAcquire.ack?.({ acquired: true, lock: null });
+    });
+
+    // another client force-takes-over: the server broadcasts RESOURCE_LOCKED,
+    // so the take-over banner shows while this client is still a stale owner
+    await act(async () => {
+      socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
+        resourceId: RESOURCE_ID,
+        ...OTHER_USER,
+      });
+    });
+    expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+
+    await act(async () => {
+      latestHookResult?.takeOver();
+    });
+    const forceAcquire = lockEmits().find((call) => call.payload.force);
+    expect(forceAcquire).toBeDefined();
+
+    const emitCountBeforeAck = socketState.emitCalls.length;
+    await act(async () => {
+      forceAcquire?.ack?.({ acquired: true, lock: null });
+    });
+
+    // the session bump re-runs the acquire effect; because takeOver reset
+    // isOwner to false, the cleanup must not emit a stray UNLOCK before the
+    // non-force re-acquire, even though this client was previously the owner
+    const windowAfterForceAck = socketState.emitCalls.slice(emitCountBeforeAck);
+    const reacquireIndex = windowAfterForceAck.findIndex(
+      (call) =>
+        call.event === WebsocketServerEvent.LOCK_RESOURCE &&
+        !call.payload.force,
+    );
+    expect(reacquireIndex).toBeGreaterThanOrEqual(0);
+    expect(
+      windowAfterForceAck
+        .slice(0, reacquireIndex)
+        .some((call) => call.event === WebsocketServerEvent.UNLOCK_RESOURCE),
+    ).toBe(false);
+    expect(onTakeOver).toHaveBeenCalledTimes(1);
+    expect(latestHookResult?.lockedBy).toBeNull();
     expect(reloadSpy).not.toHaveBeenCalled();
   });
 });

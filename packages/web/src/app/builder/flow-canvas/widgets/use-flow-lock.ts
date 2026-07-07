@@ -1,6 +1,6 @@
+import { isNil } from '@activepieces/core-utils';
 import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-use';
 
 import { useResourceLock } from '@/hooks/use-resource-lock';
 
@@ -13,22 +13,24 @@ function useFlowLock() {
     state.flow.id,
     state.setReadOnly,
   ]);
+  const run = useBuilderStateContext((state) => state.run);
   const readonlySetByLock = useRef(false);
-  const location = useLocation();
   const navigate = useNavigate();
   const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
 
   // refresh the flow in place after a successful take-over; a full-page
-  // reload would break the embed SDK handshake inside an iframe. On the
-  // runs page, mirror EditFlowOrViewDraftButton: navigate to the flow
-  // (client-side, embed-safe) instead of editing a draft under a /runs URL
+  // reload would break the embed SDK handshake inside an iframe. When viewing
+  // a run, mirror EditFlowOrViewDraftButton: navigate to the flow
+  // (client-side, embed-safe) instead of editing a draft under the run view.
+  // Branch on the builder run state, not the URL: embed mounts a memory
+  // router, so window.location never reflects the in-app route.
   const onTakeOver = useCallback(() => {
-    if (location.pathname?.includes('/runs')) {
+    if (!isNil(run)) {
       navigate(`/flows/${flowId}`);
     } else {
       switchToDraft();
     }
-  }, [location.pathname, navigate, flowId, switchToDraft]);
+  }, [run, navigate, flowId, switchToDraft]);
 
   const { lockedBy, takeOver } = useResourceLock({
     resourceId: flowId,
