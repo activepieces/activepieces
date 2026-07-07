@@ -1,5 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import TurndownService from 'turndown';
+import TurndownService from '@joplin/turndown';
+
+import { gfm } from '@joplin/turndown-plugin-gfm';
 
 export const htmlToMarkdown = createAction({
   audience: 'human',
@@ -25,6 +27,9 @@ export const htmlToMarkdown = createAction({
     const html = context.propsValue.html;
     const service = new TurndownService();
     service.remove('script');
+
+    service.use(gfm);
+
     return service.turndown(html);
   },
 });
