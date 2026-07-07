@@ -139,6 +139,58 @@ Called once per `{{...}}` token via `evalInScope` (props-resolver.ts:251-268), n
 
 ---
 
+### 6. 🟠 Code-Step Working-Set OOM — the "Apply Watermark" / large-image case (DISTINCT MECHANISM)
+
+**This is not props-resolver overhead.** Findings #1–#5 are about the *platform* cloning a large step
+output through isolates during input resolution. This one is about the *user's own code* allocating
+more than the isolate can hold while it runs — a different mechanism, a different fix, but the same
+128 MB wall and the same `MEMORY_LIMIT_EXCEEDED` outcome. Called out because a real incident hit both
+at once and they were easy to conflate.
+
+**File**: [packages/server/engine/src/lib/core/code/v8-isolate-code-sandbox.ts:23](../packages/server/engine/src/lib/core/code/v8-isolate-code-sandbox.ts) (hardcoded `memoryLimit: 128`).
+
+**Root Cause**: A code step that processes images (Jimp/sharp) decodes each photo into a raw **RGBA
+bitmap of `width × height × 4` bytes** — a size that is **independent of the compressed file size**. A
+"small" 3 MB phone JPEG is ~24 MP, which decodes to **~96 MB**; watermark compositing keeps a second
+copy simultaneously. That exceeds the 128 MB isolate cap, and because it's a large native allocation
+V8 aborts the process rather than throwing a catchable JS error — the engine dies with **SIGKILL
+("Caught fatal signal 9")**, which `sandbox.ts::handleProcessExit` maps to
+`ErrorCode.SANDBOX_MEMORY_ISSUE` → `FlowRunStatus.MEMORY_LIMIT_EXCEEDED`, and the job is retried.
+
+**Real-world incident**: An "Apply Watermark" step OOM-killed on full-resolution photos. It compounded
+with an orchestration bug — a parent cron flow **re-dispatched the same files repeatedly** (~80 →
+~1,400 runs/day), so duplicate runs also failed with Dropbox `path/not_found` (an earlier run had
+already deleted the file), and the run flood amplified the OOM rate. Both flows were disabled to stop
+the bleeding. The re-dispatch flood is an idempotency/orchestration issue (out of scope here); the OOM
+itself is this finding.
+
+**Why it's different from #1–#5**:
+- The oversized allocation is in **user code**, not in `resolve()`. No amount of props-resolver
+  optimization prevents it.
+- It is **not fixable by slicing/log limits** — the bitmap only exists transiently inside the isolate
+  during `code()`; it's never a persisted step output.
+
+**Mitigation Strategy** (in order of leverage):
+1. **Resize/stream before full decode** (user-side): downscale to the working resolution before
+   compositing, or use a streaming/tiled pipeline (`sharp` with limited `pixelLimit`) instead of
+   loading the whole bitmap. This is the real fix for the incident.
+2. **Make the code-step memory limit configurable** instead of a hardcoded `128` — image/PDF
+   workloads legitimately need more; today there is no knob. Pair with a clear pre-flight error
+   ("image too large for the N MB code limit") rather than an opaque SIGKILL retry loop.
+3. **Fail fast, don't retry OOM**: a deterministic working-set OOM will OOM again on retry — retrying
+   just multiplies the cost (as the incident showed). Treat `SANDBOX_MEMORY_ISSUE` from a code step as
+   non-retryable.
+
+**Reproduce**: [`setup-image-oom.sh`](./setup-image-oom.sh) — `MEGAPIXELS` (default 24) allocates a
+decoded-bitmap-sized buffer + a watermark copy, no image library required (a raw byte buffer is the
+faithful stand-in for what Jimp holds). Sweep `MEGAPIXELS=8/16/24/32` to find where the run flips from
+SUCCEEDED to `MEMORY_LIMIT_EXCEEDED`.
+
+**Estimated Fix Complexity**: Small for the config knob + non-retryable classification; the real
+resolution is user-side (resize before decode) plus docs.
+
+---
+
 ## Recommended Execution Order
 
 1. **Land PR #14047** (fix finding #1) — immediate, unblocks this audit's pattern adoption elsewhere.
@@ -146,6 +198,7 @@ Called once per `{{...}}` token via `evalInScope` (props-resolver.ts:251-268), n
 3. **Fix finding #3** (router eager branches) — same pattern as #1, unfixed in RUN path.
 4. **Measure finding #4** (per-token isolate churn) — microbenchmark to quantify the win from #2/#3, plan architectural fix.
 5. **Add finding #5** (sample-data cap) — cheap complementary defense.
+6. **Address finding #6 separately** (code-step working-set OOM) — different track from the resolver work: make the 128 MB code limit configurable, classify code-step OOM as non-retryable, and document resize-before-decode for image/PDF flows.
 
 ---
 
@@ -162,3 +215,57 @@ Full-stack load tests in the `benchmark/` directory validate end-to-end impact (
 - [`setup-loop-huge.sh`](./setup-loop-huge.sh) — loop over a deeply-nested payload
 - [`setup-router-wide.sh`](./setup-router-wide.sh) — wide router, only fallback matches
 - [`setup-csv-huge.sh`](./setup-csv-huge.sh) — code step that builds + parses a 100k-row CSV, then loops the rows (`ROW_COUNT` sweepable to find where `MEMORY_LIMIT_EXCEEDED` begins firing)
+- [`setup-image-oom.sh`](./setup-image-oom.sh) — finding #6: a code step that decodes a large image into a raw bitmap + watermark copy (`MEGAPIXELS` sweepable), reproducing the user-code working-set OOM / SIGKILL
+
+---
+
+## Appendix — Why resolution heap ≈ 6× the payload, and how it scales with flow size
+
+### Where the copies come from (per `{{token}}`)
+
+Resolving one expression walks `resolve()` → `resolveSingleToken` → `evalInScope` →
+`v8IsolateCodeSandbox.runScript`. For a token whose value is a large step output `P`, these full
+materializations of `P` are alive in the **main process heap** at once:
+
+1. **`JSON.stringify(scriptContext)`** ([v8-isolate-code-sandbox.ts:54](../packages/server/engine/src/lib/core/code/v8-isolate-code-sandbox.ts)) — a JS string of the whole context. V8 strings are UTF-16, so this is **~2× the JSON byte size**.
+2. **`JSON.parse(...)`** (same line) — a full deep-clone object graph. In-memory object graphs run larger than their JSON text (per-object headers, hidden classes, pointer slots), especially for arrays of many small records.
+3. **`new ivm.ExternalCopy(value).copyInto()`** ([:76](../packages/server/engine/src/lib/core/code/v8-isolate-code-sandbox.ts)) — serializes the clone again into an external buffer and copies it **into the isolate** (which is where the hardcoded **128 MB** cap applies).
+4. **`outRef.copy()`** ([:90](../packages/server/engine/src/lib/core/code/v8-isolate-code-sandbox.ts)) — deserializes the result back **out** of the isolate into the main heap. For a token that returns the whole payload (e.g. a loop's `items`), this is another full copy of `P`.
+
+That is **three-to-four full materializations of `P` in the main heap** (stringify string at 2×, parse clone, result copy) plus a fourth inside the isolate — and `resolve()` runs the **entire chain twice** (the resolved pass **and** the redundant censoring pass, finding #2). Net: **heap ≈ 6–7× the JSON payload size**, which is exactly what the microbench measures (6.3 MB → 47.7 MB; 18.5 MB → 109.5 MB). The practical consequence is the **128 MB isolate cap** (step 3): a single referenced payload of only ~20–25 MB fills the isolate and OOMs the step.
+
+### Correlation with the number of pieces in a flow (measured)
+
+`resolve()` first computes `currentState` scoped to `extractReferencedStepNames()`
+([props-resolver.ts:42-43](../packages/server/engine/src/lib/variables/props-resolver.ts)), so the
+clone cost depends on **which** upstream steps an expression references, not on the raw step count.
+Measured (40k-row steps, heap Δ):
+
+| Scenario | Heap Δ | Meaning |
+|---|---:|---|
+| 1 referenced big step, no others | 40.3 MB | baseline |
+| 1 referenced big step **+ 4 unreferenced big steps** | 39.9 MB | **flat** → unreferenced pieces are scoped out and cost nothing |
+| reference `step_10` while `step_1` is also big | 50.5 MB | **inflated** → substring false-positive (below) |
+
+So the real correlations are:
+
+- **Unreferenced pieces are free.** Adding steps a given expression doesn't mention does **not**
+  inflate that resolution — `currentState` excludes them. (B stayed flat vs A.)
+- **Per-expression cost scales with the *union* of the steps it references, cloned once per token.**
+  `currentState` is built once as the union of all step names appearing anywhere in the action's
+  input, but **every `{{token}}` re-clones that entire union** inside its own fresh isolate
+  ([props-resolver.ts:50-65](../packages/server/engine/src/lib/variables/props-resolver.ts) →
+  `evalInScope` per leaf). An action with `K` tokens referencing `S` large steps does `K ×
+  (Σ referenced sizes)` of clone work — **quadratic in transient allocation / CPU** when `K` grows
+  with `S` (e.g. a mapping step that fans in many large upstream outputs). Retained heap stays
+  roughly linear (the resolved + censored outputs), but the transient peak and CPU are what drive GC
+  pressure and the per-isolate 128 MB ceiling.
+- **Cumulative across the run scales with piece count.** In a linear pipeline where each step passes
+  a large payload to the next, *every* step pays the full 6× clone on its own resolve, so total
+  flow-run resolution churn grows ~linearly with the number of pieces that touch large data.
+- **Substring false-positive (secondary bug).** `extractReferencedStepNames` uses
+  `stringifiedInput.includes(stepName)` ([props-resolver.ts:107](../packages/server/engine/src/lib/variables/props-resolver.ts)),
+  so referencing `step_10` also matches `step_1` (a substring). Once a flow has ≥10 default-named
+  steps, high-numbered references spuriously pull prefix-colliding steps' outputs into `currentState`
+  and clone them for nothing (C: +10 MB). This makes even correctly-scoped resolution grow with flow
+  size. Fix: word-boundary / token-aware matching instead of `String.includes`.

@@ -247,8 +247,20 @@ where the real stack serves those callbacks.
 - [`setup-csv-huge.sh`](./setup-csv-huge.sh) — webhook → CODE builds **and parses a `ROW_COUNT`-row
   CSV (default 100k) × 8 columns** into row objects → `LOOP_ON_ITEMS` over the rows → response. The
   realistic "process a big spreadsheet/export" case: many small uniform objects, tens of MB.
+- [`setup-image-oom.sh`](./setup-image-oom.sh) — webhook → CODE step that mimics "Apply Watermark":
+  decodes a `MEGAPIXELS`-megapixel photo into a raw RGBA bitmap (`MP × 4` MB, **independent of file
+  size**) plus a watermark copy → response. This is a **different OOM mechanism** from the ones above:
+  the oversized allocation is in *user code*, not in props resolution. At the default 24 MP (~96 MB
+  ×2) it exceeds the 128 MB isolate cap and V8 aborts the engine with **SIGKILL** ("Caught fatal
+  signal 9") → `MEMORY_LIMIT_EXCEEDED`. Models a real incident (audit finding #6). Sweep
+  `MEGAPIXELS=8/16/24/32` to find the flip from SUCCEEDED to OOM.
 - OOM control: `CODE_INPUT_SUM="$(cat oom-expression.txt)" benchmark/setup.sh` — confirms
   `MEMORY_LIMIT_EXCEEDED` still fires when a code step genuinely exceeds the 128 MB isolate cap.
+
+Two OOM mechanisms share the same 128 MB wall but need different fixes: **platform** overflow (a large
+step output cloned 6× through isolates during resolution — findings #1–#4, addressed by resolver
+work) vs **user-code** overflow (the code step's own working set, e.g. a decoded image — finding #6,
+addressed by a configurable limit + resize-before-decode + non-retryable OOM classification).
 
 ### How to reproduce
 
@@ -261,6 +273,11 @@ NODE_OPTIONS="--expose-gc" npx vitest run test/variables/run-action-resolution.p
 benchmark/poll-metrics.sh metrics.ndjson &          # TOKEN from setup output
 ROW_COUNT=100000 benchmark/setup-csv-huge.sh        # or 10000 / 50000 to sweep
 hey -n 200 -c 2 -t 120 "http://localhost:8080/api/v1/webhooks/$FLOW_ID/sync"
+
+# Image working-set OOM — find the megapixel count where "Apply Watermark" flips to OOM
+MEGAPIXELS=24 benchmark/setup-image-oom.sh          # sweep 8 / 16 / 24 / 32
+hey -n 20 -c 1 -t 60 "http://localhost:8080/api/v1/webhooks/$FLOW_ID/sync"
+# then check the flow-runs API: expect FlowRunStatus.MEMORY_LIMIT_EXCEEDED at/above the cliff
 ```
 
 ### Results — engine microbench (measured)
@@ -307,3 +324,9 @@ deliberately, not as part of a clean throughput sweep.
   that feed expressions well under ~15–20 MB, or the 128 MB isolate cap becomes reachable. For big
   CSVs/exports, stream or paginate rather than carrying the whole parsed array through one expression.
 - Router latency scales with **branch count, not payload** — wide routers are the silent cost.
+- **Two OOMs, one wall.** The 128 MB isolate cap is hit by both platform clone overhead (findings
+  #1–#4) and user-code working sets (finding #6, e.g. a decoded image). They look identical in the
+  run status (`MEMORY_LIMIT_EXCEEDED`) but need opposite fixes — optimize the resolver vs. give the
+  code step more room (configurable limit) and resize before decode. And **never retry a
+  deterministic working-set OOM**: it will OOM again, multiplying cost (the watermark incident went
+  ~80 → ~1,400 runs/day, and the flood amplified the OOM rate).

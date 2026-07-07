@@ -1,5 +1,5 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
-import { applyFunctionToValues, extractMustacheTokens, isNil, isString } from '@activepieces/core-utils'
+import { applyFunctionToValues, extractMustacheTokens, isNil, isObject, isString } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { FormulaEvaluationError } from '@activepieces/shared'
 
@@ -55,14 +55,16 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: false,
                     contextVersion,
                 }))
-            const censoredInput = await applyFunctionToValues<T>(
-                unresolvedInput,
-                (token) => resolveInputAsync({
-                    ...resolveOptions,
-                    input: token,
-                    censoredInput: true,
-                    contextVersion,
-                }))
+            const censoredInput = inputNeedsCensoring(unresolvedInput)
+                ? await applyFunctionToValues<T>(
+                    unresolvedInput,
+                    (token) => resolveInputAsync({
+                        ...resolveOptions,
+                        input: token,
+                        censoredInput: true,
+                        contextVersion,
+                    }))
+                : structuredClone(resolvedInput)
             return {
                 resolvedInput,
                 censoredInput,
@@ -100,15 +102,36 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
 
-function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
+export function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
     const stringifiedInput = JSON.stringify(input)
     const referencedSteps = new Set<string>()
     for (const stepName of stepNames) {
-        if (stringifiedInput.includes(stepName)) {
+        const pattern = new RegExp(`\\b${escapeRegExp(stepName)}\\b`)
+        if (pattern.test(stringifiedInput)) {
             referencedSteps.add(stepName)
         }
     }
     return referencedSteps
+}
+
+export function inputNeedsCensoring(input: unknown): boolean {
+    if (isString(input)) {
+        return extractMustacheTokens(input).some(({ inner }) => {
+            const name = inner.trim()
+            return name.startsWith(VARIABLES) || name.startsWith(CONNECTIONS)
+        })
+    }
+    if (Array.isArray(input)) {
+        return input.some(inputNeedsCensoring)
+    }
+    if (isObject(input)) {
+        return Object.values(input).some(inputNeedsCensoring)
+    }
+    return false
+}
+
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /** 
