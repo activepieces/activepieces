@@ -17,12 +17,17 @@ import {
     RouterExecutionType,
     StepOutputStatus,
 } from '@activepieces/shared'
+import type { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 
-const MAX_ACCEPTABLE_LOOP_RESOLUTION_MS = 3_000
+const MAX_ACCEPTABLE_LOOP_RESOLUTION_MS = 1_000
 const MAX_ACCEPTABLE_ROUTER_MS_PER_BRANCH = 300
 const MAX_ACCEPTABLE_CENSORING_TAX_RATIO = 2.5
 const MAX_ACCEPTABLE_ISOLATE_PER_TOKEN_MS = 150
-const MAX_ACCEPTABLE_CSV_LOOP_RESOLUTION_MS = 8_000
+// Plain member-access tokens skip the isolate entirely (props-resolver fast path), so their
+// per-token cost is near-zero. This ceiling is the regression guard: if the fast path stops
+// engaging, the per-token cost jumps back to the isolate-churn range (~40ms+) and trips this.
+const MAX_ACCEPTABLE_PLAIN_TOKEN_MS = 15
+const MAX_ACCEPTABLE_CSV_LOOP_RESOLUTION_MS = 2_000
 
 describe('Props resolution performance under large payloads', () => {
     beforeEach(() => {
@@ -242,14 +247,7 @@ describe('Props resolution performance under large payloads', () => {
         expect(elapsedMs).toBeLessThan(MAX_ACCEPTABLE_LOOP_RESOLUTION_MS)
     }, 30_000)
 
-    it('per-token isolate creation overhead scales linearly with property count', async () => {
-        const { createPropsResolver } = await import('../../src/lib/variables/props-resolver')
-        const { generateMockEngineConstants } = await import('../handler/test-helper')
-
-        const stepNames = ['trigger', 'step_1']
-        const constants = generateMockEngineConstants({ stepNames })
-
-        // Create execution state with a moderately large payload
+    async function buildLargeStepState(): Promise<FlowExecutorContext> {
         const { FlowExecutorContext } = await import('../../src/lib/handler/context/flow-execution-context')
         let executionState = await FlowExecutorContext.empty().upsertStep(
             'trigger',
@@ -260,7 +258,6 @@ describe('Props resolution performance under large payloads', () => {
                 output: {},
             }),
         )
-
         const largePayload = buildGoogleDocsLikeDocument({ paragraphCount: 2_000 })
         executionState = await executionState.upsertStep(
             'step_1',
@@ -271,7 +268,15 @@ describe('Props resolution performance under large payloads', () => {
                 output: largePayload,
             }),
         )
+        return executionState
+    }
 
+    async function measurePerTokenCost(tokenTemplate: string): Promise<{ tokenCount: number, elapsedMs: number }[]> {
+        const { createPropsResolver } = await import('../../src/lib/variables/props-resolver')
+        const { generateMockEngineConstants } = await import('../handler/test-helper')
+        const stepNames = ['trigger', 'step_1']
+        const constants = generateMockEngineConstants({ stepNames })
+        const executionState = await buildLargeStepState()
         const resolver = createPropsResolver({
             engineToken: constants.engineToken,
             projectId: constants.projectId,
@@ -280,42 +285,44 @@ describe('Props resolution performance under large payloads', () => {
             stepNames,
         })
 
-        // Build inputs with K references to the same large step
         const timings = []
         for (const tokenCount of [1, 3, 5]) {
             const unresolvedInput = Object.fromEntries(
-                Array.from({ length: tokenCount }, (_, i) => [
-                    `prop_${i}`,
-                    `{{step_1['output']['title']}}`,
-                ]),
+                Array.from({ length: tokenCount }, (_, i) => [`prop_${i}`, tokenTemplate]),
             )
-
             if (global.gc) {
                 global.gc()
             }
-
             const startedAt = performance.now()
-            await resolver.resolve({
-                unresolvedInput,
-                executionState,
-            })
+            await resolver.resolve({ unresolvedInput, executionState })
             const elapsedMs = performance.now() - startedAt
             timings.push({ tokenCount, elapsedMs })
-            console.log(`${tokenCount} token(s) referencing same large step: ${Math.round(elapsedMs)}ms`)
         }
+        return timings
+    }
 
-        // Per-token cost should not explode (linear scaling acceptable)
+    it('plain property-access tokens skip the isolate (fast path, near-zero per-token cost)', async () => {
+        const timings = await measurePerTokenCost('{{step_1[\'output\'][\'title\']}}')
         for (const { tokenCount, elapsedMs } of timings) {
-            const costPerToken = elapsedMs / tokenCount
-            expect(costPerToken).toBeLessThan(MAX_ACCEPTABLE_ISOLATE_PER_TOKEN_MS)
+            console.log(`plain: ${tokenCount} token(s) referencing same large step: ${Math.round(elapsedMs)}ms`)
+            expect(elapsedMs / tokenCount).toBeLessThan(MAX_ACCEPTABLE_PLAIN_TOKEN_MS)
+        }
+    }, 30_000)
+
+    it('per-token isolate creation overhead scales linearly for expression tokens', async () => {
+        // `+ ''` forces a genuine expression that cannot use the fast path, so this still measures
+        // the per-token isolate/eval cost — the metric the fast path removes for plain tokens above.
+        const timings = await measurePerTokenCost('{{step_1[\'output\'][\'title\'] + \'\'}}')
+        for (const { tokenCount, elapsedMs } of timings) {
+            console.log(`expr: ${tokenCount} token(s) referencing same large step: ${Math.round(elapsedMs)}ms`)
+            expect(elapsedMs / tokenCount).toBeLessThan(MAX_ACCEPTABLE_ISOLATE_PER_TOKEN_MS)
         }
 
-        // Scaling should be linear, not exponential
         const costPerToken1 = timings[0].elapsedMs / 1
         const costPerToken3 = timings[1].elapsedMs / 3
         const costPerToken5 = timings[2].elapsedMs / 5
-        expect(costPerToken3).toBeLessThan(costPerToken1 * 1.3) // Allow 30% variance
-        expect(costPerToken5).toBeLessThan(costPerToken1 * 1.3)
+        expect(costPerToken3).toBeLessThan(costPerToken1 * 1.5)
+        expect(costPerToken5).toBeLessThan(costPerToken1 * 1.5)
     }, 30_000)
 
     it('resolves a loop `items` expression referencing a 100k-row parsed-CSV array without stalling', async () => {

@@ -58,7 +58,7 @@ const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
-            const { sandboxId, mounts, env } = params
+            const { sandboxId, mounts, env, resourceLimits } = params
 
             for (const mount of mounts) {
                 assertMountInsideRoot(mount)
@@ -118,6 +118,10 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--run',
                 '--',
                 process.execPath,
+                // Cap the engine's V8 heap so a runaway flow aborts gracefully (caught as
+                // SANDBOX_MEMORY_ISSUE -> MEMORY_LIMIT_EXCEEDED) instead of OOM-killing the box.
+                // Parity with fork mode (fork.ts); without it the isolate box has no memory bound.
+                `--max-old-space-size=${resourceLimits.memoryLimitMb}`,
                 engineSandboxPath,
             ]
 

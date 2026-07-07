@@ -8,6 +8,7 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
 import { createVariableResolver } from '../piece-context/variable-resolver'
 import { utils } from '../utils'
+import { plainPath } from './plain-path'
 
 const CONNECTIONS = 'connections'
 const VARIABLES = 'variables'
@@ -186,6 +187,13 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
     })
 }
 
+function narrowScopeToToken(variableName: string, currentState: Record<string, unknown>): Record<string, unknown> {
+    const referencedSteps = extractReferencedStepNames(variableName, Object.keys(currentState))
+    return Object.fromEntries(
+        Array.from(referencedSteps, (stepName) => [stepName, currentState[stepName]]),
+    )
+}
+
 async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
     const { variableName, currentState } = params
     if (variableName.startsWith(VARIABLES)) {
@@ -194,7 +202,15 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     if (variableName.startsWith(CONNECTIONS)) {
         return handleConnection(params)
     }
-    return evalInScope(variableName, { ...currentState }, { flattenNestedKeys })
+    const segments = plainPath.parseToken(variableName)
+    if (segments !== null) {
+        const result = plainPath.resolve({ segments, root: currentState })
+        if (result.kind === 'hit') {
+            return result.value
+        }
+    }
+    const tokenScope = narrowScopeToToken(variableName, currentState)
+    return evalInScope(variableName, tokenScope, { flattenNestedKeys })
 }
 
 async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown> {

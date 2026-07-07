@@ -55,12 +55,14 @@ async function callCreate({
     boxId = 7,
     enginePath = '/host/cache/common/main.js',
     sandboxId = 'sb-abc',
+    memoryLimitMb = 256,
 }: {
     mounts?: SandboxMount[]
     env?: Record<string, string>
     boxId?: number
     enginePath?: string
     sandboxId?: string
+    memoryLimitMb?: number
 } = {}) {
     const maker = isolateProcess(createMockLogger(), enginePath, '/host/cache/codes', boxId)
     return maker.create({
@@ -68,7 +70,7 @@ async function callCreate({
         command: [],
         mounts,
         env,
-        resourceLimits: { memoryLimitMb: 256, cpuMsPerSec: 1000, timeLimitSeconds: 60 },
+        resourceLimits: { memoryLimitMb, cpuMsPerSec: 1000, timeLimitSeconds: 60 },
     })
 }
 
@@ -198,10 +200,23 @@ describe('isolateProcess', () => {
         it('runs node with engine path at /root/common/<basename>', async () => {
             await callCreate({ enginePath: '/any/where/engine-main.js' })
             const args: string[] = spawnMock.mock.calls[0][1]
-            expect(args[args.length - 2]).toBe(process.execPath)
             expect(args[args.length - 1]).toBe('/root/common/engine-main.js')
-            expect(args[args.length - 3]).toBe('--')
-            expect(args[args.length - 4]).toBe('--run')
+            expect(args[args.length - 3]).toBe(process.execPath)
+            expect(args[args.length - 4]).toBe('--')
+            expect(args[args.length - 5]).toBe('--run')
+        })
+
+        it.each([256, 512])('caps the engine V8 heap at the resource limit (%iMB)', async (memoryLimitMb) => {
+            await callCreate({ enginePath: '/any/where/engine-main.js', memoryLimitMb })
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args[args.length - 2]).toBe(`--max-old-space-size=${memoryLimitMb}`)
+            expect(args.slice(-5)).toEqual([
+                '--run',
+                '--',
+                process.execPath,
+                `--max-old-space-size=${memoryLimitMb}`,
+                '/root/common/engine-main.js',
+            ])
         })
 
         it('spawns with shell: false', async () => {
