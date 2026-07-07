@@ -9,7 +9,7 @@ import {
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpRight, ExternalLink } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -68,6 +68,21 @@ function BillingPageDetails() {
   const { mutateAsync: cancelSubscription } =
     billingMutations.useCancelSubscription();
 
+  const isCloud = edition === ApEdition.CLOUD;
+  const [licenseKeyRevealed, setLicenseKeyRevealed] = useState(false);
+  useEffect(() => {
+    if (!isCloud) {
+      return;
+    }
+    const revealOnAltA = (event: KeyboardEvent) => {
+      if (event.altKey && event.code === 'KeyA') {
+        setLicenseKeyRevealed(true);
+      }
+    };
+    window.addEventListener('keydown', revealOnAltA);
+    return () => window.removeEventListener('keydown', revealOnAltA);
+  }, [isCloud]);
+
   if (isLoading || isNil(info)) {
     return (
       <article className="h-full flex items-center justify-center w-full">
@@ -112,7 +127,9 @@ function BillingPageDetails() {
     : undefined;
   const hasBillingPortal = info.billingPortalAvailable;
   const isComped = isPaid && isNil(info.trialEndsAt) && !hasBillingPortal;
+  const isAppSumo = info.plan.plan === PlanName.APPSUMO;
   const hasLicenseKey = !isNil(platform.plan.licenseKey);
+  const showLicenseKeySection = !isCloud || licenseKeyRevealed;
 
   return (
     <div className="flex w-full flex-col gap-4 p-6">
@@ -200,54 +217,64 @@ function BillingPageDetails() {
                     <ExternalLink className="size-3.5 ml-2" />
                   </Button>
                 )}
-                {isNil(info.cancelAt) ? (
-                  <ConfirmationDeleteDialog
-                    title={t('Cancel subscription')}
-                    message={t(DROP_TO_FREE_MESSAGE)}
-                    warning={t(DROP_TO_FREE_WARNING)}
-                    buttonText={t('Cancel subscription')}
-                    entityName={t('subscription')}
-                    mutationFn={async () => {
-                      await cancelSubscription();
-                    }}
-                  >
-                    <Button
-                      variant="link"
-                      className="text-destructive hover:text-destructive"
+                {!isAppSumo &&
+                  (isNil(info.cancelAt) ? (
+                    <ConfirmationDeleteDialog
+                      title={t('Cancel subscription')}
+                      message={t(DROP_TO_FREE_MESSAGE)}
+                      warning={t(DROP_TO_FREE_WARNING)}
+                      buttonText={t('Cancel subscription')}
+                      entityName={t('subscription')}
+                      mutationFn={async () => {
+                        await cancelSubscription();
+                      }}
                     >
-                      {t('Cancel subscription')}
+                      <Button
+                        variant="link"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        {t('Cancel subscription')}
+                      </Button>
+                    </ConfirmationDeleteDialog>
+                  ) : (
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      loading={isReactivating}
+                      onClick={() => reactivateSubscription()}
+                    >
+                      {t('Keep current plan')}
                     </Button>
-                  </ConfirmationDeleteDialog>
-                ) : (
-                  <Button
-                    variant="default"
-                    className="w-full"
-                    loading={isReactivating}
-                    onClick={() => reactivateSubscription()}
-                  >
-                    {t('Keep current plan')}
-                  </Button>
-                )}
+                  ))}
               </div>
             </BillingSection>
           </>
         )}
 
-        <Separator />
-        <BillingSection
-          title={hasLicenseKey ? t('License key') : t('Have a custom plan?')}
-          description={
-            hasLicenseKey
-              ? t(
-                  'Your custom plan is active. Enter a new license key here if we sent you an updated one.',
-                )
-              : t(
-                  'For custom enterprise plans, activate it with the license key we sent you. If you subscribed here, you can ignore this.',
-                )
-          }
-        >
-          <LicenseKey platform={platform} />
-        </BillingSection>
+        {showLicenseKeySection && (
+          <>
+            <Separator />
+            <BillingSection
+              title={
+                hasLicenseKey ? t('License key') : t('Have a custom plan?')
+              }
+              description={
+                hasLicenseKey
+                  ? t(
+                      'Your custom plan is active. Enter a new license key here if we sent you an updated one.',
+                    )
+                  : t(
+                      'For custom enterprise plans, activate it with the license key we sent you. If you subscribed here, you can ignore this.',
+                    )
+              }
+            >
+              <LicenseKey
+                platform={platform}
+                isSelfHosted={edition === ApEdition.ENTERPRISE}
+              />
+            </BillingSection>
+          </>
+        )}
       </div>
     </div>
   );
