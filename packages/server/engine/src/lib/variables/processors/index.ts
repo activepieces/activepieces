@@ -1,4 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
+import { checkboxProcessor } from './checkbox'
 import { dateTimeProcessor } from './date-time'
 import { fileProcessor } from './file'
 import { jsonProcessor } from './json'
@@ -8,6 +9,7 @@ import { textProcessor } from './text'
 import { ProcessorFn } from './types'
 
 export const processors: Partial<Record<PropertyType, ProcessorFn>> = {
+    CHECKBOX: checkboxProcessor,
     JSON: jsonProcessor,
     OBJECT: objectProcessor,
     NUMBER: numberProcessor,

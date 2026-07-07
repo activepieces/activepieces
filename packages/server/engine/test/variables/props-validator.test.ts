@@ -419,4 +419,25 @@ describe('Property Validation', () => {
             })
         })
     })
+
+    it('coerces checkbox string literals before validation', async () => {
+        const props = {
+            enabled: Property.Checkbox({
+                displayName: 'Enabled',
+                required: false,
+                defaultValue: false,
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+            { enabled: 'false' },
+            props,
+            PieceAuth.None(),
+            false,
+            {},
+        )
+
+        expect(errors).toEqual({})
+        expect(processedInput.enabled).toBe(false)
+    })
 })
