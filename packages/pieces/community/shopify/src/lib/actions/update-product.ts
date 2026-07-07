@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction, spreadIfDefined } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateProduct } from '../common';
-import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
+import { ShopifyImage, ShopifyProduct, ShopifyProductStatuses } from '../common/types';
 
 export const updateProductAction = createAction({
   auth: shopifyAuth,
@@ -71,24 +71,19 @@ export const updateProductAction = createAction({
     const { id, title, bodyHtml, vendor, productType, tags, productImage } =
       propsValue;
 
-    const images: Partial<ShopifyImage>[] = [];
-    if (productImage) {
-      images.push({
-        attachment: productImage.base64,
-      });
-    }
+    const images: Partial<ShopifyImage>[] | undefined = productImage
+      ? [{ attachment: productImage.base64 }]
+      : undefined;
 
-    return await updateProduct(
-      +id,
-      {
-        title,
-        body_html: bodyHtml,
-        vendor,
-        product_type: productType,
-        tags,
-        images,
-      },
-      auth
-    );
+    const product: Partial<ShopifyProduct> = {
+      ...spreadIfDefined('title', title),
+      ...spreadIfDefined('body_html', bodyHtml),
+      ...spreadIfDefined('vendor', vendor),
+      ...spreadIfDefined('product_type', productType),
+      ...spreadIfDefined('tags', tags),
+      ...spreadIfDefined('images', images),
+    };
+
+    return await updateProduct(+id, product, auth);
   },
 });
