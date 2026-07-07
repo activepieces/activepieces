@@ -394,7 +394,6 @@ import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/18010
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
 import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
-import { AddAdhocRunTable1805000000000 } from './migration/postgres/1805000000000-AddAdhocRunTable'
 import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
 import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
 
@@ -806,7 +805,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatRolloutFreeCreditGrant1802000000000,
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
         DropBadges1804000000000,
-        AddAdhocRunTable1805000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,
         CreatePieceSetTable1807000000000,
     ]

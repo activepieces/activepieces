@@ -4,8 +4,9 @@ import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToo
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
 import dayjs from 'dayjs'
 import { z } from 'zod'
-import { adhocStepRunner } from '../handler/adhoc-step-runner'
 import { EngineConstants } from '../handler/context/engine-constants'
+import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { flowExecutor } from '../handler/flow-executor'
 import { pieceHelper } from '../helper/piece-helper'
 import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
@@ -171,7 +172,12 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             },
             valid: true,
         }
-        const { output: stepOutput, errorMessage, status } = await adhocStepRunner.run({ step, operation })
+        const output = await flowExecutor.getExecutorForAction(step.type).handle({
+            action: step,
+            executionState: FlowExecutorContext.empty(),
+            constants: EngineConstants.fromExecuteActionInput(operation),
+        })
+        const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
         
         return {
             status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,

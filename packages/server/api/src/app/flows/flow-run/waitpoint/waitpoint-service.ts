@@ -151,6 +151,11 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return completed ?? waitpointRepo().findOneBy({ flowRunId })
     },
 
+    async delete({ id }: { id: string }): Promise<void> {
+        await waitpointRepo().delete({ id })
+        log.info({ waitpoint: { id } }, '[waitpointService#delete] Waitpoint deleted')
+    },
+
     async deleteByFlowRunId(flowRunId: string): Promise<void> {
         await waitpointRepo().delete({ flowRunId })
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')

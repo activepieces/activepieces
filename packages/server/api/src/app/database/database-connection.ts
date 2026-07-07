@@ -3,7 +3,6 @@ import {
     DataSource,
     EntitySchema,
 } from 'typeorm'
-import { AdhocRunEntity } from '../adhoc-run/adhoc-run.entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
@@ -80,7 +79,6 @@ function getEntities(): EntitySchema<unknown>[] {
         FlowEntity,
         FlowVersionEntity,
         FlowRunEntity,
-        AdhocRunEntity,
         ProjectEntity,
         StoreEntryEntity,
         UserEntity,
