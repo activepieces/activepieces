@@ -8,8 +8,7 @@ import { Progress } from '@/components/ui/progress';
 
 export const CreditsCard = ({ info }: CreditsCardProps) => {
   const { plan, usage } = info;
-  const isPaid =
-    !isNil(info.currentPlanId) && info.currentPlanId !== PlanName.FREE;
+  const isPaid = !isNil(plan.plan) && plan.plan !== PlanName.FREE;
   const remaining = usage.creditsRemaining;
   const isUnlimited = isNil(remaining);
   const total = plan.includedCredits;
@@ -22,7 +21,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
   const footerDate = info.trialEndsAt ?? resetAt;
   const switchesToPlanName =
     info.scheduledPlanName ??
-    (info.billingPortalAvailable ? info.currentPlanName : t('Free'));
+    (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
 
   return (
     <div className="flex flex-col rounded-xl border">

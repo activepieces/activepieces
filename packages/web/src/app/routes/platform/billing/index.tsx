@@ -84,15 +84,35 @@ function BillingPageDetails() {
     );
   }
 
-  const isPaid =
-    !isNil(info.currentPlanId) && info.currentPlanId !== PlanName.FREE;
-  const creditsFeature = info.topUpFeatures.find(
-    (feature) => feature.featureId === AutumnFeatureId.AP_CREDITS,
-  );
+  const isPaid = !isNil(info.plan.plan) && info.plan.plan !== PlanName.FREE;
+  const creditsFeature =
+    info.topUpFeatures.find(
+      (feature) => feature.featureId === AutumnFeatureId.AP_CREDITS,
+    ) ??
+    info.topUpFeatures.find(
+      (feature) => feature.featureId === AutumnFeatureId.APP_SUMO_AI_CREDITS,
+    );
   const creditsAutoTopUp = info.autoTopUps.find(
-    (config) => config.featureId === AutumnFeatureId.AP_CREDITS,
+    (config) => config.featureId === creditsFeature?.featureId,
   );
+  const isAppSumoCredits =
+    creditsFeature?.featureId === AutumnFeatureId.APP_SUMO_AI_CREDITS;
+  const appSumoAiCreditsTotal =
+    (info.usage.appSumoAiCreditsUsed ?? 0) +
+    (info.usage.appSumoAiCreditsRemaining ?? 0);
+  const includedCreditsForFeature = isAppSumoCredits
+    ? appSumoAiCreditsTotal
+    : info.plan.includedCredits;
+
+  const autoRechargeNote = isAppSumoCredits
+    ? t('Auto recharge your AI credits — {remaining} of {total} left.', {
+        remaining: (info.usage.appSumoAiCreditsRemaining ?? 0).toLocaleString(),
+        total: appSumoAiCreditsTotal.toLocaleString(),
+      })
+    : undefined;
   const hasBillingPortal = info.billingPortalAvailable;
+  const isComped = isPaid && isNil(info.trialEndsAt) && !hasBillingPortal;
+  const hasLicenseKey = !isNil(platform.plan.licenseKey);
 
   return (
     <div className="flex w-full flex-col gap-4 p-6">
@@ -113,7 +133,7 @@ function BillingPageDetails() {
               <div className="flex flex-col gap-2">
                 <span>
                   {t('Your current plan is {plan}.', {
-                    plan: info.currentPlanName ?? t('Free'),
+                    plan: info.autumnPlanName ?? t('Free'),
                   })}{' '}
                   {t(
                     'Upgrade anytime to get more credits and unlock features.',
@@ -151,13 +171,15 @@ function BillingPageDetails() {
               <AutoRechargeCard
                 feature={creditsFeature}
                 autoTopUp={creditsAutoTopUp}
-                includedCredits={info.plan.includedCredits}
+                includedCredits={includedCreditsForFeature}
+                hasCard={hasBillingPortal}
+                note={autoRechargeNote}
               />
             )}
           </BillingSection>
         )}
 
-        {isPaid && (
+        {isPaid && !isComped && (
           <>
             <Separator />
             <BillingSection
@@ -212,7 +234,20 @@ function BillingPageDetails() {
         )}
 
         <Separator />
-        <LicenseKey platform={platform} />
+        <BillingSection
+          title={hasLicenseKey ? t('License key') : t('Have a custom plan?')}
+          description={
+            hasLicenseKey
+              ? t(
+                  'Your custom plan is active. Enter a new license key here if we sent you an updated one.',
+                )
+              : t(
+                  'For custom enterprise plans, activate it with the license key we sent you. If you subscribed here, you can ignore this.',
+                )
+          }
+        >
+          <LicenseKey platform={platform} />
+        </BillingSection>
       </div>
     </div>
   );
@@ -224,7 +259,7 @@ const BillingSection = ({
   children,
 }: {
   title: string;
-  description: React.ReactNode;
+  description?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <section className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_400px] md:gap-20 pr-4">

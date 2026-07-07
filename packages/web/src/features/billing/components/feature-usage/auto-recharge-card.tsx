@@ -7,7 +7,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -20,11 +20,15 @@ export const AutoRechargeCard = ({
   feature,
   autoTopUp,
   includedCredits,
+  hasCard,
+  note,
 }: AutoRechargeCardProps) => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { mutate: updateAutoTopUp, isPending } =
     billingMutations.useUpdateAutoTopUp(queryClient);
+  const { mutate: setupPayment, isPending: isSettingUpPayment } =
+    billingMutations.useSetupPayment();
 
   const enabled = (autoTopUp?.enabled ?? false) && !isNil(autoTopUp);
 
@@ -39,6 +43,33 @@ export const AutoRechargeCard = ({
     });
   };
 
+  // Auto-recharge can only charge with a card on file, so collect one first: a cardless customer sees an
+  // "add payment method" CTA instead of the toggle. Once the card is saved, the toggle appears.
+  if (!hasCard) {
+    return (
+      <div className="flex flex-col gap-3 rounded-xl border p-5">
+        <span className="text-sm font-medium text-foreground">
+          {t('Enable auto recharge')}
+        </span>
+        {note && <span className="text-sm text-muted-foreground">{note}</span>}
+        <span className="text-sm text-muted-foreground">
+          {t(
+            'Add a payment method to set up auto recharge. You can configure it once your card is on file.',
+          )}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="self-start"
+          loading={isSettingUpPayment}
+          onClick={() => setupPayment()}
+        >
+          {t('Add a payment method')}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 rounded-xl border p-5">
       <div className="flex items-center gap-3">
@@ -51,6 +82,7 @@ export const AutoRechargeCard = ({
           {t('Enable auto recharge')}
         </span>
       </div>
+      {note && <span className="text-sm text-muted-foreground">{note}</span>}
       {enabled && (
         <>
           <div className="flex flex-col gap-2 text-sm">
@@ -118,4 +150,6 @@ type AutoRechargeCardProps = {
   feature: ToppableFeature;
   autoTopUp?: AutoTopUpConfig;
   includedCredits: number;
+  hasCard: boolean;
+  note?: ReactNode;
 };

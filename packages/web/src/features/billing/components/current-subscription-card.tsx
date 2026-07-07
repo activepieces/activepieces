@@ -16,9 +16,8 @@ export const CurrentSubscriptionCard = ({
   info,
   onExplorePlans,
 }: CurrentSubscriptionCardProps) => {
-  const isPaid =
-    !isNil(info.currentPlanId) && info.currentPlanId !== PlanName.FREE;
-  const isYearly = info.currentPlanId?.endsWith('_annual') ?? false;
+  const isPaid = !isNil(info.plan.plan) && info.plan.plan !== PlanName.FREE;
+  const isYearly = info.plan.plan?.endsWith('_annual') ?? false;
 
   if (isPaid) {
     return (
@@ -63,10 +62,10 @@ export const CurrentSubscriptionCard = ({
 };
 
 function planTitle(info: PlatformBillingInformation): string {
-  if (isNil(info.currentPlanId) || info.currentPlanId === PlanName.FREE) {
+  if (isNil(info.plan.plan) || info.plan.plan === PlanName.FREE) {
     return t('Free plan');
   }
-  const base = (info.currentPlanName ?? info.currentPlanId)
+  const base = (info.autumnPlanName ?? info.plan.plan)
     .replace(/\s*\((annual|monthly|yearly)\)\s*/i, '')
     .trim();
   return t('{plan} plan', { plan: base });

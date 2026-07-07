@@ -12,7 +12,7 @@ export const PlatformUsage = z.object({
     creditsUsed: z.number(),
     creditsRemaining: Nullable(z.number()),
     creditsNextResetAt: Nullable(z.string()),
-    appSumoAiCredits: Nullable(z.number()),
+    appSumoAiCreditsUsed: Nullable(z.number()),
     appSumoAiCreditsRemaining: Nullable(z.number()),
     activeFlows: z.number(),
     teamProjects: z.number(),
@@ -259,8 +259,7 @@ export type ProjectCreditUsage = z.infer<typeof ProjectCreditUsage>
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
-    currentPlanId: Nullable(z.string()),
-    currentPlanName: Nullable(z.string()),
+    autumnPlanName: Nullable(z.string()),
     scheduledPlanName: Nullable(z.string()),
     nextBillingDate: z.string(),
     nextBillingAmount: z.number(),

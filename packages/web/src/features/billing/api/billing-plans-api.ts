@@ -7,6 +7,7 @@ import {
   PurchasablePlan,
   CheckoutPlanParams,
   CheckoutSessionResponse,
+  SetupPaymentParams,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -46,8 +47,14 @@ export const platformBillingApi = {
     );
   },
   updateAutoTopUp(params: ConsumableProductAutoTopupParams) {
-    return api.post<{ paymentUrl?: string }>(
+    return api.post<object>(
       '/v1/platform-billing/consumable-product-topups/auto-topup',
+      params,
+    );
+  },
+  setupPayment(params: SetupPaymentParams) {
+    return api.post<{ url: string | null }>(
+      '/v1/platform-billing/setup-payment',
       params,
     );
   },

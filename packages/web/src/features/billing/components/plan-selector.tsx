@@ -47,7 +47,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
     enabled,
   );
 
-  const currentPlanId = subscription?.currentPlanId ?? platform.plan.plan;
+  const currentPlanId = subscription?.plan.plan ?? platform.plan.plan;
   const allPlans = plans ?? [];
   const currentPlan = allPlans.find((plan) => plan.id === currentPlanId);
   const hasAnnualOption = allPlans.some(

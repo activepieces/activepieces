@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, PlanName } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { getBillingEnforcedKey, getBillingOverviewKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
@@ -71,29 +71,31 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
     configureAutoTopUp: async (params) => {
         await autumnUtils.ensureEnrolled(log, params.platformId)
-        const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
         const creds = await autumnConsole.getCreds(log, params.platformId)
-        if (isNil(client) || isNil(creds)) {
-            return {}
+        if (isNil(creds)) {
+            return
         }
-        if (params.state === AiCreditsAutoTopUpState.DISABLED) {
-            await autumnConsole.configureAutoTopUp({ ...creds, featureId: params.featureId, enabled: false })
-            await autumnUtils.invalidateBillingOverview(params.platformId)
-            return {}
-        }
-        const customer = await client.getCustomer({ expand: ['payment_method'] })
-        const setupPaymentReturnUrl = isNil(customer?.paymentMethod) ? params.returnUrl : undefined
-        const { setupPaymentUrl } = await autumnConsole.configureAutoTopUp({
-            ...creds,
-            featureId: params.featureId,
-            enabled: true,
-            threshold: params.minThreshold,
-            quantity: params.creditsToAdd,
-            maxMonthlyTopUps: params.maxMonthlyTopUps,
-            setupPaymentReturnUrl,
-        })
+        await autumnConsole.configureAutoTopUp(
+            params.state === AiCreditsAutoTopUpState.DISABLED
+                ? { ...creds, featureId: params.featureId, enabled: false }
+                : {
+                    ...creds,
+                    featureId: params.featureId,
+                    enabled: true,
+                    threshold: params.minThreshold,
+                    quantity: params.creditsToAdd,
+                    maxMonthlyTopUps: params.maxMonthlyTopUps,
+                },
+        )
         await autumnUtils.invalidateBillingOverview(params.platformId)
-        return isNil(setupPaymentUrl) ? {} : { setupPaymentUrl }
+    },
+    setupPayment: async ({ platformId, redirectUrl }) => {
+        await autumnUtils.ensureEnrolled(log, platformId)
+        const creds = await autumnConsole.getCreds(log, platformId)
+        if (isNil(creds)) {
+            return { url: null }
+        }
+        return autumnConsole.setupPayment({ ...creds, redirectUrl })
     },
     cancelSubscription: async ({ platformId }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
@@ -200,16 +202,22 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
 
 function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthEnd: string): BillingInfo {
     const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
-    const basePlan = baseSubscriptions.find((subscription) => subscription.status === 'active') ?? baseSubscriptions[0]
-    const scheduledPlan = baseSubscriptions.find((subscription) => subscription !== basePlan)
+    const activeBaseSubscriptions = baseSubscriptions.filter((subscription) => subscription.status === 'active')
+    const baseSubscription = activeBaseSubscriptions.find((subscription) => subscription.planId !== PlanName.FREE)
+        ?? activeBaseSubscriptions[0]
+        ?? baseSubscriptions[0]
+    // A lifetime plan (e.g. AppSumo) has no recurring price, so Autumn models it as a one-off `purchase`
+    const purchasedPlan = (customer.purchases ?? []).find((purchase) =>
+        !isNil(purchase.plan) && !purchase.plan.addOn && purchase.planId !== PlanName.FREE)
+    const currentPlan = purchasedPlan ?? baseSubscription
+    const scheduledPlan = baseSubscriptions.find((subscription) => subscription !== baseSubscription)
     return {
-        planId: basePlan?.planId ?? null,
-        planName: basePlan?.plan?.name ?? null,
-        startDate: msToIso(basePlan?.currentPeriodStart) ?? monthStart,
-        endDate: msToIso(basePlan?.currentPeriodEnd) ?? monthEnd,
-        nextBillingAmount: basePlan?.plan?.price?.amount ?? 0,
-        cancelAt: msToIso(basePlan?.expiresAt) ?? null,
-        trialEndsAt: msToIso(basePlan?.trialEndsAt) ?? null,
+        planName: currentPlan?.plan?.name ?? null,
+        startDate: msToIso(baseSubscription?.currentPeriodStart) ?? monthStart,
+        endDate: msToIso(baseSubscription?.currentPeriodEnd) ?? monthEnd,
+        nextBillingAmount: baseSubscription?.plan?.price?.amount ?? 0,
+        cancelAt: msToIso(baseSubscription?.expiresAt) ?? null,
+        trialEndsAt: msToIso(baseSubscription?.trialEndsAt) ?? null,
         scheduledPlanName: scheduledPlan?.plan?.name ?? null,
         billingPortalAvailable: !isNil(customer.paymentMethod),
     }
@@ -372,9 +380,9 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
     const client = await autumnUtils.resolveClientForPlatform(log, platformId)
     const creds = await autumnConsole.getCreds(log, platformId)
     if (isNil(client) || isNil(creds)) {
-        return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, autoTopUps: [], topUpFeatures: [] }
+        return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, autoTopUps: [], topUpFeatures: [] }
     }
-    const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'payment_method', 'billing_controls.auto_topups.purchase_limit'] })
+    const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan', 'payment_method', 'billing_controls.auto_topups.purchase_limit'] })
     const overview: BillingOverview = {
         ...toBillingInfo(customer, monthStart, monthEnd),
         autoTopUps: toAutoTopUps(customer),

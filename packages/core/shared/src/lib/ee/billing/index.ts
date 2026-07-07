@@ -54,6 +54,11 @@ export const ConsumableProductAutoTopupParams = z.discriminatedUnion('state', [
 ])
 export type ConsumableProductAutoTopupParams = z.infer<typeof ConsumableProductAutoTopupParams>
 
+export const SetupPaymentParams = z.object({
+    redirectUrl: z.string().optional(),
+})
+export type SetupPaymentParams = z.infer<typeof SetupPaymentParams>
+
 export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tablesEnabled: true,

@@ -5,7 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
 
 function defaultBillingInfo(): BillingInfo {
-    return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planId: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
+    return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
 }
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
@@ -25,7 +25,10 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
         return { checkoutUrl: null }
     },
     configureAutoTopUp: async () => {
-        return {}
+        return
+    },
+    setupPayment: async () => {
+        return { url: null }
     },
     cancelSubscription: async () => {
         return
@@ -237,7 +240,6 @@ export type BillingInfo = {
     nextBillingAmount: number
     cancelAt: string | null
     trialEndsAt: string | null
-    planId: string | null
     planName: string | null
     scheduledPlanName: string | null
     billingPortalAvailable: boolean
@@ -257,7 +259,11 @@ export type TopUpFeatureParams = {
 
 export type ConfigureAutoTopUpParams = ConsumableProductAutoTopupParams & {
     platformId: string
-    returnUrl?: string
+}
+
+export type SetupPaymentParams = {
+    platformId: string
+    redirectUrl?: string
 }
 
 export type CancelSubscriptionParams = {
@@ -289,7 +295,8 @@ export type BillingProvider = {
     createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{ checkoutUrl: string | null }>
     getBillingPortalUrl(params: BillingPortalParams): Promise<{ url: string }>
     topUpFeature(params: TopUpFeatureParams): Promise<{ checkoutUrl: string | null }>
-    configureAutoTopUp(params: ConfigureAutoTopUpParams): Promise<{ setupPaymentUrl?: string }>
+    configureAutoTopUp(params: ConfigureAutoTopUpParams): Promise<void>
+    setupPayment(params: SetupPaymentParams): Promise<{ url: string | null }>
     cancelSubscription(params: CancelSubscriptionParams): Promise<void>
     reactivateSubscription(params: ReactivateSubscriptionParams): Promise<void>
     trackCredits(params: TrackCreditsParams): Promise<void>

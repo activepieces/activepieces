@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { AutumnFeatureId, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
+import { AutumnFeatureId, PlanName, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import {
     Autumn,
     type AggregateEventsResponse,
@@ -23,7 +23,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://london-boxed-zshops-threaded.trycloudflare.com'
+const AUTUMN_CONSOLE_URL = 'https://lounge-greatest-comprehensive-wives.trycloudflare.com'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
@@ -277,11 +277,18 @@ export const autumnConsole = {
         )
         return response.data.data
     },
-    async configureAutoTopUp(params: ConsoleCustomerCall & ConfigureAutoTopUpOnConsoleParams): Promise<{ setupPaymentUrl?: string }> {
+    async configureAutoTopUp(params: ConsoleCustomerCall & ConfigureAutoTopUpOnConsoleParams): Promise<void> {
         const { autumnCustomerId, autumnApiKey, ...body } = params
-        const response = await safeHttp.axios.post<{ data: { setupPaymentUrl?: string } }>(
+        await safeHttp.axios.post<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/auto-topup`,
             { autumnCustomerId, ...body },
+            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
+        )
+    },
+    async setupPayment({ autumnCustomerId, autumnApiKey, redirectUrl }: ConsoleCustomerCall & { redirectUrl?: string }): Promise<{ url: string | null }> {
+        const response = await safeHttp.axios.post<{ data: { url: string | null } }>(
+            `${AUTUMN_CONSOLE_URL}/api/billing/setup-payment`,
+            { autumnCustomerId, redirectUrl },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
         return response.data.data
@@ -354,9 +361,18 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
             nextResetAt: balance.nextResetAt,
         }
     }
-    const basePlan = customer.subscriptions.find((subscription) => !subscription.addOn)
+    // A lifetime plan (e.g. AppSumo) is a one-off `purchase`, not a subscription — the only base subscription
+    const baseSubscriptionPlanId =
+        customer.subscriptions.find((subscription) => !subscription.addOn && subscription.planId !== PlanName.FREE)?.planId
+        ?? customer.subscriptions.find((subscription) => !subscription.addOn)?.planId
+        ?? null
+    const purchasedPlanId = (customer.purchases ?? [])
+        .find((purchase) => !isNil(purchase.planId) && purchase.planId !== PlanName.FREE)?.planId ?? null
+    const planId = baseSubscriptionPlanId != null && baseSubscriptionPlanId !== PlanName.FREE
+        ? baseSubscriptionPlanId
+        : purchasedPlanId ?? baseSubscriptionPlanId
     return {
-        planId: basePlan?.planId ?? null,
+        planId,
         flags,
         balances,
     }
@@ -420,7 +436,6 @@ type ConfigureAutoTopUpOnConsoleParams =
         threshold: number
         quantity: number
         maxMonthlyTopUps?: number | null
-        setupPaymentReturnUrl?: string
     }
     | {
         featureId: string

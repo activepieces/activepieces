@@ -137,11 +137,7 @@ export const billingMutations = {
   useUpdateAutoTopUp: (queryClient: QueryClient) => {
     return useMutation({
       mutationFn: async (params: ConsumableProductAutoTopupParams) => {
-        const { paymentUrl } = await platformBillingApi.updateAutoTopUp(params);
-        if (paymentUrl) {
-          window.open(paymentUrl, '_blank');
-        }
-        return { paymentUrl };
+        await platformBillingApi.updateAutoTopUp(params);
       },
       onMutate: async (params) => {
         await queryClient.cancelQueries({
@@ -156,10 +152,7 @@ export const billingMutations = {
         );
         return { previous };
       },
-      onSuccess: (data, _params, context) => {
-        if (data.paymentUrl) {
-          restoreBillingSubscription(queryClient, context?.previous);
-        }
+      onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
         });
@@ -168,6 +161,21 @@ export const billingMutations = {
       onError: (_error, _params, context) => {
         restoreBillingSubscription(queryClient, context?.previous);
         toast.error(t('Auto top-up config change failed'));
+        internalErrorToast();
+      },
+    });
+  },
+  useSetupPayment: () => {
+    return useMutation({
+      mutationFn: async () => {
+        const { url } = await platformBillingApi.setupPayment({
+          redirectUrl: `${window.location.origin}/platform/setup/billing/success?action=setup`,
+        });
+        if (url) {
+          window.open(url, '_blank');
+        }
+      },
+      onError: () => {
         internalErrorToast();
       },
     });

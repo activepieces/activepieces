@@ -118,13 +118,14 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
       included: plan.teamProjectsLimit ?? null,
     },
   ];
-  if (!isNil(usage.appSumoAiCredits)) {
+  if (!isNil(usage.appSumoAiCreditsUsed)) {
     metrics.push({
       key: 'appsumo-ai-credits',
       label: 'AppSumo AI Credits',
       icon: Sparkles,
-      used: usage.appSumoAiCredits,
-      included: usage.appSumoAiCredits + (usage.appSumoAiCreditsRemaining ?? 0),
+      used: usage.appSumoAiCreditsUsed,
+      included:
+        usage.appSumoAiCreditsUsed + (usage.appSumoAiCreditsRemaining ?? 0),
     });
   }
   return metrics.filter(

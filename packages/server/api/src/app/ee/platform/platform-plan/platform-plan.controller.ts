@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils'
-import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan } from '@activepieces/shared'
+import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -100,11 +100,18 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return { paymentUrl: checkoutUrl }
     })
     fastify.post('/consumable-product-topups/auto-topup', ConsumableProductAutoTopupRequest, async (request) => {
-        const { setupPaymentUrl } = await billingProvider.get(request.log).configureAutoTopUp({
+        await billingProvider.get(request.log).configureAutoTopUp({
             ...request.body,
             platformId: request.principal.platform.id,
         })
-        return { paymentUrl: setupPaymentUrl }
+        return {}
+    })
+
+    fastify.post('/setup-payment', SetupPaymentRequest, async (request) => {
+        return billingProvider.get(request.log).setupPayment({
+            redirectUrl: request.body.redirectUrl,
+            platformId: request.principal.platform.id,
+        })
     })
 }
 
@@ -116,7 +123,7 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         billingProvider.get(log).getBillingOverview(platform.id),
     ])
 
-    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planId: currentPlanId, planName: currentPlanName, scheduledPlanName, billingPortalAvailable, autoTopUps, topUpFeatures } = overview
+    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, autoTopUps, topUpFeatures } = overview
 
     const usageWithCredits = usage.creditsRemaining === null
         ? { ...usage, creditsUsed: (await billingProvider.get(log).getCreditUsage({ platformId: platform.id, startDate: billingPeriodStart, endDate: nextBillingDate })).total }
@@ -125,8 +132,7 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
     return {
         plan: platformPlan,
         usage: usageWithCredits,
-        currentPlanId,
-        currentPlanName,
+        autumnPlanName,
         scheduledPlanName,
         nextBillingAmount,
         nextBillingDate,
@@ -237,8 +243,20 @@ const ConsumableProductAutoTopupRequest = {
     schema: {
         body: ConsumableProductAutoTopupParams,
         response: {
+            [StatusCodes.OK]: z.object({}),
+        },
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const SetupPaymentRequest = {
+    schema: {
+        body: SetupPaymentParams,
+        response: {
             [StatusCodes.OK]: z.object({
-                paymentUrl: z.string().optional(),
+                url: z.string().nullable(),
             }),
         },
     },
