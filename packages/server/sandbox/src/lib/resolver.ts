@@ -15,7 +15,7 @@ export function createResolver({ apiClient, basePath, getSettings, log }: Create
     return {
         async resolve(input: ResolveInput): Promise<ResolveResult> {
             let pieces = input.pieces ?? []
-            let codes: CodeArtifact[] = input.codes ?? []
+            let codes: CodeArtifact[] = []
             let flowVersion: FlowVersion | undefined
 
             if (!isNil(input.flow)) {
