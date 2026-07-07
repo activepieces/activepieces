@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-
-npx --no -- commitlint --edit ${1}
+ROOT="$(cd "$(dirname -- "$0")/.." && pwd)"
+"$ROOT/node_modules/.bin/commitlint" --edit ${1}
