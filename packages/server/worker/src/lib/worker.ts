@@ -3,10 +3,11 @@ import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
+import { createApiToWorkerHandlers } from './api-notify-service'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
@@ -107,6 +108,13 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
+        createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
+            getRuntime: () => runtime,
+            apiClient,
+            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            log: logger,
+        }))
+
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
         }
@@ -162,6 +170,13 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
+    })
+
+    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
+    void runtime.prewarm({
+        log: logger, 
+        apiClient,
+        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
     })
 
     logger.info({ concurrency }, 'Starting poll loops')
