@@ -13,7 +13,7 @@ A verification protocol where external services confirm webhook ownership before
 _Avoid_: webhook verification
 
 **Application Event**:
-A domain event emitted on the internal event bus (19 types) for audit logging, badges, and event destinations.
+A domain event emitted on the internal event bus (19 types) for audit logging and event destinations.
 _Avoid_: domain event, system event
 
 **Event Destination**:

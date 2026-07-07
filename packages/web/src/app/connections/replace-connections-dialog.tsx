@@ -184,6 +184,10 @@ const ReplaceConnectionsDialog = ({
     name: 'sourceConnections.id',
   });
 
+  const sourceIsGlobalConnection =
+    filteredConnections.find((conn) => conn.id === sourceConnectionId)
+      ?.scope === AppConnectionScope.PLATFORM;
+
   const replacedWithOptions = useMemo(() => {
     return filteredConnections
       .filter((conn) => conn.id !== sourceConnectionId)
@@ -200,7 +204,9 @@ const ReplaceConnectionsDialog = ({
   const deleteBlockedByPublishedFlows =
     !applyToPublishedVersions && publishedAffectedCount > 0;
   const effectiveDeleteSourceConnection =
-    oldConnectionAction === 'delete' && !deleteBlockedByPublishedFlows;
+    oldConnectionAction === 'delete' &&
+    !deleteBlockedByPublishedFlows &&
+    !sourceIsGlobalConnection;
 
   const handleBack = () => {
     setStep(STEP.SELECT);
@@ -330,16 +336,12 @@ const ReplaceConnectionsDialog = ({
                               id: '',
                               externalId: '',
                             });
+                            setOldConnectionAction('keep');
                           }}
-                          options={filteredConnections
-                            .filter(
-                              (conn) =>
-                                conn.scope === AppConnectionScope.PROJECT,
-                            )
-                            .map((conn) => ({
-                              label: conn.displayName,
-                              value: conn.id,
-                            }))}
+                          options={filteredConnections.map((conn) => ({
+                            label: conn.displayName,
+                            value: conn.id,
+                          }))}
                           placeholder={t('Choose connection to replace')}
                           valuesRendering={(value) => {
                             const conn = filteredConnections.find(
@@ -352,6 +354,10 @@ const ReplaceConnectionsDialog = ({
                                   size="xs"
                                   border={false}
                                 />
+                                {conn?.scope ===
+                                  AppConnectionScope.PLATFORM && (
+                                  <GlobeIcon className="w-4 h-4" />
+                                )}
                                 <span>{conn!.displayName}</span>
                               </div>
                             );
@@ -497,7 +503,7 @@ const ReplaceConnectionsDialog = ({
               <LabelWithTooltip
                 label={t('After replacing')}
                 tooltip={t(
-                  'Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first.',
+                  'Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. Global connections can only be deleted from the platform admin page.',
                 )}
               />
               <Select
@@ -515,7 +521,9 @@ const ReplaceConnectionsDialog = ({
                   </SelectItem>
                   <SelectItem
                     value="delete"
-                    disabled={deleteBlockedByPublishedFlows}
+                    disabled={
+                      deleteBlockedByPublishedFlows || sourceIsGlobalConnection
+                    }
                   >
                     {t('Delete the old connection')}
                   </SelectItem>
