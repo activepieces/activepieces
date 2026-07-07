@@ -3,6 +3,7 @@ import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 type TeamsBotInstallationSchema = {
     id: string
+    appId: string | null
     tenantId: string
     teamsTeamId: string
     serviceUrl: string
@@ -14,6 +15,11 @@ export const TeamsBotInstallationEntity = new EntitySchema<TeamsBotInstallationS
     name: 'teams_bot_installation',
     columns: {
         ...BaseColumnSchemaPart,
+        appId: {
+            type: String,
+            length: 255,
+            nullable: true,
+        },
         tenantId: {
             ...ApIdSchema,
             type: String,
@@ -30,7 +36,7 @@ export const TeamsBotInstallationEntity = new EntitySchema<TeamsBotInstallationS
     },
     uniques: [
         {
-            columns: ['tenantId', 'teamsTeamId'],
+            columns: ['appId', 'tenantId', 'teamsTeamId'],
         },
     ],
 })

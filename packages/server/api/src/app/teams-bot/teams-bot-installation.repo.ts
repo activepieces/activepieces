@@ -5,21 +5,31 @@ import { TeamsBotInstallationEntity } from './teams-bot-installation.entity'
 const teamsBotInstallationRepo = repoFactory(TeamsBotInstallationEntity)
 
 export const teamsBotInstallationDb = {
-    async upsert({ tenantId, teamsTeamId, serviceUrl }: {
+    async upsert({ appId, tenantId, teamsTeamId, serviceUrl }: {
+        appId: string
         tenantId: string
         teamsTeamId: string
         serviceUrl: string
     }): Promise<void> {
         await teamsBotInstallationRepo().upsert(
-            { id: apId(), tenantId, teamsTeamId, serviceUrl },
-            { conflictPaths: ['tenantId', 'teamsTeamId'], skipUpdateIfNoValuesChanged: true },
+            { id: apId(), appId, tenantId, teamsTeamId, serviceUrl },
+            { conflictPaths: ['appId', 'tenantId', 'teamsTeamId'], skipUpdateIfNoValuesChanged: true },
         )
     },
 
-    async findOne({ tenantId, teamsTeamId }: {
+    async findOne({ appId, tenantId, teamsTeamId }: {
+        appId: string
         tenantId: string
         teamsTeamId: string
     }) {
-        return teamsBotInstallationRepo().findOneBy({ tenantId, teamsTeamId })
+        return teamsBotInstallationRepo().findOneBy({ appId, tenantId, teamsTeamId })
+    },
+
+    async remove({ appId, tenantId, teamsTeamId }: {
+        appId: string
+        tenantId: string
+        teamsTeamId: string
+    }): Promise<void> {
+        await teamsBotInstallationRepo().delete({ appId, tenantId, teamsTeamId })
     },
 }

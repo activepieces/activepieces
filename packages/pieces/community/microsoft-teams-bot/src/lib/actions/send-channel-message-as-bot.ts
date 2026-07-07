@@ -1,16 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { microsoftTeamsAuth } from '../auth';
-import { microsoftTeamsCommon } from '../common';
+import { microsoftTeamsBotAuth } from '../auth';
+import { microsoftTeamsBotCommon } from '../common';
 
 export const sendChannelMessageAsBotAction = createAction({
-  auth: microsoftTeamsAuth,
+  auth: microsoftTeamsBotAuth,
   name: 'microsoft_teams_send_channel_message_as_bot',
   displayName: 'Send Channel Message as Bot',
   description: 'Sends a message to a channel from the Activepieces Bot. The bot must be installed in the team first.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends a message to a Teams channel as the Activepieces Bot, instead of as the connected user. Requires the bot to already be installed in the target team (via the Teams app store or a sideloaded package). Each call posts a new message, so retries duplicate.',
+    idempotent: false,
+  },
   props: {
-    teamId: microsoftTeamsCommon.teamId,
-    channelId: microsoftTeamsCommon.channelId,
+    teamId: microsoftTeamsBotCommon.teamId,
+    channelId: microsoftTeamsBotCommon.channelId,
     contentType: Property.StaticDropdown({
       displayName: 'Content Type',
       required: true,
@@ -30,17 +35,15 @@ export const sendChannelMessageAsBotAction = createAction({
   },
   async run(context) {
     const { teamId, channelId, contentType, content } = context.propsValue;
+    const { appId, appSecret, tenantId } = context.auth.props;
 
-    const claims = JSON.parse(
-      Buffer.from(context.auth.access_token.split('.')[1], 'base64').toString(),
-    );
-    const tenantId = claims['tid'] as string;
-
-    await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.server.apiUrl}/v1/teams-bot/send`,
+      url: `${context.server.apiUrl}v1/teams-bot/send`,
       headers: { Authorization: `Bearer ${context.server.token}` },
-      body: { tenantId, teamId, channelId, content, contentType },
+      body: { appId, appSecret, tenantId, teamId, channelId, content, contentType },
     });
+
+    return response.body;
   },
 });
