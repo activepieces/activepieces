@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import TurndownService from '@joplin/turndown';
 
 import { gfm } from '@joplin/turndown-plugin-gfm';
+import turndownPluginTableNormalizer from '../utilities/html-to-markdown/turndown-table-normalizer-plugin';
 
 export const htmlToMarkdown = createAction({
   audience: 'human',
@@ -29,6 +30,7 @@ export const htmlToMarkdown = createAction({
     service.remove('script');
 
     service.use(gfm);
+    service.use(turndownPluginTableNormalizer);
 
     return service.turndown(html);
   },
