@@ -48,7 +48,12 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     // product sessions still get tagged.
     const isEmbedded =
       embedState.isEmbedded || window.location.pathname.startsWith('/embed');
-    if (!telemetryEnabled || isEmbedded) {
+    // Wait for EDITION too: isCloud drives init-time options (autocapture,
+    // heatmaps, replay sampling) that posthog-js cannot change after init.
+    // Both flags arrive in the same /v1/flags response, so in practice this
+    // never delays init — it just makes "init with the wrong isCloud"
+    // unrepresentable.
+    if (!telemetryEnabled || isEmbedded || isNil(edition)) {
       return;
     }
     posthogInitialized.current = true;
