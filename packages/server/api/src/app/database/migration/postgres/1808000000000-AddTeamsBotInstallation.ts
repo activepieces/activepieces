@@ -16,7 +16,7 @@ export class AddTeamsBotInstallation1808000000000 implements Migration {
                 "tenantId" character varying(255) NOT NULL,
                 "teamsTeamId" character varying(255) NOT NULL,
                 "serviceUrl" character varying(512) NOT NULL,
-                CONSTRAINT "UQ_teams_bot_installation_app_tenant_team" UNIQUE ("appId", "tenantId", "teamsTeamId"),
+                CONSTRAINT "UQ_9d4e7cb17346c4840309540b56d" UNIQUE ("appId", "tenantId", "teamsTeamId"),
                 CONSTRAINT "PK_teams_bot_installation" PRIMARY KEY ("id")
             )
         `)
