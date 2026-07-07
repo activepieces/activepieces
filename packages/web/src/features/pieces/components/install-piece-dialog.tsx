@@ -1,4 +1,4 @@
-`import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
+import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
 import {
   AddPieceRequestBody,
   ApFlagId,
