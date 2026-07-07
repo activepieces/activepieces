@@ -40,7 +40,7 @@ const AUTUMN_FLAG_FEATURE_IDS = [
     'embeddingEnabled',
     'aiProvidersEnabled',
     'chatEnabled',
-    'dataManipulationEnabled',
+    'workerGroupsEnabled',
     'managePiecesEnabled',
     'manageTemplatesEnabled',
     'customAppearanceEnabled',

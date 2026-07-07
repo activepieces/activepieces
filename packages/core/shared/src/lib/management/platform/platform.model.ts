@@ -51,7 +51,7 @@ export enum AutumnFeatureId {
     EMBEDDING_ENABLED = 'embeddingEnabled',
     AI_PROVIDERS_ENABLED = 'aiProvidersEnabled',
     CHAT_ENABLED = 'chatEnabled',
-    DATA_MANIPULATION_ENABLED = 'dataManipulationEnabled',
+    WORKER_GROUPS_ENABLED = 'workerGroupsEnabled',
     MANAGE_PIECES_ENABLED = 'managePiecesEnabled',
     MANAGE_TEMPLATES_ENABLED = 'manageTemplatesEnabled',
     CUSTOM_APPEARANCE_ENABLED = 'customAppearanceEnabled',
