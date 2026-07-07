@@ -1,9 +1,9 @@
-import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
 import { AutumnFeatureId, PlanName, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
 import {
-    Autumn,
     type AggregateEventsResponse,
+    Autumn,
     type Balance,
     type CheckParams,
     type EventsAggregateParams,
@@ -147,6 +147,28 @@ export const autumnUtils = {
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
         await autumnUtils.writeCustomerStateCaches(platformId, customer)
         await autumnUtils.invalidateBillingOverview(platformId)
+        await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
+    },
+    async provisionLicenseKeyIfPaid(log: FastifyBaseLogger, platformId: string, planId: string | null): Promise<void> {
+        if (isNil(planId) || planId === PlanName.FREE || planId === PlanName.APPSUMO) {
+            return
+        }
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (!isNil(platformPlan.licenseKey) && !isEmpty(platformPlan.licenseKey)) {
+            return
+        }
+        const creds = await autumnConsole.getCreds(log, platformId)
+        if (isNil(creds)) {
+            return
+        }
+        const { data, error } = await tryCatch(() => autumnConsole.provisionLicenseKey({ ...creds }))
+        if (error) {
+            log.warn({ error, platform: { id: platformId } }, 'Failed to provision license key for self-serve paid customer')
+            return
+        }
+        if (!isNil(data.licenseKey)) {
+            await platformPlanService(log).update({ platformId, licenseKey: data.licenseKey })
+        }
     },
     async invalidateBillingOverview(platformId: string): Promise<void> {
         await distributedStore.delete(getBillingOverviewKey(platformId))
@@ -289,6 +311,14 @@ export const autumnConsole = {
         const response = await safeHttp.axios.post<{ data: { url: string | null } }>(
             `${AUTUMN_CONSOLE_URL}/api/billing/setup-payment`,
             { autumnCustomerId, redirectUrl },
+            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
+        )
+        return response.data.data
+    },
+    async provisionLicenseKey({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<{ licenseKey: string | null }> {
+        const response = await safeHttp.axios.post<{ data: { licenseKey: string | null } }>(
+            `${AUTUMN_CONSOLE_URL}/api/billing/provision-license-key`,
+            { autumnCustomerId },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
         return response.data.data
