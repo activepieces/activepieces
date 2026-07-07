@@ -135,8 +135,9 @@ COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
 LABEL service=activepieces
 
+# WORKER containers have no HTTP server; treat them as healthy (probe only the app).
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
-    CMD curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/health" || exit 1
+    CMD [ "$AP_CONTAINER_TYPE" = "WORKER" ] && exit 0 || curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/health" || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 EXPOSE 80
