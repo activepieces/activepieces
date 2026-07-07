@@ -43,14 +43,13 @@ export const drupalWebhook = createTrigger({
         'Accept': 'application/vnd.api+json',
       },
     });
-    console.debug('Webhook register response', response);
     await context.store.put(webhookStoreKey(context.propsValue.id), response.body);
   },
   async onDisable(context) {
     const { website_url, username, password } = context.auth.props;
     const webhook = await context.store.get(webhookStoreKey(context.propsValue.id));
     if (webhook) {
-      const response = await httpClient.sendRequest({
+      await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: website_url + `/orchestration/webhook/unregister`,
         body: webhook,
@@ -59,7 +58,6 @@ export const drupalWebhook = createTrigger({
           'Accept': 'application/vnd.api+json',
         },
       });
-      console.debug('Webhook unregister response', response);
     }
   },
   async run(context) {

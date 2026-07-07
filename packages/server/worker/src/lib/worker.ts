@@ -3,10 +3,11 @@ import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
+import { createApiToWorkerHandlers } from './api-notify-service'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
@@ -80,8 +81,9 @@ export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         assertReleaseReadable()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
+        const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -120,6 +122,13 @@ export const worker = {
         socket.on('connect_error', (error) => {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
+
+        createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
+            getRuntime: () => runtime,
+            apiClient,
+            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            log: logger,
+        }))
 
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
@@ -161,6 +170,9 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
+    if (concurrency === 1) {
+        await sandboxConfig.primeFullContainerMemory()
+    }
     // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
     // along with its box (usually already done by the disconnect handler), so it fails fast and is
     // retried instead of lingering on a reused box. Reusing the box made the next generation's poll
@@ -173,6 +185,13 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
+    })
+
+    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
+    void runtime.prewarm({
+        log: logger, 
+        apiClient,
+        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
     })
 
     logger.info({ concurrency }, 'Starting poll loops')
@@ -398,7 +417,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
 
 function getWorkerProps(): WorkerProps {
     try {
-        const settings = workerSettings.getSettings()
+        const settings = sandboxConfig.getSandboxSettings()
         return {
             EXECUTION_MODE: settings.EXECUTION_MODE,
             WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,

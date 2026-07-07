@@ -46,27 +46,7 @@ export const PlatformAnalyticsReport = z.object({
 })
 export type PlatformAnalyticsReport = z.infer<typeof PlatformAnalyticsReport>
 
-export const ProjectLeaderboardItem = z.object({
-    projectId: z.string(),
-    projectName: z.string(),
-    flowCount: z.number(),
-    minutesSaved: Nullable(z.number()),
-})
-export type ProjectLeaderboardItem = z.infer<typeof ProjectLeaderboardItem>
-
-export const UserLeaderboardItem = z.object({
-    userId: z.string(),
-    flowCount: z.number(),
-    minutesSaved: Nullable(z.number()),
-})
-export type UserLeaderboardItem = z.infer<typeof UserLeaderboardItem>
-
 export const AnalyticsReportRequest = z.object({
     timePeriod: z.nativeEnum(AnalyticsTimePeriod).optional(),
 })
 export type AnalyticsReportRequest = z.infer<typeof AnalyticsReportRequest>
-
-export const LeaderboardRequest = z.object({
-    timePeriod: z.nativeEnum(AnalyticsTimePeriod),
-})
-export type LeaderboardRequest = z.infer<typeof LeaderboardRequest>
