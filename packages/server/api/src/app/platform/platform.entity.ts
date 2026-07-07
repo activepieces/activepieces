@@ -100,16 +100,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: 'jsonb',
             nullable: true,
         },
-        filteredActionNames: {
-            type: 'jsonb',
-            nullable: false,
-            default: {},
-        },
-        filteredTriggerNames: {
-            type: 'jsonb',
-            nullable: false,
-            default: {},
-        },
     },
     indices: [
         {
