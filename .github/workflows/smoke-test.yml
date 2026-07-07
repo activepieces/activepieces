@@ -67,6 +67,22 @@ jobs:
       # can't exercise isolation here (it returns no data and the gate fails spuriously). Run it
       # locally with `benchmark/probe-fs.js` + `smoke-test/verify-isolation.sh` (both kept in repo).
 
+      # Memory-limit detection gate (same SANDBOX_CODE_ONLY stack): the OOM input expression blows
+      # the ENGINE heap via the isolate->engine result copy, and AP_WORKER_CONCURRENCY=1 (job env)
+      # gives that single sandbox the full 1G worker container. Every run must end
+      # MEMORY_LIMIT_EXCEEDED — this pins the detection path for production code-only engine OOMs.
+      - name: Setup OOM flow
+        id: setup-oom
+        run: |
+          FLOW_ID=$(CODE_INPUT_SUM="$(cat benchmark/oom-expression.txt)" benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Flow ID: $FLOW_ID"
+
+      - name: Run memory-limit smoke test
+        run: |
+          chmod +x smoke-test/verify-memory-limit.sh
+          smoke-test/verify-memory-limit.sh "${{ steps.setup-oom.outputs.flow_id }}"
+
       - name: Restart stack in S3 mode (MinIO, no signed URLs)
         run: |
           docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v

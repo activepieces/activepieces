@@ -5,6 +5,7 @@ import { authenticationSession } from './authentication-session';
 export const routesThatRequireProjectId = {
   runs: '/runs',
   singleRun: '/runs/:runId',
+  pieceRuns: '/piece-runs',
   flows: '/flows',
   singleFlow: '/flows/:flowId',
   automations: '/automations',
@@ -22,9 +23,14 @@ export const CHAT_ROUTE = '/chat';
 
 export const determineDefaultRoute = ({
   checkAccess,
+  chatEnabled,
 }: {
   checkAccess: (permission: Permission) => boolean;
+  chatEnabled?: boolean;
 }) => {
+  if (chatEnabled) {
+    return CHAT_ROUTE;
+  }
   if (checkAccess(Permission.READ_FLOW) || checkAccess(Permission.READ_TABLE)) {
     return authenticationSession.appendProjectRoutePrefix('/automations');
   }

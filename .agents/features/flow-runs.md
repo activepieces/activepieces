@@ -5,6 +5,9 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 
 ## Key Files
 - `packages/server/api/src/app/flows/flow-run/` — controller, service, entity
+- `packages/server/api/src/app/flows/flow-run/waitpoint/resume-controller.ts` — resume routes. Deprecated `/:id/waitpoints/:waitpointId` still resumes on a bare `GET` (kept for old emails); the new `/:id/waitpoints/:waitpointId/confirm` route serves the Resume Confirmation Page on `GET`/`HEAD` (never consumes) and only resumes on `POST`, content-negotiating its response by `Accept`
+- `packages/server/api/src/app/flows/flow-run/waitpoint/resume-page-hooks.ts` — CE-safe `hooksFactory` theme hook for the confirmation page (CE → `defaultTheme`; EE/Cloud `.set()` in `app.ts` → `appearanceHelper.getTheme`)
+- Approval pieces that link to the `/confirm` page via a single "Review & Respond" button (`${waitpoint.resumeUrl}/confirm`, extra context params like Telegram's `chat_id` appended and preserved through to resume): `gmail/.../request-approval-in-email.ts`, `microsoft-outlook/.../request-approval-send-email.ts` (email), and `telegram-bot`, `discord`, `microsoft-teams` request-approval actions (browser `url:` buttons). **Slack is intentionally unchanged** — its buttons are interactive (`action_id`/`value`) and resume via a server-side `POST` from the Slack webhook (`slack/src/index.ts`), so it is not browser-GET-prefetchable.
 - `packages/server/api/src/app/flows/flow-run/ai-usage-extractor.ts` — pure extractor that walks a finished run's step outputs and counts AI-piece usage (messages + agent tool calls) grouped per provider/model
 - `packages/server/api/src/app/flows/flow-run/ai-usage-tracker.ts` — orchestrates extraction and emits the `ai_usage_per_run` PostHog billing event (see Side Effects → AI Usage Billing)
 - `packages/server/api/src/app/helper/telemetry.utils.ts` — `captureBillingEvent` (PostHog capture keyed by license key) + `BillingEvents` enum
@@ -20,7 +23,8 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - `packages/web/src/app/builder/state/canvas-state.ts` — tracks `userManuallySelectedStepDuringRun` and exposes the `resumeLiveFollow` action for live-follow control
 - `packages/server/api/src/app/ee/alerts/alerts-service.ts` — sends the failure email via the EE Alerts feature (see `.agents/features/alerts.md`)
 - `packages/web/src/features/flow-runs/components/step-status-icon.tsx` — per-step status badge
-- `packages/web/src/app/routes/runs/index.tsx` — runs list page
+- `packages/web/src/app/routes/runs/index.tsx` — runs list page; wraps `RunsTable` in `RunsLayout`
+- `packages/web/src/app/routes/runs/runs-layout.tsx` — shared tab bar over the runs pages: "Flow runs" (`/runs`, this feature) and "Action runs" (`/piece-runs`, the ad-hoc runs table — see `.agents/features/adhoc-run.md`)
 - `packages/web/src/app/routes/runs/id/index.tsx` — individual run detail page
 - `packages/web/src/app/builder/run-details/` — step input/output inspector inside the builder
 - `packages/web/src/app/builder/run-list/` — recent runs sidebar in the builder
@@ -64,10 +68,11 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - `POST /cancel` — Bulk cancel paused/queued runs
 - `POST /archive` — Bulk soft delete (set archivedAt)
 - `POST /v1/waitpoints` — Engine-only: create a waitpoint (PENDING) for a paused step
-- `ALL /:id/waitpoints/:waitpointId` — Resume a paused run via waitpoint (V1, async)
-- `ALL /:id/waitpoints/:waitpointId/sync` — Resume and return the flow's response synchronously (V1)
-- `ALL /:id/requests/:requestId` — V0 legacy resume route (pauseMetadata-based)
-- `ALL /:id/requests/:requestId/sync` — V0 legacy sync resume
+- `ALL /:id/waitpoints/:waitpointId` — **Deprecated.** Resume a paused run via waitpoint (V1, async). Still resumes on a bare `GET` (single-use); kept so approval emails delivered before the confirmation-page rollout keep working. Carries the scanner-prefetch weakness by design.
+- `ALL /:id/waitpoints/:waitpointId/confirm` — Scanner-safe resume. `GET`/`HEAD` serves the Resume Confirmation Page (reads waitpoint from DB; shows Approve/Disapprove when still pending, else an "already responded" state) and does NOT consume. Only `POST` consumes. `POST` response content-negotiates by `Accept` (`text/html` → branded HTML result page; else `{ message }` JSON). New approval emails link here.
+- `ALL /:id/waitpoints/:waitpointId/sync` — Resume and return the flow's response synchronously (V1).
+- `ALL /:id/requests/:requestId` — V0 legacy resume route (pauseMetadata-based); resumes on `GET`.
+- `ALL /:id/requests/:requestId/sync` — V0 legacy sync resume.
 
 ## Retry Strategies
 
@@ -88,6 +93,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - **Waitpoints (V1, current):** pieces call `ctx.run.createWaitpoint({ type, ... })` + `ctx.run.waitForWaitpoint(id)`. Engine POSTs `/v1/waitpoints`; server inserts a PENDING row keyed on `(flow_run_id, step_name)`.
   - `DELAY` waitpoint: server upserts a `SystemJobName.RESUME_DELAY_WAITPOINT` BullMQ job scheduled at `resumeDateTime`. When it fires, `resumeService.resumeFromWaitpoint` enqueues the resume.
   - `WEBHOOK` waitpoint: resume signal arrives as an HTTP call on `/:id/waitpoints/:waitpointId[/sync]`. Optional `responseToSend` is replied immediately to the original webhook trigger.
+  - **Resume Confirmation Page (scanner-prefetch guard):** the dedicated `/:id/waitpoints/:waitpointId/confirm` route serves a white-labeled HTML page on `GET`/`HEAD` (never consuming the waitpoint) whose Approve/Disapprove buttons `POST` back; only the `POST` resumes. On open it reads the waitpoint from the DB and shows an "already responded" state if the run has moved on. New approval emails link here (single button), so email security scanners (Safe Links, Mimecast, Proofpoint) can't consume links on prefetch. The deprecated `/:id/waitpoints/:waitpointId` route is left resuming on `GET` for already-sent emails. See ADR `docs/adr/0005-resume-links-require-post-confirmation.md`.
 - **Pre-completion (resume-before-pause race):** `waitpoint-service.complete()` takes a pessimistic write lock on the PENDING row. If no row yet, it inserts a COMPLETED row with the `resumePayload`. When the flow then transitions to PAUSED, `flow-runs-queue.ts` sees the COMPLETED waitpoint and enqueues the resume immediately. Prevents dropped early callbacks.
 - **On resume:** fetch state from logs file → rebuild `FlowExecutorContext` → re-run the paused step with `ExecutionType.RESUME` and `ctx.resumePayload = waitpoint.resumePayload`. When rebuilding `flowContext` in `flow.operation.ts#getFlowExecutionState`, steps in `SUCCEEDED` / `PAUSED` are always restored; `FAILED` steps are restored iff `resumeReason === WAITPOINT`. Dropping a FAILED step kept alive by `continueOnFailure` would re-execute it from BEGIN — re-firing its waitpoint (e.g. re-invoking a subflow) and letting the global `constants.resumePayload` pollute the new output. The retry path needs the opposite behavior, hence the discriminator.
 - **Limits:** `AP_PAUSED_FLOW_TIMEOUT_DAYS` caps DELAY `resumeDateTime`; engine throws `PausedFlowTimeoutError` beyond that.
