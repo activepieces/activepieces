@@ -173,6 +173,15 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return this.removeSensitiveData(connectionById)
     },
 
+    async getOnePublicOrThrow(params: GetOneParams): Promise<AppConnectionWithoutSensitiveData> {
+        const connection = await this.getOneOrThrowWithoutValue(params)
+        const flowIdsByExternalId = await fetchFlowIdsForConnections(log, [connection])
+        return {
+            ...connection,
+            flowIds: flowIdsByExternalId.get(connection.externalId) ?? [],
+        }
+    },
+
     async getManyConnectionStates(params: GetManyParams): Promise<ConnectionState[]> {
         const connections = await appConnectionsRepo().find({
             where: {
@@ -698,7 +707,7 @@ const engineValidateAuth = async (
 
 async function fetchFlowIdsForConnections(
     log: FastifyBaseLogger,
-    connections: AppConnectionSchema[],
+    connections: Pick<AppConnectionSchema, 'externalId' | 'projectIds'>[],
 ): Promise<Map<string, string[]>> {
     const allExternalIds = new Set<string>()
     const allProjectIds = new Set<string>()

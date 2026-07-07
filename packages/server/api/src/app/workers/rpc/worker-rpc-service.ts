@@ -12,6 +12,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { preWarmWorkersService } from '../../flows/pre-warm-workers'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -167,6 +168,10 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async recordTriggerRun(input) {
             const redisConnection = await redisConnections.useExisting()
             await triggerRunStats(log, redisConnection).save(input)
+        },
+
+        async getPrewarmData(input) {
+            return preWarmWorkersService(log).getPrewarmData(input)
         },
 
         async extendLock(input) {

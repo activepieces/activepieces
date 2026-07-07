@@ -1,36 +1,33 @@
 import { PieceSelectorConfig } from '@activepieces/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
-import { pieceCacheUtils, piecesApi } from '@/features/pieces';
-
-import { platformPieceFilterApi } from '../api/platform-piece-filter-api';
-
-import { platformPieceFilterKeys } from './platform-piece-filter-hooks';
+import { piecesApi } from '@/features/pieces';
 
 export const platformPiecesMutations = {
   useTogglePieceVisibility: ({
+    platformId,
     filteredPieceNames,
+    refetch,
   }: {
+    platformId: string;
     filteredPieceNames: string[];
+    refetch: () => Promise<void>;
   }) => {
-    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async (pieceName: string) => {
         const newFilteredPieceNames = filteredPieceNames.includes(pieceName)
           ? filteredPieceNames.filter((name) => name !== pieceName)
           : [...filteredPieceNames, pieceName];
-        await platformPieceFilterApi.update({
-          filteredPieceNames: newFilteredPieceNames,
-        });
+        await platformApi.update(
+          { filteredPieceNames: newFilteredPieceNames },
+          platformId,
+        );
+        await refetch();
       },
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: platformPieceFilterKeys.all,
-        });
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
+      onSuccess: () => {
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
     });
@@ -44,7 +41,6 @@ export const platformPiecesMutations = {
     pinnedPieces: string[];
     refetch: () => Promise<void>;
   }) => {
-    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async (pieceName: string) => {
         const newPinnedPieces = pinnedPieces.includes(pieceName)
@@ -54,7 +50,6 @@ export const platformPiecesMutations = {
         await refetch();
       },
       onSuccess: () => {
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
     });
@@ -66,14 +61,12 @@ export const platformPiecesMutations = {
     platformId: string;
     refetch: () => Promise<void>;
   }) => {
-    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async (pieceSelectorConfig: PieceSelectorConfig | null) => {
         await platformApi.update({ pieceSelectorConfig }, platformId);
         await refetch();
       },
       onSuccess: () => {
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
       onError: () => {
@@ -82,13 +75,11 @@ export const platformPiecesMutations = {
     });
   },
   useSyncPieces: () => {
-    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async () => {
         await piecesApi.syncFromCloud();
       },
       onSuccess: () => {
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Pieces synced'), {
           description: t(
             'Pieces have been synced from the activepieces cloud.',
@@ -97,50 +88,15 @@ export const platformPiecesMutations = {
       },
     });
   },
-  useSetPieceComponentVisibility: ({
-    filteredActionNames,
-    filteredTriggerNames,
-  }: {
-    filteredActionNames: Record<string, string[]>;
-    filteredTriggerNames: Record<string, string[]>;
-  }) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: async ({
-        pieceName,
-        hiddenActions,
-        hiddenTriggers,
-      }: {
-        pieceName: string;
-        hiddenActions: string[];
-        hiddenTriggers: string[];
-      }) => {
-        await platformPieceFilterApi.update({
-          filteredActionNames: {
-            ...filteredActionNames,
-            [pieceName]: hiddenActions,
-          },
-          filteredTriggerNames: {
-            ...filteredTriggerNames,
-            [pieceName]: hiddenTriggers,
-          },
-        });
-      },
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: platformPieceFilterKeys.all,
-        });
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
-      },
-    });
-  },
   useBulkSetPiecesVisibility: ({
+    platformId,
     filteredPieceNames,
+    refetch,
   }: {
+    platformId: string;
     filteredPieceNames: string[];
+    refetch: () => Promise<void>;
   }) => {
-    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async ({
         pieceNames,
@@ -152,13 +108,10 @@ export const platformPiecesMutations = {
         const next = hidden
           ? [...new Set([...filteredPieceNames, ...pieceNames])]
           : filteredPieceNames.filter((n) => !pieceNames.includes(n));
-        await platformPieceFilterApi.update({ filteredPieceNames: next });
+        await platformApi.update({ filteredPieceNames: next }, platformId);
+        await refetch();
       },
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: platformPieceFilterKeys.all,
-        });
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
+      onSuccess: () => {
         toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
       onError: () => {

@@ -1,6 +1,6 @@
 import { ensureTrailingSlash, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -30,7 +30,6 @@ type EngineConstantsParams = {
     timeoutInSeconds: number
     platformId: PlatformId
     stepNames: string[]
-    adhocMode?: boolean
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -69,7 +68,6 @@ export class EngineConstants {
     public readonly stepNameToTest?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
-    public readonly adhocMode: boolean
     private project: Project | null = null
 
     public get isRunningApTests(): boolean {
@@ -116,7 +114,6 @@ export class EngineConstants {
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
-        this.adhocMode = params.adhocMode ?? false
     }
   
     public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
@@ -144,7 +141,7 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecuteActionInput(input: BaseEngineOperation): EngineConstants {
+    public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
         return new EngineConstants({
             flowId: DEFAULT_MCP_DATA.flowId,
             flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
@@ -165,7 +162,6 @@ export class EngineConstants {
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
             stepNames: [],
-            adhocMode: true,
         })
     }
 
