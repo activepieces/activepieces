@@ -46,6 +46,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
+        let realExecutionStarted = false
         const { data: execResult, error } = await tryCatch(async () => {
             if (data.saveSampleData) {
                 const sampleResult = await ctx.runtime.execute({
@@ -88,6 +89,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 return null
             }
 
+            realExecutionStarted = true
             const result = await ctx.runtime.execute({
                 workerIndex: ctx.workerIndex,
                 log: ctx.log,
@@ -115,7 +117,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         })
 
         if (error) {
-            if (data.execute) {
+            if (realExecutionStarted) {
                 await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
             }
             if (isSandboxTimeout(error)) {
