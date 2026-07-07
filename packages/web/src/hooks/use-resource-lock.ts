@@ -94,7 +94,7 @@ function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
           isOwner.current = false;
           setLockedBy(null);
           setLockSession((session) => session + 1);
-          onTakeOver?.();
+          void onTakeOver?.();
         }
       },
     );
@@ -107,5 +107,5 @@ export { useResourceLock };
 
 type UseResourceLockParams = {
   resourceId: string;
-  onTakeOver?: () => void;
+  onTakeOver?: () => void | Promise<void>;
 };

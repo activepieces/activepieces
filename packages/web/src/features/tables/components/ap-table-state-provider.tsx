@@ -214,7 +214,7 @@ function TableLockProvider({
   children,
 }: {
   resourceId: string;
-  onTakeOver: () => void;
+  onTakeOver: () => void | Promise<void>;
   children: React.ReactNode;
 }) {
   const { lockedBy, takeOver } = useResourceLock({ resourceId, onTakeOver });
