@@ -23,14 +23,23 @@ export const htmlToMarkdown = createAction({
       description: 'The HTML to convert to markdown',
       required: true,
     }),
+    gfm: Property.Checkbox({
+      displayName: 'GitHub Flavored Markdown',
+      description:
+        'Enable GFM extensions (tables, strikethrough, task lists, etc.)',
+      required: false,
+      defaultValue: true,
+    }),
   },
   run: async (context) => {
     const html = context.propsValue.html;
     const service = new TurndownService();
     service.remove('script');
 
-    service.use(gfm);
-    service.use(turndownPluginTableNormalizer);
+    if (context.propsValue.gfm) {
+      service.use(gfm);
+      service.use(turndownPluginTableNormalizer);
+    }
 
     return service.turndown(html);
   },
