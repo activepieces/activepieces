@@ -50,7 +50,7 @@ export const teamsBotService = {
             contentType,
         })
 
-        const messageId = created.activityId ?? created.id.split('messageid=')[1] ?? ''
+        const messageId = created.activityId ?? created.id.split('messageid=')[1] ?? created.id
         return {
             id: created.id,
             activityId: created.activityId ?? messageId,
@@ -94,8 +94,9 @@ async function createChannelConversation({ serviceUrl, botToken, botAppId, tenan
     content: string
     contentType: string
 }): Promise<CreateConversationResponse> {
+    const baseUrl = serviceUrl.endsWith('/') ? serviceUrl : `${serviceUrl}/`
     const response = await safeHttp.axios.post<CreateConversationResponse>(
-        `${serviceUrl}v3/conversations`,
+        `${baseUrl}v3/conversations`,
         {
             isGroup: true,
             bot: { id: `28:${botAppId}`, name: 'Activepieces' },

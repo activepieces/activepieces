@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddTeamsBotInstallation1778753444131 implements Migration {
-    name = 'AddTeamsBotInstallation1778753444131'
+export class AddTeamsBotInstallation1808000000000 implements Migration {
+    name = 'AddTeamsBotInstallation1808000000000'
     breaking = false
     release = '0.86.2'
 

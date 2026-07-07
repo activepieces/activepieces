@@ -366,7 +366,6 @@ import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1
 import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
 import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/1777370308000-AddRunStatusCoverIndex'
 import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
-import { AddTeamsBotInstallation1778753444131 } from './migration/postgres/1778753444131-AddTeamsBotInstallation'
 import { AddThemeColorsToPlatform1781206955649 } from './migration/postgres/1781206955649-AddThemeColorsToPlatform'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
@@ -398,6 +397,7 @@ import { DropBadges1804000000000 } from './migration/postgres/1804000000000-Drop
 import { AddAdhocRunTable1805000000000 } from './migration/postgres/1805000000000-AddAdhocRunTable'
 import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
 import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
+import { AddTeamsBotInstallation1808000000000 } from './migration/postgres/1808000000000-AddTeamsBotInstallation'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -787,7 +787,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         MakeMcpOAuthProjectIdNullable1789000000000,
         MakeChatConversationPlatformWide1787000000000,
         RemoveMcpServerStatus1790000000000,
-        AddTeamsBotInstallation1778753444131,
         RenameEnabledToolsToDisabledTools1791000000000,
         AddTriggerSourceFlowVersionIdIndex1792000000000,
         AddUiMessagesToChatConversation1778983371000,
@@ -811,6 +810,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAdhocRunTable1805000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,
         CreatePieceSetTable1807000000000,
+        AddTeamsBotInstallation1808000000000,
     ]
     return migrations
 }
