@@ -54,6 +54,7 @@ vi.mock('../../src/lib/config/logger', () => ({
 type StubRuntime = {
     execute: ReturnType<typeof vi.fn>
     getActiveExecutors: ReturnType<typeof vi.fn>
+    prewarm: ReturnType<typeof vi.fn>
     shutdown: ReturnType<typeof vi.fn>
 }
 
@@ -65,6 +66,7 @@ vi.mock('@activepieces/sandbox', () => ({
         const rt: StubRuntime = {
             execute: vi.fn(),
             getActiveExecutors: vi.fn(() => []),
+            prewarm: vi.fn().mockResolvedValue(undefined),
             shutdown: vi.fn().mockResolvedValue(undefined),
         }
         createdRuntimes.push(rt)

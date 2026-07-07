@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
 import { downloadFileFromDrive } from '../common/get-file-content';
+import { setPublicAccessActionOutputSchema } from '../output-schemas';
 
 export const setPublicAccess = createAction({
   auth: googleDriveAuth,
@@ -30,6 +31,7 @@ export const setPublicAccess = createAction({
       required: true,
     }),
   },
+  outputSchema: setPublicAccessActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 

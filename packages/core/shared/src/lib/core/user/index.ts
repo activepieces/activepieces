@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { PlatformRole, UserStatus } from './user'
 
 export * from './user'
-export * from './badges'
 
 export const UpdateUserRequestBody = z.object({
     status: z.nativeEnum(UserStatus).optional(),

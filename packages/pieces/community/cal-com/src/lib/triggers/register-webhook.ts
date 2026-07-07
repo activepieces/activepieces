@@ -53,7 +53,6 @@ export const registerWebhooks = ({
       );
 
       if (response.status === 200 || response.status === 201) {
-        console.debug('trigger.onEnable', response.body.data, context);
         await context.store?.put(
           `cal_com_trigger_${name}`,
           response.body.data
@@ -75,21 +74,16 @@ export const registerWebhooks = ({
         };
 
         try {
-          const response = await httpClient.sendRequest(request);
-          console.debug('trigger.onDisable', response);
+          await httpClient.sendRequest(request);
         } catch (e: any) {
           // 404 means the webhook was registered under the old v1 API and no
           // longer exists in v2 — safe to ignore, re-enabling will create a
           // fresh v2 webhook.
           if (e?.response?.status !== 404) throw e;
-          console.debug('trigger.onDisable: webhook not found in v2 (was v1), ignoring');
         }
-      } else {
-        console.debug(`trigger 'cal_com_trigger_${name}' not found`);
       }
     },
     async run(context) {
-      console.debug('trigger running', context);
       return [context.payload.body];
     },
   });

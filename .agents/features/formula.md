@@ -13,8 +13,8 @@ Formulas let users transform input values inside any text input in the flow buil
 
 ### Editor UI (`packages/web/src/app/builder/piece-properties/text-input-with-mentions/`)
 - `index.tsx` — 14-line wrapper, just re-exports `TiptapEditor`.
-- `tiptap-editor.tsx` — main editor (747 LOC): editor gate at line 129 (`formulaEnabled = platform.plan.dataManipulationEnabled`), conditional slash-extension registration, live preview, type-checker integration, variable mentions integration. Embed status (`useEmbedding`) is still read so the search popover can hide the docs link in embedded builders, but the feature itself is **not** gated on embed.
-- `extensions/bracket-nodes.tsx` — three TipTap inline atom nodes (`function_start`, `function_sep`, `function_end`) rendered as badges. **Always registered**, even when the flag is off, so saved formulas display read-only.
+- `tiptap-editor.tsx` — main editor: unconditionally registers `FunctionSlashExtension`, live preview, type-checker integration, variable mentions integration. Embed status (`useEmbedding`) is read only so the search popover can hide the docs link in embedded builders.
+- `extensions/bracket-nodes.tsx` — three TipTap inline atom nodes (`function_start`, `function_sep`, `function_end`) rendered as badges. Always registered so saved formulas display as badges.
 - `extensions/function-slash-extension.ts` — ProseMirror plugin that watches for `/`, opens the search popover, inserts at the cursor.
 - `components/function-search-popover.tsx` — filter-as-you-type list backed by `AP_FUNCTIONS`.
 - `components/function-hover-popover.tsx` — per-badge tooltip with signature, description, example, deprecation marker.
@@ -23,15 +23,6 @@ Formulas let users transform input values inside any text input in the flow buil
 ### Engine wiring (`packages/server/engine/src/lib/variables/`)
 - `props-resolver.ts:105` — formula pre-pass. Before any other resolution, `resolveInputAsync` checks `formulaEvaluator.containsWrapper(input)`; if true it calls `preResolveFormulaVars` (lines 272–299) to dedup and resolve every `{{var}}` once, then `formulaEvaluator.evaluate({ expression, sampleData })`. **Unconditional** — runs regardless of the plan flag, so saved formulas keep evaluating even on platforms that have the editor flag off.
 - `preResolveFormulaVars` — extracts unique `{{...}}` tokens, resolves each via `resolveSingleToken` (the same path documented in `variables.md`), batches with `Promise.all`, returns `{ expression, vars }` for the evaluator.
-
-### Feature flag & licensing
-- `packages/core/shared/src/lib/management/platform/platform.model.ts` — `dataManipulationEnabled: z.boolean()` on the plan zod schema.
-- `packages/server/api/src/app/ee/platform/platform-plan/platform-plan.entity.ts` — `dataManipulationEnabled` column on `platform_plan`.
-- `packages/server/api/src/app/database/migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan.ts` — migration: nullable add → backfill `false` → set `NOT NULL`.
-- `dataManipulationEnabled` is projected onto the plan from Autumn entitlements (`mapEntitlementsToPlanLimits` in
-  `packages/server/api/src/app/ee/platform/platform-plan/autumn.ts`). The legacy `license-keys-service.applyLimits`
-  path (and `LicenseKeyEntity`) were removed when billing moved to Autumn.
-- `packages/core/shared/src/lib/ee/billing/index.ts` — default `false` in the plan constants.
 
 ### Tests (`packages/core/shared/test/formula/`)
 - `function-evaluator.test.ts` — 220 tests, one+ per function plus pipeline cases (lazy if, var dedup, wrapper detection, embedded formulas in strings).
@@ -42,14 +33,12 @@ Formulas let users transform input values inside any text input in the flow buil
 - `text-input-utils.test.ts` — unclosed-`{{` resilience (previously caused an infinite loop / tab freeze), literal-text fallback rendering, and complete `{{...}}` mention-node creation via `convertTextToTipTapJsonContent`.
 
 ## Edition Availability
-- Community (CE): available when `platform.plan.dataManipulationEnabled` is true (defaults to `false` on `OPEN_SOURCE_PLAN`).
-- Enterprise (EE): available when `platform.plan.dataManipulationEnabled` is true (default `false`; toggled per platform via license key).
-- Cloud: available when `platform.plan.dataManipulationEnabled` is true (default `false` on `FREEMIUM_PLAN`; toggled per platform via license key).
-- Embedded builder: same rule — available when `platform.plan.dataManipulationEnabled` is true. The only embed-specific difference is cosmetic: the function-search popover hides the "See All" external docs link in embedded builders (the docs site lives on `activepieces.com` and shouldn't be surfaced from a white-labeled embedded surface).
-
-**The engine path is not gated.** The editor gate (the plan flag alone) only affects the editor UI: slash trigger, popovers, type checker, and slash insertion. Bracket nodes always render so saved formulas display read-only even when the gate is off. Existing saved formulas continue to evaluate regardless of the gate's current value.
+Available on every edition (CE, EE, Cloud freemium/paid, embedded builder). The feature is unconditionally on — no plan flag, no license-key toggle. The only embed-specific difference is cosmetic: the function-search popover hides the "See All" external docs link in embedded builders.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Formula** — a function-based expression inserted into a text input that transforms data at runtime.
 - **Wrapper** — `ap-formula-v1::{<expression>}::ap-formula-v1`. Versioned (`v\d+`) so future format changes can coexist with v1 data in saved flows.
 - **Function badge** — the visual representation of a function call in the editor: a `function_start` node + arg slots + `function_sep` nodes + `function_end` node. Stored as three TipTap inline atoms with a shared `openId` attribute linking start/sep/end.
@@ -103,13 +92,11 @@ async function resolveInputAsync(params) {
 The pre-pass:
 - Reuses the existing `resolveSingleToken` for every `{{var}}` inside the formula — so connections, step references, and variable mentions all resolve via the same code documented in `variables.md`, `app-connections.md`, etc.
 - Throws `FormulaEvaluationError` (an `ExecutionError` subclass) on evaluation failure, so the step fails with a structured message rather than the engine crashing.
-- Is **unconditional** with respect to the plan flag — the engine has no view of `platform.plan.dataManipulationEnabled`. This is intentional so that disabling the flag mid-flow doesn't break flows already saved with formulas.
 
 ## Editor Composition
 
 `tiptap-editor.tsx`:
-- Reads `platform.plan.dataManipulationEnabled` via `platformHooks.useCurrentPlatform()`; `formulaEnabled` is that flag, nothing else. Embed status is read separately via `useEmbedding()` only to pass `hideDocsLink={embedState.isEmbedded}` to the search popover — embed does not gate the feature itself.
-- `getExtensions({ formulaEnabled })` always includes `FunctionStartNode`, `FunctionEndNode`, `FunctionArgSeparatorNode` (so existing formulas render as badges no matter the flag); conditionally includes `FunctionSlashExtension` only when `formulaEnabled` is true.
+- `getExtensions(...)` always includes `FunctionStartNode`, `FunctionEndNode`, `FunctionArgSeparatorNode`, and `FunctionSlashExtension` — no plan flag, no conditional registration.
 - Holds slash-state, active-function-info, focus, type-errors, preview-result in component state. `typeCheckTiptapDoc(doc)` runs on doc updates; errors map to badge highlights and the preview panel.
 - Variables integration: fetches the project's variables via `variablesQueries.useVariables(...)` and threads the `name → name` map into `createMentionNodeFromText` and `convertTextToTipTapJsonContent` so variable mentions render with their display name.
 
@@ -119,12 +106,11 @@ Documented in `.claude/plans/glimmering-percolating-unicorn.md`. Summary:
 - **Function impl change** — versioning policy: bump `@activepieces/shared` minor + changelog entry.
 - **Arg added/removed** — use `argCompatibility.defaultArgs` so old flows fill the missing arg from a default; mark old shape `deprecated` if behavior diverges.
 - **Function removed** — never hard-remove; mark `deprecated: { replacement, removeAfter }` for at least one minor cycle; editor shows strikethrough badge with replacement suggestion.
-- **Feature dropped** — keep the engine pre-pass unconditional; flag only gates editor UI. Hard removal needs a one-shot migration that unwraps every `ap-formula-v1::{...}` in stored flows.
+- **Feature dropped** — hard removal needs a one-shot migration that unwraps every `ap-formula-v1::{...}` in stored flows.
 - **Format change `v1` → `v2`** — `containsWrapper` already matches `v\d+`; add `evaluateV2` and dispatch on the captured version.
 
 ## Frontend Hooks
-- `platformHooks.useCurrentPlatform()` — provides `platform.plan.dataManipulationEnabled` for the editor gate.
-- `useEmbedding()` (`@/components/providers/embed-provider`) — provides `embedState.isEmbedded`. Not part of the editor gate; only used to hide the "See All" docs link in the search popover (the docs site is `activepieces.com` and shouldn't be surfaced from a white-labeled embed).
+- `useEmbedding()` (`@/components/providers/embed-provider`) — provides `embedState.isEmbedded`. Only used to hide the "See All" docs link in the search popover (the docs site is `activepieces.com` and shouldn't be surfaced from a white-labeled embed).
 - `variablesQueries.useVariables(...)` — fetches the project's variables (see `variables.md`); used by the editor to render variable mention labels inside formula args.
 
 ## What's NOT in this feature

@@ -36,6 +36,9 @@ EE + Cloud (the activate seam is CE no-op). The `licenseKey` column on `platform
 4. Plan limits + feature flags are projected from Autumn via `mapEntitlementsToPlanLimits` — NOT from the key.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Activation**: redeeming a license key to bind/recover the platform's Autumn customer and credentials.
 - **Recovery handle**: a key maps to one Autumn customer; re-activating on a new instance returns the same customer
   (support hands the key back to a customer who lost their instance).

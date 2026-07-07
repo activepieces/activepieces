@@ -25,6 +25,9 @@ are gone).
   (console `/subscribe` for free, or `/activate` with a license key); entitlements project onto `platform_plan`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **PlatformPlan**: one-per-platform entity holding projected feature flags + limits + Autumn credentials.
 - **Autumn customer / scoped key**: `autumnCustomerId` + `autumnApiKey` (entity-only, never serialized to clients).
 - **apCredits**: the credit currency (flow runs + AI steps + chat burn it), metered to Autumn.
@@ -61,7 +64,7 @@ are gone).
 + `secrets.activepieces.com` path was deleted. See `.agents/features/license-keys.md`.
 
 ## Admin Endpoints (Cloud, API-key auth)
-- `POST /v1/admin/pieces` · `POST /v1/admin/platforms/runs/retry` · `POST /v1/admin/platforms/increase-ai-credits` · `POST /v1/admin/platforms/dedicated-workers`. *(`apply-license-key` was removed — customers self-activate via `/activate`.)*
+- `POST /v1/admin/pieces` · `POST /v1/admin/platforms/runs/retry` · `POST /v1/admin/platforms/increase-ai-credits` · `POST /v1/admin/platforms/dedicated-workers`. *(`apply-license-key` was removed — customers self-activate via `/activate`.)* The `/v1/admin/pieces` action/trigger body schema mirrors the framework's `ActionBase`/`TriggerBase` (incl. `outputSchema`, `aiMetadata`, `audience`) so no fields are stripped on ingest — keep it in sync when the framework contract gains fields.
 
 ## Frontend Billing API (`/v1/platform-billing/*`)
 `info` (GET) · `plans` (GET) · `checkout` (POST) · `portal` (POST) · `activate` (POST) ·

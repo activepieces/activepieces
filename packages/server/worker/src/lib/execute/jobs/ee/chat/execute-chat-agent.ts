@@ -290,6 +290,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             await sendEventWithRetry({
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
             })
+            // Running out of AI credits is a user/billing condition, not an engine failure — the error has
+            // already been delivered to the user. Complete the job (OK); re-throwing would mark it
+            // INTERNAL_ERROR and fail+retry it (pointlessly — the user is still out of credits) and page.
+            if (isCreditError) {
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
             throw err
         }
         finally {

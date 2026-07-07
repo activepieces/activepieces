@@ -31,6 +31,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         })
 
         if (flagService(log).aiCreditsEnabled() && !activepiecesExists) {
+            // Managed AI is the default chat provider so the chat page skips the "set up a
+            // provider" wall — but only when nothing else is already enabled for chat, so we never
+            // create a second chat provider or override an existing BYO choice (see update()).
+            const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
             await aiProviderRepo().save({
                 id: apId(),
                 auth: await encryptUtils.encryptObject({}),
@@ -38,6 +42,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 provider: AIProviderName.ACTIVEPIECES,
                 displayName: 'Activepieces',
                 platformId,
+                enabledForChat: !hasChatProvider,
             })
         }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
@@ -232,6 +237,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             provider: AIProviderName.ACTIVEPIECES,
         })
         if (isNil(aiProvider)) {
+            const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
             await aiProviderRepo().save({
                 id: apId(),
                 auth: await encryptUtils.encryptObject({}),
@@ -239,6 +245,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 provider: AIProviderName.ACTIVEPIECES,
                 displayName: 'Activepieces',
                 platformId,
+                enabledForChat: !hasChatProvider,
             })
         }
 

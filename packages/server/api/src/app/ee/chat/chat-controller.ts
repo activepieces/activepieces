@@ -4,13 +4,13 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
+import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -69,6 +69,17 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
+        // Cloud rollout: record that this user opened the chat page, then refresh the console
+        // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
+        await chatRolloutService.recordLanding({
+            userId: request.principal.id,
+            platformId: request.principal.platform.id,
+        })
+        chatAnalyticsTelemetry(request.log).sendRolloutFunnelUpdate()
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
         const { content, runId: clientRunId, files } = request.body
         const conversationId = request.params.id
@@ -84,8 +95,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
-        // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
-        rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
+        await chatRolloutService.recordChatted({ userId, platformId })
+        // Refresh the console rollout funnel snapshot (chatted count just changed).
+        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -135,14 +148,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
 
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
-    })
-
-    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
-        rejectedPromiseHandler(chatRolloutService.recordLanding({
-            userId: request.principal.id,
-            platformId: request.principal.platform.id,
-        }), request.log)
-        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
@@ -296,6 +301,16 @@ const SendMessageRoute = {
     },
 }
 
+const FunnelLandingRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
+
 const ToolApprovalRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
@@ -316,16 +331,6 @@ const GetPendingGateRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
-    },
-}
-
-const FunnelLandingRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['chat'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 

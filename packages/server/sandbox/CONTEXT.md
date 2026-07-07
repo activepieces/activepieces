@@ -53,3 +53,6 @@ The provisioning code is organized as three nested modules so the bundle hit/mis
 
 ### Code Cache
 `cache/flow/code/code-cache.ts`. Single owner of the compiled **Code Step** on-disk layout (`<codes>/<flowVersionId>/<stepName>/index.js`) — read/write/path. Both `code-builder` (Bundle Build miss) and the Flow Bundle Store (hit/publish) go through it, so the byte-identical-tree invariant is enforced by construction, not convention.
+
+### Code Step build-error degradation
+`cache/flow/code/code-builder.ts`. Both build phases — **dependency install** (`bun install`) and **compile** (`esbuild`) — degrade a failure into a valid `index.js` stub that `throw`s the captured error at *runtime* (`writeInvalidArtifact`), rather than letting the throw escape `processCodeStep`. This is deliberate: install/compile inputs (`packageJson`, `code`) are **user data**, so a bad one must surface as a **`FAILED` run with the message attributed to the step**, not an opaque **`INTERNAL_ERROR`** from a crashed `provision` (which also gets retried as if it were a transient platform fault). The stub interpolates the message via `JSON.stringify` so backticks/`${}`/newlines in the error can't break the generated module.

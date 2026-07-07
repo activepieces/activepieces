@@ -49,8 +49,6 @@ export const queryRecords = createAction({
     if (response.body.success) {
       return response.body.result;
     } else {
-      console.debug(response);
-
       return {
         error: 'Unexpected outcome!',
       };

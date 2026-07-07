@@ -1,9 +1,13 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
+import { PiecePackage } from '@activepieces/shared'
 import { localExecutionCache } from './cache/local-execution-cache'
+import { createResolver } from './resolver'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
 import {
+    CodeArtifact,
     ExecuteParams,
+    PreWarmSandboxParams,
     Runtime,
     RuntimeExecutionResult,
     RuntimeExecutorInfo,
@@ -33,6 +37,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             }
             const sandbox = manager.acquire({ log })
 
+            const provisionStartedAt = Date.now()
             const { error: provisionError } = await tryCatch(() => localExecutionCache(log, basePath, getSettings).provision({
                 pieces: provision.pieces,
                 codeSteps: provision.codes,
@@ -43,8 +48,11 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 await manager.invalidate(log)
                 throw provisionError
             }
+            const provisionMs = Date.now() - provisionStartedAt
 
             try {
+                let bootMs = 0
+                let runMs = 0
                 // Break the engine timeline into its two worker-observable phases:
                 //   sandboxStart = fork the engine child + Node boot + parse main.js (V8-cached) +
                 //                  isolated-vm init + socket connect handshake.
@@ -53,6 +61,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 const result = await wideEvent.timed({
                     name: 'execution',
                     fn: async () => {
+                        const bootStartedAt = Date.now()
                         await wideEvent.timed({
                             name: 'sandboxStart',
                             fn: () => sandbox.start({
@@ -61,14 +70,18 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                                 mounts: [],
                             }),
                         })
-                        return wideEvent.timed({
+                        bootMs = Date.now() - bootStartedAt
+                        const runStartedAt = Date.now()
+                        const runResult = await wideEvent.timed({
                             name: 'sandboxRun',
                             fn: () => sandbox.execute(operationType, operation, { timeoutInSeconds }),
                         })
+                        runMs = Date.now() - runStartedAt
+                        return runResult
                     },
                 })
                 await manager.release(log)
-                return result
+                return { ...result, timings: { provisionMs, bootMs, runMs } }
             }
             catch (error) {
                 await manager.invalidate(log)
@@ -86,6 +99,38 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     busy: info.busy,
                 }))
         },
+        async prewarm({ log, apiClient, publicApiUrl, flow }: PreWarmSandboxParams): Promise<void> {
+            if (isNil(apiClient) || isNil(publicApiUrl)) {
+                return
+            }
+            const { error } = await tryCatch(async () => {
+                const { flows, platformId, engineToken } = await apiClient.getPrewarmData({
+                    workerGroupId: getSettings().WORKER_GROUP_ID,
+                    projectWorker: getSettings().PROJECT_WORKER,
+                    flow,
+                })
+                const resolver = createResolver({ apiClient, basePath, getSettings, log })
+                const pieces: PiecePackage[] = []
+                const codeSteps: CodeArtifact[] = []
+                for (const flow of flows) {
+                    const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, publicApiUrl, engineToken }))
+                    if (flowError) {
+                        log.warn({ error: String(flowError), flow: { id: flow.id } }, 'Failed to resolve flow for prewarm')
+                        continue
+                    }
+                    if (resolved.kind !== 'ready') {
+                        continue
+                    }
+                    pieces.push(...resolved.provision.pieces)
+                    codeSteps.push(...resolved.provision.codes)
+                }
+                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken })
+                log.info({ flowCount: flows.length, pieceCount: pieces.length }, 'Prewarmed sandbox cache')
+            })
+            if (error) {
+                log.warn({ error: String(error) }, 'Cache prewarm failed')
+            }
+        },
         async shutdown(shutdownLog: ApLogger): Promise<void> {
             await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))
         },
@@ -96,4 +141,5 @@ type CreateSandboxRuntimeParams = {
     concurrency?: number
     basePath: string
     getSettings: () => SandboxSettings
+
 }

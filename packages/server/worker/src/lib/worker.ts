@@ -3,10 +3,11 @@ import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
+import { createApiToWorkerHandlers } from './api-notify-service'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
@@ -54,11 +55,20 @@ let inFlightJobs = 0
 
 const DRAIN_TIMEOUT_MS = 25_000
 
+// Sandbox memory/state is UI-only telemetry (the workers page). Computing it needs a full
+// process-table scan (si.processes()), so it must NOT run on the poll hot path — sampling it on
+// every poll pegged worker CPU and collapsed throughput (~7x, #13497). Sample it on a slow
+// interval instead and have buildMachineInfo() read the cached snapshot.
+let cachedSandboxInfo: SandboxInformation[] = []
+let sandboxInfoInterval: NodeJS.Timeout | null = null
+const SANDBOX_INFO_REFRESH_MS = 15_000
+
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
+        const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -98,14 +108,23 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
+        createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
+            getRuntime: () => runtime,
+            apiClient,
+            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            log: logger,
+        }))
+
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
         }
+        startSandboxInfoSampling()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
     async stop(): Promise<void> {
         polling = false
+        stopSandboxInfoSampling()
         await drainInFlightJobs()
         if (runtime) {
             await runtime.shutdown(logger)
@@ -136,6 +155,9 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
+    if (concurrency === 1) {
+        await sandboxConfig.primeFullContainerMemory()
+    }
     // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
     // along with its box (usually already done by the disconnect handler), so it fails fast and is
     // retried instead of lingering on a reused box. Reusing the box made the next generation's poll
@@ -148,6 +170,13 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
+    })
+
+    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
+    void runtime.prewarm({
+        log: logger, 
+        apiClient,
+        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
     })
 
     logger.info({ concurrency }, 'Starting poll loops')
@@ -373,7 +402,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
 
 function getWorkerProps(): WorkerProps {
     try {
-        const settings = workerSettings.getSettings()
+        const settings = sandboxConfig.getSandboxSettings()
         return {
             EXECUTION_MODE: settings.EXECUTION_MODE,
             WORKER_CONCURRENCY: system.get(WorkerSystemProp.WORKER_CONCURRENCY)!,
@@ -400,19 +429,48 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
         ip: workerHostname,
-        sandboxes: await buildSandboxInfo(),
+        sandboxes: cachedSandboxInfo,
     }
+}
+
+function startSandboxInfoSampling(): void {
+    if (!isNil(sandboxInfoInterval)) {
+        return
+    }
+    void refreshSandboxInfo()
+    sandboxInfoInterval = setInterval(() => void refreshSandboxInfo(), SANDBOX_INFO_REFRESH_MS)
+    sandboxInfoInterval.unref()
+}
+
+function stopSandboxInfoSampling(): void {
+    if (!isNil(sandboxInfoInterval)) {
+        clearInterval(sandboxInfoInterval)
+        sandboxInfoInterval = null
+    }
+    cachedSandboxInfo = []
+}
+
+async function refreshSandboxInfo(): Promise<void> {
+    const { data, error } = await tryCatch(buildSandboxInfo)
+    if (error) {
+        logger.warn({ error }, 'Failed to refresh sandbox info')
+        return
+    }
+    cachedSandboxInfo = data
 }
 
 async function buildSandboxInfo(): Promise<SandboxInformation[]> {
     const activeExecutors = runtime?.getActiveExecutors() ?? []
-
-    return Promise.all(activeExecutors.map(async (executor) => ({
+    if (activeExecutors.length === 0) {
+        return []
+    }
+    const memoryByPid = await systemUsage.getProcessTreeMemoryBytesByPids(activeExecutors.map((executor) => executor.pid))
+    return activeExecutors.map((executor) => ({
         sandboxId: executor.sandboxId,
         boxId: executor.boxId,
         busy: executor.busy,
-        memoryUsageBytes: await systemUsage.getProcessTreeMemoryBytes(executor.pid),
-    })))
+        memoryUsageBytes: memoryByPid.get(executor.pid) ?? 0,
+    }))
 }
 
 function buildErrorMessage(execError: Error | undefined, result: JobResult | undefined): string | undefined {

@@ -38,12 +38,12 @@ import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { billingUsageReportModule } from './ee/billing-usage-report/billing-usage-report-module'
 import { chatEvalModule } from './ee/chat/chat-eval-controller'
-import { chatFunnelTrackingModule } from './ee/chat/chat-funnel-tracking-module'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
+import { appearanceHelper } from './ee/helper/appearance-helper'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
@@ -70,12 +70,14 @@ import { flagHooks } from './flags/flags.hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
+import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
 import { exceptionHandler } from './helper/exception-handler'
 import { clientLogsModule } from './helper/logs/client-logs.module'
 import { openapiModule } from './helper/openapi/openapi.module'
+import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
@@ -100,15 +102,16 @@ import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
+import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
-import { userBadgeModule } from './user/badges/badge-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
+import { workerCapacity } from './workers/machine/worker-capacity'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
@@ -213,6 +216,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(storeEntryModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
+    toolSearchReindexJob(app.log).register()
+    // Cold-start backfill: build the tool-search index once if the flag is on but it has never been
+    // built (existing deployment whose piece_metadata is already populated, so no sync delta fires).
+    // Fire-and-forget — a no-op once the index has rows, and must never block or fail boot.
+    rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfEmpty(), app.log)
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
@@ -236,6 +244,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
+    await workerCapacity.setup()
     await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
@@ -244,7 +253,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(knowledgeBaseModule)
     await app.register(userModule)
     await app.register(templateModule)
-    await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
 
     // Dev-only: accept browser debug logs into the shared evlog fs drain so a
@@ -312,12 +320,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
             await app.register(chatEvalModule)
-            await app.register(chatFunnelTrackingModule)
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             billingProvider.set(autumnBillingProvider)
+            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -351,6 +359,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             billingProvider.set(autumnBillingProvider)
+            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)

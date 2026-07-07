@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { formatKey, ValueRow } from './shared-value-rendering';
+import { ValueRow } from './shared-value-rendering';
 
 type OutputGenericFieldListProps = {
   json: Record<string, unknown>;
@@ -20,7 +20,7 @@ function OutputGenericFieldList({ json }: OutputGenericFieldListProps) {
   return (
     <div className="py-1">
       {entries.map(([key, value]) => (
-        <ValueRow key={key} label={formatKey(key)} value={value} depth={0} />
+        <ValueRow key={key} label={key} value={value} depth={0} />
       ))}
     </div>
   );

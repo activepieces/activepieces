@@ -13,8 +13,8 @@ export enum SystemJobName {
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
     BILLING_USAGE_REPORT = 'billing-usage-report',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
+    TOOL_SEARCH_REINDEX = 'tool-search-reindex',
     BUNDLE_PIECE = 'bundle-piece',
-    CHAT_FUNNEL_SYNC = 'chat-funnel-sync',
 }
 
 type BundlePieceSystemJobData = {
@@ -45,6 +45,12 @@ type ResumeDelayWaitpointSystemJobData = {
     waitpointId: string
 }
 
+// Scope shape kept inline (structurally equal to tool-search's ReindexScope) so this generic
+// job framework does not depend on the tool-search feature module.
+type ToolSearchReindexSystemJobData = {
+    scope: { type: 'all' } | { type: 'platform', platformId: PlatformId }
+}
+
 type SystemJobDataMap = {
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
@@ -55,8 +61,8 @@ type SystemJobDataMap = {
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
     [SystemJobName.BILLING_USAGE_REPORT]: Record<string, never>
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
+    [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
     [SystemJobName.BUNDLE_PIECE]: BundlePieceSystemJobData
-    [SystemJobName.CHAT_FUNNEL_SYNC]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

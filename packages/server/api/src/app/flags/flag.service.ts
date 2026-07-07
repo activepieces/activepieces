@@ -38,7 +38,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
-                ApFlagId.LATEST_VERSION,
                 ApFlagId.PRIVACY_POLICY_URL,
                 ApFlagId.PIECES_SYNC_MODE,
                 ApFlagId.PRIVATE_PIECES_ENABLED,
@@ -65,7 +64,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
         const created = now
         const updated = now
         const currentVersion = apVersionUtil.getCurrentRelease()
-        const latestVersion = await apVersionUtil.getLatestRelease()
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -95,12 +93,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SHOW_PROJECT_MEMBERS,
                 value: system.getEdition() !== ApEdition.COMMUNITY,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_BADGES,
-                value: true,
                 created,
                 updated,
             },
@@ -241,12 +233,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.CURRENT_VERSION,
                 value: currentVersion,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.LATEST_VERSION,
-                value: latestVersion,
                 created,
                 updated,
             },
