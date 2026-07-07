@@ -103,6 +103,7 @@ The runs table surfaces a Status multi-select and an "Error message" text input 
 ### Failed-Step Surfaces
 
 - **Runs table failed-step column** renders the failed step's display name with a tooltip showing the truncated, JSON-pretty error message; clicking opens `FailedStepDialog` (full error + "Go to run" footer). Legacy runs without a captured message bypass the dialog and navigate straight to the run page.
+- **Run-details step panel** (`flow-step-input-output.tsx`) resolves `INTERNAL_ERROR` runs by output presence, not run status alone (`INTERNAL_ERROR` is non-terminal under `isFlowRunStateTerminal({ ignoreInternalError: true })`, so it is excluded from the skeleton-loader guard to avoid an infinite skeleton). Platform admins see `InternalErrorPanel` (from `run.internalError`, stripped server-side for non-admins) only when the selected step has no output; a step that ran before the crash still shows its captured output. When there is no output, a "no logs captured, contact support" message is shown to everyone.
 - **Builder run-info widget** shows up to two controls during a run:
   - A "Follow run updates" button — visible only while the run is non-terminal and the user has manually selected a different step. Clicking it calls `resumeLiveFollow`, which clears the `userManuallySelectedStepDuringRun` flag and snaps loop indexes to their latest iteration so the canvas resumes following the engine live.
   - On failure, a "See error" button that focuses the failed step on the canvas via `goToFailedStep` in `run-state`.

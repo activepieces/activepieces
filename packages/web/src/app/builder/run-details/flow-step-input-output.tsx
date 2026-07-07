@@ -133,28 +133,17 @@ export const FlowStepInputOutput = () => {
     return <StepOutputSkeleton className="p-4" />;
   }
 
-  if (
-    run.status === FlowRunStatus.INTERNAL_ERROR &&
-    isNil(selectedStepOutput)
-  ) {
-    return (
-      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8  px-5">
-        <Info size={36} className="text-muted-foreground" />
-        <h4 className="px-6 text-sm text-center text-muted-foreground">
-          {t(
-            'There are no logs captured for this run, because of an internal error, please contact support.',
-          )}
-        </h4>
-      </div>
-    );
-  }
-
-  const message = handleRunFailureOrEmptyLog(run, rententionDays);
+  const message =
+    run.status === FlowRunStatus.INTERNAL_ERROR && isNil(selectedStepOutput)
+      ? t(
+          'There are no logs captured for this run, because of an internal error, please contact support.',
+        )
+      : handleRunFailureOrEmptyLog(run, rententionDays);
   if (message) {
     return (
-      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8  px-5">
+      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8 px-5">
         <Info size={36} className="text-muted-foreground" />
-        <h4 className="px-6 text-sm text-center text-muted-foreground ">
+        <h4 className="px-6 text-sm text-center text-muted-foreground">
           {message}
         </h4>
       </div>
