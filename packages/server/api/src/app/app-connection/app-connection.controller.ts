@@ -96,6 +96,14 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
         return appConnectionsWithoutSensitiveData
     },
     )
+    app.get('/:id', GetAppConnectionRequest, async (request): Promise<AppConnectionWithoutSensitiveData> => {
+        return appConnectionService(request.log).getOnePublicOrThrow({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+            projectId: request.projectId,
+        })
+    })
+
     app.get('/owners', ListAppConnectionOwnersRequest, async (request): Promise<SeekPage<AppConnectionOwners>> => {
         const owners = await appConnectionService(request.log).getOwners({
             projectId: request.projectId,
@@ -253,6 +261,30 @@ const ListAppConnectionsRequest = {
         },
     },
 }
+const GetAppConnectionRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_APP_CONNECTION,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AppConnectionEntity,
+            },
+        ),
+    },
+    schema: {
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Get an app connection by id',
+        params: z.object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: AppConnectionWithoutSensitiveData,
+        },
+    },
+}
+
 const ListAppConnectionOwnersRequest = {
     config: {
         security: securityAccess.project(
