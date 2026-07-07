@@ -3,12 +3,7 @@ import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import {
-  FilteredPieceBehavior,
-  OAuth2GrantType,
-  PieceScope,
-  PieceType,
-} from '@activepieces/shared';
+import { OAuth2GrantType, PieceScope, PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -16,11 +11,10 @@ import {
   Package,
   Hash,
   GitBranch,
-  Layers,
   Puzzle,
   Trash,
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -34,12 +28,10 @@ import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { oauthAppsQueries } from '@/features/connections';
 import {
   InstallPieceDialog,
@@ -47,18 +39,11 @@ import {
   piecesApi,
   piecesHooks,
 } from '@/features/pieces';
-import { platformPieceFilterQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
 
-import { PieceSetsTab } from './piece-sets/piece-sets-tab';
-
-type TabValue = 'pieces' | 'piece-sets';
-
-const PiecesListTab = () => {
+const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
@@ -76,29 +61,6 @@ const PiecesListTab = () => {
   const { refetch: refetchPiecesOAuth2AppsMap } =
     oauthAppsQueries.usePiecesOAuth2AppsMap();
 
-  const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
-
-  const hiddenPieceNames = useMemo(
-    () => new Set(pieceFilter.filteredPieceNames),
-    [pieceFilter.filteredPieceNames],
-  );
-
-  const isPieceHidden = useCallback(
-    (pieceName: string) =>
-      pieceFilter.filteredPieceBehavior === FilteredPieceBehavior.ALLOWED
-        ? !hiddenPieceNames.has(pieceName)
-        : hiddenPieceNames.has(pieceName),
-    [pieceFilter.filteredPieceBehavior, hiddenPieceNames],
-  );
-
-  const filteredPieces = useMemo(() => {
-    const allPieces = pieces ?? [];
-    if (selectedStatuses.size === 0) return allPieces;
-    return allPieces.filter((piece) =>
-      selectedStatuses.has(isPieceHidden(piece.name) ? 'hidden' : 'visible'),
-    );
-  }, [pieces, selectedStatuses, isPieceHidden]);
-
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
       () => [
@@ -114,11 +76,7 @@ const PiecesListTab = () => {
           ),
           cell: ({ row }) => {
             return (
-              <div
-                className={cn('flex items-center gap-2', {
-                  'opacity-50': isPieceHidden(row.original.name),
-                })}
-              >
+              <div className="flex items-center gap-2">
                 <PieceIcon
                   size={'sm'}
                   border={true}
@@ -157,15 +115,7 @@ const PiecesListTab = () => {
             />
           ),
           cell: ({ row }) => {
-            return (
-              <div
-                className={cn('text-left', {
-                  'opacity-50': isPieceHidden(row.original.name),
-                })}
-              >
-                {row.original.name}
-              </div>
-            );
+            return <div className="text-left">{row.original.name}</div>;
           },
         },
         {
@@ -179,20 +129,12 @@ const PiecesListTab = () => {
             />
           ),
           cell: ({ row }) => {
-            return (
-              <div
-                className={cn('text-left', {
-                  'opacity-50': isPieceHidden(row.original.name),
-                })}
-              >
-                {row.original.version}
-              </div>
-            );
+            return <div className="text-left">{row.original.version}</div>;
           },
         },
         {
           id: 'actions',
-          size: 190,
+          size: 80,
           cell: ({ row }) => {
             return (
               <div className="flex justify-end">
@@ -208,9 +150,7 @@ const PiecesListTab = () => {
                 )}
                 <PieceActions
                   pieceName={row.original.name}
-                  pieceDisplayName={row.original.displayName}
                   isEnabled={isEnabled}
-                  isHidden={isPieceHidden(row.original.name)}
                 />
                 {row.original.pieceType === PieceType.CUSTOM && (
                   <ConfirmationDeleteDialog
@@ -244,114 +184,8 @@ const PiecesListTab = () => {
           },
         },
       ],
-      [isEnabled, refetchPieces, refetchPiecesOAuth2AppsMap, isPieceHidden],
+      [],
     );
-
-  return (
-    <>
-      {!isEnabled && (
-        <LockedAlert
-          title={t('Control Pieces')}
-          description={t(
-            "Show the pieces that matter most to your users and hide the ones you don't like.",
-          )}
-          button={
-            <RequestTrial
-              featureKey="ENTERPRISE_PIECES"
-              buttonVariant="basic"
-            />
-          }
-        />
-      )}
-      <DataTable
-        emptyStateTextTitle={t('No pieces found')}
-        emptyStateTextDescription={t(
-          'Start by installing pieces that you want to use in your automations',
-        )}
-        emptyStateIcon={<Package className="size-14" />}
-        columns={columns}
-        filters={[
-          {
-            type: 'input',
-            title: t('Piece Name'),
-            accessorKey: 'name',
-            icon: CheckIcon,
-          },
-        ]}
-        customFilters={[
-          <DataTableSelectPopover
-            key="status-filter"
-            title={t('Status')}
-            selectedValues={new Set(selectedStatuses)}
-            options={[
-              { label: t('Visible'), value: 'visible' },
-              { label: t('Hidden'), value: 'hidden' },
-            ]}
-            handleFilterChange={(values) =>
-              setSelectedStatuses(new Set(values))
-            }
-          />,
-        ]}
-        page={{
-          data: filteredPieces,
-          next: null,
-          previous: null,
-        }}
-        isLoading={isLoading}
-        getRowClassName={(row) =>
-          isPieceHidden(row.name) ? 'bg-muted/40' : ''
-        }
-        isRowSelectionDisabled={(row) => isPieceHidden(row.name)}
-        bulkActions={[
-          {
-            render: (selectedRows) => (
-              <ApplyTags
-                selectedPieces={selectedRows}
-                onApplyTags={() => refetchPieces()}
-              />
-            ),
-          },
-          {
-            render: (selectedRows, resetSelection) => (
-              <BulkVisibilityActions
-                selectedPieces={selectedRows}
-                onComplete={() => refetchPieces()}
-                resetSelection={resetSelection}
-                isEnabled={isEnabled}
-              />
-            ),
-          },
-        ]}
-        toolbarButtons={[
-          <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
-          <SyncPiecesButton key="sync" />,
-          <InstallPieceDialog
-            key="install"
-            onInstallPiece={() => refetchPieces()}
-            scope={PieceScope.PLATFORM}
-          />,
-        ]}
-        selectColumn={true}
-        virtualizeRows={true}
-        hidePagination={true}
-      />
-    </>
-  );
-};
-
-const PlatformPiecesPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as TabValue) || 'pieces';
-
-  const setTab = (tab: TabValue) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (tab === 'pieces') {
-      newParams.delete('tab');
-    } else {
-      newParams.set('tab', tab);
-    }
-    setSearchParams(newParams, { replace: true });
-  };
 
   return (
     <>
@@ -360,37 +194,74 @@ const PlatformPiecesPage = () => {
         title={t('Pieces')}
       />
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setTab(v as TabValue)}
-          className="flex flex-col flex-1 min-h-0 min-w-0"
-        >
-          <TabsList
-            variant="outline"
-            className="border-b w-full rounded-none justify-start shrink-0"
-          >
-            <TabsTrigger variant="outline" value="pieces">
-              <Puzzle className="size-4 mr-2" />
-              {t('Pieces')}
-            </TabsTrigger>
-            <TabsTrigger variant="outline" value="piece-sets">
-              <Layers className="size-4 mr-2" />
-              {t('Piece Sets')}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent
-            value="pieces"
-            className="flex-1 min-h-0 flex flex-col mt-0 min-w-0"
-          >
-            <PiecesListTab />
-          </TabsContent>
-          <TabsContent
-            value="piece-sets"
-            className="flex-1 min-h-0 flex flex-col mt-0 min-w-0"
-          >
-            <PieceSetsTab />
-          </TabsContent>
-        </Tabs>
+        {!isEnabled && (
+          <LockedAlert
+            title={t('Control Pieces')}
+            description={t(
+              "Show the pieces that matter most to your users and hide the ones you don't like.",
+            )}
+            button={
+              <RequestTrial
+                featureKey="ENTERPRISE_PIECES"
+                buttonVariant="basic"
+              />
+            }
+          />
+        )}
+        <DataTable
+          emptyStateTextTitle={t('No pieces found')}
+          emptyStateTextDescription={t(
+            'Start by installing pieces that you want to use in your automations',
+          )}
+          emptyStateIcon={<Package className="size-14" />}
+          columns={columns}
+          filters={[
+            {
+              type: 'input',
+              title: t('Piece Name'),
+              accessorKey: 'name',
+              icon: CheckIcon,
+            },
+          ]}
+          page={{
+            data: pieces ?? [],
+            next: null,
+            previous: null,
+          }}
+          isLoading={isLoading}
+          bulkActions={[
+            {
+              render: (selectedRows) => (
+                <ApplyTags
+                  selectedPieces={selectedRows}
+                  onApplyTags={() => refetchPieces()}
+                />
+              ),
+            },
+            {
+              render: (selectedRows, resetSelection) => (
+                <BulkVisibilityActions
+                  selectedPieces={selectedRows}
+                  onComplete={() => refetchPieces()}
+                  resetSelection={resetSelection}
+                  isEnabled={isEnabled}
+                />
+              ),
+            },
+          ]}
+          toolbarButtons={[
+            <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
+            <SyncPiecesButton key="sync" />,
+            <InstallPieceDialog
+              key="install"
+              onInstallPiece={() => refetchPieces()}
+              scope={PieceScope.PLATFORM}
+            />,
+          ]}
+          selectColumn={true}
+          virtualizeRows={true}
+          hidePagination={true}
+        />
       </div>
     </>
   );
