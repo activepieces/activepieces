@@ -46,7 +46,7 @@ apps    = ceil(workers / 10)
 At 50 concurrent flows: **50 workers** (25 vCPU / 50 GB) + **5 apps** (5 vCPU / 5 GB). Overflow queues in Redis and drains as slots free.
 
 <Tip>
-Size **statically for peak** — autoscaling's boot and scheduling lag can't defend the 30 s sync-webhook budget. A pre-sized fleet keeps a slot warm and waiting.
+Size **statically for peak** — autoscaling's boot and scheduling lag can't defend the 30 s sync-webhook budget. A pre-sized fleet keeps a slot warm and waiting. Measured scale-up and drain numbers: [Autoscaling](../architecture/autoscaling).
 </Tip>
 
 And it scales with your fleet:

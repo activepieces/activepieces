@@ -1,27 +1,21 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import {
 	AppConnectionValueForAuthProperty,
 	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown } from '../common/props';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlookAuth>, { folderId?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-		const cloud = auth.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = outlookCommon.createClient(auth);
 
 		const messages = [];
 		const folderId = propsValue.folderId;
@@ -32,7 +26,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlook
 				: `$filter=createdDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
 
 		let response: PageCollection = await client
-			.api(`/me/mailFolders/${folderId}/messages?${filter}`)
+			.api(`${outlookCommon.mailboxPrefix(auth)}/mailFolders/${folderId}/messages?${filter}`)
 			.orderby('createdDateTime desc')
 			.get();
 

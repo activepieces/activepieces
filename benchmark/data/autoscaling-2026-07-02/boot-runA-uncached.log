@@ -1,0 +1,14 @@
+scale to 4 issued at 2026-07-02T10:13:24Z (epoch 1782987204.097)
+new pods: worker-bd4c66d78-9x2fk worker-bd4c66d78-r7n4d
+=== worker-bd4c66d78-9x2fk ===
+  node               : gke-ap-sandbox-bench-default-pool-452661e9-c8c2
+  created            : +  -0.10s
+  PodScheduled       : +  -0.10s
+  Initialized        : +  -0.10s
+  Ready              : +  11.90s
+  containerStarted   : +  10.90s
+  event Scheduled   : +  -0.10s  Successfully assigned default/worker-bd4c66d78-9x2fk to gke-ap-sandbox-bench-default-pool-452661e9-c8c2
+  event Pulling     : +   0.90s  Pulling image "us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench"
+  event Pulled      : +  10.90s  Successfully pulled image "us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench
+  event Created     : +  10.90s  Container created
+  event Started     : +  10.90s  Container started

@@ -35,6 +35,10 @@ data:
   AP_S3_ENDPOINT: https://storage.googleapis.com
   AP_S3_REGION: europe-west1
   AP_S3_USE_SIGNED_URLS: "true"
+  # AWS SDK >=3.729 defaults to CRC32 checksums + aws-chunked payloads on PutObject; GCS's
+  # S3-interop endpoint rejects those with SignatureDoesNotMatch. WHEN_REQUIRED restores the old behavior.
+  AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
+  AWS_RESPONSE_CHECKSUM_VALIDATION: WHEN_REQUIRED
   # Official piece tarballs are pulled from the Activepieces CDN (cdn.activepieces.com) instead of npm.
   AP_USE_CDN_FOR_BUNDLES: "true"
 ---

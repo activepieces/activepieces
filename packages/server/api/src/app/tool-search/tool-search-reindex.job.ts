@@ -1,8 +1,10 @@
 import { apDayjs } from '@activepieces/server-utils'
-import { isNil } from '@activepieces/shared'
+import { ApEdition, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
 import { distributedLock } from '../database/redis-connections'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
@@ -34,6 +36,23 @@ export function reindexLockKey(_scope: ReindexScope): string {
     return 'tool-search-reindex'
 }
 
+/**
+ * Whether to skip a reconcile because there is no legitimate embedding funder.
+ *
+ * On CLOUD the shared catalog must be funded explicitly by `AP_OPENAI_API_KEY` — we never fall back
+ * to the oldest platform's key (that platform is Activepieces' own host tenant, not a valid funder
+ * for every tenant's catalog). So on cloud without the env key we skip the reconcile and let the
+ * keyword floor serve, rather than silently billing the host. Self-hosted editions keep the
+ * oldest-platform fallback.
+ */
+export function shouldSkipReindexOnCloud(): boolean {
+    if (system.getEdition() !== ApEdition.CLOUD) {
+        return false
+    }
+    const envApiKey = system.get(AppSystemProp.OPENAI_API_KEY)
+    return isNil(envApiKey) || envApiKey === ''
+}
+
 export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
     /** Register the worker handler. Called once at boot; the job only ever runs via {@link enqueue}. */
     register(): void {
@@ -42,8 +61,13 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
                 key: reindexLockKey(data.scope),
                 timeoutInSeconds: REINDEX_LOCK_TIMEOUT_SECONDS,
                 fn: async () => {
-                    // Embedding is funded by the platform that holds the AI key (the oldest platform —
-                    // the same one embed-security / chat use); scope only bounds which rows reconcile.
+                    if (shouldSkipReindexOnCloud()) {
+                        log.info('[toolSearchReindexJob] Cloud edition without AP_OPENAI_API_KEY — skipping reindex; on cloud we never fall back to the oldest platform (keyword floor serves).')
+                        return
+                    }
+                    // Embedding is funded by AP_OPENAI_API_KEY when set; otherwise (self-host only) by
+                    // the platform that holds the AI key (the oldest platform — same one embed-security
+                    // / chat use). Scope only bounds which rows reconcile, never whose key pays.
                     const platform = await platformService(log).getOldestPlatform()
                     if (isNil(platform)) {
                         log.info('[toolSearchReindexJob] No platform configured — skipping reindex.')
@@ -87,6 +111,10 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
      */
     async backfillIfEmpty(): Promise<void> {
         if (!isToolSearchEnabled()) {
+            return
+        }
+        if (shouldSkipReindexOnCloud()) {
+            log.info('[toolSearchReindexJob#backfillIfEmpty] Cloud edition without AP_OPENAI_API_KEY — skipping cold-start backfill; on cloud we never fall back to the oldest platform (keyword floor serves).')
             return
         }
         if (!await toolSearchTableExists()) {

@@ -28,6 +28,8 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 | Change the streaming loop behavior | `worker/.../ee/chat/run-chat-turn.ts` |
 | Add an endpoint | `ee/chat/chat-controller.ts` |
 
+**Flow-building guidance (prompts).** When building a flow the agent prefers, in order: a native piece action → a router condition → an **inline formula expression** (`ap-formula-v1::{ … }::ap-formula-v1`; ~100 functions in `core-formula`, evaluated at runtime by the engine props resolver) → a CODE step as a last resort. This lives in `guides/build_flow.md` (the ladder + function vocabulary) and is reinforced in `guides/ai.md`, `guides/control_flow.md`, and the `ap_build_flow` / `ap_add_step` tool descriptions. Formulas go in free-text/value inputs, not dropdowns.
+
 ## Key Files
 - `packages/server/api/src/app/ee/chat/chat.module.ts` — module registration; gates `/v1/chat` with `chatVisibilityGuard` (per-user visibility, not just the `chatEnabled` flag)
 - `packages/server/api/src/app/ee/chat/chat-visibility-helper.ts` — `chatVisibilityGuard` + `resolveChatEnabledForUser` (edition + embed + rollout/grandfather); also used by the platform endpoint to surface the effective `plan.chatEnabled`
@@ -140,7 +142,7 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 
 ## Display Tools
 - `ap_show_connection_required` — prompts the user to connect a service
-- `ap_show_connection_picker` — lets the user choose between multiple connections; no longer receives connections array from LLM (server-managed); returns only `{ selected: true, label }` to LLM, stripping externalIds
+- `ap_show_connection_picker` — lets the user choose between multiple connections; no longer receives connections array from LLM (server-managed); returns only `{ selected: true, label }` to LLM, stripping externalIds. The picker's create/reconnect dialog derives its scope from the operation: creating a new connection always defaults to PROJECT scope, while reconnecting an expired global connection routes through the global endpoint and preserves PLATFORM scope (never silently downgrades a global connection to a project-scoped duplicate)
 - `ap_show_project_picker` — lets the user select a project; accepts an optional `question` to title the card; renders up to 3 suggested-project rows plus a "Show all N projects" row that opens a searchable 2-column grid, and a resolved pick renders as an `AnsweredQuestionsCard` user-message bubble
 - `ap_show_questions` — renders an interactive multi-question form; after the user submits, the answers recap is rendered as a right-aligned user-message bubble (matching the `UserMessage` style) rather than a bordered card
 - `ap_show_quick_replies` — shows up to 3 suggested follow-ups as a stacked list docked above the chat input within the message flow (via `mt-auto`, so they dock above the input when at the bottom and scroll away when scrolling up; hidden during blocking cards and while the answer is streaming); revealed as soon as text streaming completes rather than waiting for the post-stream reconcile tail; emitted only when concrete, relevant next steps exist. Optional `offerRecurringAutomation` flag (set after a successful one-time task) pins a special "Run this automatically every day" chip (`recurring-chip.tsx`, gradient label + animated icon) as the last suggestion; clicking it sends `RECURRING_AUTOMATION_REPLY` verbatim, which the prompt guides convert into a daily recurring automation
