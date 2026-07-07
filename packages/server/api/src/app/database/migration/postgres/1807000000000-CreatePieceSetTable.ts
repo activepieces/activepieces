@@ -19,7 +19,6 @@ const DEFAULT_CONFIG: PieceSetConfig = {
     selectedTriggers: {},
 }
 
-const PLATFORM_BATCH = 100
 const PROJECT_BATCH = 500
 
 const log = system.globalLogger()
@@ -117,26 +116,36 @@ export class CreatePieceSetTable1807000000000 implements Migration {
 
         log.info('[CreatePieceSetTable1807000000000#up] Starting piece-set backfill')
 
-        let platformOffset = 0
-        let platformCount = 0
-
-        while (true) {
-            const platforms: Array<{ id: string }> = await queryRunner.query(
-                'SELECT id FROM platform ORDER BY created ASC LIMIT $1 OFFSET $2',
-                [PLATFORM_BATCH, platformOffset],
+        // Only platforms with custom configuration to preserve are migrated. A project
+        // with a NULL "pieceSetId" self-heals at runtime (resolvePieceSetForProject falls
+        // back to getOrCreateDefaultPieceSet), so platforms whose projects all use the
+        // default (NONE) filter and that have no piece-bearing tags need no backfill. The
+        // set that actually needs migrating is therefore much smaller than the platform
+        // table, which is why we select it directly instead of paginating every platform.
+        const platforms: Array<{ id: string }> = await queryRunner.query(`
+            SELECT p.id
+            FROM platform p
+            WHERE EXISTS (
+                SELECT 1 FROM project pr
+                JOIN project_plan pp ON pp."projectId" = pr.id
+                WHERE pr."platformId" = p.id AND pp."piecesFilterType" = 'ALLOWED'
             )
-            if (platforms.length === 0) break
+            OR EXISTS (
+                SELECT 1 FROM tag t
+                JOIN piece_tag pt ON pt."tagId" = t.id
+                WHERE t."platformId" = p.id
+            )
+            ORDER BY p.created ASC
+        `)
 
-            for (const { id: platformId } of platforms) {
-                await migratePlatform(queryRunner, platformId)
-                platformCount++
-            }
-
-            platformOffset += platforms.length
-            if (platforms.length < PLATFORM_BATCH) break
+        for (const { id: platformId } of platforms) {
+            await migratePlatform(queryRunner, platformId)
         }
 
-        log.info({ platformCount }, '[CreatePieceSetTable1807000000000#up] Backfill complete')
+        log.info(
+            { platformCount: platforms.length },
+            '[CreatePieceSetTable1807000000000#up] Backfill complete',
+        )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
