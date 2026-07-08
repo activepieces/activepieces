@@ -659,9 +659,11 @@ describe('Tool Search Engine (Phase 5 — keyword floor / degradation)', () => {
         await seedCatalog()
         // No reindex, no embedder, no platformId → embedder resolves to null → keyword floor.
 
-        const { results, mode } = await toolSearchService(log).searchActions('send message', { limit: 5 })
+        const { results, mode, degradeReason } = await toolSearchService(log).searchActions('send message', { limit: 5 })
 
         expect(mode).toBe('keyword')
+        // No model is configured, so the reason must be no-embedder (not a failed call).
+        expect(degradeReason).toBe('no-embedder')
         const slack = results.find((r) => r.pieceName === '@activepieces/piece-slack')
         expect(slack).toMatchObject({
             actionName: 'send_channel_message',
@@ -681,10 +683,30 @@ describe('Tool Search Engine (Phase 5 — keyword floor / degradation)', () => {
             embed: () => Promise.reject(new Error('openai unreachable')),
         }
 
-        const { results, mode } = await toolSearchService(log).searchActions('send message', { embedder: throwingEmbedder, limit: 5 })
+        const { results, mode, degradeReason } = await toolSearchService(log).searchActions('send message', { embedder: throwingEmbedder, limit: 5 })
 
         expect(mode).toBe('keyword')
+        // A model WAS configured; its embed call threw — the reason must reflect the failure, not config.
+        expect(degradeReason).toBe('embed-failed')
         expect(results.some((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
+    })
+
+    it('honors the pieceName scope in the keyword floor — a scoped query returns only that piece’s rows', async () => {
+        await seedCatalog()
+        // No embedder → keyword floor. Unscoped, "send" matches more than one piece (Slack + Gmail),
+        // so the scope below is doing real work — it must not silently vanish on degrade.
+        const unscoped = await toolSearchService(log).searchActions('send', { limit: 10 })
+        expect(unscoped.mode).toBe('keyword')
+        expect(new Set(unscoped.results.map((r) => r.pieceName)).size).toBeGreaterThan(1)
+
+        const { results, mode } = await toolSearchService(log).searchActions('send', {
+            limit: 10,
+            pieceName: '@activepieces/piece-slack',
+        })
+
+        expect(mode).toBe('keyword')
+        expect(results.length).toBeGreaterThan(0)
+        expect(results.every((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
     })
 })
 
