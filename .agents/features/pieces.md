@@ -5,13 +5,12 @@ The pieces feature manages the metadata catalog of automation integrations (call
 
 ## Key Files
 - `packages/server/api/src/app/pieces/metadata/piece-metadata-controller.ts` — all piece routes registered under `/v1/pieces`
-- `packages/server/api/src/app/pieces/metadata/piece-metadata-service.ts` — list, get, create, delete piece metadata; manages cache interactions and piece tag enrichment
+- `packages/server/api/src/app/pieces/metadata/piece-metadata-service.ts` — list, get, create, delete piece metadata; manages cache interactions
 - `packages/server/api/src/app/pieces/metadata/piece-metadata-entity.ts` — `piece_metadata` TypeORM entity
 - `packages/server/api/src/app/pieces/metadata/piece-cache.ts` — Redis/memory cache with pub/sub invalidation
 - `packages/server/api/src/app/pieces/community-piece-module.ts` — POST `/v1/pieces` for installing custom pieces
 - `packages/server/api/src/app/pieces/piece-install-service.ts` — saves archive, calls engine to extract metadata, stores result
 - `packages/server/api/src/app/pieces/piece-sync-service.ts` — syncs canonical piece registry from NPM/bundled artifacts into DB
-- `packages/server/api/src/app/pieces/tags/` — tag entity, tag service, tag-module for organizing pieces into groups
 - `packages/web/src/features/pieces/api/pieces-api.ts` — frontend HTTP client
 - `packages/web/src/features/pieces/hooks/pieces-hooks.ts` — React Query hooks for piece listing, piece model, piece options
 - `packages/web/src/features/pieces/hooks/use-piece-output-schema.ts` — reads `outputSchema` for a given step (PIECE action or trigger) off the cached piece model; shares the existing `['piece', name, version]` React Query cache so no extra network call is made

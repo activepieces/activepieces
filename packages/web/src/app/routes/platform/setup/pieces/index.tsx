@@ -11,7 +11,6 @@ import {
   Package,
   Hash,
   GitBranch,
-  Info,
   Layers,
   Puzzle,
   Trash,
@@ -30,7 +29,6 @@ import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LockedAlert } from '@/components/custom/locked-alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { oauthAppsQueries } from '@/features/connections';
@@ -58,7 +56,6 @@ const PiecesListTab = () => {
     isLoading,
   } = piecesHooks.usePieces({
     searchQuery,
-    includeTags: true,
     includeHidden: true,
     isTableQuery: true,
   });
@@ -91,19 +88,6 @@ const PiecesListTab = () => {
                 />
                 <div className="flex flex-col gap-0.5">
                   <span>{row.original.displayName}</span>
-                  {row.original.tags && row.original.tags.length > 0 && (
-                    <div className="flex gap-1">
-                      {row.original.tags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className="text-xs py-0 px-1.5"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             );
@@ -265,14 +249,6 @@ const PlatformPiecesPage = () => {
         description={t('Manage the pieces that are available to your users')}
         title={t('Pieces')}
       />
-      <div className="flex items-center gap-2 px-4 pb-4 text-sm text-muted-foreground shrink-0">
-        <Info className="size-4 shrink-0" />
-        <span>
-          {t(
-            'Piece tags are deprecated. Use Piece Sets to control which pieces are available to your projects.',
-          )}
-        </span>
-      </div>
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
         <Tabs
           value={activeTab}

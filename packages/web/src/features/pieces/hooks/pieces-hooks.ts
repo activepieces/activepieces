@@ -77,7 +77,6 @@ type UseMultiplePiecesProps = {
 type UsePiecesProps = {
   searchQuery?: string;
   includeHidden?: boolean;
-  includeTags?: boolean;
   isTableQuery?: boolean;
   skipProjectFilter?: boolean;
 };
@@ -163,7 +162,6 @@ export const piecesHooks = {
   usePieces: ({
     searchQuery,
     includeHidden = false,
-    includeTags = false,
     isTableQuery = false,
     skipProjectFilter = false,
   }: UsePiecesProps) => {
@@ -185,7 +183,6 @@ export const piecesHooks = {
           projectId,
           searchQuery,
           includeHidden,
-          includeTags,
           locale: i18n.language as LocalesEnum,
         }),
       staleTime: searchQuery ? 0 : Infinity,

@@ -14,8 +14,6 @@ import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/p
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
-import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
-import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
@@ -309,28 +307,6 @@ export const createMockSigningKey = (
     }
 }
 
-
-export const createMockTag = (tag?: Partial<Omit<TagEntitySchema, 'platform'>>): Omit<TagEntitySchema, 'platform'> => {
-    return {
-        id: tag?.id ?? apId(),
-        created: tag?.created ?? faker.date.recent().toISOString(),
-        updated: tag?.updated ?? faker.date.recent().toISOString(),
-        platformId: tag?.platformId ?? apId(),
-        name: tag?.name ?? faker.lorem.word(),
-    }
-}
-
-
-export const createMockPieceTag = (request: Partial<Omit<PieceTagSchema, 'platform' | 'tag'>>): Omit<PieceTagSchema, 'platform' | 'tag'> => {
-    return {
-        id: request.id ?? apId(),
-        created: request.created ?? faker.date.recent().toISOString(),
-        updated: request.updated ?? faker.date.recent().toISOString(),
-        platformId: request.platformId ?? apId(),
-        pieceName: request.pieceName ?? faker.lorem.word(),
-        tagId: request.tagId ?? apId(),
-    }
-}
 
 export const createMockPieceMetadata = (
     pieceMetadata?: Partial<Omit<PieceMetadataSchema, 'project'>>,

@@ -10,7 +10,6 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
@@ -29,11 +28,10 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 locale,
                 log,
             }))
-            const piecesWithTags = await enrichTags(params.platformId, translatedPieces, params.includeTags)
             const policy = await resolveVisibility({ platformId: params.platformId, projectId: params.projectId, log })
             const sortedPieces = await pieceListUtils(log).filterPieces({
                 ...params,
-                pieces: piecesWithTags,
+                pieces: translatedPieces,
                 suggestionType: params.suggestionType,
             })
             const filteredPieces = params.includeHidden || isNil(policy) ? sortedPieces : policy.filterPieces(sortedPieces)
@@ -311,19 +309,6 @@ const findOldestCreatedDate = async ({ name, platformId }: { name: string, platf
     return piece?.created ?? dayjs().toISOString()
 }
 
-const enrichTags = async (platformId: string | undefined, pieces: PieceMetadataSchema[], includeTags: boolean | undefined): Promise<PieceMetadataSchema[]> => {
-    if (!includeTags || isNil(platformId)) {
-        return pieces
-    }
-    const tags = await pieceTagService.findByPlatform(platformId)
-    return pieces.map((piece) => {
-        return {
-            ...piece,
-            tags: tags[piece.name] ?? [],
-        }
-    })
-}
-
 const sortByVersionDescending = <T extends { version: string }>(a: T, b: T): number => {
     const aValid = semVer.valid(a.version)
     const bValid = semVer.valid(b.version)
@@ -523,8 +508,6 @@ type ListParams = {
     platformId?: string
     includeHidden: boolean
     categories?: PieceCategory[]
-    includeTags?: boolean
-    tags?: string[]
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     searchQuery?: string

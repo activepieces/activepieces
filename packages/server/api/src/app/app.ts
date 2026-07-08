@@ -96,7 +96,6 @@ import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
-import { tagsModule } from './pieces/tags/tags-module'
 import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
@@ -237,7 +236,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(triggerModule)
     await app.register(platformModule)
     await app.register(humanInputModule)
-    await app.register(tagsModule)
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
     await app.register(agentsModule)
