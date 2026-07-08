@@ -139,7 +139,7 @@ async function authenticate({ client, config }: { client: AxiosInstance; config:
         return { token, projectId };
     }
 
-    throw new Error('Provide credentials: --api-key/--token with --project-id, or --email and --password.');
+    throw new Error('Provide credentials: --api-key (or AP_API_KEY) with --project-id, or --email and --password.');
 }
 
 async function createBenchmarkFlow({ client, projectId }: { client: AxiosInstance; projectId: string }): Promise<string> {
