@@ -2,6 +2,7 @@ import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
+import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { ChatAgentEvent } from './chat-agent-events'
 import { ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
@@ -59,6 +60,12 @@ export type UploadFlowBundleRequest = {
     data: Buffer
 }
 
+export type RecordTriggerRunRequest = {
+    platformId: string
+    pieceName: string
+    status: TriggerRunStatus
+}
+
 export type WorkerToApiContract = {
     poll(input: WorkerMachineHealthcheckRequest): Promise<ConsumeJobRequest | null>
     completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void>
@@ -72,6 +79,7 @@ export type WorkerToApiContract = {
     getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
+    recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendChatEvent(input: SendChatEventRequest): Promise<void>
