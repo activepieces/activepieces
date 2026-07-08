@@ -41,27 +41,13 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (posthogInitialized.current) {
       return;
     }
-    // Skip init entirely (not just capture) when telemetry is off, or for the
-    // embed route — those are customers' end-users, not our funnel. Gate on the
-    // /embed route only (matching embedState.isEmbedded, which is set on that
-    // route), NOT on `window.self !== window.top`, so legitimately iframed
-    // product sessions still get tagged.
     const isEmbedded =
       embedState.isEmbedded || window.location.pathname.startsWith('/embed');
-    // Wait for EDITION too: isCloud drives init-time options (autocapture,
-    // heatmaps, replay sampling) that posthog-js cannot change after init.
-    // Both flags arrive in the same /v1/flags response, so in practice this
-    // never delays init — it just makes "init with the wrong isCloud"
-    // unrepresentable.
     if (!telemetryEnabled || isEmbedded || isNil(edition)) {
       return;
     }
     posthogInitialized.current = true;
 
-    // Rich capture (autocapture, heatmaps, replay, dead clicks) is Cloud-only:
-    // self-hosted (ce/ee) browsers belong to other companies' end users, whose
-    // screens and interactions we have no legal basis to record. They still
-    // send plain telemetry events, PII-gated via pickTelemetryPii.
     const isCloud = edition === ApEdition.CLOUD;
 
     posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
@@ -91,9 +77,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       enable_heatmaps: isCloud,
       person_profiles: 'identified_only',
       persistence: 'localStorage+cookie',
-      // Recording starts explicitly below so Cloud can be sampled client-side;
-      // project-level sampling would also throttle the marketing site, which
-      // shares the PostHog project and records at 100%.
       disable_session_recording: true,
       enable_recording_console_log: false,
       session_recording: {
@@ -101,13 +84,9 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       },
     });
 
-    // Tag at init so even the first event carries it. source_site separates
-    // product from marketing traffic; activepiecesEdition is registered in its
-    // own effect below so it self-corrects if the EDITION flag resolves late.
+    // Tag events so the shared project separates product from marketing traffic.
     posthog.register({ source_site: 'product' });
 
-    // Stash landing-URL acquisition params before SPA navigation strips them;
-    // signup.submitted and identify read them back later in the session.
     acquisitionUtils.stashAcquisitionParams();
 
     if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
@@ -115,10 +94,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     }
   }, [telemetryEnabled, embedState.isEmbedded, edition]);
 
-  // Keep activepiecesEdition correct even if the EDITION flag resolves after
-  // init — the init guard above would otherwise pin a stale value for the whole
-  // session. The name matches the backend property so cloud vs self-hosted stays
-  // cleanly filterable in the shared project.
   useEffect(() => {
     if (!posthogInitialized.current) {
       return;
@@ -135,8 +110,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (isNil(currentUser) || !telemetryEnabled) {
       return;
     }
-    // Re-identify when the user or the resolved edition changes, so Cloud PII is
-    // attached even if the EDITION flag arrives after the first identify.
     const identityKey = `${currentUser.id}:${edition ?? ''}`;
     if (identityKey === identifiedKey.current) {
       return;
@@ -152,7 +125,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     const currentVersion = flagCurrentVersion || '0.0.0';
     const environment = flagEnvironment || '0.0.0';
 
-    // PII (email/name) is gated to Cloud — see pickTelemetryPii.
     posthog.identify(
       currentUser.id,
       {
@@ -165,8 +137,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: environment,
       },
-      // First-touch acquisition source (UTM only, no PII) persisted on the
-      // person so it attaches to backend signed.up via person-on-events.
       acquisitionUtils.getAcquisitionParams(),
     );
 
@@ -195,9 +165,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
 
 const RECORDING_SAMPLE_RATE = 0.1;
 
-// Deterministic hash (djb2) so a device keeps the same sampling decision
-// across pageloads, giving complete replays instead of fragments. Sampling is
-// decided on the pre-identify device id at init time.
 function isInRecordingSample(distinctId: string): boolean {
   let hash = 5381;
   for (let i = 0; i < distinctId.length; i++) {

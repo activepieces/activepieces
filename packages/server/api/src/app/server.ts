@@ -70,23 +70,12 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     if (system.isApp()) {
         const posthogIngestionHost = 'https://us.i.posthog.com'
         const posthogAssetsHost = 'https://us-assets.i.posthog.com'
-        // posthog-js posts gzip-compressed bodies with a text/plain content type.
-        // Fastify's built-in text/plain parser (an exact match, so it wins over the
-        // proxy's own '*' passthrough) decodes those bytes as UTF-8, which changes
-        // their length and fails the Content-Length check — every compressed
-        // browser event was rejected with FST_ERR_CTP_INVALID_CONTENT_LENGTH
-        // before reaching PostHog. Strip all inherited parsers in this scope so
-        // ingestion bodies stream upstream untouched.
         await app.register(async (ingestScope) => {
             ingestScope.removeAllContentTypeParsers()
             ingestScope.addContentTypeParser('*', (_request, payload, done) => {
                 done(null, payload)
             })
             await ingestScope.register(fastifyHttpProxy, {
-                // Must stay '' for getUpstream to take effect: a non-empty upstream
-                // pins reply-from's connection pool to that origin and the host that
-                // replyOptions.getUpstream returns is ignored, sending asset requests
-                // to the ingestion host.
                 upstream: '',
                 prefix: '/ingest',
                 rewritePrefix: '',

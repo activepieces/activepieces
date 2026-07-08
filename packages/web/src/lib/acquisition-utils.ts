@@ -14,10 +14,6 @@ const ACQUISITION_PARAM_KEYS = [
 
 const STORAGE_KEY = 'ap_acquisition_params';
 
-// SPA navigation strips the query string long before signup/identify fire, so
-// the params on the landing URL are stashed once per session and read back
-// later. First touch wins: internal navigation must not overwrite the source
-// the visitor actually arrived with.
 function stashAcquisitionParams(): void {
   const fromUrl = readFromSearch(window.location.search);
   if (Object.keys(fromUrl).length === 0) {

@@ -25,7 +25,6 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!telemetryEnabled) {
             return
         }
-        // PII (email/name) is gated to Cloud — see pickTelemetryPii.
         getPostHog().identify({
             distinctId: user?.id ?? identity.id,
             properties: {
@@ -92,11 +91,6 @@ export async function shutdownTelemetry(): Promise<void> {
     }
 }
 
-// Best-effort, per-process daily dedupe for high-frequency telemetry call
-// sites (e.g. mcp.server.connected fired on every authenticated MCP request —
-// hundreds of thousands of near-identical events per week). Multi-server
-// deployments still emit one event per instance per day, which is fine: the
-// goal is cutting analytics noise/cost, not exactly-once semantics.
 const DEDUPE_MAX_ENTRIES = 50_000
 const dailyEventDedupe = new Map<string, string>()
 

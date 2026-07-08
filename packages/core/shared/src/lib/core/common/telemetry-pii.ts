@@ -1,8 +1,5 @@
 import { ApEdition } from '../flag/flag'
 
-// Only Cloud may attach end-user PII (email/name) to the shared analytics project;
-// self-hosted editions (ce/ee) send non-PII telemetry only. Centralised here so
-// every telemetry call site gates PII identically and cannot drift apart.
 export const pickTelemetryPii = ({
     edition,
     email,

@@ -205,7 +205,6 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             await telemetry(log).identify(identity, user)
             await telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.SIGNED_UP,
-                // PII (email/name) is gated to Cloud — see pickTelemetryPii.
                 payload: {
                     userId: user.id,
                     projectId,

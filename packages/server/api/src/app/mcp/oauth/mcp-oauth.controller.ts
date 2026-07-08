@@ -130,8 +130,6 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
 async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string }> {
     try {
         if (identity.type === McpServerType.PLATFORM) {
-            // Fires on every authenticated MCP request; dedupe to one event per
-            // user+server per day to keep analytics volume sane.
             if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
                 rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
                     name: TelemetryEventName.MCP_SERVER_CONNECTED,
