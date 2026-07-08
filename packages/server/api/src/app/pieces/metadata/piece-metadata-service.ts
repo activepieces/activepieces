@@ -7,7 +7,7 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
+import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
@@ -30,16 +30,16 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 log,
             }))
             const piecesWithTags = await enrichTags(params.platformId, translatedPieces, params.includeTags)
-            const filterContext = await enterpriseFilteringUtils(log).loadFilterContext({ platformId: params.platformId, projectId: params.projectId })
-            const filteredPieces = await pieceListUtils(log).filterPieces({
+            const policy = await resolveVisibility({ platformId: params.platformId, projectId: params.projectId, log })
+            const sortedPieces = await pieceListUtils(log).filterPieces({
                 ...params,
                 pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
-                filterContext,
             })
+            const filteredPieces = params.includeHidden || isNil(policy) ? sortedPieces : policy.filterPieces(sortedPieces)
 
             const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
-            return enterpriseFilteringUtils(log).filterComponents({ platformId: params.platformId, projectId: params.projectId, summaries, filterContext })
+            return isNil(policy) ? summaries : policy.filterComponents(summaries)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const registry = filterRegistry(await loadRegistry(log), {
@@ -67,15 +67,14 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 return undefined
             }
 
-            const isFiltered = await enterpriseFilteringUtils(log).isFiltered({
-                piece,
-                projectId,
-                platformId,
-            })
-            if (isFiltered) {
+            const policy = await resolveVisibility({ platformId, projectId, log })
+            if (isNil(policy)) {
+                return piece
+            }
+            if (!policy.isPieceVisible(piece.name)) {
                 return undefined
             }
-            return piece
+            return policy.filterPieceComponents(piece)
         },
         async getOrThrow({ version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
             const piece = await this.get({ version, name, platformId })

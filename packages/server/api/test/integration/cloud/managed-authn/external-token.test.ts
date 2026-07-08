@@ -9,10 +9,8 @@ import { distributedStore, redisConnections } from '../../../../src/app/database
 import { generateMockExternalToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
-    createMockPieceTag,
     createMockProject,
     createMockSigningKey,
-    createMockTag,
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
@@ -181,7 +179,7 @@ describe('Managed Authentication API', () => {
             expect(project?.pieceSetId).toBe(tagSet.id)
         })
 
-        it('Upserts the legacy tag-based project plan when managePiecesEnabled is false', async () => {
+        it('Assigns the named piece set even when managePiecesEnabled is false (flag gates management, not enforcement)', async () => {
             // arrange — mocks default managePiecesEnabled to false
             const { mockPlatform } = await mockAndSaveBasicSetup()
 
@@ -190,14 +188,18 @@ describe('Managed Authentication API', () => {
             })
             await db.save('signing_key', mockSigningKey)
 
-            const mockTag = createMockTag({ platformId: mockPlatform.id, name: 'free' })
-            await db.save('tag', mockTag)
-            const mockPieceTag = createMockPieceTag({
+            const tagSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
                 platformId: mockPlatform.id,
-                tagId: mockTag.id,
-                pieceName: '@activepieces/piece-slack',
-            })
-            await db.save('piece_tag', mockPieceTag)
+                name: 'free',
+                externalId: 'free',
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await db.save('piece_set', tagSet)
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -222,12 +224,8 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const projectPlan = await db.findOneBy<{ pieces: string[], piecesFilterType: string }>('project_plan', { projectId: responseBody?.projectId })
-            expect(projectPlan?.piecesFilterType).toBe(PiecesFilterType.ALLOWED)
-            expect(projectPlan?.pieces).toEqual(['@activepieces/piece-slack'])
-
-            const project = await db.findOneBy<{ pieceSetId: string | null }>('project', { id: responseBody?.projectId })
-            expect(project?.pieceSetId).toBeNull()
+            const project = await db.findOneBy<{ pieceSetId: string }>('project', { id: responseBody?.projectId })
+            expect(project?.pieceSetId).toBe(tagSet.id)
         })
 
         it('Adds new user as a member in new project', async () => {

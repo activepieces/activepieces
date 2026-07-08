@@ -3,6 +3,7 @@ import { PackageType, PieceSelectionMode, PieceType, PrincipalType, SuggestionTy
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
+import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata, mockAndSaveBasicSetup } from '../../../helpers/mocks'
@@ -416,6 +417,74 @@ describe('Piece Component Filtering (EE)', () => {
 
             expect(response.statusCode).toBe(200)
             expect(Object.keys(response.json().actions).sort()).toEqual(['create_contact', 'send_email'])
+        })
+    })
+
+    // Regression guard for F2: component visibility must be enforced inside
+    // pieceMetadataService.get (the path MCP flow-building tools call directly),
+    // not only in the HTTP controller.
+    describe('pieceMetadataService.get (MCP path enforces piece-set visibility)', () => {
+        async function saveProjectPieceSet(config: object, projectId: string, platformId: string) {
+            const pieceSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId,
+                name: 'MCP Set',
+                externalId: null,
+                isDefault: false,
+                generatedForProjectId: null,
+                config,
+            }
+            await databaseConnection().getRepository('piece_set').save(pieceSet)
+            await databaseConnection().getRepository('project').update({ id: projectId }, { pieceSetId: pieceSet.id })
+        }
+
+        it('drops hidden actions when the project piece set curates the piece', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { managePiecesEnabled: true } })
+            await saveProjectPieceSet({
+                pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
+                selectedActions: { 'mcp-piece': ['visible_action'] },
+                selectedTriggers: {},
+            }, mockProject.id, mockPlatform.id)
+
+            const piece = createMockPieceMetadata({
+                name: 'mcp-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: { visible_action: makeAction('visible_action'), hidden_action: makeAction('hidden_action') },
+                triggers: {},
+            })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const result = await pieceMetadataService(mockLog).get({ name: 'mcp-piece', projectId: mockProject.id, platformId: mockPlatform.id })
+
+            expect(result).toBeDefined()
+            expect(Object.keys(result!.actions)).toEqual(['visible_action'])
+        })
+
+        it('returns undefined for a piece hidden at the piece level', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { managePiecesEnabled: true } })
+            await saveProjectPieceSet({
+                pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['mcp-hidden-piece'] },
+                selectedActions: {},
+                selectedTriggers: {},
+            }, mockProject.id, mockPlatform.id)
+
+            const piece = createMockPieceMetadata({
+                name: 'mcp-hidden-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: {},
+                triggers: {},
+            })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const result = await pieceMetadataService(mockLog).get({ name: 'mcp-hidden-piece', projectId: mockProject.id, platformId: mockPlatform.id })
+
+            expect(result).toBeUndefined()
         })
     })
 })

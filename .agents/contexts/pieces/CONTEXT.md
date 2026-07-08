@@ -47,3 +47,7 @@ _Avoid_: step, node, capability
 **Selected components**:
 A per-piece allow-list of visible actions/triggers (`selectedActions`/`selectedTriggers`). A piece with an entry is "curated" — only listed components are visible and new ones stay hidden; a piece with no entry shows all components including future ones.
 _Avoid_: disabledActions, disabledTriggers
+
+**Visibility Policy**:
+The resolved, pure value (`VisibilityPolicy`, from `resolveVisibility({ platformId, projectId })`) that answers every piece/component visibility question for a project — `filterPieces`, `filterComponents`, `filterPieceComponents`, `isPieceVisible`. Resolved once per read inside `pieceMetadataService.list`/`get` and the piece detail controller, so HTTP and MCP paths enforce identically. `null` for Community edition or when no project is in scope (both mean "no filtering"). `managePiecesEnabled` gates *managing* Piece Sets, never this resolution.
+_Avoid_: filterContext, enterpriseFilteringUtils (both retired)
