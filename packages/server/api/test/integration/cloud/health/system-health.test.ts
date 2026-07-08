@@ -26,9 +26,11 @@ describe('System Health API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             expect(body).toMatchObject({
-                cpu: expect.any(Boolean),
+                appCpu: expect.any(Boolean),
                 disk: expect.any(Boolean),
-                ram: expect.any(Boolean),
+                appRam: expect.any(Boolean),
+                workerCpu: null,
+                workerRam: null,
                 database: expect.any(Boolean),
                 release: {
                     current: expect.any(String),
