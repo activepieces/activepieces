@@ -119,7 +119,4 @@ AP_S3_USE_SIGNED_URLS=true
 ```
 With signed URLs on, file bytes flow directly between the worker/browser and S3 instead of through the app. Keep the bucket in the same region as your workers. Full env var list (bucket, keys, region): [S3 Storage](./setup-s3).
 </Step>
-<Step title="Drop dead vars">
-Remove `AP_PRE_WARM_CACHE`; it no longer does anything ([0.86.0](/install/reference/breaking-changes#0-86-0)).
-</Step>
 </Steps>
