@@ -26,13 +26,28 @@ function unescapeInputKeys<T>(value: T): T {
     ) as T
 }
 
+// Escaped keys carry the ESCAPED_KEY_MARKER prefix so unescaping only ever touches keys
+// this module produced: a literal key like `field~1name` that never went through
+// escapeKey (schema-less tool calls, API-created flows) passes through unchanged.
+// The mapping stays bijective because unescaped keys can never contain `~` (any `~`
+// triggers escaping), so they can never start with the marker.
 function escapeKey(key: string): string {
-    return key.replace(/[~.[\]"']/g, (char) => ESCAPE_SEQUENCES[char])
+    if (!RESERVED_CHARS.test(key)) {
+        return key
+    }
+    return ESCAPED_KEY_MARKER + key.replace(/[~.[\]"']/g, (char) => ESCAPE_SEQUENCES[char])
 }
 
 function unescapeKey(key: string): string {
-    return key.replace(/~[0-5]/g, (sequence) => UNESCAPE_SEQUENCES[sequence])
+    if (!key.startsWith(ESCAPED_KEY_MARKER)) {
+        return key
+    }
+    return key.slice(ESCAPED_KEY_MARKER.length).replace(/~[0-5]/g, (sequence) => UNESCAPE_SEQUENCES[sequence])
 }
+
+const ESCAPED_KEY_MARKER = '~ap~'
+
+const RESERVED_CHARS = /[~.[\]"']/
 
 const ESCAPE_SEQUENCES: Record<string, string> = {
     '~': '~0',

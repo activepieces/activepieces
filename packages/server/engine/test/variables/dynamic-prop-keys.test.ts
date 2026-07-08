@@ -9,18 +9,24 @@ describe('dynamicPropKeys', () => {
             'employee.firstName': Property.ShortText({ displayName: 'First name', required: true }),
             'columns[0]': Property.ShortText({ displayName: 'Column', required: false }),
             'weird~"\'key': Property.ShortText({ displayName: 'Weird', required: false }),
+            'field~1name': Property.ShortText({ displayName: 'Literal token', required: false }),
             plain_key: Property.ShortText({ displayName: 'Plain', required: false }),
         }
 
         const escaped = dynamicPropKeys.escapePropsKeys(props)
 
         expect(Object.keys(escaped)).toEqual([
-            'employee~1firstName',
-            'columns~20~3',
-            'weird~0~4~5key',
+            '~ap~employee~1firstName',
+            '~ap~columns~20~3',
+            '~ap~weird~0~4~5key',
+            '~ap~field~01name',
             'plain_key',
         ])
         expect(dynamicPropKeys.unescapePropsKeys(escaped)).toEqual(props)
+    })
+
+    it('never mutates keys that did not come from escapePropsKeys', () => {
+        expect(dynamicPropKeys.unescapeInputKeys({ 'field~1name': 'raw' })).toEqual({ 'field~1name': 'raw' })
     })
 
     it('leaves non-object dynamic values untouched', () => {
@@ -41,7 +47,7 @@ describe('DYNAMIC property input keys', () => {
 
     it('hands the piece the original keys and validates against them', async () => {
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-            { fields: { 'employee~1firstName': 'John', 'employee~1age': '30' } },
+            { fields: { '~ap~employee~1firstName': 'John', '~ap~employee~1age': '30' } },
             props,
             undefined,
             false,
@@ -49,8 +55,8 @@ describe('DYNAMIC property input keys', () => {
                 fields: {
                     type: PropertyExecutionType.MANUAL,
                     schema: {
-                        'employee~1firstName': Property.ShortText({ displayName: 'First name', required: true }),
-                        'employee~1age': Property.Number({ displayName: 'Age', required: true }),
+                        '~ap~employee~1firstName': Property.ShortText({ displayName: 'First name', required: true }),
+                        '~ap~employee~1age': Property.Number({ displayName: 'Age', required: true }),
                     },
                 },
             },
@@ -65,7 +71,7 @@ describe('DYNAMIC property input keys', () => {
 
     it('reports child validation errors under the original keys', async () => {
         const { errors } = await propsProcessor.applyProcessorsAndValidators(
-            { fields: { 'employee~1firstName': null } },
+            { fields: { '~ap~employee~1firstName': null } },
             props,
             undefined,
             false,
@@ -73,7 +79,7 @@ describe('DYNAMIC property input keys', () => {
                 fields: {
                     type: PropertyExecutionType.MANUAL,
                     schema: {
-                        'employee~1firstName': Property.ShortText({ displayName: 'First name', required: true }),
+                        '~ap~employee~1firstName': Property.ShortText({ displayName: 'First name', required: true }),
                     },
                 },
             },
@@ -86,7 +92,7 @@ describe('DYNAMIC property input keys', () => {
 
     it('unescapes input keys even without a persisted schema', async () => {
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-            { fields: { 'employee~1firstName': 'John' } },
+            { fields: { '~ap~employee~1firstName': 'John' } },
             props,
             undefined,
             false,
