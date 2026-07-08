@@ -18,7 +18,6 @@ export type ResolveInput = {
     engineToken: string
     flow?: { id: string, versionId: string, projectId: string }
     pieces?: PiecePackage[]
-    codes?: CodeArtifact[]
 }
 
 export type ResolveResult =

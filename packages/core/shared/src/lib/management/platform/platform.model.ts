@@ -167,7 +167,13 @@ export const Platform = z.object({
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
+    /**
+    * @deprecated Use projects filter instead.
+    */
     filteredPieceNames: z.array(z.string()),
+    /**
+    * @deprecated Use projects filter instead.
+    */
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
     googleAuthEnabled: z.boolean(),
@@ -180,8 +186,6 @@ export const Platform = z.object({
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
-    filteredActionNames: z.record(z.string(), z.array(z.string())),
-    filteredTriggerNames: z.record(z.string(), z.array(z.string())),
 })
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
@@ -200,6 +204,8 @@ export const PlatformWithoutSensitiveData = z.object({
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
+    filteredPieceNames: z.array(z.string()),
+    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
     googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
@@ -212,14 +218,6 @@ export const PlatformWithoutSensitiveData = z.object({
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
-
-export const PlatformPieceFilter = z.object({
-    filteredPieceNames: z.array(z.string()),
-    filteredPieceBehavior: z.enum(FilteredPieceBehavior),
-    filteredActionNames: z.record(z.string(), z.array(z.string())),
-    filteredTriggerNames: z.record(z.string(), z.array(z.string())),
-})
-export type PlatformPieceFilter = z.infer<typeof PlatformPieceFilter>
 
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,

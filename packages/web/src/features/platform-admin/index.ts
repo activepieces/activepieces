@@ -50,11 +50,6 @@ export {
   piecesTagKeys,
 } from './hooks/pieces-tag-hooks';
 export { platformPiecesMutations } from './hooks/platform-pieces-hooks';
-export { platformPieceFilterApi } from './api/platform-piece-filter-api';
-export {
-  platformPieceFilterQueries,
-  platformPieceFilterKeys,
-} from './hooks/platform-piece-filter-hooks';
 export { brandingMutations } from './hooks/branding-hooks';
 export { workersQueries, workersKeys } from './hooks/workers-hooks';
 export { healthQueries, healthKeys } from './hooks/health-hooks';
