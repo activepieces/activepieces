@@ -275,14 +275,19 @@ const HAZARD_WARNING_IDS = new Set<string>([
     'commonjs-variable-in-esm',
 ])
 
-// Known-native packages: they ship a `.node` binary (or load one via a runtime-computed path)
-// and cannot be inlined. Always kept external, even under inline-by-default.
+// Packages that cannot be safely inlined: they ship a `.node` binary, load a native addon via a
+// runtime-computed path, or read sibling JS/asset files (protos, keyword tables) relative to their
+// own on-disk location — inlining strands those files. Always kept external, even under
+// inline-by-default, so the runtime installer resolves them with their assets intact.
 const NATIVE_EXTERNALS = new Set<string>([
     'oracledb', 'duckdb', '@duckdb/node-api', '@duckdb/node-bindings',
     'better-sqlite3', 'sqlite3', 'cpu-features',
     'pg-native', 'mongodb-client-encryption', 'kerberos',
     'snappy', 'aws4', 'bson-ext', '@mongodb-js/zstd',
     'playwright', 'playwright-core', 'puppeteer', 'puppeteer-core',
+    // native-backed SDK (pulls better-sqlite3), and packages that load sibling files at runtime:
+    // pg-format → require(__dirname + '/reserved.js'); clarifai-nodejs-grpc → loadSync('*.proto').
+    '@actual-app/api', 'pg-format', 'clarifai-nodejs-grpc',
 ])
 
 export const bundlePieceUtils = { bundlePiece, BUNDLE_FILENAME, readInlineConfig, unsafePackages }
