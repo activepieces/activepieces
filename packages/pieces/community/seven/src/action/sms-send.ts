@@ -8,6 +8,11 @@ export const sendSmsAction = createAction({
   name: 'send-sms',
   displayName: 'Send SMS',
   description: 'Sends an SMS to one or more recipients.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an SMS text message via the seven gateway to one or more recipient phone numbers. Use to deliver a text notification or alert; supports optional scheduled dispatch (delay), flash SMS, and a custom sender. Each call dispatches a new message, so it is not idempotent — repeating sends another SMS.',
+    idempotent: false,
+  },
   props: {
     to: Property.Array({
       displayName: 'To',

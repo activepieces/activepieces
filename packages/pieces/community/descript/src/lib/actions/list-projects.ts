@@ -16,6 +16,8 @@ export const descriptListProjectsAction = createAction({
   displayName: 'List Projects',
   description:
     'Returns projects in your Descript Drive. Supports filtering by name, date, and creator.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists projects in the connected Descript Drive, auto-paginating through all matches. Optional filters narrow by name substring, creator (me vs anyone), and created/updated date ranges, with configurable sort field and direction; leaving filters blank returns all projects. Use to discover project IDs for other actions. Read-only and idempotent.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Name Filter',

@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { housecallProAuth, makeHousecallProRequest } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
-import { z } from "zod";
+import * as z from 'zod/mini'
 import { propsValidation } from "@activepieces/pieces-common";
 
 export const updateCustomer = createAction({
@@ -9,6 +9,11 @@ export const updateCustomer = createAction({
   name: 'update_customer',
   displayName: 'Update Customer',
   description: 'Updates an existing customer in Housecall Pro.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Update fields on an existing Housecall Pro customer identified by customer ID; only supplied fields change. Effectively idempotent because it targets a stable ID, but note that providing tags replaces the existing tag set rather than appending. To create a new customer use Create Customer instead.',
+    idempotent: true,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',
@@ -70,10 +75,10 @@ export const updateCustomer = createAction({
 
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email().optional(),
-      mobile_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      home_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      work_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
+      email: z.optional(z.string().check(z.email())),
+      mobile_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
+      home_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
+      work_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
     });
 
     const { customer_id, ...updateData } = propsValue;

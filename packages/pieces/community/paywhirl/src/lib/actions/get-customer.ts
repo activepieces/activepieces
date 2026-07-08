@@ -9,6 +9,12 @@ export const getCustomer = createAction({
   displayName: 'Get Customers',
   description:
     'Retrieve a selection of customers. Useful for keeping track of customers in a local database.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists PayWhirl customers, returning all customers by default or narrowing the set with an optional keyword filter plus pagination (limit, before/after ID) and sort controls. Use to look up or enumerate customers. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

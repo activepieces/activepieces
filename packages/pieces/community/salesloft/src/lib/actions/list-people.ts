@@ -8,6 +8,12 @@ export const listPeopleAction = createAction({
   name: 'list_people',
   displayName: 'List People',
   description: 'Fetch a paginated list of people from Salesloft.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists people from Salesloft with pagination; leaving the email filter empty returns all people, while supplying an email address narrows results to matching contacts. Use to browse contacts or to resolve a person ID from an email before another action. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: salesloftAuth,
   props: {
     email_addresses: Property.ShortText({

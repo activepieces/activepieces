@@ -7,6 +7,11 @@ export const getCustomerAddresses = createAction({
   name: "get_customer_addresses",
   displayName: "Get All of a Customer's Addresses",
   description: "Retrieves all of a customer's addresses.",
+  audience: 'both',
+  aiMetadata: {
+    description: "List all addresses belonging to a given Housecall Pro customer, with pagination and sorting by created/updated time. Read-only and repeatable. Requires a known customer ID.",
+    idempotent: true,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

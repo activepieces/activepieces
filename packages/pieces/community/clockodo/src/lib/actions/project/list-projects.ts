@@ -8,6 +8,8 @@ export default createAction({
   name: 'list_projects',
   displayName: 'Get Projects',
   description: 'Fetches projects from clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'List clockodo projects, optionally filtered by customer ID and active status. Read-only and repeatable. Use to discover projects or resolve a project ID by name before another call; supply a page number to read one page at a time, or omit it to retrieve all matching projects.', idempotent: true },
   props: {
     customer_id_filter: Property.Number({
       displayName: 'Customer ID Filter',

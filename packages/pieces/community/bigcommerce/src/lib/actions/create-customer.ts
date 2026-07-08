@@ -7,6 +7,12 @@ export const createCustomer = createAction({
   name: 'createCustomer',
   displayName: 'Create Customer',
   description: 'Creates a customer',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer record in a BigCommerce store from an email plus first/last name (company, phone, and notes optional). Use to register a shopper or contact. Not idempotent: each call adds a new customer, and BigCommerce rejects a duplicate email rather than returning the existing one, so call Search Customer or Find or Create Customer first if the customer may already exist.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

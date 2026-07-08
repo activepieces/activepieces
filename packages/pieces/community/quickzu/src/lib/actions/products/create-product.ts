@@ -8,6 +8,12 @@ export const addProductAction = createAction({
   name: 'quickzu_add_product',
   displayName: 'Add Product',
   description: 'Adds new product to store.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new product in a Quickzu store, requiring a name, category, MRP price, unit, and unit value. Use to add an item to the catalog. Not idempotent: each call creates a separate product even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

@@ -9,6 +9,8 @@ export const runQuery = createAction({
   name: 'run_query',
   displayName: 'Run Query (Advanced)',
   description: 'Run a salesforce query',
+  audience: 'both',
+  aiMetadata: { description: 'Run an arbitrary SOQL query string and return the matching records (read-only). Use this for any read needing multiple conditions, field selection, relationships, ordering, or aggregation that the simpler Find Record lookup cannot express; the caller must supply valid SOQL.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

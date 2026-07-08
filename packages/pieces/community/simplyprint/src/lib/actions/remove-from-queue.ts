@@ -9,6 +9,12 @@ export const removeFromQueueAction = createAction({
   name: 'remove_from_queue',
   displayName: 'Remove Queue Item',
   description: 'Remove an item from the print queue. Destructive — the item is gone.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete a single item from the print queue by its numeric ID. This is destructive — the item is gone (use Archive Print Jobs for completed jobs you only want out of the active view). Deleting an already-removed item simply finds nothing to delete, so the end state is idempotent.',
+    idempotent: true,
+  },
   props: {
     queueItemId: Property.Number({
       displayName: 'Queue item ID',

@@ -8,6 +8,12 @@ export const findMediaAction = createAction({
   name: 'find_media',
   displayName: 'Find Media',
   description: 'Search and list media in your account, optionally filtered by project, name, or type.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists media in the account, returning the most recent first up to the limit. With no filters set it fetches recent media broadly; supplying a project, an exact name match, or a media type narrows the results. Use to discover media or resolve a name to a hashed media id. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     projectId: wistiaCommon.projectIdDropdown(false),
     name: Property.ShortText({

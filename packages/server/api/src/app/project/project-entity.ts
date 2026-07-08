@@ -81,6 +81,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             ...ApIdSchema,
             nullable: true,
         },
+        workerGroupId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -102,6 +106,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         {
             name: 'idx_project_pool_id',
             columns: ['poolId'],
+            unique: false,
+        },
+        {
+            name: 'idx_project_worker_group',
+            columns: ['workerGroupId'],
             unique: false,
         },
     ],

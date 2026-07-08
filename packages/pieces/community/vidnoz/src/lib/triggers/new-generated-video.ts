@@ -108,6 +108,9 @@ export const newGeneratedVideo = createTrigger({
   name: 'new_generated_video',
   displayName: 'New Generated Video',
   description: 'Triggers when a new generated video appears in your Vidnoz account.',
+  aiMetadata: {
+    description: 'Fires when a new video appears in the Vidnoz account, polling the video list and emitting each newly seen item. An optional status filter narrows it to a single state (generated, generating, generation-failed, or draft-only), defaulting to generated/completed videos.',
+  },
   props,
   sampleData: {
     id: 'WGdtdHJDMmpueG1ZazM0OVlQQys2QT09',

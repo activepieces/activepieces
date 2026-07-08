@@ -34,6 +34,8 @@ export const descriptGetJobStatusAction = createAction({
   displayName: 'Get Job Status',
   description:
     'Retrieves the current status of a Descript background job (import, agent edit, or publish). Use the job_id returned by any job-creation action.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up the current state and result of a single Descript background job (import, agent edit, or publish) by its job_id. Use to poll for completion after starting an asynchronous job and to read outputs such as share/download URLs or error messages. Read-only and idempotent.', idempotent: true },
   props: {
     job_id: Property.ShortText({
       displayName: 'Job ID',

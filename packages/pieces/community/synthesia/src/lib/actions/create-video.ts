@@ -8,6 +8,12 @@ export const createVideo = createAction({
   displayName: 'Create video',
   description:
     'Create a video within your Synthesia account with one or more scenes',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submits a video-generation job to Synthesia built from a text script, a chosen avatar, and a background (stock preset, custom asset ID, or URL). Choose this to generate a video from scratch from raw script text rather than from a saved template; script text and avatar are required. Each call queues a new video, so it is not idempotent. Enable test mode for a watermarked preview, or set a webhook URL to be notified when the video completes.',
+    idempotent: false,
+  },
   props: {
     input_scriptText: Property.LongText({
       displayName: 'Input Script Text',

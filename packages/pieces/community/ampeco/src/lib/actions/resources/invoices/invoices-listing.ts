@@ -15,6 +15,8 @@ export const invoicesListingAction = createAction({
   name: 'invoicesListing',
   displayName: 'Resources - Invoices - Listing',
   description: 'Get all invoices.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO invoices, optionally filtered by an issued-from/issued-to date range. Read-only and idempotent. Enable pagination to fetch all matching invoices across pages. Use this to discover invoice IDs before reading a single invoice.', idempotent: true },
   props: {
         
   filter__issuedFrom: Property.ShortText({

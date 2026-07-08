@@ -103,6 +103,10 @@ export const newRowTrigger = createTrigger({
   displayName: 'New Row',
   description:
     'Triggers when a new row is inserted into the selected table. Uses a timestamp column you choose to detect rows added since the last check.',
+  aiMetadata: {
+    description:
+      'Fires for each newly inserted row in the selected Snowflake table, detected by polling and comparing a chosen "created at" timestamp column against the last-seen watermark. Each new row whose timestamp is later than the previous poll produces one event.',
+  },
   props,
   sampleData: {
     ID: 1001,

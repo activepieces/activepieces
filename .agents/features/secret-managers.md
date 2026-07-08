@@ -10,7 +10,7 @@ Secret Managers let platform admins connect Activepieces to an external secret m
 - `packages/server/api/src/app/ee/secret-managers/secret-manager.entity.ts` — TypeORM entity
 - `packages/server/api/src/app/ee/secret-managers/secret-manager-cache.ts` — Redis cache for secrets and connection status
 - `packages/server/api/src/app/ee/secret-managers/secret-manager-providers/` — provider implementations (AWS, HashiCorp, CyberArk, 1Password)
-- `packages/shared/src/lib/ee/secret-managers/dto.ts` — all types, provider configs, request schemas
+- `packages/core/shared/src/lib/ee/secret-managers/dto.ts` — all types, provider configs, request schemas
 - `packages/web/src/features/secret-managers/` — frontend components
 - `packages/web/src/app/routes/platform/security/secret-managers/` — platform admin UI page
 
@@ -18,6 +18,9 @@ Secret Managers let platform admins connect Activepieces to an external secret m
 Enterprise and Cloud. Gated by `platform.plan.secretManagersEnabled`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **SecretManagerConnection**: A configured connection to an external secret manager instance.
 - **SecretManagerProviderId**: Enum of supported providers: `hashicorp`, `aws`, `cyberark-conjur`, `onepassword`.
 - **SecretManagerConnectionScope**: `PLATFORM` (accessible to all projects) or `PROJECT` (restricted to specific projects).

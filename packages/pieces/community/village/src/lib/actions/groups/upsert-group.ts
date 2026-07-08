@@ -8,6 +8,12 @@ export const upsertGroup = createAction({
   displayName: 'Create or Update Group',
   description:
     'Create a new group or update an existing one. To create: provide a name (id is auto-generated). To update: provide group_id (requires admin permissions).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new group or update an existing one in a single write. Omit group_id to create (a new id is generated); pass an existing group_id to update its name/logo (requires admin permissions). Updating by a stable group_id is idempotent, but omitting it creates a fresh group on each call.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

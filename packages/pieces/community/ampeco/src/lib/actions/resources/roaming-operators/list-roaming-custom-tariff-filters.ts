@@ -15,6 +15,8 @@ export const listRoamingCustomTariffFiltersAction = createAction({
   name: 'listRoamingCustomTariffFilters',
   displayName: 'Resources - Roaming Operators - List Roaming Custom Tariff Filters',
   description: 'Get all custom tariff filters for a roaming operator.',
+  audience: 'both',
+  aiMetadata: { description: 'List the custom tariff filters belonging to a given roaming operator, optionally filtered by status or creation date. Read-only and idempotent; enable Paginate Results to fetch every page, or leave it off for a single page (up to per_page, max 100). Use to discover a filter ID before reading, updating, deleting, or reordering filters.', idempotent: true },
   props: {
         
   roamingOperator: Property.Number({

@@ -8,6 +8,8 @@ export const createCompany = createAction({
   name: 'createCompany',
   displayName: 'Create Company',
   description: 'Creates a Company Record',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new company (account) record in Bigin CRM with a name plus optional phone, website, billing address, owner, tags, and description. Use to add an organization the business deals with. Not idempotent: each call creates a new company even if one with the same name already exists, so search first if you need to avoid duplicates.', idempotent: false },
   props: {
     accountName: Property.ShortText({
       displayName: 'Account Name',

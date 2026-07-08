@@ -27,6 +27,12 @@ export const getRowsForJobAction = createAction({
   displayName: 'Get Rows for Job Completed',
   description:
     'Retrieves the result rows from a completed BigQuery query job by Job ID. Use this after a "Query Job Completed" trigger to fetch the full result set.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the cached result rows of an already-completed BigQuery query job by its job ID, paginating up to the max-rows cap. Use it to retrieve the full result set after a "Query Job Completed" trigger or a "Run a Query" action hands you a job ID. The job must already be finished — it errors if the job is still running. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     project_id: projectIdProp,
     job_id: Property.ShortText({

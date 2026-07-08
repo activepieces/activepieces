@@ -8,6 +8,8 @@ export const createBlob = createAction({
   name: 'createBlob',
   displayName: 'Create Blob',
   description: 'Creates a new Blob in the specified location',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads file data as a blob to the given container under the specified blob name, optionally attaching tags. Use to store or update a file in Azure Blob Storage. Idempotent on the blob name: re-uploading to the same name overwrites the existing blob rather than creating duplicates.', idempotent: true },
   props: {
       container: containerProp,
       blobName: Property.ShortText({

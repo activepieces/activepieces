@@ -76,6 +76,10 @@ export const newSession = createTrigger({
   name: 'new_session',
   displayName: 'New Session',
   description: 'Triggers when a new visitor session is detected on a website.',
+  aiMetadata: {
+    description:
+      'Fires when a new visitor session is detected on the selected Umami-tracked website, polling the sessions feed since the last run. Each fire represents one session with its visitor context (browser, OS, device, country, timestamp).',
+  },
   props,
   sampleData: {
     id: 'session-abc123',

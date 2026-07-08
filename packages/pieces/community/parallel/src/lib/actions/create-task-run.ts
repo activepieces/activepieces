@@ -9,6 +9,12 @@ export const createTaskRunAction = createAction({
   displayName: 'Create Task Run',
   description:
     'Initiate a Parallel research task. Returns immediately with a queued run; use Get Task Run Result to wait for completion.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Start an asynchronous multi-hop research task on Parallel for a free-text or JSON input, selecting a speed/depth processor tier and optionally constraining output to plain text or a JSON Schema. Use it to kick off deeper research than a single search; it returns immediately with a queued run id that you then poll with Get Task Run Status or block on with Get Task Run Result. Not idempotent: each call queues a new run.',
+    idempotent: false,
+  },
   props: {
     input: Property.LongText({
       displayName: 'Input',

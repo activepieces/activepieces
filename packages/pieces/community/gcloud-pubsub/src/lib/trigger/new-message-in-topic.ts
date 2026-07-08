@@ -9,6 +9,9 @@ export const newMessageInTopic = createTrigger({
   name: 'new_message_in_topic',
   displayName: 'New Message',
   description: 'Trigger when a new message is sended.',
+  aiMetadata: {
+    description: 'Fires when a new message is published to the configured Google Cloud Pub/Sub topic. On enable it creates a push subscription pointing at the flow webhook, so each delivered message represents one event published to that topic.',
+  },
   props: {
     subscription: Property.ShortText({
       displayName: 'Subscription name',
@@ -82,7 +85,6 @@ export const newMessageInTopic = createTrigger({
     }
   },
   async run(context) {
-    console.debug('payload received', context.payload.body);
     const payloadBody = context.payload.body as PayloadBody;
     const { data } = payloadBody.message;
     const object = data

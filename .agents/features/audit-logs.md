@@ -7,8 +7,8 @@ Audit Logging records security-relevant actions taken within a platform for comp
 - `packages/server/api/src/app/ee/audit-logs/audit-event-module.ts` — module registration, sets up listeners on startup, registers `platformMustHaveFeatureEnabled` guard
 - `packages/server/api/src/app/ee/audit-logs/audit-event-service.ts` — service with `setup()` and `list()` methods
 - `packages/server/api/src/app/ee/audit-logs/audit-event-entity.ts` — TypeORM entity
-- `packages/shared/src/lib/ee/audit-events/index.ts` — all event types, `ApplicationEvent` union, `ApplicationEventName` enum, `summarizeApplicationEvent()` helper
-- `packages/shared/src/lib/ee/audit-events/mock-event-builder.ts` — `buildMockEvent()` returns a typed `ApplicationEvent` mock for every `ApplicationEventName` value (used by event destination test delivery)
+- `packages/core/shared/src/lib/ee/audit-events/index.ts` — all event types, `ApplicationEvent` union, `ApplicationEventName` enum, `summarizeApplicationEvent()` helper
+- `packages/core/shared/src/lib/ee/audit-events/mock-event-builder.ts` — `buildMockEvent()` returns a typed `ApplicationEvent` mock for every `ApplicationEventName` value (used by event destination test delivery)
 - `packages/web/src/features/platform-admin/api/audit-events-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/audit-log-hooks.ts` — React query hooks
 - `packages/web/src/app/routes/platform/security/audit-logs/` — platform admin UI page
@@ -17,6 +17,9 @@ Audit Logging records security-relevant actions taken within a platform for comp
 Enterprise and Cloud. Gated by `platform.plan.auditLogEnabled`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ApplicationEvent**: A discriminated union of all auditable event types.
 - **ApplicationEventName**: Enum of 27 event action strings (e.g., `flow.created`, `flow.published`, `user.signed.in`, `variable.value.revealed`).
 - **userEvent / workerEvent**: Two listener types registered on the event bus; both persist records to `audit_event`.

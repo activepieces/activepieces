@@ -20,6 +20,12 @@ export const createCandidateNoteAction = createAction({
   name: 'create_candidate_note',
   displayName: 'Create Candidate Note',
   description: 'Adds a note to an existing candidate profile in Greenhouse.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Appends a note (or activity entry) to an existing candidate, with a chosen visibility level (public, private, or admin-only) and optional author attribution. Use to log commentary or context against a candidate; requires the numeric candidate ID. Not idempotent — each call adds a new note, so repeating it appends duplicates.',
+    idempotent: false,
+  },
   auth: greenhouseAuth,
   props: {
     candidate_id: Property.ShortText({

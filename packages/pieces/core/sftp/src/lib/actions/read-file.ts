@@ -25,6 +25,7 @@ async function readSFTP(client: Client, filePath: string) {
 }
 
 export const readFileContent = createAction({
+  audience: 'human',
   auth: sftpAuth,
   name: 'read_file_content',
   displayName: 'Read File Content',

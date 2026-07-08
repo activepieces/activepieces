@@ -3,7 +3,8 @@ import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
+import { sendEmailActionOutputSchema } from '../output-schemas';
 
 export const gmailSendEmailAction = createAction({
   auth: gmailAuth,
@@ -103,10 +104,11 @@ export const gmailSendEmailAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: sendEmailActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const subjectBase64 = Buffer.from(context.propsValue['subject']).toString(
       'base64'

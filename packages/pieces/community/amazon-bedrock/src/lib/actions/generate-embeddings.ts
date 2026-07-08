@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { ModelModality } from '@aws-sdk/client-bedrock';
-import { awsBedrockAuth } from '../auth';
+import { awsBedrockCombinedAuth } from '../auth';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,
@@ -9,7 +9,8 @@ import {
 } from '../common';
 
 export const generateEmbeddings = createAction({
-  auth: awsBedrockAuth,
+  audience: 'human',
+  auth: awsBedrockCombinedAuth,
   name: 'generate_embeddings',
   displayName: 'Generate Embeddings',
   description:
@@ -18,10 +19,10 @@ export const generateEmbeddings = createAction({
     model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       description: 'The embedding model to use.',
       refreshers: [],
-      options: async ({ auth }) => {
+      options: async ({ auth }, { server }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -31,7 +32,7 @@ export const generateEmbeddings = createAction({
         }
         return getBedrockModelOptions(auth.props, {
           outputModality: ModelModality.EMBEDDING,
-        });
+        }, server);
       },
     }),
     inputText: Property.LongText({
@@ -69,8 +70,8 @@ export const generateEmbeddings = createAction({
       defaultValue: true,
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = createBedrockRuntimeClient(auth.props);
+  async run({ auth, propsValue, server }) {
+    const client = await createBedrockRuntimeClient({ auth: auth.props, server });
     const { model, inputText, dimensions, normalize } = propsValue;
 
     const isTitan = model.startsWith('amazon.titan-embed');

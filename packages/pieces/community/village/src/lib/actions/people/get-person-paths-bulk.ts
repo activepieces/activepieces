@@ -10,6 +10,12 @@ export const getPersonPathsBulk = createAction({
   displayName: 'Get Person Paths (Bulk)',
   description:
     'Find introduction paths to multiple people in a single request. Provide up to 100 LinkedIn IDs (the slug after linkedin.com/in/) and get connection paths for each.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only batch lookup of warm-introduction paths to many people at once, keyed by LinkedIn ID (the slug after linkedin.com/in/, not a full URL). Pick this over Get Person Paths when you have more than one target to evaluate together; capped at 100 IDs per call. Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     linkedin_ids: Property.Array({
       displayName: 'LinkedIn IDs',

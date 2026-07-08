@@ -7,6 +7,9 @@ export const licenseKeyCreatedTrigger = createTrigger({
   name: 'license_key_created',
   displayName: 'License Key Created',
   description: 'Triggers when a license key is created from a new order',
+  aiMetadata: {
+    description: 'Fires when a license key is generated in Lemon Squeezy as a result of a new order for a license-enabled product. Represents the newly issued license key record.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

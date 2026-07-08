@@ -9,6 +9,12 @@ export const getCurrentUserAction = createAction({
   name: 'get_current_user',
   displayName: 'Get Current User',
   description: 'Get the Streak user associated with the connected API key.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve the Streak user account tied to the connected API key, including its user key, email, and display name. Use when an agent needs the current user\'s identity or user key (for example to set assignees or attribute actions). Takes no input; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const response = await streakApiCall<StreakUser>({

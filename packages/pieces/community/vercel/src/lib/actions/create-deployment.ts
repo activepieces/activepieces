@@ -10,6 +10,11 @@ export const createDeployment = createAction({
   displayName: 'Create Deployment',
   description:
     'Create a deployment for an existing Vercel project using either a redeploy source deployment ID or a git source payload.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Trigger a new deployment for an existing Vercel project. Operates in one of two modes: redeploy an existing deployment by its ID (optionally using the latest commit), or deploy from a connected Git source (GitHub, GitLab, or Bitbucket) by branch/ref plus repo identifiers. Requires a target project; for Git mode a branch/ref and either a repo ID or org+repo name are mandatory. Not idempotent: each call starts a separate deployment.',
+    idempotent: false,
+  },
   props: {
     project: vercelProjectDropdown,
     deployment_source: Property.StaticDropdown({

@@ -8,6 +8,12 @@ export const updateProjectAction = createAction({
   name: 'update_project',
   displayName: 'Update Project',
   description: 'Update the attributes of an existing project.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Wistia project (referenced by its id) — its name and its anonymous-upload/download and public-link visibility flags; omitted fields are left unchanged. Use to rename or change the sharing settings of a known project. Idempotent: repeating with the same values leaves the project in the same state.',
+    idempotent: true,
+  },
   props: {
     projectId: wistiaCommon.projectDropdown(true),
     name: Property.ShortText({

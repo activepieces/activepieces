@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework'
 import { sendEmailAction } from './lib/actions/send-email'
-import { PieceCategory } from '@activepieces/shared'
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common'
 import { emailitAuth } from './lib/auth'
 

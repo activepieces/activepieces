@@ -3,11 +3,14 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { taskOutputSchema } from '../../output-schemas';
 
 export const createClickupTaskFromTemplate = createAction({
   auth: clickupAuth,
   name: 'create_task_from_template',
   description: 'Create a new task from Template',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new ClickUp task in a list by instantiating an existing task template, supplying only the new task name. Pick this when the task should inherit structure (subtasks, fields, defaults) from a saved template; use Create Task for a task built from scratch. Each call creates a distinct task, so it is not idempotent.', idempotent: false },
   displayName: 'Create Task From Template',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -20,6 +23,7 @@ export const createClickupTaskFromTemplate = createAction({
       required: true,
     }),
   },
+  outputSchema: taskOutputSchema,
   async run(configValue) {
     const { list_id, name, template_id } = configValue.propsValue;
     const response = await callClickUpApi(

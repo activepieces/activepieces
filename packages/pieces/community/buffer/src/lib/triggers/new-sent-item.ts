@@ -44,6 +44,10 @@ export const newSentItem = createTrigger({
   name: 'new_sent_item',
   displayName: 'New Sent Post',
   description: 'Triggers when a Buffer post is successfully published.',
+  aiMetadata: {
+    description:
+      'Fires when a Buffer post is successfully published (status sent) to a connected channel in the selected organization, optionally limited to specific channels. Represents the sent post.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     organizationId: bufferProps.organizationId(),

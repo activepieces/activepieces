@@ -47,6 +47,9 @@ export const newCustomer = createTrigger({
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created.',
+  aiMetadata: {
+    description: 'Fires when a new customer is added in TimeOps. Polls the customer list and emits each newly seen customer record. Use to react to client onboarding, such as setting up a default project or notifying a team.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

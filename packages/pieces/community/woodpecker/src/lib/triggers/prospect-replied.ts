@@ -7,6 +7,9 @@ export const prospectReplied = createTrigger({
   name: 'prospect_replied',
   displayName: 'Prospect Replied',
   description: 'Triggers when a prospect replies to an email or their status is manually set to RESPONDED',
+  aiMetadata: {
+    description: 'Fires when a prospect replies to a campaign email, or when their status is manually changed to RESPONDED in Woodpecker. Represents an inbound human response and includes the prospect plus the reply email content.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_replied',

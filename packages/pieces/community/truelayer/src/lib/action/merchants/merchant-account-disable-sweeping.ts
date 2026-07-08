@@ -7,6 +7,8 @@ export const merchantAccountDisableSweeping = createAction({
   name: 'merchant-account-disable-sweeping',
   displayName: 'Disable Sweeping',
   description: 'Disable automatic sweeping for a merchant account.',
+  audience: 'both',
+  aiMetadata: { description: 'Turn off automatic sweeping for a merchant account by its ID, deleting the current sweeping configuration. Idempotent in effect: once sweeping is off, repeating leaves it off. To configure or re-enable sweeping use Set Up or Update Sweeping.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Merchant Account ID',

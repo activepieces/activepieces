@@ -10,6 +10,9 @@ export const newAlertTrigger = createTrigger({
   name: 'new_alert',
   displayName: 'New Alert Notification',
   description: 'Triggers when a new alert notification is generated (hourly or instant).',
+  aiMetadata: {
+    description: 'Fires when Lucidya generates a new alert notification (either on an hourly schedule or instantly), delivered via a webhook configured on a Lucidya alert. The event payload represents the alert details, such as trending social activity, sentiment analysis, top engagers, influencers, hashtags, keywords, and volume-over-time metrics for the monitored topic.',
+  },
   props: {
     md: Property.MarkDown({
       value: `

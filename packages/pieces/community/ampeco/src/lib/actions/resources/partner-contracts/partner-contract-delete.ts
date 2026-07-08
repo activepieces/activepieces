@@ -14,6 +14,8 @@ export const partnerContractDeleteAction = createAction({
   name: 'partnerContractDelete',
   displayName: 'Resources - Partner Contracts - Delete',
   description: 'Delete a Partner Contract.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes one partner contract in AMPECO by its numeric ID. Use to remove a contract; requires the partner contract ID. Idempotent in effect: the end state is the contract being gone, though a repeat call may report it as already removed.', idempotent: true },
   props: {
         
   partnerContract: Property.Number({

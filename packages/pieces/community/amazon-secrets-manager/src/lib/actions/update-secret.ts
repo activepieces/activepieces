@@ -1,16 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  SecretsManagerClient,
   UpdateSecretCommand,
 } from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
 import { secretIdDropdown } from '../common/props';
 
 export const updateSecret = createAction({
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   name: 'updateSecret',
   displayName: 'Update Secret',
   description: 'Updates an existing secret.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Overwrites an existing AWS Secrets Manager secret (identified by name or ARN, selectable from a list or passed directly) with a new text value and optional description. Use when rotating or changing a credential that already exists; the secret must already exist. Repeating with the same value converges to the same stored value, so it is idempotent, though each call records a new version.',
+    idempotent: true,
+  },
   props: {
     secretId: secretIdDropdown,
     secretValue: Property.LongText({
@@ -29,14 +35,8 @@ export const updateSecret = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
-    });
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 
     try {
       const command = new UpdateSecretCommand({

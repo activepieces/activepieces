@@ -7,6 +7,8 @@ export const createTimeTrackingAction = createAction({
   name: 'create_time_tracking',
   displayName: 'Create Time Tracking',
   description: 'Create a new timesheet entry',
+  audience: 'both',
+  aiMetadata: { description: 'Logs a new timesheet entry in Bexio for a user against a client service/business activity, recording time either as a duration on a date or as a from/to range. Use to record worked or billable hours, optionally tying it to a contact, project, or milestone. Requires a user, client service, billable flag, and the tracking details for the chosen mode. Not idempotent: each call creates a separate entry.', idempotent: false },
   props: {
     user_id: Property.Dropdown({
       auth: bexioAuth,

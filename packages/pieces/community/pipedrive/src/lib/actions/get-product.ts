@@ -13,6 +13,8 @@ export const getProductAction = createAction({
 	name: 'get-product',
 	displayName: 'Retrieve a Product',
 	description: 'Finds a product by ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Retrieve a single product by its exact numeric ID, returning full details and resolved custom fields. Pick this when you already know the product ID; use Find Product to search by name instead. Read-only and returns found:false rather than erroring when the ID does not exist.', idempotent: true },
 	props: {
 		productId: Property.Number({
 			displayName: 'Product ID',

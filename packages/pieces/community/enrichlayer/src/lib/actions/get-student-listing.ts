@@ -9,6 +9,12 @@ export const getStudentListing = createAction({
   displayName: 'List School Students',
   description:
     'Get a list of students at a school (3 credits per student returned)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "List students/alumni of a school from its professional-network school URL, filterable by status (current/past/all), major (boolean keyword), and country, and sortable by matriculation or graduation. Read-only and safe to retry. Use for school rosters; the company equivalent is List Company Employees. Boolean major search, sorting, and profile enrichment add credits.",
+    idempotent: true,
+  },
   props: {
     school_url: Property.ShortText({
       displayName: 'School URL',

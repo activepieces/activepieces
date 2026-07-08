@@ -19,6 +19,8 @@ export const createObjectAcl = createAction({
   name: 'create_object_acl',
   displayName: 'Create Object ACL',
   description: 'Add an ACL entry to an object (grant a permission). Perfect for granting read/write access to a user or group.',
+  audience: 'both',
+  aiMetadata: { description: 'Grants an entity (user, group, domain, or special scope) a role on a single object\'s access-control list, optionally targeting a specific generation. Use to give read or owner access to one file. Not idempotent: adding an entry that already exists fails. Only works on buckets using fine-grained ACLs, not uniform bucket-level access; requires bucket, object, entity, and role.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

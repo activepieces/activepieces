@@ -2,7 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { leapAiAuth } from './lib/common/auth';
 import { getAWorkflowRun } from './lib/actions/get-a-workflow-run';
 import { runAWorkflow } from './lib/actions/run-a-workflow';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const leapAi = createPiece({
   displayName: 'Leap AI',

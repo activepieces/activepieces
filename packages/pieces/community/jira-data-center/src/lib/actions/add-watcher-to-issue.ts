@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { jiraDataCenterAuth } from '../../auth';
 import { getUsersDropdown, issueIdOrKeyProp } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { jiraApiCall } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 
@@ -10,6 +10,12 @@ export const addWatcherToIssueAction = createAction({
 	name: 'add-watcher-to-issue',
 	displayName: 'Add Watcher to Issue',
 	description: 'Adds a new watcher to an issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Adds a user as a watcher on a Jira Data Center/Server issue so they receive notifications about it. Identify the issue by ID or key and the watcher by Jira username. Idempotent — adding an already-watching user does not create a duplicate.',
+		idempotent: true,
+	},
 	props: {
 		issueId: issueIdOrKeyProp('Issue ID or Key', true),
 		userId: getUsersDropdown({

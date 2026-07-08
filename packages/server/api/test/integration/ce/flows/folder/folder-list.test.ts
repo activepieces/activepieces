@@ -1,5 +1,7 @@
+import { apId } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import qs from 'qs'
 import { flowService } from '../../../../../src/app/flows/flow/flow.service'
 import { tableService } from '../../../../../src/app/tables/table/table.service'
 import { db } from '../../../../helpers/db'
@@ -83,6 +85,31 @@ describe('Folder N+1 fix', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const ids = response?.json().data.map((f: { id: string }) => f.id).sort()
             expect(ids).toEqual([flowA, flowB].sort())
+        })
+
+        it('parses more than 20 folderIds as an array (qs arrayLimit)', async () => {
+            const ctx = await createTestContext(app)
+            const folders = await Promise.all(
+                // Unique displayName per folder: faker.lorem.word() collides across 25
+                // folders in one project, violating idx_folder_project_id_display_name.
+                Array.from({ length: 25 }, async (_item, index) => {
+                    const folder = createMockFolder({ projectId: ctx.project.id, displayName: `folder-${index}-${apId()}` })
+                    await db.save('folder', folder)
+                    return folder
+                }),
+            )
+            const targetFlow = await saveFlowInFolder(ctx, folders[0].id)
+            const folderIds = folders.map((f) => f.id)
+
+            // Mirror the frontend's serialization (api.ts uses arrayFormat: 'repeat'). In qs 6.x
+            // arrayLimit governs repeated-key notation too, so >20 ids collapse into an object
+            // (then fail string validation) unless arrayLimit is raised — which is what this guards.
+            const query = qs.stringify({ projectId: ctx.project.id, folderIds, limit: 100 }, { arrayFormat: 'repeat' })
+            const response = await ctx.get(`/v1/flows?${query}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const ids = response?.json().data.map((f: { id: string }) => f.id)
+            expect(ids).toEqual([targetFlow])
         })
     })
 

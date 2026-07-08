@@ -9,6 +9,11 @@ export const enableUser = createAction({
   name: 'enable_user',
   displayName: 'Enable User',
   description: 'Enables a specific user in the Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Enables a Vault user identified by user ID so they can authenticate and access the Vault. Use to restore access to a disabled account. Idempotent: enabling an already-enabled user leaves it enabled.',
+    idempotent: true,
+  },
   props: {
     userId: userIdDropdown
   },

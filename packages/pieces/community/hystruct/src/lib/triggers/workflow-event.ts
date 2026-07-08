@@ -6,6 +6,9 @@ export const workflowEvent = createTrigger({
   name: 'workflow_event',
   displayName: 'Workflow Event',
   description: 'Triggers when a workflow event occurs (e.g., job completed, data updated)',
+  aiMetadata: {
+    description: 'Fires when Hystruct sends a workflow event to the registered webhook, such as a job completing or extracted data being updated; the specific event types are configured in the Hystruct dashboard and can be filtered to a single workflow ID.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     markdown: Property.MarkDown({

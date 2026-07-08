@@ -23,6 +23,12 @@ export const createFilamentAction = createAction({
   displayName: 'Create Filament',
   description:
     'Add a new filament spool to your inventory. Use the free-text brand/color fields for ad-hoc spools or the catalog ids for known SKUs.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create one or more new filament spool records in inventory, supplying brand/color/diameter and total length-or-weight, optionally via catalog SKU IDs instead of free-text. Use the "Number of spools" field to create N identical spools at once (capped at 500). Not idempotent — each call adds new spools, so re-running creates duplicates; either a material type ID or a catalog filament-ID chain is required.',
+    idempotent: false,
+  },
   props: {
     brand: Property.ShortText({
       displayName: 'Brand',

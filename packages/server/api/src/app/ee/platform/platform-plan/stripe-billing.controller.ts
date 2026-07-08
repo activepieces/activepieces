@@ -1,4 +1,5 @@
-import { ApSubscriptionStatus, isNil, PlanName, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApSubscriptionStatus, PlanName, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -122,7 +123,7 @@ export const stripeBillingController: FastifyPluginAsyncZod = async (fastify) =>
                 return await reply.status(StatusCodes.OK).send({ received: true })
             }
             catch (err) {
-                request.log.error({ err }, 'Stripe webhook processing failed')
+                request.log.error({ error: err }, 'Stripe webhook processing failed')
                 exceptionHandler.handle(err, request.log)
                 return reply
                     .status(StatusCodes.BAD_REQUEST)

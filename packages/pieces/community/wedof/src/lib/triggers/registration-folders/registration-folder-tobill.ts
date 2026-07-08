@@ -8,6 +8,10 @@ export const registrationFolderTobill = createTrigger({
   displayName: 'Dossier de formation à facturer',
   description:
     "Se déclenche lorsqu'un dossier de formation est prêt à être facturé (service fait validé)",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof training registration folder (dossier de formation) becomes ready to bill, i.e. its service-done declaration has been validated. Emits the full folder record so an invoice can be raised.",
+  },
   props: {},
   sampleData: {
     withPoleEmploi: false,

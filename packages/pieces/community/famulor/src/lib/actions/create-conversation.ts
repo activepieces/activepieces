@@ -18,6 +18,12 @@ export const createConversation = createAction({
   name: 'createConversation',
   displayName: 'Create Conversation',
   description: 'Start a new chat conversation with an AI assistant.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Start a brand-new chat conversation with an AI assistant, optionally as a widget or test conversation and with initial variables. Use to open a fresh thread before sending messages; each call creates a new conversation, so it is not idempotent. To continue an existing thread use Send Message instead.',
+    idempotent: false,
+  },
   props: famulorCommon.createConversationProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.createConversationSchema);

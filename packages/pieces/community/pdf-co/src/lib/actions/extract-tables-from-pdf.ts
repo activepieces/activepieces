@@ -51,6 +51,12 @@ export const extractTablesFromPdf = createAction({
     name: 'extract_tables_from_pdf',
     displayName: 'Extract Tables from PDF (using Template)',
     description: 'Extracts table data from a PDF using a predefined PDF.co Document Parser template.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Extracts table data from a source PDF (referenced by URL) using a predefined PDF.co Document Parser template; requires a Template ID created beforehand in the PDF.co dashboard. Use when an agent needs structured tables from a document whose layout a template already describes. The call only reads the input and returns the parsed tables, so it is idempotent.',
+        idempotent: true,
+    },
     auth: pdfCoAuth, // Inherits auth from the piece
     props: {
         url: Property.ShortText({

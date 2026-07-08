@@ -8,6 +8,8 @@ export const listRooms = createAction({
   name: 'list_rooms',
   displayName: 'List Rooms',
   description: 'Get a list of all rooms',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves all chat rooms in the AskHandle account. Use to discover available rooms or look up a room UUID before sending a message. Takes no input and is a read-only lookup, so it is idempotent.', idempotent: true },
   props: {},
   async run(context) {
     return await askHandleApiCall(

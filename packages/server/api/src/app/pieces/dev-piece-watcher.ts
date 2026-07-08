@@ -1,8 +1,9 @@
 import { spawn } from 'node:child_process'
 import { copyFile, cp } from 'node:fs/promises'
 import { join } from 'path'
+import { isNil } from '@activepieces/core-utils'
 import { memoryLock } from '@activepieces/server-utils'
-import { isNil, WebsocketClientEvent } from '@activepieces/shared'
+import { WebsocketClientEvent } from '@activepieces/shared'
 import chokidar from 'chokidar'
 import { FastifyInstance } from 'fastify'
 import { system } from '../helper/system/system'
@@ -54,7 +55,7 @@ async function buildPieces(app: FastifyInstance, piecesInfo: PieceInfo[]): Promi
         app.log.info('Changes are ready! Please refresh the frontend to see the new updates.')
     }
     catch (error) {
-        app.log.error({ err: error }, 'Failed to run build process...')
+        app.log.error({ error }, 'Failed to run build process...')
     }
     finally {
         await lock.release()
@@ -122,7 +123,7 @@ export async function startDevPieceWatcher(app: FastifyInstance): Promise<void> 
     })
 
     watcher.on('error', (error) => {
-        app.log.error({ err: error }, 'File watcher error')
+        app.log.error({ error }, 'File watcher error')
     })
 
     for (const pieceInfo of pieceInfos) {

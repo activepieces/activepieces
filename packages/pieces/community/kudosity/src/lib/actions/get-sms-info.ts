@@ -8,6 +8,12 @@ export const getSmsInfo = createAction({
   name: 'getSmsInfo',
   displayName: 'Get SMS info',
   description: 'Retrieve details for a sent SMS by ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up the details and delivery status of a previously sent SMS by its message ID (the UUID returned when the message was sent). Use to check status or fetch metadata for a known message. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Message ID',

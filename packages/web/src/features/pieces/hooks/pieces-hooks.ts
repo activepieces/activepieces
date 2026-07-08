@@ -1,3 +1,4 @@
+import { LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -9,7 +10,6 @@ import {
   ApEdition,
   FlowActionType,
   flowPieceUtil,
-  LocalesEnum,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
   FlowTriggerType,
@@ -39,6 +39,7 @@ import {
   usePieceSelectorTabs,
 } from '../stores/piece-selector-tabs-provider';
 import { pieceSearchUtils } from '../utils/piece-search-utils';
+import { pieceSelectorCustomization } from '../utils/piece-selector-customization';
 
 import { stepsHooks } from './steps-hooks';
 
@@ -95,6 +96,7 @@ export const piecesHooks = {
       pieceModel: query.data,
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
+      isError: query.isError,
       refetch: query.refetch,
     };
   },
@@ -190,7 +192,7 @@ export const piecesHooks = {
     isLoading: boolean;
     data: CategorizedStepMetadataWithSuggestions[];
   } => {
-    const { selectedTab } = usePieceSelectorTabs();
+    const { selectedTab, selectedCustomTabId } = usePieceSelectorTabs();
     const { capture } = useTelemetry();
     const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
       ApFlagId.ENVIRONMENT,
@@ -278,6 +280,39 @@ export const piecesHooks = {
           isLoading: false,
           data: [],
         };
+      case PieceSelectorTabType.CUSTOM: {
+        const customTab = pieceSelectorCustomization.getCustomTab({
+          config: platform.pieceSelectorConfig,
+          customTabId: selectedCustomTabId,
+        });
+        const categories: CategorizedStepMetadataWithSuggestions[] = [];
+        const flatPieces = getPinnedPieces(
+          piecesMetadataWithoutEmptySuggestions,
+          customTab?.pieceNames ?? [],
+        );
+        if (flatPieces.length > 0) {
+          categories.push({
+            title: customTab?.title ?? t('All'),
+            metadata: flatPieces,
+          });
+        }
+        for (const section of customTab?.sections ?? []) {
+          const sectionPieces = getPinnedPieces(
+            piecesMetadataWithoutEmptySuggestions,
+            section.pieceNames,
+          );
+          if (sectionPieces.length > 0) {
+            categories.push({
+              title: section.title,
+              metadata: sectionPieces,
+            });
+          }
+        }
+        return {
+          isLoading: false,
+          data: categories,
+        };
+      }
       case PieceSelectorTabType.APPS: {
         const popularAppsCategory = {
           ...popularCategory,

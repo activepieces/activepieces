@@ -1,17 +1,18 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apId, FieldType, FilterOperator } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { FieldType, FilterOperator } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import qs from 'qs'
 import { db } from '../../../helpers/db'
+import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
+    createMockCell,
     createMockField,
     createMockRecord,
-    createMockCell,
     createMockTable,
 } from '../../../helpers/mocks'
-import { createTestContext, TestContext } from '../../../helpers/test-context'
-import { describeWithAuth } from '../../../helpers/describe-with-auth'
-import qs from 'qs'
+import { TestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -367,6 +368,47 @@ describe('Record API', () => {
             const response = await ctx.inject({
                 method: 'GET',
                 url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EQ, value: 'target' }] })}`,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.data.length).toBe(1)
+            expect(body.data[0].id).toBe(record1.id)
+        })
+
+        it('NEQ: should match record without a cell for the field', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const record1 = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            const record2 = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            await db.save('record', [record1, record2])
+            const cell2 = createMockCell({ recordId: record2.id, fieldId: field.id, projectId: ctx.project.id })
+            cell2.value = 'true'
+            await db.save('cell', cell2)
+
+            const response = await ctx.inject({
+                method: 'GET',
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.NEQ, value: 'true' }] })}`,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.data.length).toBe(1)
+            expect(body.data[0].id).toBe(record1.id)
+        })
+
+        it('NEQ: should match record with empty string cell', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const record1 = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            await db.save('record', record1)
+            const cell1 = createMockCell({ recordId: record1.id, fieldId: field.id, projectId: ctx.project.id })
+            cell1.value = ''
+            await db.save('cell', cell1)
+
+            const response = await ctx.inject({
+                method: 'GET',
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.NEQ, value: 'true' }] })}`,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)

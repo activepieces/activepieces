@@ -2,10 +2,13 @@ import { googleGeminiAuth } from '../auth';
 import { ApFile, DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { GenerateContentParameters, GoogleGenAI } from '@google/genai';
-import { isEmpty, MarkdownVariant } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
+import { generateContentActionOutputSchema } from '../output-schemas';
 
 export const generateContentAction = createAction({
+  audience: 'human',
 	description: 'Generate content using Google Gemini using the "gemini-pro" model',
 	displayName: 'Generate Content',
 	name: 'generate_content',
@@ -102,6 +105,7 @@ export const generateContentAction = createAction({
 			},
 		}),
 	},
+	outputSchema: generateContentActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { model, prompt, toolType } = propsValue;
 		const toolProperties = propsValue.toolProperties ?? {};

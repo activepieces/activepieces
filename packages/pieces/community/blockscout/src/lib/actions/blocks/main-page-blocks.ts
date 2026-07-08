@@ -5,6 +5,8 @@ export const getMainPageBlocks = createAction({
   name: 'get_main_page_blocks',
   displayName: 'Get Main Page Blocks',
   description: 'Get blocks for main page display',
+  audience: 'both',
+  aiMetadata: { description: 'Get the short list of latest blocks shown on the Blockscout explorer home page, takes no inputs. Read-only. Use this for a quick at-a-glance feed of the newest blocks; for a fuller paginated block list use Get Blocks.', idempotent: true },
   // category: 'Blocks',
   props: {},
   async run(context) {

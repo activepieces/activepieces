@@ -11,6 +11,8 @@ export const retrieveRedditPost = createAction({
   name: 'retrieveRedditPost',
   displayName: 'Retrieve Post',
   description: 'Fetch top posts in a subreddit with optional size limit.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists posts from a given subreddit, choosing the listing via a category (hot, new, top, rising, or controversial). Use it to read or monitor a subreddit\'s feed rather than to look up one known post. Requires the subreddit name; an optional size caps how many posts are returned (max 100). Read-only and idempotent.', idempotent: true },
   props: {
     post_category: Property.StaticDropdown({
       displayName: 'Post Category',

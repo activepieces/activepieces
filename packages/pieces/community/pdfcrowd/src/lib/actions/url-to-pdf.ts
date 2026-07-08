@@ -8,6 +8,8 @@ export const urlToPdfAction = createAction({
   name: 'url_to_pdf',
   displayName: 'Convert URL to PDF',
   description: 'Convert a web page URL to PDF document',
+  audience: 'both',
+  aiMetadata: { description: 'Render a publicly accessible web page URL into a PDF file via the Pdfcrowd API, returning the generated document. Choose this when the source is a live URL rather than raw HTML markup (use Convert HTML to PDF for an HTML string). Supports extensive layout, header/footer, watermark, and security options. Not idempotent: each call performs a fresh conversion that produces a new file and consumes account credits.', idempotent: false },
   auth: pdfcrowdAuth,
   props: {
     url: Property.ShortText({

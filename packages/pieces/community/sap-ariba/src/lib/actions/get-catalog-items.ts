@@ -8,6 +8,8 @@ export const getCatalogItems = createAction({
     name: 'get_catalog_items',
     displayName: 'Get Catalog Items',
     description: 'Get list of filtered catalog items for a specific supplier.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve catalog items for a specific supplier and catalog in a SAP Ariba realm. Use to look up product/part data within a known catalog; requires realm, catalog name, supplier ID, and the comma-separated output fields to return, with an optional RSQL filter expression to narrow matches. Read-only and idempotent.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

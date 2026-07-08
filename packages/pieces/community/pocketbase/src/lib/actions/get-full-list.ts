@@ -7,6 +7,8 @@ export const getFullList = createAction({
   name: 'getFullList',
   displayName: 'Get Full List',
   description: 'Gets all the data for a given collection',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches every record in a PocketBase collection, auto-paginating through all pages so the full set is returned in one call. Optionally narrow with a filter expression, sort, or field selection; with no filter it returns the entire collection. Use when you need the complete dataset rather than a single page; for large collections prefer Get List to page through results. Read-only and idempotent.', idempotent: true },
   auth: pocketbaseAuth,
   props: {
     collection: Property.ShortText({

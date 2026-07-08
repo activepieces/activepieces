@@ -9,6 +9,11 @@ export const createChangeTask = createAction({
   name: 'create_change_task',
   displayName: 'Create Change Task',
   description: 'Creates a new task on a change request in Freshservice.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds a task (sub-item of work) to an existing Freshservice change request identified by change id. Use to break a change into actionable steps; requires a title, with optional assignee, group, status, and due date. Not idempotent — each call creates a separate task.',
+    idempotent: false,
+  },
   props: {
     change_id: freshserviceCommon.change(true),
     title: Property.ShortText({

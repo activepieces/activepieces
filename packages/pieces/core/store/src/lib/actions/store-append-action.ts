@@ -7,9 +7,9 @@ import {
   StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { common, getScopeAndKey, PieceStoreScope } from './common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 async function executeStorageAppend(context: ActionContext<PieceAuthProperty | undefined, {
   key: ShortTextProperty<true>;
@@ -18,7 +18,7 @@ async function executeStorageAppend(context: ActionContext<PieceAuthProperty | u
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
 }>, isTestMode = false) {
   await propsValidation.validateZod(context.propsValue, {
-    key: z.string().max(128),
+    key: z.string().check(z.maxLength(128)),
   });
 
   const { key, scope } = getScopeAndKey({
@@ -43,6 +43,7 @@ async function executeStorageAppend(context: ActionContext<PieceAuthProperty | u
 }
 
 export const storageAppendAction = createAction({
+  audience: 'human',
   name: 'append',
   displayName: 'Append',
   description: 'Append to a value in storage',

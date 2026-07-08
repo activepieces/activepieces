@@ -4,13 +4,17 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { filterIdProp } from '../common/props';
 import { pipedriveApiCall, pipedrivePaginatedV2ApiCall } from '../common';
 import { LeadListResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const activityMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'activity-matching-filter',
 	displayName: 'Activity Matching Filter',
 	description: 'Trigges when an activity newly matches a Pipedrive filter for the first time.',
+	aiMetadata: {
+		description:
+			'Fires when an activity (scheduled task or event) first becomes a member of a selected Pipedrive filter — that is, the activity newly satisfies the filter conditions. Polls the filter and emits each activity the first time it appears; does not re-fire for activities already in the filter.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		filterId: filterIdProp('activity', true),

@@ -22,12 +22,22 @@ export const FolderEntity = new EntitySchema<FolderSchema>({
             type: Number,
             default: 0,
         },
+        externalId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
             name: 'idx_folder_project_id_display_name',
             columns: ['projectId', 'displayName'],
             unique: true,
+        },
+        {
+            name: 'idx_folder_project_id_external_id',
+            columns: ['projectId', 'externalId'],
+            unique: true,
+            where: '"externalId" IS NOT NULL',
         },
     ],
     relations: {

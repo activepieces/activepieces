@@ -14,7 +14,7 @@ import { findCustomer } from './lib/actions/find-customer';
 import { findTag } from './lib/actions/find-tag';
 import { findSubscriber } from './lib/actions/find-subscriber';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { mailChimpSubscribeTrigger } from './lib/triggers/subscribe-trigger';
 import { mailChimpUnsubscriberTrigger } from './lib/triggers/unsubscribe-trigger';
 import { mailChimpNewCampaignTrigger } from './lib/triggers/new-campaign-trigger';

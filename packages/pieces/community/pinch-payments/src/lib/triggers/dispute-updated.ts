@@ -7,6 +7,9 @@ export const disputeUpdatedTrigger = createTrigger({
   name: 'dispute_updated',
   displayName: 'Dispute Updated',
   description: 'Triggers when a dispute is updated',
+  aiMetadata: {
+    description: 'Fires when an existing dispute (chargeback) changes in Pinch Payments, typically a status change such as resolution. Use to track a dispute through its lifecycle to its outcome.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

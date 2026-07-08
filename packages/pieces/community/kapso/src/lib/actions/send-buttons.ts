@@ -8,6 +8,11 @@ export const sendButtons = createAction({
   name: 'send_buttons',
   displayName: 'Send Button Message',
   description: 'Send an interactive button message via WhatsApp (up to 3 buttons).',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an interactive WhatsApp message with up to 3 reply buttons, each carrying an ID returned when the user taps it. Use when you want the recipient to pick from a small set of quick-reply options rather than typing. Button titles are capped at 20 characters. Each call delivers a new message, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     businessAccountId: businessAccountIdProp,
     phoneNumberId: phoneNumberIdDropdown,

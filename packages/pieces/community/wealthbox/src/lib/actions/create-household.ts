@@ -7,6 +7,8 @@ export const createHousehold = createAction({
   name: 'create_household',
   displayName: 'Create Household',
   description: 'Creates a household record with emails, tags. Group family member contacts into one household.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a household contact record in Wealthbox (name, address, email, phone, tags) and, in the same call, can attach existing contacts as Head and Spouse members if those contact ids are supplied. Use to group family members under one household; requires a household name. Not idempotent: each call creates a new household and re-adds the members.', idempotent: false },
   auth: wealthboxAuth,
   props: {
     name: Property.ShortText({

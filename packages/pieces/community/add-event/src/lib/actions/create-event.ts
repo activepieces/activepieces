@@ -10,6 +10,12 @@ export const addEventCreateEventAction = createAction({
   name: 'create_event',
   displayName: 'Create Event',
   description: 'Creates a new event on your AddEvent calendar.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new event on an AddEvent calendar from the supplied title, schedule, and details. Use when an agent needs to add a brand-new calendar event. Not idempotent: each call creates a separate event, so repeating it produces duplicates; to avoid that, use Find or Create Event instead.',
+    idempotent: false,
+  },
   props: {
     ...addEventProps.eventFields({ mode: 'create' }),
   },

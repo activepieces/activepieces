@@ -73,6 +73,10 @@ export const newContactTrigger = createTrigger({
   displayName: 'New Contact',
   description:
     'Triggers when a new contact is added to your INBOX account (through a form, manual entry, import, or API).',
+  aiMetadata: {
+    description:
+      'Fires when a new contact appears in the INBOX account, regardless of how it was added (signup form, manual entry, import, or API). Represents a newly created contact record and emits its details.',
+  },
   props: {},
   sampleData: {
     contact_id: '5df9d4b691183c000106cb90',

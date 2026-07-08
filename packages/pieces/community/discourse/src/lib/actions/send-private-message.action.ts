@@ -7,6 +7,8 @@ export const sendPrivateMessage = createAction({
   auth: discourseAuth,
   name: 'send_private_message',
   description: 'Send a private message in Discourse',
+  audience: 'both',
+  aiMetadata: { description: 'Send a private message to one or more Discourse users (by username) with a title and body. Use when an agent needs to message members directly rather than post publicly. Each call delivers a new message, so it is not idempotent.', idempotent: false },
   displayName: 'Send Private Message',
   props: {
     title: Property.ShortText({

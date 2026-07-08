@@ -1,6 +1,6 @@
+import { apId } from '@activepieces/core-utils';
 import {
   ApplicationEventName,
-  apId,
   BranchExecutionType,
   BranchOperator,
   FlowActionType,
@@ -178,8 +178,14 @@ function buildSampleDataNote({
     content,
     ownerId: null,
     color: NoteColorVariant.BLUE,
-    position: { x: 300, y: -105 },
-    size: { width: 239, height: 242 },
+    position: {
+      x: -60,
+      y: -255,
+    },
+    size: {
+      width: 234,
+      height: 150,
+    },
     createdAt: timestamp,
     updatedAt: timestamp,
   };

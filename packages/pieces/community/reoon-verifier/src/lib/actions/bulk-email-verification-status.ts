@@ -7,6 +7,8 @@ export const bulkVerificationResult = createAction({
   name: 'bulkVerificationResult',
   displayName: 'Get Bulk Verification Result',
   description: 'Retrieves result of bulk verification email by task ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the current status and verification results for a previously created bulk email verification task, identified by its task ID (obtained from the Create Bulk Email Verification action). Use to poll for or read back batch results. Idempotent: a read-only lookup that does not change the task.', idempotent: true },
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

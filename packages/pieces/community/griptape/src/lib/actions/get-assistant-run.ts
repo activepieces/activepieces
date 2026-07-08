@@ -9,6 +9,12 @@ export const getAssistantRun = createAction({
   name: 'getAssistantRun',
   displayName: 'Get Assistant Run',
   description: 'Get details of a specific assistant run',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the details and current status/output of a single existing Griptape Cloud assistant run by its run ID. Use to check or retrieve the result of a run started elsewhere; requires a known assistant run ID. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   props: {
     assistant_id: assistantIdDropdown,
     assistant_run_id: assistantRunsDropdown,

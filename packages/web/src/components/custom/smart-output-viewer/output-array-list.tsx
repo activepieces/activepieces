@@ -1,16 +1,18 @@
-import { isObject } from '@activepieces/shared';
+import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import { formatKey, truncateValue, ValueRow } from './shared-value-rendering';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
+
+import { truncateValue, ValueRow } from './shared-value-rendering';
 
 function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!isObject(item)) {
     return (
-      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers last:border-b-0">
+      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers">
         <span className="text-sm font-medium text-muted-foreground shrink-0">
           {t('Item')} {index + 1}
         </span>
@@ -57,12 +59,7 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
       {expanded && (
         <div className="pb-1">
           {entries.map(([key, value]) => (
-            <ValueRow
-              key={key}
-              label={formatKey(key)}
-              value={value}
-              depth={0}
-            />
+            <ValueRow key={key} label={key} value={value} depth={0} />
           ))}
         </div>
       )}
@@ -84,11 +81,11 @@ function OutputArrayList({ items }: OutputArrayListProps) {
   }
 
   return (
-    <div>
-      {items.map((item, idx) => (
-        <ArrayItemRow key={idx} item={item} index={idx} />
-      ))}
-    </div>
+    <VirtualizedList
+      items={items}
+      estimateSize={37}
+      renderItem={(item, idx) => <ArrayItemRow item={item} index={idx} />}
+    />
   );
 }
 

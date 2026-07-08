@@ -9,6 +9,12 @@ export const createCustomer = createAction({
   displayName: 'Create Customer',
   description:
     'Create a new customer. This is required before binding a customer to a plan via a subscription.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new PayWhirl customer record. Required first name, last name, email, and currency code; optional address, payment gateway, and UTM attribution fields. Use this before subscribing a customer to a plan. Not idempotent: each call creates a separate customer, so re-running duplicates the record.',
+    idempotent: false,
+  },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

@@ -15,6 +15,12 @@ export const updateRowsAction = createAction({
   displayName: 'Update Row(s)',
   description:
     'Updates one or more existing rows in a BigQuery table using SQL SET and WHERE expressions.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates rows in a BigQuery table by running an UPDATE DML statement, applying a comma-separated SET assignment to every row matching a WHERE condition (supply both as raw SQL fragments without the SET/WHERE keywords). Use it to change column values on existing records. Mutates state on each run, so it is not safe to assume idempotency — assignments to fixed literal values repeat harmlessly, but relative expressions (e.g. incrementing a counter) compound on every call.',
+    idempotent: false,
+  },
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,

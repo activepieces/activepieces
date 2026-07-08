@@ -4,7 +4,7 @@ import {
   ConversationRole,
 } from '@aws-sdk/client-bedrock-runtime';
 import { ModelModality } from '@aws-sdk/client-bedrock';
-import { awsBedrockAuth } from '../auth';
+import { awsBedrockCombinedAuth } from '../auth';
 import {
   buildFileContentBlock,
   buildS3ContentBlock,
@@ -15,7 +15,8 @@ import {
 } from '../common';
 
 export const generateContentFromImage = createAction({
-  auth: awsBedrockAuth,
+  audience: 'human',
+  auth: awsBedrockCombinedAuth,
   name: 'generate_content_from_image',
   displayName: 'Generate Content from Image',
   description: 'Ask a Bedrock model a question about an image.',
@@ -23,10 +24,10 @@ export const generateContentFromImage = createAction({
     model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       description: 'The foundation model to use. Must support image input.',
       refreshers: [],
-      options: async ({ auth }) => {
+      options: async ({ auth }, { server }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -37,7 +38,7 @@ export const generateContentFromImage = createAction({
         return getBedrockModelOptions(auth.props, {
           useInferenceProfiles: true,
           inputModality: ModelModality.IMAGE,
-        });
+        }, server);
       },
     }),
     source: Property.StaticDropdown({
@@ -53,7 +54,7 @@ export const generateContentFromImage = createAction({
       },
     }),
     image: Property.DynamicProperties({
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       displayName: 'Image',
       required: true,
       refreshers: ['source'],
@@ -105,8 +106,8 @@ export const generateContentFromImage = createAction({
       defaultValue: 2048,
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = createBedrockRuntimeClient(auth.props);
+  async run({ auth, propsValue, server }) {
+    const client = await createBedrockRuntimeClient({ auth: auth.props, server });
     const { model, source, image, prompt, systemPrompt, temperature, maxTokens } = propsValue;
 
     const imageBlock =

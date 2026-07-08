@@ -14,6 +14,12 @@ export const createActivityAction = createAction({
   name: 'create_activity',
   displayName: 'Create Activity',
   description: 'Creates a new activity log entry for a client in Wayfront.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Logs a new activity (note) against a specific Wayfront client, optionally scheduling it for a future date and assigning it to a team member. With no scheduled date it is logged immediately. Use to record an interaction or queue a follow-up; requires the client user ID and content. Not idempotent: each call appends a separate activity.',
+    idempotent: false,
+  },
   props: {
     user_id: clientsDropdown,
     content: Property.LongText({

@@ -1,13 +1,12 @@
-import { isNil, isObject } from '@activepieces/shared';
+import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import { stringUtils } from '@/lib/string-utils';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 
 import { FieldTypeIcon } from './field-type-icon';
 
-const formatKey = stringUtils.titleCase;
 const MAX_NESTED_DEPTH = 10;
 
 function truncateValue(value: unknown): string {
@@ -77,14 +76,14 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
         </button>
         {expanded && (
           <div>
-            {nestedEntries.map(([key, childValue]) => (
-              <ValueRow
-                key={key}
-                label={Array.isArray(value) ? key : formatKey(key)}
-                value={childValue}
-                depth={depth + 1}
-              />
-            ))}
+            <VirtualizedList
+              items={nestedEntries}
+              estimateSize={30}
+              getItemKey={(index) => nestedEntries[index][0]}
+              renderItem={([key, childValue]) => (
+                <ValueRow label={key} value={childValue} depth={depth + 1} />
+              )}
+            />
           </div>
         )}
       </div>
@@ -115,7 +114,7 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
   );
 }
 
-export { ValueRow, formatKey, truncateValue };
+export { ValueRow, truncateValue };
 
 type ValueRowProps = {
   label: string;

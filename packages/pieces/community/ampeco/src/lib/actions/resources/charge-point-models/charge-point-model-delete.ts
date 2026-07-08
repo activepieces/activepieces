@@ -14,6 +14,8 @@ export const chargePointModelDeleteAction = createAction({
   name: 'chargePointModelDelete',
   displayName: 'Resources - Charge Point Models - Delete',
   description: 'Delete a Charge Point Model.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a charge point model by its numeric model ID. Destructive: the first call removes the model, later calls for the same ID fail because it no longer exists. Use only when the model should be fully removed.', idempotent: false },
   props: {
         
   modelId: Property.Number({

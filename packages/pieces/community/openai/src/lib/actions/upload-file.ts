@@ -15,6 +15,7 @@ const isFilePurpose = (value: string): value is FilePurpose =>
   allowedPurposes.some((p) => p === value);
 
 export const uploadFile = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'upload_file',
   displayName: 'Upload File',

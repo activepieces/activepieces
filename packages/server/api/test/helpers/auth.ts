@@ -1,4 +1,5 @@
-import { apId, DefaultProjectRole, Principal, SigningKeyId } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { DefaultProjectRole, Principal, SigningKeyId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
 import {

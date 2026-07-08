@@ -8,6 +8,10 @@ export const conversationStarted = createTrigger({
   displayName: 'Conversation Started',
   description:
     'Triggered when website visitor starts interacting with a chatbot.',
+  aiMetadata: {
+    description:
+      'Fires when a website visitor begins interacting with a OnceHub chatbot, starting a new conversation. The event carries the conversation with its contact and owner details.',
+  },
   props: {},
   sampleData: {
     id: 'EVNT-KN56U3YL7C',

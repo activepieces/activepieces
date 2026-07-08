@@ -10,7 +10,7 @@ import {
 import { jiraApiCall } from '../common';
 import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 async function getFields(auth: JiraDataCenterAuth, issueId: string): Promise<IssueFieldMetaData[]> {
 	const response = await jiraApiCall<{ fields: { [x: string]: Omit<IssueFieldMetaData, 'key' | 'fieldId'> } }>({
@@ -32,6 +32,12 @@ export const updateIssueAction = createAction({
 	name: 'update_issue',
 	displayName: 'Update Issue',
 	description: 'Updates an existing issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Updates fields on an existing Jira Data Center/Server issue, identified by its ID or key. Can optionally transition the issue to a new status (workflow transition) in the same call when a status is supplied. Use to edit an already-created issue rather than create one. Repeating with the same field values converges on the same state, so it is effectively idempotent.',
+		idempotent: true,
+	},
 	auth: jiraDataCenterAuth,
 	props: {
 		issueId: issueIdOrKeyProp('Issue ID or Key', true),

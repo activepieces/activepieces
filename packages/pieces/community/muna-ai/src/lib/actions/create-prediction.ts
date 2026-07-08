@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { munaAiAuth } from '../auth';
 
 export const createPrediction = createAction({
+  audience: 'human',
   name: 'create_prediction',
   displayName: 'Create Prediction',
   description: 'Run a predictor and get back prediction resources.',

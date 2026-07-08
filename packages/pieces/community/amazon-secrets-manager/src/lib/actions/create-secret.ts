@@ -1,16 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  SecretsManagerClient,
   CreateSecretCommand,
-  type Tag,
 } from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { awsSecretsManagerCombinedAuth } from '../common/auth';
+import { resolveSecretsManagerClient } from '../common/client';
 
 export const createSecret = createAction({
-  auth: awsSecretsManagerAuth,
+  auth: awsSecretsManagerCombinedAuth,
   name: 'createSecret',
   displayName: 'Create Secret',
   description: 'Creates a new secret.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new secret in AWS Secrets Manager in the connection\'s region, storing the supplied text value under a given name with optional description and tags. Use when provisioning a brand-new credential or config value to store. Not idempotent: the name must be unique, and re-running fails (or duplicates) rather than updating — use Update Secret to change an existing secret.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Secret Name',
@@ -45,14 +50,8 @@ export const createSecret = createAction({
       },
     }),
   },
-  async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
-    });
+  async run({ auth, propsValue, server }) {
+    const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 
     try {
       const command = new CreateSecretCommand({

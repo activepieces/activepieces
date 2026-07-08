@@ -27,6 +27,12 @@ export const findOneRowAction = createAction({
   displayName: 'Find One Row',
   description:
     'Find a single row by specifying a WHERE clause and an optional ORDER BY. Returns the first matching row, or empty if none found.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a single row in a BigQuery table that matches a SQL WHERE condition, with an optional ORDER BY to control which row is picked when several match. Choose this for a simple keyed lookup or "does this record exist" check rather than writing a full query. Read-only and idempotent; returns the first match (or a not-found flag) without altering data.',
+    idempotent: true,
+  },
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,

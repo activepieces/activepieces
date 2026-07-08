@@ -9,6 +9,8 @@ export const assignOrUnassignConversation = createAction({
   name: 'assign_or_unassign_conversation',
   displayName: 'Assign or Unassign Conversation',
   description: 'Assign or unassign a conversation to/from a team member in Respond.io.',
+  audience: 'both',
+  aiMetadata: { description: 'Sets (or clears) the assignee on a contact\'s conversation in Respond.io. Two modes: provide a user to assign, or leave the assignee empty to unassign. Use to route a conversation to a specific agent or remove ownership. Idempotent — re-applying the same assignee leaves the conversation in the same state.', idempotent: true },
   props: {
     identifier: contactIdentifierDropdown,
     assignee: {

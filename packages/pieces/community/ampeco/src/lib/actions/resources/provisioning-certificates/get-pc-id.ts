@@ -15,6 +15,8 @@ export const getPcIdAction = createAction({
   name: 'getPcId',
   displayName: 'Resources - Provisioning Certificates - Get Pc Id',
   description: 'Get a Provisioning Certificate.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single AMPECO provisioning certificate by its numeric ID. Read-only and idempotent; use when you already have the certificate ID. To find IDs first, use the list pc ids action.', idempotent: true },
   props: {
         
   provisioningCertificate: Property.Number({

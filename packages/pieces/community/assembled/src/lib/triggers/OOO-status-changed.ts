@@ -8,6 +8,9 @@ export const timeOffStatusChanged = createTrigger({
   name: 'OOO_status_changed',
   displayName: 'OOO Status Changed',
   description: 'Triggers on approval/rejection of OOO.',
+  aiMetadata: {
+    description: 'Fires when an existing time-off (out-of-office) request changes status, such as being approved or rejected, polling for time-off updates since the last check. Use to react to decisions on submitted OOO requests.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

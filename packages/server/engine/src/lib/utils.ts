@@ -1,8 +1,9 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
+import { formatPieceError, Result, tryCatch } from '@activepieces/core-utils'
 import { ConnectionsManager, ContextVersion, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { ExecutionError, ExecutionErrorType, formatPieceError, RespondResponse, Result, tryCatch } from '@activepieces/shared'
+import { ExecutionError, ExecutionErrorType, RespondResponse } from '@activepieces/shared'
 import { createConnectionResolver } from './piece-context/connection-resolver'
 
 export type FileEntry = {

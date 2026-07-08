@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   ApFlagId,
   ApplicationEventName,
   EventDestination,
   CreatePlatformEventDestinationRequestBody,
-  isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';

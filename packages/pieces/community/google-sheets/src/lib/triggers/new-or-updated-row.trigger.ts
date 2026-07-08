@@ -1,6 +1,6 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../common/common';
-import { areSheetIdsValid, columnToLabel, GoogleSheetsAuthValue, labelToColumn } from '../common/common';
+import { areSheetIdsValid, columnToLabel, labelToColumn } from '../common/common';
 import {
 	createFileNotification,
 	deleteFileNotification,
@@ -24,6 +24,7 @@ import {
 
 import crypto from 'crypto';
 import { commonProps } from '../common/props';
+import { googleSheetsNewOrUpdatedRowTriggerOutputSchema } from '../output-schemas';
 
 const ALL_COLUMNS = 'all_columns';
 
@@ -86,6 +87,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			},
 		}),
 	},
+	outputSchema: googleSheetsNewOrUpdatedRowTriggerOutputSchema,
 
 	renewConfiguration: {
 		strategy: WebhookRenewStrategy.CRON,

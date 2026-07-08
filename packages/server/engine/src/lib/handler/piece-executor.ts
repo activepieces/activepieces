@@ -1,7 +1,9 @@
+import { isNil } from '@activepieces/core-utils'
 import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
+import { engineRunApi } from '../api/engine-run-api'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { pieceLoader } from '../helper/piece-loader'
@@ -12,7 +14,6 @@ import { waitpointClient } from '../piece-context/waitpoint-client'
 import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
-import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 
@@ -75,9 +76,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         }
         const outputContext = flowRunProgressReporter.createOutputContext({
             engineConstants: constants,
-            flowExecutorContext: executionState,
-            stepName: action.name,
-            stepOutput,
         })
 
         const isPaused = executionState.isPaused({ stepName: action.name })
@@ -158,13 +156,17 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
         if (!isNil(webhookResponse) && !isNil(constants.workerHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
-            await workerSocket.getWorkerClient().sendFlowResponse({
-                workerHandlerId: constants.workerHandlerId,
-                httpRequestId: constants.httpRequestId,
-                runResponse: {
-                    status: webhookResponse.status ?? 200,
-                    body: webhookResponse.body ?? {},
-                    headers: webhookResponse.headers ?? {},
+            await engineRunApi.sendFlowResponse({
+                apiUrl: constants.internalApiUrl,
+                engineToken: constants.engineToken,
+                request: {
+                    workerHandlerId: constants.workerHandlerId,
+                    httpRequestId: constants.httpRequestId,
+                    runResponse: {
+                        status: webhookResponse.status ?? 200,
+                        body: webhookResponse.body ?? {},
+                        headers: webhookResponse.headers ?? {},
+                    },
                 },
             })
         }

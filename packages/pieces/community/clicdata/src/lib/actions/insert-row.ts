@@ -9,6 +9,8 @@ export const insertRow = createAction({
   name: 'insert_row',
   displayName: 'Insert Row',
   description: 'Insert rows into a ClicData table (maximum 500 rows)',
+  audience: 'both',
+  aiMetadata: { description: 'Appends rows to a ClicData table by table ID. Use to push new records into an existing table; supply the data as an array of objects keyed by column name. Capped at 500 rows per call and not idempotent — each call appends the rows again, creating duplicates if repeated.', idempotent: false },
   props: {
     table_id: clicdataCommonProps.table_id,
     data: Property.Json({

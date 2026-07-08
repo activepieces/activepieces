@@ -6,6 +6,8 @@ export const listSites = createAction({
   name: 'list_sites',
   displayName: 'List Sites',
   description: 'Return a list of all sites this API key has access to.',
+  audience: 'both',
+  aiMetadata: { description: 'List all Fathom Analytics sites the API key can access, with optional cursor pagination (starting_after / ending_before) and a per-page limit. Use it to discover available site IDs before calling site-, event-, or aggregation-scoped actions. Read-only and safe to repeat.', idempotent: true },
   auth: fathomAuth,
   props: {
     limit: Property.Number({

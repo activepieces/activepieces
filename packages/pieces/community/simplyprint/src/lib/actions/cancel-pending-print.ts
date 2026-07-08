@@ -10,6 +10,12 @@ export const cancelPendingPrintAction = createAction({
   displayName: 'Cancel Pending Print',
   description:
     'Cancel a print that\'s queued/staged on a printer but hasn\'t started yet (status = print_pending). Distinct from "Cancel Print", which targets the active print.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Cancels prints that are staged/queued on one or more printers but have not started yet (status print_pending), given numeric printer IDs. Pick this for not-yet-running prints; use the separate "Cancel Print" action for the currently active print. Idempotent: once a printer has no pending print the call converges to the same state.',
+    idempotent: true,
+  },
   props: {
     printerIds: Property.Array({
       displayName: 'Printer IDs',

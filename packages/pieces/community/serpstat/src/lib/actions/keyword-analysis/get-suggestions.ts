@@ -9,6 +9,8 @@ export const getSuggestions = createAction({
   name: 'get_suggestions',
   displayName: 'Get Suggestions',
   description: 'Get keyword suggestions from Serpstat > Keyword Analysis.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch search suggestions related to a given keyword (full-text matches that include the seed term) on a chosen search engine/region, via Serpstat keyword analysis. Use to discover related or long-tail keyword variants for ideation; supports pagination and an advanced JSON filter. Read-only and idempotent.', idempotent: true },
   auth: serpstatAuth,
   props: {
     keyword: Property.ShortText({

@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { publicationId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
 import { beehiivApiCall, BeehiivPaginatedApiCall } from '../common/client';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const listAutomationsAction = createAction({
 	auth: beehiivAuth,

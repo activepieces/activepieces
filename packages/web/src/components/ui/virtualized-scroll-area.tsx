@@ -1,6 +1,6 @@
 'use client';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 

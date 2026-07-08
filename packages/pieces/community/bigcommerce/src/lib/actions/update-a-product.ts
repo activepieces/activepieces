@@ -7,6 +7,12 @@ export const updateAProduct = createAction({
   name: 'updateAProduct',
   displayName: 'Update a Product',
   description: 'Updates an existing Product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing catalog product in a BigCommerce store, identified by its productId. Only the fields you supply are sent (null/undefined values are dropped so existing data is preserved), so use it for partial edits to name, type, SKU, description, weight, price, or brand. Idempotent: re-applying the same field values leaves the product in the same state.',
+    idempotent: true,
+  },
   props: {
     productId: Property.ShortText({
       displayName: 'Product ID',

@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { renderTemplate } from './lib/actions/renderTemplate.action';
 import { generatebannersAuth } from './lib/auth';
 

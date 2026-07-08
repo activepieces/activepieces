@@ -9,6 +9,10 @@ export const callCompletionReport = createTrigger({
   name: 'callCompletionReport',
   displayName: 'Call Completion Report',
   description: 'Triggers when  Bolna call report  it is completed',
+  aiMetadata: {
+    description:
+      'Fires when a Bolna AI voice call finishes and its execution report is pushed to the configured webhook, emitting only calls with a completed status. Use to act on call outcomes such as transcript, duration, cost, and recording once a conversation has ended. Requires manually configuring the Bolna agent to push execution data to the webhook URL.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `## Bolna AI Webhook Setup

@@ -7,6 +7,8 @@ export const createTask = createAction({
     name: 'create_task',
     displayName: 'Create Task',
     description: 'Create a task that can be standalone or associated with a conversation',
+    audience: 'both',
+    aiMetadata: { description: 'Create a Missive task in one of two modes: a standalone task assigned to a team or specific users, or a subtask attached to a conversation (selected by ID or found/created via message references). Use to add a to-do item; standalone tasks need a team or assignees, subtasks need a parent conversation. Not idempotent: each call creates a new task.', idempotent: false },
     auth: missiveAuth,
     props: {
         task_type: Property.StaticDropdown({

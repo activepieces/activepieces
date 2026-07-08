@@ -7,6 +7,9 @@ export const prospectNonresponsive = createTrigger({
   name: 'prospect_nonresponsive',
   displayName: 'Prospect Nonresponsive',
   description: 'Triggers when a prospect is marked as nonresponsive',
+  aiMetadata: {
+    description: 'Fires when a prospect is marked nonresponsive, meaning they completed the campaign sequence without replying. Represents an end-of-sequence no-reply outcome for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_nonresponsive',

@@ -9,6 +9,7 @@ import { baseUrlv0 } from '../common/common';
 import FormData from 'form-data';
 
 export const createRag = createAction({
+  audience: 'human',
   auth: straicoAuth,
   name: 'create_rag',
   displayName: 'Create RAG',

@@ -9,6 +9,12 @@ export const createUserProfileAction = createAction({
   displayName: 'Create User Profile',
   description:
     'Creates a new user profile in AiPrise. The returned profile can then be used for repeated verifications or ongoing monitoring for the same person.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new person (user) profile in AiPrise from supplied identity details (name, date of birth, contact, address, etc.); the resulting profile is the entity you later run identity verifications or ongoing monitoring against. Use this as the setup step before Start Identity Verification for a profile. All fields are optional. Not idempotent — each call creates a separate profile, even with identical input.',
+    idempotent: false,
+  },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

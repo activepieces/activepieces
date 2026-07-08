@@ -10,6 +10,12 @@ import { mauticAuth } from '../auth';
 export const createCompany = createAction({
   auth: mauticAuth,
   description: 'Creates a new company in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new company in Mautic from the provided field values (company name, address, custom fields, etc.). Use when adding an organization to Mautic; to modify an existing company use Update Company, and check Search Company first to avoid duplicates. Not idempotent: each call inserts a new company record.',
+    idempotent: false,
+  },
   displayName: 'Create Company',
   name: 'create_mautic_company',
   props: {

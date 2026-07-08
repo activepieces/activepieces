@@ -1,6 +1,6 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { googleCloudStorageAuth } from "./lib/common/auth";
 import { createBucket } from "./lib/actions/create-bucket";
 import { deleteEmptyBucket } from "./lib/actions/delete-empty-bucket";

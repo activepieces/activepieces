@@ -7,6 +7,12 @@ export const getBrandById = createAction({
   name: 'get-brand-by-id',
   displayName: 'Get Brand By ID',
   description: "Find a Brand in your catalog by it's id",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve a single brand from a VTEX store catalog by its numeric brand ID. Use when you already know the brand ID and need its details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     BrandId: Property.Number({
       displayName: 'Brand ID',

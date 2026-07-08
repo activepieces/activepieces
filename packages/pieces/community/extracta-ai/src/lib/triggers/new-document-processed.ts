@@ -7,6 +7,9 @@ export const newDocumentProcessed = createTrigger({
   name: 'new_document_processed',
   displayName: 'New Document Processed',
   description: 'Triggers when a document extraction is successfully processed.',
+  aiMetadata: {
+    description: 'Fires when Extracta.ai successfully finishes processing a document, emitting the completed extraction result (extraction, batch, and file identifiers plus the extracted data). Filters incoming webhook events to only the extraction.processed event.',
+  },
   props: {
     webhookInstructions: Property.MarkDown({
       value: `

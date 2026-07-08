@@ -8,6 +8,8 @@ export const findBot = createAction({
   name: 'findBot',
   displayName: 'Find Bot',
   description: 'Retrieve details of a specific bot by its UID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single OpenMic AI bot by its UID. Use when you already have a bot UID and need its configuration; to discover UIDs or browse bots, use Get Bots instead. Read-only and idempotent.', idempotent: true },
   props: {
     uid: Property.ShortText({
       displayName: 'Bot UID',

@@ -9,6 +9,8 @@ export const addLeadToCampaignAction = createAction({
   name: 'add_lead_to_campaign',
   displayName: 'Add Lead to Campaign',
   description: 'Adds a lead to a campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Moves an existing lead into a campaign by lead ID and campaign ID, then polls the resulting background job until it completes. Optionally skip the lead if it already exists in the campaign. Use when assigning a known lead to a specific outreach campaign. Not idempotent — it triggers a move/add operation each call.', idempotent: false },
   props: {
     lead_id: leadId(true),
     campaign_id: campaignId(true),

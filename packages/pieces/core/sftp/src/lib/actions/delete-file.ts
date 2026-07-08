@@ -14,6 +14,7 @@ async function deleteFileFromSFTP(client: Client, filePath: string) {
 }
 
 export const deleteFileAction = createAction({
+  audience: 'human',
   auth: sftpAuth,
   name: 'deleteFile',
   displayName: 'Delete file',

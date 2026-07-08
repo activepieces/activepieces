@@ -12,6 +12,8 @@ export const updateWorkItemAction = createAction({
   name: 'update_work_item',
   displayName: 'Update Work Item',
   description: 'Updates an existing work item in Azure DevOps',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields (title, description, state, assignee, priority) on an existing Azure DevOps work item identified by its numeric ID; only the fields you provide are changed. Use to modify a known work item rather than to look it up or create one. Requires the project and numeric work item ID; the work item type prop only loads the matching state list and does not change the item type. Idempotent, since it replaces fields to a fixed target value keyed on a stable ID.', idempotent: true },
   props: {
     project: azureDevOpsCommon.projectDropdown,
     work_item_type: {

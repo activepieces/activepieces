@@ -4,7 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { openmicAiAuth } from '../common/auth';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 const webhookConfigDescription = `
 ## Post-call Webhook Configuration
@@ -30,6 +30,9 @@ export const newPostCallSummary = createTrigger({
   displayName: 'New Post-call Summary',
   description:
     'Trigger when a new call completes with comprehensive call data and analysis',
+  aiMetadata: {
+    description: 'Fires when an OpenMic AI call finishes, delivering the end-of-call report via the post-call webhook — including transcript, summary, duration, disconnection reason, success evaluation, and any extracted data. Requires the bot to be configured with the post-call webhook URL.',
+  },
   props: {
     markdown: Property.MarkDown({
       variant: MarkdownVariant.INFO,

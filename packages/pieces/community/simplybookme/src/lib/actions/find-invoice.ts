@@ -7,6 +7,8 @@ export const findInvoice = createAction({
   name: 'find_invoice',
   displayName: 'Find Invoice',
   description: 'Find invoices with filters and pagination',
+  audience: 'both',
+  aiMetadata: { description: 'Lists invoices/orders in SimplyBook.me with pagination and optional filters for client, date-time range, status, and booking code. Use to look up billing records or retrieve an invoice for a client or appointment; leaving filters empty returns the broadest paged list. Idempotent: read-only with no side effects.', idempotent: true },
   props: {
     page: Property.Number({
       displayName: 'Page',

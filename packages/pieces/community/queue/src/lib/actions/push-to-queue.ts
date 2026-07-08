@@ -11,6 +11,7 @@ const notes = `**Note:**
 - The testing step work in isolation and doesn't affect the actual queue after publishing.
 `
 export const pushToQueue = createAction({
+  audience: 'human',
   name: 'push-to-queue',
   description: 'Push item to queue',
   displayName: 'Push to Queue',

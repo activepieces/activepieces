@@ -15,6 +15,12 @@ export const listFields = createAction({
   name: 'custom_fields_list_fields',
   displayName: 'List Custom Fields',
   description: 'Returns a list of all custom fields',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists every custom field defined on the account, including each field id, key, and label. Use it to discover field keys before setting custom field values on subscribers. Takes no inputs; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     return fetchCustomFields(context.auth.secret_text);
@@ -26,6 +32,12 @@ export const createField = createAction({
   name: 'custom_fields_create_field',
   displayName: 'Create Custom Field',
   description: 'Create a new custom field',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates one or more new custom fields from an array of labels (ConvertKit derives each field key from its label). Not idempotent — repeating the call creates duplicate fields, so check List Custom Fields first.',
+    idempotent: false,
+  },
   props: {
     fields: fieldsArray,
   },
@@ -59,6 +71,12 @@ export const updateField = createAction({
   name: 'custom_fields_update_field',
   displayName: 'Custom Fields: Update Field',
   description: 'Update a custom field',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Renames an existing custom field, selected by its current label, to a new label. Not idempotent — once the rename succeeds the old label no longer matches, so a retry with the same inputs fails.',
+    idempotent: false,
+  },
   props: {
     label,
     new_label,
@@ -95,6 +113,12 @@ export const deleteField = createAction({
   name: 'custom_fields_delete_field',
   displayName: 'Custom Fields: Delete Field',
   description: 'Delete a custom field',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes a custom field by label, removing it and its stored values from all subscribers. Destructive and not retry-safe — a repeat call fails once the field is gone.',
+    idempotent: false,
+  },
   props: {
     label,
   },

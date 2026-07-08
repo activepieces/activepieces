@@ -7,6 +7,8 @@ export const createIndex = createAction({
   name: 'create_index',
   displayName: 'Create Index',
   description: 'Creates a new Pinecone index with custom settings.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Pinecone vector index in the connected project, supporting both serverless (cloud + region) and pod-based (environment + pod type) deployments selected via the index type. Use to provision a fresh index before storing or querying vectors; not for adding data to an existing one. Requires a unique name and, for dense indexes, a positive dimension. Not idempotent: re-running creates or conflicts with an index, though enabling Suppress Conflicts lets a repeat call against an existing index avoid erroring.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Index Name',

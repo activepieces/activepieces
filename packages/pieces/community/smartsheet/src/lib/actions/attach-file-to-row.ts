@@ -8,6 +8,8 @@ export const attachFileToRow = createAction({
   name: 'attach_file_to_row',
   displayName: 'Attach File to Row',
   description: 'Adds a file attachment to a row.',
+  audience: 'both',
+  aiMetadata: { description: 'Attaches a file or link to a row in a Smartsheet sheet, identified by sheet ID and row ID. The attachment type switches between two modes: uploading a binary file (FILE), or linking an external URL such as a Box, Dropbox, Google Drive, OneDrive, or plain web link. Use to add supporting documents to a row. Not idempotent: each call adds another attachment.', idempotent: false },
   props: {
     sheet_id: smartsheetCommon.sheet_id(),
     row_id: smartsheetCommon.row_id,

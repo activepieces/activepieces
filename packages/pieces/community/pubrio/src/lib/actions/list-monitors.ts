@@ -8,6 +8,12 @@ export const listMonitors = createAction({
   name: 'list_monitors',
   displayName: 'List Monitors',
   description: 'List all monitors with pagination',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List the account\'s signal monitors with paging and ordering (by created_at, updated_at, or name). Read-only and repeatable. Use to enumerate existing monitors or find a monitor_id to pass to Update, Delete, Test Run, or Reveal Monitor Signature.',
+    idempotent: true,
+  },
   props: {
     page: Property.Number({
       displayName: 'Page',

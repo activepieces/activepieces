@@ -3,7 +3,7 @@ import { documentproAuth } from './lib/common/auth';
 import { uploaddocument } from './lib/actions/upload-document';
 import { runExtract } from './lib/actions/run-extract';
 import { newDocument } from './lib/triggers/new-document';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 export const documentpro = createPiece({
   displayName: 'DocumentPro',

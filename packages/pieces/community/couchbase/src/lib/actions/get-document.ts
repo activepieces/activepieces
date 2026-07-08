@@ -15,6 +15,8 @@ export default createAction({
   name: 'get_document',
   displayName: 'Get Document',
   description: 'Retrieve a document by its ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single Couchbase document by its key from a given bucket/scope/collection. Use to look up a known record by ID; the document ID is required and must reference an existing document or the call fails. Read-only and idempotent.', idempotent: true },
   props: {
     bucket: couchbaseCommonProps.bucket,
     scope: couchbaseCommonProps.scope,

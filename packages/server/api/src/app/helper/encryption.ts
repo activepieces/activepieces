@@ -2,10 +2,7 @@ import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
 
-import {
-    assertNotNullOrUndefined,
-    isNil,
-} from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import { Mutex } from 'async-mutex'
 import { z } from 'zod'
 import { RedisType } from '../database/redis/types'

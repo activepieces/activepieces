@@ -15,6 +15,8 @@ export const invoiceDetailsCreateOrUpdateAction = createAction({
   name: 'invoiceDetailsCreateOrUpdate',
   displayName: 'Resources - Users - Invoice Details Create Or Update',
   description: 'Create or update user invoice details.',
+  audience: 'both',
+  aiMetadata: { description: "Upsert the billing/invoice details for a single AMPECO user, keyed by user id. The required fields depend on the selected invoice-manager variant (Ampeco, Cardcom, SoftOne, or Ecpay). Idempotent: it overwrites any existing invoice details for that user rather than creating duplicates. Use Invoice Details Read to inspect the current values first.", idempotent: true },
   props: {
         
   user: Property.Number({

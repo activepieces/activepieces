@@ -8,6 +8,8 @@ export const listPipelines = createAction({
   name: 'list_pipelines',
   displayName: 'List Pipelines',
   description: 'Retrieves a list of pipelines.',
+  audience: 'both',
+  aiMetadata: { description: 'List pipelines in the workspace, optionally filtered by a search term, with paging via limit and page. Set Return All to fetch every matching pipeline across pages; otherwise a single page is returned. Use to discover pipelines or resolve a pipeline ID by name. Read-only and idempotent.', idempotent: true },
   props: {
     limit: ninjapipeCommon.limitProperty,
     search: ninjapipeCommon.searchProperty,

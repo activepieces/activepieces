@@ -8,6 +8,8 @@ export const createBot = createAction({
   name: 'createBot',
   displayName: 'create bot',
   description: 'Creates a new bot that will join a meeting',
+  audience: 'both',
+  aiMetadata: { description: 'Dispatches a Recall.ai notetaker bot to join a video meeting (Zoom, Google Meet, Microsoft Teams, etc.) at the given meeting URL so it can record and transcribe the call. Use to start capturing a meeting; the meeting URL is required and the optional bot name (max 100 chars) sets the display name shown to participants. Not idempotent — each call spins up a new bot instance, even for the same meeting URL.', idempotent: false },
   props: {
     meeting_url: Property.ShortText({
       displayName: 'Meeting URL',

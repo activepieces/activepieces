@@ -14,6 +14,11 @@ export const createRecord = createAction({
 	name: 'createRecord',
 	displayName: 'Create Record',
 	description: 'Creates a new record into a specified table.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Inserts a new record into a Ninox table identified by team, database, and table. Use to add a row of field values; empty field values are dropped before sending. Not idempotent — each call creates a separate record.',
+		idempotent: false,
+	},
 	props: {
 		teamid: teamidDropdown,
 		dbid: databaseIdDropdown,

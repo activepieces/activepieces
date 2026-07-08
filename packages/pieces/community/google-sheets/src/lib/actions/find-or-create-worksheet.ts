@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient, googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
+import { findOrCreateWorksheetActionOutputSchema } from '../output-schemas';
 
 export const findOrCreateWorksheetAction = createAction({
 	auth: googleSheetsAuth,
@@ -22,12 +23,13 @@ export const findOrCreateWorksheetAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: findOrCreateWorksheetActionOutputSchema,
 	async run(context) {
 		const { spreadsheetId, title } = context.propsValue;
 		const headers = (context.propsValue.headers as string[]) ?? [];
 
 		const authClient = await createGoogleClient(context.auth);
-		const sheetsApi = google.sheets({ version: 'v4', auth: authClient });
+		const sheetsApi = googleSheets({ version: 'v4', auth: authClient });
 
 		const existing = await sheetsApi.spreadsheets.get({ spreadsheetId });
 		const found = existing.data.sheets?.find((sheet) => sheet.properties?.title === title);

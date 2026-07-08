@@ -1,10 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import { OAuth2Props, PiecePropertyMap } from '@activepieces/pieces-framework';
 import {
   FlowActionType,
   FlowOperationRequest,
   FlowOperationType,
   FlowTriggerType,
-  isNil,
   PieceAction,
   PieceTrigger,
 } from '@activepieces/shared';

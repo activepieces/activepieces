@@ -8,6 +8,8 @@ export const listPageTemplates = createAction({
   name: 'list_page_templates',
   displayName: 'List Page Templates',
   description: 'Lists all available Sendr Page templates you can use to create personalized landing pages.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the Sendr Page templates available for building personalized landing pages, returning each template id and name. Use it to discover the template id needed by Generate Sendr Page or Get Page Template Variables. Read-only; takes no input.', idempotent: true },
   props: {},
   async run(context) {
     const response = await sendrApiCall<{

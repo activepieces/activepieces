@@ -10,7 +10,7 @@ import {
   ConversationRole,
   Message,
 } from '@aws-sdk/client-bedrock-runtime';
-import { awsBedrockAuth } from '../auth';
+import { awsBedrockCombinedAuth } from '../auth';
 import {
   buildFileContentBlock,
   buildS3ContentBlock,
@@ -21,7 +21,8 @@ import {
 } from '../common';
 
 export const sendPrompt = createAction({
-  auth: awsBedrockAuth,
+  audience: 'human',
+  auth: awsBedrockCombinedAuth,
   name: 'send_prompt',
   displayName: 'Ask Bedrock',
   description: 'Send a text prompt to an Amazon Bedrock model.',
@@ -29,10 +30,10 @@ export const sendPrompt = createAction({
     model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       description: 'The foundation model to use for generation.',
       refreshers: [],
-      options: async ({ auth }) => {
+      options: async ({ auth }, { server }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -40,7 +41,7 @@ export const sendPrompt = createAction({
             options: [],
           };
         }
-        return getBedrockModelOptions(auth.props, { useInferenceProfiles: true });
+        return getBedrockModelOptions(auth.props, { useInferenceProfiles: true }, server);
       },
     }),
     prompt: Property.LongText({
@@ -97,7 +98,7 @@ export const sendPrompt = createAction({
       },
     }),
     attachment: Property.DynamicProperties({
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       displayName: 'Attachment',
       required: false,
       refreshers: ['attachmentSource'],
@@ -129,8 +130,8 @@ export const sendPrompt = createAction({
       },
     }),
   },
-  async run({ auth, propsValue, store }) {
-    const client = createBedrockRuntimeClient(auth.props);
+  async run({ auth, propsValue, store, server }) {
+    const client = await createBedrockRuntimeClient({ auth: auth.props, server });
     const {
       model,
       prompt,

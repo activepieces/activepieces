@@ -12,7 +12,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 
 const polling: Polling<
@@ -70,6 +70,9 @@ export const readNewRows = createTrigger({
   displayName: 'New Row',
   description:
     'Trigger when a new row is added, and it can include existing rows as well.',
+  aiMetadata: {
+    description: 'Fires when a new row is added to the selected worksheet, and may also surface existing rows on the first run. Each event represents one row and returns its 1-based row number and cell values keyed by column letters (A, B, C...). Use this to react to rows appended to a worksheet.',
+  },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

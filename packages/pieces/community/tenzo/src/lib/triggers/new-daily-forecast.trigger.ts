@@ -89,6 +89,9 @@ export const newDailyForecastTrigger = createTrigger({
   name: 'new_daily_forecast',
   displayName: 'New Daily Forecast',
   description: 'Triggers when there is a new daily forecast for a selected location.',
+  aiMetadata: {
+    description: 'Fires when Tenzo generates a new daily sales forecast for the selected location. Each event represents one forecasted day of business and includes the predicted paid sales (with and without tax), promos, comps, and included service charges, along with the date of business and timestamps. Use it to react to freshly produced forecasts for a specific location.',
+  },
   props: {
     location_id: tenzoCommon.location_id(true),
   },

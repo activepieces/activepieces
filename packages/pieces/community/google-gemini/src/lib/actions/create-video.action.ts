@@ -6,6 +6,7 @@ import { GoogleGenAI } from '@google/genai';
 import mime from 'mime-types';
 
 export const createVideoAction = createAction({
+  audience: 'human',
   name: 'create_video',
   auth: googleGeminiAuth,
   displayName: 'Create Video',

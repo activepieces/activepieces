@@ -11,6 +11,12 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description:
     'Add a new customer or supplier to your Wafeq address book so you can invoice them or record bills from them.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a contact (customer, supplier, or both) in Wafeq. Choose this when an invoice/bill needs a contact that does not exist yet; run Find Contact first to avoid duplicates, since this does not de-duplicate. Only name and relationship are required; tax_registration_number is needed for tax-compliant B2B documents. Not idempotent — each call creates a new contact.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

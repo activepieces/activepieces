@@ -10,6 +10,8 @@ export const updateSpace = createAction({
   name: 'updateSpace',
   displayName: 'Update Space',
   description: 'Updates an existing space.',
+  audience: 'both',
+  aiMetadata: { description: 'Renames an existing Paperform space, identified by its space ID, to the supplied name. Use to update a workspace label; repeating with the same input yields the same end state, so it is idempotent.', idempotent: true },
   props: {
     spaceId: paperformCommonProps.spaceId,
     name: Property.ShortText({

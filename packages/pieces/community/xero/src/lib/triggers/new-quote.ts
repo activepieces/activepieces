@@ -99,6 +99,9 @@ export const xeroNewQuote = createTrigger({
   name: 'xero_new_quote',
   displayName: 'New Quote',
   description: 'Fires when a new quote is created.',
+  aiMetadata: {
+    description: 'Fires when a new quote is created in the connected Xero organisation. Polls the Xero Quotes endpoint and emits each quote the first time its QuoteID is seen, optionally filtered by status (DRAFT, SENT, ACCEPTED, DECLINED, INVOICED, DELETED), contact, quote number, or date/expiry range. Each item is a full quote record (number, status, contact, line items, totals). Represents a brand-new quote; use Updated Quote to also fire on edits.',
+  },
   props: {
     tenant_id: props.tenant_id,
     statuses: Property.StaticMultiSelectDropdown({

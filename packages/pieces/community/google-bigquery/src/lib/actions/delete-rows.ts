@@ -15,6 +15,12 @@ export const deleteRowsAction = createAction({
   displayName: 'Delete Rows',
   description:
     'Deletes one or more rows from a BigQuery table using a SQL WHERE condition.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes every row matching a SQL WHERE condition from a BigQuery table by running a DELETE DML statement (supply only the condition body, without the WHERE keyword). Use it to remove records that meet a filter. Effectively idempotent on the same data — a repeat matches no remaining rows — but it is a destructive mutation, so an overly broad condition can remove far more than intended.',
+    idempotent: false,
+  },
   props: {
     project_id: projectIdProp,
     dataset_id: datasetIdProp,

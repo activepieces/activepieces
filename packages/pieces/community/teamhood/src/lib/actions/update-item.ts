@@ -19,6 +19,12 @@ export const updateItemAction = createAction({
   displayName: 'Update Item',
   description:
     'Update an existing Teamhood item. Only fields you fill in will be updated.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Teamhood item identified by its item ID; only the fields you supply are changed (title, description, status, row, assignee, dates, estimation, budget, progress, tags, and completed/archived/milestone flags). Use to edit a known item. Note tags REPLACE the existing tag set rather than appending. Idempotent — re-applying the same values to the same item yields the same state.',
+    idempotent: true,
+  },
   props: {
     workspaceId: workspaceIdDropdown(true),
     boardId: boardIdDropdown(false),

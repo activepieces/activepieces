@@ -1,3 +1,4 @@
+import { ProjectRole } from '@activepieces/core-utils';
 import {
   CreateOtpRequestBody,
   GetCurrentProjectMemberRoleQuery,
@@ -6,7 +7,6 @@ import {
   AuthenticationResponse,
   ClaimTokenRequest,
   FederatedAuthnLoginResponse,
-  ProjectRole,
   SignInRequest,
   SignUpRequest,
   SwitchPlatformRequest,

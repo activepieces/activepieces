@@ -11,6 +11,12 @@ export const createAndSendEnvelope = createAction({
   displayName: 'Send Document for Signing',
   description:
     'Upload a document and send it to one or more people to sign via DocuSign.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new DocuSign envelope from one or more uploaded documents and a set of signers (plus optional carbon-copy recipients), then either sends it immediately for signing or saves it as a draft depending on the chosen action. Use to start a new signing request; requires the account ID, an email subject, at least one document, and at least one signer. Not idempotent — each call creates and (unless saved as draft) sends a new envelope.',
+    idempotent: false,
+  },
   props: {
     accountId: Property.ShortText({
       displayName: 'Account ID',

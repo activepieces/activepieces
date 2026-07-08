@@ -12,6 +12,10 @@ export const newReactionRemoved = createTrigger({
   name: 'new_reaction_removed',
   displayName: 'Reaction Removed',
   description: 'Triggers when a reaction is removed from a message',
+  aiMetadata: {
+    description:
+      'Fires when an emoji reaction is removed from a message in the Slack workspace. Can be optionally filtered to specific emojis, a specific user, or specific channels. The event payload identifies the user who removed the reaction, the emoji name, and the message item it was removed from.',
+  },
   props: {
     info: multiSelectChannelInfo,
     emojis: Property.Array({

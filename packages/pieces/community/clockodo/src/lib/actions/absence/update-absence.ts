@@ -12,6 +12,12 @@ export default createAction({
   name: 'update_absence',
   displayName: 'Update Absence',
   description: 'Updates an absence in clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Modifies an existing clockodo absence identified by absence_id, changing its date range, type, status (e.g. approve or decline a request), half-day flag, note, or sick-note flag. Use to amend or approve an absence rather than creating a new one (use Create Absence for new records). Idempotent: applying the same field values to the same absence_id converges to the same state.',
+    idempotent: true,
+  },
   props: {
     absence_id: Property.Number({
       displayName: 'Absence ID',

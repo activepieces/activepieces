@@ -8,6 +8,8 @@ export const deleteBudget = createAction({
   name: 'delete_budget',
   displayName: 'Delete Budget',
   description: 'Deletes a budget by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a budget identified by Budget ID. Pick this to remove a budget and its tracking; the change is destructive and cannot be undone. Re-running after deletion typically fails since the ID no longer exists.', idempotent: false },
   props: {
     budgetId: ninjapipeCommon.budgetDropdownRequired,
   },

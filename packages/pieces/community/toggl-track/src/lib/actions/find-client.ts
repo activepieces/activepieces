@@ -8,6 +8,8 @@ export const findClient = createAction({
   name: 'find_client',
   displayName: 'Find Client',
   description: 'Find a client by name or status in a workspace.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists clients in a Toggl Track workspace, optionally filtered by a case-insensitive name and by active/archived/both status; omitting both returns all clients. Use to resolve a client ID before linking it to a project. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({

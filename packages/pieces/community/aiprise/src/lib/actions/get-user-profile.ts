@@ -9,6 +9,12 @@ export const getUserProfileAction = createAction({
   displayName: 'Get User Profile',
   description:
     "Fetches a user profile from AiPrise by its ID — including the person's stored details, tags, linked verification sessions, and metadata.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single user (person) profile by its ID, returning the stored identity details, tags, linked verification sessions, and metadata. Use this to read back a profile you created or referenced. Requires the user_profile_id. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     user_profile_id: Property.ShortText({
       displayName: 'User Profile ID',

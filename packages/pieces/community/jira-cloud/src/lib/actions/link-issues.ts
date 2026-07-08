@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { issueIdOrKeyProp, issueLinkTypeIdProp } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { jiraApiCall } from '../common';
 
@@ -10,6 +10,12 @@ export const linkIssuesAction = createAction({
   name: 'link-issues',
   displayName: 'Link Issues',
   description: 'Creates a link between two issues.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a directional link of a chosen type (e.g. blocks, relates to, duplicates) between two existing Jira issues, given both issue IDs/keys. Use to express dependencies or relationships; direction matters, with the first issue taking the outward role. Not idempotent: re-running can add a duplicate link.',
+    idempotent: false,
+  },
   props: {
     firstIssueId: issueIdOrKeyProp('First Issue', true),
     issueLinkTypeId: issueLinkTypeIdProp('Link Type', true),

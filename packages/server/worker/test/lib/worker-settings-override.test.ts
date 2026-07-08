@@ -82,8 +82,7 @@ function buildMinimalHandlers(): WorkerToApiContract {
         getPiece: vi.fn(),
         getPieceArchive: vi.fn(),
         extendLock: vi.fn(),
-        getUsedPieces: vi.fn().mockResolvedValue([]),
-        markPieceAsUsed: vi.fn(),
+        recordTriggerRun: vi.fn(),
         disableFlow: vi.fn(),
     }
 }

@@ -7,10 +7,11 @@ import {
   getCorrectedFormat,
   apDayjs,
 } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const firstDayOfPreviousMonthAction = createAction({
+  audience: 'human',
   name: 'first_day_of_previous_month',
   displayName: 'First Day of Previous Month',
   description: 'Get the date and time of the first day of the previous month',
@@ -57,7 +58,7 @@ export const firstDayOfPreviousMonthAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      time: z.string().regex(/^\d\d:\d\d$/),
+      time: z.string().check(z.regex(/^\d\d:\d\d$/)),
     });
 
     const outputTimeFormat = getCorrectedFormat(context.propsValue.timeFormat);

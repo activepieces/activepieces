@@ -1,3 +1,4 @@
+import { Metadata, isNil } from '@activepieces/core-utils';
 import {
   piecePropertiesUtils,
   OAuth2Props,
@@ -13,16 +14,15 @@ import {
   AppConnectionType,
   CodeActionSchema,
   LoopOnItemsActionSchema,
-  Metadata,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
-  isNil,
   RouterActionSchema,
   RouterBranchesSchema,
   RouterExecutionType,
   UpsertCloudOAuth2Request,
   UpsertCustomAuthRequest,
+  UpsertOIDCRequest,
   UpsertBasicAuthRequest,
   UpsertNoAuthRequest,
   UpsertOAuth2Request,
@@ -41,6 +41,21 @@ import {
 import { t } from 'i18next';
 import { z, ZodObject, ZodType } from 'zod';
 
+// `piecePropertiesUtils.buildSchema` returns a zod/mini object (pieces-framework uses zod/mini
+// for bundle size), but the web validates with classic zod (react-hook-form + zodResolver) and
+// calls classic instance methods on this schema — `.optional()`, `.extend()`, `.omit()`,
+// `.safeParseAsync()`. zod/mini objects do NOT expose those methods, so a bare type cast lies to
+// the compiler and crashes at runtime (`propsSchema.optional is not a function`). Rebuild it as a
+// classic `z.object` over the same field schemas: zod 4's classic and mini schemas share one
+// runtime core, so the classic wrapper validates the (still-mini) fields with no conversion while
+// giving the web the classic method surface it relies on.
+function buildClassicSchema(
+  ...args: Parameters<typeof piecePropertiesUtils.buildSchema>
+): ZodType {
+  const miniSchema = piecePropertiesUtils.buildSchema(...args);
+  return z.object((miniSchema as unknown as ZodObject).shape);
+}
+
 function buildInputSchemaForStep(
   type: FlowActionType | FlowTriggerType,
   piece: PieceMetadata | null,
@@ -53,7 +68,7 @@ function buildInputSchemaForStep(
         actionNameOrTriggerName &&
         piece.actions[actionNameOrTriggerName]
       ) {
-        return piecePropertiesUtils.buildSchema(
+        return buildClassicSchema(
           piece.actions[actionNameOrTriggerName].props,
           piece.auth,
           piece.actions[actionNameOrTriggerName].requireAuth,
@@ -67,7 +82,7 @@ function buildInputSchemaForStep(
         actionNameOrTriggerName &&
         piece.triggers[actionNameOrTriggerName]
       ) {
-        return piecePropertiesUtils.buildSchema(
+        return buildClassicSchema(
           piece.triggers[actionNameOrTriggerName].props,
           piece.auth,
           piece.triggers[actionNameOrTriggerName].requireAuth,
@@ -144,6 +159,7 @@ function getDefaultPropertyValue({
     }
     case PropertyType.OAUTH2:
     case PropertyType.CUSTOM_AUTH:
+    case PropertyType.OIDC:
     case PropertyType.BASIC_AUTH:
     case PropertyType.SECRET_TEXT:
     case PropertyType.CUSTOM: {
@@ -211,7 +227,7 @@ const GLOBAL_CONNECTION_EXTRAS_SCHEMA = z.object({
   projectIds: z
     .array(z.string())
     .min(1, { error: t('Please select at least one project') }),
-  metadata: Metadata.optional(),
+  metadata: z.optional(Metadata),
   preSelectForNewProjects: z.boolean().optional(),
 });
 
@@ -232,10 +248,7 @@ function buildOAuth2ValueSchema(
   if (auth.type !== PropertyType.OAUTH2) {
     throw new Error('buildOAuth2ValueSchema expects OAuth2 auth');
   }
-  const propsSchema = piecePropertiesUtils.buildSchema(
-    auth.props ?? {},
-    undefined,
-  );
+  const propsSchema = buildClassicSchema(auth.props ?? {}, undefined);
   const isClientCredsGrantType =
     auth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS;
 
@@ -285,6 +298,13 @@ const CUSTOM_AUTH_VALUE_PROPS = z.object({
   }),
 });
 
+const OIDC_VALUE_PROPS = z.object({
+  value: z.object({
+    type: z.literal(AppConnectionType.OIDC),
+    props: z.record(z.string(), z.unknown()),
+  }),
+});
+
 function extendUpsertSchema(
   upsertSchema: ZodObject<z.ZodRawShape>,
   names: ReturnType<typeof connectionNameSchema>,
@@ -314,6 +334,22 @@ function extendCustomAuthUpsertSchema(
         .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
     : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
   return withExtras.extend(CUSTOM_AUTH_VALUE_PROPS.shape);
+}
+
+function extendOIDCUpsertSchema(
+  names: ReturnType<typeof connectionNameSchema>,
+  isGlobalConnection: boolean,
+) {
+  const omit = isGlobalConnection
+    ? GLOBAL_NAME_AND_VALUE_OMIT
+    : PROJECT_NAME_AND_VALUE_OMIT;
+  const base = UpsertOIDCRequest.omit(omit).extend(names.shape);
+  const withExtras = isGlobalConnection
+    ? base
+        .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
+        .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
+    : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
+  return withExtras.extend(OIDC_VALUE_PROPS.shape);
 }
 
 function buildOAuth2RequestSchema(
@@ -371,6 +407,7 @@ function buildFallbackConnectionSchema(options: {
       extendUpsertSchema(UpsertPlatformOAuth2Request, names, isGlobal),
       extendUpsertSchema(UpsertBasicAuthRequest, names, isGlobal),
       extendCustomAuthUpsertSchema(names, isGlobal),
+      extendOIDCUpsertSchema(names, isGlobal),
       extendUpsertSchema(UpsertNoAuthRequest, names, isGlobal),
     ]),
   });
@@ -383,6 +420,18 @@ function buildCustomAuthValueSchema(auth: PieceAuthProperty) {
   return z.object({
     value: z.object({
       type: z.literal(AppConnectionType.CUSTOM_AUTH),
+      props: piecePropertiesUtils.buildSchema(auth.props, undefined),
+    }),
+  });
+}
+
+function buildOIDCValueSchema(auth: PieceAuthProperty) {
+  if (auth.type !== PropertyType.OIDC) {
+    throw new Error('buildOIDCValueSchema expects OIDC');
+  }
+  return z.object({
+    value: z.object({
+      type: z.literal(AppConnectionType.OIDC),
       props: piecePropertiesUtils.buildSchema(auth.props, undefined),
     }),
   });
@@ -421,6 +470,16 @@ function buildConnectionSchema(
       return z.object({
         request: extendUpsertSchema(
           UpsertCustomAuthRequest.omit({ value: true }),
+          names,
+          isGlobalConnection,
+        ).extend(valueShape.shape),
+      });
+    }
+    case PropertyType.OIDC: {
+      const valueShape = buildOIDCValueSchema(auth);
+      return z.object({
+        request: extendUpsertSchema(
+          UpsertOIDCRequest.omit({ value: true }),
           names,
           isGlobalConnection,
         ).extend(valueShape.shape),

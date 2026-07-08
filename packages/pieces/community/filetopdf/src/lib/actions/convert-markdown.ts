@@ -15,6 +15,12 @@ export const convertMarkdown = createAction({
   displayName: 'Convert Markdown',
   description:
     'Render a raw Markdown string (with optional CSS) to PDF. A sensible default stylesheet is applied when no CSS is provided.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Renders a raw Markdown string to PDF, applying a default stylesheet when no CSS is supplied (custom CSS overrides it). Choose this when the agent holds Markdown text it generated or assembled in memory, rather than a file, URL, or HTML. Requires the Markdown content as input; rendering is deterministic with no stored side effect, so re-running on the same input is safe and idempotent.',
+    idempotent: true,
+  },
   props: {
     markdown: Property.LongText({
       displayName: 'Markdown',

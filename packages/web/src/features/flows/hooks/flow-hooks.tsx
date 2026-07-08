@@ -1,5 +1,10 @@
 import {
   ApErrorParams,
+  isNil,
+  ErrorCode,
+  SeekPage,
+} from '@activepieces/core-utils';
+import {
   ApFlagId,
   FlowOperationType,
   FlowStatus,
@@ -10,10 +15,8 @@ import {
   PopulatedFlow,
   FlowTrigger,
   FlowTriggerType,
-  isNil,
-  ErrorCode,
-  SeekPage,
   Template,
+  TelemetryEventName,
   UncategorizedFolderId,
   UpdateRunProgressRequest,
 } from '@activepieces/shared';
@@ -24,6 +27,7 @@ import { toast } from 'sonner';
 
 import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
 import { useSocket } from '@/components/providers/socket-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { foldersApi } from '@/features/folders/api/folders-api';
@@ -72,6 +76,7 @@ export const flowHooks = {
       ApFlagId.TRIGGER_TIMEOUT_SECONDS,
     );
     const { openDialog } = useApErrorDialogStore();
+    const { capture } = useTelemetry();
     return useMutation({
       mutationFn: async () => {
         if (change === 'publish') {
@@ -95,6 +100,10 @@ export const flowHooks = {
       onSuccess: (flow: PopulatedFlow) => {
         if (change === 'publish') {
           setIsPublishing?.(false);
+          capture({
+            name: TelemetryEventName.FLOW_PUBLISHED,
+            payload: { flowId: flow.id },
+          });
         }
         onSuccess?.(flow);
       },

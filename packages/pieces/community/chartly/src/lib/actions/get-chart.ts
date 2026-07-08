@@ -6,6 +6,8 @@ export const getChartAction = createAction({
   name: 'get_chart',
   displayName: 'Get Chart',
   description: 'Retrieve a previously created chart by its ID. Returns cached image data optimized for sharing.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a previously created chart from Chartly by its chart ID and returns the cached image as a base64 data URL, auto-detecting PNG vs SVG from the response unless a format is specified. Use when an agent already has a chart ID (e.g. from a prior Create Chart call) and needs to re-fetch the image. Requires a valid chart ID; this is a read-only lookup and is idempotent.', idempotent: true },
   props: {
     chart_id: Property.ShortText({
       displayName: 'Chart ID',

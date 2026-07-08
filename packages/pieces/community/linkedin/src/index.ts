@@ -4,7 +4,7 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCompanyUpdate } from './lib/actions/create-company-update';
 import { createShareUpdate } from './lib/actions/create-share-update';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';

@@ -15,6 +15,8 @@ export const userCreateAction = createAction({
   name: 'userCreate',
   displayName: 'Resources - Users - User Create',
   description: 'Create new User.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new AMPECO user from an email and password, with optional profile, contact, address, group, and session-option fields. Use to register an account that does not yet exist; to modify an existing one use User Update. Not idempotent: repeated calls attempt to create duplicate users (and will fail if the email is already taken).', idempotent: false },
   props: {
         
   email: Property.ShortText({

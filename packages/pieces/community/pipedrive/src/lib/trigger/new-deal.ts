@@ -9,7 +9,7 @@ import {
 import { pipedriveAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedriveDealV2 {
@@ -72,6 +72,10 @@ export const newDeal = createTrigger({
 	name: 'new_deal',
 	displayName: 'New Deal',
 	description: 'Triggers when a new deal is created.',
+	aiMetadata: {
+		description:
+			'Fires the moment a new deal record is created in Pipedrive, representing a sales opportunity (with its title, value, currency, owner, associated person/organization, pipeline and stage). Use to start automations whenever a deal enters the CRM.',
+	},
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

@@ -10,6 +10,12 @@ export const createAVoucher = createAction({
   name: 'createAVoucher',
   displayName: 'Create a voucher',
   description: 'Create a new voucher in a campaign',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new voucher with the given code inside a specific Vouchery campaign, optionally setting an expiration date, activation date, gift card value, and assigned customer. Use to issue a redeemable voucher or gift card under a campaign. Not idempotent: each call creates a voucher, so repeating it generates additional vouchers (a duplicate code may error).',
+    idempotent: false,
+  },
   props: {
     campaignId: comapaignIdDropdown,
     voucherCode: Property.ShortText({

@@ -11,6 +11,12 @@ export const addEventCreateAddToCalendarLinksAction = createAction({
   displayName: 'Create Dynamic Add to Calendar Links',
   description:
     'Creates an AddEvent event and returns its shareable "Add to Calendar" links. Opening a link lets recipients add the event to Apple, Google, Outlook, and other calendars. Each run produces a unique link, so links can be personalized per recipient.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an AddEvent event and returns shareable "Add to Calendar" links that let recipients add it to Apple, Google, Outlook, and other calendars. Use when an agent needs distributable per-recipient calendar links rather than a managed calendar entry. Requires a title and start datetime; not idempotent, since each call creates a new event and a unique set of links.',
+    idempotent: false,
+  },
   props: {
     calendar_id: addEventProps.calendarId({ required: false }),
     title: Property.ShortText({

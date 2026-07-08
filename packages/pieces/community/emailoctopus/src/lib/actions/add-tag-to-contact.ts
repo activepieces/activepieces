@@ -10,6 +10,8 @@ export const addTagToContact = createAction({
     name: 'add_tag_to_contact',
     displayName: 'Add Tag to Contact',
     description: 'Add one or more tags to a contact in a specified list.',
+    audience: 'both',
+    aiMetadata: { description: 'Applies one or more tags to a contact in an EmailOctopus list, located by email address. Use to label or segment a known subscriber. Requires the list id, the contact email, and the tags to add. Idempotent — re-adding tags that are already present leaves the contact unchanged.', idempotent: true },
     props: {
         list_id: emailOctopusProps.listId(),
         email_address: Property.ShortText({
