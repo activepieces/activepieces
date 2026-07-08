@@ -18,7 +18,7 @@ The pieces feature manages the metadata catalog of automation integrations (call
 - `packages/pieces/framework/src/lib/output-schema.ts` — `OutputSchema` / `OutputSchemaField` / `FieldFormat` plain TypeScript types (embedded into the piece metadata via `z.custom`)
 
 ## Edition Availability
-All editions. Piece filtering by allowed/blocked list and EE-specific filtering (including per-piece action/trigger visibility) are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level. On EE/Cloud with `platform.plan.managePiecesEnabled`, per-project filtering is driven by **piece sets** rather than project-plan allow/block lists — see [piece-sets.md](./piece-sets.md).
+All editions. Base listing and installation is Community-level. EE/Cloud per-piece and per-action/trigger visibility is resolved through `resolveVisibility` (`src/app/ee/pieces/filters/piece-filtering-utils.ts`), which returns a `VisibilityPolicy` (or `null` on CE / when `platformId` or `projectId` is nil). Per-project visibility is driven by the project's **piece set** — see [piece-sets.md](./piece-sets.md).
 
 ## Domain Terms
 
@@ -78,19 +78,21 @@ Unique index on `(name, version, platformId)`.
 ## Service Methods
 
 ### `pieceMetadataService`
-- `list(params)` — returns filtered + sorted `PieceMetadataModelSummary[]` from cache; applies platform/project piece filters, then calls `enterpriseFilteringUtils.filterComponents` to strip hidden actions/triggers from `suggestedActions`/`suggestedTriggers` in the summaries (EE/Cloud only)
+- `list(params)` — returns filtered + sorted `PieceMetadataModelSummary[]` from cache; resolves a `VisibilityPolicy` via `resolveVisibility`, then (unless `includeHidden` or the policy is `null`) applies `policy.filterPieces` to drop hidden pieces and `policy.filterComponents` to strip hidden actions/triggers from `suggestedActions`/`suggestedTriggers` in the summaries
 - `getOrThrow({ platformId, name, version, locale? })` — returns full `PieceMetadataModel` for exact piece; prefers platform-specific over official; applies i18n translation
 - `listVersions({ name, platformId, projectId })` — returns all available semver versions from registry cache
 - `create({ pieceMetadata, packageType, platformId, pieceType, archiveId? })` — inserts metadata record and invalidates cache
 - `delete({ id, platformId })` — looks up the piece by id, asserts it belongs to the caller's platform and is `CUSTOM` type, deletes all versions sharing the same name on that platform, then invalidates cache
 - `registry({ release? })` — returns lightweight name+version list for all pieces
 
-### `enterpriseFilteringUtils` (EE/Cloud only — `src/app/ee/pieces/filters/piece-filtering-utils.ts`)
-- `filter({ platformId, projectId, pieces, includeHidden })` — removes entire pieces from the list. For a given `projectId`, routes through the project's **piece set** (`isPieceVisible`) when `managePiecesEnabled`, otherwise falls back to the legacy project-plan allowlist (`filterBasedOnProject`)
-- `filterComponents({ platformId, projectId, summaries })` — strips entries from `suggestedActions`/`suggestedTriggers` in each `PieceMetadataModelSummary`. For a given `projectId` under `managePiecesEnabled`, strips actions/triggers not in the project's piece-set `config` (`selectedActions`/`selectedTriggers`). No-ops on CE, when `platformId` is nil, or when the plan lacks `managePiecesEnabled`
-- `isFiltered({ piece, projectId, platformId })` — convenience wrapper around `filter` that returns a boolean
+### `resolveVisibility` (EE/Cloud only — `src/app/ee/pieces/filters/piece-filtering-utils.ts`)
+- `resolveVisibility({ platformId, projectId, log })` — returns a `VisibilityPolicy`, or `null` on CE or when `platformId`/`projectId` is nil (callers treat `null` as "no filtering"). Resolves the project's piece set via `project.pieceSetId`, falling back to the platform Default set, and builds the policy from that set's `config`. See [piece-sets.md](./piece-sets.md).
 
-Both per-project paths resolve the set via `project.pieceSetId`, falling back to the platform Default set. See [piece-sets.md](./piece-sets.md).
+The returned `VisibilityPolicy` exposes:
+- `isPieceVisible(name)` — whether a piece is visible under the set (`isPieceVisible` against `config.pieces`)
+- `filterPieces(pieces)` — drops hidden pieces from a `PieceMetadataSchema[]`
+- `filterComponents(summaries)` — strips hidden entries from `suggestedActions`/`suggestedTriggers` in each `PieceMetadataModelSummary` (`isComponentVisible` against `config.selectedActions`/`selectedTriggers`)
+- `filterPieceComponents(piece)` — strips hidden `actions`/`triggers` maps from a full `PieceMetadataModel`
 
 ### `pieceInstallService`
 - `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`. When tool-search is enabled (`isToolSearchEnabled()`), also enqueues a platform-scoped tool-search reindex (`{ type: 'platform', platformId }`) fire-and-forget so the new piece's actions/triggers become searchable; no-op when the flag is off.
