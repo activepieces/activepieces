@@ -101,6 +101,15 @@ export class CreatePieceSetTable1807000000000 implements Migration {
             `)
         }
 
+        // Piece sets replace the old platform-level piece filters. The columns are created on
+        // every edition (CreateDefaultPlatform / AddPlatformToPostgres), so they must be dropped
+        // on every edition too — this has to run before the EE/Cloud-only backfill early return.
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+                DROP COLUMN IF EXISTS "filteredPieceNames",
+                DROP COLUMN IF EXISTS "filteredPieceBehavior"
+        `)
+
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
@@ -149,14 +158,6 @@ export class CreatePieceSetTable1807000000000 implements Migration {
             { platformCount: platforms.length },
             '[CreatePieceSetTable1807000000000#up] Backfill complete',
         )
-
-        // Piece sets replace the old platform-level piece filters, so drop those columns now
-        // that the data they held is superseded.
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-                DROP COLUMN IF EXISTS "filteredPieceNames",
-                DROP COLUMN IF EXISTS "filteredPieceBehavior"
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

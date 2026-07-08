@@ -39,7 +39,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             const filteredPieces = params.includeHidden || isNil(policy) ? sortedPieces : policy.filterPieces(sortedPieces)
 
             const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
-            return isNil(policy) ? summaries : policy.filterComponents(summaries)
+            return params.includeHidden || isNil(policy) ? summaries : policy.filterComponents(summaries)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const registry = filterRegistry(await loadRegistry(log), {
