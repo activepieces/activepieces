@@ -119,8 +119,6 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                         Objects: deleteObjects,
                         Quiet: true,
                     },
-                    // DeleteObjects requires a checksum; the SDK default (CRC32) is rejected by
-                    // OCI Object Storage, which accepts only MD5 / SHA256 / CRC32C
                     ChecksumAlgorithm: 'CRC32C',
                 }))
                 log.info({ count: chunk.length }, 'files deleted from s3')
@@ -179,9 +177,6 @@ const getS3Client = (): S3 => {
         maxAttempts: 3,
     }
     if (!isNil(endpoint)) {
-        // SDK defaults (WHEN_SUPPORTED) force CRC32 checksums and aws-chunked upload
-        // encoding, which S3-compatible providers like OCI Object Storage reject.
-        // A custom endpoint means a non-AWS provider; plain AWS keeps the SDK defaults
         options.requestChecksumCalculation = 'WHEN_REQUIRED'
         options.responseChecksumValidation = 'WHEN_REQUIRED'
     }
