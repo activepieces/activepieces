@@ -3,6 +3,7 @@ import {
   FlowTriggerType,
   FlowActionType,
   AI_PIECE_NAME,
+  partition,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -12,6 +13,7 @@ import {
   StepMetadata,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/types';
+import { formatUtils } from '@/lib/format-utils';
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (
@@ -166,6 +168,102 @@ const HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS = [
   '@activepieces/piece-tables',
 ];
 
+const KNOWN_CATEGORY_VALUES = new Set(
+  Object.values(PieceCategory).map((value) => value.toLowerCase()),
+);
+
+const matchesAnyCategory = ({
+  stepMetadata,
+  lowerCasedCategories,
+}: {
+  stepMetadata: StepMetadata;
+  lowerCasedCategories: Set<string>;
+}): boolean => {
+  if (
+    stepMetadata.type !== FlowActionType.PIECE &&
+    stepMetadata.type !== FlowTriggerType.PIECE
+  ) {
+    return false;
+  }
+  return stepMetadata.categories.some((pieceCategory) =>
+    lowerCasedCategories.has(pieceCategory.toLowerCase()),
+  );
+};
+
+const getPrioritizedCategoryTitle = (category: string): string => {
+  return KNOWN_CATEGORY_VALUES.has(category.toLowerCase())
+    ? formatUtils.convertEnumToHumanReadable(category)
+    : category;
+};
+
+const getPrioritizedCategories = ({
+  queryResult,
+  categoryPriority,
+}: {
+  queryResult: StepMetadataWithSuggestions[];
+  categoryPriority: string[];
+}): CategorizedStepMetadataWithSuggestions[] => {
+  const uniqueCategories = categoryPriority.filter(
+    (category, index) =>
+      categoryPriority.findIndex(
+        (other) => other.toLowerCase() === category.toLowerCase(),
+      ) === index,
+  );
+  return uniqueCategories
+    .map((category) => {
+      const lowerCasedCategories = new Set([category.toLowerCase()]);
+      return {
+        title: getPrioritizedCategoryTitle(category),
+        metadata: queryResult.filter((stepMetadata) =>
+          matchesAnyCategory({ stepMetadata, lowerCasedCategories }),
+        ),
+      };
+    })
+    .filter((categorized) => categorized.metadata.length > 0);
+};
+
+const excludePrioritizedPieces = ({
+  categories,
+  prioritizedCategories,
+}: {
+  categories: CategorizedStepMetadataWithSuggestions[];
+  prioritizedCategories: CategorizedStepMetadataWithSuggestions[];
+}): CategorizedStepMetadataWithSuggestions[] => {
+  if (prioritizedCategories.length === 0) {
+    return categories;
+  }
+  const prioritizedPieces = new Set(
+    prioritizedCategories.flatMap((categorized) => categorized.metadata),
+  );
+  return categories
+    .map((categorized) => ({
+      ...categorized,
+      metadata: categorized.metadata.filter(
+        (stepMetadata) => !prioritizedPieces.has(stepMetadata),
+      ),
+    }))
+    .filter((categorized) => categorized.metadata.length > 0);
+};
+
+const sortByCategoryPriority = ({
+  queryResult,
+  categoryPriority,
+}: {
+  queryResult: StepMetadataWithSuggestions[];
+  categoryPriority: string[];
+}): StepMetadataWithSuggestions[] => {
+  if (categoryPriority.length === 0) {
+    return queryResult;
+  }
+  const lowerCasedCategories = new Set(
+    categoryPriority.map((category) => category.toLowerCase()),
+  );
+  const [prioritized, rest] = partition(queryResult, (stepMetadata) =>
+    matchesAnyCategory({ stepMetadata, lowerCasedCategories }),
+  );
+  return [...prioritized, ...rest];
+};
+
 const HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS = [
   AI_PIECE_NAME,
   '@activepieces/piece-http',
@@ -185,4 +283,7 @@ export const pieceSearchUtils = {
   getPinnedPieces,
   getPopularPieces,
   getHighlightedPieces,
+  getPrioritizedCategories,
+  excludePrioritizedPieces,
+  sortByCategoryPriority,
 };

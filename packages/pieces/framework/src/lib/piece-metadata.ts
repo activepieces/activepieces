@@ -21,7 +21,7 @@ export const PieceBase = z.object({
   directoryPath: z.optional(z.string()),
   auth: z.optional(z.union([PieceAuthProperty, z.array(PieceAuthProperty)])),
   version: z.string(),
-  categories: z.optional(z.array(z.enum(PieceCategory))),
+  categories: z.optional(z.array(z.string())),
   minimumSupportedRelease: z.optional(z.string()),
   maximumSupportedRelease: z.optional(z.string()),
   i18n: I18nForPiece,
@@ -38,7 +38,7 @@ export type PieceBase = {
   directoryPath?: string;
   auth?: PieceAuthProperty | PieceAuthProperty[];
   version: string;
-  categories?: PieceCategory[];
+  categories?: (PieceCategory | string)[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
   i18n?: Partial<Record<LocalesEnum, Record<string, string>>>

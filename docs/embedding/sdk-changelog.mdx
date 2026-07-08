@@ -18,6 +18,10 @@ Change log format: MM/DD/YYYY (version)
 
 
 
+### 07/08/2026 (0.12.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.12.0.js
+- Added `embedding.categoryPriority` parameter to the [configure](./embed-builder#configure-parameters) method **(value: string[])**. Takes a list of piece category names (matched case-insensitively, e.g. `['ARTIFICIAL_INTELLIGENCE', 'my-category']`). Each listed category is rendered as a named group at the top of the step picker's Explore and Apps tabs, in the configured order, and pieces in those categories are ranked first in step-picker search results. Custom pieces can declare their own category strings via `createPiece({ categories: [...] })`.
+
 ### 06/18/2026 (0.10.0)
 - SDK URL: https://cdn.activepieces.com/sdk/embed/0.10.0.js
 - Added `authorizeMcp({ authRequestId })` — opens an in-embed MCP OAuth consent dialog so embedded (managed-auth) users can approve connecting an AI client to their project **without a standalone Activepieces login**. Resolves with `{ redirectUrl }` on approval or `{ denied: true }`. See [Embeddable MCP](./embeddable-mcp).

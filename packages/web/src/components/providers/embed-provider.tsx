@@ -9,6 +9,7 @@ type EmbeddingState = {
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideTables: boolean;
+  categoryPriority: string[];
   hideFlowNameInBuilder: boolean;
   hideExportAndImportFlow: boolean;
   sdkVersion?: string;
@@ -30,6 +31,7 @@ const defaultState: EmbeddingState = {
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideTables: false,
+  categoryPriority: [],
   hideFlowNameInBuilder: false,
   hideExportAndImportFlow: false,
   useDarkBackground: window.opener !== null,

@@ -140,6 +140,14 @@ const EmbedPage = React.memo(() => {
                     event.data.data.disableNavigationInBuilder !== false,
                   hideFolders: event.data.data.hideFolders ?? false,
                   hideTables: event.data.data.hideTables ?? false,
+                  categoryPriority: Array.isArray(
+                    event.data.data.categoryPriority,
+                  )
+                    ? event.data.data.categoryPriority.filter(
+                        (category): category is string =>
+                          typeof category === 'string',
+                      )
+                    : [],
                   sdkVersion: event.data.data.sdkVersion,
                   fontUrl: event.data.data.fontUrl,
                   fontFamily: event.data.data.fontFamily,

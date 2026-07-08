@@ -122,6 +122,7 @@ export interface ActivepiecesVendorInit {
     disableNavigationInBuilder: boolean | 'keep_home_button_only';
     hideFolders?: boolean;
     hideTables?: boolean;
+    categoryPriority?: string[];
     sdkVersion?: string;
     jwtToken: string;
     initialRoute?: string 
@@ -171,6 +172,7 @@ type EmbeddingParam = {
   hideDuplicateFlow?: boolean;
   hideFolders?: boolean;
   hideTables?: boolean;
+  categoryPriority?: string[];
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -193,7 +195,7 @@ export type McpCredentials = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.11.0";
+  readonly _sdkVersion = "0.12.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -293,6 +295,7 @@ class ActivepiecesEmbedded {
                 disableNavigationInBuilder: this._embeddingState?.builder?.disableNavigation ?? false,
                 hideFolders: this._embeddingState?.hideFolders ?? false,
                 hideTables: this._embeddingState?.hideTables ?? false,
+                categoryPriority: this._embeddingState?.categoryPriority,
                 hideFlowNameInBuilder: this._embeddingState?.builder?.hideFlowName ?? false,
                 jwtToken: this._jwtToken,
                 initialRoute,

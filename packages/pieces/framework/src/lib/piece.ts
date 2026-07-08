@@ -26,7 +26,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
     public readonly events: PieceEventProcessors | undefined,
     actions: Action[],
     triggers: Trigger[],
-    public readonly categories: PieceCategory[],
+    public readonly categories: (PieceCategory | string)[],
     public readonly auth?: PieceAuth,
     public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
     public readonly maximumSupportedRelease?: string,
@@ -112,7 +112,7 @@ type CreatePieceParams<
   maximumSupportedRelease?: string;
   actions: Action[];
   triggers: Trigger[];
-  categories?: PieceCategory[];
+  categories?: (PieceCategory | string)[];
 };
 
 type PieceEventProcessors = {

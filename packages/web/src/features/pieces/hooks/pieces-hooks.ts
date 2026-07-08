@@ -23,6 +23,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import semver from 'semver';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import {
@@ -51,6 +52,9 @@ const {
   isAppPiece,
   getHighlightedPieces,
   isFlowController,
+  getPrioritizedCategories,
+  excludePrioritizedPieces,
+  sortByCategoryPriority,
 } = pieceSearchUtils;
 
 type UsePieceModelForStepSettings = {
@@ -200,6 +204,7 @@ export const piecesHooks = {
     const { metadata, isLoading: isLoadingPieces } =
       stepsHooks.useAllStepsMetadata(props);
     const { platform } = platformHooks.useCurrentPlatform();
+    const { embedState } = useEmbedding();
     if (!metadata || isLoadingPieces) {
       return {
         isLoading: true,
@@ -255,16 +260,27 @@ export const piecesHooks = {
     };
 
     switch (selectedTab) {
-      case PieceSelectorTabType.EXPLORE:
+      case PieceSelectorTabType.EXPLORE: {
+        const prioritizedCategories = getPrioritizedCategories({
+          queryResult: piecesMetadataWithoutEmptySuggestions,
+          categoryPriority: embedState.categoryPriority,
+        });
         return {
           isLoading: false,
-          data: getExploreTabContent(
-            piecesMetadataWithoutEmptySuggestions,
-            platform,
-            props.type,
-            environment,
-          ),
+          data: [
+            ...prioritizedCategories,
+            ...excludePrioritizedPieces({
+              categories: getExploreTabContent(
+                piecesMetadataWithoutEmptySuggestions,
+                platform,
+                props.type,
+                environment,
+              ),
+              prioritizedCategories,
+            }),
+          ],
         };
+      }
       case PieceSelectorTabType.UTILITY:
         return {
           isLoading: false,
@@ -318,17 +334,27 @@ export const piecesHooks = {
           ...popularCategory,
           metadata: popularCategory.metadata.filter(isAppPiece),
         };
-        const result = {
+        const prioritizedCategories = getPrioritizedCategories({
+          queryResult: piecesMetadataWithoutEmptySuggestions,
+          categoryPriority: embedState.categoryPriority,
+        });
+        const appsCategories = [
+          ...(pinnedPieces.length > 0
+            ? [{ title: t('Highlights'), metadata: pinnedPieces }]
+            : []),
+          popularAppsCategory,
+          appsCategory,
+        ];
+        return {
           isLoading: false,
-          data: [popularAppsCategory, appsCategory],
+          data: [
+            ...prioritizedCategories,
+            ...excludePrioritizedPieces({
+              categories: appsCategories,
+              prioritizedCategories,
+            }),
+          ],
         };
-        if (pinnedPieces.length > 0) {
-          result.data.unshift({
-            title: t('Highlights'),
-            metadata: pinnedPieces,
-          });
-        }
-        return result;
       }
 
       case PieceSelectorTabType.NONE: {
@@ -342,9 +368,17 @@ export const piecesHooks = {
             },
           });
         }
+        const sortedAllCategory = {
+          ...allCategory,
+          metadata: sortByCategoryPriority({
+            queryResult: allCategory.metadata,
+            categoryPriority: embedState.categoryPriority,
+          }),
+        };
         return {
           isLoading: false,
-          data: allCategory.metadata.length > 0 ? [allCategory] : [],
+          data:
+            sortedAllCategory.metadata.length > 0 ? [sortedAllCategory] : [],
         };
       }
     }

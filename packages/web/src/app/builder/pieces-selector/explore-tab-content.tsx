@@ -56,9 +56,12 @@ const ExploreTabContent = ({
 
   return (
     <ScrollArea className="h-full w-full">
-      <div className="flex  p-2  ">
+      <div className="flex flex-wrap p-2  ">
         {categories.map((category) => (
-          <div key={category.title} className="flex w-[50%] flex-col gap-0.5 ">
+          <div
+            key={category.title}
+            className="flex flex-1 min-w-[40%] flex-col gap-0.5 "
+          >
             <div className="text-sm text-muted-foreground mb-1.5">
               {category.title}
             </div>
